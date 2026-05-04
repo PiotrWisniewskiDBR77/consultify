@@ -121,11 +121,11 @@ const tokenize = (code: string, language: string): { type: string; value: string
 const TOKEN_COLORS: Record<string, string> = {
   comment: 'text-slate-500 dark:text-slate-500 italic',
   string: 'text-green-600 dark:text-green-400',
-  keyword: 'text-purple-600 dark:text-purple-400',
-  literal: 'text-orange-600 dark:text-orange-400',
+  keyword: 'text-primary-600 dark:text-primary-400',
+  literal: 'text-amber-600 dark:text-amber-400',
   number: 'text-blue-600 dark:text-blue-400',
   punctuation: 'text-slate-500 dark:text-slate-400',
-  property: 'text-cyan-600 dark:text-cyan-400',
+  property: 'text-blue-600 dark:text-blue-400',
   plain: 'text-slate-800 dark:text-slate-200',
 };
 

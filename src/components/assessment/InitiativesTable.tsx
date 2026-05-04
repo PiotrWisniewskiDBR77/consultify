@@ -136,8 +136,8 @@ interface InitiativesTableProps {
 const PRIORITY_CONFIG = {
   LOW: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
   MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  HIGH: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  CRITICAL: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  CRITICAL: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
 export const InitiativesTable: React.FC<InitiativesTableProps> = ({
@@ -312,7 +312,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           </div>
           <button
             onClick={() => setShowGenerateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
           >
             <Sparkles size={18} />
             Generate from Report
@@ -413,7 +413,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
           </div>
         ) : filteredInitiatives.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -462,8 +462,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-3">
-                          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg shrink-0">
-                            <Lightbulb className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg shrink-0">
+                            <Lightbulb className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
@@ -479,7 +479,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                     setViewingInitiativeId(initiative.id);
                                   }
                                 }}
-                                className="font-medium text-navy-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left truncate"
+                                className="font-medium text-navy-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left truncate"
                               >
                                 {initiative.name}
                               </button>
@@ -495,7 +495,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                     setViewingInitiativeId(initiative.id);
                                   }
                                 }}
-                                className="p-1 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors shrink-0"
+                                className="p-1 text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded transition-colors shrink-0"
                                 title="Open initiative details"
                               >
                                 <ArrowRight size={14} />
@@ -552,7 +552,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                             className="flex items-center gap-2 cursor-default"
                             title={`${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`}
                           >
-                            <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
+                            <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-700 dark:text-primary-300 overflow-hidden">
                               {initiative.ownerBusiness.avatarUrl ? (
                                 <img
                                   src={initiative.ownerBusiness.avatarUrl}
@@ -604,7 +604,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                 setViewingInitiativeId(initiative.id);
                               }
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                           >
                             <Edit size={14} />
                             Edit
@@ -656,7 +656,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                         handleDelete(initiative.id);
                                         setActiveRowMenu(null);
                                       }}
-                                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2"
+                                      className="w-full text-left px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-2"
                                     >
                                       <Trash2 size={14} />
                                       Delete

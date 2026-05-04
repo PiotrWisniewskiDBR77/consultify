@@ -26,6 +26,7 @@ interface ModuleHubProps {
 
   // Search
   onSearch: (query: string) => void;
+  searchValue?: string;
 
   // Dynamic documents
   openDocuments: OpenDocument[];
@@ -106,6 +107,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   viewMode,
   onViewModeChange,
   onSearch,
+  searchValue,
   openDocuments,
   activeDocumentId,
   onSelectDocument,
@@ -149,6 +151,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
         onSearch={onSearch}
+        searchValue={searchValue}
         openDocuments={openDocuments}
         activeDocumentId={activeDocumentId}
         onSelectDocument={onSelectDocument}

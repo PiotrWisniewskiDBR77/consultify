@@ -202,8 +202,8 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
   const getProgressColor = () => {
     if (completeness >= 80) return 'bg-green-500';
     if (completeness >= 60) return 'bg-amber-500';
-    if (completeness >= 40) return 'bg-orange-500';
-    return 'bg-red-500';
+    if (completeness >= 40) return 'bg-amber-500';
+    return 'bg-rose-500';
   };
 
   const getStatusText = () => {
@@ -266,16 +266,16 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
           {/* Missing Required Fields */}
           {missingRequired.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase tracking-wider font-semibold text-red-600 dark:text-red-400 mb-1.5">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-rose-600 dark:text-rose-400 mb-1.5">
                 Missing Required ({missingRequired.length})
               </div>
               <div className="space-y-1">
                 {missingRequired.map((field) => (
                   <div
                     key={field.field}
-                    className="flex items-center gap-2 px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-700 dark:text-red-400"
+                    className="flex items-center gap-2 px-2 py-1 bg-rose-50 dark:bg-rose-900/20 rounded text-xs text-rose-700 dark:text-rose-400"
                   >
-                    <Circle size={10} className="text-red-400" />
+                    <Circle size={10} className="text-rose-400" />
                     <span>{field.label}</span>
                   </div>
                 ))}

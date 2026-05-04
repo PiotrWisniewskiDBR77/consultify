@@ -57,7 +57,7 @@ const OUTCOME_COLORS: Record<string, string> = {
   trial_started: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   question_answered: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
   escalated: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  abandoned: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+  abandoned: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
   unknown: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
 };
 
@@ -205,7 +205,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
             <button
               onClick={handleDeleteConversation}
               disabled={privacyActionLoading}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-medium hover:bg-rose-700 disabled:opacity-50"
             >
               <Trash2 size={13} />
               Delete conversation
@@ -214,7 +214,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300">
             {error}
           </div>
         )}
@@ -351,7 +351,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300">
           {error}
         </div>
       )}

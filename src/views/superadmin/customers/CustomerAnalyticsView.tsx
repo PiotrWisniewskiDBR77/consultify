@@ -209,8 +209,8 @@ const CustomerAnalyticsView: React.FC = () => {
             </Card>
             <Card padding="sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <BarChart3 className="w-5 h-5 text-purple-400" />
+                <div className="p-2 bg-primary-500/20 rounded-lg">
+                  <BarChart3 className="w-5 h-5 text-primary-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -280,7 +280,7 @@ const CustomerAnalyticsView: React.FC = () => {
                                     ? 'bg-green-500'
                                     : org.health_score >= 60
                                       ? 'bg-yellow-500'
-                                      : 'bg-red-500'
+                                      : 'bg-rose-500'
                                 }`}
                                 style={{ width: `${org.health_score}%` }}
                               />
@@ -297,7 +297,7 @@ const CustomerAnalyticsView: React.FC = () => {
                         {typeof org.health_score === 'number' && org.health_score >= 70 ? (
                           <TrendingUp className="w-4 h-4 text-green-400" />
                         ) : typeof org.health_score === 'number' ? (
-                          <TrendingDown className="w-4 h-4 text-red-400" />
+                          <TrendingDown className="w-4 h-4 text-rose-400" />
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}

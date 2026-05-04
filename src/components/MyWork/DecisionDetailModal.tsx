@@ -74,9 +74,9 @@ interface DecisionDetailModalProps {
 const getPriorityStyle = (priority?: string) => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
-      return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
+      return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
     case 'HIGH':
-      return 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300';
+      return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
     case 'MEDIUM':
       return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
     default:
@@ -259,7 +259,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
         >
           {loading ? (
             <div className="flex-1 flex items-center justify-center p-12">
-              <Loader2 className="animate-spin text-purple-500" size={32} />
+              <Loader2 className="animate-spin text-primary-500" size={32} />
             </div>
           ) : decision ? (
             <>
@@ -269,7 +269,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                   <div className="space-y-2">
                     {/* Type + Priority badges */}
                     <div className="flex items-center gap-2">
-                      <span className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium">
+                      <span className="text-xs px-2 py-0.5 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium">
                         {getTypeLabel(decision.decisionType)}
                       </span>
                       {decision.priority && (
@@ -284,7 +284,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                           className={`text-xs px-2 py-0.5 rounded font-medium ${
                             decision.status === 'APPROVED'
                               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                              : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
                           }`}
                         >
                           {decision.status}
@@ -346,14 +346,14 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                     title={t('decisions.aiBrief', 'AI Analysis')}
                     icon={<Sparkles size={14} />}
                   >
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800/30">
+                    <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-100 dark:border-primary-800/30">
                       <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
                         {decision.aiBrief.contextSummary}
                       </p>
 
                       {decision.aiBrief.aiRecommendation && (
-                        <div className="pt-2 border-t border-purple-200 dark:border-purple-700/30">
-                          <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                        <div className="pt-2 border-t border-primary-200 dark:border-primary-700/30">
+                          <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
                             AI Recommendation:
                           </span>
                           <p className="text-sm text-slate-700 dark:text-slate-200 mt-1">
@@ -383,13 +383,13 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                           key={impact.id || idx}
                           className={`p-2 rounded-lg text-sm ${
                             impact.isBlocker
-                              ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30'
+                              ? 'bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30'
                               : 'bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-navy-700'
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             {impact.isBlocker && (
-                              <span className="text-xs px-1.5 py-0.5 bg-red-100 dark:bg-red-800/50 text-red-600 dark:text-red-300 rounded font-medium">
+                              <span className="text-xs px-1.5 py-0.5 bg-rose-100 dark:bg-rose-800/50 text-rose-600 dark:text-rose-300 rounded font-medium">
                                 Blocking
                               </span>
                             )}
@@ -491,7 +491,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                       value={outcome}
                       onChange={(e) => setOutcome(e.target.value)}
                       placeholder={t('decisions.rationalePlaceholder', 'Explain your decision...')}
-                      className="w-full p-3 text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg resize-none h-20 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full p-3 text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg resize-none h-20 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
 
@@ -507,7 +507,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                     <button
                       onClick={() => handleDecision('REJECTED')}
                       disabled={submitting || !outcome.trim()}
-                      className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:border-red-300 dark:hover:border-red-500/50 hover:text-red-600 dark:hover:text-red-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:border-rose-300 dark:hover:border-rose-500/50 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <span className="flex items-center gap-1.5">
                         <XCircle size={14} />
@@ -518,7 +518,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                     <button
                       onClick={() => handleDecision('APPROVED')}
                       disabled={submitting || !outcome.trim()}
-                      className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                      className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                     >
                       {submitting ? (
                         <Loader2 size={14} className="animate-spin" />

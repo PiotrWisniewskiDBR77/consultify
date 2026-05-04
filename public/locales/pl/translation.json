@@ -7089,6 +7089,7 @@
       },
       "empty": {
         "library": "Brak narzędzi.",
+        "librarySearchNoResults": "Brak wyników dla frazy \"{{query}}\". Zmień frazę lub wyczyść filtry.",
         "sessions": "Brak aktywnych sesji. Zacznij z Biblioteki.",
         "outputs": "Brak outputów. Wygeneruj raporty lub prezentacje z sesji.",
         "initiatives": "Brak roboczych inicjatyw. Uruchom narzędzie lub assessment, aby je wygenerować."

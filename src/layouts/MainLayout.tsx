@@ -204,7 +204,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (
-        <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
+        <div className="fixed top-0 left-0 right-0 h-10 bg-rose-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 bg-white dark:bg-navy-900 rounded-full animate-pulse"></span>
             Read-only impersonation mode
@@ -275,8 +275,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     onClick={() => toggleChatCollapse()}
                     className={`hidden lg:flex w-9 h-9 items-center justify-center rounded-full transition-colors ${
                       isChatCollapsed
-                        ? 'bg-purple-500 text-white hover:bg-purple-600'
-                        : 'bg-purple-500/15 text-purple-600 dark:text-purple-400 hover:bg-purple-500/25'
+                        ? 'bg-primary-500 text-white hover:bg-primary-600'
+                        : 'bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25'
                     }`}
                     title={
                       isChatCollapsed
@@ -341,7 +341,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 </div>
                 {/* Resizer */}
                 <div
-                  className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-purple-500/50 active:bg-purple-500 transition-all ${isResizing ? 'bg-purple-500 w-1.5' : ''}`}
+                  className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-primary-500/50 active:bg-primary-500 transition-all ${isResizing ? 'bg-primary-500 w-1.5' : ''}`}
                   onMouseDown={startResizing}
                 />
               </>

@@ -83,6 +83,19 @@ describe('InsightCreatorModal load honesty', () => {
             answeredQuestions: 4,
             totalQuestions: 5,
           },
+          {
+            id: 'session-2',
+            name: 'Finance Discovery',
+            status: 'completed',
+            approvalStatus: 'approved',
+            completedAt: '2026-05-03T11:00:00.000Z',
+            respondentId: 'respondent-2',
+            respondentName: 'Jan Kowalski',
+            respondentRole: 'Finance Lead',
+            department: 'Finance',
+            answeredQuestions: 3,
+            totalQuestions: 5,
+          },
         ]);
       }
       return Promise.resolve([]);
@@ -98,7 +111,9 @@ describe('InsightCreatorModal load honesty', () => {
     fireEvent.change(screen.getByPlaceholderText('e.g. Digital Transformation Analysis Q1 2024'), {
       target: { value: 'Scoped report' },
     });
+    fireEvent.click(screen.getByText('Between the Lines'));
     fireEvent.click(screen.getByText('Analysis'));
+    fireEvent.click(screen.getByText('Contradiction scan'));
     fireEvent.click(screen.getByRole('button', { name: 'Process and operations' }));
     fireEvent.click(screen.getByText('Context'));
     fireEvent.change(
@@ -114,6 +129,12 @@ describe('InsightCreatorModal load honesty', () => {
       { target: { value: 'Look for cross-functional blockers.' } }
     );
     fireEvent.click(screen.getByText('Source'));
+    fireEvent.change(screen.getByLabelText('Respondent role filter'), {
+      target: { value: 'Operations Lead' },
+    });
+    fireEvent.change(screen.getByLabelText('Respondent department filter'), {
+      target: { value: 'Operations' },
+    });
     await waitFor(() => {
       expect(screen.getByText('Customer Discovery')).toBeInTheDocument();
     });
@@ -127,8 +148,18 @@ describe('InsightCreatorModal load honesty', () => {
           topicFocus: ['process_and_operations'],
           consultantNote: 'Look for cross-functional blockers.',
           leadingQuestion: 'Where do handoffs fail?',
+          filters: expect.objectContaining({
+            roles: ['Operations Lead'],
+            departments: ['Operations'],
+            outputTypes: ['summary', 'between_the_lines'],
+            analysisModes: ['general_consulting_synthesis', 'contradiction_scan'],
+          }),
+          analysisMode: 'contradiction_scan',
           analysisScope: expect.objectContaining({
+            role_filters: ['Operations Lead'],
+            department_filters: ['Operations'],
             topic_focus: ['process_and_operations'],
+            analysis_mode: 'contradiction_scan',
             consultant_note: 'Look for cross-functional blockers.',
             leading_question: 'Where do handoffs fail?',
           }),

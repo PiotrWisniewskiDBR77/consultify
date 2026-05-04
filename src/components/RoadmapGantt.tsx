@@ -102,22 +102,22 @@ const generateMonths = (startYear: number, numMonths: number) => {
 // Axis colors
 const AXIS_COLORS: Record<string, string> = {
   processes: 'bg-blue-500',
-  digitalProducts: 'bg-purple-500',
-  dataManagement: 'bg-cyan-500',
+  digitalProducts: 'bg-primary-500',
+  dataManagement: 'bg-blue-500',
   culture: 'bg-amber-500',
   aiMaturity: 'bg-emerald-500',
   businessModels: 'bg-indigo-500',
-  cybersecurity: 'bg-red-500',
+  cybersecurity: 'bg-rose-500',
 };
 
 // Status colors
 const STATUS_COLORS: Record<string, string> = {
   approved: 'border-l-4 border-l-green-500',
-  active: 'border-l-4 border-l-purple-500',
-  on_hold: 'border-l-4 border-l-red-500 animate-pulse',
+  active: 'border-l-4 border-l-primary-500',
+  on_hold: 'border-l-4 border-l-rose-500 animate-pulse',
   APPROVED: 'border-l-4 border-l-green-500',
-  EXECUTING: 'border-l-4 border-l-purple-500',
-  BLOCKED: 'border-l-4 border-l-red-500 animate-pulse',
+  EXECUTING: 'border-l-4 border-l-primary-500',
+  BLOCKED: 'border-l-4 border-l-rose-500 animate-pulse',
 };
 
 // ============================================
@@ -638,7 +638,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               onClick={() => setZoomLevel('month')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'month'
-                  ? 'bg-purple-600 text-white shadow-sm'
+                  ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -648,7 +648,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               onClick={() => setZoomLevel('quarter')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'quarter'
-                  ? 'bg-purple-600 text-white shadow-sm'
+                  ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
@@ -686,7 +686,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               onClick={() => setShowCriticalPath((v) => !v)}
               className={`p-1.5 rounded-lg transition-colors ${
                 showCriticalPath
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                  ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
               }`}
               title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
@@ -812,7 +812,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0, 8 3, 0 6" fill="#ef4444" />
+                  <polygon points="0 0, 8 3, 0 6" fill="#f43f5e" />
                 </marker>
               </defs>
               {dependencyLines.map((line, idx) => {
@@ -821,7 +821,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                 const curveOffset = isSameRow ? 0 : (line.y2 - line.y1) * 0.3;
 
                 const stroke = line.isCritical
-                  ? '#ef4444'
+                  ? '#f43f5e'
                   : line.isConflict
                     ? '#f59e0b'
                     : '#94a3b8';
@@ -863,8 +863,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                 <div
                   key={init.id}
                   className={`flex border-b border-slate-100 dark:border-navy-700 group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                    isLinking ? 'bg-purple-50 dark:bg-purple-900/10' : ''
-                  } ${isCritical ? 'bg-red-50/50 dark:bg-red-900/5' : ''}`}
+                    isLinking ? 'bg-primary-50 dark:bg-primary-900/10' : ''
+                  } ${isCritical ? 'bg-rose-50/50 dark:bg-rose-900/5' : ''}`}
                 >
                   {/* Info Column */}
                   <div
@@ -880,7 +880,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             size={12}
                             className={
                               warnings.some((w) => w.severity === 'error')
-                                ? 'text-red-500'
+                                ? 'text-rose-500'
                                 : 'text-amber-500'
                             }
                           />
@@ -889,7 +889,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       {/* D5.1: Critical path indicator */}
                       {isCritical && (
                         <div className="shrink-0" title="On critical path">
-                          <Route size={12} className="text-red-500" />
+                          <Route size={12} className="text-rose-500" />
                         </div>
                       )}
                       <div
@@ -906,7 +906,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                           }}
                           className={`p-1 rounded transition-colors shrink-0 ${
                             isLinking
-                              ? 'bg-purple-600 text-white'
+                              ? 'bg-primary-600 text-white'
                               : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
                           }`}
                           title="Create dependency"
@@ -921,7 +921,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             e.stopPropagation();
                             onPMPerspectiveCheck(init.id);
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          className="p-1 rounded text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                           title="PM Perspective Check"
                         >
                           <Eye size={12} />
@@ -934,7 +934,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             e.stopPropagation();
                             onOpenScheduleChat(init.id);
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                           title="Chat about this initiative"
                         >
                           <MessageSquare size={12} />
@@ -947,7 +947,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       <span
                         className={`px-1.5 py-0.5 rounded ${
                           init.priority === 'high' || init.priority === 'critical'
-                            ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                            ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
                             : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                         }`}
                       >
@@ -1034,7 +1034,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       onHoverEnd={() => setHoveredInitiative(null)}
                       className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${
                         isActive ? 'ring-2 ring-white ring-offset-2' : ''
-                      } ${isCritical ? 'ring-2 ring-red-500 ring-offset-1' : ''} ${
+                      } ${isCritical ? 'ring-2 ring-rose-500 ring-offset-1' : ''} ${
                         hasWarning ? 'ring-1 ring-amber-400' : ''
                       }`}
                       whileHover={{ scale: 1.01 }}
@@ -1107,7 +1107,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
           <>
             <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded ring-2 ring-red-500 bg-red-500/20" />
+              <div className="w-3 h-3 rounded ring-2 ring-rose-500 bg-rose-500/20" />
               <span>Critical Path</span>
             </div>
           </>

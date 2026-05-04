@@ -190,7 +190,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
         {actionError && (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
           >
             {actionError}
           </div>
@@ -203,7 +203,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Bell size={14} className="text-violet-400" />
+                <Bell size={14} className="text-primary-400" />
                 {t('settings.desktopSounds.desktopNotifications', 'Desktop Notifications')}
               </h4>
 
@@ -223,7 +223,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                   Notification.permission !== 'granted' && (
                     <button
                       onClick={requestPushPermission}
-                      className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors text-sm"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm"
                     >
                       <Bell size={14} />
                       {t('settings.desktopSounds.enablePush', 'Enable Push Notifications')}
@@ -248,8 +248,8 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                             className={cn(
                               'px-3 py-2 rounded-lg border-2 transition-all text-sm',
                               prefs.desktopPosition === opt.value
-                                ? 'border-violet-500 bg-violet-600/10 text-violet-300'
-                                : 'border-white/5 text-slate-400 hover:border-violet-500/30'
+                                ? 'border-primary-500 bg-primary-600/10 text-primary-300'
+                                : 'border-white/5 text-slate-400 hover:border-primary-500/30'
                             )}
                           >
                             {t(`settings.desktopSounds.pos_${opt.value}`, opt.label)}
@@ -276,7 +276,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                               desktopDuration: Number(e.target.value),
                             }))
                           }
-                          className="flex-1 accent-violet-500"
+                          className="flex-1 accent-primary-500"
                         />
                         <span className="text-sm text-slate-400 w-12 text-right tabular-nums">
                           {prefs.desktopDuration / 1000}s
@@ -295,7 +295,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Volume2 size={14} className="text-violet-400" />
+                <Volume2 size={14} className="text-primary-400" />
                 {t('settings.desktopSounds.soundAlerts', 'Sound Alerts')}
               </h4>
 
@@ -304,7 +304,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                 <div className="flex items-center justify-between p-3.5 bg-navy-900/30 border border-white/5 rounded-lg">
                   <div className="flex items-center gap-3">
                     {prefs.soundEnabled ? (
-                      <Volume2 size={18} className="text-violet-400" />
+                      <Volume2 size={18} className="text-primary-400" />
                     ) : (
                       <VolumeX size={18} className="text-slate-500" />
                     )}
@@ -326,8 +326,8 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                     }
                     className={cn(
                       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                      'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-navy-900',
-                      prefs.soundEnabled ? 'bg-violet-600' : 'bg-white/10'
+                      'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+                      prefs.soundEnabled ? 'bg-primary-600' : 'bg-white/10'
                     )}
                   >
                     <span
@@ -358,7 +358,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                               soundPerType: { ...prev.soundPerType, [type.id]: e.target.value },
                             }))
                           }
-                          className="px-3 py-1.5 bg-navy-800 border border-white/10 rounded-lg text-sm text-white focus:ring-2 focus:ring-violet-500/50 outline-none"
+                          className="px-3 py-1.5 bg-navy-800 border border-white/10 rounded-lg text-sm text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
                         >
                           {SOUND_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>

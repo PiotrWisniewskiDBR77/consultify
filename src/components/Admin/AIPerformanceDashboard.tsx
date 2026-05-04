@@ -444,7 +444,7 @@ export function AIPerformanceDashboard() {
               icon={Clock}
               label="Avg Response"
               value={`${formatNumber(metrics.avgResponseTime)}s`}
-              color="text-cyan-400"
+              color="text-blue-400"
               trend={metrics.avgResponseTime < 1.5 ? 'up' : 'down'}
             />
             <MetricCard
@@ -458,7 +458,7 @@ export function AIPerformanceDashboard() {
               icon={Database}
               label="Cache Hit Rate"
               value={`${formatNumber(metrics.cacheHitRate)}%`}
-              color="text-purple-400"
+              color="text-primary-400"
               trend={metrics.cacheHitRate > 25 ? 'up' : 'down'}
             />
             <MetricCard
@@ -601,7 +601,7 @@ export function AIPerformanceDashboard() {
                       </div>
                     </div>
                     <div className="text-right text-xs space-y-1">
-                      <div className="text-purple-400">
+                      <div className="text-primary-400">
                         Q: {(model.avgQuality * 100).toFixed(0)}%
                       </div>
                       <div className="text-slate-500 dark:text-slate-400">
@@ -688,7 +688,7 @@ const MetricCard: React.FC<{
         (trend === 'up' ? (
           <ArrowUpRight size={12} className="text-emerald-400" />
         ) : (
-          <ArrowDownRight size={12} className="text-red-400" />
+          <ArrowDownRight size={12} className="text-rose-400" />
         ))}
     </div>
     <div className="admin-metric-value">{value}</div>
@@ -738,7 +738,7 @@ const HealthIndicator: React.FC<{ label: string; status: 'healthy' | 'warning' |
             ? 'text-emerald-400'
             : status === 'warning'
               ? 'text-amber-400'
-              : 'text-red-400'
+              : 'text-rose-400'
         }`}
       >
         {status}

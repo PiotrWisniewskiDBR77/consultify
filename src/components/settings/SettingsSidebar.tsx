@@ -537,7 +537,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     if (!item.badge) return null;
 
     const badgeStyles = {
-      count: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+      count: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
       new: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       beta: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       warning: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
@@ -613,7 +613,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           className={cn(
                             'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
-                              ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-600/20 dark:text-violet-300'
+                              ? 'bg-primary-50 text-primary-700 font-medium dark:bg-primary-600/20 dark:text-primary-300'
                               : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-navy-900 dark:hover:text-white'
                           )}
                         >
@@ -621,7 +621,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
                               isActive
-                                ? 'text-violet-600 dark:text-violet-400'
+                                ? 'text-primary-600 dark:text-primary-400'
                                 : 'text-slate-400 dark:text-slate-400'
                             )}
                           />

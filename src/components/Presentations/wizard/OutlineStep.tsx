@@ -256,7 +256,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
             </div>
 
             {/* Card number */}
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 text-xs font-bold flex-shrink-0">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-500/10 text-primary-500 text-xs font-bold flex-shrink-0">
               {index + 1}
             </div>
 
@@ -331,7 +331,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               </button>
               <button
                 onClick={() => removeSlide(index)}
-                className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10"
+                className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10"
               >
                 <Trash2 size={14} />
               </button>
@@ -342,10 +342,10 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
 
       {/* AI Suggestions Strip */}
       {aiSuggestions.length > 0 && (
-        <div className="bg-purple-50 dark:bg-purple-500/5 border border-purple-200 dark:border-purple-500/20 rounded-xl p-4">
+        <div className="bg-primary-50 dark:bg-primary-500/5 border border-primary-200 dark:border-primary-500/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Lightbulb size={14} className="text-purple-500" />
-            <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
+            <Lightbulb size={14} className="text-primary-500" />
+            <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
               {t('presentations.outline.aiRecommends', 'AI recommends adding:')}
             </p>
           </div>
@@ -354,7 +354,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               <button
                 key={suggestion.intent}
                 onClick={() => addSlide(suggestion.intent)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-purple-200 dark:border-purple-500/30 text-sm text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-primary-200 dark:border-primary-500/30 text-sm text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
               >
                 <Plus size={12} />
                 <span className="capitalize">{suggestion.intent.replace(/_/g, ' ')}</span>
@@ -375,7 +375,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
         <button
           onClick={onGenerate}
           disabled={enabledSlides.length < 2}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 shadow-lg shadow-purple-500/25"
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-blue-600 text-white font-medium rounded-xl hover:from-primary-500 hover:to-blue-500 disabled:opacity-50 shadow-lg shadow-primary-500/25"
         >
           <Play size={16} /> {t('presentations.outline.generate', 'Generate Deck')} (
           {enabledSlides.length} {t('presentations.outline.slides', 'slides')})

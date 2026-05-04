@@ -41,10 +41,10 @@ export const BusinessCasesPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-2"
+            className="inline-flex items-center gap-2 rounded-full border border-primary-400/30 bg-primary-500/10 px-4 py-2"
           >
-            <Factory size={14} className="text-violet-300" />
-            <span className="text-xs font-bold uppercase tracking-widest text-violet-300">
+            <Factory size={14} className="text-primary-300" />
+            <span className="text-xs font-bold uppercase tracking-widest text-primary-300">
               Business Case — Multi-site manufacturing
             </span>
           </motion.div>
@@ -56,7 +56,7 @@ export const BusinessCasesPage: React.FC = () => {
             className="mt-8 max-w-4xl text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
           >
             Five plants. One headquarters.{' '}
-            <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent">
               Zero shared view of the transformation.
             </span>
           </motion.h1>
@@ -98,12 +98,12 @@ export const BusinessCasesPage: React.FC = () => {
               {
                 value: '10 days',
                 sub: 'to approve a business case (was 8 weeks)',
-                color: 'border-violet-500/40 bg-violet-500/10 text-violet-300',
+                color: 'border-primary-500/40 bg-primary-500/10 text-primary-300',
               },
               {
                 value: '14 mo',
                 sub: 'payback for the entire program',
-                color: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300',
+                color: 'border-blue-500/40 bg-blue-500/10 text-blue-300',
               },
             ].map((m) => (
               <div key={m.sub} className={`rounded-2xl border px-5 py-5 ${m.color}`}>
@@ -122,7 +122,7 @@ export const BusinessCasesPage: React.FC = () => {
           className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start"
         >
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-violet-600">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary-600">
               The company
             </p>
             <h2 className="mt-4 text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
@@ -175,7 +175,7 @@ export const BusinessCasesPage: React.FC = () => {
                 key={p.site}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 dark:border-white/10 dark:bg-white/[0.03]"
               >
-                <p className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary-600 dark:text-primary-400">
                   {p.site}
                 </p>
                 <p className="mt-1 text-base font-bold text-slate-900 dark:text-white">{p.focus}</p>
@@ -256,10 +256,10 @@ export const BusinessCasesPage: React.FC = () => {
       <section className="bg-white px-6 py-16 dark:bg-slate-950">
         <motion.div {...fade} className="mx-auto max-w-7xl">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
               <Layers3 size={20} />
             </div>
-            <p className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary-600 dark:text-primary-400">
               What AluForm deployed
             </p>
           </div>
@@ -278,8 +278,8 @@ export const BusinessCasesPage: React.FC = () => {
             {[
               {
                 icon: Landmark,
-                accent: 'text-violet-600 dark:text-violet-400',
-                bg: 'bg-violet-100 dark:bg-violet-500/10',
+                accent: 'text-primary-600 dark:text-primary-400',
+                bg: 'bg-primary-100 dark:bg-primary-500/10',
                 title: 'HQ & governance',
                 body: 'The transformation office gained a single portfolio view: all initiatives from all plants, with comparable value estimates, dependency maps, and rollout status. Steering committees stopped debating data and started making decisions.',
                 bullets: [
@@ -290,8 +290,8 @@ export const BusinessCasesPage: React.FC = () => {
               },
               {
                 icon: Factory,
-                accent: 'text-cyan-600 dark:text-cyan-400',
-                bg: 'bg-cyan-100 dark:bg-cyan-500/10',
+                accent: 'text-blue-600 dark:text-blue-400',
+                bg: 'bg-blue-100 dark:bg-blue-500/10',
                 title: 'Plant operations',
                 body: 'Each plant used the same structured baseline: OEE, scrap, downtime, quality, and planning indicators. From that baseline, they built their own improvement backlog — but in a format the group could compare and prioritize centrally.',
                 bullets: [
@@ -348,7 +348,7 @@ export const BusinessCasesPage: React.FC = () => {
       {/* ── ROLLOUT WAVES ── */}
       <section className="bg-slate-50 px-6 py-16 dark:bg-slate-900/50">
         <motion.div {...fade} className="mx-auto max-w-7xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
             How the program scaled
           </p>
           <h2 className="mt-4 max-w-4xl text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
@@ -391,7 +391,7 @@ export const BusinessCasesPage: React.FC = () => {
                 <h3 className="mt-3 text-xl font-black text-slate-900 dark:text-white">
                   {w.title}
                 </h3>
-                <p className="mt-1 text-sm font-semibold text-cyan-600 dark:text-cyan-400">
+                <p className="mt-1 text-sm font-semibold text-blue-600 dark:text-blue-400">
                   {w.sub}
                 </p>
                 <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
@@ -503,7 +503,7 @@ export const BusinessCasesPage: React.FC = () => {
       {/* ── ORGANIZATIONAL IMPACT ── */}
       <section className="bg-slate-50 px-6 py-16 dark:bg-slate-900/50">
         <motion.div {...fade} className="mx-auto max-w-7xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+          <p className="text-xs font-bold uppercase tracking-widest text-primary-600 dark:text-primary-400">
             Beyond the numbers
           </p>
           <h2 className="mt-4 max-w-4xl text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
@@ -520,8 +520,8 @@ export const BusinessCasesPage: React.FC = () => {
             {[
               {
                 icon: Building2,
-                accent: 'text-violet-600 dark:text-violet-400',
-                bg: 'bg-violet-100 dark:bg-violet-500/10',
+                accent: 'text-primary-600 dark:text-primary-400',
+                bg: 'bg-primary-100 dark:bg-primary-500/10',
                 title: 'For the board',
                 bullets: [
                   'One transformation portfolio view across all plants',
@@ -542,8 +542,8 @@ export const BusinessCasesPage: React.FC = () => {
               },
               {
                 icon: Gauge,
-                accent: 'text-cyan-600 dark:text-cyan-400',
-                bg: 'bg-cyan-100 dark:bg-cyan-500/10',
+                accent: 'text-blue-600 dark:text-blue-400',
+                bg: 'bg-blue-100 dark:bg-blue-500/10',
                 title: 'For plant operations',
                 bullets: [
                   'A common language between HQ, plant managers, and engineers',
@@ -597,7 +597,7 @@ export const BusinessCasesPage: React.FC = () => {
       {/* ── QUOTE ── */}
       <section className="bg-white px-6 py-16 dark:bg-slate-950">
         <motion.div {...fade} className="mx-auto max-w-4xl text-center">
-          <Quote size={36} className="mx-auto text-violet-300 dark:text-violet-600" />
+          <Quote size={36} className="mx-auto text-primary-300 dark:text-primary-600" />
           <blockquote className="mt-6 text-2xl font-bold leading-relaxed text-slate-800 dark:text-white sm:text-3xl">
             "We went from eight weeks of manual reconciliation to a ten-day decision cycle — and for
             the first time the board could see the same numbers the plant managers see."
@@ -610,7 +610,7 @@ export const BusinessCasesPage: React.FC = () => {
 
       {/* ── CTA ── */}
       <section className="px-6 pb-24 pt-4">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-[32px] bg-gradient-to-br from-violet-600 to-indigo-700 p-10 text-center shadow-[0_0_90px_-36px_rgba(124,58,237,0.5)]">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-[32px] bg-gradient-to-br from-primary-600 to-indigo-700 p-10 text-center shadow-[0_0_90px_-36px_rgba(124,58,237,0.5)]">
           <p className="text-xs font-bold uppercase tracking-widest text-white/70">
             Ready to see this for your organization?
           </p>
@@ -625,7 +625,7 @@ export const BusinessCasesPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(ROUTES.TRIAL_ENTRY)}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-black text-primary-700 transition hover:bg-primary-50"
             >
               Start trial
               <ArrowRight size={16} />

@@ -142,7 +142,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               key={model.id}
               className={`p-4 rounded-lg border-2 transition-all ${
                 isEnabled
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
                   : 'border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -150,7 +150,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 <div className="flex items-start gap-3 flex-1">
                   <button
                     onClick={() => toggleModel(model.id)}
-                    className={`mt-0.5 ${isEnabled ? 'text-purple-600' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`mt-0.5 ${isEnabled ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}`}
                   >
                     {isEnabled ? <CheckCircle size={20} /> : <Circle size={20} />}
                   </button>
@@ -160,7 +160,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                         {model.name}
                       </h4>
                       {isPreferred && (
-                        <span className="px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full">
                           {t('settings.ai.modelSelection.preferred', 'Preferred')}
                         </span>
                       )}
@@ -175,8 +175,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     onClick={() => setPreferredModel(isPreferred ? '' : model.id)}
                     className={`px-3 py-1 text-xs rounded-lg transition-colors ${
                       isPreferred
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-500/20'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-primary-100 dark:hover:bg-primary-500/20'
                     }`}
                   >
                     {isPreferred
@@ -211,7 +211,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
         <button
           onClick={handleSave}
           disabled={isSaving || enabledModels.length === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -235,7 +235,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.ai.modelSelection.error', 'Failed to save model preferences')}
         </div>

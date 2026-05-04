@@ -72,25 +72,25 @@ const typeConfig: Record<
     icon: <CheckCircle2 size={32} />,
     defaultTitle: 'No Tasks',
     defaultDescription: 'Create a task to get started with your work.',
-    gradient: 'from-purple-500/20 to-pink-500/20 dark:from-purple-500/10 dark:to-pink-500/10',
+    gradient: 'from-primary-500/20 to-pink-500/20 dark:from-primary-500/10 dark:to-pink-500/10',
   },
   decisions: {
     icon: <Calendar size={32} />,
     defaultTitle: 'No Pending Decisions',
     defaultDescription: 'All decisions have been made. Check back later for new ones.',
-    gradient: 'from-amber-500/20 to-orange-500/20 dark:from-amber-500/10 dark:to-orange-500/10',
+    gradient: 'from-amber-500/20 to-amber-500/20 dark:from-amber-500/10 dark:to-amber-500/10',
   },
   notifications: {
     icon: <Bell size={32} />,
     defaultTitle: 'All Caught Up',
     defaultDescription: 'No new notifications. You can customize your notification preferences.',
-    gradient: 'from-cyan-500/20 to-blue-500/20 dark:from-cyan-500/10 dark:to-blue-500/10',
+    gradient: 'from-blue-500/20 to-blue-500/20 dark:from-blue-500/10 dark:to-blue-500/10',
   },
   dashboard: {
     icon: <BarChart2 size={32} />,
     defaultTitle: 'No Data Yet',
     defaultDescription: 'Complete some tasks to see your execution metrics and trends.',
-    gradient: 'from-violet-500/20 to-purple-500/20 dark:from-violet-500/10 dark:to-purple-500/10',
+    gradient: 'from-primary-500/20 to-primary-500/20 dark:from-primary-500/10 dark:to-primary-500/10',
   },
   generic: {
     icon: <Sparkles size={32} />,
@@ -153,10 +153,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             onClick={onAISuggestion}
             className="
                             inline-flex items-center gap-2 px-4 py-2 rounded-lg
-                            bg-gradient-to-r from-purple-600 to-indigo-600
-                            hover:from-purple-500 hover:to-indigo-500
+                            bg-gradient-to-r from-primary-600 to-indigo-600
+                            hover:from-primary-500 hover:to-indigo-500
                             text-white text-sm font-medium
-                            shadow-lg shadow-purple-500/25
+                            shadow-lg shadow-primary-500/25
                             transition-all duration-200
                         "
           >
@@ -188,9 +188,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             onClick={onSecondaryAction}
             className="
                             inline-flex items-center gap-2 px-4 py-2 rounded-lg
-                            bg-white dark:bg-navy-800 
+                            bg-white dark:bg-navy-800
                             border border-slate-200 dark:border-navy-700
-                            text-slate-700 dark:text-slate-300 
+                            text-slate-700 dark:text-slate-300
                             text-sm font-medium
                             hover:bg-slate-50 dark:hover:bg-navy-700
                             transition-colors

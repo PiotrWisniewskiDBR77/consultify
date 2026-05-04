@@ -198,8 +198,8 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
     cn(
       'p-3.5 rounded-lg border-2 transition-all text-left cursor-pointer',
       active
-        ? 'border-violet-500 bg-violet-600/10'
-        : 'border-white/5 hover:border-violet-500/30 bg-navy-800/30'
+        ? 'border-primary-500 bg-primary-600/10'
+        : 'border-white/5 hover:border-primary-500/30 bg-navy-800/30'
     );
 
   return (
@@ -222,7 +222,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
         {actionError && (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
           >
             {actionError}
           </div>
@@ -235,7 +235,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Mail size={14} className="text-violet-400" />
+                <Mail size={14} className="text-primary-400" />
                 {t('settings.emailDigest.categories', 'Email Categories')}
               </h4>
 
@@ -258,7 +258,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       className={cn(
                         'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
                         emailSettings[key]
-                          ? 'bg-violet-600 border-violet-600 text-white'
+                          ? 'bg-primary-600 border-primary-600 text-white'
                           : 'border-white/20 hover:border-white/40'
                       )}
                     >
@@ -286,7 +286,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Mail size={14} className="text-violet-400" />
+                <Mail size={14} className="text-primary-400" />
                 {t('settings.emailDigest.digestSettings', 'Digest Settings')}
               </h4>
 
@@ -305,7 +305,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          frequency === opt.value ? 'text-violet-300' : 'text-slate-400'
+                          frequency === opt.value ? 'text-primary-300' : 'text-slate-400'
                         )}
                       >
                         {t(`settings.emailDigest.freq_${opt.value}`, opt.label)}
@@ -333,7 +333,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          content === opt.value ? 'text-violet-300' : 'text-slate-400'
+                          content === opt.value ? 'text-primary-300' : 'text-slate-400'
                         )}
                       >
                         {t(`settings.emailDigest.content_${opt.value}`, opt.label)}
@@ -361,7 +361,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          format === opt.value ? 'text-violet-300' : 'text-slate-400'
+                          format === opt.value ? 'text-primary-300' : 'text-slate-400'
                         )}
                       >
                         {t(`settings.emailDigest.format_${opt.value}`, opt.label)}

@@ -56,7 +56,7 @@ export const PMOSystemMessages: React.FC<PMOSystemMessagesProps> = ({
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium shrink-0
                                 ${
                                   msg.severity === 'critical'
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                                     : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                                 }`}
             >
@@ -81,11 +81,11 @@ export const PMOSystemMessages: React.FC<PMOSystemMessagesProps> = ({
         {criticalMessages.slice(0, maxMessages).map((msg, idx) => (
           <div
             key={`crit-${idx}`}
-            className="flex items-start gap-2 p-2 bg-red-500/10 rounded border border-red-500/20"
+            className="flex items-start gap-2 p-2 bg-rose-500/10 rounded border border-rose-500/20"
           >
-            <XCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
+            <XCircle size={14} className="text-rose-400 shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-red-400 font-medium">{msg.message}</p>
+              <p className="text-xs text-rose-400 font-medium">{msg.message}</p>
             </div>
           </div>
         ))}
@@ -117,7 +117,7 @@ export const PMOWarningBadge: React.FC = () => {
   if (criticalCount === 0) return null;
 
   return (
-    <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs font-medium border border-red-500/30">
+    <span className="flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded text-xs font-medium border border-rose-500/30">
       <AlertTriangle size={10} />
       {criticalCount} {criticalCount === 1 ? 'Issue' : 'Issues'}
     </span>

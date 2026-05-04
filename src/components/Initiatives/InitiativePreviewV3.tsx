@@ -211,14 +211,14 @@ export const InitiativePreviewV3Body: React.FC<{
         String(initiative.sourceType || '').toLowerCase()
       ) ||
         lineage.length > 0) && (
-        <div className="rounded-xl border border-purple-200/70 dark:border-purple-500/20 bg-purple-50/70 dark:bg-purple-500/[0.08] p-3">
+        <div className="rounded-xl border border-primary-200/70 dark:border-primary-500/20 bg-primary-50/70 dark:bg-primary-500/[0.08] p-3">
           <div className="flex items-center gap-2 mb-2">
-            <Link2 size={14} className="text-purple-500" />
-            <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+            <Link2 size={14} className="text-primary-500" />
+            <span className="text-[11px] font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider">
               {isPolish ? 'Pochodzenie z Interview Insight' : 'Interview Insight lineage'}
             </span>
           </div>
-          <div className="space-y-1.5 text-xs text-purple-800 dark:text-purple-200">
+          <div className="space-y-1.5 text-xs text-primary-800 dark:text-primary-200">
             {initiative.sourceId ? (
               <button
                 type="button"
@@ -263,21 +263,21 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
           onClick={() => navigate(`/economics?tab=analysis&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
-          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
           {isPolish ? 'Analiza wskaźnikowa' : 'Ratio Analysis'}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=valuation&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
-          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
           {isPolish ? 'Wycena przedsiębiorstwa' : 'Company Valuation'}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=prediction&initiativeId=${initiativeId}`)}
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >
-          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
           {isPolish ? 'Budżet i predykcja' : 'Budget & Prediction'}
         </button>
       </div>

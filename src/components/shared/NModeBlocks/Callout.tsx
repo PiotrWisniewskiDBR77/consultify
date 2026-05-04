@@ -63,8 +63,8 @@ const VARIANT_STYLES: Record<CalloutVariant, { bg: string; text: string; icon: L
     icon: AlertTriangle,
   },
   critical: {
-    bg: 'bg-red-500/[0.06] dark:bg-red-500/10',
-    text: 'text-red-600 dark:text-red-400',
+    bg: 'bg-rose-500/[0.06] dark:bg-rose-500/10',
+    text: 'text-rose-600 dark:text-rose-400',
     icon: AlertCircle,
   },
   success: {
@@ -73,8 +73,8 @@ const VARIANT_STYLES: Record<CalloutVariant, { bg: string; text: string; icon: L
     icon: CheckCircle2,
   },
   purple: {
-    bg: 'bg-purple-500/[0.06] dark:bg-purple-500/10',
-    text: 'text-purple-700 dark:text-purple-300',
+    bg: 'bg-primary-500/[0.06] dark:bg-primary-500/10',
+    text: 'text-primary-700 dark:text-primary-300',
     icon: Sparkles,
   },
 };

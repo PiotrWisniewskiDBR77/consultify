@@ -394,14 +394,14 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
 
   const aiProposalsPanel =
     aiProposals !== null ? (
-      <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden m-4">
-        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+      <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden m-4">
+        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
               {t('initiatives.analysis.resources.aiProposals', 'AI rebalancing proposals')}
             </h3>
-            <span className="text-xs text-purple-500 dark:text-purple-400">
+            <span className="text-xs text-primary-500 dark:text-primary-400">
               ({aiProposals.length})
             </span>
           </div>
@@ -410,7 +410,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               <button
                 onClick={handleApplyAllProposals}
                 disabled={aiRunning}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
               >
                 <Check size={12} />
                 {t('initiatives.analysis.resources.applyAll', 'Apply all')}
@@ -418,7 +418,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             )}
             <button
               onClick={closeAiWorkspace}
-              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30 transition-colors"
+              className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30 transition-colors"
             >
               <X size={14} />
             </button>
@@ -436,7 +436,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+          <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
             {aiProposals.map((proposal, idx) => {
               const overrideUserId = proposalOverrides[idx];
               const effectiveUserId = overrideUserId ?? proposal.toUserId;
@@ -458,7 +458,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                         {proposal.initiativeName}
                       </span>
                       <span className="text-slate-400 dark:text-slate-500">:</span>
-                      <span className="text-red-600 dark:text-red-400 line-through text-xs">
+                      <span className="text-rose-600 dark:text-rose-400 line-through text-xs">
                         {proposal.fromUserName}
                       </span>
                       <span className="text-slate-400">→</span>
@@ -595,8 +595,8 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               {t('initiatives.analysis.resources.totalInitiatives', 'Initiatives')}
             </div>
           </div>
-          <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10 p-3">
-            <div className="text-xl font-semibold text-red-600 dark:text-red-400">
+          <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10 p-3">
+            <div className="text-xl font-semibold text-rose-600 dark:text-rose-400">
               {overallocatedCount}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -747,7 +747,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                   <tr
                     className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
                       hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
-                      ${a.status === 'overallocated' ? 'bg-red-500/5 dark:bg-red-500/10' : ''}`}
+                      ${a.status === 'overallocated' ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
                     onClick={() => setExpandedResourceId(isExpanded ? null : a.resourceId)}
                   >
                     <td className="px-4 py-3 text-slate-400">
@@ -758,7 +758,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
                             a.status === 'overallocated'
-                              ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                              ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
                               : a.status === 'underutilized'
                                 ? 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                                 : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
@@ -786,7 +786,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                           <div
                             className={`h-2.5 rounded-full transition-all duration-300 ${
                               a.utilizationPercent > 100
-                                ? 'bg-red-500'
+                                ? 'bg-rose-500'
                                 : a.utilizationPercent > 80
                                   ? 'bg-amber-500'
                                   : a.utilizationPercent > 0
@@ -801,7 +801,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                         <span
                           className={`text-xs font-semibold tabular-nums w-12 text-right ${
                             a.utilizationPercent > 100
-                              ? 'text-red-600 dark:text-red-400'
+                              ? 'text-rose-600 dark:text-rose-400'
                               : 'text-slate-700 dark:text-slate-300'
                           }`}
                         >
@@ -813,7 +813,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                           a.status === 'overallocated'
-                            ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                            ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
                             : a.status === 'underutilized'
                               ? 'bg-slate-200/70 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
                               : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'

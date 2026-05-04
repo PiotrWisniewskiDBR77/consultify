@@ -21,8 +21,8 @@ export const TextNode: React.FC<NodeProps<TextNodeData>> = memo(
       yellow: 'border-amber-500/50 bg-amber-500/10 text-amber-200',
       blue: 'border-blue-500/50 bg-blue-500/10 text-blue-200',
       green: 'border-green-500/50 bg-green-500/10 text-green-200',
-      red: 'border-red-500/50 bg-red-500/10 text-red-200',
-      purple: 'border-purple-500/50 bg-purple-500/10 text-purple-200',
+      red: 'border-rose-500/50 bg-rose-500/10 text-rose-200',
+      purple: 'border-primary-500/50 bg-primary-500/10 text-primary-200',
     };
 
     return (

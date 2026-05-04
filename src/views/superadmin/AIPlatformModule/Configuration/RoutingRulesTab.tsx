@@ -507,9 +507,9 @@ export const RoutingRulesTab: React.FC = () => {
       case 'health':
         return <AlertCircle size={16} className="text-blue-400" />;
       case 'geographic':
-        return <Globe size={16} className="text-purple-400" />;
+        return <Globe size={16} className="text-primary-400" />;
       case 'load_balance':
-        return <Layers size={16} className="text-cyan-400" />;
+        return <Layers size={16} className="text-blue-400" />;
       default:
         return <Settings size={16} />;
     }
@@ -524,9 +524,9 @@ export const RoutingRulesTab: React.FC = () => {
       case 'health':
         return 'bg-blue-500/10 text-blue-400';
       case 'geographic':
-        return 'bg-purple-500/10 text-purple-400';
+        return 'bg-primary-500/10 text-primary-400';
       case 'load_balance':
-        return 'bg-cyan-500/10 text-cyan-400';
+        return 'bg-blue-500/10 text-blue-400';
       default:
         return 'bg-slate-500/10 text-slate-400';
     }
@@ -574,7 +574,7 @@ export const RoutingRulesTab: React.FC = () => {
           {actionError ? (
             <div
               role="alert"
-              className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+              className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
             >
               {actionError}
             </div>
@@ -719,7 +719,7 @@ export const RoutingRulesTab: React.FC = () => {
                       </button>
                       <button
                         onClick={() => deleteRuleQuick(rule)}
-                        className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-red-500/20 hover:text-red-500 transition-colors"
+                        className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200 hover:bg-rose-500/20 hover:text-rose-500 transition-colors"
                         title="Delete"
                       >
                         <Trash2 size={16} />

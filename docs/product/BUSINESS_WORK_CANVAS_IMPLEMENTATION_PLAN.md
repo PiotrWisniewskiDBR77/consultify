@@ -1249,3 +1249,901 @@ Stage 23 fails if:
 - raw workflow comments enter the AI context packet,
 - event metadata is copied through `workflowRuns`,
 - Teresa loses workflow run anchors.
+
+### 17.15 Stage 24: Reviewer Lifecycle Execution Gate
+
+Goal: make workflow review metadata operationally meaningful before durable output generation.
+
+#### Scope
+
+- Enforce reviewer lifecycle before `run-next` durable output generation.
+- If a workflow has a reviewer or is `in_review`, require lifecycle `approved` before output creation.
+- Keep the existing explicit `approved: true` execution approval requirement.
+- Return a recoverable `CANVAS_WORKFLOW_REVIEW_REQUIRED` conflict when review approval is missing.
+- Surface a user-friendly Canvas message that tells the user to mark the workflow approved.
+
+#### Quality Gate 24
+
+Stage 24 passes only when:
+
+- reviewed workflows cannot generate durable outputs until lifecycle is `approved`,
+- workflows without reviewer/review lifecycle retain existing approval behavior,
+- frontend shows clear recoverable feedback,
+- targeted backend/frontend tests pass,
+- changed files have no linter errors.
+
+Stage 24 fails if:
+
+- review metadata remains cosmetic,
+- review gate replaces the explicit execution approval instead of layering on top,
+- rejected review attempts mutate workflow outputs.
+
+### 17.16 Stage 25: Conflict-Safe Workflow Actions
+
+Goal: ensure workflow mutations never apply against a stale Canvas draft.
+
+#### Scope
+
+- Require/propagate `baseUpdatedAt` for workflow mutations:
+  - create workflow,
+  - resume workflow,
+  - run next workflow step,
+  - update review metadata,
+  - add workflow comment.
+- Reuse the existing `CANVAS_DRAFT_CONFLICT` recoverable response.
+- Preserve local UI state and show the existing friendly conflict message.
+- Keep stale workflow attempts from mutating provenance, versions or outputs.
+
+#### Quality Gate 25
+
+Stage 25 passes only when:
+
+- frontend sends `baseUpdatedAt` for workflow mutations,
+- backend rejects stale workflow actions before persistence,
+- conflict feedback is recoverable and user-readable,
+- targeted backend/frontend tests pass,
+- changed files have no linter errors.
+
+Stage 25 fails if:
+
+- workflow actions can overwrite newer Canvas state,
+- stale `run-next` can create a version or output,
+- conflict errors surface as raw backend JSON.
+
+### 17.17 Stage 26: Review-Aware Workflow Controls
+
+Goal: make the Canvas workflow ledger prevent review-gated actions before the user hits the backend.
+
+#### Scope
+
+- Detect workflows that are assigned to a reviewer or are in lifecycle `in_review`.
+- Disable `Run next` while review lifecycle is not `approved`.
+- Show an inline review gate message in the workflow ledger.
+- Keep `Mark approved` as the explicit UI action that unlocks workflow execution.
+- Preserve backend review enforcement from Stage 24 as the source of truth.
+
+#### Quality Gate 26
+
+Stage 26 passes only when:
+
+- review-gated workflows visibly explain why `Run next` is disabled,
+- `Run next` is disabled until lifecycle is `approved`,
+- backend enforcement remains in place,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 26 fails if:
+
+- the UI suggests a review-gated workflow can run,
+- the frontend replaces backend enforcement,
+- approved workflows remain blocked.
+
+### 17.18 Stage 27: Approval-Aware Workflow Execution UI
+
+Goal: make workflow approval checkpoints explicit at the moment durable output generation is triggered.
+
+#### Scope
+
+- Detect pending workflow approvals in the Canvas workflow ledger.
+- Show which workflow step is awaiting explicit approval.
+- Rename the execution CTA from `Run next` to `Approve and run` while an approval is pending.
+- Keep the existing backend `approved: true` contract for workflow execution.
+- Preserve the Stage 26 review gate so reviewer lifecycle approval still blocks execution first.
+
+#### Quality Gate 27
+
+Stage 27 passes only when:
+
+- pending approval checkpoints are visible in the ledger,
+- the CTA clearly communicates approval plus execution,
+- review-gated workflows still disable the CTA,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 27 fails if:
+
+- a pending approval looks like a normal workflow run,
+- the CTA hides that output generation also approves a checkpoint,
+- review lifecycle and approval checkpoint states conflict in the UI.
+
+### 17.19 Stage 28: Status-Aware Workflow Completion Controls
+
+Goal: prevent completed or failed workflow runs from appearing executable in the Canvas workflow ledger.
+
+#### Scope
+
+- Detect terminal workflow statuses (`completed`, `failed`) in the ledger.
+- Disable the execution CTA for terminal workflow runs.
+- Replace the execution CTA label with the terminal status.
+- Show inline copy that points users to the output ledger after completion.
+- Preserve `Resume` as the explicit path for continuing or reopening workflow context.
+
+#### Quality Gate 28
+
+Stage 28 passes only when:
+
+- completed workflow runs no longer show an active execution CTA,
+- the ledger explains where the generated output is available,
+- pending approvals and review gates still behave as before,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 28 fails if:
+
+- completed workflow runs still invite another `Run next`,
+- terminal and approval states produce contradictory labels,
+- resume behavior is removed or hidden.
+
+### 17.20 Stage 29: Terminal Workflow Server Guard
+
+Goal: make the backend enforce the same terminal workflow execution rule that the Stage 28 UI communicates.
+
+#### Scope
+
+- Reject `run-next` for workflow runs with status `completed` or `failed`.
+- Return recoverable `409 CANVAS_WORKFLOW_TERMINAL_STATE` with workflow id, status and output count.
+- Keep output creation, version snapshotting and workflow event writes from running for terminal workflows.
+- Surface a friendly frontend message if an older client or direct API call hits the guard.
+- Add an integration regression test.
+
+#### Quality Gate 29
+
+Stage 29 passes only when:
+
+- terminal workflows cannot create additional output resources through `run-next`,
+- the response uses a stable recoverable error code,
+- frontend error copy is understandable,
+- targeted backend tests pass,
+- changed files have no linter errors.
+
+Stage 29 fails if:
+
+- a completed workflow can generate a second output via direct API call,
+- terminal-state rejection happens after snapshot/output side effects,
+- terminal workflow errors appear as raw backend JSON in the UI.
+
+### 17.21 Stage 30: Workflow Execution In-Flight Guard
+
+Goal: prevent accidental duplicate workflow execution requests from rapid repeated clicks in the Canvas ledger.
+
+#### Scope
+
+- Track `run-next` request state per workflow run in the frontend.
+- Disable the execution CTA immediately while a `run-next` request is in flight.
+- Show a temporary `Running...` label during execution.
+- Keep Stage 29 backend terminal-state guard as the authoritative duplicate-output protection.
+- Add a component regression test for in-flight disabling.
+
+#### Quality Gate 30
+
+Stage 30 passes only when:
+
+- rapid repeated clicks cannot send duplicate `run-next` requests from the same visible control,
+- users see a clear in-flight state,
+- completed workflows still end in terminal-state UI,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 30 fails if:
+
+- a user can double-click `Approve and run` and submit two frontend requests,
+- in-flight UI hides errors or successful output creation,
+- terminal-state labels regress after request completion.
+
+### 17.22 Stage 31: Workflow Mutation In-Flight Guards
+
+Goal: extend in-flight protection from workflow execution to the remaining workflow mutation controls.
+
+#### Scope
+
+- Track `start workflow` request state in the frontend.
+- Track `resume workflow` request state per workflow run.
+- Track workflow review metadata update state per workflow run.
+- Track workflow comment creation state per workflow run.
+- Disable each corresponding control while its request is in flight.
+- Show temporary labels: `Starting...`, `Resuming...`, `Updating...`, `Adding...`.
+- Add a component regression test for duplicate workflow creation prevention.
+
+#### Quality Gate 31
+
+Stage 31 passes only when:
+
+- repeated clicks cannot create duplicate workflow start requests from the same visible control,
+- resume/review/comment controls expose immediate in-flight feedback,
+- in-flight states clear on success or failure,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 31 fails if:
+
+- `Start workflow` can be submitted twice from rapid clicks,
+- review or comment mutation buttons remain active during request execution,
+- loading labels get stuck after request completion.
+
+### 17.23 Stage 32: Consistent Workflow Mutation Error Copy
+
+Goal: make all workflow mutation controls surface the same recoverable Canvas error language.
+
+#### Scope
+
+- Route workflow start errors through `canvasActionErrorMessage`.
+- Route workflow resume errors through `canvasActionErrorMessage`.
+- Route workflow review metadata update errors through `canvasActionErrorMessage`.
+- Route workflow comment errors through `canvasActionErrorMessage`.
+- Preserve specific messages for conflict, review gate and terminal workflow state.
+- Add component coverage for stale workflow creation conflict copy.
+
+#### Quality Gate 32
+
+Stage 32 passes only when:
+
+- workflow mutations do not surface raw backend conflict messages,
+- stale workflow creation shows the same friendly Canvas conflict copy as other Canvas actions,
+- in-flight states still clear after errors,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 32 fails if:
+
+- workflow start/resume/review/comment errors bypass shared Canvas error mapping,
+- conflict payloads appear as raw API strings,
+- buttons remain stuck after a recoverable error.
+
+### 17.24 Stage 33: Workflow Comment Input Guard
+
+Goal: prevent empty workflow comments from appearing as executable actions in the ledger.
+
+#### Scope
+
+- Trim the workflow comment input before determining action availability.
+- Disable `Add comment` when the comment is empty or whitespace-only.
+- Keep `Add comment` disabled while comment creation is in flight.
+- Re-enable `Add comment` as soon as meaningful text exists.
+- Preserve backend validation as the source of truth.
+
+#### Quality Gate 33
+
+Stage 33 passes only when:
+
+- empty workflow comments cannot be submitted from the visible control,
+- whitespace-only comments keep the action disabled,
+- valid comments enable the action,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 33 fails if:
+
+- `Add comment` is active for an empty input,
+- comment in-flight state regresses,
+- valid comments become impossible to submit.
+
+### 17.25 Stage 34: Reviewer Preservation On Lifecycle Updates
+
+Goal: prevent lifecycle-only workflow review updates from accidentally clearing an existing reviewer assignment.
+
+#### Scope
+
+- Preserve the persisted reviewer id when the reviewer input has not been locally edited.
+- Continue allowing an intentionally cleared reviewer input to submit `null`.
+- Apply the preservation rule to `Send to review` and `Mark approved`.
+- Add a component regression test for approving a workflow with an existing reviewer.
+
+#### Quality Gate 34
+
+Stage 34 passes only when:
+
+- `Mark approved` preserves an existing reviewer assignment by default,
+- lifecycle updates do not clear reviewer metadata unless the user edits the reviewer field,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 34 fails if:
+
+- approving a reviewed workflow removes its reviewer,
+- reviewer input edits are ignored,
+- lifecycle update payloads become ambiguous.
+
+### 17.26 Stage 35: Workflow Input In-Flight Locks
+
+Goal: prevent reviewer and comment field edits while their corresponding workflow mutation is already being saved.
+
+#### Scope
+
+- Disable reviewer input during workflow review metadata updates.
+- Disable comment input during workflow comment creation.
+- Preserve existing in-flight button labels and disabled states.
+- Add component coverage for reviewer input locking during `Mark approved`.
+
+#### Quality Gate 35
+
+Stage 35 passes only when:
+
+- reviewer input is locked during review metadata update,
+- comment input is locked during comment creation,
+- input locks clear after request completion,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 35 fails if:
+
+- users can edit reviewer/comment fields while the matching request is in flight,
+- input locks remain stuck after success or failure,
+- Stage 34 reviewer preservation regresses.
+
+### 17.27 Stage 36: Lifecycle-Aware Review Controls
+
+Goal: prevent redundant workflow review lifecycle submissions from the Canvas ledger.
+
+#### Scope
+
+- Disable `Send to review` when workflow lifecycle is already `in_review`.
+- Disable `Mark approved` when workflow lifecycle is already `approved`.
+- Keep the opposite lifecycle action available when valid.
+- Preserve in-flight disabled behavior from Stage 31 and input locks from Stage 35.
+- Add component coverage for current lifecycle button disabling.
+
+#### Quality Gate 36
+
+Stage 36 passes only when:
+
+- `Send to review` is disabled for workflows already in review,
+- `Mark approved` is disabled for already approved workflows,
+- valid lifecycle transitions remain available,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 36 fails if:
+
+- users can submit a lifecycle update that repeats the current lifecycle,
+- valid lifecycle transitions become unavailable,
+- in-flight states conflict with lifecycle-aware disabled states.
+
+### 17.28 Stage 37: Full Canvas Rollout E2E Gate
+
+Goal: freeze an end-to-end rollout gate for Canvas context continuity before adding the next product capability.
+
+#### Scope
+
+- Treat Stage 37 as a product readiness gate, not a net-new workflow feature.
+- Verify that an active Canvas draft can be projected into Teresa context with draft anchors, selection, Markdown projection, block summaries, workflow summaries, recent timeline events and output summaries.
+- Verify that native JSON block payloads, raw workflow comments and raw event metadata are not copied into the AI context packet.
+- Keep the rollout gate aligned with the Markdown-first, JSON-when-native, always Markdown projection contract.
+- Add source-of-truth documentation for the rollout contract.
+
+#### Quality Gate 37
+
+Stage 37 passes only when:
+
+- Canvas context packet includes active draft, selection, memory anchors, block summaries, workflow run summaries, event summaries and output summaries,
+- Teresa receives safe Markdown projections and summaries rather than raw native block JSON,
+- reviewer comments and workflow event metadata are excluded from the projected context,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 37 fails if:
+
+- the chat can lose active Canvas draft identity during context packet construction,
+- native block JSON or sensitive review/comment metadata leaks into Teresa context,
+- workflow outputs are not visible as summarized context for follow-up AI work.
+
+### 17.29 Stage 38: Canvas Capability Honesty Labels
+
+Goal: prevent Canvas from overstating unfinished capabilities by labeling exposed work modes and workflow templates honestly.
+
+#### Scope
+
+- Add capability labels using the source-of-truth vocabulary: `real`, `partial`, `scaffold`, `missing`, `out_of_scope`.
+- Label visible Canvas starter templates with their current capability status.
+- Label the active Canvas document capability inside diagnostics.
+- Label workflow templates with their current capability status and a short reason.
+- Keep labels product-facing and non-technical: users should understand what is ready and what is still partial.
+
+#### Quality Gate 38
+
+Stage 38 passes only when:
+
+- every visible Canvas starter template has a capability label,
+- the active Canvas diagnostics show capability status and explanation,
+- workflow template selection shows capability status and explanation,
+- partial lanes do not read as fully production-ready,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 38 fails if:
+
+- Canvas UI presents partial lanes as complete,
+- capability labels are hidden from the places where users choose work modes,
+- documentation claims capability honesty without a tested UI surface.
+
+### 17.30 Stage 39: ResearchCanvas + ResearchSession Integration
+
+Goal: make the Research starter in Canvas create and preserve a real `ResearchSession` linkage instead of remaining a disconnected research brief.
+
+#### Scope
+
+- Use the existing `/api/research/sessions` runtime as the source of truth for research missions.
+- When a user starts the Research Canvas template from a conversation, plan a `ResearchSession`.
+- Persist the resulting `researchSessionId` on the Work Canvas draft.
+- Keep `researchSessionId` in frontend Canvas state, draft adapter mapping and AI context anchors.
+- Show the linked `ResearchSession` in Canvas diagnostics.
+- Add regression coverage for frontend linking and backend `research_session_id` persistence.
+
+#### Quality Gate 39
+
+Stage 39 passes only when:
+
+- selecting the Research starter with a conversation creates a planned `ResearchSession`,
+- the Canvas draft save payload includes `researchSessionId`,
+- the backend persists and returns `researchSessionId`,
+- Teresa's Canvas context packet can carry the `researchSessionId` anchor,
+- diagnostics shows the linked ResearchSession,
+- targeted frontend/backend tests pass,
+- changed files have no linter errors.
+
+Stage 39 fails if:
+
+- Research Canvas remains detached from `ResearchSession`,
+- `researchSessionId` is lost during draft mapping, save or context packet construction,
+- Canvas creates a separate research mechanism instead of using the existing research runtime.
+
+### 17.31 Stage 40: Artifact Runtime Unification Metadata
+
+Goal: align Work Canvas durable outputs with the Wave 5 artifact runtime contract without forcing a risky double-write migration.
+
+#### Scope
+
+- Add a Wave 5 artifact runtime hint to every Work Canvas durable output metadata object.
+- Map Canvas output types to Wave 5 artifact types:
+  - `presentation` -> `slide_deck`,
+  - `table` -> `spreadsheet`,
+  - `report` -> `report`.
+- Include a `sourceRefsTemplate` that can seed a future Wave 5 artifact write.
+- Carry Canvas lineage through `draftId`, `canvasVersionId`, `outputResourceType`, `outputResourceId`, `conversationId`, `projectId` and `researchSessionId`.
+- Keep the change additive so existing Canvas output flows, presentation decks and output drafts continue to work.
+
+#### Quality Gate 40
+
+Stage 40 passes only when:
+
+- manual Canvas output creation includes artifact runtime correlation metadata,
+- workflow-generated outputs include the same artifact runtime correlation metadata,
+- source Canvas lineage remains available,
+- no Wave 5 rows are created implicitly without a dedicated migration/commit gate,
+- targeted backend tests pass,
+- changed files have no linter errors.
+
+Stage 40 fails if:
+
+- Canvas outputs remain impossible to correlate with Wave 5 artifact semantics,
+- metadata breaks existing output consumers,
+- the implementation silently creates duplicate artifact records without explicit governance.
+
+### 17.32 Stage 41: Chat-To-Canvas Command Routing
+
+Goal: let users open the correct Canvas work mode directly from chat commands while preserving the same conversation runtime.
+
+#### Scope
+
+- Detect explicit Canvas routing intents in chat, including slash commands and natural-language requests.
+- Route commands such as `/canvas research`, `wrzuć to do Canvas`, `zrób research canvas`, and `review in Canvas`.
+- Open the right-side Canvas panel instead of navigating to a separate app or starting a new chat.
+- Select the matching Canvas starter when possible:
+  - research,
+  - decision,
+  - plan,
+  - thoughts,
+  - document.
+- Persist the user command in the same conversation with command metadata.
+- Avoid sending the command to Teresa streaming when the command is a local UI routing action.
+
+#### Quality Gate 41
+
+Stage 41 passes only when:
+
+- explicit Canvas commands open the right work panel,
+- the selected Canvas starter matches the command intent,
+- the command remains attached to the current conversation,
+- Teresa stream is not started for local Canvas routing commands,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 41 fails if:
+
+- Canvas commands create a separate chat/runtime,
+- commands are accidentally sent to Teresa as normal prompts,
+- the wrong starter opens for research/decision/plan commands.
+
+### 17.33 Stage 42: DocumentCanvas Selection Edit Loop
+
+Goal: make DocumentCanvas feel more like a real AI work editor by adding a governed selection edit loop before introducing a full TipTap/ProseMirror editor.
+
+#### Scope
+
+- Keep Markdown as the canonical document source.
+- Preserve the existing Document and Markdown views.
+- Let users select text in the Canvas and draft a replacement in a focused edit panel.
+- Preview the edit through the existing governed `replace_selection` operation.
+- Require the same approval preview before mutating the saved draft.
+- Reuse version/diff/read-back behavior from existing Canvas operations.
+- Keep this as a minimal editor upgrade, not a rich-text editor migration.
+
+#### Quality Gate 42
+
+Stage 42 passes only when:
+
+- selected Canvas text exposes a clear edit panel,
+- empty replacement text cannot be previewed,
+- preview uses `replace_selection` with the selected text and replacement Markdown,
+- apply updates the Canvas draft only after explicit user approval,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 42 fails if:
+
+- selection edits mutate the draft without preview/approval,
+- the editor bypasses the Markdown-first contract,
+- the UI implies full TipTap/ProseMirror capabilities before that runtime exists.
+
+### 17.34 Stage 43: Visible Diff Preview For Canvas Edits
+
+Goal: make governed Canvas edits reviewable before approval by showing concrete added/removed Markdown line samples in the preview.
+
+#### Scope
+
+- Extend Canvas diff summaries with short added/removed line samples.
+- Return the same sample fields from backend operation previews and apply responses.
+- Show the line samples inside the existing operation preview panel.
+- Keep the preview compact and business-readable.
+- Preserve the existing approval flow and version snapshots.
+- Avoid introducing a new diff runtime or parallel document format.
+
+#### Quality Gate 43
+
+Stage 43 passes only when:
+
+- operation previews still show the diff summary,
+- previews also show representative removed and added Markdown lines when available,
+- backend operation responses include the same diff sample fields,
+- apply still requires explicit approval,
+- targeted frontend and backend tests pass,
+- changed files have no linter errors.
+
+Stage 43 fails if:
+
+- users must approve edits without seeing concrete changed content,
+- diff samples expose raw native block JSON or internals,
+- the preview becomes a separate mutation path outside governed Canvas operations.
+
+### 17.35 Stage 44: DocumentCanvas Writing Shortcuts
+
+Goal: add a first, safe set of writing shortcuts to DocumentCanvas selection editing while keeping all mutations proposal-first.
+
+#### Scope
+
+- Add deterministic writing shortcuts inside the selected-text edit panel.
+- Include shortcuts for:
+  - using the selection as the replacement base,
+  - turning selected lines into an action checklist,
+  - turning selected lines into a bullet summary.
+- Populate the replacement Markdown draft only.
+- Keep preview/apply as the only mutation path.
+- Do not claim AI rewriting or rich-text editing capabilities.
+- Preserve the Markdown-first editing contract.
+
+#### Quality Gate 44
+
+Stage 44 passes only when:
+
+- selected text exposes writing shortcut buttons,
+- shortcuts populate replacement Markdown without calling the backend,
+- preview still uses `replace_selection`,
+- no shortcut mutates the draft before explicit approval,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 44 fails if:
+
+- writing shortcuts bypass preview/apply,
+- shortcuts are presented as AI rewrites without AI execution,
+- shortcut output creates a non-Markdown document format.
+
+### 17.36 Stage 45: Revise Selection Edit Before Apply
+
+Goal: complete the first selection edit loop by letting users return from preview to the replacement draft without losing their proposed edit.
+
+#### Scope
+
+- Add a `Revise edit` action to selection edit previews.
+- Show the action only for `replace_selection` previews.
+- Dismiss the preview without applying or rejecting the underlying draft.
+- Preserve the replacement Markdown draft so the user can adjust it.
+- Let the user run preview again after revision.
+- Keep `Apply` and `Reject` as explicit choices.
+
+#### Quality Gate 45
+
+Stage 45 passes only when:
+
+- selection edit preview exposes `Revise edit`,
+- revising closes the preview and keeps the replacement Markdown,
+- revising does not mutate the draft,
+- the user can preview again after revising,
+- targeted frontend tests pass,
+- changed files have no linter errors.
+
+Stage 45 fails if:
+
+- revising applies or rejects the edit implicitly,
+- replacement draft text is lost when returning from preview,
+- non-selection operations show a misleading revise action.
+
+### 17.37 Final Rollout Cutline Sign-Off
+
+Goal: close the current Business Work Canvas rollout honestly as a Markdown-first DocumentCanvas product surface.
+
+#### Scope
+
+- Treat `CANVAS_SOURCE_OF_TRUTH.md` section 17 as the final rollout cutline.
+- Treat `BUSINESS_WORK_CANVAS_TESTING_STEP_1_2.md` as the user-flow and Playwright gate contract.
+- Confirm Stages 37-45 are marked `PASSED`.
+- Reconcile old "largest gaps" wording into addressed-for-cutline vs post-cutline backlog.
+- Normalize client mapping for server lifecycle/kind vocabulary:
+  - server `proposed` lifecycle maps to UI `in_review`,
+  - server draft kinds `markdown`, `checklist`, `sheet`, `deck` remain visible instead of falling back silently.
+- Keep full rich editor, full Research evidence runtime, Wave 5 promotion and collaboration outside this cutline.
+
+#### Quality Gate 46
+
+Final rollout sign-off passes only when:
+
+- docs state exactly what "100%" means for this rollout,
+- partial/out-of-scope features remain explicitly named,
+- client state hydration does not hide server lifecycle/kind truth,
+- Step 1/2 testing docs and Playwright gate are linked from the source of truth,
+- targeted unit/component/e2e validation passes,
+- changed files have no linter errors.
+
+Final rollout sign-off fails if:
+
+- docs imply the future Canvas vision is fully shipped,
+- server `proposed` or `deck/sheet/markdown/checklist` values are silently hidden by frontend mapping,
+- there is no executable Playwright gate for the current editor flow.
+
+### 17.38 Stage 47: Canvas GA Production Scope And Backlog
+
+Goal: define what "100% production Canvas" means beyond the completed Markdown-first cutline.
+
+#### Scope
+
+- Add a named `Canvas GA / Production 100%` milestone.
+- Keep `CURRENT CUTLINE COMPLETE` separate from `GA`.
+- Turn the post-cutline backlog into executable stages.
+- Add a readiness audit that tracks scope, risks, gates and residual gaps.
+- Link Canvas GA to the source of truth, interactivity blueprint and release readiness docs.
+
+#### Quality Gate 47
+
+Stage 47 passes only when:
+
+- GA criteria are written down as a production contract,
+- every post-cutline workstream has a stage and quality gate,
+- future features are not described as already shipped,
+- source of truth links to the GA readiness audit,
+- changed files have no linter errors.
+
+Stage 47 fails if:
+
+- "100%" is used without saying whether it means cutline or GA,
+- backlog items remain vague wishes instead of executable stages,
+- docs imply full Research, Wave 5 promotion or rich collaboration is already shipped.
+
+### 17.39 Stage 48: One Canonical Canvas Shell
+
+Goal: prevent two separate Canvas products from drifting.
+
+#### Scope
+
+- Declare the chat-integrated `WorkCanvasDocumentPanel` as the canonical product shell.
+- Treat `/ai/work-canvas` as a legacy/admin route until it is wrapped around the canonical shell.
+- Remove confusing duplicate component names from `WorkCanvasRuntime`.
+- Add a migration note for route-level role expectations.
+- Keep existing legacy route behavior available during migration.
+
+#### Quality Gate 48
+
+Stage 48 passes only when:
+
+- canonical shell ownership is documented,
+- duplicate `WorkCanvasDocumentPanel` naming is removed from legacy runtime,
+- `/ai/work-canvas` cannot be mistaken for the same implementation as chat Canvas,
+- tests or type checks confirm imports still resolve.
+
+Stage 48 fails if:
+
+- both shells present themselves as independent product truths,
+- future developers can import the legacy preview panel by the canonical component name,
+- route-level role semantics remain undocumented.
+
+### 17.40 Stage 49: Canvas Governance And RBAC Hardening
+
+Goal: make proposal governance enforceable on the server, not only visible in the UI.
+
+#### Scope
+
+- Enforce `requiredCapability` before proposal approval.
+- Return a recoverable denial with the required capability.
+- Add integration tests for allowed and denied approval.
+- Keep proposal creation and rejection behavior unchanged.
+
+#### Quality Gate 49
+
+Stage 49 passes only when:
+
+- approve cannot succeed without the proposal capability,
+- denied approvals do not mutate proposal state,
+- allowed approvals still create read-back and audit metadata,
+- targeted route tests pass.
+
+Stage 49 fails if:
+
+- `requiredCapability` stays cosmetic,
+- missing capability returns a raw/internal error,
+- denial still writes target ids or read-back.
+
+### 17.41 Stage 50: Durable Artifact Promotion Contract
+
+Goal: move `save-as-artifact` from soft metadata toward a clear production promotion workflow.
+
+#### Scope
+
+- Return explicit artifact promotion read-back from Canvas.
+- Include artifact runtime, artifact id, version, run id, source draft and promotion status.
+- Record promotion metadata in Canvas provenance.
+- Keep Wave 5 double-write behind a later migration gate unless the artifact runtime API is fully wired.
+
+#### Quality Gate 50
+
+Stage 50 passes only when:
+
+- users and tests can distinguish draft-only save from promoted artifact state,
+- `artifactId`, `artifactRunId` and `artifactVersion` are durable Canvas fields,
+- read-back names `wave5` as intended runtime bridge,
+- failures remain recoverable and honest.
+
+Stage 50 fails if:
+
+- UI claims a full Wave 5 write when only Canvas metadata exists,
+- artifact read-back omits source lineage,
+- save-as-artifact hides failed promotion state.
+
+### 17.42 Stage 51: Research Canvas GA
+
+Goal: make Research Canvas trustworthy as a governed research workspace.
+
+#### Scope
+
+- Show evidence/source lists, confidence and gaps from research blocks.
+- Use degraded states when evidence is unavailable.
+- Connect ResearchSession lifecycle to final report handoff.
+- Promote final research report through the artifact promotion contract.
+- Add Playwright/integration tests for ResearchSession -> Canvas -> final artifact.
+
+#### Quality Gate 51
+
+Stage 51 passes only when:
+
+- no research claim renders without visible evidence state,
+- missing evidence is presented as missing/degraded rather than fake source material,
+- final report handoff has source lineage and artifact read-back,
+- ResearchSession id survives draft reload and context packet creation.
+
+Stage 51 fails if:
+
+- Canvas invents sources,
+- ResearchSession and Canvas create parallel research truths,
+- final report is not traceable to the research draft.
+
+### 17.43 Stage 52: Interactive Block Runtime Tier 1
+
+Goal: ship the first competitive typed block runtime for business artifacts.
+
+#### Scope
+
+- Stabilize typed block schema v2.
+- Support interactive tables with filter, sort, selection and export.
+- Support chart rendering with stable config and graceful fallback.
+- Support Mermaid/diagram source, render and export fallback.
+- Keep Markdown projection for every native block.
+
+#### Quality Gate 52
+
+Stage 52 passes only when:
+
+- table/chart/diagram blocks work without exposing raw JSON,
+- each block has copy/export or explicit disabled-state messaging,
+- projection failures show readable fallback,
+- component and Playwright coverage exercise the block interactions.
+
+Stage 52 fails if:
+
+- native blocks lose Markdown projection,
+- failed renderers break the whole Canvas,
+- users see raw block internals.
+
+### 17.44 Stage 53: Production Testing, Observability And Release Gates
+
+Goal: lift Canvas from smoke coverage to production readiness.
+
+#### Scope
+
+- Add Canvas GA readiness audit.
+- Add role matrix coverage for admin/member/no-permission behavior.
+- Add persistence/refresh tests for draft and artifact promotion state.
+- Add telemetry contract for save failures, conflicts, approval denials and artifact promotion failures.
+- Link Canvas GA gates into the release readiness checklist.
+
+#### Quality Gate 53
+
+Stage 53 passes only when:
+
+- Canvas has a named readiness audit,
+- critical user flows have unit/integration/Playwright coverage,
+- release checklist references Canvas GA gates,
+- observability events are documented and ready to instrument.
+
+Stage 53 fails if:
+
+- Canvas ships only on smoke tests,
+- RBAC and artifact promotion are not part of release gates,
+- production failures cannot be diagnosed.
+
+### 17.45 Stage 54: Rich Editor And Collaboration Decision Gate
+
+Goal: enter rich editing only after the runtime and governance foundations are production safe.
+
+#### Scope
+
+- Evaluate TipTap/ProseMirror against the Markdown-first contract.
+- Define migration path from textarea Markdown to structured editor state.
+- Define inline comments/suggestions model.
+- Decide whether realtime collaboration is required for GA or a post-GA package.
+
+#### Quality Gate 54
+
+Stage 54 passes only when:
+
+- editor runtime choice preserves Markdown projection,
+- collaboration does not bypass proposal-first governance,
+- migration risk and fallback plan are documented,
+- the decision is explicit: GA dependency or post-GA roadmap.
+
+Stage 54 fails if:
+
+- rich editor introduces a second source of truth,
+- comments/suggestions mutate business outputs without approval,
+- collaboration is started before storage/governance are ready.
+
+#### Stage 54 decision evidence
+
+- Rich editor decision gate is formally captured in `BUSINESS_WORK_CANVAS_STAGE_54_RICH_EDITOR_DECISION.md`.
+- Current product decision: keep Markdown-first canonical runtime for GA, keep rich editor execution post-GA behind feature flags and rollback path.

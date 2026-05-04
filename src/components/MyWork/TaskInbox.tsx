@@ -148,9 +148,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     switch (priority?.toLowerCase()) {
       case 'urgent':
       case 'high':
-        return 'text-red-500 bg-red-50 dark:bg-red-900/20';
+        return 'text-rose-500 bg-rose-50 dark:bg-rose-900/20';
       case 'medium':
-        return 'text-orange-500 bg-orange-50 dark:bg-orange-900/20';
+        return 'text-amber-500 bg-amber-50 dark:bg-amber-900/20';
       case 'low':
         return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20';
       default:
@@ -283,13 +283,13 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
 
     if (priority === 'urgent' && !isDone) {
       borderClass =
-        'border-l-4 border-l-red-500 border-slate-200 dark:border-navy-700 bg-red-50/20 dark:bg-red-900/10';
+        'border-l-4 border-l-rose-500 border-slate-200 dark:border-navy-700 bg-rose-50/20 dark:bg-rose-900/10';
     } else if (isDone) {
       borderClass =
         'border-transparent bg-transparent opacity-75 hover:bg-slate-50 dark:hover:bg-white/5';
     } else {
       borderClass =
-        'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-purple-200 dark:hover:border-purple-500/30 shadow-sm dark:shadow-[0_0_15px_rgba(168,85,247,0.05)]';
+        'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-primary-200 dark:hover:border-primary-500/30 shadow-sm dark:shadow-[0_0_15px_rgba(168,85,247,0.05)]';
     }
 
     return `group p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer relative overflow-hidden ${borderClass}`;
@@ -379,7 +379,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         id: 'overdue',
         label: 'Overdue',
         items: overdueItems,
-        accentColor: 'text-red-500',
+        accentColor: 'text-rose-500',
       });
     if (restItems.length > 0)
       sections.push({
@@ -441,7 +441,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex flex-col gap-0.5">
                 {task.initiativeName && (
-                  <span className="text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-1.5 py-0.5 rounded w-fit font-medium">
+                  <span className="text-[10px] bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300 px-1.5 py-0.5 rounded w-fit font-medium">
                     {task.initiativeName}
                   </span>
                 )}
@@ -471,7 +471,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 className={`flex items-center gap-1 text-[10px] whitespace-nowrap ${
                   task.dueDate
                     ? new Date(task.dueDate) < new Date() && !isDone
-                      ? 'text-red-500'
+                      ? 'text-rose-500'
                       : 'text-slate-400 dark:text-slate-500'
                     : 'text-slate-300 dark:text-slate-600'
                 }`}
@@ -583,7 +583,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
               onClick={() => toggleFilter('quick')}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white font-medium text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
             >
-              <span className={quickFilter !== 'all' ? 'text-purple-600 dark:text-purple-400' : ''}>
+              <span className={quickFilter !== 'all' ? 'text-primary-600 dark:text-primary-400' : ''}>
                 {quickFilterLabels[quickFilter]}
               </span>
               <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
@@ -602,13 +602,13 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                       id: 'overdue' as QuickFilter,
                       label: 'Overdue',
                       icon: '🔴',
-                      color: 'text-red-600',
+                      color: 'text-rose-600',
                     },
                     {
                       id: 'urgent' as QuickFilter,
                       label: 'Urgent',
                       icon: '⚡',
-                      color: 'text-orange-600',
+                      color: 'text-amber-600',
                     },
                     {
                       id: 'today' as QuickFilter,
@@ -649,7 +649,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
               onClick={() => toggleFilter('view')}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white font-medium text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
             >
-              <Layers size={12} className="text-purple-500" />
+              <Layers size={12} className="text-primary-500" />
               {viewMode === 'pmo' ? 'PMO Priority' : 'List'}
               <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
             </button>
@@ -663,7 +663,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                       setViewMode('pmo');
                       setOpenFilter(null);
                     }}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'pmo' ? 'font-semibold bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'text-slate-700 dark:text-slate-200'}`}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2 ${viewMode === 'pmo' ? 'font-semibold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-200'}`}
                   >
                     <Layers size={12} />
                     PMO Priority
@@ -731,8 +731,8 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         {cardStyle === 'd' && !loading && pinnedTasks.length > 0 && (
           <div className="mb-4 pb-3 border-b border-dashed border-slate-200 dark:border-navy-700 flex-shrink-0">
             <div className="flex items-center gap-2 mb-2 px-1">
-              <Pin size={12} className="text-purple-500" />
-              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+              <Pin size={12} className="text-primary-500" />
+              <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider">
                 Pinned
               </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -755,14 +755,14 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
               {
                 key: 'blocking_phase' as PMOCategory,
                 label: '🔴 Blokujące Fazę',
-                color: 'border-red-500',
-                bgColor: 'bg-red-50 dark:bg-red-900/10',
+                color: 'border-rose-500',
+                bgColor: 'bg-rose-50 dark:bg-rose-900/10',
               },
               {
                 key: 'blocking_initiative' as PMOCategory,
                 label: '🟠 Blokujące Inicjatywy',
-                color: 'border-orange-500',
-                bgColor: 'bg-orange-50 dark:bg-orange-900/10',
+                color: 'border-amber-500',
+                bgColor: 'bg-amber-50 dark:bg-amber-900/10',
               },
               {
                 key: 'awaiting_decision' as PMOCategory,
@@ -850,7 +850,7 @@ const PMOTaskLabels: React.FC<{ taskId: string }> = ({ taskId }) => {
   const getLabelStyle = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/30';
+        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/30';
       case 'warning':
         return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/30';
       default:

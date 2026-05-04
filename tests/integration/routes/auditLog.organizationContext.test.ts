@@ -10,6 +10,7 @@ const dbMocks = vi.hoisted(() => ({
   processQueuedContextDocumentJobs: vi.fn(),
   getContextProcessingQueueSummary: vi.fn(),
   requeueDeadLetterContextProcessingJob: vi.fn(),
+  recoverStaleContextProcessingLocksForAdmin: vi.fn(),
 }));
 
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
@@ -23,6 +24,7 @@ vi.mock('../../../server/src/services/organizationContext/ContextDocumentService
     processQueuedContextDocumentJobs: dbMocks.processQueuedContextDocumentJobs,
     getContextProcessingQueueSummary: dbMocks.getContextProcessingQueueSummary,
     requeueDeadLetterContextProcessingJob: dbMocks.requeueDeadLetterContextProcessingJob,
+    recoverStaleContextProcessingLocksForAdmin: dbMocks.recoverStaleContextProcessingLocksForAdmin,
   },
 }));
 
@@ -88,6 +90,11 @@ describe('Audit log organization context read surfaces', () => {
       previousStatus: 'dead_letter',
       status: 'retry_scheduled',
     });
+    dbMocks.recoverStaleContextProcessingLocksForAdmin.mockReset().mockResolvedValue({
+      recoveredLocks: 1,
+      staleBefore: '2026-05-03T09:45:00.000Z',
+      staleLockMs: 900000,
+    });
     dbMocks.dbGet.mockReset().mockResolvedValue({ role: 'ADMIN' });
   });
 
@@ -137,6 +144,61 @@ describe('Audit log organization context read surfaces', () => {
         ],
         meta: expect.objectContaining({
           contract: 'organization_context_lineage_audit_read_v1',
+        }),
+      })
+    );
+  });
+
+  it('filters organization context lineage by target type and workflow for queue outcomes', async () => {
+    dbMocks.dbAll.mockResolvedValueOnce([
+      {
+        id: 'queue-lineage-1',
+        user_id: null,
+        target_type: 'organization_context_worker',
+        target_id: 'organization-context',
+        workflow: 'organization_context_external_queue',
+        event_type: 'external_queue_outcome_attention',
+        requested_document_ids_json: JSON.stringify(['doc-queue']),
+        selected_document_ids_json: JSON.stringify(['doc-queue']),
+        used_chunks_json: JSON.stringify([]),
+        degraded: 1,
+        degraded_reasons_json: JSON.stringify(['external_queue_ack_url_missing']),
+        metadata_json: JSON.stringify({ pulledMessages: 1, ackedMessages: 0 }),
+        created_at: '2026-05-03T10:00:00.000Z',
+      },
+    ]);
+
+    const res = await request(mount()).get(
+      '/api/audit-logs/organization-context/lineage?targetType=organization_context_worker&workflow=organization_context_external_queue&limit=5'
+    );
+
+    expect(res.status).toBe(200);
+    expect(dbMocks.dbAll).toHaveBeenCalledWith(
+      expect.stringContaining('target_type = ?'),
+      [
+        'test-org-id',
+        'organization_context_worker',
+        'organization_context_external_queue',
+        5,
+      ],
+      expect.any(Object)
+    );
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        data: [
+          expect.objectContaining({
+            id: 'queue-lineage-1',
+            targetType: 'organization_context_worker',
+            workflow: 'organization_context_external_queue',
+            degradedReasons: ['external_queue_ack_url_missing'],
+            metadata: { pulledMessages: 1, ackedMessages: 0 },
+          }),
+        ],
+        meta: expect.objectContaining({
+          filters: expect.objectContaining({
+            targetType: 'organization_context_worker',
+            workflow: 'organization_context_external_queue',
+          }),
         }),
       })
     );
@@ -299,6 +361,55 @@ describe('Audit log organization context read surfaces', () => {
     expect(dbMocks.requeueDeadLetterContextProcessingJob).not.toHaveBeenCalled();
   });
 
+  it('requires explicit confirmation before recovering stale context locks', async () => {
+    const res = await request(mount())
+      .post('/api/audit-logs/organization-context/processing-jobs/recover-stale-locks')
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        code: 'CONFIRMATION_REQUIRED',
+      })
+    );
+    expect(dbMocks.recoverStaleContextProcessingLocksForAdmin).not.toHaveBeenCalled();
+  });
+
+  it('recovers stale context locks for confirmed admin action and audits it', async () => {
+    const res = await request(mount())
+      .post('/api/audit-logs/organization-context/processing-jobs/recover-stale-locks')
+      .send({ confirmation: 'recover_context_stale_locks', staleLockMs: 900000 });
+
+    expect(res.status).toBe(200);
+    expect(dbMocks.recoverStaleContextProcessingLocksForAdmin).toHaveBeenCalledWith({
+      organizationId: 'test-org-id',
+      staleLockMs: 900000,
+    });
+    expect(dbMocks.dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO audit_log'),
+      expect.arrayContaining([
+        expect.any(String),
+        'test-org-id',
+        'test-user-id',
+        'organization_context.stale_locks_recovered',
+        'organization_context_processing_jobs',
+        'stale-locks',
+      ]),
+      expect.any(Object)
+    );
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          recoveredLocks: 1,
+        }),
+        meta: expect.objectContaining({
+          contract: 'organization_context_stale_locks_recovery_v1',
+          explicitAction: true,
+        }),
+      })
+    );
+  });
+
   it('requeues a dead-letter context job for confirmed admin action and audits it', async () => {
     const res = await request(mount())
       .post('/api/audit-logs/organization-context/processing-jobs/job-dead/requeue')
@@ -361,7 +472,7 @@ describe('Audit log organization context read surfaces', () => {
         'test-user-id',
         'organization_context.worker_run_requested',
         'organization_context_processing_jobs',
-        'manual-run',
+        expect.stringContaining('context-worker-run-'),
       ]),
       expect.any(Object)
     );
@@ -371,11 +482,16 @@ describe('Audit log organization context read surfaces', () => {
           processed: 1,
           retried: 1,
           deadLettered: 0,
+          runId: expect.stringContaining('context-worker-run-'),
+          auditEventId: expect.stringContaining('audit-'),
+          auditRecorded: true,
         }),
         meta: expect.objectContaining({
           contract: 'organization_context_worker_run_v1',
           explicitAction: true,
           confirmation: 'run_context_worker_once',
+          runId: expect.stringContaining('context-worker-run-'),
+          auditEventId: expect.stringContaining('audit-'),
         }),
       })
     );

@@ -107,7 +107,7 @@ type ViewId = 'overview' | 'services' | 'metrics' | 'alerts';
 const STATUS_CONFIG = {
   healthy: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
   degraded: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
-  down: { color: 'bg-red-500', text: 'text-red-400', icon: XCircle },
+  down: { color: 'bg-rose-500', text: 'text-rose-400', icon: XCircle },
   unknown: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Activity },
 };
 
@@ -455,7 +455,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-96">
-        <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
+        <Loader2 className="w-10 h-10 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -486,7 +486,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
+              className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
             />
             Auto-refresh
           </label>
@@ -522,7 +522,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -570,9 +570,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-xl border border-purple-500/20">
+                <div className="p-4 bg-gradient-to-br from-primary-500/10 to-primary-600/5 rounded-xl border border-primary-500/20">
                   <div className="flex items-center gap-3 mb-3">
-                    <Brain className="w-5 h-5 text-purple-400" />
+                    <Brain className="w-5 h-5 text-primary-400" />
                     <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                       AI Services
                     </span>
@@ -580,7 +580,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                     {Object.values(health?.ai?.providers || {}).filter(Boolean).length}
                   </div>
-                  <div className="text-xs text-purple-400 mt-1">Active providers</div>
+                  <div className="text-xs text-primary-400 mt-1">Active providers</div>
                 </div>
 
                 <div className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-600/5 rounded-xl border border-amber-500/20">
@@ -603,7 +603,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <MemoryStick className="w-4 h-4 text-cyan-400" />
+                    <MemoryStick className="w-4 h-4 text-blue-400" />
                     Memory Usage
                   </h3>
                   <div className="space-y-3">
@@ -615,7 +615,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     </div>
                     <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500"
                         style={{ width: `${Math.min(100, metrics?.memory.percent || 0)}%` }}
                       />
                     </div>
@@ -628,7 +628,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                   <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-orange-400" />
+                    <Cpu className="w-4 h-4 text-amber-400" />
                     System Load
                   </h3>
                   <div className="space-y-3">
@@ -661,7 +661,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               {/* AI Providers Status */}
               <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                 <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-purple-400" />
+                  <Brain className="w-4 h-4 text-primary-400" />
                   AI Provider Status
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -814,7 +814,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                       <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                       {trend === 'up' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
-                      {trend === 'down' && <TrendingDown className="w-4 h-4 text-red-400" />}
+                      {trend === 'down' && <TrendingDown className="w-4 h-4 text-rose-400" />}
                       {trend === 'stable' && (
                         <Activity className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                       )}
@@ -862,7 +862,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             <button
               onClick={() => setShowCreateAlert(true)}
               disabled={!!alertsLoadError}
-              className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"
             >
               <Bell className="w-4 h-4" />
               Add Alert
@@ -870,7 +870,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
           </div>
 
           {showCreateAlert && (
-            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-purple-500/30 space-y-3">
+            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-primary-500/30 space-y-3">
               <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">New Alert</h4>
               <div className="grid grid-cols-2 gap-3">
                 <input
@@ -933,7 +933,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   <button
                     onClick={handleCreateAlert}
                     disabled={!newAlert.name.trim()}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
                   >
                     Create
                   </button>
@@ -985,7 +985,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
                       aria-label={`Delete alert ${alert.name}`}
-                      className="p-1 text-slate-400 hover:text-red-400 transition-colors"
+                      className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
                       title="Delete alert"
                     >
                       <XCircle className="w-4 h-4" />

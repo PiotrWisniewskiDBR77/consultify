@@ -69,7 +69,7 @@ const getColorFromName = (name: string): string => {
     'bg-success-500',
     'bg-amber-500',
     'bg-pink-500',
-    'bg-cyan-500',
+    'bg-blue-500',
     'bg-indigo-500',
     'bg-rose-500',
   ];

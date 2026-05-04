@@ -205,7 +205,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
                 <button
                   type="button"
                   onClick={() => void fetchData()}
-                  className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700"
+                  className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
                 >
                   Retry
                 </button>

@@ -96,9 +96,9 @@ interface DependenciesSectionProps {
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-500',
-  review: 'bg-purple-500',
+  review: 'bg-primary-500',
   done: 'bg-emerald-500',
-  blocked: 'bg-red-500',
+  blocked: 'bg-rose-500',
   cancelled: 'bg-slate-300',
 };
 
@@ -112,8 +112,8 @@ const STATUS_LABELS: Record<string, { en: string; pl: string }> = {
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  critical: 'text-red-500',
-  high: 'text-orange-500',
+  critical: 'text-rose-500',
+  high: 'text-amber-500',
   medium: 'text-amber-500',
   low: 'text-slate-500 dark:text-slate-400',
 };
@@ -609,7 +609,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border ${
                                 isPredecessor
                                   ? 'border-blue-300/50 text-blue-600 dark:text-blue-400 bg-blue-500/10'
-                                  : 'border-orange-300/50 text-orange-600 dark:text-orange-400 bg-orange-500/10'
+                                  : 'border-amber-300/50 text-amber-600 dark:text-amber-400 bg-amber-500/10'
                               }`}
                             >
                               {isPredecessor ? <ArrowDown size={11} /> : <ArrowUp size={11} />}
@@ -755,7 +755,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                         setOpenMenuId(null);
                                         handleRemove(dep);
                                       }}
-                                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
                                     >
                                       <Trash2 size={13} />
                                       {isPolish ? 'Kasuj' : 'Delete'}
@@ -989,7 +989,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       onClick={() => setAddDirection('successor')}
                       className={`relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all text-center ${
                         addDirection === 'successor'
-                          ? 'border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-500/10 shadow-sm shadow-orange-500/10'
+                          ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-500/10 shadow-sm shadow-amber-500/10'
                           : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 bg-white dark:bg-navy-800/50'
                       }`}
                     >
@@ -997,17 +997,17 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         size={16}
                         className={
                           addDirection === 'successor'
-                            ? 'text-orange-500'
+                            ? 'text-amber-500'
                             : 'text-slate-500 dark:text-slate-400'
                         }
                       />
                       <span
-                        className={`text-xs font-semibold ${addDirection === 'successor' ? 'text-orange-700 dark:text-orange-300' : 'text-slate-600 dark:text-slate-400'}`}
+                        className={`text-xs font-semibold ${addDirection === 'successor' ? 'text-amber-700 dark:text-amber-300' : 'text-slate-600 dark:text-slate-400'}`}
                       >
                         {isPolish ? 'Następnik' : 'Successor'}
                       </span>
                       <span
-                        className={`text-[10px] leading-tight ${addDirection === 'successor' ? 'text-orange-500/70 dark:text-orange-400/60' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
+                        className={`text-[10px] leading-tight ${addDirection === 'successor' ? 'text-amber-500/70 dark:text-amber-400/60' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                       >
                         {isPolish ? 'Inne zadanie zależy od tego' : 'Another task depends on this'}
                       </span>

@@ -105,6 +105,20 @@ export interface InterviewReportPackExportManifest {
   worksheets: InterviewReportWorksheet[];
 }
 
+export interface InterviewReportPackMarkdownExport {
+  reportPackId: string;
+  insightId: string;
+  title: string;
+  status: 'published';
+  exportedAt: string;
+  format: 'markdown';
+  filename: string;
+  markdown: string;
+  sourceManifestHash: string;
+  exportHash: string;
+  worksheetCount: number;
+}
+
 export interface InterviewReportPackRevision {
   id: string;
   reportPackId: string;
@@ -177,8 +191,8 @@ export interface ReportPackSourceInsight {
   title?: string;
   executiveSummary?: string;
   sourceSessionIds?: string[];
-  analysisScope?: Record<string, unknown>;
-  materialQuality?: Record<string, unknown> | null;
+  analysisScope?: object;
+  materialQuality?: object | null;
   themes?: Array<Record<string, unknown>>;
   issues?: Array<Record<string, unknown>>;
   opportunities?: Array<Record<string, unknown>>;
@@ -327,6 +341,39 @@ function createReportPackManifestHash(payload: Record<string, unknown>): string 
   return crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 }
 
+function createMarkdownExportHash(markdown: string): string {
+  return crypto.createHash('sha256').update(markdown).digest('hex');
+}
+
+function markdownEscape(value: unknown): string {
+  return String(value ?? '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
+
+function buildWorksheetMarkdown(worksheet: InterviewReportWorksheet): string {
+  const lines: string[] = [
+    `## ${worksheet.title}`,
+    '',
+    `Status: ${worksheet.status}`,
+    `Completeness: ${worksheet.completenessScore}%`,
+  ];
+  if (worksheet.warnings.length > 0) {
+    lines.push('', 'Warnings:');
+    worksheet.warnings.forEach((warning) => lines.push(`- ${markdownEscape(warning)}`));
+  }
+  if (worksheet.markdown) {
+    lines.push('', markdownEscape(worksheet.markdown));
+  }
+  if (worksheet.rows.length > 0) {
+    lines.push('', 'Rows:', '');
+    worksheet.rows.forEach((row, index) => {
+      lines.push(`### Row ${index + 1}`, '', '```json', JSON.stringify(row, null, 2), '```', '');
+    });
+  }
+  return lines.join('\n');
+}
+
 function mapRowsToReportPack(
   packRow: ReportPackRow,
   worksheetRows: ReportPackWorksheetRow[]
@@ -405,6 +452,107 @@ function worksheet(params: {
   };
 }
 
+function materialQualityWarnings(materialQuality?: object | null): string[] {
+  if (!materialQuality || typeof materialQuality !== 'object') {
+    return ['Material Quality was not generated.'];
+  }
+
+  const quality = materialQuality as Record<string, unknown>;
+  const warnings: string[] = [];
+  const score = Number(quality.overall_material_score);
+  const answerPosture = String(quality.answer_quality_posture || '');
+  const coveragePosture = String(quality.coverage_posture || '');
+  const recommendationPosture = String(quality.recommendation_posture || '');
+
+  if (Number.isFinite(score) && score < 70) {
+    warnings.push(
+      `Material quality score is ${score}; recommendations require confidence downgrade.`
+    );
+  }
+  if (answerPosture === 'thin' || answerPosture === 'poor') {
+    warnings.push(`Answer quality posture is ${answerPosture}; keep conclusions evidence-bounded.`);
+  }
+  if (coveragePosture === 'single_perspective' || coveragePosture === 'partial_coverage') {
+    warnings.push(`Coverage posture is ${coveragePosture}; missing voices must be reviewed.`);
+  }
+  if (quality.confidence_downgrade_required === true) {
+    warnings.push('Confidence downgrade is required before action planning.');
+  }
+  if (recommendationPosture === 'hypothesis_only' || recommendationPosture === 'review_required') {
+    warnings.push(
+      `Recommendation posture is ${recommendationPosture}; do not treat as decision-ready.`
+    );
+  }
+
+  return warnings.filter((warning, index, all) => all.indexOf(warning) === index);
+}
+
+function buildContextDocumentRows(generationContext?: Record<string, unknown>): {
+  rows: Array<Record<string, unknown>>;
+  warnings: string[];
+} {
+  const contextDocuments = (generationContext?.contextDocuments || {}) as Record<string, unknown>;
+  const requestedIds = Array.isArray(contextDocuments.requestedIds)
+    ? contextDocuments.requestedIds.map(String).filter(Boolean)
+    : [];
+  const selectedIds = Array.isArray(contextDocuments.selectedIds)
+    ? contextDocuments.selectedIds.map(String).filter(Boolean)
+    : [];
+  const degradedReasons = Array.isArray(contextDocuments.degradedReasons)
+    ? contextDocuments.degradedReasons.map(String).filter(Boolean)
+    : [];
+  const documents = Array.isArray(contextDocuments.documents)
+    ? (contextDocuments.documents as Array<Record<string, unknown>>)
+    : [];
+  const selected = new Set(selectedIds);
+  const documentRows = documents.map((doc) => {
+    const usedChunkCount = Number(doc.usedChunkCount || 0);
+    const documentId = String(doc.id || '');
+    return {
+      sourceType: 'organization_context_document',
+      documentId,
+      filename: doc.filename || null,
+      status: doc.status || 'unknown',
+      scope: doc.scope || null,
+      projectId: doc.projectId || null,
+      ownerId: doc.ownerId || null,
+      version: doc.version || null,
+      uploadedAt: doc.uploadedAt || null,
+      usageStatus: usedChunkCount > 0 ? 'used_in_generation' : 'selected_not_used',
+      usedChunkCount,
+      chunks: Array.isArray(doc.chunks) ? doc.chunks : [],
+    };
+  });
+  const visibleDocumentIds = new Set(documentRows.map((row) => String(row.documentId || '')));
+  const inaccessibleRows = requestedIds
+    .filter((id) => !visibleDocumentIds.has(id))
+    .map((id) => ({
+      sourceType: 'organization_context_document',
+      documentId: id,
+      status: selected.has(id) ? 'selected_without_metadata' : 'not_accessible_or_not_selected',
+      usageStatus: 'not_used',
+      usedChunkCount: 0,
+      degradedReason: 'document_missing_from_context_pack',
+    }));
+  const warnings = [
+    ...degradedReasons,
+    ...(inaccessibleRows.length > 0
+      ? ['Some requested organization context documents were not accessible or not retrievable.']
+      : []),
+    ...documentRows
+      .filter((row) => row.usageStatus === 'selected_not_used')
+      .map(
+        (row) =>
+          `Context document ${row.documentId || row.filename || 'unknown'} was selected but no chunks were used.`
+      ),
+  ];
+
+  return {
+    rows: [...documentRows, ...inaccessibleRows],
+    warnings: warnings.filter((warning, index, all) => all.indexOf(warning) === index),
+  };
+}
+
 function evidenceRefsFrom(items: Array<Record<string, unknown>> = []): string[] {
   return Array.from(
     new Set(
@@ -437,6 +585,8 @@ export function buildInterviewReportPackDraft(
   const evidenceWarnings = Array.isArray(evidenceValidation.warnings)
     ? evidenceValidation.warnings.map(String)
     : [];
+  const qualityWarnings = materialQualityWarnings(insight.materialQuality);
+  const contextDocumentLineage = buildContextDocumentRows(insight.generationContext);
 
   const topicRows = [...themes, ...issues, ...signals].map((item) => ({ ...item }));
   const contradictionRows = signals
@@ -457,14 +607,15 @@ export function buildInterviewReportPackDraft(
         return worksheet({
           key,
           title,
-          rows: [insight.analysisScope || {}],
+          rows: [(insight.analysisScope || {}) as Record<string, unknown>],
         });
       case 'material_quality':
         return worksheet({
           key,
           title,
-          rows: insight.materialQuality ? [insight.materialQuality] : [],
-          warnings: insight.materialQuality ? [] : ['Material Quality was not generated.'],
+          rows: insight.materialQuality ? [insight.materialQuality as Record<string, unknown>] : [],
+          warnings: qualityWarnings,
+          degraded: qualityWarnings.length > 0,
         });
       case 'source_register':
         return worksheet({
@@ -472,10 +623,14 @@ export function buildInterviewReportPackDraft(
           title,
           rows: [
             {
+              sourceType: 'interview_sessions',
               sourceSessionIds: insight.sourceSessionIds || [],
               sourceMaterial,
             },
+            ...contextDocumentLineage.rows,
           ],
+          warnings: contextDocumentLineage.warnings,
+          degraded: contextDocumentLineage.warnings.length > 0,
         });
       case 'respondent_profile':
         return worksheet({
@@ -521,9 +676,20 @@ export function buildInterviewReportPackDraft(
           title,
           rows: opportunities.map((opportunity) => ({
             recommendationType: 'hypothesis',
+            recommendationPosture:
+              (insight.materialQuality as Record<string, unknown> | undefined)
+                ?.recommendation_posture || 'hypothesis_only',
+            confidenceDowngradeRequired: Boolean(
+              (insight.materialQuality as Record<string, unknown> | undefined)
+                ?.confidence_downgrade_required
+            ),
             ...opportunity,
           })),
-          warnings: ['Recommendations are hypotheses until reviewed by an operator.'],
+          warnings: [
+            'Recommendations are hypotheses until reviewed by an operator.',
+            ...qualityWarnings,
+          ],
+          degraded: qualityWarnings.length > 0,
         });
       case 'initiative_candidates':
         return worksheet({
@@ -547,13 +713,15 @@ export function buildInterviewReportPackDraft(
           title,
           rows: [
             {
+              sourceType: 'generation_context',
               insightId: insight.id,
               generationContext: insight.generationContext || {},
               allEvidenceRefs,
             },
+            ...contextDocumentLineage.rows,
           ],
-          degraded: evidenceWarnings.length > 0,
-          warnings: evidenceWarnings,
+          degraded: evidenceWarnings.length > 0 || contextDocumentLineage.warnings.length > 0,
+          warnings: [...evidenceWarnings, ...contextDocumentLineage.warnings],
         });
       default:
         return worksheet({ key, title });
@@ -911,6 +1079,55 @@ export async function buildInterviewReportPackExportManifest(params: {
     readiness,
     worksheetCount: reportPack.worksheets.length,
     worksheets: reportPack.worksheets,
+  };
+}
+
+export async function buildInterviewReportPackMarkdownExport(params: {
+  organizationId: string;
+  insightId: string;
+}): Promise<InterviewReportPackMarkdownExport | null> {
+  const manifest = await buildInterviewReportPackExportManifest(params);
+  if (!manifest) return null;
+
+  const exportedAt = new Date().toISOString();
+  const readinessWarnings = [
+    ...manifest.readiness.blockers.map((issue) => issue.message),
+    ...manifest.readiness.warnings.map((issue) => issue.message),
+  ];
+  const markdown = [
+    `# ${manifest.title}`,
+    '',
+    `Report Pack ID: ${manifest.reportPackId}`,
+    `Insight ID: ${manifest.insightId}`,
+    `Status: ${manifest.status}`,
+    `Exported at: ${exportedAt}`,
+    `Source manifest hash: ${manifest.manifestHash}`,
+    `Completeness: ${manifest.completenessScore}%`,
+    `Readiness: ${manifest.readiness.status}`,
+    '',
+    manifest.degraded
+      ? `> Warning: This report pack is degraded. ${manifest.degradedReasons.join(' ')}`
+      : '> Status: No degraded report-pack reasons recorded.',
+    readinessWarnings.length > 0 ? `\n> Readiness notes: ${readinessWarnings.join(' ')}` : '',
+    '',
+    ...manifest.worksheets.map(buildWorksheetMarkdown),
+  ]
+    .filter((part) => part !== null && part !== undefined)
+    .join('\n');
+  const exportHash = createMarkdownExportHash(markdown);
+
+  return {
+    reportPackId: manifest.reportPackId,
+    insightId: manifest.insightId,
+    title: manifest.title,
+    status: 'published',
+    exportedAt,
+    format: 'markdown',
+    filename: `${manifest.reportPackId}-client-report.md`,
+    markdown,
+    sourceManifestHash: manifest.manifestHash,
+    exportHash,
+    worksheetCount: manifest.worksheetCount,
   };
 }
 

@@ -310,7 +310,7 @@ export const MarketInboxTab: React.FC = () => {
                         <button
                           onClick={() => setStatus(r.id, 'ignored')}
                           disabled={updating}
-                          className="p-2 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
+                          className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-400 transition-colors"
                           title="Ignore"
                           aria-label={`Ignore ${r.model_id}`}
                         >

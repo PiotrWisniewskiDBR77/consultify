@@ -39,7 +39,7 @@ class RechartsErrorBoundary extends Component<Props, State> {
                 Chart failed to load. Please refresh the page.
               </p>
               {process.env.NODE_ENV === 'development' && this.state.error && (
-                <pre className="mt-2 text-xs text-red-500">{this.state.error.message}</pre>
+                <pre className="mt-2 text-xs text-rose-500">{this.state.error.message}</pre>
               )}
             </div>
           </div>
@@ -126,7 +126,7 @@ export const RechartsWrapper: React.FC<{
               Chart failed to load. Please refresh the page.
             </p>
             {process.env.NODE_ENV === 'development' && error && (
-              <pre className="mt-2 text-xs text-red-500">{error.message}</pre>
+              <pre className="mt-2 text-xs text-rose-500">{error.message}</pre>
             )}
           </div>
         </div>

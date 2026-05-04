@@ -546,7 +546,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
       className={`flex flex-col ${mode === 'slideOver' || mode === 'splitScreen' ? 'h-full' : 'max-h-[80vh]'}`}
     >
       {/* Panel header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-zinc-700 bg-gradient-to-r from-violet-50 to-transparent dark:from-violet-950/20 flex-shrink-0">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-zinc-700 bg-gradient-to-r from-primary-50 to-transparent dark:from-primary-950/20 flex-shrink-0">
         <Sparkles size={16} className="text-primary-500" />
         <span className="text-sm font-semibold text-slate-800 dark:text-zinc-100">
           {isPl ? 'AI Kreator Tabel' : 'AI Table Builder'}

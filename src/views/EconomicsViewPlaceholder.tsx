@@ -69,8 +69,8 @@ export const EconomicsViewPlaceholder: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mb-3">
-                  <DollarSign size={20} className="text-purple-400" />
+                <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center mb-3">
+                  <DollarSign size={20} className="text-primary-400" />
                 </div>
                 <h3 className="font-semibold text-navy-900 dark:text-white mb-1">
                   Śledzenie korzyści

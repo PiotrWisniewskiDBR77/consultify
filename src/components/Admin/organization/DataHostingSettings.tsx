@@ -106,7 +106,7 @@ const COMPLIANCE_BADGES: Record<string, { label: string; color: string; descript
   },
   SOC2: {
     label: 'SOC 2',
-    color: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
+    color: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300',
     description: 'Service Organization Control 2 - Security, availability, and confidentiality',
   },
   ISO27001: {
@@ -191,7 +191,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Database size={20} className="text-violet-500" />
+            <Database size={20} className="text-primary-500" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">
               {t('admin.org.dataHosting.title', 'Data Hosting Location')}
             </h3>
@@ -216,7 +216,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
         </p>
 
         {/* Current Region Display */}
-        <div className="p-4 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 rounded-xl border border-violet-200 dark:border-violet-800">
+        <div className="p-4 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-xl border border-primary-200 dark:border-primary-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="text-4xl">{currentRegion.flag}</div>
@@ -273,7 +273,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
       {/* Available Regions Card */}
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-          <Globe size={20} className="text-violet-500" />
+          <Globe size={20} className="text-primary-500" />
           {t('admin.org.dataHosting.availableRegions', 'Available Regions')}
         </h3>
 
@@ -289,9 +289,9 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                 className={cn(
                   'p-4 rounded-xl border text-left transition-all',
                   isCurrentRegion
-                    ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700 cursor-default'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 cursor-default'
                     : region.available
-                      ? 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-700 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 cursor-pointer'
+                      ? 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 cursor-pointer'
                       : 'bg-slate-100 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 opacity-60 cursor-not-allowed'
                 )}
               >
@@ -302,7 +302,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-navy-900 dark:text-white">{region.name}</h4>
                         {isCurrentRegion && (
-                          <Check size={16} className="text-violet-600 dark:text-violet-400" />
+                          <Check size={16} className="text-primary-600 dark:text-primary-400" />
                         )}
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -429,7 +429,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="MIGRATE"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
         </div>

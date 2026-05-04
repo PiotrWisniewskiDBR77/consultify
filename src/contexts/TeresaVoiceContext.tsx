@@ -14,15 +14,129 @@ interface TeresaVoiceContextValue extends UseTeresaVoiceReturn {
 
 const TeresaVoiceCtx = createContext<TeresaVoiceContextValue | null>(null);
 
+const VOICE_BACKOFF_BASE_MS = 1000;
+const VOICE_BACKOFF_MAX_MS = 60_000;
+const VOICE_BACKOFF_STORAGE_KEY = 'consultify-voice-backoff';
+
+let voiceConfigBackoffMs = 0;
+let voiceConfigBlockedUntil = 0;
+let voiceEventBackoffMs = 0;
+let voiceEventBlockedUntil = 0;
+let voiceBackoffHydrated = false;
+
+const hydrateVoiceBackoff = () => {
+  if (voiceBackoffHydrated || typeof window === 'undefined') return;
+  voiceBackoffHydrated = true;
+  try {
+    const raw = sessionStorage.getItem(VOICE_BACKOFF_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as {
+      configBackoffMs?: number;
+      configBlockedUntil?: number;
+      eventBackoffMs?: number;
+      eventBlockedUntil?: number;
+    };
+    const now = Date.now();
+    voiceConfigBackoffMs = Number(parsed?.configBackoffMs || 0);
+    voiceConfigBlockedUntil =
+      Number(parsed?.configBlockedUntil || 0) > now ? Number(parsed?.configBlockedUntil) : 0;
+    voiceEventBackoffMs = Number(parsed?.eventBackoffMs || 0);
+    voiceEventBlockedUntil =
+      Number(parsed?.eventBlockedUntil || 0) > now ? Number(parsed?.eventBlockedUntil) : 0;
+  } catch {
+    // no-op
+  }
+};
+
+const persistVoiceBackoff = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(
+      VOICE_BACKOFF_STORAGE_KEY,
+      JSON.stringify({
+        configBackoffMs: voiceConfigBackoffMs,
+        configBlockedUntil: voiceConfigBlockedUntil,
+        eventBackoffMs: voiceEventBackoffMs,
+        eventBlockedUntil: voiceEventBlockedUntil,
+      })
+    );
+  } catch {
+    // no-op
+  }
+};
+
+const hasStoredAuthToken = (): boolean => {
+  try {
+    return Boolean(localStorage.getItem('token'));
+  } catch {
+    return false;
+  }
+};
+
+const getAuthHeaders = (): Record<string, string> => {
+  let token = '';
+  try {
+    token = localStorage.getItem('token') || '';
+  } catch {
+    token = '';
+  }
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const bumpVoiceBackoff = (
+  type: 'config' | 'event'
+): { backoffMs: number; blockedUntil: number } => {
+  hydrateVoiceBackoff();
+  const current = type === 'config' ? voiceConfigBackoffMs : voiceEventBackoffMs;
+  const next = current > 0 ? Math.min(current * 2, VOICE_BACKOFF_MAX_MS) : VOICE_BACKOFF_BASE_MS;
+  const blockedUntil = Date.now() + next;
+  if (type === 'config') {
+    voiceConfigBackoffMs = next;
+    voiceConfigBlockedUntil = blockedUntil;
+  } else {
+    voiceEventBackoffMs = next;
+    voiceEventBlockedUntil = blockedUntil;
+  }
+  persistVoiceBackoff();
+  return { backoffMs: next, blockedUntil };
+};
+
+const resetVoiceBackoff = (type: 'config' | 'event') => {
+  hydrateVoiceBackoff();
+  if (type === 'config') {
+    voiceConfigBackoffMs = 0;
+    voiceConfigBlockedUntil = 0;
+    persistVoiceBackoff();
+    return;
+  }
+  voiceEventBackoffMs = 0;
+  voiceEventBlockedUntil = 0;
+  persistVoiceBackoff();
+};
+
 function postTeresaVoiceEvent(payload: Record<string, unknown>) {
+  hydrateVoiceBackoff();
+  if (!hasStoredAuthToken()) return;
+  if (Date.now() < voiceEventBlockedUntil) return;
+
   fetch('/api/v10/teresa/voice-event', {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify(payload),
-  }).catch(() => {
-    /* telemetry must never break voice UX */
-  });
+  })
+    .then((res) => {
+      if (res.ok) {
+        resetVoiceBackoff('event');
+        return;
+      }
+      if (res.status === 401 || res.status === 403 || res.status === 429) {
+        bumpVoiceBackoff('event');
+      }
+    })
+    .catch(() => {
+      bumpVoiceBackoff('event');
+    });
 }
 
 export function useTeresaVoiceContext(): TeresaVoiceContextValue {
@@ -32,6 +146,7 @@ export function useTeresaVoiceContext(): TeresaVoiceContextValue {
 }
 
 export function TeresaVoiceProvider({ children }: { children: React.ReactNode }) {
+  hydrateVoiceBackoff();
   const currentUser = useAppStore((s) => s.currentUser);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
@@ -63,11 +178,37 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     let cancelled = false;
 
-    fetch('/api/v10/teresa/voice-config', { credentials: 'include' })
+    if (!hasStoredAuthToken()) {
+      setVoiceConfig({
+        enabled: false,
+        apiKey: null,
+        unavailableReason: 'Voice requires an authenticated session.',
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (Date.now() < voiceConfigBlockedUntil) {
+      setVoiceConfig({
+        enabled: false,
+        apiKey: null,
+        unavailableReason: 'Voice config is temporarily paused after repeated failures.',
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    fetch('/api/v10/teresa/voice-config', { credentials: 'include', headers: getAuthHeaders() })
       .then(async (response) => {
         if (!response.ok) {
+          if (response.status === 401 || response.status === 403 || response.status === 429) {
+            bumpVoiceBackoff('config');
+          }
           throw new Error(`voice-config ${response.status}`);
         }
+        resetVoiceBackoff('config');
         return response.json();
       })
       .then((data) => {

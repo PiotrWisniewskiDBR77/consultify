@@ -87,12 +87,12 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
   if (!batch || pending.length === 0) return null;
 
   return (
-    <div className="border border-violet-300/30 dark:border-violet-700/30 rounded-2xl bg-gradient-to-b from-violet-50/60 to-white dark:from-violet-950/30 dark:to-navy-950 overflow-hidden shadow-lg shadow-violet-500/5">
+    <div className="border border-primary-300/30 dark:border-primary-700/30 rounded-2xl bg-gradient-to-b from-primary-50/60 to-white dark:from-primary-950/30 dark:to-navy-950 overflow-hidden shadow-lg shadow-primary-500/5">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-violet-200/30 dark:border-violet-800/30">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-primary-200/30 dark:border-primary-800/30">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/15 flex items-center justify-center">
-            <Sparkles size={12} className="text-violet-600 dark:text-violet-400" />
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-500/20 to-indigo-500/15 flex items-center justify-center">
+            <Sparkles size={12} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
@@ -128,7 +128,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
                 batch: true,
               });
             }}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
           >
             <X size={10} />
             {isPl ? 'Odrzuć' : 'Reject all'}
@@ -184,7 +184,7 @@ const ProposalItem: React.FC<{
       ? 'bg-emerald-500'
       : proposal.confidence >= 0.4
         ? 'bg-amber-500'
-        : 'bg-red-500';
+        : 'bg-rose-500';
 
   const patchSummary = useMemo(() => {
     const p = proposal.patch;
@@ -257,7 +257,7 @@ const ProposalItem: React.FC<{
               </div>
             ))}
             {proposal.patch.removeNodeIds?.map((id) => (
-              <div key={id} className="text-red-600 dark:text-red-400">
+              <div key={id} className="text-rose-600 dark:text-rose-400">
                 - {id}
               </div>
             ))}
@@ -321,7 +321,7 @@ const ProposalItem: React.FC<{
                   {proposal.citations.slice(0, 4).map((citation, idx) => (
                     <span
                       key={`${citation.label}-${idx}`}
-                      className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold text-violet-600 dark:text-violet-300"
+                      className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-semibold text-primary-600 dark:text-primary-300"
                     >
                       {citation.label}
                     </span>
@@ -342,7 +342,7 @@ const ProposalItem: React.FC<{
             </button>
             <button
               onClick={onReject}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/10 transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/10 transition-colors"
             >
               <X size={10} />
               {isPl ? 'Odrzuć' : 'Reject'}

@@ -108,15 +108,15 @@ const DropboxIcon = () => (
 const FileIcon: React.FC<{ name: string }> = ({ name }) => {
   const ext = name.split('.').pop()?.toLowerCase() || '';
   const colorMap: Record<string, string> = {
-    pdf: 'text-red-400',
+    pdf: 'text-rose-400',
     docx: 'text-blue-400',
     doc: 'text-blue-400',
     xlsx: 'text-emerald-400',
     xls: 'text-emerald-400',
     csv: 'text-emerald-400',
-    png: 'text-violet-400',
-    jpg: 'text-violet-400',
-    jpeg: 'text-violet-400',
+    png: 'text-primary-400',
+    jpg: 'text-primary-400',
+    jpeg: 'text-primary-400',
     txt: 'text-slate-400',
     md: 'text-slate-400',
     json: 'text-amber-400',

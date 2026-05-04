@@ -316,7 +316,7 @@ export const BulkOperationsView: React.FC = () => {
             <div
               className={`flex items-center gap-2 ${
                 importStep === s.step
-                  ? 'text-violet-600'
+                  ? 'text-primary-600'
                   : ['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx
                     ? 'text-emerald-600'
                     : 'text-slate-400 dark:text-slate-500'
@@ -325,7 +325,7 @@ export const BulkOperationsView: React.FC = () => {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   importStep === s.step
-                    ? 'bg-violet-100 dark:bg-violet-500/20'
+                    ? 'bg-primary-100 dark:bg-primary-500/20'
                     : ['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx
                       ? 'bg-emerald-100 dark:bg-emerald-500/20'
                       : 'bg-slate-100 dark:bg-navy-700'
@@ -348,8 +348,8 @@ export const BulkOperationsView: React.FC = () => {
       {importStep === 'upload' && (
         <div className="bg-white dark:bg-navy-800 rounded-xl p-8 border border-slate-200 dark:border-navy-700">
           <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
-              <Upload className="text-violet-600" size={32} />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center">
+              <Upload className="text-primary-600" size={32} />
             </div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Upload CSV File
@@ -369,7 +369,7 @@ export const BulkOperationsView: React.FC = () => {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+                className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
               >
                 <Upload size={18} />
                 Select CSV File
@@ -403,7 +403,7 @@ export const BulkOperationsView: React.FC = () => {
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {field}
                     {REQUIRED_FIELDS.includes(field) && (
-                      <span className="text-red-500 ml-1">*</span>
+                      <span className="text-rose-500 ml-1">*</span>
                     )}
                   </span>
                 </div>
@@ -434,7 +434,7 @@ export const BulkOperationsView: React.FC = () => {
             <button
               onClick={() => setImportStep('preview')}
               disabled={!columnMapping['email']}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium"
             >
               Continue to Preview
             </button>
@@ -497,7 +497,7 @@ export const BulkOperationsView: React.FC = () => {
             </button>
             <button
               onClick={handleStartImport}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
             >
               <UserPlus size={18} />
               Import {csvData.length} Users
@@ -509,7 +509,7 @@ export const BulkOperationsView: React.FC = () => {
       {/* Importing Step */}
       {importStep === 'importing' && (
         <div className="bg-white dark:bg-navy-800 rounded-xl p-12 border border-slate-200 dark:border-navy-700 text-center">
-          <Loader2 size={48} className="mx-auto mb-4 text-violet-600 animate-spin" />
+          <Loader2 size={48} className="mx-auto mb-4 text-primary-600 animate-spin" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             Importing Users...
           </h3>
@@ -555,11 +555,11 @@ export const BulkOperationsView: React.FC = () => {
           </div>
 
           {importResult.errors.length > 0 && (
-            <div className="bg-red-50 dark:bg-red-500/10 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-red-900 dark:text-red-300 mb-2">
+            <div className="bg-rose-50 dark:bg-rose-500/10 rounded-lg p-4 mb-6">
+              <h4 className="font-medium text-rose-900 dark:text-rose-300 mb-2">
                 {importResult.failed} Failed Imports:
               </h4>
-              <ul className="text-sm text-red-800 dark:text-red-400 space-y-1">
+              <ul className="text-sm text-rose-800 dark:text-rose-400 space-y-1">
                 {importResult.errors.slice(0, 5).map((err, idx) => (
                   <li key={idx}>
                     Row {err.row}: {err.email || 'Unknown'} - {err.error}
@@ -575,7 +575,7 @@ export const BulkOperationsView: React.FC = () => {
           <div className="flex justify-center">
             <button
               onClick={resetImport}
-              className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium"
+              className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium"
             >
               Import More Users
             </button>
@@ -608,8 +608,8 @@ export const BulkOperationsView: React.FC = () => {
       </div>
 
       {selectedUsers.length > 0 && (
-        <div className="bg-violet-50 dark:bg-violet-500/10 rounded-lg p-4 flex items-center justify-between">
-          <span className="text-violet-700 dark:text-violet-300 font-medium">
+        <div className="bg-primary-50 dark:bg-primary-500/10 rounded-lg p-4 flex items-center justify-between">
+          <span className="text-primary-700 dark:text-primary-300 font-medium">
             {selectedUsers.length} users selected
           </span>
           <div className="flex items-center gap-2">
@@ -620,7 +620,7 @@ export const BulkOperationsView: React.FC = () => {
                   e.target.value = '';
                 }
               }}
-              className="px-4 py-2 bg-white dark:bg-navy-800 border border-violet-200 dark:border-violet-500/30 rounded-lg"
+              className="px-4 py-2 bg-white dark:bg-navy-800 border border-primary-200 dark:border-primary-500/30 rounded-lg"
             >
               <option value="">Assign Role...</option>
               <option value="USER">User</option>
@@ -641,7 +641,7 @@ export const BulkOperationsView: React.FC = () => {
                   checked={selectedUsers.length === users.length && users.length > 0}
                   onChange={selectAllUsers}
                   disabled={!!usersLoadError}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600"
                 />
               </th>
               <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
@@ -663,12 +663,12 @@ export const BulkOperationsView: React.FC = () => {
                     type="checkbox"
                     checked={selectedUsers.includes(user.id)}
                     onChange={() => toggleUserSelection(user.id)}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600"
                   />
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-medium text-sm">
                       {user.firstName?.charAt(0) || user.email.charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -683,7 +683,7 @@ export const BulkOperationsView: React.FC = () => {
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       user.role === 'ADMIN'
-                        ? 'bg-violet-500/10 text-violet-600'
+                        ? 'bg-primary-500/10 text-primary-600'
                         : user.role === 'OWNER'
                           ? 'bg-amber-500/10 text-amber-600'
                           : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
@@ -719,7 +719,7 @@ export const BulkOperationsView: React.FC = () => {
                   <p className="text-slate-500 dark:text-slate-400">No users found</p>
                   <button
                     onClick={fetchUsers}
-                    className="mt-2 text-sm text-violet-600 hover:text-violet-700"
+                    className="mt-2 text-sm text-primary-600 hover:text-primary-700"
                   >
                     Load users
                   </button>
@@ -815,7 +815,7 @@ export const BulkOperationsView: React.FC = () => {
               type="button"
               disabled={sendingEmail}
               onClick={handleSendMassEmail}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
             >
               {sendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               {sendingEmail ? 'Sending…' : 'Send Email'}
@@ -864,7 +864,7 @@ export const BulkOperationsView: React.FC = () => {
                   type="button"
                   disabled={sendingEmail}
                   onClick={handleSendMassEmail}
-                  className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
                 >
                   {sendingEmail ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -932,8 +932,8 @@ export const BulkOperationsView: React.FC = () => {
 
         <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
-              <Shield className="text-violet-500" size={24} />
+            <div className="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center">
+              <Shield className="text-primary-500" size={24} />
             </div>
             <div>
               <h4 className="font-semibold text-slate-900 dark:text-white">Export Audit Log</h4>
@@ -1003,7 +1003,7 @@ export const BulkOperationsView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >

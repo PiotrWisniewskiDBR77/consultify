@@ -223,7 +223,9 @@ function WorkCanvasPreview({ draft }: { draft: Draft }) {
   return <CanvasMarkdownRenderer text={canvasText(draft)} />;
 }
 
-export function WorkCanvasDocumentPanel() {
+// Legacy preview kept for the standalone /ai/work-canvas route.
+// The canonical product shell is src/components/AIChat/WorkCanvasDocumentPanel.tsx.
+export function LegacyWorkCanvasPreviewPanel() {
   const [mode, setMode] = React.useState<'document' | 'md'>('document');
   const [draft] = React.useState(() =>
     createLocalDraft('document', 'Start a company work note', '')
@@ -730,6 +732,9 @@ export function WorkCanvasRuntime() {
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Consultify Work Canvas
               </div>
+              <div className="mt-1 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-800">
+                Legacy preview route
+              </div>
               <h1 className="mt-1 text-lg font-semibold text-slate-950">{displayDraft.title}</h1>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -768,7 +773,7 @@ export function WorkCanvasRuntime() {
                 onClick={() => void saveArtifact()}
                 className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"
               >
-                Save artifact
+                Record artifact promotion
               </button>
             </div>
           </div>
@@ -797,7 +802,7 @@ export function WorkCanvasRuntime() {
             </div>
           </div>
           {error ? (
-            <div className="mt-3 rounded-xl bg-red-50 p-2 text-xs text-red-700">{error}</div>
+            <div className="mt-3 rounded-xl bg-rose-50 p-2 text-xs text-rose-700">{error}</div>
           ) : null}
         </header>
 
@@ -935,7 +940,15 @@ export function WorkCanvasRuntime() {
                 )}
                 {saveReadBack ? (
                   <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-sm font-semibold text-emerald-950">Artifact read-back</p>
+                    <p className="text-sm font-semibold text-emerald-950">
+                      Draft artifact promotion read-back
+                    </p>
+                    {String(saveReadBack.status || '') === 'promotion_recorded' ? (
+                      <p className="mt-1 text-xs text-emerald-800">
+                        Promotion is recorded on Canvas draft metadata and lineage. This route does
+                        not claim a full Wave 5 write path yet.
+                      </p>
+                    ) : null}
                     <ReadBackView readBack={saveReadBack} />
                   </div>
                 ) : null}

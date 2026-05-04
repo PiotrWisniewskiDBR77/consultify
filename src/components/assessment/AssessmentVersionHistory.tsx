@@ -95,14 +95,14 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
   if (isLoading && versions.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-12 text-red-500">
+      <div className="flex items-center justify-center py-12 text-rose-500">
         <AlertCircle className="w-5 h-5 mr-2" />
         <span>{error}</span>
       </div>
@@ -123,8 +123,8 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
       {/* Header */}
       <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+            <History className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h3 className="font-bold text-navy-900 dark:text-white">Version History</h3>
@@ -136,7 +136,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
         {selectedForCompare.length === 2 && onCompareVersions && (
           <button
             onClick={handleCompare}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <GitCompare className="w-4 h-4" />
             Compare selected
@@ -156,7 +156,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
               key={version.id}
               className={`transition-colors ${
                 isSelected
-                  ? 'bg-purple-50 dark:bg-purple-900/20'
+                  ? 'bg-primary-50 dark:bg-primary-900/20'
                   : 'hover:bg-slate-50 dark:hover:bg-white/5'
               }`}
             >
@@ -168,8 +168,8 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                     onClick={() => toggleCompareSelection(version.version)}
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                       isSelected
-                        ? 'bg-purple-600 border-purple-600 text-white'
-                        : 'border-slate-300 dark:border-slate-600 hover:border-purple-400'
+                        ? 'bg-primary-600 border-primary-600 text-white'
+                        : 'border-slate-300 dark:border-slate-600 hover:border-primary-400'
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
@@ -182,14 +182,14 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                     <span
                       className={`font-semibold ${
                         isCurrent
-                          ? 'text-purple-600 dark:text-purple-400'
+                          ? 'text-primary-600 dark:text-primary-400'
                           : 'text-navy-900 dark:text-white'
                       }`}
                     >
                       {getVersionLabel(version, index, versions.length)}
                     </span>
                     {isCurrent && (
-                      <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">
+                      <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-medium rounded-full">
                         Aktualna
                       </span>
                     )}
@@ -217,7 +217,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                   {onViewVersion && (
                     <button
                       onClick={() => onViewVersion(version)}
-                      className="p-2 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                      className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                       title="Preview"
                     >
                       <Eye className="w-4 h-4" />
@@ -276,7 +276,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                                 {data?.actual || '-'}
                               </span>
                               <span className="text-sm text-slate-500 dark:text-slate-400">→</span>
-                              <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                              <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
                                 {data?.target || '-'}
                               </span>
                             </div>

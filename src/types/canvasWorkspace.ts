@@ -54,16 +54,21 @@ export interface CanvasArtifactBlock<TData = unknown> {
 }
 
 export type CanvasDocumentKind =
+  | 'markdown'
   | 'document'
   | 'research'
   | 'decision'
   | 'plan'
+  | 'checklist'
+  | 'sheet'
+  | 'deck'
   | 'table'
   | 'presentation'
   | 'report';
 
 export interface ActiveCanvasDocument {
   draftId?: string;
+  researchSessionId?: string | null;
   title: string;
   saveState: CanvasSaveState;
   lifecycleState: CanvasLifecycleState;
@@ -114,6 +119,8 @@ export interface CanvasDiffSummary {
   addedLines: number;
   removedLines: number;
   summary: string;
+  addedLineSamples?: string[];
+  removedLineSamples?: string[];
 }
 
 export type CanvasWorkflowStepKind =
@@ -248,6 +255,7 @@ export interface CanvasMemorySnapshot {
   summary: string;
   anchors: {
     draftId?: string | null;
+    researchSessionId?: string | null;
     title: string;
     kind?: CanvasDocumentKind;
     workflowRunIds: string[];
@@ -260,6 +268,7 @@ export interface CanvasContextPacket {
   schemaVersion: 'canvas-context/v1';
   activeDraft: {
     draftId?: string | null;
+    researchSessionId?: string | null;
     title: string;
     kind?: CanvasDocumentKind;
     lifecycleState: CanvasLifecycleState;

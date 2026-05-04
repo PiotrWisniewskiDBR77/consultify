@@ -109,8 +109,8 @@ type OperatorOps = {
 const STATUS_STYLES: Record<string, string> = {
   healthy: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
   degraded: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  critical: 'bg-red-500/10 text-red-700 dark:text-red-300',
-  missing: 'bg-red-500/10 text-red-700 dark:text-red-300',
+  critical: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  missing: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
   unknown: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
 };
 
@@ -726,7 +726,7 @@ export const AIUseCaseControlPlane: React.FC = () => {
                     <span
                       className={`rounded-full px-2 py-1 text-[10px] font-medium ${
                         purpose.policyAllowed === false
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+                          ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300'
                           : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
                       }`}
                     >

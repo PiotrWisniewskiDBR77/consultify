@@ -319,7 +319,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -346,7 +346,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
               key={signature.id}
               className={cn(
                 'transition-all',
-                signature.isDefault && 'ring-2 ring-violet-500 dark:ring-violet-400'
+                signature.isDefault && 'ring-2 ring-primary-500 dark:ring-primary-400'
               )}
             >
               <CardHeader className="pb-2">
@@ -354,7 +354,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-base">{signature.name}</CardTitle>
                     {signature.isDefault && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full">
                         {t('settings.signatures.default', 'Default')}
                       </span>
                     )}
@@ -390,7 +390,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(signature.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                       title={t('settings.signatures.delete', 'Delete')}
                     >
                       <Trash2 className="w-4 h-4" />

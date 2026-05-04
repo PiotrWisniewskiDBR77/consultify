@@ -251,17 +251,17 @@ const CHANGE_TYPE_CONFIG: Record<
   fix: {
     icon: Bug,
     label: 'Bug Fix',
-    color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   },
   breaking: {
     icon: AlertTriangle,
     label: 'Breaking',
-    color: 'bg-red-500/20 text-red-400 border-red-500/30',
+    color: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
   },
   security: {
     icon: CheckCircle2,
     label: 'Security',
-    color: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
   },
 };
 
@@ -325,7 +325,7 @@ function ReleaseCard({ release }: { release: Release }) {
             {release.isMajor && (
               <Badge
                 variant="outline"
-                className="bg-purple-500/20 text-purple-400 border-purple-500/50"
+                className="bg-primary-500/20 text-primary-400 border-primary-500/50"
               >
                 <Star size={12} className="mr-1" />
                 Major
@@ -349,8 +349,8 @@ function ReleaseCard({ release }: { release: Release }) {
             {improvementCount > 0 && (
               <span className="text-blue-400">{improvementCount} improvements</span>
             )}
-            {fixCount > 0 && <span className="text-orange-400">{fixCount} fixes</span>}
-            {breakingCount > 0 && <span className="text-red-400">{breakingCount} breaking</span>}
+            {fixCount > 0 && <span className="text-amber-400">{fixCount} fixes</span>}
+            {breakingCount > 0 && <span className="text-rose-400">{breakingCount} breaking</span>}
           </div>
         </div>
 
@@ -410,7 +410,7 @@ export function DocsChangelogView() {
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-purple-900/20 to-zinc-950 border-b border-zinc-800">
+      <div className="bg-gradient-to-b from-primary-900/20 to-zinc-950 border-b border-zinc-800">
         <div className="max-w-4xl mx-auto px-6 py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -418,7 +418,7 @@ export function DocsChangelogView() {
             className="text-center"
           >
             <div className="flex items-center justify-center gap-2 mb-4">
-              <GitBranch className="text-purple-400" size={32} />
+              <GitBranch className="text-primary-400" size={32} />
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Changelog</h1>
             <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
@@ -479,7 +479,7 @@ export function DocsChangelogView() {
           </p>
           <Link
             to="/docs"
-            className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
+            className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors"
           >
             <ArrowRight size={16} />
             Back to Documentation Home

@@ -159,11 +159,11 @@ const normalizeInvoice = (invoice: InvoiceRow): Invoice => ({
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   trialing: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
-  past_due: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  past_due: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
   canceling: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400',
   renewal_due: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-  suspended: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  suspended: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
 };
 
 export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps> = ({
@@ -356,7 +356,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 {Math.round(percentage)}%
               </span>
             )}
-            {(isHigh || isExceeded) && <AlertCircle size={14} className="text-red-500" />}
+            {(isHigh || isExceeded) && <AlertCircle size={14} className="text-rose-500" />}
           </div>
         </div>
         {!isUnlimited && (
@@ -364,9 +364,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div
               className={`h-full rounded-full transition-all ${
                 isExceeded
-                  ? 'bg-red-500'
+                  ? 'bg-rose-500'
                   : isHigh
-                    ? 'bg-orange-500'
+                    ? 'bg-amber-500'
                     : isApproaching
                       ? 'bg-amber-500'
                       : 'bg-emerald-500'
@@ -413,7 +413,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -421,16 +421,16 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Past Due Banner */}
       {effectiveStatus === 'past_due' && (
-        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 flex items-center gap-3">
-          <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle size={20} className="text-rose-500 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+            <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
               {t('access.banner.pastDue')}
             </p>
           </div>
           <button
             onClick={() => setActiveTab('payment')}
-            className="px-3 py-1.5 text-sm font-medium bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm font-medium bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
           >
             {t('access.cta.fixPayment')}
           </button>
@@ -442,7 +442,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
         <div
           className={`rounded-xl p-4 flex items-center gap-3 ${
             snapshot.warningLevel === 'critical'
-              ? 'bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30'
+              ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30'
               : 'bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30'
           }`}
         >
@@ -450,14 +450,14 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             size={20}
             className={
               snapshot.warningLevel === 'critical'
-                ? 'text-orange-500 flex-shrink-0'
+                ? 'text-amber-500 flex-shrink-0'
                 : 'text-blue-500 flex-shrink-0'
             }
           />
           <p
             className={`text-sm flex-1 ${
               snapshot.warningLevel === 'critical'
-                ? 'text-orange-800 dark:text-orange-300'
+                ? 'text-amber-800 dark:text-amber-300'
                 : 'text-blue-800 dark:text-blue-300'
             }`}
           >
@@ -470,7 +470,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           </p>
           <button
             onClick={() => setActiveTab('overview')}
-            className="px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             {t('access.cta.upgradePlan')}
           </button>
@@ -534,17 +534,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Checkout Overlay */}
       {checkoutPlanId && (
-        <div className="bg-white dark:bg-navy-900 border-2 border-purple-500 rounded-xl p-6 space-y-4">
+        <div className="bg-white dark:bg-navy-900 border-2 border-primary-500 rounded-xl p-6 space-y-4">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <ArrowUpCircle size={20} className="text-purple-500" />
+            <ArrowUpCircle size={20} className="text-primary-500" />
             {t('access.upgrade.checkout.title')}
           </h3>
-          <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
-            <p className="text-sm text-purple-700 dark:text-purple-300">
+          <div className="p-4 bg-primary-50 dark:bg-primary-500/10 rounded-lg">
+            <p className="text-sm text-primary-700 dark:text-primary-300">
               {t('access.upgrade.whatChanges')}:{' '}
               {availablePlans.find((p) => p.id === checkoutPlanId)?.name || checkoutPlanId}
             </p>
-            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+            <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
               {t('access.upgrade.instantUnlock')}
             </p>
           </div>
@@ -565,7 +565,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <button
               onClick={handleCheckoutConfirm}
               disabled={checkoutLoading}
-              className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-semibold bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {checkoutLoading
                 ? t('access.upgrade.checkout.processing')
@@ -579,7 +579,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       {activeTab === 'overview' && (
         <>
           {/* Current Plan */}
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-6 text-white">
+          <div className="bg-gradient-to-r from-emerald-500 to-blue-500 rounded-xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-100">{t('access.upgrade.currentPlan')}</p>
@@ -629,7 +629,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary-600 text-white text-xs font-bold rounded-full">
                       {t('access.upgrade.popular')}
                     </div>
                   )}
@@ -685,7 +685,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div className="text-center">
               <button
                 onClick={handleCancelSubscription}
-                className="text-sm text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors"
+                className="text-sm text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
               >
                 Cancel Subscription
               </button>
@@ -768,8 +768,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           </div>
 
           {snapshot?.isTrial && (
-            <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg border border-purple-200 dark:border-purple-500/20">
-              <p className="text-sm text-purple-700 dark:text-purple-300">
+            <div className="p-4 bg-primary-50 dark:bg-primary-500/10 rounded-lg border border-primary-200 dark:border-primary-500/20">
+              <p className="text-sm text-primary-700 dark:text-primary-300">
                 {t('access.upgrade.instantUnlock')}{' '}
                 <button onClick={() => setActiveTab('overview')} className="underline font-medium">
                   {t('access.cta.upgradePlan')}
@@ -849,14 +849,14 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       {activeTab === 'payment' && (
         <div className="space-y-4">
           {effectiveStatus === 'past_due' && (
-            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4">
+            <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <AlertCircle size={16} className="text-red-500" />
-                <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                <AlertCircle size={16} className="text-rose-500" />
+                <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
                   {t('access.upgrade.subscription.past_due')}
                 </p>
               </div>
-              <p className="text-xs text-red-600 dark:text-red-400">{t('access.banner.pastDue')}</p>
+              <p className="text-xs text-rose-600 dark:text-rose-400">{t('access.banner.pastDue')}</p>
             </div>
           )}
 
@@ -908,7 +908,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                             Default
                           </span>
                         )}
-                        <button className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
+                        <button className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg">
                           <Trash2 size={16} />
                         </button>
                       </div>

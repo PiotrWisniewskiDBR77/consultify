@@ -111,16 +111,16 @@ const normalizeSchedules = (payload: unknown): BackupSchedule[] => {
 };
 
 const BACKUP_TYPE_CONFIG = {
-  full: { color: 'bg-purple-500/20 text-purple-400', label: 'Full' },
+  full: { color: 'bg-primary-500/20 text-primary-400', label: 'Full' },
   incremental: { color: 'bg-blue-500/20 text-blue-400', label: 'Incremental' },
-  differential: { color: 'bg-cyan-500/20 text-cyan-400', label: 'Differential' },
+  differential: { color: 'bg-blue-500/20 text-blue-400', label: 'Differential' },
 };
 
 const STATUS_CONFIG = {
   pending: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Clock },
   in_progress: { color: 'bg-amber-500', text: 'text-amber-400', icon: RefreshCw },
   completed: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
-  failed: { color: 'bg-red-500', text: 'text-red-400', icon: XCircle },
+  failed: { color: 'bg-rose-500', text: 'text-rose-400', icon: XCircle },
 };
 
 const fallbackBackupTypeConfig = { color: 'bg-slate-500/20 text-slate-400', label: 'Unknown' };
@@ -290,7 +290,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
           onClick={() => setShowCreateModal(true)}
           disabled={creating || Boolean(backupLoadError)}
           title={backupLoadError || undefined}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Create Backup
@@ -300,7 +300,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -334,9 +334,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
               {formatDate(backups[0]?.createdAt)}
             </div>
           </div>
-          <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
+          <div className="p-4 bg-primary-500/10 rounded-xl border border-primary-500/30">
             <div className="text-sm text-slate-600 dark:text-slate-400">Active Schedules</div>
-            <div className="text-2xl font-semibold text-purple-700 dark:text-purple-300">
+            <div className="text-2xl font-semibold text-primary-700 dark:text-primary-300">
               {schedules.filter((s) => s.enabled).length}
             </div>
           </div>
@@ -412,7 +412,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                 {backup.filename}
                               </code>
                               {backup.encrypted && <Lock className="w-3 h-3 text-emerald-400" />}
-                              {backup.hasS3 && <Cloud className="w-3 h-3 text-cyan-400" />}
+                              {backup.hasS3 && <Cloud className="w-3 h-3 text-blue-400" />}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                               <span>{formatBytes(backup.sizeBytes)}</span>
@@ -454,7 +454,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                             title={destructiveBackupActionReason}
                           >
-                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <Trash2 className="w-4 h-4 text-rose-400" />
                           </button>
                         </div>
                       </div>
@@ -633,7 +633,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                         onChange={(e) =>
                           setConfig({ ...config, encryption_enabled: e.target.checked })
                         }
-                        className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
+                        className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
                       />
                     </label>
                     <label className="flex items-center justify-between">
@@ -645,7 +645,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                         checked={config.auto_verify}
                         disabled
                         onChange={(e) => setConfig({ ...config, auto_verify: e.target.checked })}
-                        className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
+                        className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
                       />
                     </label>
                   </div>
@@ -653,7 +653,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
                 <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 md:col-span-2">
                   <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Cloud className="w-4 h-4 text-cyan-400" />
+                    <Cloud className="w-4 h-4 text-blue-400" />
                     Cloud Storage
                   </h4>
                   <label className="flex items-center justify-between mb-4">
@@ -667,7 +667,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                       onChange={(e) =>
                         setConfig({ ...config, cloud_storage_enabled: e.target.checked })
                       }
-                      className="rounded border-slate-300 bg-white text-purple-600 dark:border-slate-600 dark:bg-slate-800 dark:text-purple-500"
+                      className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
                     />
                   </label>
                   {config.cloud_storage_enabled && (
@@ -694,7 +694,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <button
                   disabled
                   title="Backup settings persistence is not connected"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg transition-colors opacity-50 cursor-not-allowed"
                 >
                   Save Settings
                 </button>
@@ -710,7 +710,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 description={destructiveBackupActionReason}
               />
 
-              <div className="p-6 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-500/30">
+              <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/10 rounded-xl border border-amber-500/30">
                 <div className="flex items-start gap-4">
                   <Shield className="w-8 h-8 text-amber-400" />
                   <div>
@@ -761,9 +761,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <button
                   onClick={() => handleCreateBackup('full')}
                   disabled={creating}
-                  className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg text-left hover:bg-purple-500/20 transition-colors disabled:opacity-50"
+                  className="p-4 bg-primary-500/10 border border-primary-500/30 rounded-lg text-left hover:bg-primary-500/20 transition-colors disabled:opacity-50"
                 >
-                  <div className="font-medium text-purple-400 mb-1">Full Backup</div>
+                  <div className="font-medium text-primary-400 mb-1">Full Backup</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     Complete database snapshot
                   </div>

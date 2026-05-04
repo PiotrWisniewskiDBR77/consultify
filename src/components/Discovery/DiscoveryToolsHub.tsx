@@ -2600,6 +2600,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     }
     return data;
   }, [libraryCatalogItems, searchQuery, libraryCategoryFilter]);
+  const libraryEmptyMessage = useMemo(() => {
+    const normalizedQuery = String(searchQuery || '').trim();
+    if (normalizedQuery.length > 0) {
+      return t(
+        'tools.hub.empty.librarySearchNoResults',
+        isPolish
+          ? `Brak wyników dla frazy "${normalizedQuery}". Zmień frazę lub wyczyść filtry.`
+          : `No results for "${normalizedQuery}". Try a different phrase or clear filters.`,
+        { query: normalizedQuery }
+      );
+    }
+
+    return t('tools.hub.empty.library', 'No tools available in this category yet.');
+  }, [isPolish, searchQuery, t]);
+  const librarySearchQuery = String(searchQuery || '').trim();
+  const hasLibrarySearchNoResults =
+    librarySearchQuery.length > 0 && filteredLibraryItems.length === 0;
 
   const libraryCategoryCounts = useMemo(() => {
     const counts: Record<ToolCategory | 'other', number> = {
@@ -3281,6 +3298,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ? ({ ...selectedRow, title: selectedRow.name } as LibraryPreviewItem)
         : null;
       const itemIds = filteredLibraryItems.map((d) => d.id);
+      const renderLibrarySearchEmptyState = () => (
+        <div className="flex h-full items-center justify-center px-6 py-12">
+          <div
+            className="max-w-xl rounded-2xl border border-slate-200/70 bg-slate-50/80 px-6 py-7 text-center text-sm text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300"
+            data-testid="tools-library-search-empty-state"
+          >
+            <Library className="mx-auto mb-3 h-8 w-8 text-slate-400 dark:text-slate-500" />
+            <p className="font-medium text-slate-900 dark:text-white">{libraryEmptyMessage}</p>
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="mt-4 inline-flex h-9 items-center justify-center rounded-full border border-slate-200/70 bg-white px-4 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/[0.1]"
+            >
+              {isPolish ? 'Wyczyść wyszukiwanie' : 'Clear search'}
+            </button>
+          </div>
+        </div>
+      );
 
       const renderPreview = (item: LibraryPreviewItem) => {
         if ((item as any)?.kind === 'assessment') {
@@ -3353,19 +3388,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               renderPreview={renderPreview}
               renderPreviewFooter={renderFooter}
             >
-              <GridView
-                items={libraryGridItems}
-                selectedItemId={previewItemId}
-                onItemClick={(item) => setPreviewItemId(item.id)}
-                onItemAction={(action, item) => {
-                  if (action === 'open') return handleRowAction('library_open_full', item as any);
-                  return handleRowAction(action, item as any);
-                }}
-                emptyMessage={t(
-                  'tools.hub.empty.library',
-                  'No tools available in this category yet.'
-                )}
-              />
+              {hasLibrarySearchNoResults ? (
+                renderLibrarySearchEmptyState()
+              ) : (
+                <GridView
+                  items={libraryGridItems}
+                  selectedItemId={previewItemId}
+                  onItemClick={(item) => setPreviewItemId(item.id)}
+                  onItemAction={(action, item) => {
+                    if (action === 'open') return handleRowAction('library_open_full', item as any);
+                    return handleRowAction(action, item as any);
+                  }}
+                  emptyMessage={libraryEmptyMessage}
+                />
+              )}
             </TableWithPreviewLayout>
           </div>
         );
@@ -3389,58 +3425,59 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             renderPreview={renderPreview}
             renderPreviewFooter={renderFooter}
           >
-            <FilterableTable
-              columns={libraryColumns}
-              data={filteredLibraryItems}
-              selectedRowId={previewItemId}
-              onRowClick={(row) => setPreviewItemId(row.id)}
-              onRowDoubleClick={(row) => handleRowAction('library_open_full', row as any)}
-              onRowAction={handleRowAction}
-              getRowActions={(row) =>
-                [
-                  {
-                    id: 'open',
-                    label: t('common.open', 'Open'),
-                    icon: ExternalLink,
-                    variant: 'primary',
-                    disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
-                    onClick: () => handleRowAction('library_open_full', row),
-                  },
-                  {
-                    id: 'start',
-                    label:
-                      row?.kind === 'assessment'
-                        ? isPolish
-                          ? 'Start assessment'
-                          : 'Start assessment'
-                        : isPolish
-                          ? 'Rozpocznij sesję'
-                          : 'Start session',
-                    icon: Play,
-                    disabled:
-                      !!(row as any)?.isComingSoon ||
-                      ((row as any)?.kind === 'tool' && !(row as any)?.isActive),
-                    onClick: () => handleRowAction('library_start_session', row),
-                  },
-                  {
-                    id: 'chat',
-                    label: isPolish ? 'Czat' : 'Chat',
-                    icon: MessageSquare,
-                    divider: true,
-                    disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
-                    onClick: () => handleRowAction('library_chat', row),
-                  },
-                ] as RowAction[]
-              }
-              activeFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              emptyMessage={t(
-                'tools.hub.empty.library',
-                'No tools available in this category yet.'
-              )}
-              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-              density="compact"
-            />
+            {hasLibrarySearchNoResults ? (
+              renderLibrarySearchEmptyState()
+            ) : (
+              <FilterableTable
+                columns={libraryColumns}
+                data={filteredLibraryItems}
+                selectedRowId={previewItemId}
+                onRowClick={(row) => setPreviewItemId(row.id)}
+                onRowDoubleClick={(row) => handleRowAction('library_open_full', row as any)}
+                onRowAction={handleRowAction}
+                getRowActions={(row) =>
+                  [
+                    {
+                      id: 'open',
+                      label: t('common.open', 'Open'),
+                      icon: ExternalLink,
+                      variant: 'primary',
+                      disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
+                      onClick: () => handleRowAction('library_open_full', row),
+                    },
+                    {
+                      id: 'start',
+                      label:
+                        row?.kind === 'assessment'
+                          ? isPolish
+                            ? 'Start assessment'
+                            : 'Start assessment'
+                          : isPolish
+                            ? 'Rozpocznij sesję'
+                            : 'Start session',
+                      icon: Play,
+                      disabled:
+                        !!(row as any)?.isComingSoon ||
+                        ((row as any)?.kind === 'tool' && !(row as any)?.isActive),
+                      onClick: () => handleRowAction('library_start_session', row),
+                    },
+                    {
+                      id: 'chat',
+                      label: isPolish ? 'Czat' : 'Chat',
+                      icon: MessageSquare,
+                      divider: true,
+                      disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
+                      onClick: () => handleRowAction('library_chat', row),
+                    },
+                  ] as RowAction[]
+                }
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                emptyMessage={libraryEmptyMessage}
+                canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+                density="compact"
+              />
+            )}
           </TableWithPreviewLayout>
         </div>
       );
@@ -4544,6 +4581,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
+        searchValue={searchQuery}
         openDocuments={openDocuments}
         activeDocumentId={activeDocumentId}
         onSelectDocument={setActiveDocumentId}

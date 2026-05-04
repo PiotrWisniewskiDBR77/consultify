@@ -162,10 +162,10 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 4: Learn Our Tools - Education Hub */}
             <div
               onClick={() => navigate('/tools')}
-              className="glass-card p-8 rounded-xl group hover:shadow-2xl shadow-cyan-500/20 hover:shadow-xl transition-all duration-500 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:shadow-2xl shadow-blue-500/20 hover:shadow-xl transition-all duration-500 cursor-pointer relative overflow-hidden"
             >
               {/* Background Image */}
-              <div className="absolute inset-0 ring-2 ring-cyan-500/40 group-hover:ring-cyan-400/60 ring-inset transition-all duration-500 pointer-events-none">
+              <div className="absolute inset-0 ring-2 ring-blue-500/40 group-hover:ring-blue-400/60 ring-inset transition-all duration-500 pointer-events-none">
                 <img
                   src="/assets/landing/cinematic/tools_education.png"
                   alt="Education Hub"
@@ -179,8 +179,8 @@ export const PublicLandingPage: React.FC = () => {
                   {t('pages.public.cards.tools.meta', 'Education Hub')}
                 </div>
                 <div className="mt-8 flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-cyan-600/20 flex items-center justify-center border border-cyan-500/30 group-hover:bg-cyan-600/30 transition-colors">
-                    <Sparkles size={32} className="text-cyan-400" />
+                  <div className="w-16 h-16 rounded-xl bg-blue-600/20 flex items-center justify-center border border-blue-500/30 group-hover:bg-blue-600/30 transition-colors">
+                    <Sparkles size={32} className="text-blue-400" />
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold mb-1 text-white">
@@ -197,7 +197,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 5: Become Partner - Replacing Log In */}
             <div
               onClick={handlePartnerClick}
-              className="glass-card p-8 rounded-xl group hover:bg-purple-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:bg-primary-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.partner.meta', 'Returning Users')}
@@ -218,13 +218,13 @@ export const PublicLandingPage: React.FC = () => {
             </div>
 
             {/* Card 7: AI Consulting Pitch */}
-            <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-purple-600/10 transition-all duration-500 border-white/5 relative overflow-hidden">
+            <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-primary-600/10 transition-all duration-500 border-white/5 relative overflow-hidden">
               <div className="flex flex-col h-full justify-center items-center text-center">
                 <h3 className="text-3xl font-bold mb-2">
                   {t('pages.public.tagline.line1', 'AI consulting.')}
                 </h3>
                 <h3 className="text-3xl font-bold mb-2">
-                  <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-brand-400 to-primary-400 bg-clip-text text-transparent">
                     {t('pages.public.tagline.line2', 'No slides.')}
                   </span>
                 </h3>
@@ -265,11 +265,11 @@ export const PublicLandingPage: React.FC = () => {
           <button
             onClick={handleDemoClick}
             className="
-                            group relative inline-flex items-center gap-4 
-                            bg-brand-600 hover:bg-brand-500 
-                            text-white font-semibold text-xl 
-                            px-10 p-4 rounded-xl 
-                            shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)] 
+                            group relative inline-flex items-center gap-4
+                            bg-brand-600 hover:bg-brand-500
+                            text-white font-semibold text-xl
+                            px-10 p-4 rounded-xl
+                            shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)]
                             hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)]
                             active:scale-[0.98]
                             transition-all duration-500 overflow-hidden

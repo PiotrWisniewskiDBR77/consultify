@@ -360,7 +360,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                 ? 'bg-blue-100 text-blue-600'
                                 : targetStatus === 'APPROVED'
                                   ? 'bg-green-100 text-green-600'
-                                  : 'bg-red-100 text-red-600'
+                                  : 'bg-rose-100 text-rose-600'
                             }
                         `}
             >
@@ -420,7 +420,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                               check.passed
                                                 ? 'bg-green-50 dark:bg-green-900/20'
                                                 : check.severity === 'error'
-                                                  ? 'bg-red-50 dark:bg-red-900/20'
+                                                  ? 'bg-rose-50 dark:bg-rose-900/20'
                                                   : 'bg-yellow-50 dark:bg-yellow-900/20'
                                             }
                                         `}
@@ -429,7 +429,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                       {check.passed ? (
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                       ) : check.severity === 'error' ? (
-                        <AlertCircle className="w-5 h-5 text-red-500" />
+                        <AlertCircle className="w-5 h-5 text-rose-500" />
                       ) : (
                         <AlertTriangle className="w-5 h-5 text-yellow-500" />
                       )}
@@ -441,7 +441,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                                       check.passed
                                                         ? 'text-green-700 dark:text-green-300'
                                                         : check.severity === 'error'
-                                                          ? 'text-red-700 dark:text-red-300'
+                                                          ? 'text-rose-700 dark:text-rose-300'
                                                           : 'text-yellow-700 dark:text-yellow-300'
                                                     }
                                                 `}
@@ -508,7 +508,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                         </div>
                       </div>
                       {reviewer.canApprove && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 rounded">
                           Can Approve
                         </span>
                       )}
@@ -565,8 +565,8 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
 
           {/* Error */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+            <div className="mb-4 p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
+              <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
                 <AlertCircle className="w-5 h-5" />
                 <span>{error}</span>
               </div>
@@ -593,7 +593,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                             ${
                               canProceed && !isLoading
                                 ? targetStatus === 'REJECTED'
-                                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                                  ? 'bg-rose-600 hover:bg-rose-700 text-white'
                                   : 'bg-blue-600 hover:bg-blue-700 text-white'
                                 : 'bg-slate-300 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                             }

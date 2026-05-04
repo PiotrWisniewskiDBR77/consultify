@@ -228,7 +228,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
               flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition-colors
               ${
                 force.trend === 'increasing'
-                  ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                  ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300'
                   : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
               }
             `}
@@ -310,7 +310,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
                 <span className="text-sm text-slate-700 dark:text-slate-300">{driver}</span>
                 <button
                   onClick={() => handleRemoveDriver(index)}
-                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500 transition-colors"
+                  className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

@@ -34,13 +34,13 @@ interface RecommendationAttrs {
 
 const PRIORITY_STYLES = {
   critical: {
-    badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    border: 'border-l-red-500',
+    badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    border: 'border-l-rose-500',
     label: 'Krytyczny',
   },
   high: {
-    badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    border: 'border-l-orange-500',
+    badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    border: 'border-l-amber-500',
     label: 'Wysoki',
   },
   medium: {
@@ -62,7 +62,7 @@ const IMPACT_LABELS = {
 };
 
 const EFFORT_LABELS = {
-  high: { label: 'Duży', color: 'text-red-500' },
+  high: { label: 'Duży', color: 'text-rose-500' },
   medium: { label: 'Średni', color: 'text-yellow-600' },
   low: { label: 'Mały', color: 'text-green-600' },
 };
@@ -105,7 +105,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={handleCancel}
-                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500"
+                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -250,7 +250,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
           {/* Header */}
           <div className="rec-header flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-amber-400 to-amber-500 rounded-lg">
                 <Lightbulb className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">

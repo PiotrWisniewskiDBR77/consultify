@@ -72,8 +72,8 @@ export const UserTableRow: React.FC<{
   mode,
 }) => {
   const getRoleBadgeColor = (role?: string) => {
-    if (isSuperAdminRole(role)) return 'bg-red-500/20 text-red-400';
-    if (role === UserRole.ADMIN) return 'bg-purple-500/20 text-purple-400 border-purple-500/50';
+    if (isSuperAdminRole(role)) return 'bg-rose-500/20 text-rose-400';
+    if (role === UserRole.ADMIN) return 'bg-primary-500/20 text-primary-400 border-primary-500/50';
     return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
   };
 
@@ -111,7 +111,7 @@ export const UserTableRow: React.FC<{
       </td>
       <td className="px-6 py-4">
         <span
-          className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-red-400'}`}
+          className={`flex items-center gap-1.5 ${user.status === 'active' ? 'text-green-400' : 'text-rose-400'}`}
         >
           {user.status === 'active' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
           {user.status || 'active'}
@@ -158,7 +158,7 @@ export const UserTableRow: React.FC<{
           {showImpersonate && onImpersonate && !isSuperAdminRole(user.role) && (
             <button
               onClick={() => onImpersonate(user.id)}
-              className="p-2 hover:bg-purple-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-purple-400 text-xs font-medium"
+              className="p-2 hover:bg-primary-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-primary-400 text-xs font-medium"
               title="Impersonate"
             >
               Impersonate
@@ -169,8 +169,8 @@ export const UserTableRow: React.FC<{
               onClick={() => onBlock(user.id, user.status || 'active')}
               className={`p-2 rounded-lg text-xs font-medium ${
                 user.status === 'active'
-                  ? 'hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400'
-                  : 'hover:bg-green-500/20 text-red-400 hover:text-green-400'
+                  ? 'hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400'
+                  : 'hover:bg-green-500/20 text-rose-400 hover:text-green-400'
               }`}
               title={user.status === 'active' ? 'Block' : 'Unblock'}
             >
@@ -180,7 +180,7 @@ export const UserTableRow: React.FC<{
           {onDelete && (
             <button
               onClick={() => onDelete(user.id)}
-              className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-400"
+              className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
               title="Delete"
             >
               <Trash2 size={16} />
@@ -315,7 +315,7 @@ export const UserFormModal: React.FC<{
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4 disabled:opacity-60"
+            className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-semibold mt-4 disabled:opacity-60"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </button>
@@ -767,7 +767,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none w-full md:w-64"
+              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none w-full md:w-64"
             />
           </div>
           {mode === 'platform' && (
@@ -776,7 +776,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedOrganizationId}
                 onChange={(e) => onSelectedOrganizationChange?.(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[220px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[220px]"
               >
                 <option value="">All organizations</option>
                 {organizations.map((org) => (
@@ -789,7 +789,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
               >
                 <option value="">All roles</option>
                 {roleOptions.map((role) => (
@@ -802,7 +802,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 disabled={!!loadError}
-                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[160px]"
               >
                 <option value="">All statuses</option>
                 {statusOptions.map((status) => (
@@ -835,7 +835,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           <button
             onClick={openAddModal}
             disabled={!canCreateUsersDirectly || !!loadError}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-primary-900/20"
           >
             <Plus size={16} /> Add User
           </button>
@@ -851,7 +851,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       )}
 
       {loadError && (
-        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+        <div className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
           {loadError}
         </div>
       )}
@@ -890,7 +890,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
             {loading ? (
               <tr>
                 <td colSpan={mode === 'platform' ? 6 : 5} className="px-6 py-12 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                 </td>
               </tr>
             ) : loadError ? (

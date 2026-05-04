@@ -508,17 +508,17 @@ const AIBudgetsView: React.FC = () => {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-violet-600/20 to-violet-700/10 border border-violet-500/30 rounded-xl p-4">
+        <div className="bg-gradient-to-br from-primary-600/20 to-primary-700/10 border border-primary-500/30 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <DollarSign className="text-violet-400" size={24} />
-            <span className="text-xs text-violet-300 bg-violet-500/20 px-2 py-0.5 rounded">
+            <DollarSign className="text-primary-400" size={24} />
+            <span className="text-xs text-primary-300 bg-primary-500/20 px-2 py-0.5 rounded">
               This Month
             </span>
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white">
             {formatCurrency(usageStats?.budgets.find((b) => b.type === 'cost')?.current || 0)}
           </div>
-          <div className="text-sm text-violet-800 dark:text-violet-300">Total AI Spending</div>
+          <div className="text-sm text-primary-800 dark:text-primary-300">Total AI Spending</div>
         </div>
 
         <div className="bg-gradient-to-br from-emerald-600/20 to-emerald-700/10 border border-emerald-500/30 rounded-xl p-4">
@@ -576,10 +576,10 @@ const AIBudgetsView: React.FC = () => {
                 <div
                   className={`h-full rounded-full transition-all ${
                     budget.percentUsed >= 100
-                      ? 'bg-red-500'
+                      ? 'bg-rose-500'
                       : budget.percentUsed >= 80
                         ? 'bg-amber-500'
-                        : 'bg-violet-500'
+                        : 'bg-primary-500'
                   }`}
                   style={{ width: `${Math.min(100, budget.percentUsed)}%` }}
                 />
@@ -605,7 +605,7 @@ const AIBudgetsView: React.FC = () => {
                 key={alert.id}
                 className={`flex items-center justify-between p-3 rounded-lg ${
                   alert.alertType === 'exceeded'
-                    ? 'bg-red-500/10 border border-red-500/30'
+                    ? 'bg-rose-500/10 border border-rose-500/30'
                     : alert.alertType === 'warning'
                       ? 'bg-amber-500/10 border border-amber-500/30'
                       : 'bg-blue-500/10 border border-blue-500/30'
@@ -615,7 +615,7 @@ const AIBudgetsView: React.FC = () => {
                   <AlertTriangle
                     className={
                       alert.alertType === 'exceeded'
-                        ? 'text-red-400'
+                        ? 'text-rose-400'
                         : alert.alertType === 'warning'
                           ? 'text-amber-400'
                           : 'text-blue-400'
@@ -676,7 +676,7 @@ const AIBudgetsView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowBudgetModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={18} />
           Create Budget
@@ -684,7 +684,7 @@ const AIBudgetsView: React.FC = () => {
       </div>
 
       {loadError && (
-        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+        <div className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300">
           {loadError}
         </div>
       )}
@@ -711,14 +711,14 @@ const AIBudgetsView: React.FC = () => {
                     <div
                       className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         budget.budgetType === 'cost'
-                          ? 'bg-violet-500/20'
+                          ? 'bg-primary-500/20'
                           : budget.budgetType === 'tokens'
                             ? 'bg-emerald-500/20'
                             : 'bg-blue-500/20'
                       }`}
                     >
                       {budget.budgetType === 'cost' ? (
-                        <DollarSign className="text-violet-400" size={20} />
+                        <DollarSign className="text-primary-400" size={20} />
                       ) : budget.budgetType === 'tokens' ? (
                         <Zap className="text-emerald-400" size={20} />
                       ) : (
@@ -741,21 +741,21 @@ const AIBudgetsView: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {budget.hardLimit && (
-                      <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded">
+                      <span className="text-xs text-rose-400 bg-rose-500/10 px-2 py-1 rounded">
                         Hard Limit
                       </span>
                     )}
                     <button
                       onClick={() => openEditBudget(budget)}
                       aria-label={`Edit budget ${budget.id}`}
-                      className="p-2 text-slate-500 hover:text-violet-500 hover:bg-violet-500/10 rounded-lg transition-colors"
+                      className="p-2 text-slate-500 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors"
                     >
                       <Check size={18} />
                     </button>
                     <button
                       onClick={() => handleDeleteBudget(budget.id)}
                       aria-label={`Delete budget ${budget.id}`}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -780,10 +780,10 @@ const AIBudgetsView: React.FC = () => {
                     <div
                       className={`h-full rounded-full transition-all ${
                         percentUsed >= 100
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : percentUsed >= budget.warningThreshold * 100
                             ? 'bg-amber-500'
-                            : 'bg-violet-500'
+                            : 'bg-primary-500'
                       }`}
                       style={{ width: `${Math.min(100, percentUsed)}%` }}
                     />
@@ -884,7 +884,7 @@ const AIBudgetsView: React.FC = () => {
                   type="checkbox"
                   checked={newBudget.hardLimit}
                   onChange={(e) => setNewBudget({ ...newBudget, hardLimit: e.target.checked })}
-                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
+                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                 />
                 <span className="text-sm text-slate-700 dark:text-gray-200">
                   Hard limit (block requests when exceeded)
@@ -903,7 +903,7 @@ const AIBudgetsView: React.FC = () => {
               </button>
               <button
                 onClick={handleCreateBudget}
-                className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
               >
                 {editingBudget ? 'Save' : 'Create'}
               </button>
@@ -947,7 +947,7 @@ const AIBudgetsView: React.FC = () => {
               key={alert.id}
               className={`bg-white dark:bg-gray-800/50 border rounded-xl p-4 ${
                 alert.alertType === 'exceeded'
-                  ? 'border-red-500/50'
+                  ? 'border-rose-500/50'
                   : alert.alertType === 'warning'
                     ? 'border-amber-500/50'
                     : 'border-slate-200 dark:border-gray-700'
@@ -958,7 +958,7 @@ const AIBudgetsView: React.FC = () => {
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                       alert.alertType === 'exceeded'
-                        ? 'bg-red-500/20'
+                        ? 'bg-rose-500/20'
                         : alert.alertType === 'warning'
                           ? 'bg-amber-500/20'
                           : 'bg-blue-500/20'
@@ -967,7 +967,7 @@ const AIBudgetsView: React.FC = () => {
                     <AlertTriangle
                       className={
                         alert.alertType === 'exceeded'
-                          ? 'text-red-400'
+                          ? 'text-rose-400'
                           : alert.alertType === 'warning'
                             ? 'text-amber-400'
                             : 'text-blue-400'
@@ -1026,7 +1026,7 @@ const AIBudgetsView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowModelModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={18} />
           Add Restriction
@@ -1082,7 +1082,7 @@ const AIBudgetsView: React.FC = () => {
                       className={`px-2 py-1 rounded text-xs ${
                         perm.isAllowed
                           ? 'bg-green-500/20 text-green-300'
-                          : 'bg-red-500/20 text-red-300'
+                          : 'bg-rose-500/20 text-rose-300'
                       }`}
                     >
                       {perm.isAllowed ? 'Allowed' : 'Blocked'}
@@ -1098,7 +1098,7 @@ const AIBudgetsView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteModelPermission(perm.id)}
                       aria-label={`Delete model permission ${perm.id}`}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -1184,7 +1184,7 @@ const AIBudgetsView: React.FC = () => {
                   onChange={(e) =>
                     setNewModelPermission({ ...newModelPermission, isAllowed: e.target.checked })
                   }
-                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
+                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                 />
                 <span className="text-sm text-slate-700 dark:text-gray-200">
                   Allow access to this model
@@ -1201,7 +1201,7 @@ const AIBudgetsView: React.FC = () => {
               <button
                 onClick={handleSaveModelPermission}
                 disabled={!newModelPermission.modelId}
-                className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 Save
               </button>
@@ -1235,14 +1235,14 @@ const AIBudgetsView: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-violet-600 text-slate-900 dark:text-white'
+                    ? 'border-primary-600 text-slate-900 dark:text-white'
                     : 'border-transparent text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Icon size={18} />
                 {tab.label}
                 {tab.id === 'alerts' && alerts.length > 0 && (
-                  <span className="px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                  <span className="px-1.5 py-0.5 bg-rose-500 text-white text-xs rounded-full">
                     {alerts.length}
                   </span>
                 )}
@@ -1255,7 +1255,7 @@ const AIBudgetsView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -1264,7 +1264,7 @@ const AIBudgetsView: React.FC = () => {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-violet-500" size={32} />
+          <RefreshCw className="animate-spin text-primary-500" size={32} />
         </div>
       ) : loadError ? (
         <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">

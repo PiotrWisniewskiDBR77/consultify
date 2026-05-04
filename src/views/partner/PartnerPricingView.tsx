@@ -110,8 +110,8 @@ export const PartnerPricingView: React.FC = () => {
   return (
     <MarketingLayout>
       <div className="min-h-full bg-slate-50 dark:bg-navy-950">
-        <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-20 pt-14 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
+        <section className="relative overflow-hidden bg-gradient-to-b from-primary-50 via-white to-slate-50 px-6 pb-20 pt-14 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-100/40 via-transparent to-transparent dark:from-primary-900/20" />
 
           <div className="relative mx-auto max-w-6xl">
             <motion.div
@@ -121,14 +121,14 @@ export const PartnerPricingView: React.FC = () => {
               className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center"
             >
               <div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
-                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-4 py-2 text-sm font-semibold text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
+                  <span className="h-2 w-2 rounded-full bg-primary-500" />
                   Consultify Partner Program
                 </span>
 
                 <h1 className="mt-6 text-4xl font-black tracking-tight text-navy-950 dark:text-white md:text-5xl">
                   Program partnerski, który daje{' '}
-                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
                     realny pipeline, wdrożenia i payout
                   </span>
                 </h1>
@@ -142,14 +142,14 @@ export const PartnerPricingView: React.FC = () => {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button
                     onClick={startApplication}
-                    className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
+                    className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary-500/30 transition hover:bg-primary-500"
                   >
                     Apply
                     <ArrowRight size={18} />
                   </button>
                   <button
                     onClick={openPartnerDocs}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-white/5"
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-primary-300 hover:bg-white dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-white/5"
                   >
                     Odkrywaj program
                   </button>
@@ -164,8 +164,8 @@ export const PartnerPricingView: React.FC = () => {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-purple-200 bg-white/90 p-6 shadow-sm dark:border-purple-900/40 dark:bg-navy-900/80 md:col-span-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-600 dark:text-purple-300">
+                <div className="rounded-2xl border border-primary-200 bg-white/90 p-6 shadow-sm dark:border-primary-900/40 dark:bg-navy-900/80 md:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600 dark:text-primary-300">
                     Co dostajesz od dnia 1
                   </p>
                   <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -197,7 +197,7 @@ export const PartnerPricingView: React.FC = () => {
                       key={step.title}
                       className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900"
                     >
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                         <Icon size={20} />
                       </div>
                       <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
@@ -221,7 +221,7 @@ export const PartnerPricingView: React.FC = () => {
           <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-500">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-500">
                   Proof + next step
                 </p>
                 <h2 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
@@ -237,14 +237,14 @@ export const PartnerPricingView: React.FC = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   onClick={openPartnerDocs}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-5 py-4 text-sm font-bold text-slate-700 transition hover:border-purple-400 hover:text-purple-600 dark:border-white/15 dark:text-white"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-5 py-4 text-sm font-bold text-slate-700 transition hover:border-primary-400 hover:text-primary-600 dark:border-white/15 dark:text-white"
                 >
                   Otwórz partner docs
                   <ArrowRight size={16} />
                 </button>
                 <button
                   onClick={openCaseStudy}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-purple-500"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-primary-500"
                 >
                   Zobacz case study
                   <ArrowRight size={16} />
@@ -276,7 +276,7 @@ export const PartnerPricingView: React.FC = () => {
                     className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                         <Icon size={18} />
                       </div>
                       <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
@@ -394,8 +394,8 @@ export const PartnerPricingView: React.FC = () => {
                     transition={{ delay: idx * 0.05 }}
                     className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
-                      <Icon size={24} className="text-purple-600 dark:text-purple-400" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
+                      <Icon size={24} className="text-primary-600 dark:text-primary-400" />
                     </div>
                     <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
                       {benefit.title}
@@ -450,7 +450,7 @@ export const PartnerPricingView: React.FC = () => {
                     key={step.title}
                     className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                       <Icon size={22} />
                     </div>
                     <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
@@ -467,14 +467,14 @@ export const PartnerPricingView: React.FC = () => {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <button
                 onClick={startApplication}
-                className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-8 py-4 font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
+                className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-8 py-4 font-bold text-white shadow-lg shadow-primary-500/30 transition hover:bg-primary-500"
               >
                 Start application
                 <ArrowRight size={18} />
               </button>
               <button
                 onClick={openContact}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-8 py-4 font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:text-white dark:hover:bg-white/5"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-8 py-4 font-bold text-navy-950 transition hover:border-primary-300 hover:bg-white dark:border-white/20 dark:text-white dark:hover:bg-white/5"
               >
                 Ustal warunki współpracy
               </button>
@@ -505,7 +505,7 @@ export const PartnerPricingView: React.FC = () => {
                     transition={{ duration: 0.5, delay: idx * 0.08 }}
                     className={`relative flex flex-col rounded-2xl p-6 ${
                       tier.highlight
-                        ? 'z-10 scale-[1.02] bg-gradient-to-b from-purple-600 to-purple-700 text-white shadow-2xl shadow-purple-500/20 ring-4 ring-purple-500/50'
+                        ? 'z-10 scale-[1.02] bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-2xl shadow-primary-500/20 ring-4 ring-primary-500/50'
                         : 'border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900'
                     }`}
                   >
@@ -520,13 +520,13 @@ export const PartnerPricingView: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div
                         className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                          tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
+                          tier.highlight ? 'bg-white/20' : 'bg-primary-100 dark:bg-primary-900/30'
                         }`}
                       >
                         <Icon
                           size={24}
                           className={
-                            tier.highlight ? 'text-white' : 'text-purple-600 dark:text-purple-400'
+                            tier.highlight ? 'text-white' : 'text-primary-600 dark:text-primary-400'
                           }
                         />
                       </div>
@@ -541,7 +541,7 @@ export const PartnerPricingView: React.FC = () => {
                         <p
                           className={`text-xs ${
                             tier.highlight
-                              ? 'text-purple-200'
+                              ? 'text-primary-200'
                               : 'text-slate-500 dark:text-slate-400'
                           }`}
                         >
@@ -562,7 +562,7 @@ export const PartnerPricingView: React.FC = () => {
                         <span
                           className={`text-sm ${
                             tier.highlight
-                              ? 'text-purple-200'
+                              ? 'text-primary-200'
                               : 'text-slate-500 dark:text-slate-400'
                           }`}
                         >
@@ -571,7 +571,7 @@ export const PartnerPricingView: React.FC = () => {
                       </div>
                       <p
                         className={`mt-1 text-xs ${
-                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
                         Support SLA: {tier.supportSLA}
@@ -580,7 +580,7 @@ export const PartnerPricingView: React.FC = () => {
 
                     <p
                       className={`mt-4 text-sm ${
-                        tier.highlight ? 'text-purple-100' : 'text-slate-600 dark:text-slate-400'
+                        tier.highlight ? 'text-primary-100' : 'text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       {tier.description}
@@ -593,7 +593,7 @@ export const PartnerPricingView: React.FC = () => {
                             <Check
                               size={16}
                               className={`mt-0.5 flex-shrink-0 ${
-                                tier.highlight ? 'text-purple-200' : 'text-green-500'
+                                tier.highlight ? 'text-primary-200' : 'text-green-500'
                               }`}
                             />
                           ) : (
@@ -601,7 +601,7 @@ export const PartnerPricingView: React.FC = () => {
                               size={16}
                               className={`mt-0.5 flex-shrink-0 ${
                                 tier.highlight
-                                  ? 'text-purple-300/50'
+                                  ? 'text-primary-300/50'
                                   : 'text-slate-300 dark:text-slate-600'
                               }`}
                             />
@@ -610,10 +610,10 @@ export const PartnerPricingView: React.FC = () => {
                             className={`text-xs ${
                               feature.included
                                 ? tier.highlight
-                                  ? 'text-purple-100'
+                                  ? 'text-primary-100'
                                   : 'text-slate-700 dark:text-slate-300'
                                 : tier.highlight
-                                  ? 'text-purple-300/50'
+                                  ? 'text-primary-300/50'
                                   : 'text-slate-400 dark:text-slate-500'
                             } ${feature.highlight ? 'font-semibold' : ''}`}
                           >
@@ -630,7 +630,7 @@ export const PartnerPricingView: React.FC = () => {
                     >
                       <p
                         className={`mb-2 text-xs font-semibold uppercase tracking-wide ${
-                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
                         Wymagania
@@ -644,7 +644,7 @@ export const PartnerPricingView: React.FC = () => {
                             <span
                               className={
                                 tier.highlight
-                                  ? 'text-purple-200'
+                                  ? 'text-primary-200'
                                   : 'text-slate-600 dark:text-slate-400'
                               }
                             >
@@ -666,9 +666,9 @@ export const PartnerPricingView: React.FC = () => {
                       onClick={() => handleTierCta(tier)}
                       className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
                         tier.ctaVariant === 'primary'
-                          ? 'bg-white text-purple-700 shadow-lg hover:bg-purple-50'
+                          ? 'bg-white text-primary-700 shadow-lg hover:bg-primary-50'
                           : tier.ctaVariant === 'secondary'
-                            ? 'bg-purple-600 text-white hover:bg-purple-500'
+                            ? 'bg-primary-600 text-white hover:bg-primary-500'
                             : 'border-2 border-slate-300 text-navy-950 hover:bg-slate-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5'
                       }`}
                     >
@@ -685,7 +685,7 @@ export const PartnerPricingView: React.FC = () => {
                 const Icon = indicator.icon;
                 return (
                   <div key={idx} className="flex items-center gap-2">
-                    <Icon size={18} className="text-purple-500" />
+                    <Icon size={18} className="text-primary-500" />
                     <span>{indicator.label}</span>
                   </div>
                 );
@@ -702,7 +702,7 @@ export const PartnerPricingView: React.FC = () => {
               </h2>
               <p className="mt-4 text-slate-600 dark:text-slate-400">
                 Masz scenariusz, który wymaga niestandardowych warunków?{' '}
-                <button onClick={openContact} className="text-purple-600 hover:underline">
+                <button onClick={openContact} className="text-primary-600 hover:underline">
                   Skontaktuj się z nami
                 </button>
               </p>
@@ -723,7 +723,7 @@ export const PartnerPricingView: React.FC = () => {
                     className="flex w-full items-center justify-between p-4 text-left"
                   >
                     <div className="flex items-start gap-3">
-                      <HelpCircle size={20} className="mt-0.5 flex-shrink-0 text-purple-500" />
+                      <HelpCircle size={20} className="mt-0.5 flex-shrink-0 text-primary-500" />
                       <span className="font-bold text-navy-950 dark:text-white">
                         {faq.question}
                       </span>
@@ -748,17 +748,17 @@ export const PartnerPricingView: React.FC = () => {
           </div>
         </section>
 
-        <section className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-16">
+        <section className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-16">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-3xl font-black text-white">Gotowy do wejścia do programu?</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-purple-100">
+            <p className="mx-auto mt-4 max-w-2xl text-primary-100">
               Możesz wystartować aplikację od razu albo porozmawiać z nami o warunkach współpracy,
               certyfikacji i wspólnym motion sprzedażowym.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <button
                 onClick={startApplication}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-bold text-purple-700 shadow-lg transition hover:bg-purple-50 dark:bg-navy-900"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-bold text-primary-700 shadow-lg transition hover:bg-primary-50 dark:bg-navy-900"
               >
                 Start application
                 <ArrowRight size={18} />

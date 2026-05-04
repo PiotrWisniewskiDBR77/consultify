@@ -141,7 +141,7 @@ export const DataExportPanel: React.FC = () => {
         bg: 'bg-emerald-500/20',
         text: 'text-emerald-400',
       },
-      failed: { icon: <XCircle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
+      failed: { icon: <XCircle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
       expired: { icon: <AlertTriangle size={14} />, bg: 'bg-amber-500/20', text: 'text-amber-400' },
     };
     const config = configs[status] || configs.pending;
@@ -158,7 +158,7 @@ export const DataExportPanel: React.FC = () => {
 
   const getExportTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
-      full: 'bg-violet-500/20 text-violet-400',
+      full: 'bg-primary-500/20 text-primary-400',
       partial: 'bg-blue-500/20 text-blue-400',
       gdpr: 'bg-emerald-500/20 text-emerald-400',
     };
@@ -179,7 +179,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterOrgId(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -194,7 +194,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -217,7 +217,7 @@ export const DataExportPanel: React.FC = () => {
           <button
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 rounded-lg text-white font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={18} />
             Request Export
@@ -228,7 +228,7 @@ export const DataExportPanel: React.FC = () => {
       {/* Export Requests List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : requests.length === 0 ? (
         <div className="py-6">
@@ -286,7 +286,7 @@ export const DataExportPanel: React.FC = () => {
                   </div>
 
                   {request.error_message && (
-                    <p className="mt-2 text-sm text-red-400">{request.error_message}</p>
+                    <p className="mt-2 text-sm text-rose-400">{request.error_message}</p>
                   )}
                 </div>
 
@@ -306,7 +306,7 @@ export const DataExportPanel: React.FC = () => {
                     <button
                       onClick={() => handleCancelRequest(request.id)}
                       disabled
-                      className="p-2 text-red-400 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                      className="p-2 text-rose-400 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                       title={dataExportWorkflowUnavailableReason}
                     >
                       <Trash2 size={16} />
@@ -336,7 +336,7 @@ export const DataExportPanel: React.FC = () => {
                       onClick={() => setFormData((prev) => ({ ...prev, exportType: type }))}
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         formData.exportType === type
-                          ? 'bg-violet-500/20 border-violet-500/50 text-violet-400'
+                          ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
                           : 'bg-slate-800 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/20'
                       }`}
                     >
@@ -372,7 +372,7 @@ export const DataExportPanel: React.FC = () => {
                             }));
                           }
                         }}
-                        className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-500"
+                        className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-slate-800 text-primary-500"
                       />
                       <div>
                         <span className="text-sm text-slate-300 group-hover:text-white">
@@ -398,7 +398,7 @@ export const DataExportPanel: React.FC = () => {
               <button
                 onClick={handleCreateExport}
                 disabled={creating || formData.includeData.length === 0}
-                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
               >
                 {creating ? (
                   <Loader2 size={18} className="animate-spin" />

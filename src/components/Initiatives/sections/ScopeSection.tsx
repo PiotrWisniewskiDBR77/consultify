@@ -99,7 +99,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
     <div key={idx} className="group flex items-center gap-2 py-1">
       <span
         className={`w-2 h-2 rounded-full shrink-0 ${
-          dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-red-400'
+          dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-400'
         }`}
       />
       <input
@@ -121,7 +121,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
       />
       <button
         onClick={() => onRemove(idx)}
-        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
       >
         <Trash2 size={12} />
       </button>
@@ -132,8 +132,8 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
     <CollapsibleSection
       id="scope"
       title={isPolish ? 'Zakres i kryteria rezygnacji' : 'Scope & Kill Criteria'}
-      icon={<Scale size={18} className="text-violet-500 dark:text-violet-400" />}
-      iconBg="bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20"
+      icon={<Scale size={18} className="text-primary-500 dark:text-primary-400" />}
+      iconBg="bg-gradient-to-br from-primary-500/10 to-primary-500/10 dark:from-primary-500/20 dark:to-primary-500/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={
@@ -159,7 +159,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
             }
           }}
           disabled={isGeneratingAI === 'scope'}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-xs font-medium transition-all disabled:opacity-50"
         >
           {isGeneratingAI === 'scope' ? (
             <Loader2 size={14} className="animate-spin" />
@@ -224,7 +224,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
           <div className="flex-1 space-y-2 pl-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-400 shrink-0" />
+                <span className="w-3 h-3 rounded-full bg-rose-400 shrink-0" />
                 <div>
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                     {isPolish ? 'Poza zakresem' : 'Out of Scope'}
@@ -238,7 +238,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
               </div>
               <button
                 onClick={addOutScope}
-                className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
               >
                 <Plus size={14} />
                 {isPolish ? 'Dodaj' : 'Add item'}
@@ -272,7 +272,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
         <div className="space-y-2 pt-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+              <span className="w-3 h-3 rounded-full bg-rose-500 shrink-0" />
               <div>
                 <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                   {isPolish ? 'Kryteria rezygnacji (Kill Criteria)' : 'Kill Criteria'}
@@ -286,7 +286,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
             </div>
             <button
               onClick={addKill}
-              className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               <Plus size={14} />
               {isPolish ? 'Dodaj' : 'Add item'}
@@ -295,7 +295,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
           <div className="min-h-[40px]">
             {killCriteria.map((item, i) => (
               <div key={i} className="group flex items-center gap-2 py-1">
-                <AlertTriangle size={12} className="text-red-500 shrink-0" />
+                <AlertTriangle size={12} className="text-rose-500 shrink-0" />
                 <input
                   type="text"
                   value={item}
@@ -317,7 +317,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 />
                 <button
                   onClick={() => removeKill(i)}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
                 >
                   <Trash2 size={12} />
                 </button>

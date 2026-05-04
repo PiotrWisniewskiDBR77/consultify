@@ -195,7 +195,7 @@
   }
 
   .admin-badge-error {
-    @apply bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400;
+    @apply bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400;
   }
 
   .admin-badge-info {

@@ -148,7 +148,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
       is_system: false,
       layout_type: 'modern',
       paper_size: 'A4',
-      primary_color: '#8B5CF6',
+      primary_color: '#6366F1',
       secondary_color: '#10B981',
       text_color: '#1F2937',
       background_color: '#FFFFFF',
@@ -177,7 +177,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
           <h3 className="font-semibold text-slate-900 dark:text-white">Templates</h3>
           <button
             onClick={createNewTemplate}
-            className="p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+            className="p-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -185,7 +185,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
         <div className="divide-y divide-slate-200 dark:divide-white/10 max-h-96 overflow-y-auto">
           {loading ? (
             <div className="p-8 text-center">
-              <RefreshCw className="w-6 h-6 animate-spin mx-auto text-purple-600" />
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto text-primary-600" />
             </div>
           ) : templates.length === 0 ? (
             <div className="p-8 text-center text-slate-500 dark:text-slate-400">No templates</div>
@@ -198,7 +198,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
                   setEditMode(false);
                 }}
                 className={`p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 ${
-                  selectedTemplate?.id === tpl.id ? 'bg-purple-50 dark:bg-purple-900/20' : ''
+                  selectedTemplate?.id === tpl.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -284,7 +284,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
                     </button>
                     <button
                       onClick={() => handleDelete(selectedTemplate.id)}
-                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -338,7 +338,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
                           key={l.value}
                           type="button"
                           onClick={() => updateTemplate('layout_type', l.value)}
-                          className={`p-3 rounded-lg border text-center transition-all ${selectedTemplate.layout_type === l.value ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'}`}
+                          className={`p-3 rounded-lg border text-center transition-all ${selectedTemplate.layout_type === l.value ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'}`}
                         >
                           <Layout className="w-5 h-5 mx-auto mb-1" />
                           <span className="text-xs font-medium">{l.label}</span>
@@ -529,7 +529,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
       )}
 
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 right-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2 rounded-lg shadow-lg">
           {error}
           <button onClick={() => setError(null)} className="ml-2 font-bold">
             ×

@@ -243,8 +243,8 @@ export function WorkflowDashboard({
     {
       id: 'sync',
       icon: RefreshCw,
-      iconColor: 'text-cyan-500',
-      bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
+      iconColor: 'text-blue-500',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
       titleEn: 'Table Sync',
       titlePl: 'Synchronizacja',
       descEn: 'Keep tables in sync automatically',
@@ -265,8 +265,8 @@ export function WorkflowDashboard({
     {
       id: 'sharing',
       icon: Users,
-      iconColor: 'text-violet-500',
-      bgColor: 'bg-violet-50 dark:bg-violet-900/20',
+      iconColor: 'text-primary-500',
+      bgColor: 'bg-primary-50 dark:bg-primary-900/20',
       titleEn: 'Sharing',
       titlePl: 'Udostępnianie',
       descEn: 'Share views, manage collaborators and API access',

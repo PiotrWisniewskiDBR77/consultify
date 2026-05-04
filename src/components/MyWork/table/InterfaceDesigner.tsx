@@ -362,7 +362,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
                     e.stopPropagation();
                     removeBlock(block.id);
                   }}
-                  className="text-gray-400 hover:text-red-500 text-sm transition-colors"
+                  className="text-gray-400 hover:text-rose-500 text-sm transition-colors"
                 >
                   ×
                 </button>

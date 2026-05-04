@@ -213,7 +213,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               autoFocus
             />
           </div>
@@ -241,7 +241,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                           onClick={() => setType(t)}
                           className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl text-[9px] font-medium transition-all ${
                             isActive
-                              ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/30'
+                              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/30'
                               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                           }`}
                         >
@@ -266,7 +266,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 value={options}
                 onChange={(e) => setOptions(e.target.value)}
                 placeholder="Option 1, Option 2, Option 3"
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
             </div>
           )}
@@ -290,7 +290,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                     value={formula}
                     onChange={(e) => setFormula(e.target.value)}
                     placeholder="{impact} * {effort}"
-                    className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                    className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
                   />
                   <p className="mt-1 text-[9px] text-slate-400">
                     {isPl
@@ -328,7 +328,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                     : 'Assess risk based on company context...'
                 }
                 rows={3}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30 resize-none"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30 resize-none"
               />
             </div>
           )}
@@ -341,7 +341,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               <select
                 value={currencyCode}
                 onChange={(e) => setCurrencyCode(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               >
                 {['USD', 'EUR', 'PLN', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD'].map((c) => (
                   <option key={c} value={c}>
@@ -360,7 +360,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               <select
                 value={dateFormat}
                 onChange={(e) => setDateFormat(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               >
                 <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -381,7 +381,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 value={relationTarget}
                 onChange={(e) => setRelationTarget(e.target.value)}
                 placeholder={isPl ? 'np. Inicjatywy, Zadania...' : 'e.g. Initiatives, Tasks...'}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
               <p className="mt-1 text-[9px] text-slate-400">
                 {isPl
@@ -401,7 +401,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   value={rollupSource}
                   onChange={(e) => setRollupSource(e.target.value)}
                   placeholder={isPl ? 'np. tasks_relation' : 'e.g. tasks_relation'}
-                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
                 />
               </div>
               <div>
@@ -411,7 +411,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 <select
                   value={rollupFunction}
                   onChange={(e) => setRollupFunction(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
                 >
                   <option value="count">Count</option>
                   <option value="sum">Sum</option>

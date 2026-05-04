@@ -68,12 +68,12 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
         >
           {/* Background Effects */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-[120px] animate-pulse" />
             <div
               className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"
               style={{ animationDelay: '500ms' }}
             />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[150px]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-[150px]" />
           </div>
 
           {/* Content */}
@@ -85,7 +85,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
               transition={{ duration: 0.5 }}
               className="mb-12"
             >
-              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-2xl shadow-purple-500/30 mb-6">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-2xl shadow-primary-500/30 mb-6">
                 <img
                   src="/assets/logos/logo-icon.png"
                   alt="Consultify"
@@ -127,7 +127,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                         isCompleted
                           ? 'bg-emerald-500/20'
                           : isActive
-                            ? 'bg-purple-500/20'
+                            ? 'bg-primary-500/20'
                             : 'bg-white/5'
                       }`}
                     >
@@ -136,7 +136,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                       ) : (
                         <Icon
                           size={20}
-                          className={isActive ? 'text-purple-400' : 'text-white/30'}
+                          className={isActive ? 'text-primary-400' : 'text-white/30'}
                         />
                       )}
                     </div>
@@ -151,7 +151,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                       <motion.div
                         animate={{ opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 1, repeat: Infinity }}
-                        className="ml-auto w-2 h-2 bg-purple-400 rounded-full"
+                        className="ml-auto w-2 h-2 bg-primary-400 rounded-full"
                       />
                     )}
                   </motion.div>
@@ -165,7 +165,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                 initial={{ width: '0%' }}
                 animate={{ width: `${(completedSteps.length / LOADING_STEPS.length) * 100}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-indigo-500 rounded-full"
               />
             </div>
           </div>

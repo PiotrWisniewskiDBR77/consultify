@@ -3,46 +3,19 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
-import { Api } from '../../services/api';
+import {
+  OrganizationContextProcessingJob,
+  OrganizationContextProcessingQueueSummary,
+  OrganizationContextQueueOutcomeEvent,
+  OrganizationContextWorkerApi,
+  OrganizationContextWorkerRunHistoryEvent,
+  OrganizationContextWorkerRunHistoryFilter,
+  OrganizationContextWorkerRunResult,
+} from '../../services/api/organizationContextWorker.api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { OrganizationContextWorkerOperationsPanel } from './OrganizationContextWorkerOperationsPanel';
 
-type ContextProcessingJob = {
-  id: string;
-  documentId: string;
-  status: string;
-  attemptCount: number;
-  errorCode?: string | null;
-  lockedBy?: string | null;
-  createdAt: string;
-};
-
-type ContextProcessingQueueSummary = {
-  adapter: string;
-  configuredBackend?: string;
-  queueBackendReady?: boolean;
-  queueBackendReason?: string | null;
-  externalQueueName?: string | null;
-  queueCanEnqueue?: boolean;
-  queueCanConsumeLocally?: boolean;
-  queueAdapterReason?: string | null;
-  schedulerEnabled?: boolean;
-  pendingCount: number;
-  blockedCount: number;
-  claimedCount?: number;
-  staleClaimedCount?: number;
-  oldestClaimedAt?: string | null;
-  deadLetterCount?: number;
-  latestDeadLetterAt?: string | null;
-  staleLockMs?: number;
-};
-
-type ContextWorkerRunResult = {
-  processed?: number;
-  retried?: number;
-  deadLettered?: number;
-  recoveredLocks?: number;
-};
+type QueueOutcomeFilter = 'all' | 'attention';
 
 function formatTimestamp(timestamp: string) {
   const date = new Date(timestamp);
@@ -53,38 +26,145 @@ function formatTimestamp(timestamp: string) {
 export function OrganizationContextWorkerOperationsView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [jobs, setJobs] = useState<ContextProcessingJob[]>([]);
-  const [summary, setSummary] = useState<ContextProcessingQueueSummary | null>(null);
-  const [lastRunResult, setLastRunResult] = useState<ContextWorkerRunResult | null>(null);
+  const [jobs, setJobs] = useState<OrganizationContextProcessingJob[]>([]);
+  const [summary, setSummary] = useState<OrganizationContextProcessingQueueSummary | null>(null);
+  const [lastRunResult, setLastRunResult] = useState<OrganizationContextWorkerRunResult | null>(
+    null
+  );
+  const [queueOutcomeEvents, setQueueOutcomeEvents] = useState<
+    OrganizationContextQueueOutcomeEvent[]
+  >([]);
+  const [workerRunHistory, setWorkerRunHistory] = useState<
+    OrganizationContextWorkerRunHistoryEvent[]
+  >([]);
+  const [queueOutcomeLastLoadedAt, setQueueOutcomeLastLoadedAt] = useState<string | null>(null);
+  const [queueOutcomeFilter, setQueueOutcomeFilter] = useState<QueueOutcomeFilter>('all');
+  const [workerRunHistoryFilter, setWorkerRunHistoryFilter] =
+    useState<OrganizationContextWorkerRunHistoryFilter>('all');
+  const [refreshingQueueOutcomeEvents, setRefreshingQueueOutcomeEvents] = useState(false);
+  const [refreshingAsyncUploadStatus, setRefreshingAsyncUploadStatus] = useState(false);
+  const [asyncUploadStatusLastRefreshedAt, setAsyncUploadStatusLastRefreshedAt] = useState<
+    string | null
+  >(null);
   const [running, setRunning] = useState(false);
   const [requeueingJobId, setRequeueingJobId] = useState<string | null>(null);
+  const [recoveringStaleLocks, setRecoveringStaleLocks] = useState(false);
 
-  const loadWorkerOperations = useCallback(async () => {
-    setLoading(true);
+  const loadWorkerOperations = useCallback(
+    async (
+      filter: QueueOutcomeFilter = 'all',
+      runFilter: OrganizationContextWorkerRunHistoryFilter = 'all'
+    ) => {
+      setLoading(true);
+      try {
+        setError(null);
+        const [jobsResponse, summaryResponse, queueOutcomeResponse, runHistoryResponse] =
+          await Promise.all([
+            OrganizationContextWorkerApi.getProcessingJobs({ limit: 25 }),
+            OrganizationContextWorkerApi.getProcessingQueueSummary(),
+            OrganizationContextWorkerApi.getQueueOutcomeLineage({
+              limit: 5,
+              eventType: filter === 'attention' ? 'external_queue_outcome_attention' : undefined,
+            }),
+            OrganizationContextWorkerApi.getWorkerRunHistory({ limit: 5, outcome: runFilter }),
+          ]);
+        setJobs(Array.isArray(jobsResponse?.data) ? jobsResponse.data : []);
+        setSummary(summaryResponse?.data || null);
+        setQueueOutcomeEvents(
+          Array.isArray(queueOutcomeResponse?.data) ? queueOutcomeResponse.data : []
+        );
+        setWorkerRunHistory(Array.isArray(runHistoryResponse?.data) ? runHistoryResponse.data : []);
+        setQueueOutcomeLastLoadedAt(new Date().toISOString());
+      } catch (loadError: unknown) {
+        const message = normalizeApiErrorMessage(
+          loadError,
+          'Organization context worker operations unavailable'
+        );
+        setError(message);
+        setJobs([]);
+        setSummary(null);
+        setQueueOutcomeEvents([]);
+        setWorkerRunHistory([]);
+        setQueueOutcomeLastLoadedAt(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const refreshQueueOutcomeEvents = useCallback(
+    async (filter: QueueOutcomeFilter = queueOutcomeFilter) => {
+      setRefreshingQueueOutcomeEvents(true);
+      try {
+        const response = await OrganizationContextWorkerApi.getQueueOutcomeLineage({
+          limit: 5,
+          eventType: filter === 'attention' ? 'external_queue_outcome_attention' : undefined,
+        });
+        setQueueOutcomeEvents(Array.isArray(response?.data) ? response.data : []);
+        setQueueOutcomeLastLoadedAt(new Date().toISOString());
+      } catch (refreshError: unknown) {
+        toast.error(normalizeApiErrorMessage(refreshError, 'Queue outcome audit refresh failed'));
+      } finally {
+        setRefreshingQueueOutcomeEvents(false);
+      }
+    },
+    [queueOutcomeFilter]
+  );
+
+  const handleQueueOutcomeFilterChange = useCallback(
+    async (filter: QueueOutcomeFilter) => {
+      setQueueOutcomeFilter(filter);
+      await refreshQueueOutcomeEvents(filter);
+    },
+    [refreshQueueOutcomeEvents]
+  );
+
+  const handleWorkerRunHistoryFilterChange = useCallback(
+    async (filter: OrganizationContextWorkerRunHistoryFilter) => {
+      setWorkerRunHistoryFilter(filter);
+      try {
+        const response = await OrganizationContextWorkerApi.getWorkerRunHistory({
+          limit: 5,
+          outcome: filter,
+        });
+        setWorkerRunHistory(Array.isArray(response?.data) ? response.data : []);
+      } catch (historyError: unknown) {
+        toast.error(normalizeApiErrorMessage(historyError, 'Worker run history refresh failed'));
+      }
+    },
+    []
+  );
+
+  const refreshAsyncUploadStatus = useCallback(async () => {
+    setRefreshingAsyncUploadStatus(true);
     try {
-      setError(null);
       const [jobsResponse, summaryResponse] = await Promise.all([
-        Api.getOrganizationContextProcessingJobsAudit({ limit: 25 }),
-        Api.getOrganizationContextProcessingQueueSummary(),
+        OrganizationContextWorkerApi.getProcessingJobs({ limit: 25 }),
+        OrganizationContextWorkerApi.getProcessingQueueSummary(),
       ]);
       setJobs(Array.isArray(jobsResponse?.data) ? jobsResponse.data : []);
       setSummary(summaryResponse?.data || null);
-    } catch (loadError: unknown) {
-      const message = normalizeApiErrorMessage(
-        loadError,
-        'Organization context worker operations unavailable'
-      );
-      setError(message);
-      setJobs([]);
-      setSummary(null);
+      setAsyncUploadStatusLastRefreshedAt(new Date().toISOString());
+    } catch (refreshError: unknown) {
+      toast.error(normalizeApiErrorMessage(refreshError, 'Async upload status refresh failed'));
     } finally {
-      setLoading(false);
+      setRefreshingAsyncUploadStatus(false);
     }
   }, []);
 
   useEffect(() => {
-    loadWorkerOperations();
+    loadWorkerOperations('all');
   }, [loadWorkerOperations]);
+
+  useEffect(() => {
+    const processingCount = Number(summary?.asyncUploadReadBack?.processingDocumentCount || 0);
+    if (processingCount <= 0) return undefined;
+    const intervalId = window.setInterval(() => {
+      void refreshAsyncUploadStatus();
+    }, 15_000);
+    return () => window.clearInterval(intervalId);
+  }, [refreshAsyncUploadStatus, summary?.asyncUploadReadBack?.processingDocumentCount]);
 
   const handleRunWorkerOnce = async () => {
     const confirmed = window.confirm(
@@ -94,7 +174,7 @@ export function OrganizationContextWorkerOperationsView() {
 
     setRunning(true);
     try {
-      const response = await Api.runOrganizationContextWorkerOnce({ limit: 5 });
+      const response = await OrganizationContextWorkerApi.runWorkerOnce({ limit: 5 });
       const result = response?.data || {};
       setLastRunResult(result);
       toast.success(
@@ -102,7 +182,7 @@ export function OrganizationContextWorkerOperationsView() {
           result.retried || 0
         )} retried, ${Number(result.deadLettered || 0)} dead-lettered.`
       );
-      await loadWorkerOperations();
+      await loadWorkerOperations(queueOutcomeFilter, workerRunHistoryFilter);
     } catch (runError: unknown) {
       toast.error(normalizeApiErrorMessage(runError, 'Context worker run failed'));
     } finally {
@@ -110,7 +190,7 @@ export function OrganizationContextWorkerOperationsView() {
     }
   };
 
-  const handleRequeueJob = async (job: ContextProcessingJob) => {
+  const handleRequeueJob = async (job: OrganizationContextProcessingJob) => {
     const confirmed = window.confirm(
       `Requeue dead-letter context processing job ${job.id}? This only schedules another attempt and writes an audit event.`
     );
@@ -118,13 +198,34 @@ export function OrganizationContextWorkerOperationsView() {
 
     setRequeueingJobId(job.id);
     try {
-      await Api.requeueOrganizationContextProcessingJob(job.id);
+      await OrganizationContextWorkerApi.requeueProcessingJob(job.id);
       toast.success('Context processing job requeued.');
-      await loadWorkerOperations();
+      await loadWorkerOperations(queueOutcomeFilter, workerRunHistoryFilter);
     } catch (requeueError: unknown) {
       toast.error(normalizeApiErrorMessage(requeueError, 'Context processing job requeue failed'));
     } finally {
       setRequeueingJobId(null);
+    }
+  };
+
+  const handleRecoverStaleLocks = async () => {
+    const confirmed = window.confirm(
+      'Recover stale organization context worker locks? This moves stale claimed jobs back to retry scheduled and writes an audit event.'
+    );
+    if (!confirmed) return;
+
+    setRecoveringStaleLocks(true);
+    try {
+      const response = await OrganizationContextWorkerApi.recoverStaleLocks({
+        staleLockMs: summary?.staleLockMs,
+      });
+      const recoveredLocks = Number(response?.data?.recoveredLocks || 0);
+      toast.success(`Recovered ${recoveredLocks} stale context worker locks.`);
+      await loadWorkerOperations(queueOutcomeFilter, workerRunHistoryFilter);
+    } catch (recoverError: unknown) {
+      toast.error(normalizeApiErrorMessage(recoverError, 'Stale lock recovery failed'));
+    } finally {
+      setRecoveringStaleLocks(false);
     }
   };
 
@@ -144,14 +245,14 @@ export function OrganizationContextWorkerOperationsView() {
             type="button"
             onClick={handleRunWorkerOnce}
             disabled={loading || running}
-            className="flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-500 disabled:opacity-50"
           >
             {running ? <RefreshCw size={14} className="animate-spin" /> : <PlayCircle size={14} />}
             Run worker once
           </button>
           <button
             type="button"
-            onClick={loadWorkerOperations}
+            onClick={() => loadWorkerOperations(queueOutcomeFilter, workerRunHistoryFilter)}
             disabled={loading}
             className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-50 dark:border-navy-600 dark:hover:bg-navy-700"
           >
@@ -173,9 +274,23 @@ export function OrganizationContextWorkerOperationsView() {
           jobs={jobs}
           summary={summary}
           lastRunResult={lastRunResult}
+          queueOutcomeEvents={queueOutcomeEvents}
+          workerRunHistory={workerRunHistory}
+          queueOutcomeLastLoadedAt={queueOutcomeLastLoadedAt}
+          refreshingQueueOutcomeEvents={refreshingQueueOutcomeEvents}
+          refreshingAsyncUploadStatus={refreshingAsyncUploadStatus}
+          asyncUploadStatusLastRefreshedAt={asyncUploadStatusLastRefreshedAt}
+          queueOutcomeFilter={queueOutcomeFilter}
+          onQueueOutcomeFilterChange={handleQueueOutcomeFilterChange}
+          onRefreshQueueOutcomeEvents={refreshQueueOutcomeEvents}
+          onRefreshAsyncUploadStatus={refreshAsyncUploadStatus}
+          workerRunHistoryFilter={workerRunHistoryFilter}
+          onWorkerRunHistoryFilterChange={handleWorkerRunHistoryFilterChange}
           formatTimestamp={formatTimestamp}
           requeueingJobId={requeueingJobId}
           onRequeueJob={handleRequeueJob}
+          recoveringStaleLocks={recoveringStaleLocks}
+          onRecoverStaleLocks={handleRecoverStaleLocks}
         />
       )}
     </div>

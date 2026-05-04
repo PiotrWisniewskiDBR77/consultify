@@ -214,7 +214,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             <button
               onClick={handleAICalibrate}
               disabled={aiLoading}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors disabled:opacity-50"
             >
               {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
               {isPl ? 'AI kalibracja' : 'AI calibrate'}
@@ -238,7 +238,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                     max={100}
                     value={w.weight}
                     onChange={(e) => handleWeightChange(w.colKey, Number(e.target.value))}
-                    className="flex-1 accent-violet-500 h-1.5"
+                    className="flex-1 accent-primary-500 h-1.5"
                   />
                   <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 w-8 text-right">
                     {w.weight}%
@@ -255,7 +255,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
               <div className="flex items-center gap-2 pt-1">
                 <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-violet-500 transition-all"
+                    className="h-full rounded-full bg-primary-500 transition-all"
                     style={{ width: `${Math.min(totalWeight, 100)}%` }}
                   />
                 </div>
@@ -339,7 +339,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           <button
             onClick={handleApply}
             disabled={scoredNodes.length === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors disabled:opacity-50"
           >
             <Save size={12} />
             {isPl ? 'Zastosuj ranking' : 'Apply ranking'}

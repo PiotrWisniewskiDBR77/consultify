@@ -270,7 +270,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
         {saveError && (
           <div
             role="alert"
-            className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+            className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
           >
             {saveError}
           </div>
@@ -366,9 +366,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 
             {/* Info Box */}
             {integrations.length > 0 && (
-              <div className="p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg">
+              <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
                 <p className="text-sm text-slate-400 dark:text-slate-500">
-                  <Bell size={14} className="inline mr-2 text-violet-400" />
+                  <Bell size={14} className="inline mr-2 text-primary-400" />
                   {t(
                     'settings.notifications.integrationNote',
                     `You have ${integrations.length} connected integration(s). Notifications can be sent to these channels as well.`
@@ -470,8 +470,8 @@ const NotificationToggle: React.FC<{ checked: boolean; onChange: () => void }> =
     aria-checked={checked}
     className={cn(
       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-      'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-navy-900',
-      checked ? 'bg-violet-600' : 'bg-white/10'
+      'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+      checked ? 'bg-primary-600' : 'bg-white/10'
     )}
   >
     <span

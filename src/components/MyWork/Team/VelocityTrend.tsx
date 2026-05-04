@@ -84,7 +84,7 @@ const SparklineChart: React.FC<{ data: number[]; target?: number }> = ({ data, t
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-violet-500"
+        className="text-primary-500"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
         transition={{ duration: 1, ease: 'easeOut' }}
@@ -98,7 +98,7 @@ const SparklineChart: React.FC<{ data: number[]; target?: number }> = ({ data, t
           cy={p.y}
           r={i === points.length - 1 ? 5 : 3}
           fill="currentColor"
-          className={i === points.length - 1 ? 'text-violet-500' : 'text-violet-400'}
+          className={i === points.length - 1 ? 'text-primary-500' : 'text-primary-400'}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.8 + i * 0.1 }}
@@ -172,8 +172,8 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-            <Activity size={16} className="text-violet-600 dark:text-violet-400" />
+          <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+            <Activity size={16} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h4 className="text-sm font-semibold text-navy-900 dark:text-white">

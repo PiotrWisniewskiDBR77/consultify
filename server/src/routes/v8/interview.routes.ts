@@ -27,6 +27,7 @@ import {
 } from '../../services/InterviewAssignmentService.js';
 import {
   buildInterviewReportPackExportManifest,
+  buildInterviewReportPackMarkdownExport,
   createInterviewReportPackDraft,
   createInterviewReportPackRevision,
   evaluateInterviewReportPackReadiness,
@@ -556,7 +557,7 @@ router.get(
 
     const reportPack = await createInterviewReportPackDraft({
       organizationId,
-      insight,
+      insight: insight as any,
       createdBy: userId,
     });
     return res.json({ data: { reportPack }, meta: insightReadMeta() });
@@ -588,7 +589,7 @@ router.get(
 
     const reportPack = await createInterviewReportPackDraft({
       organizationId,
-      insight,
+      insight: insight as any,
       createdBy: userId,
     });
     return res.json({
@@ -618,7 +619,7 @@ router.post(
 
     await createInterviewReportPackDraft({
       organizationId,
-      insight,
+      insight: insight as any,
       createdBy: userId,
     });
 
@@ -744,6 +745,79 @@ router.get(
     );
 
     return res.json({ data: { exportManifest }, meta: insightReadMeta() });
+  })
+);
+
+router.get(
+  '/insights/:id/report-pack/export-markdown',
+  requirePermission('INTERVIEW_INSIGHTS_PUBLISH'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res.status(403).json({ error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    let markdownExport;
+    try {
+      markdownExport = await buildInterviewReportPackMarkdownExport({
+        organizationId,
+        insightId: id,
+      });
+    } catch (error) {
+      const knownError = error as { code?: unknown; message?: unknown; statusCode?: unknown };
+      if (knownError.code === 'INTERVIEW_REPORT_PACK_EXPORT_BLOCKED') {
+        return res.status(Number(knownError.statusCode) || 409).json({
+          error:
+            typeof knownError.message === 'string'
+              ? knownError.message
+              : 'Only published report packs can be exported as client-ready material.',
+          code: 'INTERVIEW_REPORT_PACK_EXPORT_BLOCKED',
+        });
+      }
+      throw error;
+    }
+
+    if (!markdownExport) {
+      return res.status(404).json({
+        error: 'Report pack not found',
+        code: 'INTERVIEW_REPORT_PACK_NOT_FOUND',
+      });
+    }
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_insight_audit_log
+       (id, organization_id, insight_id, entity_type, entity_id, action, actor_user_id, detail_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        organizationId,
+        id,
+        'interview_report_pack',
+        markdownExport.reportPackId,
+        'report_pack_client_markdown_exported',
+        userId || null,
+        JSON.stringify({
+          reportPackId: markdownExport.reportPackId,
+          worksheetCount: markdownExport.worksheetCount,
+          exportedAt: markdownExport.exportedAt,
+          sourceManifestHash: markdownExport.sourceManifestHash,
+          exportHash: markdownExport.exportHash,
+          format: markdownExport.format,
+        }),
+        new Date().toISOString(),
+      ]
+    );
+
+    return res.json({ data: { markdownExport }, meta: insightReadMeta() });
   })
 );
 
@@ -1480,6 +1554,14 @@ router.get(
             ? `, hash ${String(detail.manifestHash).slice(0, 12)}`
             : '';
           return `Report pack export manifest downloaded (${readinessStatus}${worksheetCount}${hash})`;
+        }
+        if (entry.type === 'report_pack_client_markdown_exported') {
+          const worksheetCount =
+            detail.worksheetCount !== undefined ? `, ${detail.worksheetCount} worksheets` : '';
+          const hash = detail.exportHash
+            ? `, export hash ${String(detail.exportHash).slice(0, 12)}`
+            : '';
+          return `Client-ready Markdown report downloaded (${detail.format || 'markdown'}${worksheetCount}${hash})`;
         }
         if (entry.type === 'report_pack_revision_created') {
           const version = detail.version !== undefined ? ` v${detail.version}` : '';

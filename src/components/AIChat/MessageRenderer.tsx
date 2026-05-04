@@ -1472,7 +1472,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 isDone
                                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
                                   : isError
-                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                                    ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
                                     : isActive
                                       ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
                                       : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -1481,7 +1481,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               {isDone ? (
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                               ) : isError ? (
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               ) : isActive ? (
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                               ) : (
@@ -1593,7 +1593,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         speak(userVisibleContent);
                       }, 60);
                     }}
-                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                     title={
                       voiceState.isSpeaking
                         ? t('chat.actions.stop', 'Stop')
@@ -1715,7 +1715,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             <button
               onClick={() => handleSaveToContext(msg.id, userVisibleContent, 'ai')}
               disabled={isContextSaveBusy || isContextSaved}
-              className="p-1.5 rounded-md text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-md text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title={
                 isContextSaved
                   ? t('chat.actions.savedToContext', 'Saved to Context OS')

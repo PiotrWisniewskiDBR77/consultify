@@ -299,7 +299,7 @@ export const AIGovernanceTab: React.FC = () => {
           {saveError && (
             <div
               role="alert"
-              className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+              className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
             >
               {saveError}
             </div>
@@ -491,7 +491,7 @@ export const AIGovernanceTab: React.FC = () => {
           <>
             <div className="flex items-center gap-3 text-sm">
               {errorCount > 0 ? (
-                <span className="inline-flex items-center gap-2 text-red-600 dark:text-red-400">
+                <span className="inline-flex items-center gap-2 text-rose-600 dark:text-rose-400">
                   <ShieldAlert size={16} /> {errorCount} errors
                 </span>
               ) : (
@@ -536,7 +536,7 @@ export const AIGovernanceTab: React.FC = () => {
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : c.status === 'warn'
                             ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-red-600 dark:text-red-400'
+                            : 'text-rose-600 dark:text-rose-400'
                       }`}
                     >
                       {c.status}

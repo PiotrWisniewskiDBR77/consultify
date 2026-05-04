@@ -323,8 +323,8 @@ export function ABTestingDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-xl">
-              <FlaskConical size={24} className="text-purple-500" />
+            <div className="p-3 bg-primary-500/10 rounded-xl">
+              <FlaskConical size={24} className="text-primary-500" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">A/B Testing</h1>
@@ -346,7 +346,7 @@ export function ABTestingDashboard() {
               onClick={() => setShowCreateModal(true)}
               disabled={!!error}
               title={error || undefined}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               <Plus size={16} />
               New Experiment
@@ -363,7 +363,7 @@ export function ABTestingDashboard() {
               disabled={!!error}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 statusFilter === status
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -376,7 +376,7 @@ export function ABTestingDashboard() {
         <div className="space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-20 bg-white dark:bg-navy-800 rounded-xl">
-              <Loader2 size={32} className="animate-spin text-purple-500" />
+              <Loader2 size={32} className="animate-spin text-primary-500" />
             </div>
           ) : error ? (
             <div className="bg-white dark:bg-navy-800 rounded-xl p-6">
@@ -389,7 +389,7 @@ export function ABTestingDashboard() {
               <button
                 onClick={() => setShowCreateModal(true)}
                 disabled={!!error}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 Create First Experiment
               </button>
@@ -767,7 +767,7 @@ export function ABTestingDashboard() {
                   </label>
                   <button
                     onClick={addVariant}
-                    className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                    className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
                   >
                     <Plus size={14} />
                     Add Variant
@@ -811,7 +811,7 @@ export function ABTestingDashboard() {
                       {newExperiment.variants.length > 2 && (
                         <button
                           onClick={() => removeVariant(index)}
-                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                         >
                           <X size={16} />
                         </button>
@@ -822,7 +822,7 @@ export function ABTestingDashboard() {
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   Total traffic: {newExperiment.variants.reduce((sum, v) => sum + v.traffic, 0)}%
                   {newExperiment.variants.reduce((sum, v) => sum + v.traffic, 0) !== 100 && (
-                    <span className="text-red-500 ml-2">(must be 100%)</span>
+                    <span className="text-rose-500 ml-2">(must be 100%)</span>
                   )}
                 </p>
               </div>
@@ -837,7 +837,7 @@ export function ABTestingDashboard() {
               <button
                 onClick={handleCreateExperiment}
                 disabled={creating || !!error}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
                 {creating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 Create Experiment

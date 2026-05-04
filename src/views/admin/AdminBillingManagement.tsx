@@ -879,14 +879,14 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                             <div
                               className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                                 addon.type === 'tokens'
-                                  ? 'bg-purple-100 dark:bg-purple-900/30'
+                                  ? 'bg-primary-100 dark:bg-primary-900/30'
                                   : addon.type === 'storage'
                                     ? 'bg-blue-100 dark:bg-blue-900/30'
                                     : 'bg-green-100 dark:bg-green-900/30'
                               }`}
                             >
                               {addon.type === 'tokens' ? (
-                                <Zap size={18} className="text-purple-600 dark:text-purple-400" />
+                                <Zap size={18} className="text-primary-600 dark:text-primary-400" />
                               ) : addon.type === 'storage' ? (
                                 <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
                               ) : (
@@ -1041,7 +1041,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 {billingActionError && (
                   <div
                     role="alert"
-                    className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"
+                    className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
                   >
                     {billingActionError}
                   </div>

@@ -194,7 +194,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         label: t('results.status.onTarget', 'On target'),
         color: 'bg-emerald-500',
       },
-      { value: 'below', label: t('results.status.below', 'Below target'), color: 'bg-red-500' },
+      { value: 'below', label: t('results.status.below', 'Below target'), color: 'bg-rose-500' },
       { value: 'no-data', label: t('results.status.noData', 'No data'), color: 'bg-slate-400' },
     ],
     [t]
@@ -413,10 +413,10 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                     kpi.openDeviationCase.severity === 'RED'
                       ? t('results.deviation.red', 'Deviation (Red)')
                       : t('results.deviation.amber', 'Deviation (Amber)'),
-                  dot: kpi.openDeviationCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500',
+                  dot: kpi.openDeviationCase.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500',
                   className:
                     kpi.openDeviationCase.severity === 'RED'
-                      ? 'bg-red-500/10 text-red-400'
+                      ? 'bg-rose-500/10 text-rose-400'
                       : 'bg-amber-500/10 text-amber-400 dark:text-amber-300',
                 } as MetaPill,
               ]

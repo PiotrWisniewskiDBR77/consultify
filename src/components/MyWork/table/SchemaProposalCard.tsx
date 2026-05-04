@@ -45,13 +45,13 @@ const OP_META: Record<string, { en: string; pl: string; icon: LucideIcon; color:
     en: 'Create table',
     pl: 'Utwórz tabelę',
     icon: Table2,
-    color: 'text-violet-600 dark:text-violet-400',
+    color: 'text-primary-600 dark:text-primary-400',
   },
   add_table: {
     en: 'Create table',
     pl: 'Utwórz tabelę',
     icon: Table2,
-    color: 'text-violet-600 dark:text-violet-400',
+    color: 'text-primary-600 dark:text-primary-400',
   },
   create_field: {
     en: 'Add field',
@@ -75,7 +75,7 @@ const OP_META: Record<string, { en: string; pl: string; icon: LucideIcon; color:
     en: 'Delete field',
     pl: 'Usuń pole',
     icon: Trash2,
-    color: 'text-red-600 dark:text-red-400',
+    color: 'text-rose-600 dark:text-rose-400',
   },
   create_view: {
     en: 'Create view',
@@ -93,13 +93,13 @@ const OP_META: Record<string, { en: string; pl: string; icon: LucideIcon; color:
     en: 'Add record',
     pl: 'Dodaj rekord',
     icon: Layers,
-    color: 'text-teal-600 dark:text-teal-400',
+    color: 'text-blue-600 dark:text-blue-400',
   },
   add_record: {
     en: 'Add record',
     pl: 'Dodaj rekord',
     icon: Layers,
-    color: 'text-teal-600 dark:text-teal-400',
+    color: 'text-blue-600 dark:text-blue-400',
   },
 };
 
@@ -273,7 +273,7 @@ const OperationItem: React.FC<{
     <div
       className={`rounded-xl border transition-all duration-150 ${
         selected
-          ? 'border-violet-400/50 bg-violet-500/5 dark:bg-violet-500/10'
+          ? 'border-primary-400/50 bg-primary-500/5 dark:bg-primary-500/10'
           : 'border-slate-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/50'
       }`}
     >
@@ -281,7 +281,7 @@ const OperationItem: React.FC<{
         <button
           onClick={onToggleSelect}
           className={`flex-shrink-0 w-4 h-4 rounded border transition-colors ${
-            selected ? 'border-violet-500 bg-violet-500' : 'border-slate-300 dark:border-zinc-600'
+            selected ? 'border-primary-500 bg-primary-500' : 'border-slate-300 dark:border-zinc-600'
           } flex items-center justify-center`}
         >
           {selected && <Check size={10} className="text-white" />}
@@ -329,13 +329,13 @@ function renderPayloadDetails(payload: Record<string, unknown>, isPl: boolean): 
       <div className="space-y-1">
         {fields.map((f, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="text-violet-600 dark:text-violet-400 font-semibold">
+            <span className="text-primary-600 dark:text-primary-400 font-semibold">
               {String(f.name ?? f.fieldName ?? `field_${i}`)}
             </span>
             <span className="text-slate-400">—</span>
             <span>{String(f.type ?? f.fieldType ?? 'text')}</span>
             {Boolean(f.required) && (
-              <span className="text-red-500 text-[9px]">{isPl ? 'wymagane' : 'required'}</span>
+              <span className="text-rose-500 text-[9px]">{isPl ? 'wymagane' : 'required'}</span>
             )}
           </div>
         ))}
@@ -424,10 +424,10 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
       ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
       : confidence >= 0.6
         ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
-        : 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30';
+        : 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30';
 
   const confidenceDot =
-    confidence >= 0.8 ? 'bg-emerald-500' : confidence >= 0.6 ? 'bg-amber-500' : 'bg-red-500';
+    confidence >= 0.8 ? 'bg-emerald-500' : confidence >= 0.6 ? 'bg-amber-500' : 'bg-rose-500';
 
   const confidencePercent = Math.round(confidence * 100);
 
@@ -446,11 +446,11 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
   const timeStr = formatTimestamp(proposal.created_at);
 
   return (
-    <div className="rounded-2xl border border-violet-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-zinc-700/60 bg-gradient-to-r from-violet-50/50 to-transparent dark:from-violet-950/20">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-zinc-700/60 bg-gradient-to-r from-primary-50/50 to-transparent dark:from-primary-950/20">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className="inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-violet-500/15 text-violet-700 dark:text-violet-300 border border-violet-500/20">
+          <span className="inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-primary-500/15 text-primary-700 dark:text-primary-300 border border-primary-500/20">
             {intentLabel}
           </span>
           <span
@@ -503,14 +503,14 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             <div className="flex gap-1">
               <button
                 onClick={selectAll}
-                className="text-[10px] text-violet-600 dark:text-violet-400 hover:underline"
+                className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
               >
                 {isPl ? 'Wszystkie' : 'All'}
               </button>
               <span className="text-slate-300 dark:text-zinc-600">|</span>
               <button
                 onClick={selectNone}
-                className="text-[10px] text-violet-600 dark:text-violet-400 hover:underline"
+                className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
               >
                 {isPl ? 'Żadne' : 'None'}
               </button>
@@ -584,7 +584,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             <button
               onClick={handleReject}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               <X size={14} />
               {isPl ? 'Odrzuć' : 'Reject'}

@@ -296,7 +296,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
                         ${
                           activeTab === 'youtube'
-                            ? 'bg-gray-800 text-red-400 border-b-2 border-red-400'
+                            ? 'bg-gray-800 text-rose-400 border-b-2 border-rose-400'
                             : 'text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                         }`}
         >
@@ -395,7 +395,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                           e.stopPropagation();
                           removeFile(index);
                         }}
-                        className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-red-400 transition-colors"
+                        className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-400 transition-colors"
                       >
                         <X size={16} />
                       </button>
@@ -405,7 +405,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 <button
                   onClick={processFiles}
                   disabled={processing}
-                  className="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-600 
+                  className="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-600
                                         text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {processing ? (
@@ -435,15 +435,15 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
               <div className="relative">
                 <Youtube
                   size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400"
                 />
                 <input
                   type="text"
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3 
-                                        text-gray-200 placeholder-gray-500 focus:outline-none focus:border-red-400"
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3
+                                        text-gray-200 placeholder-gray-500 focus:outline-none focus:border-rose-400"
                 />
               </div>
               <p className="text-gray-500 dark:text-gray-400 text-xs mt-2">
@@ -454,7 +454,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             <button
               onClick={processYouTube}
               disabled={processing || !youtubeUrl.trim() || !isYouTubeUrl(youtubeUrl)}
-              className="w-full bg-red-600 hover:bg-red-500 disabled:bg-gray-600 
+              className="w-full bg-rose-600 hover:bg-rose-500 disabled:bg-gray-600
                                 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {processing ? (
@@ -489,7 +489,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                   value={webUrl}
                   onChange={(e) => setWebUrl(e.target.value)}
                   placeholder="https://example.com/article"
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3 
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3
                                         text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-400"
                 />
               </div>
@@ -501,7 +501,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             <button
               onClick={processUrl}
               disabled={processing || !webUrl.trim() || !webUrl.startsWith('http')}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600
                                 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {processing ? (
@@ -536,16 +536,16 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             {results.map((result, index) => (
               <div
                 key={index}
-                className={`p-3 rounded-lg flex items-start gap-3 
-                                    ${result.success ? 'bg-emerald-900/30 border border-emerald-700' : 'bg-red-900/30 border border-red-700'}`}
+                className={`p-3 rounded-lg flex items-start gap-3
+                                    ${result.success ? 'bg-emerald-900/30 border border-emerald-700' : 'bg-rose-900/30 border border-rose-700'}`}
               >
                 {result.success ? (
                   <CheckCircle size={18} className="text-emerald-400 mt-0.5" />
                 ) : (
-                  <AlertCircle size={18} className="text-red-400 mt-0.5" />
+                  <AlertCircle size={18} className="text-rose-400 mt-0.5" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${result.success ? 'text-emerald-300' : 'text-red-300'}`}>
+                  <p className={`text-sm ${result.success ? 'text-emerald-300' : 'text-rose-300'}`}>
                     {result.success
                       ? result.metadata?.filename || result.metadata?.title || 'Content processed'
                       : result.error || 'Processing failed'}

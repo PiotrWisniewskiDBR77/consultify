@@ -503,8 +503,8 @@ export const LeanForm: React.FC<LeanFormProps> = ({
           className="w-full flex items-center justify-between p-4 hover:bg-slate-100 dark:hover:bg-navy-750 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <span className="text-purple-400 font-bold">
+            <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
+              <span className="text-primary-400 font-bold">
                 {workstation.leanMaturity > 0 ? workstation.leanMaturity : '-'}
               </span>
             </div>
@@ -727,7 +727,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             onClick={() => setActiveTab('workstations')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'workstations'
-                ? 'bg-purple-500/20 text-purple-400 border border-purple-500'
+                ? 'bg-primary-500/20 text-primary-400 border border-primary-500'
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-navy-600 hover:border-slate-400 dark:hover:border-slate-500'
             }`}
           >
@@ -825,7 +825,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                     <div className="flex gap-2">
                       <button
                         onClick={handleAddWorkstation}
-                        className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-400"
+                        className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-400"
                       >
                         Add Workstation
                       </button>

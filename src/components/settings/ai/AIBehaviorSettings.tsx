@@ -154,18 +154,18 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
     <div
       className={`p-4 rounded-xl border-2 transition-all ${
         enabled
-          ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10'
+          ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
           : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950'
       }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
           <div
-            className={`p-2 rounded-lg ${enabled ? 'bg-violet-100 dark:bg-violet-500/20' : 'bg-white dark:bg-navy-900'}`}
+            className={`p-2 rounded-lg ${enabled ? 'bg-primary-100 dark:bg-primary-500/20' : 'bg-white dark:bg-navy-900'}`}
           >
             <Icon
               size={18}
-              className={enabled ? 'text-violet-600' : 'text-slate-400 dark:text-slate-500'}
+              className={enabled ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}
             />
           </div>
           <div>
@@ -176,7 +176,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
         <button
           onClick={() => onChange(!enabled)}
           className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
-            enabled ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'
+            enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span
@@ -192,7 +192,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-violet-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }

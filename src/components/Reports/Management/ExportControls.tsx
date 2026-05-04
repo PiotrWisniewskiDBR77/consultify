@@ -120,7 +120,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
         <button
           onClick={handleExportPDF}
           disabled={disabled || exportingPDF}
-          className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white rounded-lg font-medium transition-colors"
         >
           {exportingPDF ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
           <span>Export PDF</span>
@@ -132,7 +132,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
         <button
           onClick={handleExportPPTX}
           disabled={disabled || exportingPPTX}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-lg font-medium transition-colors"
         >
           {exportingPPTX ? (
             <Loader2 size={18} className="animate-spin" />
@@ -151,7 +151,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
               {shareUrl.includes('generating...') ? (
                 // Optimistic state - show loading indicator
                 <>
-                  <Loader2 size={16} className="animate-spin text-violet-500" />
+                  <Loader2 size={16} className="animate-spin text-primary-500" />
                   <span className="text-sm text-slate-500 dark:text-slate-400 italic">
                     Generating share link...
                   </span>
@@ -189,7 +189,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
             <button
               onClick={handleShare}
               disabled={disabled || sharing}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 disabled:bg-violet-300 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg font-medium transition-colors"
             >
               {sharing ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
               <span>Share Link</span>

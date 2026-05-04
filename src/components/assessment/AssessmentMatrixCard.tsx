@@ -66,7 +66,7 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span>Gap Points:</span>
-              <span className={`font-bold ${gap > 0 ? 'text-red-400' : 'text-green-400'}`}>
+              <span className={`font-bold ${gap > 0 ? 'text-rose-400' : 'text-green-400'}`}>
                 {gap > 0 ? `-${gap.toFixed(1)}` : 'Optimized'}
               </span>
             </div>
@@ -95,15 +95,15 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
             gridTemplateColumns: `auto repeat(${areas.length}, minmax(140px, 1fr))`,
           }}
         >
-          {/* Header Row (Optional - maybe just Area names at bottom is better as per design? 
-                        Design shows Side Labels (Levels) and Bottom Labels (Areas). 
+          {/* Header Row (Optional - maybe just Area names at bottom is better as per design?
+                        Design shows Side Labels (Levels) and Bottom Labels (Areas).
                         Let's render the grid content first.
                     */}
 
           {rows.map((level) => (
             <React.Fragment key={level}>
               {/* Level Label Column */}
-              <div className="flex items-center justify-start px-4 py-2 bg-purple-100 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-500/30 rounded text-xs font-bold text-purple-800 dark:text-white min-h-[60px]">
+              <div className="flex items-center justify-start px-4 py-2 bg-primary-100 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-500/30 rounded text-xs font-bold text-primary-800 dark:text-white min-h-[60px]">
                 {level}. Poziom{' '}
                 {level === 5
                   ? 'ekspert'
@@ -164,7 +164,7 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
                     )}
                     {isTarget && !isActual && (
                       <div
-                        className="absolute top-1 right-1 w-2 h-2 rounded-full border border-purple-400"
+                        className="absolute top-1 right-1 w-2 h-2 rounded-full border border-primary-400"
                         title="Cel"
                       />
                     )}
@@ -176,19 +176,19 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
 
           {/* Bottom Header: Area Names */}
           {/* Empty cell for Y-axis column */}
-          <div className="p-4 flex items-center justify-center font-bold text-sm text-purple-900 dark:text-white bg-purple-200 dark:bg-purple-900/80 rounded border border-purple-300 dark:border-purple-500/50">
+          <div className="p-4 flex items-center justify-center font-bold text-sm text-primary-900 dark:text-white bg-primary-200 dark:bg-primary-900/80 rounded border border-primary-300 dark:border-primary-500/50">
             Poziom
           </div>
           {/* Area Headers */}
           {areas.map((area) => (
             <div
               key={`header-${area.id}`}
-              className="bg-purple-100 dark:bg-purple-900/60 border border-purple-200 dark:border-purple-500/30 p-2 rounded flex flex-col items-center justify-center min-h-[50px]"
+              className="bg-primary-100 dark:bg-primary-900/60 border border-primary-200 dark:border-primary-500/30 p-2 rounded flex flex-col items-center justify-center min-h-[50px]"
             >
-              <span className="text-[10px] font-bold text-purple-500 dark:text-slate-300 mb-1">
+              <span className="text-[10px] font-bold text-primary-500 dark:text-slate-300 mb-1">
                 {area.id}
               </span>
-              <span className="text-xs font-bold text-purple-900 dark:text-white text-center leading-tight">
+              <span className="text-xs font-bold text-primary-900 dark:text-white text-center leading-tight">
                 {area.name}
               </span>
             </div>

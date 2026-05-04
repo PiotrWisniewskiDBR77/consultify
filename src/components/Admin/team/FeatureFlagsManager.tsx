@@ -195,9 +195,9 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.features.beta', 'Beta')}
             </span>
-            <Sparkles size={16} className="text-violet-500" />
+            <Sparkles size={16} className="text-primary-500" />
           </div>
-          <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{stats.beta}</p>
+          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{stats.beta}</p>
         </div>
       </div>
 
@@ -310,7 +310,7 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
                               </span>
                             )}
                             {flag.isBeta && (
-                              <span className="px-1.5 py-0.5 text-xs font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded">
+                              <span className="px-1.5 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded">
                                 {t('admin.features.beta', 'BETA')}
                               </span>
                             )}
@@ -421,7 +421,7 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
                                     {flag.targetedGroups.map((groupId) => (
                                       <span
                                         key={groupId}
-                                        className="px-2 py-0.5 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded"
+                                        className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded"
                                       >
                                         {groupId}
                                       </span>

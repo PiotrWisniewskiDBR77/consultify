@@ -328,7 +328,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
               {/* Template download */}
               <button
                 onClick={handleDownloadTemplate}
-                className="flex items-center gap-2 text-sm text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+                className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
               >
                 <Download size={16} />
                 {t('admin.team.import.downloadTemplate', 'Download CSV template')}
@@ -343,15 +343,15 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                 className={cn(
                   'flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl cursor-pointer transition-all',
                   isDragOver
-                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
-                    : 'border-slate-300 dark:border-navy-600 hover:border-violet-400 hover:bg-slate-50 dark:hover:bg-navy-800'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-slate-300 dark:border-navy-600 hover:border-primary-400 hover:bg-slate-50 dark:hover:bg-navy-800'
                 )}
               >
                 <Upload
                   size={48}
                   className={cn(
                     'mb-4',
-                    isDragOver ? 'text-violet-500' : 'text-slate-400 dark:text-slate-500'
+                    isDragOver ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
                   )}
                 />
                 <p className="text-lg font-medium text-navy-900 dark:text-white mb-1">
@@ -417,7 +417,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
               {/* File info */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FileSpreadsheet size={20} className="text-violet-500" />
+                  <FileSpreadsheet size={20} className="text-primary-500" />
                   <span className="font-medium text-navy-900 dark:text-white">{fileName}</span>
                   <span className="text-sm text-slate-500 dark:text-slate-400">
                     ({parsedRows.length} {t('admin.team.import.users', 'users')})
@@ -425,7 +425,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                 </div>
                 <button
                   onClick={() => setStep('upload')}
-                  className="text-sm text-violet-600 hover:text-violet-700 dark:text-violet-400"
+                  className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
                 >
                   {t('admin.team.import.changeFile', 'Change file')}
                 </button>
@@ -552,7 +552,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
               exit={{ opacity: 0, x: -20 }}
               className="flex flex-col items-center justify-center py-12"
             >
-              <RefreshCw size={48} className="text-violet-500 animate-spin mb-6" />
+              <RefreshCw size={48} className="text-primary-500 animate-spin mb-6" />
               <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
                 {t('admin.team.import.importing', 'Importing users...')}
               </h3>

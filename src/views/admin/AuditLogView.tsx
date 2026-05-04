@@ -134,6 +134,18 @@ type ContextWorkerRunResult = {
   retried?: number;
   deadLettered?: number;
   recoveredLocks?: number;
+  claimSkipped?: number;
+  pulledMessages?: number;
+  ackedMessages?: number;
+  backoffMessages?: number;
+  queueActionReason?: string | null;
+  runId?: string | null;
+  auditEventId?: string | null;
+  auditRecorded?: boolean;
+  processedJobs?: Array<{ jobId: string; documentId: string }>;
+  retriedJobs?: Array<{ jobId: string; documentId: string }>;
+  deadLetteredJobs?: Array<{ jobId: string; documentId: string }>;
+  claimSkippedJobs?: Array<{ jobId: string; documentId: string }>;
 };
 
 export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) => {
@@ -339,17 +351,17 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       case 'UPDATE':
         return <Edit size={14} className="text-blue-500" />;
       case 'DELETE':
-        return <Trash2 size={14} className="text-red-500" />;
+        return <Trash2 size={14} className="text-rose-500" />;
       case 'VIEW':
         return <Eye size={14} className="text-slate-500 dark:text-slate-400" />;
       case 'LOGIN':
-        return <LogIn size={14} className="text-violet-500" />;
+        return <LogIn size={14} className="text-primary-500" />;
       case 'LOGOUT':
         return <LogOut size={14} className="text-slate-500 dark:text-slate-400" />;
       case 'SECURITY':
         return <Shield size={14} className="text-amber-500" />;
       case 'EXPORT':
-        return <Download size={14} className="text-cyan-500" />;
+        return <Download size={14} className="text-blue-500" />;
       default:
         return <FileText size={14} className="text-slate-500 dark:text-slate-400" />;
     }
@@ -362,14 +374,14 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       case 'UPDATE':
         return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
       case 'DELETE':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400';
       case 'LOGIN':
       case 'LOGOUT':
-        return 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400';
+        return 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400';
       case 'SECURITY':
         return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
       case 'EXPORT':
-        return 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
       default:
         return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
     }
@@ -431,7 +443,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -454,7 +466,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
         <button
           onClick={handleExport}
           disabled={exporting || !!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
         >
           {exporting ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
           Export CSV
@@ -479,7 +491,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
               type="button"
               onClick={handleRunContextWorkerOnce}
               disabled={contextAuditLoading || contextWorkerRunning}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-lg disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg disabled:opacity-50"
             >
               {contextWorkerRunning ? (
                 <RefreshCw size={14} className="animate-spin" />

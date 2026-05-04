@@ -173,7 +173,7 @@ export function KnownToolDetailView(props: {
         <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
           {safe.map((v, idx) => (
             <li key={idx} className="flex items-start gap-2">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-400" />
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary-400" />
               <span>{v}</span>
             </li>
           ))}
@@ -389,8 +389,8 @@ export function KnownToolDetailView(props: {
                   ]
             )}
           </div>
-          <div className="rounded-2xl border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
+          <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
               {isPolish
                 ? 'Co sprawia, że SWOT jest tutaj dynamiczny'
                 : 'What makes the SWOT dynamic here'}
@@ -433,8 +433,8 @@ export function KnownToolDetailView(props: {
         note: isPolish
           ? 'Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem.'
           : 'The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos.',
-        accent: 'bg-violet-500',
-        tone: 'from-violet-500/12 to-fuchsia-500/5',
+        accent: 'bg-primary-500',
+        tone: 'from-primary-500/12 to-fuchsia-500/5',
       },
       {
         id: 2,
@@ -457,7 +457,7 @@ export function KnownToolDetailView(props: {
           ? 'Na tym etapie nie wyciąga się jeszcze decyzji. Powstaje warstwa źródłowa, z której później da się obronić wnioski.'
           : 'This is not the stage for conclusions yet. It builds the source layer from which the later conclusions can be defended.',
         accent: 'bg-sky-500',
-        tone: 'from-sky-500/12 to-cyan-500/5',
+        tone: 'from-sky-500/12 to-blue-500/5',
       },
       {
         id: 3,
@@ -480,7 +480,7 @@ export function KnownToolDetailView(props: {
           ? 'Mocna macierz nie jest długa. Jest selektywna, konkretna i oparta na źródłach.'
           : 'A strong matrix is not long. It is selective, concrete, and backed by sources.',
         accent: 'bg-emerald-500',
-        tone: 'from-emerald-500/12 to-teal-500/5',
+        tone: 'from-emerald-500/12 to-blue-500/5',
       },
       {
         id: 4,
@@ -503,7 +503,7 @@ export function KnownToolDetailView(props: {
           ? 'To tutaj pojawia się wartość konsultingowa. Sama lista kart przestaje być tabelą i zaczyna tworzyć logikę decyzji.'
           : 'This is where consulting value appears. The card list stops being a table and starts becoming decision logic.',
         accent: 'bg-amber-500',
-        tone: 'from-amber-500/15 to-orange-500/5',
+        tone: 'from-amber-500/15 to-amber-500/5',
       },
       {
         id: 5,
@@ -525,8 +525,8 @@ export function KnownToolDetailView(props: {
         note: isPolish
           ? 'Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania.'
           : 'Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action.',
-        accent: 'bg-violet-600',
-        tone: 'from-violet-500/15 to-indigo-500/5',
+        accent: 'bg-primary-600',
+        tone: 'from-primary-500/15 to-indigo-500/5',
       },
     ];
 
@@ -655,12 +655,12 @@ export function KnownToolDetailView(props: {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
+        <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
               {isPolish ? '4 typowe sytuacje decyzyjne' : '4 common decision situations'}
             </div>
-            <span className="inline-flex shrink-0 rounded-full border border-violet-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200">
+            <span className="inline-flex shrink-0 rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
               Insight
             </span>
           </div>
@@ -894,11 +894,11 @@ export function KnownToolDetailView(props: {
 
     const colorMap = {
       violet: {
-        card: 'border-violet-200/70 bg-violet-500/5 dark:border-violet-900/40',
+        card: 'border-primary-200/70 bg-primary-500/5 dark:border-primary-900/40',
         badge:
-          'border-violet-300/50 bg-white/70 text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200',
-        title: 'text-violet-700 dark:text-violet-300',
-        dot: 'bg-violet-500',
+          'border-primary-300/50 bg-white/70 text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200',
+        title: 'text-primary-700 dark:text-primary-300',
+        dot: 'bg-primary-500',
       },
       sky: {
         card: 'border-sky-200/70 bg-sky-500/5 dark:border-sky-900/40',
@@ -1329,8 +1329,8 @@ export function KnownToolDetailView(props: {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
+        <div className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
             {isPolish ? 'Filozofia AI' : 'AI philosophy'}
           </div>
           {chipRow(
@@ -1649,7 +1649,7 @@ export function KnownToolDetailView(props: {
               className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-[11px] font-bold text-white">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-[11px] font-bold text-white">
                   {index + 1}
                 </div>
                 <div>
@@ -1702,9 +1702,9 @@ export function KnownToolDetailView(props: {
           ).map(([title, text]) => (
             <div
               key={title}
-              className="rounded-2xl border border-purple-200/70 bg-purple-500/5 p-4 dark:border-purple-900/40"
+              className="rounded-2xl border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40"
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-purple-700 dark:text-purple-300">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
                 {title}
               </div>
               <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -2409,7 +2409,7 @@ export function KnownToolDetailView(props: {
         saving: false,
         isDirty: false,
         onClose,
-        statusDotColor: 'bg-purple-400',
+        statusDotColor: 'bg-primary-400',
       }}
       properties={properties}
       sections={sections}

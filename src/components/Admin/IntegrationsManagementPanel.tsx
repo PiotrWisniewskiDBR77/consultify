@@ -410,7 +410,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                 {webhook.lastStatus && (
                   <span
                     className={`text-xs flex items-center gap-1 ${
-                      webhook.lastStatus === 'success' ? 'text-green-500' : 'text-red-500'
+                      webhook.lastStatus === 'success' ? 'text-green-500' : 'text-rose-500'
                     }`}
                   >
                     {webhook.lastStatus === 'success' ? (
@@ -435,7 +435,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <button
               onClick={() => toggleWebhookActive(webhook)}
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               {webhook.isActive ? <Pause size={16} /> : <Play size={16} />}
@@ -443,7 +443,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <button
               onClick={() => startEditing(webhook)}
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Edit size={16} />
@@ -451,7 +451,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <button
               onClick={() => deleteWebhook(webhook)}
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Trash2 size={16} />
@@ -497,7 +497,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               <button
                 disabled
                 title={APP_CONNECT_UNAVAILABLE}
-                className="px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
               >
                 {t('admin.integrations.disconnect', 'Disconnect')}
               </button>
@@ -505,7 +505,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               <button
                 disabled
                 title={APP_CONNECT_UNAVAILABLE}
-                className="px-3 py-1.5 text-sm bg-violet-500 hover:bg-violet-600 text-white rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
               >
                 {t('admin.integrations.connect', 'Connect')}
               </button>
@@ -590,7 +590,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                 </button>
                 <button
                   onClick={() => copyToClipboard(selectedWebhook.secret)}
-                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500"
+                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500"
                 >
                   <Copy size={18} />
                 </button>
@@ -618,7 +618,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                           type="checkbox"
                           checked={formData.events.includes(event.id)}
                           onChange={() => toggleEvent(event.id)}
-                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-500 focus:ring-violet-500"
+                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">
                           {event.label}
@@ -639,7 +639,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               type="checkbox"
               checked={formData.isActive}
               onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
-              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-500 focus:ring-violet-500"
+              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
               {t('admin.integrations.activateImmediately', 'Activate immediately')}
@@ -650,7 +650,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
         <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
           <button
             onClick={saveWebhook}
-            className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
           >
             <Check size={16} />
             {t('common.save', 'Save')}
@@ -685,7 +685,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           <button
             onClick={loadData}
             disabled={loading}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors disabled:opacity-50"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -695,7 +695,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               onClick={startCreating}
               disabled
               title={WEBHOOK_MUTATION_UNAVAILABLE}
-              className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
             >
               <Plus size={18} />
               {t('admin.integrations.addWebhook', 'Add Webhook')}
@@ -717,7 +717,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           onClick={() => setActiveTab('webhooks')}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'webhooks'
-              ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
@@ -733,7 +733,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           onClick={() => setActiveTab('apps')}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'apps'
-              ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
@@ -771,7 +771,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <div className="space-y-3">
               {loading ? (
                 <div className="text-center py-8">
-                  <RefreshCw className="animate-spin mx-auto text-violet-500 mb-2" size={24} />
+                  <RefreshCw className="animate-spin mx-auto text-primary-500 mb-2" size={24} />
                   <p className="text-slate-500 dark:text-slate-400">
                     {t('common.loading', 'Loading...')}
                   </p>
@@ -812,7 +812,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                 onClick={startCreating}
                 disabled
                 title={WEBHOOK_MUTATION_UNAVAILABLE}
-                className="px-4 py-2 border border-violet-500 text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg flex items-center gap-2 mx-auto transition-colors"
+                className="px-4 py-2 border border-primary-500 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg flex items-center gap-2 mx-auto transition-colors"
               >
                 <Plus size={16} />
                 {t('admin.integrations.addWebhook', 'Add Webhook')}

@@ -432,7 +432,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               selectedEnvironment === env
                 ? env === 'production'
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                   : env === 'staging'
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -482,7 +482,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -512,9 +512,9 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
               {new Set(configs.map((c) => c.category)).size}
             </div>
           </div>
-          <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
+          <div className="p-4 bg-primary-500/10 rounded-xl border border-primary-500/30">
             <div className="text-sm text-slate-600 dark:text-slate-400">Unsaved Changes</div>
-            <div className="text-2xl font-bold text-purple-400">
+            <div className="text-2xl font-bold text-primary-400">
               {Object.keys(unsavedChanges).length}
             </div>
           </div>
@@ -654,7 +654,7 @@ const ConfigRow: React.FC<{
               config.type === 'boolean'
                 ? config.value === 'true'
                   ? 'text-emerald-400'
-                  : 'text-red-400'
+                  : 'text-rose-400'
                 : 'text-slate-700 dark:text-slate-300'
             } font-mono truncate max-w-md`}
           >
@@ -693,11 +693,11 @@ const ConfigRow: React.FC<{
         </button>
         <button
           onClick={onDelete}
-          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+          className="p-2 hover:bg-rose-500/20 rounded-lg transition-colors"
           title="Delete"
           disabled={config.is_locked}
         >
-          <Trash2 className="w-4 h-4 text-red-400" />
+          <Trash2 className="w-4 h-4 text-rose-400" />
         </button>
       </div>
     </div>
@@ -744,7 +744,7 @@ const ConfigEditModal: React.FC<{
           {saveError && (
             <div
               role="alert"
-              className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-300"
+              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
             >
               {saveError}
             </div>
@@ -754,7 +754,7 @@ const ConfigEditModal: React.FC<{
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Key
             </label>
-            <code className="block w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-cyan-400 rounded-lg font-mono">
+            <code className="block w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-blue-400 rounded-lg font-mono">
               {config.key}
             </code>
           </div>
@@ -882,7 +882,7 @@ const ConfigAddModal: React.FC<{
           {saveError && (
             <div
               role="alert"
-              className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-300"
+              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
             >
               {saveError}
             </div>
@@ -1072,7 +1072,7 @@ const ConfigHistoryModal: React.FC<{
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 text-xs">Previous:</span>
-                  <code className="block mt-1 text-red-400 bg-red-500/10 px-2 py-1 rounded">
+                  <code className="block mt-1 text-rose-400 bg-rose-500/10 px-2 py-1 rounded">
                     {version.old_value}
                   </code>
                 </div>

@@ -431,11 +431,11 @@ export const UsageAnalyticsDashboard: React.FC = () => {
   const formatCurrency = (num: number) => `$${num.toFixed(2)}`;
 
   const getIntensityColor = (intensity: number) => {
-    if (intensity >= 80) return 'bg-violet-500';
-    if (intensity >= 60) return 'bg-violet-400';
-    if (intensity >= 40) return 'bg-violet-300/70';
-    if (intensity >= 20) return 'bg-violet-200/50';
-    return 'bg-violet-100/30';
+    if (intensity >= 80) return 'bg-primary-500';
+    if (intensity >= 60) return 'bg-primary-400';
+    if (intensity >= 40) return 'bg-primary-300/70';
+    if (intensity >= 20) return 'bg-primary-200/50';
+    return 'bg-primary-100/30';
   };
 
   const maxTrendValue = Math.max(...trends.map((t) => t.requests), 1);
@@ -451,7 +451,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <BarChart2 size={24} className="text-violet-400" />
+            <BarChart2 size={24} className="text-primary-400" />
             AI Usage Analytics
           </h2>
           <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm mt-1">
@@ -469,7 +469,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 title={loadError || undefined}
                 className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -493,7 +493,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
               onClick={() => handleExport('pdf')}
               disabled
               title="PDF export is not connected to a generated report yet"
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download size={16} />
               PDF Report
@@ -529,7 +529,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
               icon={Layers}
               label="Total Tokens"
               value={formatNumber(summary.totalTokens)}
-              color="text-purple-400"
+              color="text-primary-400"
             />
             <SummaryCard
               icon={DollarSign}
@@ -541,7 +541,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
               icon={Users}
               label="Unique Users"
               value={summary.uniqueUsers.toString()}
-              color="text-cyan-400"
+              color="text-blue-400"
             />
             <SummaryCard
               icon={Activity}
@@ -580,11 +580,11 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                     className={`flex items-center gap-1 text-sm ${
                       item.changePercent > 0
                         ? item.metric.includes('Time')
-                          ? 'text-red-400'
+                          ? 'text-rose-400'
                           : 'text-emerald-400'
                         : item.metric.includes('Time')
                           ? 'text-emerald-400'
-                          : 'text-red-400'
+                          : 'text-rose-400'
                     }`}
                   >
                     {item.changePercent > 0 ? (
@@ -602,7 +602,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           {/* Trends Chart */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Activity size={18} className="text-violet-400" />
+              <Activity size={18} className="text-primary-400" />
               Usage Trends
             </h3>
             {loading ? (
@@ -619,7 +619,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 {trends.map((point, idx) => (
                   <div key={idx} className="flex-1 group relative">
                     <div
-                      className="w-full bg-gradient-to-t from-violet-600 to-violet-400 rounded-t transition-all hover:from-violet-500 hover:to-violet-300"
+                      className="w-full bg-gradient-to-t from-primary-600 to-primary-400 rounded-t transition-all hover:from-primary-500 hover:to-primary-300"
                       style={{
                         height: `${(point.requests / maxTrendValue) * 100}%`,
                         minHeight: '4px',
@@ -747,7 +747,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           {/* Hourly Usage Heatmap */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Clock size={18} className="text-cyan-400" />
+              <Clock size={18} className="text-blue-400" />
               Peak Usage Hours
             </h3>
             <div className="flex gap-1">
@@ -765,7 +765,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                       <div className="text-slate-900 dark:text-white">
                         {hour.hour}:00 - {hour.hour + 1}:00
                       </div>
-                      <div className="text-cyan-400">{hour.requests} requests</div>
+                      <div className="text-blue-400">{hour.requests} requests</div>
                     </div>
                   </div>
                 </div>
@@ -774,11 +774,11 @@ export const UsageAnalyticsDashboard: React.FC = () => {
             <div className="flex items-center justify-end gap-2 mt-4 text-xs text-slate-500 dark:text-slate-400">
               <span>Low</span>
               <div className="flex gap-0.5">
-                <div className="w-4 h-3 bg-violet-100/30 rounded-sm" />
-                <div className="w-4 h-3 bg-violet-200/50 rounded-sm" />
-                <div className="w-4 h-3 bg-violet-300/70 rounded-sm" />
-                <div className="w-4 h-3 bg-violet-400 rounded-sm" />
-                <div className="w-4 h-3 bg-violet-500 rounded-sm" />
+                <div className="w-4 h-3 bg-primary-100/30 rounded-sm" />
+                <div className="w-4 h-3 bg-primary-200/50 rounded-sm" />
+                <div className="w-4 h-3 bg-primary-300/70 rounded-sm" />
+                <div className="w-4 h-3 bg-primary-400 rounded-sm" />
+                <div className="w-4 h-3 bg-primary-500 rounded-sm" />
               </div>
               <span>High</span>
             </div>
@@ -809,7 +809,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                   : 'No hourly activity available'
               }
               icon={Clock}
-              color="text-cyan-400"
+              color="text-blue-400"
             />
           </div>
         </>

@@ -208,7 +208,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
           <button
             onClick={() => setShowCreateModal(true)}
             disabled={!selectedOrgId || Boolean(loadError)}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
           >
             <Plus size={18} />
             Add Note
@@ -223,7 +223,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -327,7 +327,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
                   type="button"
                   disabled={creating}
                   onClick={handleCreateNote}
-                  className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
                 >
                   <Plus size={18} />
                   {creating ? 'Creating…' : 'Create'}

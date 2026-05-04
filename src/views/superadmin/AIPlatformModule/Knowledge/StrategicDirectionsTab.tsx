@@ -256,7 +256,7 @@ export const StrategicDirectionsTab: React.FC = () => {
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 text-red-700';
+        return 'bg-rose-100 text-rose-700';
       case 'medium':
         return 'bg-amber-100 text-amber-700';
       case 'low':
@@ -309,7 +309,7 @@ export const StrategicDirectionsTab: React.FC = () => {
       {actionError ? (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -370,7 +370,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                     onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
                     className={`p-2 rounded-lg transition-colors ${
                       s.is_active
-                        ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-700'
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-700'
                         : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
                     }`}
                     title={s.is_active ? 'Deactivate' : 'Activate'}

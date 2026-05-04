@@ -93,7 +93,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 min-w-0 flex-1">
         <button
           onClick={goToPresentations}
-          className="flex-shrink-0 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="flex-shrink-0 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('presentations.builder.title', 'Deck Builder')}
         </button>
@@ -105,12 +105,12 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             onChange={(e) => onTitleChange(e.target.value)}
             onBlur={() => setEditing(false)}
             onKeyDown={(e) => e.key === 'Enter' && setEditing(false)}
-            className="bg-transparent border-b border-purple-500 text-slate-900 dark:text-white text-sm font-medium outline-none min-w-[200px]"
+            className="bg-transparent border-b border-primary-500 text-slate-900 dark:text-white text-sm font-medium outline-none min-w-[200px]"
           />
         ) : (
           <button
             onClick={() => setEditing(true)}
-            className="text-slate-900 dark:text-white font-medium truncate hover:text-purple-600 dark:hover:text-purple-400"
+            className="text-slate-900 dark:text-white font-medium truncate hover:text-primary-600 dark:hover:text-primary-400"
           >
             {title || t('presentations.builder.untitled', 'Untitled Deck')}
           </button>
@@ -147,7 +147,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             onClick={onToggleAnimations}
             className={`p-1.5 rounded-lg transition-colors ${
               animationsEnabled
-                ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
                 : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
             }`}
             title={t(
@@ -216,7 +216,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         onClick={onToggleAgent}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
           agentOpen
-            ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
         }`}
       >
@@ -226,7 +226,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
 
       <button
         onClick={onPresent}
-        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-500"
+        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-500"
       >
         <Monitor size={14} />
         <span>{t('presentations.builder.topBar.present', 'Present')}</span>

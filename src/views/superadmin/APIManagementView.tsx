@@ -345,7 +345,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   type="radio"
                   checked={keyType === 'org'}
                   onChange={() => setKeyType('org')}
-                  className="w-4 h-4 text-violet-600"
+                  className="w-4 h-4 text-primary-600"
                 />
                 <Building2 size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="text-sm text-slate-700 dark:text-slate-300">Organization Key</span>
@@ -355,7 +355,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   type="radio"
                   checked={keyType === 'service'}
                   onChange={() => setKeyType('service')}
-                  className="w-4 h-4 text-violet-600"
+                  className="w-4 h-4 text-primary-600"
                 />
                 <Server size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="text-sm text-slate-700 dark:text-slate-300">Service Key</span>
@@ -373,7 +373,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                 <div key={group}>
                   <button
                     onClick={() => selectAllInGroup(group)}
-                    className="text-sm font-medium text-slate-900 dark:text-white mb-2 hover:text-violet-600 dark:hover:text-violet-400"
+                    className="text-sm font-medium text-slate-900 dark:text-white mb-2 hover:text-primary-600 dark:hover:text-primary-400"
                   >
                     {group}
                   </button>
@@ -384,7 +384,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                           type="checkbox"
                           checked={selectedScopes.includes(scope)}
                           onChange={() => toggleScope(scope)}
-                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
+                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600"
                         />
                         <span className="text-xs text-slate-600 dark:text-slate-400">{scope}</span>
                       </label>
@@ -452,7 +452,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
           <button
             onClick={handleCreate}
             disabled={creating || !name || !organizationId || selectedScopes.length === 0}
-            className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
           >
             {creating ? <Loader2 size={18} className="animate-spin" /> : <KeyRound size={18} />}
             Create Key
@@ -648,7 +648,7 @@ export const APIManagementView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -662,8 +662,8 @@ export const APIManagementView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <KeyRound className="text-violet-500" size={20} />
+                <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
+                  <KeyRound className="text-primary-500" size={20} />
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -713,7 +713,7 @@ export const APIManagementView: React.FC = () => {
                   ? 'No organizations available for API key creation'
                   : 'Create API Key')
               }
-              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center gap-2"
             >
               <Plus size={18} />
               Create API Key
@@ -761,7 +761,7 @@ export const APIManagementView: React.FC = () => {
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                               key.keyType === 'org'
-                                ? 'bg-violet-500/10 text-violet-600'
+                                ? 'bg-primary-500/10 text-primary-600'
                                 : key.keyType === 'service'
                                   ? 'bg-blue-500/10 text-blue-600'
                                   : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
@@ -815,7 +815,7 @@ export const APIManagementView: React.FC = () => {
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-600">
                           <XCircle size={12} />
                           Revoked
                         </span>
@@ -844,10 +844,10 @@ export const APIManagementView: React.FC = () => {
                           <button
                             onClick={() => setKeyPendingRevoke(key)}
                             aria-label={`Revoke API key ${key.id}`}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                            className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                             title="Revoke Key"
                           >
-                            <Trash2 size={16} className="text-red-400" />
+                            <Trash2 size={16} className="text-rose-400" />
                           </button>
                         )}
                       </div>
@@ -905,7 +905,7 @@ export const APIManagementView: React.FC = () => {
                 <div className="text-sm text-slate-500 dark:text-slate-400">Avg Response Time</div>
               </div>
               <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-2xl font-bold text-rose-600">
                   {formatInteger(usageData.totals?.total_errors)}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">Errors</div>
@@ -930,7 +930,7 @@ export const APIManagementView: React.FC = () => {
                               ? 'bg-emerald-500/10 text-emerald-600'
                               : ep.method === 'PUT'
                                 ? 'bg-amber-500/10 text-amber-600'
-                                : 'bg-red-500/10 text-red-600'
+                                : 'bg-rose-500/10 text-rose-600'
                         }`}
                       >
                         {ep.method}
@@ -970,7 +970,7 @@ export const APIManagementView: React.FC = () => {
           <button
             disabled
             title={webhookWorkflowUnavailableReason}
-            className="px-4 py-2 bg-violet-600 text-white rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
           >
             <Plus size={16} />
             Add Webhook
@@ -1029,7 +1029,7 @@ export const APIManagementView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -1042,7 +1042,7 @@ export const APIManagementView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : (
         <>
@@ -1078,7 +1078,7 @@ export const APIManagementView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleRevokeKey(keyPendingRevoke.id)}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
               >
                 Revoke Key
               </button>

@@ -29,27 +29,35 @@ class TokenService {
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private isRefreshing = false;
   private refreshPromise: Promise<string | null> | null = null;
+  private isInitialized = false;
+  private refreshBackoffMs = 0;
+  private refreshBlockedUntil = 0;
+  private readonly onAuthError = () => {
+    this.handleAuthError();
+  };
+  private readonly onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      void this.checkAndRefreshToken();
+    }
+  };
 
   /**
    * Initialize token service - call on app startup
    */
   init() {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
     const token = this.getToken();
     if (token) {
       this.scheduleRefresh(token);
     }
 
     // Listen for 401 errors globally
-    window.addEventListener('auth-error', this.handleAuthError.bind(this));
+    window.addEventListener('auth-error', this.onAuthError);
 
     // Check token on visibility change (user comes back to tab)
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        this.checkAndRefreshToken();
-      }
-    });
-
-    console.log('[TokenService] Initialized');
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   /**
@@ -85,6 +93,8 @@ class TokenService {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     clearPersonalTasksCache();
+    this.refreshBackoffMs = 0;
+    this.refreshBlockedUntil = 0;
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
@@ -176,6 +186,11 @@ class TokenService {
    * Refresh the access token using refresh token
    */
   async refreshToken(): Promise<string | null> {
+    const now = Date.now();
+    if (this.refreshBlockedUntil > now) {
+      return null;
+    }
+
     // Prevent multiple simultaneous refresh attempts
     if (this.isRefreshing && this.refreshPromise) {
       return this.refreshPromise;
@@ -217,16 +232,21 @@ class TokenService {
         if (res.status === 401) {
           this.clearTokens();
           this.notifyAuthError();
+        } else {
+          this.bumpRefreshBackoff();
         }
         return null;
       }
 
       const data: RefreshResult = await res.json();
+      this.refreshBackoffMs = 0;
+      this.refreshBlockedUntil = 0;
       this.saveTokens(data.token, data.refreshToken);
       console.log('[TokenService] Token refreshed successfully');
       return data.token;
     } catch (error) {
       console.error('[TokenService] Refresh error:', error);
+      this.bumpRefreshBackoff();
       return null;
     }
   }
@@ -235,8 +255,15 @@ class TokenService {
    * Handle authentication errors
    */
   private handleAuthError() {
+    if (!this.getToken() && !this.getRefreshToken()) return;
     console.log('[TokenService] Auth error detected, attempting recovery...');
-    this.refreshToken();
+    void this.refreshToken();
+  }
+
+  private bumpRefreshBackoff() {
+    const next = this.refreshBackoffMs > 0 ? Math.min(this.refreshBackoffMs * 2, 60_000) : 1_000;
+    this.refreshBackoffMs = next;
+    this.refreshBlockedUntil = Date.now() + next;
   }
 
   /**
@@ -278,8 +305,13 @@ export const tokenService = new TokenService();
 
 // Initialize on module load
 if (typeof window !== 'undefined') {
-  // Delay init to ensure localStorage is available
-  setTimeout(() => tokenService.init(), 0);
+  const tokenInitKey = '__consultifyTokenServiceInitialized__';
+  const scopedWindow = window as typeof window & { [key: string]: unknown };
+  if (!scopedWindow[tokenInitKey]) {
+    scopedWindow[tokenInitKey] = true;
+    // Delay init to ensure localStorage is available
+    setTimeout(() => tokenService.init(), 0);
+  }
 }
 
 export default tokenService;

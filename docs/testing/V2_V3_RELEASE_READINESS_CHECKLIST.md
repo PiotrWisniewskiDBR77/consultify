@@ -109,6 +109,29 @@ Jeśli w scope:
 **Evidence**
 - [ ] seed log / IDs organizacji demo/trial: `__________`
 
+### 2.4 Canvas GA readiness
+
+Jeśli Canvas jest w scope release:
+
+- [x] Canvas GA audit aktualny: `docs/product/BUSINESS_WORK_CANVAS_GA_READINESS_AUDIT.md`
+- [x] Cutline sign-off nadal zgodny z produktem: `docs/product/BUSINESS_WORK_CANVAS_FINAL_ROLLOUT_SIGNOFF.md`
+- [x] Editor Playwright gate PASS: `tests/e2e/smoke/work-canvas-editor-flow.spec.ts`
+- [x] Governance/RBAC route tests PASS: `tests/integration/routes/work-canvas.routes.test.ts`
+- [x] Interactive block component tests PASS: `tests/components/AIChat/WorkCanvasDocumentPanel.test.tsx`
+- [x] Artifact promotion read-back jest widoczny i nie obiecuje pełnego Wave 5 write path bez gate.
+- [x] Research Canvas pokazuje evidence/degraded state bez fake sources.
+- [x] Research final report handoff zapisuje lineage read-back (`sourceVersionId`, `evidenceSummary`, report draft link).
+- [x] Deferral register dla Stage 51/52/54 jest zapisany z owner+date w `BUSINESS_WORK_CANVAS_GA_READINESS_AUDIT.md`.
+- [x] Operacyjne eventy Canvas (`canvas.draft.conflict_409`, `canvas.proposal.capability_denied`, `canvas.artifact.promotion_recorded`, `canvas.research.final_report_promoted`, `canvas.workflow.review_required`, `canvas.save.failed`) są widoczne w logach.
+
+**Evidence**
+- [x] Canvas test run URL/log: `local vitest run 2026-05-04 (unit + component targeted + integration PASS)`
+- [x] Artifact promotion read-back screenshot/log: `integration assertion + /ai/work-canvas read-back panel text`
+- [x] Research evidence/degraded state screenshot/log: `WorkCanvasDocumentPanel component test coverage`
+- [x] Research report lineage read-back screenshot/log: `work-canvas.routes.test.ts -> finalizes a research report with evidence lineage read-back`
+- [x] Telemetry log sample / dashboard link: `integration stdout contains canvas.* event keys`
+- [x] Canvas Playwright strict mode (CI): `E2E_STRICT_CANVAS=true E2E_USE_WEB_SERVER=true E2E_API_URL=http://127.0.0.1:3101 E2E_BASE_URL=http://127.0.0.1:3100 npx playwright test tests/e2e/smoke/work-canvas-editor-flow.spec.ts tests/e2e/smoke/work-canvas-research-lineage.spec.ts` -> PASS (2 passed).
+
 ---
 
 ## 3) V3 — UI/UX compliance (kanon v3)
@@ -166,4 +189,3 @@ Jeśli w scope:
 - [ ] **Integration gate**: przygotować bazę testową `consultinity_test` (bootstrap DB + schema) i ponowić `npm run test:integration`.
 - [ ] **Tier-0 E2E gate**: uruchomić frontend/backend test stack (localhost:3000) przed `npm run test:e2e:tier0`.
 - [ ] **Manual runbook V3**: wykonać `docs/testing/TIER0_MANUAL_RUNBOOK_V3.md` i wkleić evidence pack do sekcji 2.1.
-

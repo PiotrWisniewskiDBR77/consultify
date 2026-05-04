@@ -382,7 +382,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
                       ? '#fbbf24'
                       : '#94a3b8';
               }
-              if (n.type === 'scoreNode') return '#8b5cf6';
+              if (n.type === 'scoreNode') return '#6366f1';
               if (n.type === 'progressNode') return '#60a5fa';
               if (n.type === 'summaryCard') return '#a78bfa';
               if (n.type === 'frameNode') return isDarkCanvas ? '#0f172a' : '#f1f5f9';

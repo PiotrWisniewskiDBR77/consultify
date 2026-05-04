@@ -83,7 +83,7 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
         icon={MessageSquareWarning}
         titlePl="Sugestie AI (do rozważenia)"
         titleEn="AI suggestions (consider)"
-        activeClass="text-violet-600 dark:text-violet-300"
+        activeClass="text-primary-600 dark:text-primary-300"
       />
     </div>
   );

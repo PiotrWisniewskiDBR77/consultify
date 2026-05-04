@@ -332,8 +332,8 @@ export const SSOConfigurationView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <Key className="text-violet-500" size={20} />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
+              <Key className="text-primary-500" size={20} />
             </div>
             <div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
@@ -392,7 +392,7 @@ export const SSOConfigurationView: React.FC = () => {
             placeholder="Search organizations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-violet-500/20"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500/20"
           />
         </div>
         <select
@@ -406,7 +406,7 @@ export const SSOConfigurationView: React.FC = () => {
         </select>
         <button
           onClick={() => setShowConfigModal(true)}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
         >
           <Key size={18} />
           Configure SSO
@@ -454,7 +454,7 @@ export const SSOConfigurationView: React.FC = () => {
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
                         {config.organizationName.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -509,12 +509,12 @@ export const SSOConfigurationView: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
                       {config.enforceSso && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400">
+                        <span className="text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400">
                           SSO Only
                         </span>
                       )}
                       {config.autoProvisionUsers && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                        <span className="text-xs px-2 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400">
                           Auto-provision
                         </span>
                       )}
@@ -542,7 +542,7 @@ export const SSOConfigurationView: React.FC = () => {
                       </button>
                       <button
                         onClick={() => deleteSSOConfig(config.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors"
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 transition-colors"
                       >
                         Delete
                       </button>
@@ -580,7 +580,7 @@ export const SSOConfigurationView: React.FC = () => {
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-red-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-rose-500 flex items-center justify-center">
             <Globe size={24} className="text-white" />
           </div>
           <div className="flex-1">
@@ -615,7 +615,7 @@ export const SSOConfigurationView: React.FC = () => {
               className={`p-4 rounded-lg border ${
                 message.type === 'success'
                   ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
+                  : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400'
               }`}
             >
               {message.text}
@@ -706,7 +706,7 @@ export const SSOConfigurationView: React.FC = () => {
             <button
               onClick={saveGoogleConfig}
               disabled={saving || !googleForm.organizationId || !googleForm.clientId}
-              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
             >
               {saving && <Loader2 size={16} className="animate-spin" />}
               {saving ? 'Saving...' : 'Save Configuration'}
@@ -808,7 +808,7 @@ export const SSOConfigurationView: React.FC = () => {
               a.click();
               URL.revokeObjectURL(url);
             }}
-            className="mt-3 px-3 py-1.5 text-sm text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded-lg transition-colors flex items-center gap-2"
+            className="mt-3 px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors flex items-center gap-2"
           >
             <Download size={14} />
             Download SP Metadata XML
@@ -930,7 +930,7 @@ export const SSOConfigurationView: React.FC = () => {
             <button
               onClick={handleSaveSaml}
               disabled={savingSaml || !samlForm.organizationId}
-              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {savingSaml && <Loader2 size={16} className="animate-spin" />}
               Save SAML Configuration
@@ -945,7 +945,7 @@ export const SSOConfigurationView: React.FC = () => {
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
             <Globe size={24} className="text-white" />
           </div>
           <div className="flex-1">
@@ -956,7 +956,7 @@ export const SSOConfigurationView: React.FC = () => {
           </div>
           <button
             onClick={() => setShowAddDomainModal(true)}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
             <Globe size={16} />
             Add Domain
@@ -1021,7 +1021,7 @@ export const SSOConfigurationView: React.FC = () => {
                   <button
                     onClick={handleAddDomain}
                     disabled={savingDomain || !newDomain.domain || !newDomain.organizationId}
-                    className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
                   >
                     {savingDomain && <Loader2 size={16} className="animate-spin" />}
                     Save
@@ -1179,7 +1179,7 @@ export const SSOConfigurationView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -1192,7 +1192,7 @@ export const SSOConfigurationView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : (
         <>

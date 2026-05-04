@@ -24,7 +24,7 @@ interface OrgSwitcherProps {
 const getRoleBadgeColor = (role: string): string => {
   switch (role) {
     case 'OWNER':
-      return 'bg-purple-500/20 text-purple-400 dark:text-purple-300 border-purple-500/30';
+      return 'bg-primary-500/20 text-primary-400 dark:text-primary-300 border-primary-500/30';
     case 'ADMIN':
       return 'bg-blue-500/20 text-blue-400 dark:text-blue-300 border-blue-500/30';
     case 'MEMBER':

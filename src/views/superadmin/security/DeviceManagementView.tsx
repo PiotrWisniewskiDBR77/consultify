@@ -235,7 +235,7 @@ export const DeviceManagementView: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       {device.is_blocked ? (
-                        <span className="px-2 py-1 rounded text-xs bg-red-500/10 text-red-700 dark:bg-red-500/20 dark:text-red-400">
+                        <span className="px-2 py-1 rounded text-xs bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400">
                           Blocked
                         </span>
                       ) : device.is_trusted ? (

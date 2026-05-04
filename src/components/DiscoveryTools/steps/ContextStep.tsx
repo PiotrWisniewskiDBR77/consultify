@@ -716,7 +716,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
     const navButtonClass =
       'inline-flex rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700';
     const primaryNavButtonClass =
-      'inline-flex rounded-xl border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-violet-900/40 dark:bg-violet-950/20 dark:text-violet-200 dark:hover:bg-violet-950/30';
+      'inline-flex rounded-xl border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-900/40 dark:bg-primary-950/20 dark:text-primary-200 dark:hover:bg-primary-950/30';
 
     const toggleChoice = (
       field:
@@ -1190,7 +1190,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           <button
             type="button"
             onClick={() => handleMissionFeedbackAction(blockId, 'think-deeper')}
-            className="inline-flex rounded-full border border-violet-300/50 bg-white/80 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 shadow-sm transition-colors hover:bg-violet-50 dark:border-violet-900/40 dark:bg-white/[0.04] dark:text-violet-200"
+            className="inline-flex rounded-full border border-primary-300/50 bg-white/80 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 shadow-sm transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
           >
             {labelsUi.thinkDeeper}
           </button>
@@ -1253,8 +1253,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                           onClick={() => setSelectedDeepDive(option.label)}
                           className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors ${
                             active
-                              ? 'border-violet-400 bg-violet-500 text-white'
-                              : 'border-violet-300/50 bg-white/80 text-violet-800 dark:border-violet-900/40 dark:bg-white/[0.04] dark:text-violet-200'
+                              ? 'border-primary-400 bg-primary-500 text-white'
+                              : 'border-primary-300/50 bg-white/80 text-primary-800 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200'
                           }`}
                         >
                           {option.label}
@@ -1267,7 +1267,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                       type="button"
                       onClick={() => handleImplementMissionFeedback(blockId)}
                       disabled={!selectedDeepDive}
-                      className="inline-flex rounded-2xl bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex rounded-2xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {labelsUi.implement}
                     </button>
@@ -1293,7 +1293,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           <div className="border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-200">
+                <span className="inline-flex items-center rounded-full border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-200">
                   Mission & Context
                 </span>
                 <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
@@ -1312,12 +1312,12 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           </div>
 
           <div className="space-y-4 px-6 py-5">
-            <div className="rounded-[26px] border border-violet-200/70 bg-violet-500/5 p-5 shadow-sm dark:border-violet-900/40">
+            <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-5 shadow-sm dark:border-primary-900/40">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
                   {isPolish ? 'AI understanding' : 'AI understanding'}
                 </div>
-                <span className="inline-flex rounded-full border border-violet-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200">
+                <span className="inline-flex rounded-full border border-primary-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
                   Understanding
                 </span>
               </div>
@@ -1357,7 +1357,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                       onClick={() => toggleChoice('directionChoices', option.id)}
                       className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
                         active
-                          ? 'border-violet-300 bg-violet-50 shadow-sm dark:border-violet-700 dark:bg-violet-950/20'
+                          ? 'border-primary-300 bg-primary-50 shadow-sm dark:border-primary-700 dark:bg-primary-950/20'
                           : 'border-slate-200 bg-white/80 hover:border-slate-300 dark:border-navy-700 dark:bg-navy-900/40'
                       }`}
                     >
@@ -1365,7 +1365,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                         <span
                           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                             active
-                              ? 'border-violet-500 bg-violet-500 text-white'
+                              ? 'border-primary-500 bg-primary-500 text-white'
                               : 'border-slate-300 text-slate-400 dark:border-slate-600'
                           }`}
                         >
@@ -1607,14 +1607,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
             )}
 
             {displayedContext.question3Confirmed && (
-              <div className="rounded-[26px] border border-violet-200/70 bg-violet-500/5 p-5 shadow-sm dark:border-violet-900/40">
+              <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-5 shadow-sm dark:border-primary-900/40">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
                     {isPolish
                       ? '4. Jakie pytanie kontekstowe musimy jeszcze doprecyzować?'
                       : '4. Which contextual question still needs sharpening?'}
                   </div>
-                  <span className="inline-flex rounded-full border border-violet-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200">
+                  <span className="inline-flex rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
                     4/5
                   </span>
                 </div>
@@ -1636,15 +1636,15 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                         onClick={() => toggleChoice('question4Choices', option.id)}
                         className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
                           active
-                            ? 'border-violet-300 bg-violet-50 shadow-sm dark:border-violet-700 dark:bg-violet-950/20'
-                            : 'border-violet-200/50 bg-white/80 hover:border-violet-300 dark:border-violet-900/30 dark:bg-navy-900/40'
+                            ? 'border-primary-300 bg-primary-50 shadow-sm dark:border-primary-700 dark:bg-primary-950/20'
+                            : 'border-primary-200/50 bg-white/80 hover:border-primary-300 dark:border-primary-900/30 dark:bg-navy-900/40'
                         }`}
                       >
                         <div className="flex items-start gap-3">
                           <span
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                               active
-                                ? 'border-violet-500 bg-violet-500 text-white'
+                                ? 'border-primary-500 bg-primary-500 text-white'
                                 : 'border-slate-300 text-slate-400 dark:border-slate-600'
                             }`}
                           >
@@ -1787,7 +1787,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                 <div className="mt-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                   {executiveSummaryBody}
                 </div>
-                <div className="mt-4 rounded-2xl border border-violet-200/70 bg-violet-500/5 px-4 py-4 text-sm leading-relaxed text-slate-700 dark:border-violet-900/40 dark:text-slate-200">
+                <div className="mt-4 rounded-2xl border border-primary-200/70 bg-primary-500/5 px-4 py-4 text-sm leading-relaxed text-slate-700 dark:border-primary-900/40 dark:text-slate-200">
                   {executiveSummaryDelivery}
                 </div>
               </div>
@@ -1875,7 +1875,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   type="button"
                   onClick={onGenerateFullSession}
                   disabled={isGenerating}
-                  className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
                   {isGenerating

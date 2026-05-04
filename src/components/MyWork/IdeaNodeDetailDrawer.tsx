@@ -184,8 +184,8 @@ const STATUS_CONFIG: Record<
   rejected: {
     labelPl: 'Odrzucone',
     labelEn: 'Rejected',
-    color: 'text-red-600',
-    bg: 'bg-red-50 dark:bg-red-900/20',
+    color: 'text-rose-600',
+    bg: 'bg-rose-50 dark:bg-rose-900/20',
   },
 };
 
@@ -193,9 +193,9 @@ const TAG_COLORS = [
   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
   'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
-  'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -576,7 +576,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             {onDrillDown && (
               <button
                 onClick={() => onDrillDown(nodeId)}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
               >
                 <GitBranch size={12} />
                 {isPl ? 'Rozwiń sub-mapę' : 'Drill down'}
@@ -585,7 +585,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             <button
               onClick={handleAIExpand}
               disabled={aiLoading}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors disabled:opacity-40"
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
               {isPl ? 'AI Rozbuduj' : 'AI Expand'}
@@ -783,7 +783,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 onNodeDataChange(nodeId, { semanticType: e.target.value || undefined })
               }
               disabled={locked}
-              className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400 transition-colors"
+              className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400 transition-colors"
             >
               <option value="">{isPl ? '— Brak —' : '— None —'}</option>
               {[
@@ -858,7 +858,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             accent
           >
             {aiLoading ? (
-              <div className="flex items-center gap-2 py-4 justify-center text-violet-500">
+              <div className="flex items-center gap-2 py-4 justify-center text-primary-500">
                 <Loader2 size={14} className="animate-spin" />
                 <span className="text-[11px]">
                   {isPl ? 'Analizuję kontekst...' : 'Analyzing context...'}
@@ -867,7 +867,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             ) : aiContext ? (
               <div className="space-y-3">
                 {aiContext.summary && (
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed bg-violet-50/50 dark:bg-violet-900/10 rounded-lg p-2.5">
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed bg-primary-50/50 dark:bg-primary-900/10 rounded-lg p-2.5">
                     {aiContext.summary}
                   </div>
                 )}
@@ -900,7 +900,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       <div key={i} className="flex items-start gap-1.5 py-1">
                         <AlertTriangle
                           size={10}
-                          className={`mt-0.5 shrink-0 ${risk.severity === 'high' ? 'text-red-500' : 'text-amber-500'}`}
+                          className={`mt-0.5 shrink-0 ${risk.severity === 'high' ? 'text-rose-500' : 'text-amber-500'}`}
                         />
                         <div className="text-[10px] text-slate-700 dark:text-slate-300">
                           {risk.text}
@@ -926,7 +926,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 )}
                 <button
                   onClick={fetchAIContext}
-                  className="text-[10px] text-violet-500 hover:text-violet-600 font-medium"
+                  className="text-[10px] text-primary-500 hover:text-primary-600 font-medium"
                 >
                   {isPl ? '↻ Odśwież kontekst' : '↻ Refresh context'}
                 </button>
@@ -978,7 +978,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   {!locked && (
                     <button
                       onClick={() => handleRemoveAttachment(att.id)}
-                      className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 shrink-0"
+                      className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 shrink-0"
                     >
                       <X size={12} />
                     </button>
@@ -1079,7 +1079,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                           e.stopPropagation();
                           handleDetachArtifact(artifactType, artifactId);
                         }}
-                        className="text-slate-400 hover:text-red-500 shrink-0"
+                        className="text-slate-400 hover:text-rose-500 shrink-0"
                       >
                         <X size={12} />
                       </button>
@@ -1134,7 +1134,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowEvidenceForm(true)}
-                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/5 hover:bg-blue-500/10 transition-colors"
                 >
                   <Plus size={12} />
                   {isPl ? 'Dodaj dowód / źródło' : 'Add evidence / source'}
@@ -1167,7 +1167,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     <button
                       onClick={handleAddEvidence}
                       disabled={!newEvidenceTitle.trim()}
-                      className="flex-1 h-7 rounded-lg text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 transition-colors disabled:opacity-40"
+                      className="flex-1 h-7 rounded-lg text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors disabled:opacity-40"
                     >
                       {isPl ? 'Dodaj' : 'Add'}
                     </button>
@@ -1290,11 +1290,11 @@ const SectionToggle: React.FC<{
       type="button"
       onClick={onToggle}
       className={`w-full flex items-center gap-2 py-1.5 text-left group ${
-        accent ? 'text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400'
+        accent ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-400'
       }`}
     >
       {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-      <Icon size={12} className={accent ? 'text-violet-500' : 'text-slate-400'} />
+      <Icon size={12} className={accent ? 'text-primary-500' : 'text-slate-400'} />
       <span className="text-[10px] font-bold uppercase tracking-wider flex-1">{title}</span>
       {count != null && count > 0 && (
         <span className="text-[9px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-500 px-1.5 py-0.5 rounded-full">

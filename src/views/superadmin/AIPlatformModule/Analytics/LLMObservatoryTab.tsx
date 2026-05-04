@@ -295,7 +295,7 @@ function statusTone(status: string): string {
   const normalized = String(status || '').toLowerCase();
   if (normalized === 'healthy') return 'text-emerald-600 dark:text-emerald-400';
   if (normalized === 'degraded') return 'text-amber-600 dark:text-amber-400';
-  if (normalized === 'unhealthy') return 'text-red-600 dark:text-red-400';
+  if (normalized === 'unhealthy') return 'text-rose-600 dark:text-rose-400';
   return 'text-slate-500 dark:text-slate-400';
 }
 
@@ -470,7 +470,7 @@ export const LLMObservatoryTab: React.FC = () => {
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {t('superadmin.ai.observatory.avgLatency', 'Avg latency')}
                 </span>
-                <Clock3 size={16} className="text-cyan-500" />
+                <Clock3 size={16} className="text-blue-500" />
               </div>
               <div className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">
                 {summary?.avgLatencyMs ?? 0}ms
@@ -516,7 +516,7 @@ export const LLMObservatoryTab: React.FC = () => {
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {t('superadmin.ai.observatory.incidents', 'Incidents')}
                 </span>
-                <ShieldAlert size={16} className="text-red-500" />
+                <ShieldAlert size={16} className="text-rose-500" />
               </div>
               <div className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">
                 {summary?.incidents ?? 0}
@@ -532,7 +532,7 @@ export const LLMObservatoryTab: React.FC = () => {
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {t('superadmin.ai.observatory.providerScope', 'Scope')}
                 </span>
-                <AlertTriangle size={16} className="text-violet-500" />
+                <AlertTriangle size={16} className="text-primary-500" />
               </div>
               <div className="mt-3 text-lg font-semibold text-slate-900 dark:text-white capitalize">
                 {selectedProvider === 'all'
@@ -630,7 +630,7 @@ export const LLMObservatoryTab: React.FC = () => {
                         <span
                           className={`text-[11px] font-medium ${
                             incident.end === null
-                              ? 'text-red-600 dark:text-red-400'
+                              ? 'text-rose-600 dark:text-rose-400'
                               : 'text-amber-600 dark:text-amber-400'
                           }`}
                         >
@@ -804,7 +804,7 @@ export const LLMObservatoryTab: React.FC = () => {
                             {entry.error}
                           </div>
                         </div>
-                        <div className="text-xs font-medium text-red-600 dark:text-red-400 shrink-0">
+                        <div className="text-xs font-medium text-rose-600 dark:text-rose-400 shrink-0">
                           {entry.occurrences}x
                         </div>
                       </div>

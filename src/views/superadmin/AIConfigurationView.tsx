@@ -63,7 +63,7 @@ const AI_CAPABILITIES = [
     icon: Wand2,
     description: 'Field auto-suggestions',
     promptKey: 'system_magic_wand',
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-primary-500 to-primary-600',
   },
   {
     id: 'reports',
@@ -95,7 +95,7 @@ const AI_CAPABILITIES = [
     icon: Brain,
     description: 'PMO coaching and mentoring',
     promptKey: 'system_coach',
-    color: 'from-cyan-500 to-cyan-600',
+    color: 'from-blue-500 to-blue-600',
   },
 ];
 
@@ -444,7 +444,7 @@ Help leaders develop change management competencies.`,
       <div className="shrink-0 px-8 py-6 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
               <Brain className="text-white" size={24} />
             </div>
             <div>
@@ -589,10 +589,10 @@ Help leaders develop change management competencies.`,
         {activeTab === 'providers' && (
           <div className="p-8 overflow-y-auto h-full space-y-6">
             {/* Ollama Local Models */}
-            <div className="bg-gradient-to-br from-purple-900/30 to-navy-900 border border-purple-500/20 rounded-xl p-6">
+            <div className="bg-gradient-to-br from-primary-900/30 to-navy-900 border border-primary-500/20 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-purple-500/20">
-                  <Server size={20} className="text-purple-400" />
+                <div className="p-2 rounded-lg bg-primary-500/20">
+                  <Server size={20} className="text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">Ollama Local Models</h3>
@@ -613,7 +613,7 @@ Help leaders develop change management competencies.`,
                 <button
                   onClick={testOllamaConnection}
                   disabled={testingOllama}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   {testingOllama ? (
                     <RefreshCw size={16} className="animate-spin" />
@@ -644,7 +644,7 @@ Help leaders develop change management competencies.`,
                           className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors ${
                             alreadyAdded
                               ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
-                              : 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                              : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30'
                           }`}
                         >
                           {alreadyAdded && <Check size={12} />}
@@ -657,7 +657,7 @@ Help leaders develop change management competencies.`,
               )}
 
               {ollamaConnected === false && (
-                <p className="text-red-400 text-sm">
+                <p className="text-rose-400 text-sm">
                   Unable to connect. Make sure Ollama is running.
                 </p>
               )}
@@ -770,7 +770,7 @@ Help leaders develop change management competencies.`,
                               </button>
                               <button
                                 onClick={() => handleDeleteProvider(p.id)}
-                                className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-400"
+                                className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -876,7 +876,7 @@ Help leaders develop change management competencies.`,
                 icon={TrendingUp}
                 label="Cache Hit Rate"
                 value={`${usageStats?.cache?.hitRate || 0}%`}
-                color="text-purple-400"
+                color="text-primary-400"
               />
             </div>
 
@@ -990,7 +990,7 @@ Help leaders develop change management competencies.`,
                 <button
                   onClick={saveGlobalSettings}
                   disabled={savingSettings || !globalSettings}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg transition-colors"
                 >
                   {savingSettings ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1020,7 +1020,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('defaultProvider', e.target.value || null)
                           }
-                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-violet-500 outline-none"
+                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
                         >
                           <option value="">Auto (First Available)</option>
                           {providers
@@ -1047,7 +1047,7 @@ Help leaders develop change management competencies.`,
                                 failureThreshold: parseInt(e.target.value) || 5,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-violet-500 outline-none"
+                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Failures before circuit opens
@@ -1066,7 +1066,7 @@ Help leaders develop change management competencies.`,
                                 cooldownSeconds: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-violet-500 outline-none"
+                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Wait before retry
@@ -1133,7 +1133,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerMinute: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-violet-500 outline-none"
+                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
                           />
                         </div>
                         <div>
@@ -1149,7 +1149,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerHour: parseInt(e.target.value) || 1000,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-violet-500 outline-none"
+                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
                           />
                         </div>
                       </div>
@@ -1178,7 +1178,7 @@ Help leaders develop change management competencies.`,
                                                                 ${
                                                                   globalSettings.piiDetectionSensitivity ===
                                                                   level
-                                                                    ? 'bg-violet-500/20 border-violet-500 text-violet-300'
+                                                                    ? 'bg-primary-500/20 border-primary-500 text-primary-300'
                                                                     : 'bg-slate-800/50 border-slate-700 text-slate-400 dark:text-slate-500 hover:border-slate-600'
                                                                 }
                                                             `}
@@ -1211,7 +1211,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('dataResidency', e.target.value || null)
                           }
-                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-violet-500 outline-none"
+                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
                         >
                           <option value="">No Restriction</option>
                           <option value="eu">European Union</option>

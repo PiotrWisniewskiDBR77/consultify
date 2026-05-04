@@ -121,7 +121,7 @@ export const FeatureFlagsPanel: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={16} />
           Create Flag
@@ -140,13 +140,13 @@ export const FeatureFlagsPanel: React.FC = () => {
             placeholder="Search flags..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
         <select
           value={filterEnvironment}
           onChange={(e) => setFilterEnvironment(e.target.value)}
-          className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All Environments</option>
           <option value="development">Development</option>
@@ -172,7 +172,7 @@ export const FeatureFlagsPanel: React.FC = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-white font-medium">{flag.name}</h3>
-                    <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">
+                    <span className="px-2 py-0.5 text-xs bg-primary-500/20 text-primary-400 rounded">
                       {flag.flag_key}
                     </span>
                     <span className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
@@ -220,7 +220,7 @@ export const FeatureFlagsPanel: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDelete(flag.id)}
-                    className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                    className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />
@@ -321,7 +321,7 @@ const FeatureFlagModal: React.FC<{
               required
               value={formData.flag_key}
               onChange={(e) => setFormData({ ...formData, flag_key: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="new_feature"
             />
           </div>
@@ -333,7 +333,7 @@ const FeatureFlagModal: React.FC<{
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
@@ -342,7 +342,7 @@ const FeatureFlagModal: React.FC<{
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               rows={3}
             />
           </div>
@@ -353,7 +353,7 @@ const FeatureFlagModal: React.FC<{
               <select
                 value={formData.flag_type}
                 onChange={(e) => setFormData({ ...formData, flag_type: e.target.value as any })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="boolean">Boolean</option>
                 <option value="percentage">Percentage Rollout</option>
@@ -367,7 +367,7 @@ const FeatureFlagModal: React.FC<{
               <select
                 value={formData.environment}
                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="development">Development</option>
                 <option value="staging">Staging</option>
@@ -389,7 +389,7 @@ const FeatureFlagModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, rollout_percentage: parseInt(e.target.value) })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           )}
@@ -400,7 +400,7 @@ const FeatureFlagModal: React.FC<{
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-              className="w-4 h-4 text-purple-600 bg-slate-50/30 dark:bg-navy-950/20 border-white/10 rounded focus:ring-purple-500"
+              className="w-4 h-4 text-primary-600 bg-slate-50/30 dark:bg-navy-950/20 border-white/10 rounded focus:ring-primary-500"
             />
             <label htmlFor="enabled" className="text-sm text-slate-300">
               Enabled
@@ -418,7 +418,7 @@ const FeatureFlagModal: React.FC<{
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {flag ? 'Update' : 'Create'}

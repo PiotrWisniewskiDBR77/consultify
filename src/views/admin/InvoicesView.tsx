@@ -132,7 +132,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
     const styles = {
       paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
       pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-      overdue: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+      overdue: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
       void: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400',
     };
 
@@ -198,7 +198,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -332,7 +332,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                       <button
                         onClick={() => handleDownload(invoice)}
                         disabled={downloading === invoice.id}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-600 rounded-lg text-slate-500 dark:text-slate-400 hover:text-violet-600"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-600 rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary-600"
                         title="Download PDF"
                       >
                         {downloading === invoice.id ? (
@@ -422,7 +422,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                 </button>
                 <button
                   onClick={() => handleDownload(selectedInvoice)}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
                 >
                   <Download size={16} />
                   Download PDF

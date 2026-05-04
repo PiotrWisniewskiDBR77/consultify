@@ -170,7 +170,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -213,8 +213,8 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-500/10 rounded-lg">
-            <Shield size={20} className="text-purple-500" />
+          <div className="p-2 bg-primary-500/10 rounded-lg">
+            <Shield size={20} className="text-primary-500" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">Governance Settings</h3>
@@ -226,7 +226,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           Save
@@ -256,7 +256,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
             <button
               onClick={() => toggleSetting(config.key)}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings[config.key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                settings[config.key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
@@ -302,7 +302,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
         {/* AI Roles Model: AI Governance Role Selector */}
         <div className="px-6 py-4 border-t border-slate-100 dark:border-navy-700">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
+            <div className="p-2 rounded-lg bg-primary-500/10 text-primary-500">
               <Shield size={18} />
             </div>
             <div>
@@ -341,7 +341,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     isSelected
                       ? `border-${info.color}-500 bg-${info.color}-500/10`
-                      : 'border-slate-200 dark:border-navy-700 hover:border-purple-500/50'
+                      : 'border-slate-200 dark:border-navy-700 hover:border-primary-500/50'
                   }`}
                 >
                   <div

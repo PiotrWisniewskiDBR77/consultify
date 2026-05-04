@@ -46,7 +46,7 @@ export const AITextArea: React.FC<AITextAreaProps> = ({
   return (
     <div className="relative group">
       <textarea
-        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all placeholder:text-slate-400 dark:text-slate-500 pb-10 ${className} ${isRefining ? 'animate-pulse bg-purple-50 dark:bg-purple-900/20' : ''}`}
+        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 text-sm focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all placeholder:text-slate-400 dark:text-slate-500 pb-10 ${className} ${isRefining ? 'animate-pulse bg-primary-50 dark:bg-primary-900/20' : ''}`}
         value={props.value}
         onChange={props.onChange}
         disabled={isRefining}
@@ -55,18 +55,18 @@ export const AITextArea: React.FC<AITextAreaProps> = ({
       <button
         onClick={handleRefine}
         type="button"
-        className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-purple-100 dark:border-purple-500/20 hover:border-purple-300 dark:hover:border-purple-500 rounded-full shadow-sm hover:shadow-md transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed"
+        className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-primary-100 dark:border-primary-500/20 hover:border-primary-300 dark:hover:border-primary-500 rounded-full shadow-sm hover:shadow-md transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={isRefining || !props.value}
       >
         {isRefining ? (
-          <Loader2 size={12} className="text-purple-500 animate-spin" />
+          <Loader2 size={12} className="text-primary-500 animate-spin" />
         ) : (
           <Sparkles
             size={12}
-            className="text-purple-500 group-hover/btn:text-purple-600 transition-colors"
+            className="text-primary-500 group-hover/btn:text-primary-600 transition-colors"
           />
         )}
-        <span className="text-[10px] font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 group-hover/btn:from-purple-700 group-hover/btn:to-indigo-700">
+        <span className="text-[10px] font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-indigo-600 group-hover/btn:from-primary-700 group-hover/btn:to-indigo-700">
           {isRefining ? 'Refining...' : 'AI'}
         </span>
       </button>

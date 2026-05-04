@@ -100,7 +100,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
 
   if (error) {
     return (
-      <div className="p-8 text-center text-red-600 dark:text-red-400">
+      <div className="p-8 text-center text-rose-600 dark:text-rose-400">
         <p>Error: {error}</p>
         <button
           onClick={onClose}
@@ -214,7 +214,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
 
                   <div className="grid md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span className="font-semibold text-red-600/80 dark:text-red-400 block mb-2">
+                      <span className="font-semibold text-rose-600/80 dark:text-rose-400 block mb-2">
                         Risks
                       </span>
                       <ul className="list-disc list-inside space-y-1">

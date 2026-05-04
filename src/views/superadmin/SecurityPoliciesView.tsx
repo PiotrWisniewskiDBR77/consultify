@@ -235,8 +235,8 @@ export const SecurityPoliciesView: React.FC = () => {
         {/* Password Policy */}
         <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <Lock className="text-violet-500" size={20} />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
+              <Lock className="text-primary-500" size={20} />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -282,7 +282,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireUppercase}
                 onChange={(e) => updateField('passwordRequireUppercase', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Uppercase</span>
             </label>
@@ -291,7 +291,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireLowercase}
                 onChange={(e) => updateField('passwordRequireLowercase', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Lowercase</span>
             </label>
@@ -300,7 +300,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireNumbers}
                 onChange={(e) => updateField('passwordRequireNumbers', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Numbers</span>
             </label>
@@ -309,7 +309,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.passwordRequireSpecial}
                 onChange={(e) => updateField('passwordRequireSpecial', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Special chars</span>
             </label>
@@ -392,7 +392,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.requireSessionBinding}
                 onChange={(e) => updateField('requireSessionBinding', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">
                 Bind sessions to IP/device (stricter security)
@@ -421,7 +421,7 @@ export const SecurityPoliciesView: React.FC = () => {
                 type="checkbox"
                 checked={editedPolicy.mfaRequired}
                 onChange={(e) => updateField('mfaRequired', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Require MFA for all users
@@ -518,7 +518,7 @@ export const SecurityPoliciesView: React.FC = () => {
                     addToList('ipBlocklist', newBlocklistIP);
                     setNewBlocklistIP('');
                   }}
-                  className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                  className="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"
                 >
                   <Plus size={16} />
                 </button>
@@ -527,12 +527,12 @@ export const SecurityPoliciesView: React.FC = () => {
                 {editedPolicy.ipBlocklist.map((ip, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between px-3 py-1.5 bg-red-50 dark:bg-red-500/10 rounded text-sm"
+                    className="flex items-center justify-between px-3 py-1.5 bg-rose-50 dark:bg-rose-500/10 rounded text-sm"
                   >
-                    <span className="text-red-700 dark:text-red-400 font-mono">{ip}</span>
+                    <span className="text-rose-700 dark:text-rose-400 font-mono">{ip}</span>
                     <button
                       onClick={() => removeFromList('ipBlocklist', idx)}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-rose-600 hover:text-rose-800"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -548,7 +548,7 @@ export const SecurityPoliciesView: React.FC = () => {
           <button
             onClick={() => onSave(editedPolicy)}
             disabled={saving}
-            className="px-6 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Save Policy
@@ -598,13 +598,13 @@ export const SecurityPoliciesView: React.FC = () => {
             }}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
               selectedOrg === org.id
-                ? 'bg-violet-50 dark:bg-violet-500/10 border-violet-300 dark:border-violet-500/30'
-                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-500/30'
+                ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-300 dark:border-primary-500/30'
+                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -615,7 +615,7 @@ export const SecurityPoliciesView: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               {org.hasCustomPolicy ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400">
                   <Settings size={12} />
                   Custom Policy
                 </span>
@@ -947,7 +947,7 @@ export const SecurityPoliciesView: React.FC = () => {
           <button
             onClick={handleSave}
             disabled={saving || !dirty}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center gap-2 ml-auto transition-colors"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center gap-2 ml-auto transition-colors"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             Save
@@ -1014,7 +1014,7 @@ export const SecurityPoliciesView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -1027,7 +1027,7 @@ export const SecurityPoliciesView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : loadError ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">

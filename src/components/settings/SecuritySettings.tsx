@@ -173,7 +173,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
       <InfoButton cardId="settings-security" position="top-right" />
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
           <Shield className="w-6 h-6 text-white" />
         </div>
         <div>
@@ -190,7 +190,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-navy-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Key className="w-5 h-5 text-purple-500" />
+            <Key className="w-5 h-5 text-primary-500" />
             {t('settings.security.changePassword', 'Change Password')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -213,7 +213,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
@@ -237,7 +237,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
@@ -297,7 +297,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               {confirmPassword && (
@@ -305,7 +305,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                   {passwordRequirements.passwordsMatch ? (
                     <CheckCircle className="w-5 h-5 text-emerald-500" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-red-500" />
+                    <AlertCircle className="w-5 h-5 text-rose-500" />
                   )}
                 </div>
               )}
@@ -314,7 +314,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
           {/* Error/Success Messages */}
           {passwordError && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {passwordError}
             </div>
@@ -334,7 +334,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           <button
             onClick={handleChangePassword}
             disabled={!isPasswordValid || !currentPassword || isChangingPassword}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium hover:from-purple-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-medium hover:from-primary-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isChangingPassword ? (
               <>
@@ -369,7 +369,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           {sessions.length > 1 && (
             <button
               onClick={handleRevokeAllSessions}
-              className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               {t('settings.security.logoutAll', 'Log Out All Others')}
@@ -380,7 +380,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
         <div className="divide-y divide-slate-100 dark:divide-white/5">
           {isLoadingSessions ? (
             <div className="p-8 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
             </div>
           ) : sessions.length === 0 ? (
             <div className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -422,7 +422,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                   <button
                     onClick={() => handleRevokeSession(session.id)}
                     disabled={isRevokingSession === session.id}
-                    className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                    className="px-3 py-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {isRevokingSession === session.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

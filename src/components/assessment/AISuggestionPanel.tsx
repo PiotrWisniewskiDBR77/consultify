@@ -259,8 +259,8 @@ const TechnologyCard: React.FC<{
     <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <Cpu className="w-5 h-5 text-purple-500" />
+          <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+            <Cpu className="w-5 h-5 text-primary-500" />
           </div>
           <div>
             <h4 className="font-medium text-navy-900 dark:text-white">{technology.name}</h4>
@@ -292,7 +292,7 @@ const TechnologyCard: React.FC<{
               ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
               : technology.implementationComplexity === 'medium'
                 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
           }`}
         >
           {isPolish ? 'Złożoność:' : 'Complexity:'}{' '}
@@ -350,7 +350,7 @@ const TechnologyCard: React.FC<{
           {onSelect && (
             <button
               onClick={onSelect}
-              className="w-full mt-2 px-3 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition-colors"
+              className="w-full mt-2 px-3 py-2 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 transition-colors"
             >
               {isPolish ? 'Dodaj do planu' : 'Add to plan'}
             </button>
@@ -445,7 +445,7 @@ const GapAnalysisCard: React.FC<{
 
           {gap.longTermActions.length > 0 && (
             <div>
-              <h5 className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase mb-2 flex items-center gap-1">
+              <h5 className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase mb-2 flex items-center gap-1">
                 <Target size={12} />
                 {isPolish ? 'Działania długoterminowe' : 'Long-term Actions'}
               </h5>
@@ -455,7 +455,7 @@ const GapAnalysisCard: React.FC<{
                     key={i}
                     className="text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2"
                   >
-                    <ChevronRight size={14} className="text-purple-500 mt-0.5 shrink-0" />
+                    <ChevronRight size={14} className="text-primary-500 mt-0.5 shrink-0" />
                     {action}
                   </li>
                 ))}
@@ -514,7 +514,7 @@ const RoadmapPhaseCard: React.FC<{
             {phase.technologies.map((t, i) => (
               <span
                 key={i}
-                className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded"
+                className="text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded"
               >
                 {t}
               </span>
@@ -580,7 +580,7 @@ export const AISuggestionPanel: React.FC<Props> = ({
 
   if (compact) {
     return (
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-4">
+      <div className="bg-gradient-to-r from-blue-50 to-primary-50 dark:from-blue-900/20 dark:to-primary-900/20 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-blue-500" />
@@ -606,7 +606,7 @@ export const AISuggestionPanel: React.FC<Props> = ({
               <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
                 {suggestions.levelSuggestions.length} {isPolish ? 'sugestii' : 'suggestions'}
               </span>
-              <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">
+              <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded">
                 {suggestions.technologySuggestions.length}{' '}
                 {isPolish ? 'technologii' : 'technologies'}
               </span>
@@ -620,7 +620,7 @@ export const AISuggestionPanel: React.FC<Props> = ({
   return (
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4">
+      <div className="bg-gradient-to-r from-blue-500 to-primary-500 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
@@ -685,8 +685,8 @@ export const AISuggestionPanel: React.FC<Props> = ({
         )}
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+          <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
               <AlertTriangle size={18} />
               <span>{error}</span>
             </div>

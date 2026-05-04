@@ -189,7 +189,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
               onClick={() => setSelectedVariant(variant)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 activeVariant === variant
-                  ? 'bg-cyan-500 text-slate-950'
+                  ? 'bg-blue-500 text-slate-950'
                   : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
               }`}
             >

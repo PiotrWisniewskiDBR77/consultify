@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { useConversationStore } from '../../store/useConversationStore';
+import {
+  isConversationMarkedMissing,
+  useConversationStore,
+} from '../../store/useConversationStore';
 
 /**
  * ConversationRouteSync
@@ -23,6 +26,7 @@ export const ConversationRouteSync: React.FC = () => {
   const isLoading = useConversationStore((s) => s.isLoading);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
   const fetchConversation = useConversationStore((s) => s.fetchConversation);
+  const clearActiveChat = useConversationStore((s) => s.clearActiveChat);
 
   // Guard to prevent Store→URL sync from firing right after URL→Store sync
   const syncingFromUrl = useRef(false);
@@ -39,6 +43,12 @@ export const ConversationRouteSync: React.FC = () => {
       // createConversation() sets activeConversationId, the Store -> URL effect
       // below must navigate to /chat/:id; clearing here races that transition and
       // leaves the user on the welcome screen while the backend has messages.
+      return;
+    }
+
+    if (isConversationMarkedMissing(conversationId)) {
+      clearActiveChat();
+      navigate('/chat', { replace: true });
       return;
     }
 
@@ -68,7 +78,9 @@ export const ConversationRouteSync: React.FC = () => {
     activeConversationId,
     activeMessagesCount,
     isLoading,
+    clearActiveChat,
     fetchConversation,
+    navigate,
     setActiveConversation,
   ]);
 

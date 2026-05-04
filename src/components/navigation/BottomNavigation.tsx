@@ -131,18 +131,18 @@ export const BottomNavigation: React.FC = () => {
               onClick={() => handleNavClick(item)}
               data-testid={`bottom-nav-${item.id}`}
               className={`
-                                flex-1 flex flex-col items-center justify-center gap-0.5 
+                                flex-1 flex flex-col items-center justify-center gap-0.5
                                 transition-all duration-200 relative touch-target no-select
                                 ${
                                   active
-                                    ? 'text-purple-600 dark:text-purple-400'
-                                    : 'text-slate-400 dark:text-slate-500 active:text-purple-600 dark:active:text-purple-400'
+                                    ? 'text-primary-600 dark:text-primary-400'
+                                    : 'text-slate-400 dark:text-slate-500 active:text-primary-600 dark:active:text-primary-400'
                                 }
                             `}
             >
               {/* Active Indicator */}
               {active && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-purple-600 dark:bg-purple-400 rounded-b-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary-600 dark:bg-primary-400 rounded-b-full" />
               )}
 
               {/* Icon Container with pulse effect for AI */}
@@ -156,7 +156,7 @@ export const BottomNavigation: React.FC = () => {
 
                 {/* Badge */}
                 {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}

@@ -30,7 +30,7 @@ const FieldRenderer: React.FC<{
   isPl: boolean;
 }> = ({ col, value, onChange, isPl }) => {
   const baseInput =
-    'w-full h-9 px-3 rounded-xl text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30 transition-all';
+    'w-full h-9 px-3 rounded-xl text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30 transition-all';
 
   switch (col.type) {
     case 'text':
@@ -86,7 +86,7 @@ const FieldRenderer: React.FC<{
             type="checkbox"
             checked={!!value}
             onChange={(e) => onChange(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-violet-500 focus:ring-violet-500/30"
+            className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
           />
           <span className="text-xs text-slate-600 dark:text-slate-300">
             {value ? (isPl ? 'Tak' : 'Yes') : isPl ? 'Nie' : 'No'}
@@ -126,7 +126,7 @@ const FieldRenderer: React.FC<{
                   onChange(next);
                 }}
                 className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all ${
-                  isSelected ? 'ring-2 ring-violet-400/50 shadow-sm' : 'opacity-50 hover:opacity-80'
+                  isSelected ? 'ring-2 ring-primary-400/50 shadow-sm' : 'opacity-50 hover:opacity-80'
                 }`}
                 style={{ backgroundColor: bgColor, color: '#334155' }}
               >
@@ -172,7 +172,7 @@ const FieldRenderer: React.FC<{
             max={100}
             value={pct}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="flex-1 h-2 rounded-full appearance-none bg-slate-200 dark:bg-navy-700 accent-violet-500"
+            className="flex-1 h-2 rounded-full appearance-none bg-slate-200 dark:bg-navy-700 accent-primary-500"
           />
           <span className="text-xs font-bold text-slate-600 dark:text-slate-300 w-10 text-right">
             {pct}%
@@ -267,7 +267,7 @@ export const FormView: React.FC<FormViewProps> = ({
         {onRecordCreate && (
           <button
             onClick={startCreate}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500 text-white hover:bg-violet-600 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 transition-colors"
           >
             <Plus size={14} />
             {isPl ? 'Utwórz pierwszy rekord' : 'Create first record'}
@@ -316,7 +316,7 @@ export const FormView: React.FC<FormViewProps> = ({
               </button>
               <button
                 onClick={handleCreate}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-violet-500 text-white hover:bg-violet-600 transition-colors"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 transition-colors"
               >
                 {isPl ? 'Zapisz' : 'Save'}
               </button>
@@ -324,7 +324,7 @@ export const FormView: React.FC<FormViewProps> = ({
           ) : onRecordCreate ? (
             <button
               onClick={startCreate}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
             >
               <Plus size={12} />
               {isPl ? 'Nowy' : 'New'}

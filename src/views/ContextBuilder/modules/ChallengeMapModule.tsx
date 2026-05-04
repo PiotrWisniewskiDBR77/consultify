@@ -138,7 +138,7 @@ export const ChallengeMapModule: React.FC = () => {
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${
                               activeTab === tab.id
-                                ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                             }
                         `}
@@ -251,7 +251,7 @@ export const ChallengeMapModule: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                    <Search size={16} className="text-purple-500" />
+                    <Search size={16} className="text-primary-500" />
                     Suggested Obstacles
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -260,7 +260,7 @@ export const ChallengeMapModule: React.FC = () => {
                 </div>
                 <button
                   onClick={addCustomBlocker}
-                  className="px-3 py-1.5 bg-white dark:bg-navy-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 text-xs font-bold border border-purple-100 dark:border-purple-500/20 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                  className="px-3 py-1.5 bg-white dark:bg-navy-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-primary-600 text-xs font-bold border border-primary-100 dark:border-primary-500/20 rounded-lg shadow-sm transition-all flex items-center gap-2"
                 >
                   <Plus size={14} />
                   Create Custom
@@ -278,8 +278,8 @@ export const ChallengeMapModule: React.FC = () => {
                                                 relative p-3 rounded-xl border text-left transition-all group
                                                 ${
                                                   isAdded
-                                                    ? 'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-500/20 opacity-60 cursor-default'
-                                                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-purple-400 hover:shadow-md cursor-pointer'
+                                                    ? 'bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-500/20 opacity-60 cursor-default'
+                                                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-primary-400 hover:shadow-md cursor-pointer'
                                                 }
                                             `}
                     >
@@ -288,9 +288,9 @@ export const ChallengeMapModule: React.FC = () => {
                           {cb.type}
                         </span>
                         {isAdded ? (
-                          <Check size={14} className="text-purple-500" />
+                          <Check size={14} className="text-primary-500" />
                         ) : (
-                          <Plus size={14} className="text-slate-300 group-hover:text-purple-600" />
+                          <Plus size={14} className="text-slate-300 group-hover:text-primary-600" />
                         )}
                       </div>
                       <div className="font-bold text-xs text-navy-900 dark:text-white leading-tight">
@@ -321,13 +321,13 @@ export const ChallengeMapModule: React.FC = () => {
                   {activeBlockers.map((blocker, index) => (
                     <div
                       key={blocker.id}
-                      className="group relative bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:shadow-md hover:border-purple-200 dark:hover:border-purple-500/30 transition-all p-4"
+                      className="group relative bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:shadow-md hover:border-primary-200 dark:hover:border-primary-500/30 transition-all p-4"
                     >
                       {/* Action Bar (Hover only) */}
                       <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => removeBlocker(blocker.id)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                           title="Remove Blocker"
                         >
                           <Trash2 size={16} />
@@ -338,7 +338,7 @@ export const ChallengeMapModule: React.FC = () => {
                         <div className="md:col-span-4 space-y-3">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`p-2 rounded-lg shrink-0 ${blocker.type === 'Culture' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}
+                              className={`p-2 rounded-lg shrink-0 ${blocker.type === 'Culture' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}
                             >
                               <AlertTriangle size={18} />
                             </div>
@@ -353,7 +353,7 @@ export const ChallengeMapModule: React.FC = () => {
                               <select
                                 value={blocker.type}
                                 onChange={(e) => updateBlocker(blocker.id, 'type', e.target.value)}
-                                className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 bg-transparent border-none p-0 focus:ring-0 cursor-pointer hover:text-purple-600 transition-colors"
+                                className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 bg-transparent border-none p-0 focus:ring-0 cursor-pointer hover:text-primary-600 transition-colors"
                               >
                                 <option value="Culture">Culture</option>
                                 <option value="Process">Process</option>
@@ -365,7 +365,7 @@ export const ChallengeMapModule: React.FC = () => {
                           </div>
                           {/* Confidence Badge (if detected) */}
                           {blocker.status === 'detected' && (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-500/20 rounded text-[10px] font-bold text-purple-600 dark:text-purple-400">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-500/20 rounded text-[10px] font-bold text-primary-600 dark:text-primary-400">
                               <Cpu size={10} />
                               AI Detected ({blocker.confidence})
                             </div>

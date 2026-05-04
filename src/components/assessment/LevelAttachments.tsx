@@ -132,7 +132,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
       <div className="flex items-center gap-2">
         <button
           onClick={() => setIsExpanded(true)}
-          className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-purple-500 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-500 transition-colors"
         >
           <Paperclip size={14} />
           <span>
@@ -157,7 +157,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
         {!readOnly && (
           <button
             onClick={() => setShowUploadForm(!showUploadForm)}
-            className="flex items-center gap-1.5 text-xs font-medium text-purple-500 hover:text-purple-600 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
           >
             <Plus size={14} />
             Add
@@ -225,7 +225,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-medium rounded-md transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-medium rounded-md transition-colors"
               >
                 {isUploading ? (
                   <>
@@ -250,7 +250,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs rounded-md">
+        <div className="mb-3 p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs rounded-md">
           {error}
         </div>
       )}
@@ -265,7 +265,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
             return (
               <div
                 key={attachment.id}
-                className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30 transition-colors group"
+                className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 transition-colors group"
               >
                 {/* Icon */}
                 <div className="shrink-0 w-8 h-8 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 flex items-center justify-center">
@@ -307,7 +307,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                     <button
                       onClick={() => handleDelete(attachment.id)}
                       disabled={isCurrentDeleting}
-                      className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors disabled:opacity-50"
+                      className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors disabled:opacity-50"
                       title="Delete"
                     >
                       {isCurrentDeleting ? (

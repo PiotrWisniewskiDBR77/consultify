@@ -125,7 +125,7 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
         {actionError ? (
           <div
             role="alert"
-            className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+            className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
           >
             {actionError}
           </div>

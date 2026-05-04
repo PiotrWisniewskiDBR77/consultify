@@ -44,6 +44,53 @@ let _lastFetchConversationsAt = 0;
 const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
 const _conversationMessagesCache: Record<string, ConversationMessage[]> = {};
+const MISSING_CONVERSATIONS_STORAGE_KEY = 'consultify-missing-conversations';
+
+function readMissingConversationIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(MISSING_CONVERSATIONS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(
+      parsed.map((value) => String(value || '').trim()).filter((value) => value.length > 0)
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function writeMissingConversationIds(ids: Set<string>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(MISSING_CONVERSATIONS_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // no-op
+  }
+}
+
+export function markConversationAsMissing(conversationId: string) {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  ids.add(normalized);
+  writeMissingConversationIds(ids);
+}
+
+export function clearMissingConversationMark(conversationId: string) {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  if (!ids.delete(normalized)) return;
+  writeMissingConversationIds(ids);
+}
+
+export function isConversationMarkedMissing(conversationId: string): boolean {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return false;
+  return readMissingConversationIds().has(normalized);
+}
 
 function isChatRootPath(): boolean {
   if (typeof window === 'undefined') return false;
@@ -635,6 +682,17 @@ export const useConversationStore = create<ConversationState>()(
       },
 
       fetchConversation: async (id: string) => {
+        if (isConversationMarkedMissing(id)) {
+          set({
+            activeConversationId: null,
+            activeMessages: [],
+            isLoading: false,
+            _activeConversationState: 'not_found',
+            _activeConversationStateMessage: 'This conversation does not exist.',
+          });
+          return;
+        }
+
         const now = Date.now();
 
         // Feedback #2ee998d3 / #53cc607e — always sync activeConversationId to the
@@ -679,6 +737,7 @@ export const useConversationStore = create<ConversationState>()(
               FETCH_HARD_TIMEOUT_MS,
               'fetchConversation'
             );
+            clearMissingConversationMark(id);
 
             // Handle deep-link states: deleted conversation
             if (result?._state === 'deleted') {
@@ -756,12 +815,21 @@ export const useConversationStore = create<ConversationState>()(
               return;
             }
             if (status === 404) {
-              set({
-                activeConversationId: id,
-                activeMessages: [],
-                isLoading: false,
-                _activeConversationState: 'not_found',
-                _activeConversationStateMessage: 'This conversation does not exist.',
+              markConversationAsMissing(id);
+              delete _conversationMessagesCache[id];
+              set((state) => {
+                const nextConversations = state.conversations.filter(
+                  (conversation) => conversation.id !== id
+                );
+                return {
+                  conversations: nextConversations,
+                  groupedConversations: groupConversations(nextConversations),
+                  activeConversationId: null,
+                  activeMessages: [],
+                  isLoading: false,
+                  _activeConversationState: 'not_found',
+                  _activeConversationStateMessage: 'This conversation does not exist.',
+                };
               });
               return;
             }
@@ -1082,6 +1150,19 @@ export const useConversationStore = create<ConversationState>()(
 
       setActiveConversation: (id) => {
         if (id) {
+          if (isConversationMarkedMissing(id)) {
+            set({
+              activeConversationId: null,
+              activeMessages: [],
+              isLoading: false,
+              _activeConversationState: 'not_found',
+              _activeConversationStateMessage: 'This conversation does not exist.',
+            });
+            if (typeof window !== 'undefined' && window.location.pathname.startsWith('/chat/')) {
+              window.history.replaceState({}, '', '/chat');
+            }
+            return;
+          }
           const existing = get().chatLanguageByConversationId[id];
           if (existing) {
             set({ draftChatLanguage: existing });
@@ -1101,7 +1182,7 @@ export const useConversationStore = create<ConversationState>()(
               _activeConversationStateMessage: null,
             });
           }
-          get().fetchConversation(id);
+          void get().fetchConversation(id);
         } else {
           set({
             activeConversationId: null,
@@ -1660,6 +1741,10 @@ export const useConversationStore = create<ConversationState>()(
           }
 
           if (chatRouteConversationId && state) {
+            if (isConversationMarkedMissing(chatRouteConversationId)) {
+              state.clearActiveChat();
+              return;
+            }
             state.activeConversationId = chatRouteConversationId;
           }
 

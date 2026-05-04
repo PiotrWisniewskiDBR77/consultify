@@ -226,8 +226,8 @@ export function FormsIndex({
   if (forms.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="mb-4 rounded-2xl bg-purple-50 p-4 dark:bg-purple-900/20">
-          <FileText className="h-10 w-10 text-purple-500" />
+        <div className="mb-4 rounded-2xl bg-primary-50 p-4 dark:bg-primary-900/20">
+          <FileText className="h-10 w-10 text-primary-500" />
         </div>
         <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
           {t('formsIndex.emptyTitle', 'Create a form to collect data')}
@@ -241,7 +241,7 @@ export function FormsIndex({
         {!locked && (
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-purple-700"
+            className="flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700"
           >
             <Plus className="h-4 w-4" />
             {t('formsIndex.createForm', 'Create Form')}
@@ -262,7 +262,7 @@ export function FormsIndex({
         {!locked && (
           <button
             onClick={handleCreate}
-            className="flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700"
+            className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
           >
             <Plus className="h-4 w-4" />
             {t('formsIndex.createForm', 'Create Form')}
@@ -363,7 +363,7 @@ export function FormsIndex({
                           onClick={() => handleShareModeChange(form, mode)}
                           className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-navy-700 ${
                             shareMode === mode
-                              ? 'font-medium text-purple-600 dark:text-purple-400'
+                              ? 'font-medium text-primary-600 dark:text-primary-400'
                               : 'text-gray-700 dark:text-gray-300'
                           }`}
                         >
@@ -406,7 +406,7 @@ export function FormsIndex({
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleDelete(form.id)}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="rounded-lg px-2 py-1 text-xs font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20"
                         >
                           {t('formsIndex.confirmDelete', 'Confirm')}
                         </button>
@@ -420,7 +420,7 @@ export function FormsIndex({
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(form.id)}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
                         title={t('formsIndex.delete', 'Delete')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

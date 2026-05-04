@@ -6529,6 +6529,7 @@
       },
       "empty": {
         "library": "No tools available.",
+        "librarySearchNoResults": "No results for \"{{query}}\". Try a different phrase or clear filters.",
         "sessions": "No active sessions. Start from the Library.",
         "outputs": "No outputs yet. Generate reports or presentations from your sessions.",
         "initiatives": "No draft initiatives yet. Run a tool or assessment to generate initiatives."

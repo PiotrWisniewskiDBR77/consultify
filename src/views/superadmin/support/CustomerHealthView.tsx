@@ -142,7 +142,7 @@ export const CustomerHealthView: React.FC = () => {
       case 'fair':
         return 'text-yellow-800 dark:text-yellow-400';
       case 'poor':
-        return 'text-red-700 dark:text-red-400';
+        return 'text-rose-700 dark:text-rose-400';
       default:
         return 'text-slate-700 dark:text-slate-400';
     }
@@ -192,7 +192,7 @@ export const CustomerHealthView: React.FC = () => {
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-slate-500 dark:text-slate-400 text-sm">Overall Health</h3>
-              <Activity className="text-violet-400" size={20} />
+              <Activity className="text-primary-400" size={20} />
             </div>
             <div className={`text-3xl font-bold ${getHealthColor(overallHealth)}`}>
               {overallHealth}

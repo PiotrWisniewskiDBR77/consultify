@@ -29,7 +29,7 @@ const getAllocationColor = (allocation: number): string => {
  * Get text color based on allocation
  */
 const getAllocationTextColor = (allocation: number): string => {
-  if (allocation >= 100) return 'text-red-700 dark:text-red-300';
+  if (allocation >= 100) return 'text-rose-700 dark:text-rose-300';
   if (allocation >= 80) return 'text-amber-700 dark:text-amber-300';
   if (allocation >= 50) return 'text-blue-700 dark:text-blue-300';
   return 'text-green-700 dark:text-green-300';
@@ -58,7 +58,7 @@ const UserWorkloadRow: React.FC<{
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-primary-600 flex items-center justify-center text-white text-sm font-medium">
             {user.userName.charAt(0)}
           </div>
         )}
@@ -101,7 +101,7 @@ const UserWorkloadRow: React.FC<{
 
       {/* Status indicator */}
       {user.status === 'overloaded' && (
-        <AlertTriangle size={16} className="text-red-500 shrink-0" />
+        <AlertTriangle size={16} className="text-rose-500 shrink-0" />
       )}
     </motion.div>
   );
@@ -182,7 +182,7 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
         {/* Summary stats */}
         <div className="flex items-center gap-4 text-xs">
           {displayWorkload.overloadedCount > 0 && (
-            <span className="flex items-center gap-1 text-red-500">
+            <span className="flex items-center gap-1 text-rose-500">
               <AlertTriangle size={12} />
               {displayWorkload.overloadedCount} overloaded
             </span>

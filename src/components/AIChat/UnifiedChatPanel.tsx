@@ -67,7 +67,11 @@ import {
   ResponseFeedback,
   ThinkingStep,
 } from '../../types';
-import type { CanvasContextPacket, CanvasSelection } from '../../types/canvasWorkspace';
+import type {
+  CanvasContextPacket,
+  CanvasSelection,
+  CanvasStarterId,
+} from '../../types/canvasWorkspace';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
@@ -107,6 +111,11 @@ const MAX_WORK_CANVAS_WIDTH_PERCENT = 72;
 
 interface ChatSaveIntent {
   target: ChatSaveTarget;
+  cleanPrompt: string;
+}
+
+interface ChatCanvasIntent {
+  starterId: CanvasStarterId;
   cleanPrompt: string;
 }
 
@@ -203,6 +212,7 @@ export function buildCanvasContextPacket(
     schemaVersion: 'canvas-context/v1',
     activeDraft: {
       draftId: document.draftId || null,
+      researchSessionId: document.researchSessionId || null,
       title: document.title,
       kind: document.kind,
       lifecycleState: document.lifecycleState,
@@ -226,6 +236,7 @@ export function buildCanvasContextPacket(
       summary: summaryParts.join(' · '),
       anchors: {
         draftId: document.draftId || null,
+        researchSessionId: document.researchSessionId || null,
         title: document.title,
         kind: document.kind,
         workflowRunIds,
@@ -300,6 +311,37 @@ const isUuidLike = (value: unknown): value is string =>
   typeof value === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
 
+const canvasStarterFromText = (input: string): CanvasStarterId => {
+  if (/research|badani|researchu|market|rynek|evidence|źród|zrodl|source/i.test(input)) {
+    return 'research';
+  }
+  if (/decyz|decision|wyb[oó]r|opcj/i.test(input)) return 'decision';
+  if (/plan|roadmap|harmonogram|krok|działan|dzialan/i.test(input)) return 'plan';
+  if (/notatk|note|myśli|mysli|thought/i.test(input)) return 'thoughts';
+  return 'document';
+};
+
+const parseChatCanvasIntent = (rawContent: string): ChatCanvasIntent | null => {
+  const raw = String(rawContent || '').trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+
+  const slashPayload = extractSlashPayload(raw, ['/canvas', '/kanwa', '/research-canvas']);
+  if (slashPayload !== null) {
+    const prompt = slashPayload || raw;
+    return { starterId: canvasStarterFromText(prompt), cleanPrompt: prompt };
+  }
+
+  const mentionsCanvas = /\bcanvas\b|\bkanw[ayęe]?\b|obszar roboczy|work area/i.test(lower);
+  if (!mentionsCanvas) return null;
+  const asksToRoute =
+    /wrzu[cć]|przenie[sś]|otw[oó]rz|zrob|zrób|stw[oó]rz|utw[oó]rz|review|open|create|start/i.test(
+      lower
+    );
+  if (!asksToRoute) return null;
+  return { starterId: canvasStarterFromText(lower), cleanPrompt: raw };
+};
+
 const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   const raw = String(rawContent || '').trim();
   if (!raw) return null;
@@ -351,6 +393,7 @@ export const __private__ = {
   firstMatchIndex,
   isLikelyAiFailureText,
   extractSlashPayload,
+  parseChatCanvasIntent,
   parseChatSaveIntent,
 };
 
@@ -520,6 +563,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
   const [isWorkPanelOpen, setIsWorkPanelOpen] = useState(false);
+  const [requestedCanvasStarterId, setRequestedCanvasStarterId] =
+    useState<CanvasStarterId | null>(null);
   const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
     null
   );
@@ -1748,6 +1793,78 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
 
+      const canvasIntent = parseChatCanvasIntent(text);
+      if (canvasIntent && canUseWorkPanel) {
+        let conversationId = useConversationStore.getState().activeConversationId;
+        if (!conversationId) {
+          try {
+            const conv = await createConversation();
+            conversationId = conv.id;
+          } catch (err) {
+            console.error('[UnifiedChatPanel] Failed to create conversation for Canvas:', err);
+          }
+        }
+
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (conversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+              metadata: {
+                canvasCommand: {
+                  starterId: canvasIntent.starterId,
+                  cleanPrompt: canvasIntent.cleanPrompt,
+                },
+              },
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        const starterLabel =
+          canvasIntent.starterId === 'research'
+            ? uiLang === 'pl'
+              ? 'Research Canvas'
+              : 'Research Canvas'
+            : canvasIntent.starterId === 'decision'
+              ? uiLang === 'pl'
+                ? 'Decision Canvas'
+                : 'Decision Canvas'
+              : canvasIntent.starterId === 'plan'
+                ? uiLang === 'pl'
+                  ? 'Plan Canvas'
+                  : 'Plan Canvas'
+                : uiLang === 'pl'
+                  ? 'Canvas'
+                  : 'Canvas';
+        addChatMessage({
+          id: `canvas-route-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLang === 'pl'
+              ? `Otwieram ${starterLabel} po prawej stronie. Będziemy pracować w tej samej rozmowie.`
+              : `Opening ${starterLabel} on the right. We'll keep working in the same conversation.`,
+          timestamp: new Date(),
+        });
+
+        setRequestedCanvasStarterId(canvasIntent.starterId);
+        setIsWorkPanelOpen(true);
+        onMessageSent?.(content);
+        return;
+      }
+
       // P23 Excele: intercept workbook/excel/financial model intents before Table Builder
       if (detectExceleIntent(text)) {
         const userMessage: ChatMessage = {
@@ -2526,6 +2643,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       focusMode,
       chatLanguage,
       workspaceContext,
+      mode,
       activeCanvasDocument,
       activeCanvasSelection,
       startStream,
@@ -3747,7 +3865,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       ref={splitShellRef}
       className={`relative flex h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
         isPrivateMode
-          ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
+          ? 'ring-1 ring-primary-200/70 dark:ring-primary-800/45'
           : 'ring-1 ring-transparent'
       } ${className}`}
       style={rootStyle}
@@ -4080,8 +4198,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.market.kickoff',
                       'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
                     ),
-                    color: 'text-violet-500',
-                    bg: 'bg-violet-50 dark:bg-violet-900/20',
+                    color: 'text-primary-500',
+                    bg: 'bg-primary-50 dark:bg-primary-900/20',
                   },
                   {
                     icon: Calculator,
@@ -4214,9 +4332,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 </div>
               )}
               {_activeConversationState === 'deleted' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200/60 dark:border-red-700/40 flex items-center gap-2">
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200/60 dark:border-rose-700/40 flex items-center gap-2">
                   <svg
-                    className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0"
+                    className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -4228,7 +4346,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
-                  <span className="text-xs text-red-700 dark:text-red-400">
+                  <span className="text-xs text-rose-700 dark:text-rose-400">
                     {_activeConversationStateMessage ||
                       t('aiChat.deletedBanner', 'This conversation has been deleted.')}
                   </span>
@@ -4340,7 +4458,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   <button
                     key={prompt}
                     onClick={() => handleSendMessage(prompt)}
-                    className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
+                    className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
                   >
                     {prompt}
                   </button>
@@ -4420,6 +4538,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           <div className="min-h-0 flex-1">
             <WorkCanvasDocumentPanel
               conversationId={activeConversationId}
+              initialStarterId={requestedCanvasStarterId}
               onActiveDocumentChange={setActiveCanvasDocument}
               onCanvasSelectionChange={setActiveCanvasSelection}
               onClose={() => setIsWorkPanelOpen(false)}

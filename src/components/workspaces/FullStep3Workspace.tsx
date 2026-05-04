@@ -197,7 +197,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                   key={q}
                   className={`p-2 rounded border flex flex-col items-center justify-center relative group transition-all min-h-[80px] ${
                     isWarning
-                      ? 'bg-red-500/5 border-red-500/30'
+                      ? 'bg-rose-500/5 border-rose-500/30'
                       : count > 0
                         ? 'bg-slate-50 dark:bg-navy-900 border-slate-100 dark:border-navy-700 hover:border-blue-500/30'
                         : 'bg-transparent border-transparent opacity-50'
@@ -209,7 +209,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                       Review
                     </button>
                     {isWarning && (
-                      <button className="text-[9px] font-bold text-white bg-red-500 px-2 py-1 rounded-full w-20 hover:scale-105 transition-transform">
+                      <button className="text-[9px] font-bold text-white bg-rose-500 px-2 py-1 rounded-full w-20 hover:scale-105 transition-transform">
                         Lighten
                       </button>
                     )}
@@ -220,7 +220,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                   </span>
                   <div className="flex items-end gap-1">
                     <span
-                      className={`text-sm font-bold ${isWarning ? 'text-red-500 dark:text-red-400' : 'text-navy-900 dark:text-white'}`}
+                      className={`text-sm font-bold ${isWarning ? 'text-rose-500 dark:text-rose-400' : 'text-navy-900 dark:text-white'}`}
                     >
                       {count}
                     </span>
@@ -231,7 +231,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
 
                   {isWarning && (
                     <div className="absolute top-1 right-1">
-                      <AlertTriangle size={10} className="text-red-500 animate-pulse" />
+                      <AlertTriangle size={10} className="text-rose-500 animate-pulse" />
                     </div>
                   )}
 
@@ -244,14 +244,14 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                       <div className="flex justify-between">
                         <span>Effort:</span> <span>{totalEffort} pts</span>
                       </div>
-                      <div className="flex justify-between text-red-300">
+                      <div className="flex justify-between text-rose-300">
                         <span>Change:</span> <span>{changeEffort} pts</span>
                       </div>
                       {isHighChange && (
-                        <div className="mt-1 text-red-400 font-bold">High Change Fatigue Risk!</div>
+                        <div className="mt-1 text-rose-400 font-bold">High Change Fatigue Risk!</div>
                       )}
                       {isOverloaded && (
-                        <div className="mt-1 text-red-400 font-bold">Capacity Overload!</div>
+                        <div className="mt-1 text-rose-400 font-bold">Capacity Overload!</div>
                       )}
                     </div>
                   )}
@@ -309,7 +309,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded border ${
                             init.priority === 'High'
-                              ? 'border-red-500/30 text-red-400 bg-red-500/10'
+                              ? 'border-rose-500/30 text-rose-400 bg-rose-500/10'
                               : init.priority === 'Medium'
                                 ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10'
                                 : 'border-green-500/30 text-green-400 bg-green-500/10'

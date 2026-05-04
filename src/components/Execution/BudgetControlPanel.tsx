@@ -78,7 +78,7 @@ interface BudgetControlPanelProps {
 const STATUS_STYLES = {
   GREEN: { bg: 'bg-green-500/15', text: 'text-green-400', label: 'On Track' },
   AMBER: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'Warning' },
-  RED: { bg: 'bg-red-500/15', text: 'text-red-400', label: 'Over Budget' },
+  RED: { bg: 'bg-rose-500/15', text: 'text-rose-400', label: 'Over Budget' },
 };
 
 // ── Component ──────────────────────────────────────────────────
@@ -272,7 +272,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             <div
               className={`h-full rounded-full transition-all ${
                 initSummary.burnRate >= 100
-                  ? 'bg-red-500'
+                  ? 'bg-rose-500'
                   : initSummary.burnRate >= 80
                     ? 'bg-amber-500'
                     : 'bg-green-500'
@@ -283,7 +283,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           <div className="flex justify-between mt-1 text-[10px] text-slate-400">
             <span>0%</span>
             <span className="text-amber-400">80%</span>
-            <span className="text-red-400">100%</span>
+            <span className="text-rose-400">100%</span>
           </div>
         </div>
 
@@ -304,7 +304,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           <button
             type="button"
             onClick={() => setShowAddEntry(true)}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-cyan-400 border border-dashed border-cyan-500/30 rounded-lg hover:bg-cyan-500/10 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-400 border border-dashed border-blue-500/30 rounded-lg hover:bg-blue-500/10 transition-colors"
           >
             <Plus size={14} />
             {t('execution.budget.addEntry')}
@@ -360,7 +360,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               type="button"
               onClick={handleAddEntry}
               disabled={!entryForm.amount}
-              className="w-full py-1.5 text-xs font-medium bg-cyan-600 text-white rounded hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-1.5 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {t('execution.budget.save')}
             </button>
@@ -399,7 +399,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           {t('execution.budget.portfolioTitle')}
         </h3>
         {portfolio.overspendCount > 0 && (
-          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-500/20 text-red-400">
+          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-500/20 text-rose-400">
             {portfolio.overspendCount} {t('execution.budget.overspendRisks')}
           </span>
         )}
@@ -420,7 +420,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             {t('execution.budget.actual')}
           </div>
           <div
-            className={`text-base font-bold ${portfolio.variancePercent >= 90 ? 'text-red-400' : portfolio.variancePercent >= 80 ? 'text-amber-400' : 'text-green-400'}`}
+            className={`text-base font-bold ${portfolio.variancePercent >= 90 ? 'text-rose-400' : portfolio.variancePercent >= 80 ? 'text-amber-400' : 'text-green-400'}`}
           >
             {formatCurrency(portfolio.totalActual, portfolio.currency)}
           </div>
@@ -430,7 +430,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             {t('execution.budget.variance')}
           </div>
           <div
-            className={`text-base font-bold flex items-center gap-1 ${portfolio.totalVariance > 0 ? 'text-red-400' : 'text-green-400'}`}
+            className={`text-base font-bold flex items-center gap-1 ${portfolio.totalVariance > 0 ? 'text-rose-400' : 'text-green-400'}`}
           >
             {portfolio.totalVariance > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             {formatCurrency(Math.abs(portfolio.totalVariance), portfolio.currency)}
@@ -449,9 +449,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               key={sig.id}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
                 sig.severity === 'CRITICAL'
-                  ? 'bg-red-500/10 border-red-500/30'
+                  ? 'bg-rose-500/10 border-rose-500/30'
                   : sig.severity === 'HIGH'
-                    ? 'bg-orange-500/10 border-orange-500/30'
+                    ? 'bg-amber-500/10 border-amber-500/30'
                     : 'bg-amber-500/10 border-amber-500/30'
               }`}
             >
@@ -459,9 +459,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                 size={14}
                 className={
                   sig.severity === 'CRITICAL'
-                    ? 'text-red-400'
+                    ? 'text-rose-400'
                     : sig.severity === 'HIGH'
-                      ? 'text-orange-400'
+                      ? 'text-amber-400'
                       : 'text-amber-400'
                 }
               />
@@ -477,7 +477,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => onInitiativeClick(sig.initiativeId!)}
-                  className="text-cyan-400 hover:text-cyan-300 shrink-0"
+                  className="text-blue-400 hover:text-blue-300 shrink-0"
                 >
                   <ArrowUpRight size={14} />
                 </button>
@@ -520,7 +520,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                     <div
                       className={`h-full rounded-full ${
                         summary.burnRate >= 100
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : summary.burnRate >= 80
                             ? 'bg-amber-500'
                             : 'bg-green-500'
@@ -570,7 +570,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                       <button
                         type="button"
                         onClick={() => onInitiativeClick(summary.initiativeId)}
-                        className="col-span-2 inline-flex items-center justify-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 pt-1"
+                        className="col-span-2 inline-flex items-center justify-center gap-1 text-xs text-blue-400 hover:text-blue-300 pt-1"
                       >
                         <ArrowUpRight size={12} />
                         {t('execution.budget.viewDetails')}

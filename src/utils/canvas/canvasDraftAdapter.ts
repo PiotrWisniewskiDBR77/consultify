@@ -27,6 +27,7 @@ interface WorkCanvasDraftLike {
   linkedIdeaId?: unknown;
   linkedNoteId?: unknown;
   linkedInitiativeId?: unknown;
+  researchSessionId?: unknown;
   workflowRuns?: unknown;
   provenance?: unknown;
 }
@@ -42,6 +43,7 @@ function asSaveState(value: unknown, fallback: CanvasSaveState): CanvasSaveState
 }
 
 function asLifecycleState(value: unknown, fallback: CanvasLifecycleState): CanvasLifecycleState {
+  if (value === 'proposed') return 'in_review';
   return value === 'in_review' || value === 'approved' || value === 'draft' ? value : fallback;
 }
 
@@ -55,9 +57,13 @@ function asProjectionStatus(
 }
 
 function asDocumentKind(value: unknown, fallback: CanvasDocumentKind): CanvasDocumentKind {
-  return value === 'research' ||
+  return value === 'markdown' ||
+    value === 'research' ||
     value === 'decision' ||
     value === 'plan' ||
+    value === 'checklist' ||
+    value === 'sheet' ||
+    value === 'deck' ||
     value === 'table' ||
     value === 'presentation' ||
     value === 'report' ||
@@ -119,6 +125,7 @@ export function mapDraftResponseToCanvasDocumentState(
     projectionError:
       typeof draft.projectionError === 'string' ? draft.projectionError : fallback.projectionError,
     updatedAt: asString(draft.updatedAt) || fallback.updatedAt,
+    researchSessionId: asString(draft.researchSessionId) || fallback.researchSessionId,
     linkedIdeaId: asString(draft.linkedIdeaId) || fallback.linkedIdeaId,
     linkedNoteId: asString(draft.linkedNoteId) || fallback.linkedNoteId,
     linkedInitiativeId: asString(draft.linkedInitiativeId) || fallback.linkedInitiativeId,

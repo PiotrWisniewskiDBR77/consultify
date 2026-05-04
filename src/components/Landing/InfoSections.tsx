@@ -39,14 +39,14 @@ const AppFeatureSlide: React.FC<{
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-              <Bell size={20} className="text-purple-400" />
+            <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
+              <Bell size={20} className="text-primary-400" />
             </div>
             <span className="text-white font-bold text-lg">
               {t('landing.carousel.labels.notifications', 'Notifications')}
             </span>
           </div>
-          <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold">
+          <span className="px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-xs font-bold">
             {t('landing.carousel.slides.notifications.badge', {
               count: 3,
               defaultValue: '{{count}} New',
@@ -176,7 +176,7 @@ const AppFeatureSlide: React.FC<{
                   <span className="text-white font-semibold text-sm">{task.title}</span>
                 </div>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'high' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}`}
                 >
                   {task.priorityLabel}
                 </span>
@@ -186,7 +186,7 @@ const AppFeatureSlide: React.FC<{
                   initial={{ width: 0 }}
                   animate={{ width: `${task.progress}%` }}
                   transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-blue-500 to-primary-500 rounded-full"
                 />
               </div>
             </motion.div>
@@ -422,7 +422,7 @@ const FeatureCarousel: React.FC = () => {
               onClick={() => setCurrentSlide(idx)}
               className={`transition-all duration-300 ${
                 idx === currentSlide
-                  ? 'w-8 h-2 bg-purple-500 rounded-full'
+                  ? 'w-8 h-2 bg-primary-500 rounded-full'
                   : 'w-2 h-2 bg-white/20 rounded-full hover:bg-white/40'
               }`}
             />
@@ -466,7 +466,7 @@ const FAQItem: React.FC<{
       onClick={onClick}
       className="w-full p-4 flex items-center justify-between text-left group"
     >
-      <span className="font-bold text-navy-950 dark:text-white pr-8 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+      <span className="font-bold text-navy-950 dark:text-white pr-8 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
         {question}
       </span>
       <ChevronDown
@@ -568,7 +568,7 @@ export const InfoSections: React.FC = () => {
             <motion.h2
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              className="text-xs font-black text-purple-600 uppercase tracking-[0.3em] mb-6"
+              className="text-xs font-black text-primary-600 uppercase tracking-[0.3em] mb-6"
             >
               {t('landing.methodology.badge')}
             </motion.h2>
@@ -613,7 +613,7 @@ export const InfoSections: React.FC = () => {
       <section className="px-6 relative z-10">
         <div className="max-w-6xl mx-auto bg-navy-950 rounded-[4rem] p-12 lg:p-24 relative overflow-hidden border border-navy-800 dark:border-white/10 shadow-3xl">
           {/* Background decoration */}
-          <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px] -mr-32 -mt-32" />
+          <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary-600/10 rounded-full blur-[120px] -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-indigo-600/5 rounded-full blur-[100px] -ml-20 -mb-20" />
 
           <div className="relative z-10 grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
@@ -645,8 +645,8 @@ export const InfoSections: React.FC = () => {
                     key={i}
                     className="flex items-center gap-4 text-base font-bold text-slate-200"
                   >
-                    <div className="w-6 h-6 rounded-full bg-purple-600/20 flex items-center justify-center">
-                      <CheckCircle size={16} className="text-purple-400" />
+                    <div className="w-6 h-6 rounded-full bg-primary-600/20 flex items-center justify-center">
+                      <CheckCircle size={16} className="text-primary-400" />
                     </div>
                     {item}
                   </li>
@@ -679,7 +679,7 @@ export const InfoSections: React.FC = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400 text-xs font-black uppercase tracking-widest mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 rounded-full text-primary-600 dark:text-primary-400 text-xs font-black uppercase tracking-widest mb-6"
             >
               <HelpCircle size={14} />
               {t('landing.faq.badge', 'FAQ')}
@@ -711,7 +711,7 @@ export const InfoSections: React.FC = () => {
               {t('landing.faq.more', 'Have more questions?')}{' '}
               <a
                 href="/contact"
-                className="text-purple-600 dark:text-purple-400 font-semibold hover:underline"
+                className="text-primary-600 dark:text-primary-400 font-semibold hover:underline"
               >
                 {t('landing.faq.contact', 'Contact us')}
               </a>
@@ -720,7 +720,7 @@ export const InfoSections: React.FC = () => {
             <div className="pt-6 flex flex-col sm:flex-row justify-center gap-3">
               <button
                 onClick={() => navigate('/register')}
-                className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-lg shadow-purple-500/20 transition-colors"
+                className="px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold shadow-lg shadow-primary-500/20 transition-colors"
               >
                 {t('landing.faq.ctaPrimary', 'Launch Free Trial')}
               </button>

@@ -410,7 +410,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         {actionError && (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
           >
             {actionError}
           </div>
@@ -419,10 +419,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         {!loadError && (
           <>
             {/* GDPR Compliance Banner */}
-            <div className="p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg flex items-start gap-3">
-              <Shield size={18} className="text-violet-400 flex-shrink-0 mt-0.5" />
+            <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg flex items-start gap-3">
+              <Shield size={18} className="text-primary-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-violet-300">
+                <p className="text-sm font-medium text-primary-300">
                   {t('settings.data.gdprTitle', 'GDPR Compliant')}
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -437,7 +437,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Consent Management ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Shield size={14} className="text-violet-400" />
+                <Shield size={14} className="text-primary-400" />
                 {t('settings.data.consentsTitle', 'Consent Management')}
               </h4>
               <p className="text-xs text-slate-500 mb-4">
@@ -477,7 +477,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Data Retention ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Clock size={14} className="text-violet-400" />
+                <Clock size={14} className="text-primary-400" />
                 {t('settings.data.retentionTitle', 'Data Retention')}
               </h4>
               <p className="text-xs text-slate-500 mb-4">
@@ -496,7 +496,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     className={cn(
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
-                        ? 'bg-violet-600/20 text-violet-300 border-violet-500 shadow-sm'
+                        ? 'bg-primary-600/20 text-primary-300 border-primary-500 shadow-sm'
                         : 'bg-navy-800/50 text-slate-400 border-white/5 hover:border-white/20'
                     )}
                   >
@@ -518,7 +518,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Data Portability ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Download size={14} className="text-violet-400" />
+                <Download size={14} className="text-primary-400" />
                 {t('settings.data.portabilityTitle', 'Data Portability')}
               </h4>
               <div className={cardClass}>
@@ -539,8 +539,8 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     disabled={exporting}
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0',
-                      'bg-violet-600/10 text-violet-300 border border-violet-500/30',
-                      'hover:bg-violet-600/20 hover:border-violet-500/50',
+                      'bg-primary-600/10 text-primary-300 border border-primary-500/30',
+                      'hover:bg-primary-600/20 hover:border-primary-500/50',
                       'disabled:opacity-50'
                     )}
                   >
@@ -651,7 +651,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             {/* ─── Legal Documents ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <FileText size={14} className="text-violet-400" />
+                <FileText size={14} className="text-primary-400" />
                 {t('settings.data.relatedDocs', 'Legal Documents')}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
@@ -661,15 +661,15 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <Link
                       key={doc.to}
                       to={doc.to}
-                      className="flex items-start gap-3 p-3 bg-navy-900/30 border border-white/5 rounded-lg hover:border-violet-500/30 hover:bg-violet-600/5 transition-all group"
+                      className="flex items-start gap-3 p-3 bg-navy-900/30 border border-white/5 rounded-lg hover:border-primary-500/30 hover:bg-primary-600/5 transition-all group"
                     >
                       <Icon
                         size={14}
-                        className="text-slate-500 group-hover:text-violet-400 mt-0.5 flex-shrink-0"
+                        className="text-slate-500 group-hover:text-primary-400 mt-0.5 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-slate-300 group-hover:text-violet-300">
+                          <span className="text-xs font-medium text-slate-300 group-hover:text-primary-300">
                             {t(doc.titleKey, doc.titleDefault)}
                           </span>
                           <ExternalLink size={10} className="text-slate-600" />

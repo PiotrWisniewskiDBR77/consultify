@@ -75,7 +75,7 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
 
     case 'error':
       return (
-        <div className="flex items-start gap-2 text-red-600 dark:text-red-400">
+        <div className="flex items-start gap-2 text-rose-600 dark:text-rose-400">
           <XCircle size={16} className="flex-shrink-0 mt-0.5" />
           <pre className="text-sm font-mono whitespace-pre-wrap">{output.data}</pre>
         </div>
@@ -219,7 +219,7 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
           </span>
           {result && (
             <span
-              className={`flex items-center gap-1 text-xs ${result.success ? 'text-green-600' : 'text-red-600'}`}
+              className={`flex items-center gap-1 text-xs ${result.success ? 'text-green-600' : 'text-rose-600'}`}
             >
               {result.success ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
               {result.executionTime}ms
@@ -338,12 +338,12 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
               ))}
 
               {result?.stderr && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2 text-xs text-red-600 dark:text-red-400">
+                <div className="p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2 text-xs text-rose-600 dark:text-rose-400">
                     <AlertTriangle size={14} />
                     <span>{t('code.error', 'Error')}</span>
                   </div>
-                  <pre className="text-sm font-mono text-red-700 dark:text-red-300 whitespace-pre-wrap">
+                  <pre className="text-sm font-mono text-rose-700 dark:text-rose-300 whitespace-pre-wrap">
                     {result.stderr}
                   </pre>
                 </div>

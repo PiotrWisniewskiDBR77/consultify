@@ -193,7 +193,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
         </div>
 
         {actionError && (
-          <div role="alert" className="mx-4 mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-300">
+          <div role="alert" className="mx-4 mt-4 rounded-lg bg-rose-500/10 p-3 text-sm text-rose-300">
             {actionError}
           </div>
         )}
@@ -242,7 +242,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
                       <button
                         onClick={() => handleDelete(file.path)}
                         aria-label={`Delete file ${file.path}`}
-                        className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
+                        className="p-1.5 hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
                         title="Permanently Delete"
                       >
                         <Trash2 size={16} />

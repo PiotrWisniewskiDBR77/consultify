@@ -417,7 +417,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 </div>
                 <button
                   onClick={() => handleDeleteAPIKey(apiKey.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -430,7 +430,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       {/* Export Preferences */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <FileDown size={20} className="text-cyan-500" />
+          <FileDown size={20} className="text-blue-500" />
           {t('settings.advanced.exportPreferences', 'Export Preferences')}
         </h3>
 
@@ -480,7 +480,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('includeAttachments', !preferences.includeAttachments)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.includeAttachments ? 'bg-cyan-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.includeAttachments ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -522,8 +522,8 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-lg">
-              <Keyboard size={20} className="text-purple-600 dark:text-purple-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
+              <Keyboard size={20} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -543,7 +543,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               preferences.keyboardShortcutsEnabled
-                ? 'bg-purple-600'
+                ? 'bg-primary-600'
                 : 'bg-slate-200 dark:bg-slate-700'
             }`}
           >
@@ -696,7 +696,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Shield size={16} className="text-orange-500" />
+                <Shield size={16} className="text-amber-500" />
                 {t('settings.advanced.betaFeatures', 'Beta Features')}
               </label>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -708,7 +708,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('enableBetaFeatures', !preferences.enableBetaFeatures)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableBetaFeatures ? 'bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.enableBetaFeatures ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -875,7 +875,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             </span>
             <button
               onClick={() => handleDisconnectAccount(provider)}
-              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
             >
               <Trash2 size={16} />
             </button>

@@ -28,15 +28,24 @@ function getRequestUserRole(req: AuthRequest): string | null {
   );
 }
 
+const MAX_UPLOAD_BYTES = Math.max(
+  1024 * 1024,
+  Math.min(
+    Number(process.env.ORG_CONTEXT_MAX_UPLOAD_BYTES || 100 * 1024 * 1024),
+    500 * 1024 * 1024
+  )
+);
+
 const upload = multer({
   // Avoid runtime filesystem writes when the feature is unavailable.
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
+  limits: { fileSize: MAX_UPLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
       'application/pdf',
       'text/plain',
       'text/markdown',
+      'text/csv',
       'application/json',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -47,8 +56,22 @@ const upload = multer({
       'image/png',
       'image/jpeg',
       'image/gif',
+      'image/webp',
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/wav',
+      'audio/x-wav',
+      'audio/m4a',
+      'audio/x-m4a',
+      'audio/webm',
+      'audio/ogg',
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+    if (
+      allowedTypes.includes(file.mimetype) ||
+      file.mimetype.startsWith('text/') ||
+      file.mimetype.startsWith('audio/') ||
+      file.mimetype.startsWith('image/')
+    ) {
       cb(null, true);
     } else {
       cb(new Error(`Unsupported file type: ${file.mimetype}`));
@@ -226,7 +249,7 @@ router.get(
         return res.status(404).json({ error: 'Document not found' });
       }
 
-      const filePath = document.filepath;
+      const filePath = (document as any).filepath || (document as any).filePath;
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'File not found on server' });
       }
@@ -312,6 +335,48 @@ router.post(
         });
       }
       return res.status(500).json({ error: error.message || 'Upload failed' });
+    }
+  })
+);
+
+/**
+ * POST /api/documents/:id/processing-attention/ack
+ * Explicitly acknowledge a visible processing attention state.
+ */
+router.post(
+  '/:id/processing-attention/ack',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const result = await contextDocumentService.acknowledgeProcessingAttention({
+        documentId: req.params.id,
+        organizationId,
+        userId,
+      });
+
+      if (result.reason === 'document_not_found') {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+      if (result.reason === 'attention_not_required') {
+        return res.status(409).json({
+          code: 'PROCESSING_ATTENTION_NOT_REQUIRED',
+          data: result,
+        });
+      }
+
+      return res.json({
+        message: 'Processing attention acknowledged',
+        data: result,
+      });
+    } catch (error: any) {
+      logger.error('[Documents] Processing attention acknowledgement error:', error);
+      return res.status(500).json({ error: error.message || 'Acknowledgement failed' });
     }
   })
 );

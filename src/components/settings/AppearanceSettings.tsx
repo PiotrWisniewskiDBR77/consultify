@@ -205,7 +205,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -218,7 +218,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Palette size={28} className="text-purple-500" />
+            <Palette size={28} className="text-primary-500" />
             {t('settings.appearance.title', 'Appearance')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -228,7 +228,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
@@ -275,8 +275,8 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 onClick={() => toggleTheme(option.value as 'light' | 'dark' | 'system')}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   isSelected
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
                 }`}
               >
                 <div className={`w-full h-16 rounded-lg border mb-3 ${option.colors}`} />
@@ -284,11 +284,11 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                   <Icon
                     size={16}
                     className={
-                      isSelected ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500'
+                      isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500'
                     }
                   />
                   <span
-                    className={`font-medium ${isSelected ? 'text-purple-700 dark:text-purple-400' : 'text-slate-700 dark:text-slate-300'}`}
+                    className={`font-medium ${isSelected ? 'text-primary-700 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'}`}
                   >
                     {option.label}
                   </span>
@@ -577,8 +577,8 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 onClick={() => changeLanguage(lang.code)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
                   isSelected
-                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
-                    : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border-2 border-transparent hover:border-purple-300'
+                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
+                    : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border-2 border-transparent hover:border-primary-300'
                 }`}
               >
                 <span>{lang.flag}</span>

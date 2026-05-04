@@ -695,7 +695,7 @@ export const LLMManagementView: React.FC = () => {
               {providerActionError && (
                 <div
                   role="alert"
-                  className="m-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+                  className="m-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
                 >
                   {providerActionError}
                 </div>
@@ -852,7 +852,7 @@ export const LLMManagementView: React.FC = () => {
                                             {badge}
                                             {live.status === 'error' && (
                                               <span
-                                                className="text-[10px] text-red-400 max-w-[140px] truncate"
+                                                className="text-[10px] text-rose-400 max-w-[140px] truncate"
                                                 title={live.message}
                                               >
                                                 {live.message}

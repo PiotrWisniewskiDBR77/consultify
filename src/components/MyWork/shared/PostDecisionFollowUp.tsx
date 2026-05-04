@@ -146,7 +146,7 @@ export const PostDecisionFollowUp: React.FC<PostDecisionFollowUpProps> = ({
                 />
                 <button
                   onClick={() => removeTask(idx)}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                  className="p-1.5 rounded-md text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                 >
                   <Trash2 size={14} />
                 </button>

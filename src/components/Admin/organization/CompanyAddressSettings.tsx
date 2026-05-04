@@ -162,7 +162,7 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
       {/* Company Address Card */}
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-          <MapPin size={20} className="text-violet-500" />
+          <MapPin size={20} className="text-primary-500" />
           {t('admin.org.address.title', 'Company Address')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
@@ -245,7 +245,7 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
                 'transition-all duration-150 ease-out outline-none focus:ring-2 focus:bg-white dark:focus:bg-navy-900',
                 errors.country
                   ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20'
-                  : 'border-transparent focus:border-violet-500 focus:ring-violet-500/20'
+                  : 'border-transparent focus:border-primary-500 focus:ring-primary-500/20'
               )}
             >
               {COUNTRIES.map((country) => (
@@ -276,7 +276,7 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
       {/* Tax Information Card */}
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-          <Receipt size={20} className="text-violet-500" />
+          <Receipt size={20} className="text-primary-500" />
           {t('admin.org.address.taxInfo', 'Tax Information')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">

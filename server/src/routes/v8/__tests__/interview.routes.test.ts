@@ -29,6 +29,7 @@ const mockInsightCreate = vi.fn();
 const mockInsightRegenerate = vi.fn();
 const mockInsightDelete = vi.fn();
 const mockBuildReportPackExportManifest = vi.fn();
+const mockBuildReportPackMarkdownExport = vi.fn();
 const mockCreateReportPackDraft = vi.fn();
 const mockCreateReportPackRevision = vi.fn();
 const mockEvaluateReportPackReadiness = vi.fn();
@@ -74,6 +75,8 @@ vi.mock('../../../services/InterviewInsightService.js', () => ({
 vi.mock('../../../services/interviewInsightReportPackService.js', () => ({
   buildInterviewReportPackExportManifest: (...args: unknown[]) =>
     mockBuildReportPackExportManifest(...args),
+  buildInterviewReportPackMarkdownExport: (...args: unknown[]) =>
+    mockBuildReportPackMarkdownExport(...args),
   createInterviewReportPackDraft: (...args: unknown[]) => mockCreateReportPackDraft(...args),
   createInterviewReportPackRevision: (...args: unknown[]) => mockCreateReportPackRevision(...args),
   evaluateInterviewReportPackReadiness: (...args: unknown[]) =>
@@ -323,6 +326,19 @@ describe('V8 Interview read-only routes', () => {
       },
       worksheetCount: 1,
       worksheets: [{ key: 'executive_summary', title: 'Executive Summary', status: 'generated' }],
+    });
+    mockBuildReportPackMarkdownExport.mockResolvedValue({
+      reportPackId: 'irp_ins-1',
+      insightId: 'ins-1',
+      title: 'Report Pack: Test',
+      status: 'published',
+      exportedAt: '2026-05-03T17:05:00.000Z',
+      format: 'markdown',
+      filename: 'irp_ins-1-client-report.md',
+      markdown: '# Report Pack: Test',
+      sourceManifestHash: 'abcdef1234567890',
+      exportHash: 'fedcba0987654321',
+      worksheetCount: 1,
     });
     mockCreateReportPackRevision.mockResolvedValue({
       reportPack: {
@@ -999,6 +1015,40 @@ describe('V8 Interview insight routes', () => {
     expect(res.body.error).toBe(
       'Only published report packs can be exported as client-ready material.'
     );
+  });
+
+  it('GET /api/v8/interview/insights/:id/report-pack/export-markdown returns client-ready Markdown report', async () => {
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/report-pack/export-markdown')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.markdownExport?.status).toBe('published');
+    expect(res.body.data?.markdownExport?.format).toBe('markdown');
+    expect(res.body.data?.markdownExport?.exportHash).toBe('fedcba0987654321');
+    expect(mockBuildReportPackMarkdownExport).toHaveBeenCalledWith({
+      organizationId: ORG,
+      insightId: 'ins-1',
+    });
+    expect(
+      mockQueryRun.mock.calls.some(([sql, params]) => {
+        const values = params as unknown[];
+        return (
+          String(sql).includes('INSERT INTO interview_insight_audit_log') &&
+          values.includes('report_pack_client_markdown_exported') &&
+          values.includes('irp_ins-1') &&
+          values.includes(UID)
+        );
+      })
+    ).toBe(true);
   });
 
   it('POST /api/v8/interview/insights/:id/report-pack/revisions creates editable draft from published pack', async () => {

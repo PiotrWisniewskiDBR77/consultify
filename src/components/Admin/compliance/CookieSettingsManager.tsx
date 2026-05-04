@@ -135,7 +135,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
               <Cookie size={24} className="text-white" />
             </div>
             <div>
@@ -368,7 +368,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
               {settings.bannerDescription || 'We use cookies to improve your experience.'}
             </p>
             <div className="flex flex-wrap gap-2">
-              <button className="px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700">
+              <button className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700">
                 {settings.acceptButtonText || 'Accept All'}
               </button>
               <button
@@ -385,8 +385,8 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                 className={cn(
                   'px-4 py-2 text-sm font-medium',
                   settings.theme === 'dark'
-                    ? 'text-violet-400 hover:text-violet-300'
-                    : 'text-violet-600 hover:text-violet-700'
+                    ? 'text-primary-400 hover:text-primary-300'
+                    : 'text-primary-600 hover:text-primary-700'
                 )}
               >
                 {settings.customizeButtonText || 'Manage Preferences'}

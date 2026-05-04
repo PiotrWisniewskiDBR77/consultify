@@ -165,7 +165,7 @@ function QuadrantCard({
                 <button
                   type="button"
                   onClick={() => removeSWOTItem(item.id)}
-                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -189,13 +189,13 @@ function QuadrantCard({
           {proposals.map((proposal) => (
             <div
               key={proposal.id}
-              className="rounded-2xl border border-violet-200/70 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(76,29,149,0.35)] dark:border-violet-900/40 dark:bg-violet-950/20"
+              className="rounded-2xl border border-primary-200/70 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(76,29,149,0.35)] dark:border-primary-900/40 dark:bg-primary-950/20"
             >
               <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-300">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-300">
                   {isPolish ? 'Propozycja AI' : 'AI proposal'}
                 </div>
-                <div className="rounded-full border border-violet-200/70 bg-violet-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-300">
+                <div className="rounded-full border border-primary-200/70 bg-primary-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-300">
                   AI
                 </div>
               </div>

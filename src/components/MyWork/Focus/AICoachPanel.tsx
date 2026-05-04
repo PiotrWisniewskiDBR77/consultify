@@ -18,7 +18,7 @@ interface AdvisorResult {
 
 const URGENCY_COLORS = {
   critical:
-    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
+    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
   high: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
   medium:
     'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
@@ -53,11 +53,11 @@ export const AICoachPanel: React.FC = () => {
   if (!result && !loading) return null;
 
   return (
-    <div className="mx-4 mb-3 rounded-xl border border-purple-200/50 dark:border-purple-800/30 bg-gradient-to-r from-purple-50/60 to-indigo-50/60 dark:from-purple-950/15 dark:to-indigo-950/10 overflow-hidden">
+    <div className="mx-4 mb-3 rounded-xl border border-primary-200/50 dark:border-primary-800/30 bg-gradient-to-r from-primary-50/60 to-indigo-50/60 dark:from-primary-950/15 dark:to-indigo-950/10 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Brain size={16} className="text-purple-500" />
-          <span className="text-sm font-semibold text-purple-800 dark:text-purple-200">
+          <Brain size={16} className="text-primary-500" />
+          <span className="text-sm font-semibold text-primary-800 dark:text-primary-200">
             {isPolish ? 'AI Coach' : 'AI Coach'}
           </span>
         </div>
@@ -65,18 +65,18 @@ export const AICoachPanel: React.FC = () => {
           <button
             onClick={fetchAdvice}
             disabled={loading}
-            className="p-1 rounded hover:bg-purple-500/10"
+            className="p-1 rounded hover:bg-primary-500/10"
           >
-            <RefreshCw size={12} className={`text-purple-500 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw size={12} className={`text-primary-500 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded hover:bg-purple-500/10"
+            className="p-1 rounded hover:bg-primary-500/10"
           >
             {expanded ? (
-              <ChevronUp size={14} className="text-purple-500" />
+              <ChevronUp size={14} className="text-primary-500" />
             ) : (
-              <ChevronDown size={14} className="text-purple-500" />
+              <ChevronDown size={14} className="text-primary-500" />
             )}
           </button>
         </div>
@@ -84,17 +84,17 @@ export const AICoachPanel: React.FC = () => {
       {expanded && (
         <div className="px-4 pb-3 space-y-2">
           {loading ? (
-            <div className="flex items-center gap-2 text-xs text-purple-500">
+            <div className="flex items-center gap-2 text-xs text-primary-500">
               <Loader2 size={12} className="animate-spin" />{' '}
               {isPolish ? 'Analizuję...' : 'Analyzing...'}
             </div>
           ) : result ? (
             <>
-              <p className="text-xs font-medium text-purple-700 dark:text-purple-300">
+              <p className="text-xs font-medium text-primary-700 dark:text-primary-300">
                 {result.summary}
               </p>
               {result.overcommitWarning && (
-                <div className="px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300">
+                <div className="px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-800/30 text-xs text-rose-700 dark:text-rose-300">
                   {result.overcommitWarning}
                 </div>
               )}

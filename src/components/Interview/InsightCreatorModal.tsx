@@ -472,7 +472,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       const isSelected = prev.includes(mode);
       const next = isSelected ? prev.filter((item) => item !== mode) : [...prev, mode];
       const normalized = next.length > 0 ? next : [mode];
-      setAnalysisMode(normalized[0]);
+      setAnalysisMode(isSelected ? normalized[0] : mode);
       return normalized;
     });
   };
@@ -484,10 +484,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
   const [filterTemplate, setFilterTemplate] = useState<string>('');
   const [filterRespondent, setFilterRespondent] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [useTemplateFilter, setUseTemplateFilter] = useState(false);
   const [useRespondentFilter, setUseRespondentFilter] = useState(false);
+  const [useRoleFilter, setUseRoleFilter] = useState(false);
+  const [useDepartmentFilter, setUseDepartmentFilter] = useState(false);
   const [useDateFilter, setUseDateFilter] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [contextDocuments, setContextDocuments] = useState<V8ContextDocument[]>([]);
@@ -702,10 +706,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setInternalArtifactLinks('');
       setFilterTemplate('');
       setFilterRespondent('');
+      setFilterRole('');
+      setFilterDepartment('');
       setFilterDateFrom('');
       setFilterDateTo('');
       setUseTemplateFilter(false);
       setUseRespondentFilter(false);
+      setUseRoleFilter(false);
+      setUseDepartmentFilter(false);
       setUseDateFilter(false);
       setContextDocuments([]);
       setSelectedContextDocumentIds([]);
@@ -734,6 +742,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       sessions = sessions.filter((s) => s.respondentId === filterRespondent);
     }
 
+    if (useRoleFilter && filterRole) {
+      sessions = sessions.filter((s) => s.respondentRole === filterRole);
+    }
+
+    if (useDepartmentFilter && filterDepartment) {
+      sessions = sessions.filter((s) => s.department === filterDepartment);
+    }
+
     if (useDateFilter && filterDateFrom) {
       const from = new Date(filterDateFrom);
       sessions = sessions.filter((s) => s.completedAt && new Date(s.completedAt) >= from);
@@ -750,11 +766,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     completedSessions,
     filterTemplate,
     filterRespondent,
+    filterRole,
+    filterDepartment,
     filterDateFrom,
     filterDateTo,
     selectedRespondents,
     useDateFilter,
+    useDepartmentFilter,
     useRespondentFilter,
+    useRoleFilter,
     useTemplateFilter,
   ]);
 
@@ -776,6 +796,30 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     });
     return Array.from(respondents.values());
   }, [completedSessions]);
+
+  const roleOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          completedSessions
+            .map((session) => session.respondentRole)
+            .filter((role): role is string => Boolean(role))
+        )
+      ).sort(),
+    [completedSessions]
+  );
+
+  const departmentOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          completedSessions
+            .map((session) => session.department)
+            .filter((department): department is string => Boolean(department))
+        )
+      ).sort(),
+    [completedSessions]
+  );
 
   useEffect(() => {
     const visibleSessionIds = new Set(filteredSessions.map((session) => session.id));
@@ -831,6 +875,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 ? filterRespondent || undefined
                 : undefined,
           respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
+          roles: useRoleFilter && filterRole ? [filterRole] : undefined,
+          departments: useDepartmentFilter && filterDepartment ? [filterDepartment] : undefined,
           dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
           dateTo: useDateFilter ? filterDateTo || undefined : undefined,
           topicFocus: selectedTopicFocus.length > 0 ? selectedTopicFocus : undefined,
@@ -847,8 +893,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               : useRespondentFilter && filterRespondent
                 ? [filterRespondent]
                 : [],
-          role_filters: [],
-          department_filters: [],
+          role_filters: useRoleFilter && filterRole ? [filterRole] : [],
+          department_filters: useDepartmentFilter && filterDepartment ? [filterDepartment] : [],
           template_filters: useTemplateFilter && filterTemplate ? [filterTemplate] : [],
           date_range:
             useDateFilter && (filterDateFrom || filterDateTo)
@@ -881,6 +927,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   ? filterRespondent || undefined
                   : undefined,
             respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
+            roles: useRoleFilter && filterRole ? [filterRole] : undefined,
+            departments: useDepartmentFilter && filterDepartment ? [filterDepartment] : undefined,
             dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
             dateTo: useDateFilter ? filterDateTo || undefined : undefined,
             topicFocus: selectedTopicFocus.length > 0 ? selectedTopicFocus : undefined,
@@ -897,8 +945,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 : useRespondentFilter && filterRespondent
                   ? [filterRespondent]
                   : [],
-            role_filters: [],
-            department_filters: [],
+            role_filters: useRoleFilter && filterRole ? [filterRole] : [],
+            department_filters: useDepartmentFilter && filterDepartment ? [filterDepartment] : [],
             template_filters: useTemplateFilter && filterTemplate ? [filterTemplate] : [],
             date_range:
               useDateFilter && (filterDateFrom || filterDateTo)
@@ -1198,11 +1246,19 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                       {isPolish ? type.namePl : type.name}
                     </div>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish ? type.descriptionPl : type.description}
+                    </p>
                   </div>
                 </label>
               );
             })}
           </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Typ wyniku kształtuje zawartość tego insightu. Nie tworzy automatycznie raportu, prezentacji ani obiektu w aplikacji.'
+              : 'Output type shapes this insight only. It does not automatically create a report, presentation, or app object.'}
+          </p>
           <p className="text-xs text-primary-400">
             {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
           </p>
@@ -1347,6 +1403,82 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </div>
       </div>
 
+      <div className="grid gap-3 md:grid-cols-2">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Rola respondenta' : 'Respondent role'}
+            </label>
+            {filterRole && (
+              <button
+                type="button"
+                onClick={() => {
+                  setUseRoleFilter(false);
+                  setFilterRole('');
+                }}
+                className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+              >
+                {isPolish ? 'Wszystkie role' : 'All roles'}
+              </button>
+            )}
+          </div>
+          <select
+            value={filterRole}
+            onChange={(event) => {
+              const nextRole = event.target.value;
+              setFilterRole(nextRole);
+              setUseRoleFilter(Boolean(nextRole));
+            }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            aria-label={isPolish ? 'Filtr roli respondenta' : 'Respondent role filter'}
+          >
+            <option value="">{isPolish ? 'Wszystkie role' : 'All roles'}</option>
+            {roleOptions.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Dział respondenta' : 'Respondent department'}
+            </label>
+            {filterDepartment && (
+              <button
+                type="button"
+                onClick={() => {
+                  setUseDepartmentFilter(false);
+                  setFilterDepartment('');
+                }}
+                className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+              >
+                {isPolish ? 'Wszystkie działy' : 'All departments'}
+              </button>
+            )}
+          </div>
+          <select
+            value={filterDepartment}
+            onChange={(event) => {
+              const nextDepartment = event.target.value;
+              setFilterDepartment(nextDepartment);
+              setUseDepartmentFilter(Boolean(nextDepartment));
+            }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            aria-label={isPolish ? 'Filtr działu respondenta' : 'Respondent department filter'}
+          >
+            <option value="">{isPolish ? 'Wszystkie działy' : 'All departments'}</option>
+            {departmentOptions.map((department) => (
+              <option key={department} value={department}>
+                {department}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -1429,7 +1561,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 ? 'Brak zatwierdzonych i zakończonych sesji'
                 : 'No approved completed sessions'}
             </p>
-            {(filterTemplate || filterRespondent || filterDateFrom || filterDateTo) && (
+            {(filterTemplate ||
+              filterRespondent ||
+              filterRole ||
+              filterDepartment ||
+              filterDateFrom ||
+              filterDateTo) && (
               <p className="text-xs mt-1">
                 {isPolish ? 'Spróbuj zmienić filtry' : 'Try changing filters'}
               </p>
@@ -1512,11 +1649,19 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                     {isPolish ? mode.labelPl : mode.labelEn}
                   </div>
+                  <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? mode.hintPl : mode.hintEn}
+                  </p>
                 </div>
               </label>
             );
           })}
         </div>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Tryby analizy są soczewkami promptu dla jednego insightu. Nie uruchamiają downstream actions bez osobnego zatwierdzenia.'
+            : 'Analysis modes are prompt lenses for one insight. They do not run downstream actions without separate approval.'}
+        </p>
         <p className="mt-2 text-xs text-primary-400">
           {isPolish
             ? `Wybrano: ${selectedAnalysisModes.length}`

@@ -167,11 +167,11 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
         icon: <AlertTriangle className="w-3 h-3" />,
       },
       error: {
-        color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+        color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
         icon: <XCircle className="w-3 h-3" />,
       },
       stale: {
-        color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+        color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
         icon: <AlertTriangle className="w-3 h-3" />,
       },
       pending: {
@@ -357,7 +357,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -411,12 +411,12 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                 onChange={(e) => handleJsonChange(e.target.value)}
                 className={`w-full h-64 p-3 text-xs font-mono rounded-lg border ${
                   jsonError
-                    ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
+                    ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/20'
                     : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900'
                 } text-slate-900 dark:text-white`}
                 spellCheck={false}
               />
-              {jsonError && <p className="text-xs text-red-500">{jsonError}</p>}
+              {jsonError && <p className="text-xs text-rose-500">{jsonError}</p>}
             </div>
           )}
 

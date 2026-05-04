@@ -216,7 +216,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           type="button"
           onClick={() => setEnabled((v) => !v)}
           className={`relative h-6 w-11 rounded-full transition-colors ${
-            enabled ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'
+            enabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
           }`}
         >
           <span
@@ -246,12 +246,12 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 }}
                 className={`flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors ${
                   isActive
-                    ? 'border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/20'
+                    ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/20'
                     : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500'
                 }`}
               >
                 <span
-                  className={`mt-0.5 ${isActive ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'}`}
+                  className={`mt-0.5 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`}
                 >
                   {opt.icon}
                 </span>
@@ -351,7 +351,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
             >
               <div className="mb-2 flex items-center gap-2">
                 <GripVertical className="h-4 w-4 flex-shrink-0 text-gray-300" />
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-100 text-xs font-bold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
                   {idx + 1}
                 </span>
                 <select
@@ -391,7 +391,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     type="button"
                     onClick={() => removeAction(action.id)}
                     disabled={actions.length <= 1}
-                    className="rounded p-1 text-red-400 hover:text-red-600 disabled:opacity-30"
+                    className="rounded p-1 text-rose-400 hover:text-rose-600 disabled:opacity-30"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -457,7 +457,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           type="button"
           onClick={handleSave}
           disabled={!canSave || saving}
-          className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {isPl ? 'Zapisz' : 'Save'}

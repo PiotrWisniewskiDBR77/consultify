@@ -48,10 +48,10 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       />
 
       {/* Executive Summary */}
-      <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-500/20 p-6">
+      <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-6">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles size={18} className="text-violet-500" />
-          <h2 className="text-lg font-semibold text-violet-900 dark:text-violet-100">
+          <Sparkles size={18} className="text-primary-500" />
+          <h2 className="text-lg font-semibold text-primary-900 dark:text-primary-100">
             Executive Summary
           </h2>
         </div>
@@ -90,22 +90,22 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
 
       {/* Warnings Section - AI Transparency */}
       {content.warnings && content.warnings.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border-2 border-red-200 dark:border-red-500/30 p-6">
+        <div className="bg-rose-50 dark:bg-rose-900/10 rounded-xl border-2 border-rose-200 dark:border-rose-500/30 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <AlertCircle size={20} className="text-red-500" />
-            <h2 className="text-lg font-bold text-red-700 dark:text-red-400">
+            <AlertCircle size={20} className="text-rose-500" />
+            <h2 className="text-lg font-bold text-rose-700 dark:text-rose-400">
               ⚠️ Attention Required
             </h2>
           </div>
           <ul className="space-y-2">
             {content.warnings.map((warning, idx: number) => (
-              <li key={idx} className="flex items-start gap-2 text-red-800 dark:text-red-300">
+              <li key={idx} className="flex items-start gap-2 text-rose-800 dark:text-rose-300">
                 <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
                 <span>{warning}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-red-600 dark:text-red-400 italic">
+          <p className="mt-4 text-xs text-rose-600 dark:text-rose-400 italic">
             AI Transparency: These warnings are automatically generated. AI never hides bad news.
           </p>
         </div>
@@ -115,7 +115,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       {content.kpis && content.kpis.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-            <TrendingUp size={20} className="text-violet-500" />
+            <TrendingUp size={20} className="text-primary-500" />
             Key Performance Indicators
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -177,7 +177,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                         className={`px-2 py-1 text-xs font-medium rounded ${
                           item.type === 'RISK'
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                         }`}
                       >
                         {item.type}
@@ -190,9 +190,9 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                       <span
                         className={`px-2 py-1 text-xs font-bold rounded ${
                           item.severity === 'CRITICAL'
-                            ? 'bg-red-500 text-white'
+                            ? 'bg-rose-500 text-white'
                             : item.severity === 'HIGH'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                               : item.severity === 'MEDIUM'
                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                 : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
@@ -224,7 +224,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       {content.decisionsRequired && content.decisionsRequired.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-            <HelpCircle size={20} className="text-violet-500" />
+            <HelpCircle size={20} className="text-primary-500" />
             Decisions Required from Board
           </h2>
           <div className="space-y-4">
@@ -235,27 +235,27 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                   key={decision.id}
                   className={`p-4 rounded-lg border-2 ${
                     isOverdue
-                      ? 'border-red-300 bg-red-50 dark:border-red-500/30 dark:bg-red-900/10'
-                      : 'border-violet-200 bg-violet-50/50 dark:border-violet-500/20 dark:bg-violet-900/10'
+                      ? 'border-rose-300 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-900/10'
+                      : 'border-primary-200 bg-primary-50/50 dark:border-primary-500/20 dark:bg-primary-900/10'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded ${
-                          isOverdue ? 'bg-red-500 text-white' : 'bg-violet-500 text-white'
+                          isOverdue ? 'bg-rose-500 text-white' : 'bg-primary-500 text-white'
                         }`}
                       >
                         {decision.decisionType}
                       </span>
                       {isOverdue && (
-                        <span className="px-2 py-1 text-xs font-bold bg-red-500 text-white rounded">
+                        <span className="px-2 py-1 text-xs font-bold bg-rose-500 text-white rounded">
                           OVERDUE
                         </span>
                       )}
                     </div>
                     <span
-                      className={`text-sm ${isOverdue ? 'text-red-600 font-bold' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-sm ${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {isOverdue
                         ? `${Math.abs(decision.daysUntilDeadline)} days overdue`
@@ -284,7 +284,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       {/* Forecast & Milestones */}
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <h2 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-          <Target size={20} className="text-violet-500" />
+          <Target size={20} className="text-primary-500" />
           Forecast & Next Milestones
         </h2>
 
@@ -325,15 +325,15 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
               {content.forecast.nextGates.map((gate) => (
                 <div
                   key={gate.id}
-                  className="flex items-center justify-between p-2 bg-violet-50 dark:bg-violet-900/10 rounded"
+                  className="flex items-center justify-between p-2 bg-primary-50 dark:bg-primary-900/10 rounded"
                 >
                   <div className="flex items-center gap-2">
                     <RAGIndicator status={gate.readiness} size="sm" />
-                    <span className="text-sm font-medium text-violet-900 dark:text-violet-100">
+                    <span className="text-sm font-medium text-primary-900 dark:text-primary-100">
                       {gate.name}
                     </span>
                   </div>
-                  <span className="text-xs text-violet-600 dark:text-violet-400">
+                  <span className="text-xs text-primary-600 dark:text-primary-400">
                     {gate.plannedDate}
                   </span>
                 </div>

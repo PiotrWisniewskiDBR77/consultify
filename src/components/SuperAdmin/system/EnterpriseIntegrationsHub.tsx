@@ -287,7 +287,7 @@ const STATUS_CONFIG = {
     bg: 'bg-slate-500/20',
     icon: Unlink,
   },
-  error: { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle },
+  error: { color: 'text-rose-400', bg: 'bg-rose-500/20', icon: XCircle },
   pending: { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Clock },
 };
 
@@ -454,9 +454,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               {webhooks.filter((w) => Boolean(w.is_active)).length}
             </div>
           </div>
-          <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
+          <div className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/30">
             <div className="text-sm text-slate-600 dark:text-slate-400">Errors</div>
-            <div className="text-2xl font-semibold text-red-700 dark:text-red-400">
+            <div className="text-2xl font-semibold text-rose-700 dark:text-rose-400">
               {integrations.filter((i) => normalizeStatus(i.status) === 'error').length}
             </div>
           </div>
@@ -587,7 +587,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 )}
                               </div>
                               {integration.error_message && (
-                                <div className="flex items-center gap-1 text-xs text-red-400 mt-1">
+                                <div className="flex items-center gap-1 text-xs text-rose-400 mt-1">
                                   <AlertTriangle className="w-3 h-3" />
                                   {asText(integration.error_message, 'Unknown integration error')}
                                 </div>
@@ -611,10 +611,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             </button>
                             <button
                               onClick={() => handleDeleteIntegration(integration.type)}
-                              className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                              className="p-2 hover:bg-rose-500/20 rounded-lg transition-colors"
                               title="Disconnect"
                             >
-                              <Unlink className="w-4 h-4 text-red-400" />
+                              <Unlink className="w-4 h-4 text-rose-400" />
                             </button>
                           </div>
                         </div>
@@ -676,7 +676,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 {webhook.is_active ? (
                                   <CheckCircle className="w-4 h-4 text-emerald-400" />
                                 ) : (
-                                  <XCircle className="w-4 h-4 text-red-400" />
+                                  <XCircle className="w-4 h-4 text-rose-400" />
                                 )}
                               </div>
                               <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 break-all">
@@ -697,7 +697,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 <span className="text-emerald-400">
                                   ✓ {safeNumber(webhook.success_count)}
                                 </span>
-                                <span className="text-red-400">
+                                <span className="text-rose-400">
                                   ✗ {safeNumber(webhook.failure_count)}
                                 </span>
                                 {webhook.last_triggered_at && (
@@ -725,7 +725,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={WEBHOOK_MUTATION_UNAVAILABLE}
                               >
-                                <Trash2 className="w-4 h-4 text-red-400" />
+                                <Trash2 className="w-4 h-4 text-rose-400" />
                               </button>
                             </div>
                           </div>
@@ -907,7 +907,7 @@ const DeliveriesModal: React.FC<{
                   {delivery.status === 'success' ? (
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
                   ) : delivery.status === 'failed' ? (
-                    <XCircle className="w-4 h-4 text-red-400" />
+                    <XCircle className="w-4 h-4 text-rose-400" />
                   ) : (
                     <Clock className="w-4 h-4 text-amber-400" />
                   )}
@@ -917,7 +917,7 @@ const DeliveriesModal: React.FC<{
                   {delivery.response_code && (
                     <span
                       className={`text-xs ${
-                        delivery.response_code < 300 ? 'text-emerald-400' : 'text-red-400'
+                        delivery.response_code < 300 ? 'text-emerald-400' : 'text-rose-400'
                       }`}
                     >
                       HTTP {delivery.response_code}

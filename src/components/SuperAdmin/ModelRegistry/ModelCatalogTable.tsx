@@ -139,7 +139,7 @@ function CapabilityIcons({ caps }: { caps: RegistryModel['capabilities'] }) {
         </span>
       )}
       {caps.jsonMode && (
-        <span title="JSON mode" className="p-1 rounded bg-purple-500/10 text-purple-400">
+        <span title="JSON mode" className="p-1 rounded bg-primary-500/10 text-primary-400">
           <Server size={12} />
         </span>
       )}
@@ -222,7 +222,7 @@ function ActionsMenu({
               onDelete(model);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
           >
             <Trash2 size={14} /> Delete
           </button>
@@ -625,7 +625,7 @@ export const ModelCatalogTable: React.FC = () => {
               </div>
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <div className="text-sm text-purple-400">IMAGE_MODEL</div>
+              <div className="text-sm text-primary-400">IMAGE_MODEL</div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">
                 {models.filter((m) => m.kind === 'IMAGE_MODEL').length}
               </div>

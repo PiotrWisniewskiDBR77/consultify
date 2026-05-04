@@ -242,7 +242,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center">
-          <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <AlertTriangle className="w-12 h-12 text-rose-400 mx-auto mb-4" />
           <p className="text-slate-900 dark:text-white text-lg mb-2">Failed to load initiative</p>
           <p className="text-slate-500 dark:text-slate-400">{error || 'Initiative not found'}</p>
         </div>
@@ -304,9 +304,9 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
       case 'APPROVED':
         return 'bg-emerald-500/20 text-emerald-400';
       case 'EXECUTING':
-        return 'bg-cyan-500/20 text-cyan-400';
+        return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-red-500/20 text-red-400';
+        return 'bg-rose-500/20 text-rose-400';
       case 'DONE':
         return 'bg-green-500/20 text-green-400';
       default:
@@ -417,7 +417,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                     ? 'text-green-400'
                     : readiness.total >= 40
                       ? 'text-amber-400'
-                      : 'text-red-400'
+                      : 'text-rose-400'
                 }`}
               >
                 {readiness.total}%
@@ -481,7 +481,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
               {/* Executive One-Liner */}
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles size={16} className="text-purple-400" />
+                  <Sparkles size={16} className="text-primary-400" />
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                     Executive One-Liner
                   </span>
@@ -529,7 +529,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             {/* Problem Statement */}
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle size={16} className="text-orange-400" />
+                <AlertTriangle size={16} className="text-amber-400" />
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                   Problem Statement (The Why)
                 </span>

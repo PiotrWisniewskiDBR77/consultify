@@ -88,7 +88,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, poster }) => {
           className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors"
         >
           <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <Play size={28} className="text-purple-600 ml-1" />
+            <Play size={28} className="text-primary-600 ml-1" />
           </div>
         </button>
       )}
@@ -156,7 +156,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
       </div>
     );
   }
@@ -173,7 +173,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
         </p>
         <button
           onClick={onBack}
-          className="mt-4 px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
+          className="mt-4 px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 bg-primary-50 dark:bg-primary-900/20 rounded-lg"
         >
           ← {t('help.knowledge.browseCollections', 'Browse collections')}
         </button>
@@ -219,7 +219,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-semibold rounded-full uppercase">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-[10px] font-semibold rounded-full uppercase">
               <DynamicIcon name={article.category_icon || 'BookOpen'} size={10} />
               {article.category_name}
             </span>
@@ -235,7 +235,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
       <div className="flex-1 overflow-y-auto">
         {/* P26-B: Deprecation banner */}
         {redirectInfo?.deprecationReason && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200 flex items-start gap-2">
+          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200 flex items-start gap-2">
             <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">
@@ -248,14 +248,14 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                     onBack();
                     setTimeout(() => onArticleClick?.(redirectInfo.redirectSlug!), 100);
                   }}
-                  className="mt-1 text-red-700 dark:text-red-300 underline hover:no-underline"
+                  className="mt-1 text-rose-700 dark:text-rose-300 underline hover:no-underline"
                 >
                   {t('help.knowledge.viewReplacement', 'View replacement article')} →
                 </button>
               ) : (
                 <button
                   onClick={() => onBack()}
-                  className="mt-1 text-red-700 dark:text-red-300 underline hover:no-underline"
+                  className="mt-1 text-rose-700 dark:text-rose-300 underline hover:no-underline"
                 >
                   {t('help.knowledge.browseCollections', 'Browse collections')} →
                 </button>
@@ -300,8 +300,8 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
               const kindColors: Record<string, string> = {
                 domain: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
                 tool: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-                concept: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
-                stage: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+                concept: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+                stage: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
                 audience: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
               };
               return (
@@ -327,7 +327,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
             <button
               type="button"
               onClick={() => closePanelAndNavigate(effectiveNextRoute)}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
               data-testid="help-next-action"
             >
               {nextActionRoute
@@ -394,13 +394,13 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                   );
                 }
                 return (
-                  <code className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs font-mono text-purple-600 dark:text-purple-400">
+                  <code className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs font-mono text-primary-600 dark:text-primary-400">
                     {children}
                   </code>
                 );
               },
               blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-purple-500 pl-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-r-lg mb-3 italic text-slate-600 dark:text-slate-300">
+                <blockquote className="border-l-4 border-primary-500 pl-4 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-r-lg mb-3 italic text-slate-600 dark:text-slate-300">
                   {children}
                 </blockquote>
               ),
@@ -457,10 +457,10 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                 <button
                   key={rel.id}
                   onClick={() => onArticleClick?.(rel.slug) ?? onBack()}
-                  className="w-full text-left p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-sm transition-all group flex items-center gap-3"
+                  className="w-full text-left p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-sm transition-all group flex items-center gap-3"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 truncate">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 truncate">
                       {rel.title}
                     </p>
                     <p className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
@@ -469,7 +469,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                   </div>
                   <ChevronRight
                     size={14}
-                    className="text-slate-400 group-hover:text-purple-500 flex-shrink-0"
+                    className="text-slate-400 group-hover:text-primary-500 flex-shrink-0"
                   />
                 </button>
               ))}
@@ -485,7 +485,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
             const deepLink = `${window.location.origin}${window.location.pathname}?help_article=${encodeURIComponent(slug)}${moduleId ? `&help_module=${encodeURIComponent(moduleId)}` : ''}`;
             navigator.clipboard.writeText(deepLink).catch(() => {});
           }}
-          className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-3 px-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-medium rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg"
         >
           <Share2 size={16} />
           {t('help.knowledge.shareArticle', 'Share Article')}

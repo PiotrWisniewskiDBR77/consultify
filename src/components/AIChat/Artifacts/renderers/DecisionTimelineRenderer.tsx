@@ -108,7 +108,7 @@ function parseTimelineContent(content: string): TimelineData | null {
 function impactColor(impact: string): string {
   switch (impact) {
     case 'high':
-      return 'border-red-400 dark:border-red-600';
+      return 'border-rose-400 dark:border-rose-600';
     case 'medium':
       return 'border-amber-400 dark:border-amber-600';
     case 'low':
@@ -127,7 +127,7 @@ function statusBg(status: string): string {
     case 'planned':
       return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
     case 'cancelled':
-      return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 line-through';
+      return 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 line-through';
     default:
       return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
   }
@@ -138,7 +138,7 @@ function outcomeIcon(outcome?: string) {
     case 'positive':
       return <TrendingUp size={12} className="text-green-500" />;
     case 'negative':
-      return <AlertTriangle size={12} className="text-red-500" />;
+      return <AlertTriangle size={12} className="text-rose-500" />;
     case 'mixed':
       return <AlertTriangle size={12} className="text-amber-500" />;
     default:
@@ -149,11 +149,11 @@ function outcomeIcon(outcome?: string) {
 function typeIcon(type: string) {
   switch (type) {
     case 'decision':
-      return <Flag size={12} className="text-purple-500" />;
+      return <Flag size={12} className="text-primary-500" />;
     case 'milestone':
       return <Check size={12} className="text-blue-500" />;
     case 'risk':
-      return <AlertTriangle size={12} className="text-red-500" />;
+      return <AlertTriangle size={12} className="text-rose-500" />;
     case 'opportunity':
       return <TrendingUp size={12} className="text-green-500" />;
     default:
@@ -164,7 +164,7 @@ function typeIcon(type: string) {
 function severityColor(severity: string): string {
   switch (severity) {
     case 'high':
-      return 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50';
+      return 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50';
     case 'medium':
       return 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50';
     case 'low':

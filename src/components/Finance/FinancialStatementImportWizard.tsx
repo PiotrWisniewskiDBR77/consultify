@@ -511,12 +511,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         ? 'text-emerald-600 bg-emerald-50'
         : pct >= 40
           ? 'text-amber-600 bg-amber-50'
-          : 'text-red-600 bg-red-50';
+          : 'text-rose-600 bg-rose-50';
     return <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${color}`}>{pct}%</span>;
   };
 
   const validationIcon = (type: string) => {
-    if (type === 'error') return <XCircle size={14} className="text-red-500" />;
+    if (type === 'error') return <XCircle size={14} className="text-rose-500" />;
     if (type === 'warning') return <AlertTriangle size={14} className="text-amber-500" />;
     return <CheckCircle2 size={14} className="text-emerald-500" />;
   };
@@ -588,7 +588,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                     isCompleted
                       ? 'bg-emerald-500 text-white shadow-sm'
                       : isCurrent
-                        ? 'bg-cyan-600 text-white shadow-sm ring-4 ring-cyan-100 dark:ring-cyan-500/20'
+                        ? 'bg-blue-600 text-white shadow-sm ring-4 ring-blue-100 dark:ring-blue-500/20'
                         : 'border-2 border-slate-200 text-slate-400 dark:border-white/[0.1] dark:text-slate-500'
                   }`}
                   aria-current={isCurrent ? 'step' : undefined}
@@ -621,9 +621,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       </div>
 
       {error && (
-        <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
-          <AlertTriangle size={16} className="text-red-500 mt-0.5 shrink-0" />
-          <span className="text-sm text-red-700 dark:text-red-400">{error}</span>
+        <div className="mb-6 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-2">
+          <AlertTriangle size={16} className="text-rose-500 mt-0.5 shrink-0" />
+          <span className="text-sm text-rose-700 dark:text-rose-400">{error}</span>
         </div>
       )}
 
@@ -633,17 +633,17 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           <div
             className={`group relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200 cursor-pointer ${
               file
-                ? 'border-cyan-400/60 bg-cyan-50/30 dark:border-cyan-500/30 dark:bg-cyan-500/5'
-                : 'border-slate-300 hover:border-cyan-400 hover:bg-cyan-50/20 dark:border-white/[0.1] dark:hover:border-cyan-500/40 dark:hover:bg-cyan-500/5'
+                ? 'border-blue-400/60 bg-blue-50/30 dark:border-blue-500/30 dark:bg-blue-500/5'
+                : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50/20 dark:border-white/[0.1] dark:hover:border-blue-500/40 dark:hover:bg-blue-500/5'
             }`}
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
             onDragOver={(e) => {
               e.preventDefault();
-              e.currentTarget.classList.add('border-cyan-400', 'bg-cyan-50/30');
+              e.currentTarget.classList.add('border-blue-400', 'bg-blue-50/30');
             }}
             onDragLeave={(e) => {
-              e.currentTarget.classList.remove('border-cyan-400', 'bg-cyan-50/30');
+              e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50/30');
             }}
             role="button"
             tabIndex={0}
@@ -652,10 +652,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             }}
             aria-label={isPl ? 'Upuść plik lub kliknij aby wybrać' : 'Drop file or click to browse'}
           >
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100/80 transition-colors group-hover:bg-cyan-100/60 dark:bg-white/[0.05] dark:group-hover:bg-cyan-500/10">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100/80 transition-colors group-hover:bg-blue-100/60 dark:bg-white/[0.05] dark:group-hover:bg-blue-500/10">
               <Upload
                 size={28}
-                className="text-slate-400 transition-colors group-hover:text-cyan-500"
+                className="text-slate-400 transition-colors group-hover:text-blue-500"
               />
             </div>
             <p className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
@@ -718,7 +718,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           <button
             onClick={handleUpload}
             disabled={!file || loading}
-            className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white font-medium rounded-xl shadow-sm hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.98]"
+            className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl shadow-sm hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.98]"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
             {loading
@@ -1026,7 +1026,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                       key={stmt.statementId}
                       className="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm dark:bg-white/[0.06]"
                     >
-                      <span className="inline-flex items-center justify-center h-6 w-10 rounded-md bg-cyan-100 text-[10px] font-bold text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300">
+                      <span className="inline-flex items-center justify-center h-6 w-10 rounded-md bg-blue-100 text-[10px] font-bold text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
                         {stmt.statementType}
                       </span>
                       <span className="text-slate-700 dark:text-slate-300">
@@ -1101,7 +1101,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 ? 'border-emerald-200 dark:border-emerald-800'
                 : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
                   ? 'border-amber-200 dark:border-amber-800'
-                  : 'border-red-200 dark:border-red-800'
+                  : 'border-rose-200 dark:border-rose-800'
             }`}
           >
             {/* Gauge bar at top */}

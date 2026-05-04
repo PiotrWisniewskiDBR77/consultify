@@ -21,7 +21,7 @@ const FORCE_CONFIG = {
   rivalry: {
     label: { en: 'Competitive Rivalry', pl: 'Rywalizacja konkurencyjna' },
     shortLabel: { en: 'Rivalry', pl: 'Rywalizacja' },
-    color: '#ef4444',
+    color: '#f43f5e',
   },
   newEntrants: {
     label: { en: 'New Entrants', pl: 'Nowi gracze' },
@@ -31,7 +31,7 @@ const FORCE_CONFIG = {
   substitutes: {
     label: { en: 'Substitutes', pl: 'Substytuty' },
     shortLabel: { en: 'Substitutes', pl: 'Substytuty' },
-    color: '#8b5cf6',
+    color: '#6366f1',
   },
   buyerPower: {
     label: { en: 'Buyer Power', pl: 'Siła nabywców' },
@@ -70,7 +70,7 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
               px-1.5 py-0.5 text-xs rounded
               ${
                 force.trend === 'increasing'
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
                   : force.trend === 'decreasing'
                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
@@ -118,7 +118,7 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
 
         {/* Attractiveness scale */}
         <div className="mt-4">
-          <div className="h-3 rounded-full bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 relative">
+          <div className="h-3 rounded-full bg-gradient-to-r from-rose-500 via-amber-500 to-emerald-500 relative">
             <div
               className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-slate-400 shadow"
               style={{ left: `${((attractiveness - 1) / 4) * 100}%`, marginLeft: '-8px' }}
@@ -153,7 +153,7 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
             <span>3: {isPolish ? 'Umiarkowana' : 'Moderate'}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded bg-red-500" />
+            <span className="w-3 h-3 rounded bg-rose-500" />
             <span>4-5: {isPolish ? 'Wysoka siła' : 'High force'}</span>
           </div>
         </div>

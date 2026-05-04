@@ -198,7 +198,7 @@ export const CloudDataSettings: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -279,7 +279,7 @@ export const CloudDataSettings: React.FC = () => {
                         source.status === 'active'
                           ? 'text-green-500'
                           : source.status === 'error'
-                            ? 'text-red-500'
+                            ? 'text-rose-500'
                             : 'text-slate-400'
                       }
                     >
@@ -306,7 +306,7 @@ export const CloudDataSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleDelete(source.id)}
-                  className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
                   title={t('cloud.disconnect', 'Disconnect')}
                 >
                   <Trash2 size={14} />

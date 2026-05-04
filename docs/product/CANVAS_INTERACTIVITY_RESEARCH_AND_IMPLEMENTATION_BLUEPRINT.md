@@ -17,6 +17,8 @@ Markdown document + typed artifact blocks + governed AI operations + native rend
 
 This keeps the accepted contract from `docs/architecture/adr/0001-markdown-first-json-native-markdown-projection.md`: Markdown-first for natural documents, JSON-native when the content needs native behavior, and always a Markdown projection.
 
+Current rollout note: the shipped cutline is the Markdown-first `DocumentCanvas` editor loop captured in `BUSINESS_WORK_CANVAS_FINAL_ROLLOUT_SIGNOFF.md`. The Tier 1/Tier 2 capability tables below remain the product backlog and competitive target, not a claim that every competitor capability is already shipped.
+
 ## 2. Competitor Capability Matrix
 
 | Capability | Claude Artifacts | ChatGPT Canvas / Data Analysis | Gemini Canvas | Manus | Consultify priority |

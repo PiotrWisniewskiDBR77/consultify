@@ -98,7 +98,7 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
       <div
         ref={panelRef}
         className={`
-                    fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-navy-900 
+                    fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-navy-900
                     shadow-xl z-50 flex flex-col
                     transform transition-transform duration-300 ease-out
                     ${isOpen ? 'translate-x-0' : 'translate-x-full'}
@@ -108,8 +108,8 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
         <div className="shrink-0 px-4 py-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <h3 className="font-bold text-navy-900 dark:text-white">Komentarze</h3>

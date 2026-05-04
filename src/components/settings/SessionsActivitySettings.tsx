@@ -107,7 +107,7 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
             active === tab.id
-              ? 'bg-violet-600 text-white shadow-sm'
+              ? 'bg-primary-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-white hover:bg-white/5'
           )}
         >
@@ -258,7 +258,7 @@ export const SessionsActivitySettings: React.FC = () => {
           {sessionActionError && (
             <div
               role="alert"
-              className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+              className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
             >
               {sessionActionError}
             </div>

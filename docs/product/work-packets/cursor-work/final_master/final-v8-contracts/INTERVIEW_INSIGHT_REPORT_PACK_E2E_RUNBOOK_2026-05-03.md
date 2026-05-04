@@ -54,6 +54,8 @@ For each run capture:
 - Screenshot of the created insight.
 - Screenshot of the Report Pack card with 15 worksheets.
 - Screenshot of readiness gate before and after worksheet edits.
+- Screenshot of `source_register` or `appendix_provenance` showing organization context documents when context docs are selected.
+- Screenshot of downstream `Next Actions` confirmation/read-back before creating any artifact.
 - Network evidence for these endpoints when available:
   - `GET /api/v8/interview/insights/:id/report-pack`
   - `GET /api/v8/interview/insights/:id/report-pack/readiness`
@@ -61,9 +63,12 @@ For each run capture:
   - `POST /api/v8/interview/insights/:id/report-pack/submit-review`
   - `POST /api/v8/interview/insights/:id/report-pack/publish`
   - `GET /api/v8/interview/insights/:id/report-pack/export-manifest`
+  - `GET /api/v8/interview/insights/:id/report-pack/export-markdown`
   - `POST /api/v8/interview/insights/:id/report-pack/revisions`
 - Activity feed screenshot after worksheet update, review, publish, export, and revision.
 - Downloaded manifest JSON and visible `manifestHash`.
+- Downloaded Markdown report and visible `sourceManifestHash` / `exportHash`.
+- Downstream artifact conversion evidence, if a report/deck/table/idea/note/initiative is created.
 - Console errors, if any.
 
 ---
@@ -239,7 +244,96 @@ Fail as:
 - `P0` if export is allowed before publish as client-ready.
 - `P1` if export has no audit trail.
 
-### 9. Create Revision
+### 9. Export Client Markdown Report
+
+Steps:
+
+1. Click `Download report MD` after publish.
+2. Inspect downloaded Markdown.
+3. Refresh and open activity feed.
+4. Try the same endpoint or button on a draft/in-review pack if possible.
+
+Expected:
+
+- Draft/in-review Markdown export is blocked with `409 INTERVIEW_REPORT_PACK_EXPORT_BLOCKED`.
+- Published export downloads a `.md` file.
+- Markdown includes:
+  - `Report Pack ID`
+  - `Insight ID`
+  - `Status: published`
+  - `Source manifest hash`
+  - `Completeness`
+  - `Readiness`
+  - all worksheet sections
+  - degraded/readiness warnings when present
+- Activity feed includes client-ready Markdown export event and `exportHash` prefix.
+
+Fail as:
+
+- `P0` if Markdown export is allowed before publish as client-ready.
+- `P1` if Markdown export has no audit trail or omits source hash.
+- `PASS_WITH_P2` if Markdown is complete but visual polish is not client-grade enough.
+
+### 10. Context Document Provenance
+
+Steps:
+
+1. Create or open an insight generated with selected organization/project context documents.
+2. Open `Report Pack`.
+3. Inspect `source_register`.
+4. Inspect `appendix_provenance`.
+5. Use a fixture with at least one ready/used document and, if possible, one selected document with no used chunks or inaccessible document.
+
+Expected:
+
+- Context documents appear as `organization_context_document` rows.
+- Used documents show `usageStatus: used_in_generation`.
+- Selected-but-unused documents show `usageStatus: selected_not_used`.
+- Inaccessible/missing requested documents show `usageStatus: not_used`.
+- Degraded context state produces visible worksheet warning.
+- UI does not imply that a document was used when only metadata was available.
+
+Fail as:
+
+- `P0` if cross-tenant document metadata/content is visible.
+- `P1` if context is silently omitted while UI implies it influenced the report.
+- `PASS_WITH_P2` if lineage exists but copy is hard to understand.
+
+### 11. Six Downstream Actions
+
+Steps:
+
+1. Open `Next Actions`.
+2. For document actions, open each generator:
+   - report
+   - deck
+   - table
+3. Confirm that no artifact is created before the confirmation checkbox is selected.
+4. Confirm read-back/downstream warnings include Report Pack lineage/limits where relevant.
+5. Create one document artifact if the environment supports it.
+6. For app actions, open each confirmation modal:
+   - idea
+   - note
+   - initiative
+7. Confirm no mutation occurs until read-back checkbox is selected.
+8. Create one app artifact if the environment supports it.
+9. Verify artifact conversion/audit/lineage includes insight id, evidence refs, source pack, and Report Pack context.
+
+Expected:
+
+- All six actions are discoverable.
+- All mutating actions require explicit confirmation.
+- Created app objects are draft/proposal/intake objects, not silently approved work.
+- Downstream payload includes `actionContract` and Report Pack lineage.
+- Report Pack degraded/readiness warnings stay visible before creation.
+
+Fail as:
+
+- `P0` if any downstream artifact is created without explicit confirmation.
+- `P1` if a required action is missing or mutation has no lineage/audit.
+- `PASS_WITH_P2` if actions work but navigation/copy is confusing.
+
+### 12. Create Revision
 
 Steps:
 
@@ -275,7 +369,9 @@ Expected response patterns:
 - `POST /submit-review`: `200`, `result.blocked` truthfully reflects gate.
 - `POST /publish`: `200`, `result.blocked` truthfully reflects gate.
 - `GET /export-manifest`: `200` for published, `409 INTERVIEW_REPORT_PACK_EXPORT_BLOCKED` for draft/in_review.
+- `GET /export-markdown`: `200` for published, `409 INTERVIEW_REPORT_PACK_EXPORT_BLOCKED` for draft/in_review.
 - `POST /revisions`: `200` for published, `409 INTERVIEW_REPORT_PACK_REVISION_BLOCKED` otherwise.
+- Downstream conversion: target creation endpoint is followed by `/artifact-conversions/record` with `actionContract`.
 
 ---
 
@@ -285,10 +381,13 @@ After technical PASS, review content quality:
 
 - Executive summary says what happened, why it matters, and what to do next.
 - Evidence register contains usable snippets or honest missing evidence.
+- Source register and provenance identify used/not-used organization context documents.
 - Findings are not generic.
 - Recommendations map to findings/opportunities.
 - Open questions reflect actual gaps.
 - Material quality honestly describes weak source coverage.
+- Recommendations are downgraded to hypotheses/review-required when material quality is weak.
+- Markdown report can be read by a client without exposing raw backend internals.
 - Consultant can explain the report to a client without reading raw internals.
 
 Classify:
@@ -297,6 +396,47 @@ Classify:
 - `PASS_WITH_P2`: structurally correct, but copy needs polish or some worksheets feel thin.
 - `BLOCKED_P1`: recommendations/findings are misleading, unsupported, or dangerously generic.
 - `INCONCLUSIVE`: source data is too thin to judge business quality.
+
+---
+
+## Manual Evidence Record
+
+Fill this section during the actual run. Do not pre-fill it from automated tests.
+
+Run metadata:
+
+- Date/time:
+- Environment:
+- Organization/tenant:
+- Tester:
+- User/role:
+- Insight ID:
+- Report Pack ID:
+- Published manifest hash:
+- Markdown export hash:
+
+Evidence checklist:
+
+- Insight screenshot:
+- Report Pack screenshot:
+- Readiness gate screenshot:
+- Source register/provenance screenshot:
+- Activity feed screenshot:
+- Manifest file retained:
+- Markdown file retained:
+- Network/API evidence retained:
+- Console evidence retained:
+- Refresh resistance checked:
+- Downstream action confirmation checked:
+
+Decision:
+
+- Result: `PASS` / `PASS_WITH_P2` / `BLOCKED_P1` / `INCONCLUSIVE`
+- P0 findings:
+- P1 findings:
+- P2 findings:
+- Accepted limitations:
+- Follow-up owner:
 
 ---
 
@@ -312,6 +452,10 @@ Mark the Report Pack flow as `PASS` only if all are true:
 - Published pack is immutable.
 - Export manifest is available only after publish.
 - Export manifest has `manifestHash` and audit.
+- Markdown report export is available only after publish.
+- Markdown report has `sourceManifestHash`, `exportHash`, worksheet content, and audit.
+- Organization context documents are traceable as used, selected-not-used, or not-used.
+- Six downstream actions require confirmation and preserve Report Pack lineage.
 - Revision creates a new editable draft from a preserved published snapshot.
 - Activity feed gives readable evidence for all critical mutations.
 - No P0/P1 found in the run.

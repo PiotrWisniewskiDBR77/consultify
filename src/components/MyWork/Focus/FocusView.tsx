@@ -158,8 +158,8 @@ const PRIORITY_RANK: Record<string, number> = {
 };
 
 const priorityBorderColor: Record<string, string> = {
-  urgent: 'border-l-red-500',
-  critical: 'border-l-orange-500',
+  urgent: 'border-l-rose-500',
+  critical: 'border-l-amber-500',
   high: 'border-l-amber-500',
   medium: 'border-l-blue-400',
   low: 'border-l-slate-300 dark:border-l-slate-600',
@@ -370,7 +370,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           item.isCompleted
             ? 'border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10'
             : isOverdue
-              ? 'border-red-200 dark:border-red-800/30'
+              ? 'border-rose-200 dark:border-rose-800/30'
               : isSelected
                 ? 'border-brand dark:border-brand ring-2 ring-brand/30'
                 : 'border-slate-200 dark:border-navy-700 hover:border-brand/30 dark:hover:border-brand/20'
@@ -401,7 +401,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           {item.isCompleted ? (
             <CheckCircle2 size={20} className="text-green-500" />
           ) : item.type === 'decision' ? (
-            <Zap size={20} className="text-purple-500" />
+            <Zap size={20} className="text-blue-500" />
           ) : (
             <div className="w-5 h-5 rounded-full border-2 border-slate-300 hover:border-brand transition-colors" />
           )}
@@ -416,7 +416,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                 <span
                   className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                     item.type === 'decision'
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                       : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                   }`}
                 >
@@ -425,7 +425,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                     : t('myWork.focus.task', 'Task')}
                 </span>
                 {isBlocked && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
                     {t('myWork.focus.card.blocked', 'Blocked')}
                   </span>
                 )}
@@ -504,7 +504,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                   e.stopPropagation();
                   onRemove(item);
                 }}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 rounded-md hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors"
               >
                 <ThumbsDown size={10} />
                 {t('myWork.focus.card.reject', 'Reject')}
@@ -580,7 +580,7 @@ const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
     >
       <div className="flex items-center gap-3">
         {item.type === 'decision' ? (
-          <Zap size={20} className="text-purple-500" />
+          <Zap size={20} className="text-blue-500" />
         ) : (
           <div className="w-5 h-5 rounded-full border-2 border-brand" />
         )}
@@ -588,7 +588,7 @@ const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
           <span
             className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
               item.type === 'decision'
-                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
                 : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
             }`}
           >
@@ -779,8 +779,8 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               {(aiSuggestions.length > 0 || aiLoading) && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Sparkles size={12} className="text-purple-500" />
-                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                    <Sparkles size={12} className="text-primary-500" />
+                    <span className="text-[11px] font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wider">
                       {t('myWork.focus.delegate.aiSuggestions', 'AI Suggestions')}
                     </span>
                   </div>
@@ -798,10 +798,10 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                           className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left ${
                             selectedUserId === sug.userId
                               ? 'border-brand bg-brand/5'
-                              : 'border-purple-200 dark:border-purple-900/30 bg-purple-50/30 dark:bg-purple-950/10 hover:border-purple-300 dark:hover:border-purple-800/40'
+                              : 'border-primary-200 dark:border-primary-900/30 bg-primary-50/30 dark:bg-primary-950/10 hover:border-primary-300 dark:hover:border-primary-800/40'
                           }`}
                         >
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-brand flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-brand flex items-center justify-center shrink-0">
                             <span className="text-xs font-medium text-white">
                               {(sug.name || '?').charAt(0).toUpperCase()}
                             </span>
@@ -811,7 +811,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                               <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
                                 {sug.name}
                               </span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-medium shrink-0">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium shrink-0">
                                 {sug.score}%
                               </span>
                             </div>
@@ -861,7 +861,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                               className="w-8 h-8 rounded-full"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-primary-600 flex items-center justify-center">
                               <span className="text-xs font-medium text-white">
                                 {user.name.charAt(0).toUpperCase()}
                               </span>
@@ -1879,7 +1879,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                     </button>
                     <button
                       onClick={() => handleRemoveFromFocus(selectedItem)}
-                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-red-300/40 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-200 hover:bg-red-100/70 dark:hover:bg-red-500/15 transition-colors text-xs font-medium"
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-rose-300/40 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-100/70 dark:hover:bg-rose-500/15 transition-colors text-xs font-medium"
                       title={t('myWork.focus.actions.remove', 'Remove from focus')}
                     >
                       <X size={14} />
@@ -1894,7 +1894,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                       <span
                         className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                           selectedItem.type === 'decision'
-                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                             : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                         }`}
                       >

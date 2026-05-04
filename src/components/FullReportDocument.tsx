@@ -10,7 +10,7 @@ interface FullReportDocumentProps {
 
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="mt-8 mb-4 border-b border-navy-800 pb-2">
-    <h3 className="text-lg font-bold text-purple-400 uppercase tracking-wide">{title}</h3>
+    <h3 className="text-lg font-bold text-primary-400 uppercase tracking-wide">{title}</h3>
   </div>
 );
 
@@ -22,7 +22,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
     <div className="h-full bg-gray-50 dark:bg-navy-950 flex flex-col">
       {/* Document Header */}
       <div className="h-16 border-b border-slate-200 dark:border-navy-800 flex items-center px-8 bg-white dark:bg-navy-950 shrink-0 print:hidden">
-        <FileText className="text-purple-500 mr-3" size={20} />
+        <FileText className="text-primary-500 mr-3" size={20} />
         <span className="font-semibold text-navy-900 dark:text-white tracking-wide">
           {t.header}
         </span>
@@ -39,7 +39,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
       >
         <div className="max-w-4xl mx-auto bg-white dark:bg-navy-900/50 p-8 lg:p-16 rounded-xl border border-slate-200 dark:border-navy-700 shadow-xl dark:shadow-2xl print:shadow-none print:border-none print:max-w-none">
           {/* Title Page */}
-          <div className="text-center mb-16 border-b-2 border-purple-500 pb-8">
+          <div className="text-center mb-16 border-b-2 border-primary-500 pb-8">
             <div className="text-sm font-bold tracking-[0.3em] text-slate-400 dark:text-slate-500 uppercase mb-4">
               CONFIDENTIAL
             </div>
@@ -144,11 +144,11 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                     ${report.financials.benefit.toLocaleString()}
                   </div>
                 </div>
-                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                  <div className="text-xs text-purple-600 dark:text-purple-400 uppercase mb-1">
+                <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
+                  <div className="text-xs text-primary-600 dark:text-primary-400 uppercase mb-1">
                     ROI
                   </div>
-                  <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
+                  <div className="text-xl font-bold text-primary-700 dark:text-primary-300">
                     {report.financials.roi.toFixed(0)}%
                   </div>
                 </div>
@@ -197,7 +197,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                       key={i}
                       className="flex items-center gap-3 text-slate-700 dark:text-slate-300"
                     >
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
                       {item}
                     </li>
                   ))}
@@ -213,7 +213,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                       key={i}
                       className="flex items-center gap-3 text-slate-700 dark:text-slate-300"
                     >
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
                       {item}
                     </li>
                   ))}

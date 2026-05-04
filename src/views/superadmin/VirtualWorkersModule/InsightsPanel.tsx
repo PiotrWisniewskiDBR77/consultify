@@ -33,13 +33,13 @@ interface InsightsPanelProps {
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   knowledge_gap: <Brain size={16} className="text-amber-500" />,
   frequent_topic: <TrendingUp size={16} className="text-blue-500" />,
-  objection_pattern: <AlertTriangle size={16} className="text-red-500" />,
+  objection_pattern: <AlertTriangle size={16} className="text-rose-500" />,
   improvement_suggestion: <Lightbulb size={16} className="text-emerald-500" />,
-  escalation_pattern: <AlertTriangle size={16} className="text-orange-500" />,
+  escalation_pattern: <AlertTriangle size={16} className="text-amber-500" />,
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  critical: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  critical: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   low: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',

@@ -179,7 +179,7 @@ export const ModelRegistryTab: React.FC = () => {
     const styles = {
       active: 'bg-emerald-500/10 text-emerald-500',
       deprecated: 'bg-amber-500/10 text-amber-500',
-      beta: 'bg-purple-500/10 text-purple-500',
+      beta: 'bg-primary-500/10 text-primary-500',
       archived: 'bg-slate-500/10 text-slate-500',
     };
     return (
@@ -194,7 +194,7 @@ export const ModelRegistryTab: React.FC = () => {
       budget: 'bg-blue-500/10 text-blue-500',
       standard: 'bg-slate-500/10 text-slate-400',
       premium: 'bg-amber-500/10 text-amber-500',
-      reasoning: 'bg-purple-500/10 text-purple-500',
+      reasoning: 'bg-primary-500/10 text-primary-500',
     };
     return (
       <span className={`px-2 py-1 rounded text-xs font-medium ${styles[tier]}`}>
@@ -284,7 +284,7 @@ export const ModelRegistryTab: React.FC = () => {
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Cpu size={16} className="text-purple-500" />
+                <Cpu size={16} className="text-primary-500" />
                 <span className="text-sm text-slate-500 dark:text-slate-400">Providers</span>
               </div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -415,7 +415,7 @@ export const ModelRegistryTab: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-red-500'}`}
+                        className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-rose-500'}`}
                       >
                         {model.successRate.toFixed(1)}%
                       </span>

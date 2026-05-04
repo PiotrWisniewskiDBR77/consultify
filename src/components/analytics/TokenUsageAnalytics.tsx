@@ -43,7 +43,7 @@ interface UsageData {
 
 const USAGE_TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   chat: { icon: <MessageSquare className="w-4 h-4" />, color: 'bg-blue-500', label: 'AI Chat' },
-  analysis: { icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500', label: 'Analysis' },
+  analysis: { icon: <Brain className="w-4 h-4" />, color: 'bg-primary-500', label: 'Analysis' },
   generation: {
     icon: <FileText className="w-4 h-4" />,
     color: 'bg-emerald-500',
@@ -114,7 +114,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center p-8 ${className}`}>
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
       {showHeader && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-slate-900 dark:text-white" />
             </div>
             <div>
@@ -178,12 +178,12 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
         {/* Total Used */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <Coins className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <Coins className="w-4 h-4 text-primary-600 dark:text-primary-400" />
             </div>
             <div
               className={`flex items-center gap-1 text-xs font-medium ${
-                usageData.trend === 'up' ? 'text-red-500' : 'text-emerald-500'
+                usageData.trend === 'up' ? 'text-rose-500' : 'text-emerald-500'
               }`}
             >
               {usageData.trend === 'up' ? (
@@ -262,10 +262,10 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
           <div
             className={`h-full rounded-full transition-all duration-500 ${
               usagePercentage >= 90
-                ? 'bg-red-500'
+                ? 'bg-rose-500'
                 : usagePercentage >= 75
                   ? 'bg-amber-500'
-                  : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                  : 'bg-gradient-to-r from-primary-500 to-indigo-500'
             }`}
             style={{ width: `${Math.min(100, usagePercentage)}%` }}
           />
@@ -279,7 +279,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
       {!compact && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <h3 className="font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <PieChart className="w-4 h-4 text-purple-500" />
+            <PieChart className="w-4 h-4 text-primary-500" />
             {t('analytics.usageByType', 'Usage by Type')}
           </h3>
           <div className="space-y-3">
@@ -322,7 +322,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
       {!compact && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <h3 className="font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-purple-500" />
+            <BarChart3 className="w-4 h-4 text-primary-500" />
             {t('analytics.dailyUsage', 'Daily Usage Trend')}
           </h3>
           <div className="flex items-end gap-1 h-32">
@@ -336,7 +336,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
                   title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
                 >
                   <div
-                    className="w-full rounded-t bg-gradient-to-t from-purple-600 to-purple-400 hover:from-purple-500 hover:to-purple-300 transition-all cursor-pointer"
+                    className="w-full rounded-t bg-gradient-to-t from-primary-600 to-primary-400 hover:from-primary-500 hover:to-primary-300 transition-all cursor-pointer"
                     style={{ height: `${height}%` }}
                   />
                   {/* Tooltip */}

@@ -37,8 +37,8 @@ const NODE_WIDTH = 220;
 const NODE_HEIGHT = 84;
 
 const PRIORITY_RING: Record<string, string> = {
-  CRITICAL: '#ef4444',
-  HIGH: '#f97316',
+  CRITICAL: '#f43f5e',
+  HIGH: '#f59e0b',
   MEDIUM: '#a855f7',
   LOW: '#64748b',
 };
@@ -161,14 +161,14 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
           animated: hasConflict,
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: hasConflict ? '#ef4444' : isCritical ? '#f59e0b' : '#94a3b8',
+            color: hasConflict ? '#f43f5e' : isCritical ? '#f59e0b' : '#94a3b8',
           },
           style: {
-            stroke: hasConflict ? '#ef4444' : isCritical ? '#f59e0b' : '#94a3b8',
+            stroke: hasConflict ? '#f43f5e' : isCritical ? '#f59e0b' : '#94a3b8',
             strokeWidth: isCritical ? 2.4 : 1.8,
           },
           labelStyle: {
-            fill: hasConflict ? '#ef4444' : isCritical ? '#f59e0b' : '#94a3b8',
+            fill: hasConflict ? '#f43f5e' : isCritical ? '#f59e0b' : '#94a3b8',
             fontSize: 10,
             fontWeight: 700,
           },
@@ -249,7 +249,7 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
             {t('initiatives.analysis.logic.graph.hint', 'Drag from predecessor to successor')}
           </span>
           {selectedEdge?.hasTimingConflict && (
-            <span className="inline-flex items-center gap-1 text-red-500">
+            <span className="inline-flex items-center gap-1 text-rose-500">
               <AlertTriangle size={12} />
               {t('initiatives.analysis.logic.graph.timingConflict', 'Timing conflict')}
             </span>

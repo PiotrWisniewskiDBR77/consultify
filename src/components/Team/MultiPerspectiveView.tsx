@@ -50,10 +50,10 @@ interface MultiPerspectiveViewProps {
 
 // Color palette for different users
 const USER_COLORS = [
-  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
 ];
 
@@ -82,7 +82,7 @@ const TensionBadge: React.FC<{ level: 'none' | 'low' | 'medium' | 'high' }> = ({
     none: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
     low: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    high: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   };
 
   const labels = {
@@ -167,7 +167,7 @@ const AxisView: React.FC<{
         className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Target size={18} className="text-purple-500" />
+          <Target size={18} className="text-primary-500" />
           <div className="text-left">
             <h3 className="font-semibold text-navy-900 dark:text-white">{axis.axisName}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -195,14 +195,14 @@ const AxisView: React.FC<{
             <>
               {/* Tension Summary for high tension */}
               {tension === 'high' && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg">
+                <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <Scale size={16} className="text-red-600 dark:text-red-400 mt-0.5" />
+                    <Scale size={16} className="text-rose-600 dark:text-rose-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                      <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
                         Wykryto znaczące różnice w perspektywach
                       </p>
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                         To może wskazywać na ważny obszar do dyskusji zespołowej.
                       </p>
                     </div>
@@ -253,7 +253,7 @@ export const MultiPerspectiveView: React.FC<MultiPerspectiveViewProps> = ({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Users size={20} className="text-purple-500" />
+            <Users size={20} className="text-primary-500" />
             Perspektywy zespołu
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">

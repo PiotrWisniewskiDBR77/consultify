@@ -252,14 +252,14 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
                       <button
                         type="button"
                         onClick={(link as any).onClick}
-                        className="text-sm text-slate-600 transition-colors hover:text-purple-600 dark:text-slate-300 dark:hover:text-purple-400"
+                        className="text-sm text-slate-600 transition-colors hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
                       >
                         {link.label}
                       </button>
                     ) : (
                       <a
                         href={link.href}
-                        className="text-sm text-slate-600 transition-colors hover:text-purple-600 dark:text-slate-300 dark:hover:text-purple-400"
+                        className="text-sm text-slate-600 transition-colors hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
                       >
                         {link.label}
                       </a>
@@ -371,7 +371,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               <a
                 key={idx}
                 href={link.href}
-                className="text-[11px] text-slate-400 hover:text-purple-500 transition-colors dark:text-slate-500 dark:hover:text-purple-400"
+                className="text-[11px] text-slate-400 hover:text-primary-500 transition-colors dark:text-slate-500 dark:hover:text-primary-400"
               >
                 {link.label}
               </a>

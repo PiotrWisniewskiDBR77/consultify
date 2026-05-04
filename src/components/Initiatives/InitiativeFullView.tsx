@@ -67,8 +67,8 @@ const STATUS_META: Record<
   },
   PENDING_REVIEW: {
     label: 'Pending Review',
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500/20',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/20',
     icon: <Clock size={14} />,
   },
   REVIEW: {
@@ -97,20 +97,20 @@ const STATUS_META: Record<
   },
   SCHEDULED: {
     label: 'Scheduled',
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500/20',
+    color: 'text-primary-400',
+    bgColor: 'bg-primary-500/20',
     icon: <Calendar size={14} />,
   },
   EXECUTING: {
     label: 'Executing',
-    color: 'text-cyan-400',
-    bgColor: 'bg-cyan-500/20',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
     icon: <Play size={14} />,
   },
   BLOCKED: {
     label: 'Blocked',
-    color: 'text-red-400',
-    bgColor: 'bg-red-500/20',
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/20',
     icon: <AlertTriangle size={14} />,
   },
   DONE: {
@@ -121,8 +121,8 @@ const STATUS_META: Record<
   },
   TRACKING: {
     label: 'Tracking',
-    color: 'text-teal-400',
-    bgColor: 'bg-teal-500/20',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
     icon: <BarChart size={14} />,
   },
   CANCELLED: {
@@ -241,7 +241,7 @@ const TruncatedListSection: React.FC<{
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+          className="mt-3 text-xs text-primary-400 hover:text-primary-300 transition-colors"
         >
           {expanded ? `Show less` : `Show ${items.length - maxVisible} more…`}
         </button>
@@ -365,7 +365,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'submit',
           label: 'Submit for Review',
           gate: 'SUBMIT_FOR_REVIEW',
-          color: 'bg-orange-600 hover:bg-orange-500',
+          color: 'bg-amber-600 hover:bg-amber-500',
           icon: <Send size={16} />,
         });
         break;
@@ -397,7 +397,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'reject',
           label: 'Reject',
           gate: 'REJECT',
-          color: 'bg-red-600 hover:bg-red-500',
+          color: 'bg-rose-600 hover:bg-rose-500',
           icon: <XCircle size={16} />,
         });
         break;
@@ -424,7 +424,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'schedule',
           label: 'Schedule',
           gate: 'SCHEDULE',
-          color: 'bg-purple-600 hover:bg-purple-500',
+          color: 'bg-primary-600 hover:bg-primary-500',
           icon: <Calendar size={16} />,
         });
         break;
@@ -433,7 +433,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'start',
           label: 'Start Execution',
           gate: 'START',
-          color: 'bg-cyan-600 hover:bg-cyan-500',
+          color: 'bg-blue-600 hover:bg-blue-500',
           icon: <Play size={16} />,
         });
         break;
@@ -449,7 +449,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'block',
           label: 'Block',
           gate: 'BLOCK',
-          color: 'bg-red-600 hover:bg-red-500',
+          color: 'bg-rose-600 hover:bg-rose-500',
           icon: <AlertTriangle size={16} />,
         });
         break;
@@ -458,7 +458,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'unblock',
           label: 'Unblock',
           gate: 'UNBLOCK',
-          color: 'bg-cyan-600 hover:bg-cyan-500',
+          color: 'bg-blue-600 hover:bg-blue-500',
           icon: <Play size={16} />,
         });
         break;
@@ -467,7 +467,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           id: 'starttracking',
           label: 'Start Benefits Tracking',
           gate: 'START_TRACKING',
-          color: 'bg-teal-600 hover:bg-teal-500',
+          color: 'bg-blue-600 hover:bg-blue-500',
           icon: <BarChart size={16} />,
         });
         break;
@@ -536,7 +536,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       case 'IN_PROGRESS':
         return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-red-500/20 text-red-400';
+        return 'bg-rose-500/20 text-rose-400';
       default:
         return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
     }
@@ -545,9 +545,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return 'text-red-400';
+        return 'text-rose-400';
       case 'HIGH':
-        return 'text-orange-400';
+        return 'text-amber-400';
       case 'MEDIUM':
         return 'text-amber-400';
       default:
@@ -596,7 +596,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center">
-          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-400" />
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-rose-400" />
           <p className="text-lg text-slate-900 dark:text-white mb-2">Failed to load initiative</p>
           <p className="text-slate-500 dark:text-slate-400 mb-4">
             {error || 'Initiative not found'}
@@ -681,7 +681,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   {initiative.axis && (
-                    <span className="px-2 py-0.5 text-xs font-medium rounded bg-purple-500/20 text-purple-400 capitalize">
+                    <span className="px-2 py-0.5 text-xs font-medium rounded bg-primary-500/20 text-primary-400 capitalize">
                       {initiative.axis}
                     </span>
                   )}
@@ -794,7 +794,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     <span className="text-green-400">{taskStats.done} Done</span>
                     <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
                     {taskStats.blocked > 0 && (
-                      <span className="text-red-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-rose-400">{taskStats.blocked} Blocked</span>
                     )}
                   </div>
                 </div>
@@ -807,7 +807,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     </div>
                     <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all"
+                        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
                       />
                     </div>
@@ -833,7 +833,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                               : task.status === 'IN_PROGRESS'
                                 ? 'bg-blue-400'
                                 : task.status === 'BLOCKED'
-                                  ? 'bg-red-400'
+                                  ? 'bg-rose-400'
                                   : 'bg-slate-400'
                           }`}
                         />
@@ -881,7 +881,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                               ? `/interview?assessmentId=${initiative.sourceId}`
                               : '#'
                         }
-                        className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline ml-1"
+                        className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline ml-1"
                       >
                         <ExternalLink size={10} />
                         {i18n.language === 'pl' ? 'Otwórz źródło' : 'View source'}
@@ -1020,7 +1020,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-4 p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 transition-colors"
+                  className="flex items-center gap-4 p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-primary-500/30 transition-colors"
                 >
                   <div
                     className={`w-3 h-3 rounded-full ${
@@ -1029,7 +1029,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                         : task.status === 'IN_PROGRESS'
                           ? 'bg-blue-400'
                           : task.status === 'BLOCKED'
-                            ? 'bg-red-400'
+                            ? 'bg-rose-400'
                             : 'bg-slate-400'
                     }`}
                   />
@@ -1156,7 +1156,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             </div>
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
+                <div className="p-2 rounded-lg bg-primary-500/20 text-primary-400">
                   <DollarSign size={20} />
                 </div>
                 <div>
@@ -1210,7 +1210,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             </div>
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
+                <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400">
                   <User size={20} />
                 </div>
                 <div>

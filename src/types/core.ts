@@ -5099,12 +5099,43 @@ export interface Document {
   originalName: string;
   fileType: string;
   fileSize: number;
+  fileSizeBytes?: number;
   mimeType: string;
   filepath: string;
   description?: string;
   tags?: string[];
   status: DocumentStatus;
   processingError?: string | null;
+  processingState?: {
+    status:
+      | 'not_processing'
+      | 'queued'
+      | 'claimed'
+      | 'processing'
+      | 'retry_scheduled'
+      | 'stale_processing'
+      | 'attention_required';
+    attentionRequired: boolean;
+    reason: string | null;
+    jobId: string | null;
+    jobStatus: string | null;
+    jobUpdatedAt: string | null;
+    staleAfterMs: number;
+    attentionReadBack?: {
+      status: 'not_required' | 'visible_to_user';
+      observedAt: string | null;
+    };
+    recoveryAuditReadBack?: {
+      status: 'not_checked' | 'not_found' | 'found';
+      actionType: string | null;
+      recordedAt: string | null;
+    };
+    acknowledgement?: {
+      status: 'not_required' | 'unacknowledged' | 'acknowledged';
+      acknowledgedAt: string | null;
+      acknowledgedByCurrentUser: boolean;
+    };
+  };
   chunkCount?: number;
   sourceUpload?: string;
   createdAt: string;

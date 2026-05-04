@@ -109,7 +109,7 @@ const FAQItem: React.FC<{ question: string; answer: string; searchQuery?: string
       >
         <span className="flex-shrink-0 mt-0.5">
           {isOpen ? (
-            <ChevronDown size={16} className="text-purple-500" />
+            <ChevronDown size={16} className="text-primary-500" />
           ) : (
             <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
           )}
@@ -177,7 +177,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
     <div className="h-full flex flex-col">
       <div className="mb-3 px-1">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Library size={20} className="text-purple-500" />
+          <Library size={20} className="text-primary-500" />
           {t('help.sidePanel.knowledge.title', 'Knowledge Base')}
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -214,11 +214,11 @@ const GuideCard: React.FC<{
 }> = ({ icon = 'ChevronRight', title, description, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors"
+    className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-colors"
   >
     <div className="flex items-start gap-3">
       <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-        <DynamicIcon name={icon} size={16} className="text-purple-500" />
+        <DynamicIcon name={icon} size={16} className="text-primary-500" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
@@ -387,19 +387,19 @@ export const HelpSidePanel: React.FC = () => {
       <div className="fixed right-0 top-0 h-full w-[380px] max-w-[90vw] bg-slate-50 dark:bg-navy-950 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200 border-l border-slate-200 dark:border-navy-700">
         <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-navy-700 shrink-0 bg-white dark:bg-navy-900">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <HelpCircle size={18} className="text-purple-500" />
+            <HelpCircle size={18} className="text-primary-500" />
             {t('help.sidePanel.title', 'Help Center')}
           </h2>
           <button
             onClick={() => setOpen(false)}
-            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shrink-0">
-          <div className="text-xs font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-400">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
             {currentStageLabel || t('help.sidePanel.context.default', 'Current context')}
           </div>
           <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
@@ -417,7 +417,7 @@ export const HelpSidePanel: React.FC = () => {
               onClick={() => setActiveTab(id)}
               className={`flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
                 activeTab === id
-                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
@@ -439,7 +439,7 @@ export const HelpSidePanel: React.FC = () => {
                 <div className="mt-3 grid gap-2">
                   <button
                     onClick={openIntroScreen}
-                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors text-left"
                   >
                     <div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -451,11 +451,11 @@ export const HelpSidePanel: React.FC = () => {
                           : 'A short map of Consultify work: 5 steps and supporting modules.'}
                       </div>
                     </div>
-                    <ArrowRight size={16} className="text-purple-500" />
+                    <ArrowRight size={16} className="text-primary-500" />
                   </button>
                   <button
                     onClick={() => setActiveTab('this_step')}
-                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors text-left"
                   >
                     <div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -467,7 +467,7 @@ export const HelpSidePanel: React.FC = () => {
                           : 'The shortest version: why this screen exists and what to do next.'}
                       </div>
                     </div>
-                    <ArrowRight size={16} className="text-purple-500" />
+                    <ArrowRight size={16} className="text-primary-500" />
                   </button>
                 </div>
               </SectionCard>
@@ -481,7 +481,7 @@ export const HelpSidePanel: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl text-white">
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary-500 to-indigo-600 rounded-xl text-white">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <PlayCircle size={24} />
                 </div>
@@ -499,8 +499,8 @@ export const HelpSidePanel: React.FC = () => {
                 <div className="space-y-3">
                   {overviewCards.journey.map((card) => (
                     <div key={card.id} className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                        <DynamicIcon name={card.icon} size={16} className="text-purple-500" />
+                      <div className="w-9 h-9 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                        <DynamicIcon name={card.icon} size={16} className="text-primary-500" />
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -520,7 +520,7 @@ export const HelpSidePanel: React.FC = () => {
                   {overviewCards.support.map((card) => (
                     <div key={card.id} className="flex items-start gap-3">
                       <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                        <DynamicIcon name={card.icon} size={16} className="text-purple-500" />
+                        <DynamicIcon name={card.icon} size={16} className="text-primary-500" />
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -541,7 +541,7 @@ export const HelpSidePanel: React.FC = () => {
                 </p>
                 <button
                   onClick={openAiNow}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
                 >
                   <Bot size={16} />
                   {getLocalizedText(help.promptAction.label, lang)}
@@ -550,16 +550,16 @@ export const HelpSidePanel: React.FC = () => {
 
               <button
                 onClick={() => setShowKeyboardShortcuts(true)}
-                className="w-full flex items-center gap-3 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
+                className="w-full flex items-center gap-3 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors group"
               >
-                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
                   <Keyboard
                     size={18}
-                    className="text-slate-500 dark:text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400"
+                    className="text-slate-500 dark:text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400"
                   />
                 </div>
                 <div className="flex-1 text-left">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-300">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary-700 dark:group-hover:text-primary-300">
                     {t('help.sidePanel.overview.keyboardShortcuts', 'Keyboard Shortcuts')}
                   </span>
                   <p className="text-xs text-slate-400 dark:text-slate-500">
@@ -591,7 +591,7 @@ export const HelpSidePanel: React.FC = () => {
                       key={index}
                       className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
                     >
-                      <CheckCircle2 size={14} className="text-purple-500 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 size={14} className="text-primary-500 flex-shrink-0 mt-0.5" />
                       <span>{getLocalizedText(item, lang)}</span>
                     </div>
                   ))}
@@ -622,7 +622,7 @@ export const HelpSidePanel: React.FC = () => {
                       setHelpDocumentIdOverride(nextDocument.id);
                       setActiveTab('this_step');
                     }}
-                    className="mt-3 w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 text-left transition-colors"
+                    className="mt-3 w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 text-left transition-colors"
                   >
                     <div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -632,14 +632,14 @@ export const HelpSidePanel: React.FC = () => {
                         {getLocalizedText(nextDocument.title, lang)}
                       </div>
                     </div>
-                    <ArrowRight size={16} className="text-purple-500" />
+                    <ArrowRight size={16} className="text-primary-500" />
                   </button>
                 )}
               </SectionCard>
 
               <button
                 onClick={openAiNow}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
               >
                 <Bot size={16} />
                 {getLocalizedText(help.promptAction.label, lang)}
@@ -684,7 +684,7 @@ export const HelpSidePanel: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('help.sidePanel.faq.searchPlaceholder', 'Search questions...')}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
 
@@ -742,7 +742,7 @@ export const HelpSidePanel: React.FC = () => {
           <Link
             to={HELP_CONFIG.docsBaseUrl}
             onClick={() => setOpen(false)}
-            className="flex items-center justify-center gap-2 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+            className="flex items-center justify-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
           >
             <BookOpen size={14} />
             <span className="hidden sm:inline">

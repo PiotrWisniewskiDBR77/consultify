@@ -20,7 +20,7 @@ export function ProposalStatusBadge({
   };
   const tone =
     status === 'ai-proposed'
-      ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-300'
+      ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-300'
       : status === 'rejected'
         ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300'
         : status === 'rethinking'
@@ -74,7 +74,7 @@ export function ProposalCardActions({
         <button
           type="button"
           onClick={() => setIsCommenting((value) => !value)}
-          className="rounded-lg bg-violet-50 p-1.5 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/30 dark:text-violet-300"
+          className="rounded-lg bg-primary-50 p-1.5 text-primary-700 hover:bg-primary-100 dark:bg-primary-950/30 dark:text-primary-300"
           aria-label={isPolish ? 'Przemyśl ponownie' : 'Rethink'}
           title={isPolish ? 'Poproś AI o ponowne przemyślenie' : 'Ask AI to rethink'}
         >
@@ -102,7 +102,7 @@ export function ProposalCardActions({
           <button
             type="button"
             onClick={submitRethink}
-            className="self-end rounded-lg bg-violet-600 px-2 py-1 text-xs text-white hover:bg-violet-700"
+            className="self-end rounded-lg bg-primary-600 px-2 py-1 text-xs text-white hover:bg-primary-700"
           >
             {isPolish ? 'Wyślij' : 'Send'}
           </button>

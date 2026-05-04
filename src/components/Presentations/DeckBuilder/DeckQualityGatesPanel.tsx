@@ -59,7 +59,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 const severityStyles: Record<string, { bg: string; text: string; icon: typeof XCircle }> = {
-  error: { bg: 'bg-red-500/10', text: 'text-red-600', icon: XCircle },
+  error: { bg: 'bg-rose-500/10', text: 'text-rose-600', icon: XCircle },
   warning: { bg: 'bg-amber-500/10', text: 'text-amber-600', icon: AlertTriangle },
   info: { bg: 'bg-blue-500/10', text: 'text-blue-500', icon: Info },
 };
@@ -129,14 +129,14 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
       ? 'text-green-500'
       : (report?.score ?? 0) >= 50
         ? 'text-amber-500'
-        : 'text-red-500';
+        : 'text-rose-500';
 
   return (
     <div className="absolute top-0 right-0 w-80 h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 z-30 flex flex-col shadow-xl">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
-          <Shield size={16} className="text-purple-500" />
+          <Shield size={16} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {t('presentations.qualityGates.title', 'Quality Gates')}
           </h3>
@@ -158,7 +158,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
           <div className="mt-2 flex gap-2">
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                report.canExport ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'
+                report.canExport ? 'bg-green-500/10 text-green-600' : 'bg-rose-500/10 text-rose-600'
               }`}
             >
               {report.canExport ? 'Export OK' : 'Export Blocked'}
@@ -180,7 +180,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" />
           </div>
         )}
 
@@ -223,7 +223,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
                   </span>
                   <div className="ml-auto flex gap-1">
                     {errorCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/10 text-red-600 font-medium">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-600 font-medium">
                         {errorCount}
                       </span>
                     )}
@@ -265,7 +265,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
         <button
           onClick={runCheck}
           disabled={loading}
-          className="w-full py-2 rounded-lg bg-purple-600 text-white text-xs font-medium hover:bg-purple-500 disabled:opacity-50"
+          className="w-full py-2 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-500 disabled:opacity-50"
         >
           {loading
             ? t('presentations.qualityGates.checking', 'Checking...')

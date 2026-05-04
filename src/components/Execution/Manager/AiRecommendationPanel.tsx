@@ -80,8 +80,8 @@ const SEVERITY_COLORS: Record<string, { dot: string; bg: string; text: string }>
 
 const FEASIBILITY_COLORS: Record<string, string> = {
   immediate: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
-  manager_decision: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400',
-  leadership_decision: 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400',
+  manager_decision: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+  leadership_decision: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400',
   not_feasible_now: 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300',
 };
 
@@ -125,7 +125,7 @@ function normalizeErrorMessage(err: unknown) {
 
 const StepCard: React.FC<{ step: V8AiStep }> = ({ step }) => (
   <div className="flex gap-3 rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]">
-    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-[11px] font-bold text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">
+    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
       {step.order}
     </div>
     <div className="min-w-0 flex-1">
@@ -289,7 +289,7 @@ const SuggestionCard: React.FC<{
         {suggestion.category}
       </span>
       {decisionState ? (
-        <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300">
+        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
           {decisionState.replace(/_/g, ' ')}
         </span>
       ) : null}
@@ -321,7 +321,7 @@ const SuggestionCard: React.FC<{
             type="button"
             onClick={onApprove}
             disabled={busy}
-            className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold text-cyan-700 transition-colors hover:bg-cyan-500/15 disabled:opacity-40 dark:text-cyan-200"
+            className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-500/15 disabled:opacity-40 dark:text-blue-200"
           >
             {approveLabel}
           </button>
@@ -402,8 +402,8 @@ const RecommendView: React.FC<{ data: V8AiRecommendation }> = ({ data }) => (
     </CollapsibleSection>
 
     <CollapsibleSection title="Recommendation" badge={<ConfidenceBadge value={data.confidence} />}>
-      <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 dark:border-cyan-800/40 dark:bg-cyan-900/10">
-        <p className="text-[12px] font-medium leading-relaxed text-cyan-800 dark:text-cyan-300">
+      <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-800/40 dark:bg-blue-900/10">
+        <p className="text-[12px] font-medium leading-relaxed text-blue-800 dark:text-blue-300">
           {data.recommendation}
         </p>
       </div>
@@ -482,7 +482,7 @@ const TriageView: React.FC<{
             <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
               {cluster.summary}
             </p>
-            <div className="mt-2 flex items-center gap-1.5 rounded bg-cyan-50/50 px-2 py-1 text-[11px] text-cyan-700 dark:bg-cyan-900/10 dark:text-cyan-400">
+            <div className="mt-2 flex items-center gap-1.5 rounded bg-blue-50/50 px-2 py-1 text-[11px] text-blue-700 dark:bg-blue-900/10 dark:text-blue-400">
               <ArrowRight size={10} />
               {cluster.suggestedAction}
             </div>
@@ -530,7 +530,7 @@ const ActionPlanView: React.FC<{
       <CollapsibleSection
         title="Suggested Actions"
         badge={
-          <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300">
+          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
             {analysis.suggestions.length}
           </span>
         }
@@ -644,7 +644,7 @@ const FocusWorkspaceView: React.FC<{
       <CollapsibleSection
         title="Focus Summary"
         badge={
-          <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300">
+          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
             {focusRows.length}
           </span>
         }
@@ -783,7 +783,7 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
       className="flex h-full min-h-0 flex-col bg-white dark:bg-navy-900"
     >
       <div className="flex items-center gap-3 border-b border-slate-200/70 px-4 py-3 dark:border-white/[0.06]">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-blue-500">
           {mode === 'triage' ? (
             <Sparkles size={16} className="text-white" />
           ) : mode === 'action-plan' ? (
@@ -816,7 +816,7 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
       <div className="flex-1 overflow-auto">
         {loading && (
           <div className="flex flex-col items-center justify-center gap-3 py-20">
-            <Loader2 size={28} className="animate-spin text-cyan-500" />
+            <Loader2 size={28} className="animate-spin text-blue-500" />
             <p className="text-[12px] text-slate-500 dark:text-slate-400">
               {t('execution.manager.ai.analyzing', 'AI is analyzing your data…')}
             </p>

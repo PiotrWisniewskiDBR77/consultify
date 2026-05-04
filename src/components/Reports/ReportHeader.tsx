@@ -245,7 +245,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                 {sourceLink && (
                   <a
                     href={sourceLink.url}
-                    className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline"
+                    className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     {sourceLink.label}
@@ -261,7 +261,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
             {onFullscreen && (
               <button
                 onClick={onFullscreen}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 title={
                   isPolish
                     ? isFullscreen
@@ -310,7 +310,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                     >
-                      <FileText className="w-4 h-4 text-red-500" />
+                      <FileText className="w-4 h-4 text-rose-500" />
                       <span className="text-navy-900 dark:text-white">
                         {t('reports.exportPdf', 'Export as PDF')}
                       </span>
@@ -400,7 +400,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                       >
-                        <RefreshCw className="w-4 h-4 text-purple-500" />
+                        <RefreshCw className="w-4 h-4 text-primary-500" />
                         <div>
                           <span className="text-navy-900 dark:text-white block">
                             {t('reports.regenerate', 'Regenerate Report')}

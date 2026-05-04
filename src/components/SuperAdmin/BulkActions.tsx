@@ -198,7 +198,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             className={`flex items-center gap-2 px-4 py-2 text-sm ${
               result.success
                 ? 'bg-emerald-500/10 text-emerald-400 border-b border-emerald-500/20'
-                : 'bg-red-500/10 text-red-400 border-b border-red-500/20'
+                : 'bg-rose-500/10 text-rose-400 border-b border-rose-500/20'
             }`}
           >
             {result.success ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
@@ -217,9 +217,9 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             className="flex items-center gap-2 text-slate-400 dark:text-slate-500 hover:text-white"
           >
             {isAllSelected ? (
-              <CheckSquare size={20} className="text-violet-400" />
+              <CheckSquare size={20} className="text-primary-400" />
             ) : isSomeSelected ? (
-              <div className="w-5 h-5 border-2 border-violet-400 rounded bg-violet-400/30" />
+              <div className="w-5 h-5 border-2 border-primary-400 rounded bg-primary-400/30" />
             ) : (
               <Square size={20} />
             )}
@@ -338,7 +338,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                         setActiveMode('delete');
                         setShowMoreActions(false);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
                     >
                       <Trash2 size={14} />
                       Delete
@@ -447,7 +447,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               <button
                 onClick={() => handleAction('addTags')}
                 disabled={selectedTagIds.length === 0 || isProcessing}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-500 text-white rounded-lg font-medium hover:bg-violet-600 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <RefreshCw size={14} className="animate-spin" />
@@ -509,7 +509,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               <button
                 onClick={() => handleAction('removeTags')}
                 disabled={selectedTagIds.length === 0 || isProcessing}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <RefreshCw size={14} className="animate-spin" />
@@ -539,7 +539,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white mb-3 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             >
               <option value="">Select a category...</option>
               {availableCategories.map((cat) => (
@@ -561,7 +561,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               <button
                 onClick={() => handleAction('setCategory')}
                 disabled={!selectedCategoryId || isProcessing}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-500 text-white rounded-lg font-medium hover:bg-violet-600 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <RefreshCw size={14} className="animate-spin" />
@@ -596,7 +596,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   const variantStyles = {
     default: 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-700/50',
     success: 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10',
-    danger: 'text-red-400 hover:text-red-300 hover:bg-red-500/10',
+    danger: 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10',
     warning: 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10',
   };
 
@@ -635,7 +635,7 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
     default: {
       bg: 'bg-slate-800/50',
       border: 'border-slate-700/50',
-      button: 'bg-violet-500 hover:bg-violet-600',
+      button: 'bg-primary-500 hover:bg-primary-600',
       icon: <AlertTriangle size={16} className="text-slate-400 dark:text-slate-500" />,
     },
     success: {
@@ -645,10 +645,10 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
       icon: <CheckCircle2 size={16} className="text-emerald-400" />,
     },
     danger: {
-      bg: 'bg-red-900/20',
-      border: 'border-red-500/20',
-      button: 'bg-red-500 hover:bg-red-600',
-      icon: <AlertTriangle size={16} className="text-red-400" />,
+      bg: 'bg-rose-900/20',
+      border: 'border-rose-500/20',
+      button: 'bg-rose-500 hover:bg-rose-600',
+      icon: <AlertTriangle size={16} className="text-rose-400" />,
     },
     warning: {
       bg: 'bg-amber-900/20',

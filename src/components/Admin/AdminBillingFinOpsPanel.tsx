@@ -132,7 +132,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             />
             <button
               onClick={() => void addPaymentMethod()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Add method
             </button>
@@ -241,7 +241,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             ))}
             <button
               onClick={() => void saveAlerts()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Save alerts
             </button>
@@ -277,7 +277,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             />
             <button
               onClick={() => void saveTaxSettings()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Save tax settings
             </button>
@@ -354,7 +354,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
       )}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-          <CreditCard className="h-5 w-5 text-violet-500" />
+          <CreditCard className="h-5 w-5 text-primary-500" />
           Billing, FinOps, and commercial controls
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -371,7 +371,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               className={cn(
                 'rounded-xl px-4 py-2 text-sm font-medium transition',
                 activeTab === tab.id
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5'
               )}
             >

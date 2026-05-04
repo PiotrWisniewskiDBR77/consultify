@@ -213,8 +213,8 @@ export const ExecutiveView: React.FC = () => {
       <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950 overflow-auto p-4">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <Eye size={24} className="text-purple-600 dark:text-purple-400" />
+          <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+            <Eye size={24} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -249,7 +249,7 @@ export const ExecutiveView: React.FC = () => {
 
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Shield size={18} className="text-purple-500" />
+              <Shield size={18} className="text-primary-500" />
               <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Gate Status</h2>
             </div>
             <div className="flex items-center gap-3">
@@ -285,7 +285,7 @@ export const ExecutiveView: React.FC = () => {
         {/* Blockers (Top 5) */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={18} className="text-red-500" />
+            <AlertTriangle size={18} className="text-rose-500" />
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">
               Top Blockers ({snapshot?.blockers.length || 0})
             </h2>
@@ -305,7 +305,7 @@ export const ExecutiveView: React.FC = () => {
                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                         : blocker.type === 'DECISION'
                           ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                          : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                          : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                     }`}
                   >
                     {blocker.type}
@@ -352,7 +352,7 @@ export const ExecutiveView: React.FC = () => {
         {/* Overdue Tasks (Top 5) */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Clock size={18} className="text-red-500" />
+            <Clock size={18} className="text-rose-500" />
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">
               Overdue Tasks ({snapshot?.tasks.overdueCount || 0})
             </h2>
@@ -366,11 +366,11 @@ export const ExecutiveView: React.FC = () => {
                   key={task.id}
                   className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-navy-700 last:border-0"
                 >
-                  <AlertTriangle size={14} className="text-red-500 flex-shrink-0" />
+                  <AlertTriangle size={14} className="text-rose-500 flex-shrink-0" />
                   <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                     {task.title}
                   </span>
-                  <span className="text-xs text-red-400">
+                  <span className="text-xs text-rose-400">
                     Due: {new Date(task.due_date).toLocaleDateString()}
                   </span>
                 </div>
@@ -382,7 +382,7 @@ export const ExecutiveView: React.FC = () => {
         {/* At-Risk Initiatives */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={18} className="text-orange-500" />
+            <TrendingUp size={18} className="text-amber-500" />
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">
               At-Risk Initiatives ({snapshot?.initiatives.atRiskCount || 0})
             </h2>
@@ -396,15 +396,15 @@ export const ExecutiveView: React.FC = () => {
                   key={initiative.id}
                   className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-navy-700 last:border-0"
                 >
-                  <Flag size={14} className="text-orange-500 flex-shrink-0" />
+                  <Flag size={14} className="text-amber-500 flex-shrink-0" />
                   <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                     {initiative.name}
                   </span>
                   <span
                     className={`px-2 py-0.5 rounded text-xs ${
                       initiative.status === 'BLOCKED'
-                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                        : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                     }`}
                   >
                     {initiative.status || initiative.risk_level}

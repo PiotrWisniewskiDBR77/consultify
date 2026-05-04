@@ -60,9 +60,9 @@ const METRIC_TYPES = [
 const COLOR_STYLES: Record<string, { bg: string; text: string }> = {
   green: { bg: 'bg-emerald-500/15', text: 'text-emerald-600 dark:text-emerald-400' },
   blue: { bg: 'bg-blue-500/15', text: 'text-blue-600 dark:text-blue-400' },
-  purple: { bg: 'bg-purple-500/15', text: 'text-purple-600 dark:text-purple-400' },
-  orange: { bg: 'bg-orange-500/15', text: 'text-orange-600 dark:text-orange-400' },
-  cyan: { bg: 'bg-cyan-500/15', text: 'text-cyan-600 dark:text-cyan-400' },
+  purple: { bg: 'bg-primary-500/15', text: 'text-primary-600 dark:text-primary-400' },
+  orange: { bg: 'bg-amber-500/15', text: 'text-amber-600 dark:text-amber-400' },
+  cyan: { bg: 'bg-blue-500/15', text: 'text-blue-600 dark:text-blue-400' },
   gray: { bg: 'bg-slate-500/10', text: 'text-slate-700 dark:text-slate-300' },
 };
 
@@ -245,7 +245,7 @@ const BusinessMetricsView: React.FC = () => {
     if (!trend || trend === 0)
       return <Minus className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />;
     if (trend > 0) return <TrendingUp className="w-4 h-4 text-green-400" />;
-    return <TrendingDown className="w-4 h-4 text-red-400" />;
+    return <TrendingDown className="w-4 h-4 text-rose-400" />;
   };
 
   const getHealthStatus = (metric: BusinessMetric) => {
@@ -308,10 +308,10 @@ const BusinessMetricsView: React.FC = () => {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-            <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+            <AlertTriangle className="w-5 h-5 text-rose-400" />
+            <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
           </div>
           <button
             onClick={async () => {
@@ -319,7 +319,7 @@ const BusinessMetricsView: React.FC = () => {
               const m = await fetchMetrics();
               await fetchStats(m);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-sm rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -374,8 +374,8 @@ const BusinessMetricsView: React.FC = () => {
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <XCircle className="w-5 h-5 text-red-400" />
+                <div className="p-2 bg-rose-500/20 rounded-lg">
+                  <XCircle className="w-5 h-5 text-rose-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -451,7 +451,7 @@ const BusinessMetricsView: React.FC = () => {
                         : health === 'warning'
                           ? 'bg-yellow-500/20 text-yellow-400'
                           : health === 'bad'
-                            ? 'bg-red-500/20 text-red-400'
+                            ? 'bg-rose-500/20 text-rose-400'
                             : 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300'
                     }`}
                   >
@@ -487,7 +487,7 @@ const BusinessMetricsView: React.FC = () => {
                           metric.trend > 0
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : metric.trend < 0
-                              ? 'text-red-600 dark:text-red-400'
+                              ? 'text-rose-600 dark:text-rose-400'
                               : 'text-slate-600 dark:text-slate-400'
                         }`}
                       >
@@ -508,7 +508,7 @@ const BusinessMetricsView: React.FC = () => {
                             ? 'bg-green-500'
                             : health === 'warning'
                               ? 'bg-yellow-500'
-                              : 'bg-red-500'
+                              : 'bg-rose-500'
                         }`}
                         style={{
                           width: `${Math.min(100, (metric.current_value / metric.target_value) * 100)}%`,
@@ -552,7 +552,7 @@ const BusinessMetricsView: React.FC = () => {
               </button>
               <button
                 onClick={() => handleDeleteMetric(selectedMetric.id)}
-                className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                className="p-2 text-rose-400 hover:bg-rose-600/20 rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

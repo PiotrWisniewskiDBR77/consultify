@@ -59,7 +59,7 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
       case 'approved':
         return <Check size={14} className="text-blue-500" />;
       case 'rejected':
-        return <XCircle size={14} className="text-red-500" />;
+        return <XCircle size={14} className="text-rose-500" />;
       case 'pending':
       default:
         return <Clock size={14} className="text-amber-500 animate-pulse" />;
@@ -73,7 +73,7 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
       case 'approved':
         return 'border-blue-500/30 bg-blue-500/10';
       case 'rejected':
-        return 'border-red-500/30 bg-red-500/10';
+        return 'border-rose-500/30 bg-rose-500/10';
       case 'pending':
       default:
         return 'border-amber-500/30 bg-amber-500/10';
@@ -545,7 +545,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                           </button>
                           <button
                             onClick={() => handleMessageFeedback(msg.id, 'negative')}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            className="p-1.5 rounded-md text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                             title={t('chat.actions.notHelpful', 'Not helpful')}
                           >
                             <ThumbsDown size={14} />
@@ -568,7 +568,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       {msg.role === 'user' && (
                         <button
                           onClick={() => handleDeleteMessage(msg.id)}
-                          className="p-1.5 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="p-1.5 rounded-md text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                           title={t('chat.actions.delete', 'Delete')}
                         >
                           <Trash2 size={14} />
@@ -581,7 +581,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                           onClick={() =>
                             voiceState.isSpeaking ? stopSpeaking() : speak(msg.content)
                           }
-                          className={`p-1.5 rounded-md ${voiceState.isSpeaking ? 'text-red-500 hover:text-red-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                          className={`p-1.5 rounded-md ${voiceState.isSpeaking ? 'text-rose-500 hover:text-rose-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                           title={
                             voiceState.isSpeaking
                               ? t('chat.actions.stop', 'Stop')
@@ -607,8 +607,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
               {/* Thinking Indicator for MAX Mode */}
               {msg.role === 'ai' && msg.isThinking && (
-                <div className="ml-9 mt-2 flex items-center gap-2 text-xs text-purple-500 dark:text-purple-400">
-                  <div className="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full" />
+                <div className="ml-9 mt-2 flex items-center gap-2 text-xs text-primary-500 dark:text-primary-400">
+                  <div className="animate-spin w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full" />
                   <span>Deep reasoning in progress...</span>
                 </div>
               )}
@@ -641,7 +641,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
                       msg.feedback.rating === 'positive'
                         ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
                     }`}
                   >
                     {msg.feedback.rating === 'positive' ? (
@@ -683,7 +683,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       onClick={() => (voiceState.isSpeaking ? stopSpeaking() : speak(msg.content))}
                       className={`p-1.5 rounded-md transition-all ${
                         voiceState.isSpeaking
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                          ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
                           : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                       }`}
                       title={voiceState.isSpeaking ? 'Zatrzymaj' : 'Przeczytaj'}
@@ -711,7 +711,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                               onClick={() => handleMultiSelectToggle(option.value)}
                               className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${
                                 isSelected
-                                  ? 'bg-purple-100 dark:bg-purple-600/20 border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-200'
+                                  ? 'bg-primary-100 dark:bg-primary-600/20 border-primary-300 dark:border-primary-500 text-primary-700 dark:text-primary-200'
                                   : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:border-slate-300 dark:hover:border-white/20'
                               }`}
                             >
@@ -736,7 +736,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       <button
                         key={option.id}
                         onClick={() => onOptionSelect(option)}
-                        className="px-3 py-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-purple-50 dark:hover:bg-purple-600/10 hover:border-purple-300 dark:hover:border-purple-500 hover:text-purple-700 dark:hover:text-purple-300 transition-all text-left"
+                        className="px-3 py-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-primary-50 dark:hover:bg-primary-600/10 hover:border-primary-300 dark:hover:border-primary-500 hover:text-primary-700 dark:hover:text-primary-300 transition-all text-left"
                       >
                         {option.label}
                       </button>
@@ -778,13 +778,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     ? 'Listening...'
                     : 'Type your answer...'
               }
-              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-red-400 ring-1 ring-red-400 animate-pulse' : ''}`}
+              className={`w-full bg-slate-50 dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg px-3 py-2.5 pr-10 text-sm border border-slate-200 dark:border-navy-700 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-navy-950' : ''} ${isRecording ? 'border-rose-400 ring-1 ring-rose-400 animate-pulse' : ''}`}
             />
             {isRecording && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <span className="flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                 </span>
               </div>
             )}
@@ -797,7 +797,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             disabled={aiFreezeStatus.isFrozen || !speechSupported}
             className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
               isRecording
-                ? 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/30'
+                ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-500/30'
                 : speechSupported
                   ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-200'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-300 dark:text-slate-600 cursor-not-allowed'
@@ -819,7 +819,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             disabled={aiFreezeStatus.isFrozen || !inputValue.trim()}
             className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
               inputValue.trim()
-                ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-500/30'
+                ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-md shadow-primary-500/30'
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
             } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Send message"

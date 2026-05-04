@@ -233,7 +233,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
               ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
               : recoveryScore >= 1
                 ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
-                : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                : 'border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-900/20'
           )}
         >
           <Shield
@@ -243,7 +243,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 ? 'text-emerald-600'
                 : recoveryScore >= 1
                   ? 'text-amber-600'
-                  : 'text-red-600'
+                  : 'text-rose-600'
             )}
           />
           <AlertTitle
@@ -252,7 +252,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 ? 'text-emerald-800 dark:text-emerald-200'
                 : recoveryScore >= 1
                   ? 'text-amber-800 dark:text-amber-200'
-                  : 'text-red-800 dark:text-red-200'
+                  : 'text-rose-800 dark:text-rose-200'
             )}
           >
             {recoveryScore === 3
@@ -267,7 +267,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 ? 'text-emerald-700 dark:text-emerald-300'
                 : recoveryScore >= 1
                   ? 'text-amber-700 dark:text-amber-300'
-                  : 'text-red-700 dark:text-red-300'
+                  : 'text-rose-700 dark:text-rose-300'
             )}
           >
             {recoveryScore === 3
@@ -412,8 +412,8 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-                <Key className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Key className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <CardTitle className="text-base">

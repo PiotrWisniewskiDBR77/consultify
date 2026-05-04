@@ -183,7 +183,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
       case 'MEDIUM':
         return 'text-amber-500 bg-amber-500/10';
       case 'LOW':
-        return 'text-red-500 bg-red-500/10';
+        return 'text-rose-500 bg-rose-500/10';
       default:
         return 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/300/10';
     }
@@ -248,10 +248,10 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
   return (
     <div className="space-y-4">
       {/* Header with Confidence */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-xl border border-purple-500/20">
+      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-500/10 to-blue-500/10 rounded-xl border border-primary-500/20">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-500/20 rounded-lg">
-            <Sparkles size={24} className="text-purple-500" />
+          <div className="p-2 bg-primary-500/20 rounded-lg">
+            <Sparkles size={24} className="text-primary-500" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-navy-900 dark:text-white">
@@ -305,8 +305,8 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                       disabled={isRegenerating}
                       className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
                         isRegenerating
-                          ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-500'
-                          : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-purple-500 hover:bg-purple-50'
+                          ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-500'
+                          : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:bg-primary-50'
                       }`}
                     >
                       <RefreshCw size={12} className={isRegenerating ? 'animate-spin' : ''} />
@@ -378,9 +378,9 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                   )}
 
                   {section.id === 'problem' && charter.problemStructured && (
-                    <div className="space-y-3 bg-white dark:bg-navy-900 p-4 rounded-lg border border-red-200 dark:border-red-500/20">
+                    <div className="space-y-3 bg-white dark:bg-navy-900 p-4 rounded-lg border border-rose-200 dark:border-rose-500/20">
                       <div>
-                        <label className="text-xs text-red-500 uppercase font-bold flex items-center gap-1">
+                        <label className="text-xs text-rose-500 uppercase font-bold flex items-center gap-1">
                           <Lightbulb size={10} /> Symptom
                         </label>
                         <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">
@@ -393,7 +393,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-red-500 uppercase font-bold">
+                        <label className="text-xs text-rose-500 uppercase font-bold">
                           Root Cause
                         </label>
                         <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">
@@ -406,7 +406,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-red-500 uppercase font-bold">
+                        <label className="text-xs text-rose-500 uppercase font-bold">
                           Cost of Inaction
                         </label>
                         <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">
@@ -467,7 +467,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               const updated = charter.killCriteria.filter((_, idx) => idx !== i);
                               onUpdate({ killCriteria: updated });
                             }}
-                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500"
+                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -481,7 +481,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                       {(charter.keyRisks || []).map((risk, i) => (
                         <div
                           key={i}
-                          className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-orange-200 dark:border-orange-500/20"
+                          className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-amber-200 dark:border-amber-500/20"
                         >
                           <div className="flex items-start justify-between">
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -490,7 +490,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                             <span
                               className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                                 risk.metric === 'High'
-                                  ? 'bg-red-100 text-red-600'
+                                  ? 'bg-rose-100 text-rose-600'
                                   : risk.metric === 'Medium'
                                     ? 'bg-amber-100 text-amber-600'
                                     : 'bg-green-100 text-green-600'
@@ -512,9 +512,9 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                       {(charter.suggestedTasks || []).map((task, i) => (
                         <div
                           key={task.id || i}
-                          className="flex items-start gap-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-purple-200 dark:border-purple-500/20"
+                          className="flex items-start gap-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-primary-200 dark:border-primary-500/20"
                         >
-                          <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 flex items-center justify-center text-xs font-bold shrink-0">
+                          <div className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-500/20 text-primary-600 flex items-center justify-center text-xs font-bold shrink-0">
                             {i + 1}
                           </div>
                           <div className="flex-1">
@@ -522,7 +522,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               <span className="font-medium text-sm text-navy-900 dark:text-white">
                                 {task.title}
                               </span>
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 uppercase font-bold">
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-500/20 text-primary-600 uppercase font-bold">
                                 {task.taskType}
                               </span>
                             </div>
@@ -542,7 +542,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               const updated = charter.suggestedTasks.filter((_, idx) => idx !== i);
                               onUpdate({ suggestedTasks: updated });
                             }}
-                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500"
+                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -556,9 +556,9 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                       {(charter.suggestedTeam || []).map((member, i) => (
                         <div
                           key={member.id || i}
-                          className="flex items-center gap-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-teal-200 dark:border-teal-500/20"
+                          className="flex items-center gap-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-blue-200 dark:border-blue-500/20"
                         >
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold text-xs">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white font-bold text-xs">
                             {(member as any).title?.[0] || 'T'}
                           </div>
                           <div className="flex-1">
@@ -566,7 +566,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               {(member as any).title || member.role}
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                              <span className="px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-500/20 text-teal-600 uppercase text-[9px] font-bold">
+                              <span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 uppercase text-[9px] font-bold">
                                 {member.role}
                               </span>
                               <span>{member.allocation}%</span>

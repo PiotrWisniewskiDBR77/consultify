@@ -1546,7 +1546,8 @@ router.post(
       actor.actorRole,
       req.body || {}
     );
-    if ('validationErrors' in outcome) return sendValidationError(res, outcome.validationErrors);
+    if ('validationErrors' in outcome)
+      return sendValidationError(res, outcome.validationErrors || []);
     if ('notFound' in outcome) return res.status(404).json(outcome.notFound);
     if ('conflict' in outcome) return res.status(409).json(outcome.conflict);
 
@@ -1581,7 +1582,8 @@ router.post(
     const actor = await getAdminActor(req, res, ['people:write']);
     if (!actor) return;
     const outcome = await createAdminAccessCode(actor.orgId, req.body || {});
-    if ('validationErrors' in outcome) return sendValidationError(res, outcome.validationErrors);
+    if ('validationErrors' in outcome)
+      return sendValidationError(res, outcome.validationErrors || []);
 
     await adminAuditService.logAction({
       adminId: actor.actorId,

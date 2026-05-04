@@ -423,7 +423,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -532,7 +532,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-medium text-slate-900 dark:text-white">{key.name}</p>
                     {expired && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded-full">
                         {t('settings.api.expired', 'Expired')}
                       </span>
                     )}
@@ -588,7 +588,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   </button>
                   <button
                     onClick={() => deleteKey(key.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                     title={t('common.delete', 'Delete')}
                   >
                     <Trash2 size={16} />
@@ -611,7 +611,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     <div
                       className={`h-2 rounded-full transition-all ${
                         quotaPercent >= 90
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : quotaPercent >= 70
                             ? 'bg-amber-500'
                             : 'bg-green-500'

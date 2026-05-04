@@ -103,7 +103,7 @@ const FONT_OPTIONS = [
 
 const DEFAULT_BRANDING: BrandingConfig = {
   organizationId: '',
-  primaryColor: '#8B5CF6',
+  primaryColor: '#6366F1',
   secondaryColor: '#3B82F6',
   accentColor: '#10B981',
   backgroundColor: '#F8FAFC',
@@ -332,7 +332,7 @@ export const WhitelabelStudioView: React.FC = () => {
                         : 'faviconUrl';
                 updateField(urlField, undefined);
               }}
-              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+              className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center"
             >
               <Trash2 size={10} />
             </button>
@@ -397,7 +397,7 @@ export const WhitelabelStudioView: React.FC = () => {
               type="checkbox"
               checked={branding.hidePoweredBy}
               onChange={(e) => updateField('hidePoweredBy', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
+              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
               Hide "Powered by Consultify" branding
@@ -440,13 +440,13 @@ export const WhitelabelStudioView: React.FC = () => {
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={() => setPreviewMode('light')}
-          className={`p-2 rounded-lg ${previewMode === 'light' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`p-2 rounded-lg ${previewMode === 'light' ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
         >
           <Sun size={18} />
         </button>
         <button
           onClick={() => setPreviewMode('dark')}
-          className={`p-2 rounded-lg ${previewMode === 'dark' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`p-2 rounded-lg ${previewMode === 'dark' ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
         >
           <Moon size={18} />
         </button>
@@ -754,7 +754,7 @@ export const WhitelabelStudioView: React.FC = () => {
                   }
                 }}
                 disabled={!selectedOrg || !branding.customDomain?.trim()}
-                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium"
+                className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium"
               >
                 Verify Domain
               </button>
@@ -786,7 +786,7 @@ export const WhitelabelStudioView: React.FC = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-slate-500 dark:text-slate-400">CNAME Record:</span>
                     <button
-                      className="text-violet-600 hover:text-violet-700"
+                      className="text-primary-600 hover:text-primary-700"
                       onClick={() => {
                         const text = `${branding.customDomain} → app.consultify.com`;
                         navigator.clipboard?.writeText?.(text);
@@ -811,7 +811,7 @@ export const WhitelabelStudioView: React.FC = () => {
                 branding.customDomainSslStatus === 'active'
                   ? 'bg-emerald-500/10 text-emerald-600'
                   : branding.customDomainSslStatus === 'failed'
-                    ? 'bg-red-500/10 text-red-600'
+                    ? 'bg-rose-500/10 text-rose-600'
                     : 'bg-amber-500/10 text-amber-600'
               }`}
             >
@@ -851,17 +851,17 @@ export const WhitelabelStudioView: React.FC = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-violet-500" />
+            <Loader2 size={32} className="animate-spin text-primary-500" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {organizations.map((org) => (
               <div
                 key={org.id}
-                className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-500/30 transition-all group"
+                className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 transition-all group"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-xl">
                     {org.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex items-center gap-2">
@@ -871,7 +871,7 @@ export const WhitelabelStudioView: React.FC = () => {
                           e.stopPropagation();
                           handleDelete(org.id);
                         }}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
+                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
                         title="Reset to defaults"
                       >
                         <Trash2 size={16} />
@@ -883,7 +883,7 @@ export const WhitelabelStudioView: React.FC = () => {
                     >
                       <ChevronRight
                         size={20}
-                        className="text-slate-400 dark:text-slate-500 group-hover:text-violet-500 transition-colors"
+                        className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
                       />
                     </button>
                   </div>
@@ -892,7 +892,7 @@ export const WhitelabelStudioView: React.FC = () => {
                   <h3 className="font-semibold text-slate-900 dark:text-white">{org.name}</h3>
                   <div className="mt-2">
                     {org.hasBranding ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-500/10 text-violet-600">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary-500/10 text-primary-600">
                         <Palette size={12} />
                         Custom Branding
                       </span>
@@ -945,7 +945,7 @@ export const WhitelabelStudioView: React.FC = () => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Save Changes
@@ -959,7 +959,7 @@ export const WhitelabelStudioView: React.FC = () => {
           className={`p-4 rounded-lg border ${
             message.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-              : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
+              : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -999,7 +999,7 @@ export const WhitelabelStudioView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >

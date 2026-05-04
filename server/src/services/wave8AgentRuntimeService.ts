@@ -43,6 +43,12 @@ export interface Wave8AgentDefinition {
   updatedBy?: string | null;
 }
 
+type Wave8AgentDefinitionListItem = Wave8AgentDefinition & {
+  editable: boolean;
+  source: 'code' | 'database';
+  updatedBy: string | null;
+};
+
 export interface LaunchWave8AgentInput {
   organizationId: string;
   userId: string;
@@ -434,7 +440,7 @@ export async function listWave8AgentDefinitions(params?: {
   organizationId?: string | null;
 }): Promise<Wave8AgentDefinition[]> {
   await ensureWave8AgentRuntimeSchema();
-  const base = AGENT_DEFINITIONS.map((agent) => ({
+  const base: Wave8AgentDefinitionListItem[] = AGENT_DEFINITIONS.map((agent) => ({
     ...agent,
     editable: true,
     source: 'code' as const,
@@ -447,7 +453,20 @@ export async function listWave8AgentDefinitions(params?: {
        ORDER BY organization_id, name ASC`,
       [params?.organizationId || null]
     );
-    const overrides = (rows || []).map(mapDefinitionRow).filter(Boolean) as Wave8AgentDefinition[];
+    const overrides = (rows || [])
+      .map(mapDefinitionRow)
+      .filter(Boolean)
+      .map(
+        (definition) =>
+          ({
+            ...(definition as Wave8AgentDefinition),
+            editable: Boolean((definition as Wave8AgentDefinition).editable),
+            source: ((definition as Wave8AgentDefinition).source || 'database') as
+              | 'code'
+              | 'database',
+            updatedBy: (definition as Wave8AgentDefinition).updatedBy || null,
+          }) satisfies Wave8AgentDefinitionListItem
+      );
     const byId = new Map(base.map((agent) => [agent.agentId, agent]));
     for (const override of overrides) byId.set(override.agentId, override);
     return Array.from(byId.values());

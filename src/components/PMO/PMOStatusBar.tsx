@@ -72,11 +72,11 @@ export const PMOStatusBar: React.FC = () => {
       case 'Assessment':
         return 'bg-indigo-500';
       case 'Initiatives':
-        return 'bg-purple-500';
+        return 'bg-primary-500';
       case 'Roadmap':
         return 'bg-pink-500';
       case 'Execution':
-        return 'bg-orange-500';
+        return 'bg-amber-500';
       case 'Stabilization':
         return 'bg-green-500';
       default:
@@ -106,13 +106,13 @@ export const PMOStatusBar: React.FC = () => {
   const getIssueIcon = (type: string) => {
     switch (type) {
       case 'DECISION':
-        return <FileQuestion size={14} className="text-purple-400" />;
+        return <FileQuestion size={14} className="text-primary-400" />;
       case 'TASK':
         return <Target size={14} className="text-blue-400" />;
       case 'INITIATIVE':
-        return <AlertTriangle size={14} className="text-orange-400" />;
+        return <AlertTriangle size={14} className="text-amber-400" />;
       default:
-        return <XCircle size={14} className="text-red-400" />;
+        return <XCircle size={14} className="text-rose-400" />;
     }
   };
 
@@ -172,12 +172,12 @@ export const PMOStatusBar: React.FC = () => {
               {criticalMessages.map((msg, idx) => (
                 <div
                   key={`crit-${idx}`}
-                  className="flex items-start gap-2 p-2 bg-red-500/10 rounded border border-red-500/20"
+                  className="flex items-start gap-2 p-2 bg-rose-500/10 rounded border border-rose-500/20"
                 >
-                  <XCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                  <XCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-xs font-bold text-red-400">{msg.code}</span>
-                    <p className="text-xs text-red-300">{msg.message}</p>
+                    <span className="text-xs font-bold text-rose-400">{msg.code}</span>
+                    <p className="text-xs text-rose-300">{msg.message}</p>
                   </div>
                 </div>
               ))}
@@ -219,7 +219,7 @@ export const PMOStatusBar: React.FC = () => {
                           {issue.type}
                         </span>
                         {issue.label && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 text-rose-400 rounded">
                             {issue.label}
                           </span>
                         )}

@@ -147,7 +147,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
             className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
           />
           {confirmPassword && !passwordsMatch && (
-            <p className="text-sm text-red-500 mt-1">
+            <p className="text-sm text-rose-500 mt-1">
               {t('settings.password.mismatch', 'Passwords do not match')}
             </p>
           )}

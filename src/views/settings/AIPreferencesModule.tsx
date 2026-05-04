@@ -56,7 +56,7 @@ const AIMemorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
           <button
             onClick={() => setMemoryEnabled(!memoryEnabled)}
             className={`w-12 h-6 rounded-full transition-colors ${
-              memoryEnabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              memoryEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -76,15 +76,15 @@ const AIMemorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
           </h4>
           <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+              <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
               {t('settings.aiMemory.item1', 'Your preferred communication style')}
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+              <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
               {t('settings.aiMemory.item2', 'Industry and role context')}
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+              <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
               {t('settings.aiMemory.item3', 'Previous project preferences')}
             </li>
           </ul>
@@ -102,7 +102,7 @@ const AIMemorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
               {t('settings.aiMemory.clearDesc', 'Delete all stored preferences and start fresh')}
             </p>
           </div>
-          <button className="px-4 py-2 bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 text-red-700 dark:text-red-300 rounded-lg transition-colors">
+          <button className="px-4 py-2 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 rounded-lg transition-colors">
             {t('settings.aiMemory.clearBtn', 'Clear All')}
           </button>
         </div>
@@ -144,7 +144,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setResponseLength(len)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 responseLength === len
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
@@ -166,7 +166,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setTone(t_)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 tone === t_
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
@@ -188,7 +188,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setFormat(f)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 format === f
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
@@ -231,7 +231,7 @@ const ChatHistorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) =
           <button
             onClick={() => setHistoryEnabled(!historyEnabled)}
             className={`w-12 h-6 rounded-full transition-colors ${
-              historyEnabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              historyEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -254,7 +254,7 @@ const ChatHistorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) =
               {t('settings.chatHistory.clearDesc', 'Permanently delete all conversation history')}
             </p>
           </div>
-          <button className="px-4 py-2 bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 text-red-700 dark:text-red-300 rounded-lg transition-colors">
+          <button className="px-4 py-2 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 rounded-lg transition-colors">
             {t('settings.chatHistory.clearBtn', 'Clear All')}
           </button>
         </div>

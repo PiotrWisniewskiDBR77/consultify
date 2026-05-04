@@ -85,16 +85,16 @@ export const TeamExpansionTrigger: React.FC<TeamExpansionTriggerProps> = ({
   return (
     <div
       className={`
-            bg-gradient-to-r from-purple-50 to-blue-50 
-            dark:from-purple-900/20 dark:to-blue-900/20
-            border border-purple-200 dark:border-purple-500/30
+            bg-gradient-to-r from-primary-50 to-blue-50
+            dark:from-primary-900/20 dark:to-blue-900/20
+            border border-primary-200 dark:border-primary-500/30
             rounded-xl p-4
             ${className}
         `}
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
-          <Icon className="text-purple-600 dark:text-purple-400" size={20} />
+        <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+          <Icon className="text-primary-600 dark:text-primary-400" size={20} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -107,9 +107,9 @@ export const TeamExpansionTrigger: React.FC<TeamExpansionTriggerProps> = ({
             <button
               onClick={handleInvite}
               className="
-                                inline-flex items-center gap-2 
-                                px-3 py-1.5 rounded-lg 
-                                bg-purple-600 hover:bg-purple-500 
+                                inline-flex items-center gap-2
+                                px-3 py-1.5 rounded-lg
+                                bg-primary-600 hover:bg-primary-500
                                 text-white text-sm font-medium
                                 transition-colors
                             "
@@ -145,7 +145,7 @@ export const TeamExpansionBanner: React.FC<{
   if (memberCount >= 3) return null; // Don't show if team is already growing
 
   return (
-    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-3 flex items-center justify-between">
+    <div className="bg-gradient-to-r from-blue-500 to-primary-600 text-white px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <UserPlus size={18} />
         <span className="text-sm font-medium">

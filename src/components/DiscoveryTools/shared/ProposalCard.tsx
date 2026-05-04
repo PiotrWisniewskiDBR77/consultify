@@ -21,7 +21,7 @@ interface ProposalCardProps {
 
 const STATUS_STYLES: Record<ProposalStatus, string> = {
   'ai-proposed':
-    'border-l-4 border-l-violet-400 border border-dashed border-violet-200/60 bg-violet-50/20 dark:border-l-violet-500 dark:border-violet-800/40 dark:bg-violet-950/10',
+    'border-l-4 border-l-primary-400 border border-dashed border-primary-200/60 bg-primary-50/20 dark:border-l-primary-500 dark:border-primary-800/40 dark:bg-primary-950/10',
   accepted:
     'border-l-4 border-l-emerald-400 border border-emerald-200/60 bg-white dark:border-l-emerald-500 dark:border-emerald-800/40 dark:bg-navy-900/40',
   rejected:
@@ -120,12 +120,12 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRethink()}
             placeholder={isPolish ? 'Dodaj feedback dla AI...' : 'Your feedback for AI...'}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             autoFocus
           />
           <button
             onClick={handleRethink}
-            className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-700"
+            className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-700"
           >
             {isPolish ? 'Przemyśl' : 'Rethink'}
           </button>

@@ -117,7 +117,7 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
       {actionError && (
         <div
           role="alert"
-          className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -169,7 +169,7 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
                       step="0.1"
                       value={preferences.sensitivity}
                       onChange={(e) => update('sensitivity', Number(e.target.value))}
-                      className="flex-1 accent-violet-500"
+                      className="flex-1 accent-primary-500"
                     />
                     <span className="text-sm font-mono text-white w-12 text-right">
                       {Math.round(preferences.sensitivity * 100)}%

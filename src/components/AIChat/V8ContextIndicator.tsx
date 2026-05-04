@@ -89,7 +89,7 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
         V8 {items.length}
         {traces.length > 0 && (
-          <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-violet-700 dark:border-violet-800/70 dark:bg-violet-950/50 dark:text-violet-300">
+          <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-primary-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-primary-700 dark:border-primary-800/70 dark:bg-primary-950/50 dark:text-primary-300">
             <Search size={10} />
             RAG {traces.length}
           </span>
@@ -191,7 +191,7 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
           <div
             className={`mt-3 rounded-xl border p-3 ${
               traces.length > 0
-                ? 'border-violet-200 bg-violet-50/80 dark:border-violet-900/60 dark:bg-violet-950/20'
+                ? 'border-primary-200 bg-primary-50/80 dark:border-primary-900/60 dark:bg-primary-950/20'
                 : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70'
             }`}
           >
@@ -206,16 +206,16 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                 className="mt-2 space-y-2 text-xs text-slate-700 dark:text-slate-200"
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-violet-200/80 bg-white/80 px-2 py-1.5 dark:border-violet-900/60 dark:bg-violet-950/40">
+                  <div className="rounded-lg border border-primary-200/80 bg-white/80 px-2 py-1.5 dark:border-primary-900/60 dark:bg-primary-950/40">
                     <div className="opacity-70">{t('v8.retrievalPreset', 'Preset')}</div>
                     <div className="mt-0.5 font-medium">{latestTrace.presetUsed}</div>
                   </div>
-                  <div className="rounded-lg border border-violet-200/80 bg-white/80 px-2 py-1.5 dark:border-violet-900/60 dark:bg-violet-950/40">
+                  <div className="rounded-lg border border-primary-200/80 bg-white/80 px-2 py-1.5 dark:border-primary-900/60 dark:bg-primary-950/40">
                     <div className="opacity-70">{t('v8.retrievalResults', 'Results')}</div>
                     <div className="mt-0.5 font-medium">{latestTrace.resultsReturned}</div>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-[11px] text-violet-800 dark:text-violet-200">
+                <div className="flex flex-wrap gap-2 text-[11px] text-primary-800 dark:text-primary-200">
                   <span>
                     {t('v8.retrievalDenied', 'Denied')}: {latestTrace.deniedEntries.length}
                   </span>

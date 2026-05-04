@@ -726,7 +726,7 @@ export const DeckBuilder: React.FC = () => {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-4 inline-flex rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+              className="mt-4 inline-flex rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               {t('common.retry', 'Retry')}
             </button>

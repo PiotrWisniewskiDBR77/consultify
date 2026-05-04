@@ -49,8 +49,8 @@ function TypeBadge({ type }: { type: string }) {
     blocked_initiative: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
     overdue_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
     pending_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-    unassigned_task: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
-    no_owner: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400',
+    unassigned_task: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
+    no_owner: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
     stale_item: 'bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400',
   };
   const cls = colors[type] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400';

@@ -320,6 +320,20 @@ export interface V8InterviewReportExportManifest {
   worksheets: V8InterviewReportWorksheet[];
 }
 
+export interface V8InterviewReportMarkdownExport {
+  reportPackId: string;
+  insightId: string;
+  title: string;
+  status: 'published';
+  exportedAt: string;
+  format: 'markdown';
+  filename: string;
+  markdown: string;
+  sourceManifestHash: string;
+  exportHash: string;
+  worksheetCount: number;
+}
+
 export interface V8InterviewReportRevision {
   id: string;
   reportPackId: string;
@@ -643,6 +657,11 @@ export const V8InterviewApi = {
   getInsightReportExportManifest: (id: string) =>
     v8Get<{ exportManifest: V8InterviewReportExportManifest }>(
       `/interview/insights/${encodeURIComponent(id)}/report-pack/export-manifest`
+    ),
+
+  getInsightReportMarkdownExport: (id: string) =>
+    v8Get<{ markdownExport: V8InterviewReportMarkdownExport }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/export-markdown`
     ),
 
   createInsightReportRevision: (id: string) =>

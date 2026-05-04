@@ -73,6 +73,34 @@ describe('canvas workspace front-end contract helpers', () => {
     expect(mapped.markdownProjectionStatus).toBe('synced');
   });
 
+  it('normalizes server rollout vocabulary without hiding lifecycle or kind truth', () => {
+    const proposed = mapDraftResponseToCanvasDocumentState(
+      {
+        draftId: 'draft-proposed',
+        kind: 'markdown',
+        lifecycleState: 'proposed',
+        contentMd: '# Proposed Canvas',
+      },
+      baseDocument
+    );
+
+    expect(proposed.kind).toBe('markdown');
+    expect(proposed.lifecycleState).toBe('in_review');
+
+    const deck = mapDraftResponseToCanvasDocumentState(
+      {
+        draftId: 'draft-deck',
+        kind: 'deck',
+        lifecycleState: 'approved',
+        contentMd: '# Deck Canvas',
+      },
+      baseDocument
+    );
+
+    expect(deck.kind).toBe('deck');
+    expect(deck.lifecycleState).toBe('approved');
+  });
+
   it('maps optional artifact blocks without changing Markdown-only drafts', () => {
     const mappedWithoutBlocks = mapDraftResponseToCanvasDocumentState(
       {

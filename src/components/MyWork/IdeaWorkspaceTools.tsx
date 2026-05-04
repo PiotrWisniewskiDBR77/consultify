@@ -273,7 +273,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'Initiative',
       descPl: 'Utwórz w PMO',
       descEn: 'Create in PMO',
-      gradient: 'from-amber-500/15 to-orange-500/10',
+      gradient: 'from-amber-500/15 to-amber-500/10',
       textColor: 'text-amber-600 dark:text-amber-400',
     },
     {
@@ -293,7 +293,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'Decision',
       descPl: 'Artefakt decyzyjny',
       descEn: 'Decision artifact',
-      gradient: 'from-blue-500/15 to-cyan-500/10',
+      gradient: 'from-blue-500/15 to-blue-500/10',
       textColor: 'text-blue-600 dark:text-blue-400',
     },
     {
@@ -355,7 +355,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       title={title || (isPl ? 'Bez tytułu' : 'Untitled')}
       subtitle={toolLabel}
       icon={
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-sm shadow-amber-500/20">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-sm shadow-amber-500/20">
           <Lightbulb size={13} className="text-white" />
         </div>
       }
@@ -394,7 +394,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <button
                 onClick={onAcceptChallenge}
                 disabled={saving || isDraft || !seedText.trim()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm transition-all hover:shadow-md disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-sm transition-all hover:shadow-md disabled:opacity-40"
               >
                 <CheckCircle2 size={12} />
                 {isPl ? 'Akceptuj' : 'Accept'}

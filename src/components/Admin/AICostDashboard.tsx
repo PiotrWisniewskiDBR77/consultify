@@ -172,7 +172,7 @@ export const AICostDashboard: React.FC = () => {
   const getTrendIcon = (trend: 'up' | 'down' | 'neutral') => {
     switch (trend) {
       case 'up':
-        return <TrendingUp className="w-4 h-4 text-red-400" />;
+        return <TrendingUp className="w-4 h-4 text-rose-400" />;
       case 'down':
         return <TrendingDown className="w-4 h-4 text-green-400" />;
       default:
@@ -227,7 +227,7 @@ export const AICostDashboard: React.FC = () => {
                 </div>
                 {metric.change !== 0 && (
                   <div
-                    className={`text-xs mt-1 ${metric.change > 0 ? 'text-red-400' : 'text-green-400'}`}
+                    className={`text-xs mt-1 ${metric.change > 0 ? 'text-rose-400' : 'text-green-400'}`}
                   >
                     {metric.change > 0 ? '+' : ''}
                     {metric.change}% vs last month

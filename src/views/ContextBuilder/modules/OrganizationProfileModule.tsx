@@ -598,7 +598,7 @@ const ChipSelector: React.FC<{
         onClick={() => {
           onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
         }}
-        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${value.includes(opt) ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300' : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-purple-300'}`}
+        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${value.includes(opt) ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'}`}
       >
         {opt}
       </button>
@@ -607,7 +607,7 @@ const ChipSelector: React.FC<{
 );
 
 const inputCls =
-  'w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm';
+  'w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm';
 const labelCls = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5';
 
 // ─── Main Component ───
@@ -752,10 +752,10 @@ export const OrganizationProfileModule: React.FC = () => {
       className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-950 transition-colors"
     >
       <div className="flex items-center gap-3">
-        <div className="text-purple-500">{icon}</div>
+        <div className="text-primary-500">{icon}</div>
         <span className="font-semibold text-navy-900 dark:text-white text-sm">{title}</span>
         {badge && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
             {badge}
           </span>
         )}
@@ -767,7 +767,7 @@ export const OrganizationProfileModule: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="animate-spin text-purple-500" size={32} />
+        <Loader2 className="animate-spin text-primary-500" size={32} />
       </div>
     );
   }
@@ -780,7 +780,7 @@ export const OrganizationProfileModule: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Building2 className="text-purple-500" size={22} />
+            <Building2 className="text-primary-500" size={22} />
             {t('organization.profile.title', 'Organization Profile')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
@@ -809,7 +809,7 @@ export const OrganizationProfileModule: React.FC = () => {
                 cx="24"
                 cy="24"
                 r="20"
-                className="stroke-purple-500"
+                className="stroke-primary-500"
                 strokeWidth="3"
                 fill="none"
                 strokeDasharray={`${completeness * 1.26} 126`}
@@ -828,14 +828,14 @@ export const OrganizationProfileModule: React.FC = () => {
 
       {/* Teresa AI Guidance (Phase 3.2 — completeness coaching with downstream context) */}
       {teresaHint && (
-        <div className="bg-gradient-to-r from-purple-50 to-white dark:from-purple-900/20 dark:to-navy-900 border border-purple-100 dark:border-purple-800/50 rounded-xl p-4 flex items-start gap-3">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600 shrink-0">
+        <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-900 border border-primary-100 dark:border-primary-800/50 rounded-xl p-4 flex items-start gap-3">
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 shrink-0">
             <Bot size={18} />
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
               Teresa
-              <span className="text-[10px] font-normal px-1.5 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 rounded-full">
+              <span className="text-[10px] font-normal px-1.5 py-0.5 bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-300 rounded-full">
                 AI Guide
               </span>
             </h4>
@@ -852,7 +852,7 @@ export const OrganizationProfileModule: React.FC = () => {
                 setExpandedSections((prev) => ({ ...prev, [teresaHint.field]: true }));
               }
             }}
-            className="px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors shrink-0"
+            className="px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors shrink-0"
           >
             Go
           </button>
@@ -888,9 +888,9 @@ export const OrganizationProfileModule: React.FC = () => {
 
       {/* Document extraction proposals (Phase 3.4) */}
       {docExtractProposals.length > 0 && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-purple-200 dark:border-purple-700 p-4 space-y-3">
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-primary-200 dark:border-primary-700 p-4 space-y-3">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Sparkles size={16} className="text-purple-500" />
+            <Sparkles size={16} className="text-primary-500" />
             Teresa extracted these fields from your document
           </h4>
           {docExtractProposals.map((proposal, idx) => (
@@ -935,7 +935,7 @@ export const OrganizationProfileModule: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {t('common.save', 'Save')}
@@ -961,7 +961,7 @@ export const OrganizationProfileModule: React.FC = () => {
         />
         <button
           onClick={() => setShowReadiness((prev) => !prev)}
-          className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors ${showReadiness ? 'bg-purple-50 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300' : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700'}`}
+          className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors ${showReadiness ? 'bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700'}`}
         >
           <Target size={16} />
           Readiness {readyCount}/{readiness.length}
@@ -972,7 +972,7 @@ export const OrganizationProfileModule: React.FC = () => {
       {showReadiness && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
-            <Target size={16} className="text-purple-500" />
+            <Target size={16} className="text-primary-500" />
             Module Readiness
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -1027,8 +1027,8 @@ export const OrganizationProfileModule: React.FC = () => {
                         setExpandedSections((prev) => ({ ...prev, type: false, identity: true }));
                       }}
                     />
-                    <div className="h-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:border-purple-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-purple-500 peer-checked:border-transparent peer-checked:bg-white dark:peer-checked:bg-navy-800">
-                      <div className="text-slate-500 dark:text-slate-400 mb-2 peer-checked:text-purple-600">
+                    <div className="h-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent peer-checked:bg-white dark:peer-checked:bg-navy-800">
+                      <div className="text-slate-500 dark:text-slate-400 mb-2 peer-checked:text-primary-600">
                         {ot.icon}
                       </div>
                       <div className="font-semibold text-sm text-navy-900 dark:text-white">
@@ -1542,7 +1542,7 @@ export const OrganizationProfileModule: React.FC = () => {
                     <button
                       key={r.value}
                       onClick={() => update('risk_appetite', r.value)}
-                      className={`flex-1 p-3 rounded-lg border text-center text-sm transition-colors ${profile.risk_appetite === r.value ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300' : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-purple-300'}`}
+                      className={`flex-1 p-3 rounded-lg border text-center text-sm transition-colors ${profile.risk_appetite === r.value ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'}`}
                     >
                       {r.label}
                     </button>
@@ -1579,7 +1579,7 @@ export const OrganizationProfileModule: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {t('common.saveProfile', 'Save Profile')}

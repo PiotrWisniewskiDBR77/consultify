@@ -70,10 +70,10 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
       <div
         className={`bg-white dark:bg-navy-900 rounded-xl border border-amber-200 dark:border-amber-500/30 overflow-hidden ${className}`}
       >
-        <div className="h-1.5 bg-gradient-to-r from-amber-400 to-orange-400" />
+        <div className="h-1.5 bg-gradient-to-r from-amber-400 to-amber-400" />
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white flex-shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-white flex-shrink-0">
               <Mail className="w-6 h-6" />
             </div>
             <div className="flex-1">
@@ -91,7 +91,7 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
                 <button
                   onClick={handleResendVerification}
                   disabled={isSending || sent}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-500 text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSending ? (
                     <>

@@ -135,11 +135,11 @@ export const SuperAdminSignalCenter: React.FC = () => {
   const getTypeColor = (type: 'system' | 'client' | 'feedback') => {
     switch (type) {
       case 'system':
-        return 'text-red-500';
+        return 'text-rose-500';
       case 'client':
         return 'text-amber-500 dark:text-amber-400';
       case 'feedback':
-        return 'text-cyan-600 dark:text-cyan-400';
+        return 'text-blue-600 dark:text-blue-400';
     }
   };
 
@@ -154,7 +154,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
         icon={AlertCircle}
         label="System Alerts"
         count={notifications.system.length}
-        colorClass="text-red-500"
+        colorClass="text-rose-500"
         active={selectedType === 'system'}
         onClick={() => setSelectedType(selectedType === 'system' ? null : 'system')}
       />
@@ -180,7 +180,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
         icon={MessageSquare}
         label="Feedback"
         count={notifications.feedback.length}
-        colorClass="text-cyan-600 dark:text-cyan-400"
+        colorClass="text-blue-600 dark:text-blue-400"
         active={selectedType === 'feedback'}
         onClick={() => setSelectedType(selectedType === 'feedback' ? null : 'feedback')}
       />

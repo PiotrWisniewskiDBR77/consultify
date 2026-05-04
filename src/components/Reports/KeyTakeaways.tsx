@@ -47,11 +47,11 @@ const ACCENT_COLORS = {
     textColor: 'text-blue-900 dark:text-blue-100',
   },
   purple: {
-    bg: 'bg-purple-50 dark:bg-purple-500/10',
-    border: 'border-purple-500',
-    iconBg: 'bg-purple-100 dark:bg-purple-500/20',
-    iconColor: 'text-purple-600 dark:text-purple-400',
-    textColor: 'text-purple-900 dark:text-purple-100',
+    bg: 'bg-primary-50 dark:bg-primary-500/10',
+    border: 'border-primary-500',
+    iconBg: 'bg-primary-100 dark:bg-primary-500/20',
+    iconColor: 'text-primary-600 dark:text-primary-400',
+    textColor: 'text-primary-900 dark:text-primary-100',
   },
   green: {
     bg: 'bg-green-50 dark:bg-green-500/10',
@@ -80,7 +80,7 @@ const TAKEAWAY_COLORS = {
   insight: 'text-blue-500',
   warning: 'text-amber-500',
   success: 'text-green-500',
-  action: 'text-purple-500',
+  action: 'text-primary-500',
 };
 
 export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
@@ -276,7 +276,7 @@ export const QuickStats: React.FC<{
                 stat.trend === 'up'
                   ? 'text-green-500'
                   : stat.trend === 'down'
-                    ? 'text-red-500'
+                    ? 'text-rose-500'
                     : 'text-slate-500 dark:text-slate-400'
               }`}
             >

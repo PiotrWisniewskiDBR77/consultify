@@ -382,8 +382,8 @@ const PermissionsMatrixView: React.FC = () => {
 
           <Card variant="bordered" className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-500/10 rounded-lg">
-                <Key className="w-5 h-5 text-violet-500" />
+              <div className="p-2 bg-primary-500/10 rounded-lg">
+                <Key className="w-5 h-5 text-primary-500" />
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">System Permissions</p>
@@ -426,11 +426,11 @@ const PermissionsMatrixView: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div role="alert" className="flex items-center gap-2 text-red-400">
+        <Card variant="bordered" className="p-4 border-rose-500/30 bg-rose-500/5">
+          <div role="alert" className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5" />
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
+            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
               Dismiss
             </button>
           </div>
@@ -452,7 +452,7 @@ const PermissionsMatrixView: React.FC = () => {
           <button
             onClick={() => setShowCopyModal(true)}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
           >
             <Copy className="w-4 h-4" />
             Copy Permissions
@@ -637,7 +637,7 @@ const PermissionsMatrixView: React.FC = () => {
                           <button
                             onClick={() => handleDelete(perm.key)}
                             aria-label={`Delete permission ${perm.key}`}
-                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -800,7 +800,7 @@ const PermissionsMatrixView: React.FC = () => {
               <button
                 onClick={handleCopyPermissions}
                 disabled={saving || !copyFormData.sourceRole || !copyFormData.targetRole}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-500 hover:bg-violet-600 rounded-lg disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-primary-500 hover:bg-primary-600 rounded-lg disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

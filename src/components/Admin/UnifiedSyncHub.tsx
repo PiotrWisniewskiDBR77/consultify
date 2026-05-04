@@ -293,8 +293,8 @@ const STATUS_CONFIG: Record<
   },
   error: {
     label: 'Error',
-    color: 'text-red-400',
-    bg: 'bg-red-500/10',
+    color: 'text-rose-400',
+    bg: 'bg-rose-500/10',
     icon: <XCircle size={14} />,
   },
   pending: {
@@ -305,8 +305,8 @@ const STATUS_CONFIG: Record<
   },
   requires_reauth: {
     label: 'Reauth Required',
-    color: 'text-orange-400',
-    bg: 'bg-orange-500/10',
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10',
     icon: <ShieldAlert size={14} />,
   },
 };
@@ -314,7 +314,7 @@ const STATUS_CONFIG: Record<
 const HEALTH_CONFIG: Record<HealthStatus, { label: string; color: string; dot: string }> = {
   healthy: { label: 'Healthy', color: 'text-emerald-400', dot: 'bg-emerald-400' },
   degraded: { label: 'Degraded', color: 'text-amber-400', dot: 'bg-amber-400' },
-  unhealthy: { label: 'Unhealthy', color: 'text-red-400', dot: 'bg-red-400' },
+  unhealthy: { label: 'Unhealthy', color: 'text-rose-400', dot: 'bg-rose-400' },
 };
 
 const CONNECTOR_PROVIDER_FAMILY_MAP: Partial<Record<string, V8SyncProviderFamily>> = {
@@ -1749,7 +1749,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 {isConnected ? null : connectable ? (
                                   <button
                                     onClick={() => handleConnect(conn.id)}
-                                    className="px-3 py-1 text-xs bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+                                    className="px-3 py-1 text-xs bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
                                   >
                                     {t('integrations.syncHub.connect', 'Connect')}
                                   </button>
@@ -2148,7 +2148,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   {t('integrations.syncHub.lastResult', 'Last result')}
                 </div>
                 <div
-                  className={`text-xs ${int.lastRun.status === 'completed' ? 'text-emerald-400' : int.lastRun.status === 'failed' ? 'text-red-400' : 'text-amber-400'}`}
+                  className={`text-xs ${int.lastRun.status === 'completed' ? 'text-emerald-400' : int.lastRun.status === 'failed' ? 'text-rose-400' : 'text-amber-400'}`}
                 >
                   {int.lastRun.status} · {formatDuration(int.lastRun.duration_ms)}
                 </div>
@@ -2200,24 +2200,24 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               <div className="px-4 pb-4 pt-1 border-t border-navy-700/50 space-y-3">
                 {/* Error banner */}
                 {int.status === 'error' && int.lastError && (
-                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-500/10 text-red-400 text-xs">
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-rose-500/10 text-rose-400 text-xs">
                     <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                     <div>
                       <div className="font-medium">
                         {t('integrations.syncHub.errorOccurred', 'Error occurred')}
                       </div>
-                      <div className="text-red-300/70 mt-0.5">{int.lastError}</div>
+                      <div className="text-rose-300/70 mt-0.5">{int.lastError}</div>
                     </div>
                   </div>
                 )}
                 {int.status === 'requires_reauth' && (
-                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-orange-500/10 text-orange-400 text-xs">
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 text-amber-400 text-xs">
                     <ShieldAlert size={14} className="shrink-0 mt-0.5" />
                     <div>
                       <div className="font-medium">
                         {t('integrations.syncHub.reauthRequired', 'Re-authorization required')}
                       </div>
-                      <div className="text-orange-300/70 mt-0.5">
+                      <div className="text-amber-300/70 mt-0.5">
                         {t(
                           'integrations.syncHub.reauthDesc',
                           'Your access token has expired. Re-authorize to resume syncing.'
@@ -2403,7 +2403,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <button
                         type="button"
                         onClick={() => handleReauth(int.id)}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-orange-500/20 bg-orange-500/10 px-2.5 py-1.5 text-[11px] font-medium text-orange-300 hover:bg-orange-500/15 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-medium text-amber-300 hover:bg-amber-500/15 transition-colors"
                       >
                         <Shield size={12} />
                         {t('integrations.syncHub.reauth', 'Re-authorize')}
@@ -2480,16 +2480,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 )}
 
                 {canMaterializeCredential && (
-                  <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3 text-xs">
+                  <div className="rounded-lg border border-primary-500/20 bg-primary-500/5 p-3 text-xs">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="font-medium text-violet-200">
+                        <div className="font-medium text-primary-200">
                           {t(
                             'integrations.syncHub.governedCredentialBaseline',
                             'Governed credential baseline'
                           )}
                         </div>
-                        <div className="mt-1 text-violet-100/70">
+                        <div className="mt-1 text-primary-100/70">
                           {int.credential
                             ? t(
                                 'integrations.syncHub.governedCredentialBaselineSaved',
@@ -2505,7 +2505,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         <button
                           type="button"
                           onClick={() => setEditingCredentialId(int.id)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 text-[11px] font-medium text-violet-200 hover:bg-violet-500/15 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-primary-500/20 bg-primary-500/10 text-[11px] font-medium text-primary-200 hover:bg-primary-500/15 transition-colors"
                         >
                           <CheckCircle2 size={12} />
                           {int.credential
@@ -2522,28 +2522,28 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     </div>
 
                     {int.credential && !isEditingCredential && (
-                      <div className="mt-3 grid gap-2 md:grid-cols-2 text-[11px] text-violet-100/80">
+                      <div className="mt-3 grid gap-2 md:grid-cols-2 text-[11px] text-primary-100/80">
                         <div>
-                          <div className="text-violet-200/60">
+                          <div className="text-primary-200/60">
                             {t('integrations.syncHub.providerAccountId', 'Provider account')}
                           </div>
                           <div className="mt-1 break-all">{int.credential.providerAccountId}</div>
                         </div>
                         <div>
-                          <div className="text-violet-200/60">
+                          <div className="text-primary-200/60">
                             {t('integrations.syncHub.workspaceTenantId', 'Workspace or tenant')}
                           </div>
                           <div className="mt-1 break-all">{int.credential.workspaceOrTenantId}</div>
                         </div>
                         <div className="md:col-span-2">
-                          <div className="text-violet-200/60">
+                          <div className="text-primary-200/60">
                             {t('integrations.syncHub.governedScopes', 'Governed scopes')}
                           </div>
                           <div className="mt-1 flex flex-wrap gap-1.5">
                             {int.credential.scopesGranted.map((scope) => (
                               <span
                                 key={scope}
-                                className="px-2 py-0.5 rounded-full border border-violet-500/20 bg-violet-500/10 text-[11px] text-violet-100"
+                                className="px-2 py-0.5 rounded-full border border-primary-500/20 bg-primary-500/10 text-[11px] text-primary-100"
                               >
                                 {scope}
                               </span>
@@ -2551,7 +2551,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           </div>
                         </div>
                         <div>
-                          <div className="text-violet-200/60">
+                          <div className="text-primary-200/60">
                             {t('integrations.syncHub.lastRefreshResult', 'Last refresh result')}
                           </div>
                           <div className="mt-1 break-all">
@@ -2560,7 +2560,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           </div>
                         </div>
                         <div>
-                          <div className="text-violet-200/60">
+                          <div className="text-primary-200/60">
                             {t('integrations.syncHub.lastRefreshAt', 'Last refresh at')}
                           </div>
                           <div className="mt-1 break-all">
@@ -2571,9 +2571,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     )}
 
                     {isEditingCredential && (
-                      <div className="mt-3 space-y-2 rounded-lg border border-violet-500/20 bg-navy-950/30 p-3">
+                      <div className="mt-3 space-y-2 rounded-lg border border-primary-500/20 bg-navy-950/30 p-3">
                         <label className="block">
-                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-primary-100/80">
                             {t('integrations.syncHub.providerAccountId', 'Provider account')}
                           </div>
                           <input
@@ -2587,11 +2587,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="acct-123"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
-                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-primary-100/80">
                             {t('integrations.syncHub.workspaceTenantId', 'Workspace or tenant')}
                           </div>
                           <input
@@ -2605,11 +2605,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               )
                             }
                             placeholder="tenant-456"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
-                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-primary-100/80">
                             {t('integrations.syncHub.governedScopes', 'Governed scopes')}
                           </div>
                           <input
@@ -2619,11 +2619,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleCredentialDraftChange(int.id, 'scopesGranted', e.target.value)
                             }
                             placeholder="read:jira-work, write:jira-work"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <label className="block">
-                          <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                          <div className="mb-1 text-[11px] uppercase tracking-wide text-primary-100/80">
                             {t('integrations.syncHub.tokenExpiresAt', 'Token expires at')}
                           </div>
                           <input
@@ -2633,7 +2633,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               handleCredentialDraftChange(int.id, 'tokenExpiresAt', e.target.value)
                             }
                             placeholder="2026-03-27T19:00:00.000Z"
-                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                            className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-primary-500/40 focus:outline-none"
                           />
                         </label>
                         <div className="flex items-center gap-2">
@@ -2641,7 +2641,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             type="button"
                             onClick={() => void handleSaveCredential(int)}
                             disabled={savingCredentialId === int.id}
-                            className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-100 hover:bg-violet-500/25 rounded-lg transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs bg-primary-500/15 text-primary-100 hover:bg-primary-500/25 rounded-lg transition-colors disabled:opacity-50"
                           >
                             {savingCredentialId === int.id
                               ? t('common.saving', 'Saving...')
@@ -2662,20 +2662,20 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     )}
 
                     {canRecordRefreshResult && !isEditingCredential && (
-                      <div className="mt-3 border-t border-violet-500/10 pt-3">
+                      <div className="mt-3 border-t border-primary-500/10 pt-3">
                         {!editingRefreshResultId || editingRefreshResultId !== int.id ? (
                           <button
                             type="button"
                             onClick={() => setEditingRefreshResultId(int.id)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 text-[11px] font-medium text-violet-200 hover:bg-violet-500/15 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-primary-500/20 bg-primary-500/10 text-[11px] font-medium text-primary-200 hover:bg-primary-500/15 transition-colors"
                           >
                             <RefreshCw size={12} />
                             {t('integrations.syncHub.recordRefreshResult', 'Record refresh result')}
                           </button>
                         ) : (
-                          <div className="space-y-2 rounded-lg border border-violet-500/20 bg-navy-950/30 p-3">
+                          <div className="space-y-2 rounded-lg border border-primary-500/20 bg-navy-950/30 p-3">
                             <label className="block">
-                              <div className="mb-1 text-[11px] uppercase tracking-wide text-violet-100/80">
+                              <div className="mb-1 text-[11px] uppercase tracking-wide text-primary-100/80">
                                 {t('integrations.syncHub.refreshResult', 'Refresh result')}
                               </div>
                               <select
@@ -2686,7 +2686,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                     e.target.value as RefreshResultDraft
                                   )
                                 }
-                                className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white focus:border-violet-500/40 focus:outline-none"
+                                className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white focus:border-primary-500/40 focus:outline-none"
                               >
                                 <option value="success">success</option>
                                 <option value="transient_failure">transient_failure</option>
@@ -2699,7 +2699,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 type="button"
                                 onClick={() => void handleSaveRefreshResult(int)}
                                 disabled={savingRefreshResultId === int.id}
-                                className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-100 hover:bg-violet-500/25 rounded-lg transition-colors disabled:opacity-50"
+                                className="px-3 py-1.5 text-xs bg-primary-500/15 text-primary-100 hover:bg-primary-500/25 rounded-lg transition-colors disabled:opacity-50"
                               >
                                 {savingRefreshResultId === int.id
                                   ? t('common.saving', 'Saving...')
@@ -2912,7 +2912,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <span className="text-slate-500">
                         {t('integrations.syncHub.errorRateLabel', 'Error rate')}:
                       </span>{' '}
-                      <span className={`${int.errorRate > 20 ? 'text-red-400' : 'text-slate-300'}`}>
+                      <span className={`${int.errorRate > 20 ? 'text-rose-400' : 'text-slate-300'}`}>
                         {int.errorRate}%
                       </span>
                     </div>
@@ -2924,7 +2924,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   {int.status === 'requires_reauth' && (
                     <button
                       onClick={() => handleReauth(int.id)}
-                      className="px-3 py-1.5 text-xs bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 rounded-lg transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 rounded-lg transition-colors flex items-center gap-1.5"
                     >
                       <Shield size={13} />
                       {t('integrations.syncHub.reauth', 'Re-authorize')}
@@ -2968,7 +2968,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   )}
                   <button
                     onClick={() => handleDisconnect(int.id)}
-                    className="px-3 py-1.5 text-xs bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors flex items-center gap-1.5 ml-auto"
+                    className="px-3 py-1.5 text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors flex items-center gap-1.5 ml-auto"
                   >
                     <Unplug size={13} />
                     {t('integrations.syncHub.disconnect', 'Disconnect')}
@@ -2995,12 +2995,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.search', 'Search integrations…')}
-            className="w-full h-9 pl-9 pr-4 bg-navy-800 border border-navy-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-navy-800 border border-navy-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
           />
         </div>
         <button
           onClick={() => window.location.assign('/settings/integrations')}
-          className="h-9 px-4 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
+          className="h-9 px-4 bg-primary-600 hover:bg-primary-500 text-white text-sm rounded-lg flex items-center gap-2 transition-colors shrink-0"
         >
           <Plus size={16} />
           {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
@@ -3010,7 +3010,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       {/* Integrations list */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="animate-spin text-violet-400" size={24} />
+          <Loader2 className="animate-spin text-primary-400" size={24} />
           <span className="ml-3 text-slate-400 text-sm">
             {t('integrations.syncHub.loading', 'Loading integrations…')}
           </span>
@@ -3023,7 +3023,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </p>
           <button
             onClick={() => window.location.assign('/settings/integrations')}
-            className="mt-3 px-4 py-2 text-sm text-violet-400 border border-violet-500/30 hover:bg-violet-500/10 rounded-lg transition-colors"
+            className="mt-3 px-4 py-2 text-sm text-primary-400 border border-primary-500/30 hover:bg-primary-500/10 rounded-lg transition-colors"
           >
             {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
           </button>
@@ -3047,7 +3047,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     onClick={() => setShowComingSoonCatalog(false)}
                     className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                       !showComingSoonCatalog
-                        ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                        ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                         : 'text-slate-400 hover:text-white border border-navy-700'
                     }`}
                   >
@@ -3058,7 +3058,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     onClick={() => setShowComingSoonCatalog(true)}
                     className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                       showComingSoonCatalog
-                        ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                        ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                         : 'text-slate-400 hover:text-white border border-navy-700'
                     }`}
                   >
@@ -3081,8 +3081,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const renderHealthTab = () => (
     <div className="space-y-6">
       {!loading && integrations.length === 0 && (
-        <div className="flex items-start gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
-          <Zap size={16} className="text-violet-300 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 rounded-lg border border-primary-500/20 bg-primary-500/5 p-4">
+          <Zap size={16} className="text-primary-300 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-white">
               {t('integrations.syncHub.healthEmptyTitle', 'No integrations connected yet')}
@@ -3100,7 +3100,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               setActiveTab('apps');
               window.location.assign('/settings/integrations');
             }}
-            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
           >
             <Plus size={14} />
             {t('integrations.syncHub.manageInSettings', 'Manage in Settings')}
@@ -3130,7 +3130,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {
               label: t('integrations.syncHub.unhealthy', 'Unhealthy'),
               value: healthSummary.unhealthy,
-              color: 'text-red-400',
+              color: 'text-rose-400',
             },
           ].map((card) => (
             <div
@@ -3147,7 +3147,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       {v8AuthHealthSummary && (
         <div>
           <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-            <Shield size={14} className="text-cyan-400" />
+            <Shield size={14} className="text-blue-400" />
             {t('integrations.syncHub.v8AuthHealth', 'V8 Auth Health')}
           </h3>
           <div className="grid grid-cols-4 gap-3">
@@ -3155,7 +3155,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {
                 label: t('integrations.syncHub.v8TotalCredentials', 'Governed credentials'),
                 value: v8AuthHealthSummary.total,
-                color: 'text-cyan-300',
+                color: 'text-blue-300',
               },
               {
                 label: t('integrations.syncHub.v8HealthyCredentials', 'Healthy'),
@@ -3170,12 +3170,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               {
                 label: t('integrations.syncHub.v8EscalatedCredentials', 'Escalated'),
                 value: v8AuthHealthSummary.escalated,
-                color: 'text-red-400',
+                color: 'text-rose-400',
               },
             ].map((card) => (
               <div
                 key={card.label}
-                className="p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/20"
+                className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20"
               >
                 <div className={`text-2xl font-semibold ${card.color}`}>{card.value}</div>
                 <div className="text-xs text-slate-500 mt-1">{card.label}</div>
@@ -3187,10 +3187,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       <div>
         <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-          <ShieldAlert size={14} className="text-orange-400" />
+          <ShieldAlert size={14} className="text-amber-400" />
           {t('integrations.syncHub.v8AuthEscalations', 'V8 Active Auth Escalations')}
           {v8AuthEscalations.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-orange-500/10 text-orange-400 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-amber-500/10 text-amber-400 rounded">
               {v8AuthEscalations.length}
             </span>
           )}
@@ -3212,15 +3212,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               return (
                 <div
                   key={escalation.escalationId}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20"
+                  className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20"
                 >
-                  <ShieldAlert size={14} className="text-orange-400 shrink-0 mt-0.5" />
+                  <ShieldAlert size={14} className="text-amber-400 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-slate-200">
                         {escalation.connectorId}
                       </span>
-                      <span className="px-1.5 py-0.5 text-[11px] bg-orange-500/10 text-orange-300 rounded">
+                      <span className="px-1.5 py-0.5 text-[11px] bg-amber-500/10 text-amber-300 rounded">
                         {t('integrations.syncHub.v8Escalated', 'escalated')}
                       </span>
                     </div>
@@ -3232,14 +3232,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       {timeAgo(escalation.escalatedAt)}
                     </div>
                     {recoveryTarget ? (
-                      <div className="mt-2 text-[11px] text-orange-200/70">
+                      <div className="mt-2 text-[11px] text-amber-200/70">
                         {t(
                           'integrations.syncHub.v8RecoveryTargetReady',
                           'Governed re-authorization can start directly from this recovery panel.'
                         )}
                       </div>
                     ) : (
-                      <div className="mt-2 text-[11px] text-orange-200/60">
+                      <div className="mt-2 text-[11px] text-amber-200/60">
                         {t(
                           'integrations.syncHub.v8RecoveryTargetMissing',
                           'No governed re-authorization target is currently available for this escalation.'
@@ -3253,7 +3253,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         type="button"
                         onClick={() => void handleRecoverV8AuthEscalation(escalation.connectorId)}
                         disabled={recoveringAuthEscalationConnectorId === escalation.connectorId}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-orange-500/20 bg-orange-500/10 text-[11px] font-medium text-orange-200 hover:bg-orange-500/15 disabled:opacity-60 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 text-[11px] font-medium text-amber-200 hover:bg-amber-500/15 disabled:opacity-60 transition-colors"
                       >
                         {recoveringAuthEscalationConnectorId === escalation.connectorId ? (
                           <Loader2 size={12} className="animate-spin" />
@@ -3330,7 +3330,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 : health.healthy
                   ? 'border-emerald-500/20 bg-emerald-500/5'
                   : ['error', 'dead_letter', 'conflict'].includes(health.syncStatus)
-                    ? 'border-red-500/20 bg-red-500/5'
+                    ? 'border-rose-500/20 bg-rose-500/5'
                     : 'border-amber-500/20 bg-amber-500/5';
 
               return (
@@ -3626,10 +3626,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       <div>
         <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-          <Shield size={14} className="text-violet-400" />
+          <Shield size={14} className="text-primary-400" />
           {t('integrations.syncHub.v8ActiveLocks', 'V8 Active Locks')}
           {v8WorkspaceLocks.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-violet-500/10 text-violet-400 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-primary-500/10 text-primary-400 rounded">
               {v8WorkspaceLocks.length}
             </span>
           )}
@@ -3643,13 +3643,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {v8WorkspaceLocks.slice(0, 5).map((lock) => (
               <div
                 key={lock.lockId}
-                className="flex items-start gap-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20"
+                className="flex items-start gap-3 p-3 rounded-lg bg-primary-500/5 border border-primary-500/20"
               >
-                <Shield size={14} className="text-violet-400 shrink-0 mt-0.5" />
+                <Shield size={14} className="text-primary-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-200">{lock.lockType}</span>
-                    <span className="px-1.5 py-0.5 text-[11px] bg-violet-500/10 text-violet-300 rounded">
+                    <span className="px-1.5 py-0.5 text-[11px] bg-primary-500/10 text-primary-300 rounded">
                       {lock.lockScope}
                     </span>
                   </div>
@@ -3668,7 +3668,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           <AlertTriangle size={14} className="text-amber-400" />
           {t('integrations.syncHub.unresolvedErrors', 'Unresolved Errors')}
           {errors.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-red-500/10 text-red-400 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-rose-500/10 text-rose-400 rounded">
               {errors.length}
             </span>
           )}
@@ -3685,7 +3685,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 key={err.id}
                 className="flex items-start gap-3 p-3 rounded-lg bg-navy-900/40 border border-navy-700/50"
               >
-                <XCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
+                <XCircle size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-300">{err.errorType}</span>
@@ -3748,7 +3748,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             value={usersSearchQuery}
             onChange={(e) => setUsersSearchQuery(e.target.value)}
             placeholder={t('integrations.syncHub.usersSearch', 'Search users, connectors, status…')}
-            className="w-full h-9 pl-9 pr-4 bg-navy-800 border border-navy-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50"
+            className="w-full h-9 pl-9 pr-4 bg-navy-800 border border-navy-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
           />
         </div>
         <button
@@ -3762,7 +3762,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       {ownershipError && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
           {ownershipError}
         </div>
       )}
@@ -3885,7 +3885,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       </div>
 
       {connectionLogError && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
           {connectionLogError}
         </div>
       )}
@@ -4002,7 +4002,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const stateColor = (s: string) => {
       if (s === 'connected' || s === 'recovered') return 'text-green-500';
       if (s === 'degraded' || s === 'requires_action') return 'text-amber-500';
-      if (s === 'blocked') return 'text-red-500';
+      if (s === 'blocked') return 'text-rose-500';
       return 'text-slate-400';
     };
 
@@ -4072,7 +4072,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <div className="space-y-3">
           <div>
             <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-              <Zap size={14} className="text-violet-400" />
+              <Zap size={14} className="text-primary-400" />
               {t('integrations.syncHub.v8RefreshPolicies', 'Governed Refresh Timing Policies')}
             </h3>
             <div className="space-y-2">
@@ -4082,7 +4082,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 return (
                   <div
                     key={target.providerFamily}
-                    className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/20"
+                    className="p-3 rounded-lg bg-primary-500/5 border border-primary-500/20"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -4090,7 +4090,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           <span className="text-sm font-medium text-slate-100">
                             {target.providerLabel}
                           </span>
-                          <span className="px-1.5 py-0.5 text-[11px] bg-violet-500/10 text-violet-300 rounded">
+                          <span className="px-1.5 py-0.5 text-[11px] bg-primary-500/10 text-primary-300 rounded">
                             {target.connectorId}
                           </span>
                         </div>
@@ -4113,7 +4113,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         type="button"
                         onClick={() => void handleApplyGovernedRefreshPolicy(target.providerFamily)}
                         disabled={mutatingRefreshPolicyFamily === target.providerFamily}
-                        className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-violet-500/20 bg-violet-500/10 text-[11px] font-medium text-violet-300 hover:bg-violet-500/15 disabled:opacity-60 transition-colors"
+                        className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-primary-500/20 bg-primary-500/10 text-[11px] font-medium text-primary-300 hover:bg-primary-500/15 disabled:opacity-60 transition-colors"
                         title={`lifetime ${preset.typicalTokenLifetimeMinutes}m, window ${preset.refreshWindowMinutes}m, retries ${preset.maxRetryAttempts}`}
                       >
                         {mutatingRefreshPolicyFamily === target.providerFamily ? (
@@ -4172,7 +4172,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     const statusColors: Record<string, string> = {
       running: 'text-blue-400 bg-blue-500/10',
       completed: 'text-emerald-400 bg-emerald-500/10',
-      failed: 'text-red-400 bg-red-500/10',
+      failed: 'text-rose-400 bg-rose-500/10',
     };
 
     const formatDuration = (ms: number | null) => {
@@ -4270,7 +4270,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   const lifecycleColors: Record<string, string> = {
                     connected: 'text-emerald-400',
                     degraded: 'text-amber-400',
-                    requires_action: 'text-red-400',
+                    requires_action: 'text-rose-400',
                     draft: 'text-slate-400',
                   };
                   return (
@@ -4306,7 +4306,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           {run.canReplay && (
                             <button
                               type="button"
-                              className="px-2 py-1 text-xs rounded bg-violet-600/20 text-violet-400 hover:bg-violet-600/40 transition-colors"
+                              className="px-2 py-1 text-xs rounded bg-primary-600/20 text-primary-400 hover:bg-primary-600/40 transition-colors"
                               onClick={async () => {
                                 try {
                                   await V8SyncApi.replayRun(run.id);
@@ -4331,8 +4331,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         </td>
                       </tr>
                       {run.errorSummary && (
-                        <tr className="bg-red-500/5">
-                          <td colSpan={9} className="px-4 py-1.5 text-xs text-red-400/80">
+                        <tr className="bg-rose-500/5">
+                          <td colSpan={9} className="px-4 py-1.5 text-xs text-rose-400/80">
                             <span className="text-slate-500 mr-2">
                               {t('integrations.syncHub.traceId', 'Trace:')} {run.id}
                             </span>
@@ -4387,9 +4387,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         entry.action.includes('connected')
                           ? 'text-emerald-400'
                           : entry.action.includes('disconnected')
-                            ? 'text-red-400'
+                            ? 'text-rose-400'
                             : entry.action.includes('reauth')
-                              ? 'text-orange-400'
+                              ? 'text-amber-400'
                               : entry.action.includes('sync')
                                 ? 'text-blue-400'
                                 : 'text-slate-400'
@@ -4445,7 +4445,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               onClick={() => setSelectedCategory(null)}
               className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                 !selectedCategory
-                  ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                  ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                   : 'text-slate-400 hover:text-white border border-navy-700'
               }`}
             >
@@ -4459,7 +4459,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                   onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
                   className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                     selectedCategory === cat
-                      ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                      ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                       : 'text-slate-400 hover:text-white border border-navy-700'
                   }`}
                 >
@@ -4478,7 +4478,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 onClick={() => setShowComingSoonCatalog(false)}
                 className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                   !showComingSoonCatalog
-                    ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                    ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                     : 'text-slate-400 hover:text-white border border-navy-700'
                 }`}
               >
@@ -4489,7 +4489,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 onClick={() => setShowComingSoonCatalog(true)}
                 className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
                   showComingSoonCatalog
-                    ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
+                    ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                     : 'text-slate-400 hover:text-white border border-navy-700'
                 }`}
               >
@@ -4524,7 +4524,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <button
           onClick={loadAll}
           disabled={loading}
-          className="p-2 text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 rounded-lg transition-colors disabled:opacity-50"
+          className="p-2 text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -4539,7 +4539,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-violet-500 text-violet-400'
+                ? 'border-primary-500 text-primary-400'
                 : 'border-transparent text-slate-500 hover:text-slate-300'
             }`}
           >

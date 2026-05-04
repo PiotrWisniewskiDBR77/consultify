@@ -102,7 +102,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Zap className="text-purple-500" />
+            <Zap className="text-primary-500" />
             AI Analytics Dashboard
           </h1>
           <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
@@ -138,7 +138,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
               ? 'bg-green-500/10 border border-green-500/20'
               : diagnostics.status === 'NEEDS_CONFIG'
                 ? 'bg-yellow-500/10 border border-yellow-500/20'
-                : 'bg-red-500/10 border border-red-500/20'
+                : 'bg-rose-500/10 border border-rose-500/20'
           }`}
         >
           {diagnostics.status === 'OK' ? (
@@ -204,7 +204,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Cache Hit Rate</span>
-            <Database className="text-purple-400" size={20} />
+            <Database className="text-primary-400" size={20} />
           </div>
           <p className="text-3xl font-bold text-white">
             {((stats?.cache?.hitRate || 0) * 100).toFixed(1)}%
@@ -219,7 +219,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens Saved (Cache)</span>
-            <DollarSign className="text-cyan-400" size={20} />
+            <DollarSign className="text-blue-400" size={20} />
           </div>
           <p className="text-3xl font-bold text-white">
             {formatNumber(stats?.cache?.estimatedTokensSaved || 0)}
@@ -266,7 +266,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                     </div>
                     <div className="w-full bg-navy-700 rounded-full h-2 mt-1">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                        className="bg-gradient-to-r from-blue-500 to-primary-500 h-2 rounded-full"
                         style={{
                           width: `${Math.min(100, (org.tokensMonth / (stats.topOrganizations[0]?.tokensMonth || 1)) * 100)}%`,
                         }}
@@ -297,7 +297,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        provider.is_active ? 'bg-green-500' : 'bg-red-500'
+                        provider.is_active ? 'bg-green-500' : 'bg-rose-500'
                       }`}
                     />
                     <div>
@@ -337,7 +337,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
               {check.status === 'OK' ? (
                 <CheckCircle className="text-green-500 shrink-0" size={18} />
               ) : check.status === 'FAILED' ? (
-                <XCircle className="text-red-500 shrink-0" size={18} />
+                <XCircle className="text-rose-500 shrink-0" size={18} />
               ) : check.status === 'NEEDS_CONFIGURATION' ? (
                 <AlertCircle className="text-yellow-500 shrink-0" size={18} />
               ) : (
@@ -369,7 +369,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
           </button>
           <button
             onClick={() => (window.location.href = '/admin#knowledge')}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 rounded-lg text-sm font-medium transition-colors"
           >
             Knowledge Base
           </button>

@@ -448,7 +448,7 @@ const SavedReportsView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -555,7 +555,7 @@ const SavedReportsView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteReport(selectedReport.id)}
                       aria-label={`Delete report ${selectedReport.name}`}
-                      className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                      className="p-2 text-rose-400 hover:bg-rose-600/20 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -719,7 +719,7 @@ const SavedReportsView: React.FC = () => {
                           {exec.status === 'completed' ? (
                             <CheckCircle2 className="w-4 h-4 text-green-400" />
                           ) : exec.status === 'failed' ? (
-                            <XCircle className="w-4 h-4 text-red-400" />
+                            <XCircle className="w-4 h-4 text-rose-400" />
                           ) : (
                             <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
                           )}
@@ -730,7 +730,7 @@ const SavedReportsView: React.FC = () => {
                             exec.status === 'completed'
                               ? 'bg-green-500/20 text-green-400'
                               : exec.status === 'failed'
-                                ? 'bg-red-500/20 text-red-400'
+                                ? 'bg-rose-500/20 text-rose-400'
                                 : 'bg-blue-500/20 text-blue-400'
                           }`}
                         >

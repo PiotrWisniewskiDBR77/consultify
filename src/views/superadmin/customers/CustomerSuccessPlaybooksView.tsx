@@ -518,7 +518,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -561,8 +561,8 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
               </Card>
               <Card padding="sm">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-500/20 rounded-lg">
-                    <Activity className="w-5 h-5 text-purple-400" />
+                  <div className="p-2 bg-primary-500/20 rounded-lg">
+                    <Activity className="w-5 h-5 text-primary-400" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -717,7 +717,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                         <button
                           onClick={() => handleDeletePlaybook(selectedPlaybook.id)}
                           aria-label="Delete success playbook"
-                          className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
+                          className="p-2 text-rose-400 hover:bg-rose-600/20 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -813,7 +813,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                                     action.status === 'completed'
                                       ? 'bg-green-500/20 text-green-400'
                                       : action.status === 'failed'
-                                        ? 'bg-red-500/20 text-red-400'
+                                        ? 'bg-rose-500/20 text-rose-400'
                                         : 'bg-yellow-500/20 text-yellow-400'
                                   }`}
                                 >
@@ -922,7 +922,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                       </div>
                       <button
                         onClick={() => removeActionFromPlaybook(idx)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-rose-400 hover:text-rose-300"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

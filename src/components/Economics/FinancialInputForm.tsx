@@ -200,11 +200,11 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
           disabled={readOnly || isLoading}
           min={min}
           max={max}
-          className={`w-full px-3 py-2 ${type === 'currency' ? 'pl-12' : ''} ${type === 'percent' ? 'pr-8' : ''} 
+          className={`w-full px-3 py-2 ${type === 'currency' ? 'pl-12' : ''} ${type === 'percent' ? 'pr-8' : ''}
                         bg-white dark:bg-navy-800 border rounded-lg text-right
                         ${
                           errors[field]
-                            ? 'border-red-500 focus:ring-red-500'
+                            ? 'border-rose-500 focus:ring-rose-500'
                             : 'border-slate-200 dark:border-navy-700 focus:ring-blue-500'
                         }
                         focus:outline-none focus:ring-2 focus:border-transparent
@@ -218,7 +218,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
         )}
       </div>
       {errors[field] && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
+        <p className="text-xs text-rose-500 flex items-center gap-1">
           <AlertCircle size={12} /> {errors[field]}
         </p>
       )}
@@ -434,7 +434,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
               <button
                 onClick={addAssumption}
                 disabled={readOnly || !newAssumption.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
                                     disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Dodaj
@@ -454,7 +454,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                     {!readOnly && (
                       <button
                         onClick={() => removeAssumption(index)}
-                        className="text-red-500 hover:text-red-700 text-sm shrink-0"
+                        className="text-rose-500 hover:text-rose-700 text-sm shrink-0"
                       >
                         Delete
                       </button>
@@ -478,8 +478,8 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
             <button
               onClick={() => onCalculate(formData)}
               disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300 
-                                bg-slate-100 dark:bg-navy-700 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700/40 
+              className="flex items-center gap-2 px-4 py-2 text-slate-700 dark:text-slate-300
+                                bg-slate-100 dark:bg-navy-700 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700/40
                                 dark:hover:bg-navy-600 transition-colors disabled:opacity-50"
             >
               <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
@@ -489,7 +489,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
           <button
             onClick={handleSave}
             disabled={isSaving || isLoading}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg 
+            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg
                             hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             <Save size={18} />

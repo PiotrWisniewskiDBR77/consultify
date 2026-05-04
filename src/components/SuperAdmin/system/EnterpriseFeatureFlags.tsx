@@ -100,7 +100,7 @@ const FLAG_TYPE_CONFIG = {
     label: 'Boolean',
   },
   percentage: { icon: Percent, color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Percentage' },
-  targeting: { icon: Target, color: 'text-purple-400', bg: 'bg-purple-500/20', label: 'Targeting' },
+  targeting: { icon: Target, color: 'text-primary-400', bg: 'bg-primary-500/20', label: 'Targeting' },
   ab_test: { icon: Beaker, color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'A/B Test' },
 };
 
@@ -396,7 +396,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <button
           onClick={() => setShowCreateModal(true)}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={16} />
           Create Flag
@@ -407,7 +407,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -443,9 +443,9 @@ export const EnterpriseFeatureFlags: React.FC = () => {
               {flags.filter((f) => f.flag_type === 'ab_test').length}
             </div>
           </div>
-          <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
+          <div className="p-4 bg-primary-500/10 rounded-xl border border-primary-500/30">
             <div className="text-sm text-slate-400 dark:text-slate-500">Production</div>
-            <div className="text-2xl font-bold text-purple-400">
+            <div className="text-2xl font-bold text-primary-400">
               {flags.filter((f) => f.environment === 'production' && f.enabled).length}
             </div>
           </div>
@@ -465,14 +465,14 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={!!loadError}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
         <select
           value={filterEnvironment}
           onChange={(e) => setFilterEnvironment(e.target.value)}
           disabled={!!loadError}
-          className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All Environments</option>
           {ENVIRONMENTS.map((env) => (
@@ -485,7 +485,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
           disabled={!!loadError}
-          className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All Types</option>
           {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
@@ -507,7 +507,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       {!loadError && (
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-2 mb-3">
-            <Eye className="w-4 h-4 text-cyan-400" />
+            <Eye className="w-4 h-4 text-blue-400" />
             <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
               Test Evaluation Context
             </span>
@@ -677,7 +677,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           handleDelete(flag.id);
                         }}
                         aria-label={`Delete ${flag.name}`}
-                        className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                        className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -736,7 +736,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                 key={rule.id || i}
                                 className={`p-2 rounded-lg ${
                                   rule.enabled
-                                    ? 'bg-purple-500/10 border border-purple-500/30'
+                                    ? 'bg-primary-500/10 border border-primary-500/30'
                                     : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent'
                                 }`}
                               >
@@ -744,7 +744,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                                   <span
                                     className={
                                       rule.enabled
-                                        ? 'text-purple-400'
+                                        ? 'text-primary-400'
                                         : 'text-slate-500 dark:text-slate-400'
                                     }
                                   >
@@ -924,7 +924,7 @@ const FeatureFlagModal: React.FC<{
           {saveError && (
             <div
               role="alert"
-              className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-300"
+              className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-sm text-rose-600 dark:text-rose-300"
             >
               {saveError}
             </div>
@@ -1040,7 +1040,7 @@ const FeatureFlagModal: React.FC<{
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-              className="w-4 h-4 text-purple-600 bg-white dark:bg-navy-950/20 border-slate-300 dark:border-white/10 rounded"
+              className="w-4 h-4 text-primary-600 bg-white dark:bg-navy-950/20 border-slate-300 dark:border-white/10 rounded"
             />
             <label htmlFor="enabled" className="text-sm text-slate-700 dark:text-slate-300">
               Enable flag immediately
@@ -1058,7 +1058,7 @@ const FeatureFlagModal: React.FC<{
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {flag ? 'Update' : 'Create'}

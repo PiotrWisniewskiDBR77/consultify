@@ -41,9 +41,9 @@ export default function PublicViewPage() {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 p-8 max-w-md text-center">
-          <h2 className="text-lg font-semibold text-red-800 dark:text-red-200">View Unavailable</h2>
-          <p className="mt-2 text-sm text-red-600 dark:text-red-300">{error}</p>
+        <div className="rounded-xl border border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-900/20 p-8 max-w-md text-center">
+          <h2 className="text-lg font-semibold text-rose-800 dark:text-rose-200">View Unavailable</h2>
+          <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">{error}</p>
         </div>
       </div>
     );

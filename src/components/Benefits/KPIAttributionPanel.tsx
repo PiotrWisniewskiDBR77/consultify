@@ -130,7 +130,7 @@ export const KPIAttributionPanel: React.FC = () => {
   if (loadingKpis) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -138,7 +138,7 @@ export const KPIAttributionPanel: React.FC = () => {
   if (kpis.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center p-6">
-        <PieChart className="w-12 h-12 text-purple-400/50 mb-3" />
+        <PieChart className="w-12 h-12 text-primary-400/50 mb-3" />
         <p className="text-lg text-slate-900 dark:text-white">
           {t('kpi.attribution.noMappings', 'No KPI Mappings Found')}
         </p>
@@ -175,7 +175,7 @@ export const KPIAttributionPanel: React.FC = () => {
 
       {loading && (
         <div className="flex items-center justify-center h-40">
-          <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+          <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
         </div>
       )}
 
@@ -229,8 +229,8 @@ export const KPIAttributionPanel: React.FC = () => {
             />
             <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Shield className="w-5 h-5 text-purple-400" />
+                <div className="p-2 bg-primary-500/10 rounded-lg">
+                  <Shield className="w-5 h-5 text-primary-400" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -323,7 +323,7 @@ export const KPIAttributionPanel: React.FC = () => {
                     <ConfBadge level={c.confidence} />
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-bold text-purple-500">
+                    <span className="text-sm font-bold text-primary-500">
                       {c.contributionPercent}%
                     </span>
                     <span className="text-sm text-slate-500">
@@ -385,14 +385,14 @@ export const KPIAttributionPanel: React.FC = () => {
 };
 
 const COLORS = [
-  '#8b5cf6',
-  '#06b6d4',
+  '#6366f1',
+  '#3b82f6',
   '#f59e0b',
-  '#ef4444',
+  '#f43f5e',
   '#22c55e',
   '#ec4899',
   '#3b82f6',
-  '#f97316',
+  '#f59e0b',
 ];
 
 const MetricCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({
@@ -415,7 +415,7 @@ const ConfBadge: React.FC<{ level: string }> = ({ level }) => {
   const cls: Record<string, string> = {
     high: 'bg-green-500/20 text-green-600 dark:text-green-400',
     medium: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
-    low: 'bg-red-500/20 text-red-600 dark:text-red-400',
+    low: 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
   };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls[level] || cls.low}`}>

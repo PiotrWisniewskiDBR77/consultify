@@ -152,7 +152,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2 mb-1">
-          <TestTube className="w-5 h-5 text-purple-500" />
+          <TestTube className="w-5 h-5 text-primary-500" />
           <h3 className="font-semibold text-slate-900 dark:text-white">
             Multi-Language Test Bench
           </h3>
@@ -185,7 +185,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
             value={sampleInput}
             onChange={(e) => setSampleInput(e.target.value)}
             placeholder="Enter test input..."
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             rows={2}
           />
           <div className="flex flex-wrap gap-2 mt-2">
@@ -212,7 +212,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
             </label>
             <button
               onClick={selectAllLanguages}
-              className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+              className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
             >
               Select All
             </button>
@@ -226,8 +226,8 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                   onClick={() => toggleLanguage(lang.code)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     isSelected
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-2 border-purple-500'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 border-2 border-primary-500'
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-primary-300'
                   }`}
                 >
                   <span>{lang.flag}</span>
@@ -242,7 +242,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
         <button
           onClick={runTests}
           disabled={!templateCode || selectedLanguages.length === 0 || isRunning}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isRunning ? (
             <>
@@ -287,7 +287,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                     ? 'text-green-600 dark:text-green-400'
                     : summary.languageAccuracy >= 0.8
                       ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-red-600 dark:text-red-400'
+                      : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {Math.round(summary.languageAccuracy * 100)}%
@@ -322,7 +322,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                     ) : result.success ? (
                       <AlertTriangle className="w-5 h-5 text-amber-500" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
+                      <XCircle className="w-5 h-5 text-rose-500" />
                     )}
                     <span className="text-lg">{lang.flag}</span>
                     <span className="font-medium text-slate-900 dark:text-white">{lang.name}</span>
@@ -356,7 +356,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700">
                     {result.error ? (
-                      <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+                      <div className="mt-3 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm">
                         {result.error}
                       </div>
                     ) : result.response ? (

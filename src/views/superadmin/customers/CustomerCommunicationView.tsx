@@ -273,7 +273,7 @@ const CustomerCommunicationView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -348,8 +348,8 @@ const CustomerCommunicationView: React.FC = () => {
               }}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <MessageSquare className="w-5 h-5 text-purple-400" />
+                <div className="p-2 bg-primary-500/20 rounded-lg">
+                  <MessageSquare className="w-5 h-5 text-primary-400" />
                 </div>
                 <div>
                   <p className="text-slate-900 dark:text-white font-medium">Announcement</p>
@@ -413,13 +413,13 @@ const CustomerCommunicationView: React.FC = () => {
                               comm.type === 'email'
                                 ? 'bg-blue-500/20'
                                 : comm.type === 'announcement'
-                                  ? 'bg-purple-500/20'
+                                  ? 'bg-primary-500/20'
                                   : 'bg-green-500/20'
                             }`}
                           >
                             {comm.type === 'email' && <Mail className="w-4 h-4 text-blue-400" />}
                             {comm.type === 'announcement' && (
-                              <MessageSquare className="w-4 h-4 text-purple-400" />
+                              <MessageSquare className="w-4 h-4 text-primary-400" />
                             )}
                             {comm.type === 'broadcast' && (
                               <Users className="w-4 h-4 text-green-400" />

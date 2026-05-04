@@ -206,7 +206,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -229,7 +229,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Clock size={28} className="text-purple-500" />
+            <Clock size={28} className="text-primary-500" />
             {t('settings.availability.title', 'Availability & Status')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -239,7 +239,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
@@ -261,7 +261,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
             'e.g., 🎉 On vacation until Jan 15'
           )}
           maxLength={100}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           {statusMessage.length} / 100 {t('settings.availability.characters', 'characters')}
@@ -420,7 +420,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
           </h3>
           <button
             onClick={addOutOfOffice}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.availability.addOOO', 'Add Period')}
@@ -479,7 +479,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
 
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -531,7 +531,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             {t('common.save', 'Save')}
           </button>
@@ -543,7 +543,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -595,7 +595,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="p-2 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-lg text-red-600"
+            className="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-rose-600"
           >
             <Trash2 size={16} />
           </button>

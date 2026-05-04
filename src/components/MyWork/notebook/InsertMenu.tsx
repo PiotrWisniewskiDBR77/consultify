@@ -12,7 +12,7 @@ import {
   Info,
   List,
   ListChecks,
-  ListOrdered,
+  ListOrderose,
   MessageSquare,
   Minus,
   Plus,
@@ -106,7 +106,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
                 'Delete block',
                 'Usuń blok',
                 () => deleteContainingBlock(editor),
-                <Trash2 size={14} className="text-red-500" />
+                <Trash2 size={14} className="text-rose-500" />
               )}
               {btn(
                 'Callout',
@@ -150,10 +150,10 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
                 <List size={14} className="text-slate-500" />
               )}
               {btn(
-                'Numbered list',
+                'Numberose list',
                 'Lista numerowana',
-                () => editor.chain().focus().toggleOrderedList().run(),
-                <ListOrdered size={14} className="text-slate-500" />
+                () => editor.chain().focus().toggleOrderoseList().run(),
+                <ListOrderose size={14} className="text-slate-500" />
               )}
               {btn(
                 'Checklist',
@@ -187,7 +187,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
               )}
             </div>
 
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-violet-500 px-1 pt-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-primary-500 px-1 pt-2">
               AI
             </div>
             <div className="space-y-0.5">
@@ -196,14 +196,14 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
                   'AI command',
                   'Polecenie AI',
                   onFocusAICommand,
-                  <Sparkles size={14} className="text-violet-500" />
+                  <Sparkles size={14} className="text-primary-500" />
                 )}
               {onOpenAIChat &&
                 btn(
                   'AI Chat',
                   'Czat AI',
                   onOpenAIChat,
-                  <MessageSquare size={14} className="text-violet-500" />
+                  <MessageSquare size={14} className="text-primary-500" />
                 )}
             </div>
           </div>

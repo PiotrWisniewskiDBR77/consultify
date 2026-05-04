@@ -301,7 +301,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         return (
           <Badge
             variant="outline"
-            className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+            className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800"
           >
             Alpha
           </Badge>
@@ -516,7 +516,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                         className={cn(
                           'p-2 rounded-lg',
                           feature.enabled
-                            ? 'bg-violet-100 dark:bg-violet-900/30'
+                            ? 'bg-primary-100 dark:bg-primary-900/30'
                             : 'bg-slate-100 dark:bg-slate-800'
                         )}
                       >
@@ -524,7 +524,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                           className={cn(
                             'w-5 h-5',
                             feature.enabled
-                              ? 'text-violet-600 dark:text-violet-400'
+                              ? 'text-primary-600 dark:text-primary-400'
                               : 'text-slate-400 dark:text-slate-500'
                           )}
                         />
@@ -609,7 +609,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                       className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
                     >
                       <div>
-                        <code className="text-sm font-mono text-violet-600 dark:text-violet-400">
+                        <code className="text-sm font-mono text-primary-600 dark:text-primary-400">
                           {flag.key}
                         </code>
                         {flag.description && (

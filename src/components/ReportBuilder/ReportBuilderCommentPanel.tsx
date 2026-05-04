@@ -80,7 +80,7 @@ const COMMENT_TYPE_CONFIG: Record<CommentType, { label: string; labelPl: string;
     QUESTION: {
       label: 'Question',
       labelPl: 'Pytanie',
-      color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+      color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
     },
     APPROVAL: {
       label: 'Approval',
@@ -90,7 +90,7 @@ const COMMENT_TYPE_CONFIG: Record<CommentType, { label: string; labelPl: string;
     REJECTION: {
       label: 'Rejection',
       labelPl: 'Odrzucenie',
-      color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
     },
     CHANGE_REQUEST: {
       label: 'Change Request',
@@ -232,7 +232,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
       <div className="shrink-0 px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-purple-500" />
+            <MessageSquare className="w-5 h-5 text-primary-500" />
             <div>
               <h3 className="font-semibold text-navy-900 dark:text-white">
                 {isPl ? 'Komentarze' : 'Comments'}
@@ -289,7 +289,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                 onClick={() => setFilterStatus(f)}
                 className={`px-2 py-1 text-xs rounded ${
                   filterStatus === f
-                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                     : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
                 }`}
               >
@@ -314,7 +314,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+            <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
           </div>
         ) : filteredComments.length === 0 ? (
           <div className="text-center py-8">
@@ -427,7 +427,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                     )}
                     <button
                       onClick={() => onDeleteComment(comment.id)}
-                      className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 rounded"
+                      className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -479,7 +479,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={isPl ? 'Dodaj komentarz...' : 'Add a comment...'}
               rows={2}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-navy-900 dark:text-white resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-navy-900 dark:text-white resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                   handleSubmit();
@@ -492,7 +492,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             disabled={!newComment.trim() || submitting}
             className={`p-2 rounded-lg transition-colors ${
               newComment.trim() && !submitting
-                ? 'bg-purple-600 text-white hover:bg-purple-500'
+                ? 'bg-primary-600 text-white hover:bg-primary-500'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
             }`}
           >

@@ -12,6 +12,7 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
 
 import {
   buildInterviewReportPackExportManifest,
+  buildInterviewReportPackMarkdownExport,
   buildInterviewReportPackDraft,
   createInterviewReportPackDraft,
   createInterviewReportPackRevision,
@@ -133,11 +134,139 @@ describe('interviewInsightReportPackService', () => {
     );
     const appendix = pack.worksheets.find((worksheet) => worksheet.key === 'appendix_provenance');
 
-    expect(materialQuality?.status).toBe('empty');
+    expect(materialQuality?.status).toBe('degraded');
     expect(evidenceRegister?.status).toBe('degraded');
     expect(appendix?.status).toBe('degraded');
     expect(pack.degraded).toBe(true);
+    expect(pack.degradedReasons.join('\n')).toContain('Material Quality was not generated.');
     expect(pack.degradedReasons.join('\n')).toContain('Removed invalid evidence_refs');
+  });
+
+  it('degrades material quality and recommendations when confidence downgrade is required', () => {
+    const pack = buildInterviewReportPackDraft({
+      id: 'insight-thin',
+      title: 'Thin material',
+      sourceSessionIds: ['session-1'],
+      materialQuality: {
+        overall_material_score: 38,
+        answer_quality_posture: 'poor',
+        coverage_posture: 'single_perspective',
+        confidence_downgrade_required: true,
+        recommendation_posture: 'hypothesis_only',
+      },
+      opportunities: [
+        {
+          title: 'Clarify ownership',
+          description: 'Clarify ownership model.',
+          evidence_refs: ['answer-1'],
+          impact: 'high',
+        },
+      ],
+    });
+
+    const materialQuality = pack.worksheets.find(
+      (worksheet) => worksheet.key === 'material_quality'
+    );
+    const recommendations = pack.worksheets.find(
+      (worksheet) => worksheet.key === 'recommendations_and_action_plan'
+    );
+
+    expect(materialQuality?.status).toBe('degraded');
+    expect(recommendations?.status).toBe('degraded');
+    expect(recommendations?.rows[0]).toEqual(
+      expect.objectContaining({
+        recommendationType: 'hypothesis',
+        recommendationPosture: 'hypothesis_only',
+        confidenceDowngradeRequired: true,
+      })
+    );
+    expect(pack.degradedReasons.join('\n')).toContain('Recommendation posture is hypothesis_only');
+  });
+
+  it('projects organization context document lineage into source register and provenance', () => {
+    const pack = buildInterviewReportPackDraft({
+      id: 'insight-context',
+      title: 'Context lineage',
+      sourceSessionIds: ['session-1'],
+      executiveSummary: 'Summary',
+      materialQuality: {
+        overall_material_score: 82,
+        answer_quality_posture: 'strong',
+        coverage_posture: 'good_coverage',
+        confidence_downgrade_required: false,
+        recommendation_posture: 'decision_ready',
+      },
+      generationContext: {
+        contextDocuments: {
+          requestedIds: ['doc-used', 'doc-selected', 'doc-missing'],
+          selectedIds: ['doc-used', 'doc-selected'],
+          degraded: true,
+          degradedReasons: ['some_documents_not_accessible'],
+          documents: [
+            {
+              id: 'doc-used',
+              filename: 'strategy.pdf',
+              status: 'ready',
+              scope: 'project',
+              projectId: 'project-1',
+              ownerId: 'user-1',
+              version: 2,
+              uploadedAt: '2026-05-03T10:00:00.000Z',
+              usedChunkCount: 1,
+              chunks: [{ chunkId: 'chunk-1', excerpt: 'Strategy excerpt' }],
+            },
+            {
+              id: 'doc-selected',
+              filename: 'policy.pdf',
+              status: 'ready',
+              scope: 'project',
+              projectId: 'project-1',
+              ownerId: 'user-1',
+              version: 1,
+              uploadedAt: '2026-05-03T11:00:00.000Z',
+              usedChunkCount: 0,
+              chunks: [],
+            },
+          ],
+        },
+      },
+    });
+
+    const sourceRegister = pack.worksheets.find((worksheet) => worksheet.key === 'source_register');
+    const appendix = pack.worksheets.find((worksheet) => worksheet.key === 'appendix_provenance');
+
+    expect(sourceRegister?.status).toBe('degraded');
+    expect(sourceRegister?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceType: 'organization_context_document',
+          documentId: 'doc-used',
+          usageStatus: 'used_in_generation',
+          usedChunkCount: 1,
+        }),
+        expect.objectContaining({
+          sourceType: 'organization_context_document',
+          documentId: 'doc-selected',
+          usageStatus: 'selected_not_used',
+          usedChunkCount: 0,
+        }),
+        expect.objectContaining({
+          sourceType: 'organization_context_document',
+          documentId: 'doc-missing',
+          usageStatus: 'not_used',
+        }),
+      ])
+    );
+    expect(appendix?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceType: 'organization_context_document',
+          documentId: 'doc-used',
+        }),
+      ])
+    );
+    expect(pack.degradedReasons.join('\n')).toContain('some_documents_not_accessible');
+    expect(pack.degradedReasons.join('\n')).toContain('selected but no chunks were used');
   });
 
   it('persists a report pack draft once and returns existing drafts without overwriting worksheets', async () => {
@@ -637,6 +766,46 @@ describe('interviewInsightReportPackService', () => {
     expect(manifest?.worksheets[0]).toEqual(
       expect.objectContaining({ key: 'executive_summary', status: 'generated' })
     );
+  });
+
+  it('builds a client-ready Markdown export for a published report pack', async () => {
+    queryOneMock.mockResolvedValueOnce({
+      id: 'irp_insight-12-md',
+      organization_id: 'org-1',
+      insight_id: 'insight-12-md',
+      title: 'Published Markdown Report Pack',
+      status: 'published',
+      completeness_score: 100,
+      degraded: 0,
+      degraded_reasons_json: '[]',
+    });
+    queryAllMock.mockResolvedValueOnce(
+      REQUIRED_INTERVIEW_REPORT_WORKSHEETS.map((worksheet, index) => ({
+        worksheet_key: worksheet.key,
+        title: worksheet.title,
+        required: 1,
+        status: 'generated',
+        completeness_score: 100,
+        warnings_json: '[]',
+        rows_json: index === 0 ? '[{"summary":"ready"}]' : '[{"ready":true}]',
+        markdown: index === 0 ? 'Executive summary markdown.' : null,
+        sort_order: index,
+      }))
+    );
+
+    const markdownExport = await buildInterviewReportPackMarkdownExport({
+      organizationId: 'org-1',
+      insightId: 'insight-12-md',
+    });
+
+    expect(markdownExport?.status).toBe('published');
+    expect(markdownExport?.format).toBe('markdown');
+    expect(markdownExport?.sourceManifestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(markdownExport?.exportHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(markdownExport?.filename).toBe('irp_insight-12-md-client-report.md');
+    expect(markdownExport?.markdown).toContain('# Published Markdown Report Pack');
+    expect(markdownExport?.markdown).toContain('## Executive Summary');
+    expect(markdownExport?.markdown).toContain('Source manifest hash:');
   });
 
   it('blocks revision creation when the report pack is not published', async () => {

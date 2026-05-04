@@ -50,10 +50,10 @@ const STAGE_COLORS = [
   '#3B82F6', // Blue
   '#10B981', // Green
   '#F59E0B', // Amber
-  '#EF4444', // Red
-  '#8B5CF6', // Purple
+  '#F43F5E', // Red
+  '#6366F1', // Purple
   '#EC4899', // Pink
-  '#06B6D4', // Cyan
+  '#3B82F6', // Cyan
   '#6B7280', // Gray
 ];
 
@@ -410,7 +410,7 @@ const CustomerLifecycleView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -452,8 +452,8 @@ const CustomerLifecycleView: React.FC = () => {
             </Card>
             <Card padding="sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <ArrowRight className="w-5 h-5 text-purple-400" />
+                <div className="p-2 bg-primary-500/20 rounded-lg">
+                  <ArrowRight className="w-5 h-5 text-primary-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -528,9 +528,9 @@ const CustomerLifecycleView: React.FC = () => {
                               <button
                                 onClick={() => handleDeleteStage(stage.id)}
                                 aria-label={`Delete lifecycle stage ${stage.id}`}
-                                className="p-1 hover:bg-red-600/20 rounded"
+                                className="p-1 hover:bg-rose-600/20 rounded"
                               >
-                                <Trash2 className="w-3 h-3 text-red-400" />
+                                <Trash2 className="w-3 h-3 text-rose-400" />
                               </button>
                             </div>
                           </div>

@@ -97,9 +97,9 @@ const STATUS_CONFIG = {
   },
   missing: {
     icon: XCircle,
-    color: 'text-red-500',
-    bg: 'bg-red-50 dark:bg-red-500/10',
-    border: 'border-red-200 dark:border-red-500/20',
+    color: 'text-rose-500',
+    bg: 'bg-rose-50 dark:bg-rose-500/10',
+    border: 'border-rose-200 dark:border-rose-500/20',
   },
   unknown: {
     icon: HelpCircle,
@@ -110,12 +110,12 @@ const STATUS_CONFIG = {
 };
 
 const RECOMMENDATION_LABELS: Record<string, { en: string; pl: string; color: string }> = {
-  hire: { en: 'Hire', pl: 'Rekrutuj', color: 'text-red-600 bg-red-50 dark:bg-red-500/10' },
+  hire: { en: 'Hire', pl: 'Rekrutuj', color: 'text-rose-600 bg-rose-50 dark:bg-rose-500/10' },
   train: { en: 'Train', pl: 'Szkolenie', color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10' },
   outsource: {
     en: 'Outsource',
     pl: 'Outsource',
-    color: 'text-purple-600 bg-purple-50 dark:bg-purple-500/10',
+    color: 'text-primary-600 bg-primary-50 dark:bg-primary-500/10',
   },
   resequence: {
     en: 'Resequence',
@@ -153,7 +153,7 @@ export const SkillsGapSection: React.FC<InitiativeSectionProps> = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="animate-spin text-purple-500" size={20} />
+        <Loader2 className="animate-spin text-primary-500" size={20} />
       </div>
     );
   }
@@ -182,7 +182,7 @@ export const SkillsGapSection: React.FC<InitiativeSectionProps> = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BarChart3 size={16} className="text-purple-500" />
+          <BarChart3 size={16} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             {t('skillsGap.title', 'Skills Gap Analysis')}
           </h3>
@@ -238,7 +238,7 @@ export const SkillsGapSection: React.FC<InitiativeSectionProps> = () => {
             onClick={() => setActiveTab(key)}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
               activeTab === key
-                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -286,7 +286,7 @@ const RequirementsView: React.FC<{ gap: GapSummary; isPl: boolean }> = ({ gap, i
               </div>
               <div className="flex items-center gap-2">
                 {req.priority === 'required' && (
-                  <span className="text-[10px] font-medium text-red-600 dark:text-red-400">
+                  <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
                     {t('skillsGap.mustHave', 'Must-have')}
                   </span>
                 )}
@@ -353,7 +353,7 @@ const PersonsView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
                   person.hasProfile
-                    ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400'
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-400'
                 }`}
               >
@@ -386,10 +386,10 @@ const PersonsView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
               {person.gaps.map((g) => (
                 <div
                   key={g.capabilityId}
-                  className="flex items-center justify-between text-[10px] px-2 py-1 rounded bg-red-50 dark:bg-red-500/10"
+                  className="flex items-center justify-between text-[10px] px-2 py-1 rounded bg-rose-50 dark:bg-rose-500/10"
                 >
-                  <span className="text-red-700 dark:text-red-400">{g.capabilityName}</span>
-                  <span className="text-red-500 font-mono">
+                  <span className="text-rose-700 dark:text-rose-400">{g.capabilityName}</span>
+                  <span className="text-rose-500 font-mono">
                     L{g.actual} &rarr; L{g.required}
                   </span>
                 </div>
@@ -453,7 +453,7 @@ const SummaryView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
           )}
           {gap.missing > 0 && (
             <div
-              className="bg-red-500 transition-all"
+              className="bg-rose-500 transition-all"
               style={{ width: `${(gap.missing / total) * 100}%` }}
             />
           )}
@@ -481,7 +481,7 @@ const SummaryView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
           <div className="text-xs text-slate-500 mb-1">
             {t('skillsGap.summary.mustHaveGaps', 'Must-Have Gaps')}
           </div>
-          <div className="text-lg font-bold text-red-600 dark:text-red-400">
+          <div className="text-lg font-bold text-rose-600 dark:text-rose-400">
             {
               gap.requirements.filter((r) => r.priority === 'required' && r.status !== 'covered')
                 .length

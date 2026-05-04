@@ -27,10 +27,10 @@ const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
 const SOURCE_TYPES = [
   { type: 'initiative_portfolio', icon: 'Target', color: 'text-blue-500' },
   { type: 'kpi_roi', icon: 'TrendingUp', color: 'text-amber-500' },
-  { type: 'assessment', icon: 'FileText', color: 'text-purple-500' },
-  { type: 'raid', icon: 'Shield', color: 'text-red-500' },
+  { type: 'assessment', icon: 'FileText', color: 'text-primary-500' },
+  { type: 'raid', icon: 'Shield', color: 'text-rose-500' },
   { type: 'execution_status', icon: 'ClipboardList', color: 'text-emerald-500' },
-  { type: 'tool_session', icon: 'Zap', color: 'text-cyan-500' },
+  { type: 'tool_session', icon: 'Zap', color: 'text-blue-500' },
 ];
 
 interface SourceStepProps {
@@ -70,7 +70,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               onClick={() => onToggleSource(type)}
               className={`p-5 rounded-xl border-2 text-left transition-all ${
                 selected
-                  ? 'border-purple-500 bg-purple-500/5 shadow-lg shadow-purple-500/10'
+                  ? 'border-primary-500 bg-primary-500/5 shadow-lg shadow-primary-500/10'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
@@ -79,7 +79,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                 {t(`presentations.sources.${type}`, type.replace(/_/g, ' '))}
               </p>
               {selected && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-purple-500 font-medium">
+                <div className="mt-2 flex items-center gap-1 text-xs text-primary-500 font-medium">
                   <Check size={12} /> {t('common.selected', 'Selected')}
                 </div>
               )}
@@ -92,7 +92,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
         <button
           onClick={onNext}
           disabled={selectedSources.length === 0}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('common.next', 'Next')} <ArrowRight size={16} />
         </button>

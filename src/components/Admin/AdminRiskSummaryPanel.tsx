@@ -110,7 +110,7 @@ export const AdminRiskSummaryPanel: React.FC = () => {
         action={
           <button
             onClick={() => void loadSummary()}
-            className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-500"
+            className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500"
           >
             Retry risk summary
           </button>
@@ -146,7 +146,7 @@ export const AdminRiskSummaryPanel: React.FC = () => {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-          <FileText className="h-5 w-5 text-violet-500" />
+          <FileText className="h-5 w-5 text-primary-500" />
           Risk follow-up queue
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">

@@ -116,7 +116,7 @@ export const TokenBillingManagementView = () => {
           <KPICard
             title="System Balance"
             value={(stats.balance / 1000).toFixed(1) + 'k'}
-            icon={<DollarSign size={20} className="text-purple-400" />}
+            icon={<DollarSign size={20} className="text-primary-400" />}
             loading={loading}
             subtext="Current admin tokens"
           />

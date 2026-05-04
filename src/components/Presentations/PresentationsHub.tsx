@@ -73,8 +73,8 @@ const SOURCE_TYPE_META: Record<
   },
   assessment: {
     labelKey: 'presentations.sourceType.assessment',
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500/20',
+    color: 'text-primary-400',
+    bgColor: 'bg-primary-500/20',
   },
   finance: {
     labelKey: 'presentations.sourceType.finance',
@@ -608,7 +608,7 @@ export const PresentationsHub: React.FC = () => {
                   </p>
                   <button
                     onClick={() => navigate(`/presentations/builder/${activeDocumentId}`)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-500 transition-colors font-medium mb-4"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white hover:bg-primary-500 transition-colors font-medium mb-4"
                   >
                     <Presentation size={16} />
                     {t('presentations.openEditor', 'Open Editor')}

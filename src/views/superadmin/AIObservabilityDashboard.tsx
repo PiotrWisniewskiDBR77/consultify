@@ -169,10 +169,10 @@ const AIObservabilityDashboard: React.FC = () => {
       </div>
 
       {alerts.length > 0 && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-            <span className="text-red-300 font-semibold">
+            <AlertTriangle className="w-5 h-5 text-rose-400" />
+            <span className="text-rose-300 font-semibold">
               {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}
             </span>
           </div>
@@ -182,7 +182,7 @@ const AIObservabilityDashboard: React.FC = () => {
                 <span
                   className={`px-2 py-0.5 rounded text-xs font-medium ${
                     alert.severity === 'critical'
-                      ? 'bg-red-500/20 text-red-300'
+                      ? 'bg-rose-500/20 text-rose-300'
                       : 'bg-yellow-500/20 text-yellow-300'
                   }`}
                 >
@@ -232,7 +232,7 @@ const AIObservabilityDashboard: React.FC = () => {
           label="Safety Refusals"
           value={metrics.safety.totalRefusals.toString()}
           sub={pct(metrics.safety.refusalRate)}
-          color="text-orange-400"
+          color="text-amber-400"
         />
         <MetricCard
           icon={<MessageSquare className="w-4 h-4" />}
@@ -247,7 +247,7 @@ const AIObservabilityDashboard: React.FC = () => {
         {/* Grounding & Confidence */}
         <div className="rounded-xl border border-white/10 bg-white/5 p-5">
           <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
-            <FileSearch className="w-4 h-4 text-purple-400" /> Grounding & Citation
+            <FileSearch className="w-4 h-4 text-primary-400" /> Grounding & Citation
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
@@ -278,7 +278,7 @@ const AIObservabilityDashboard: React.FC = () => {
         {/* RAG Performance */}
         <div className="rounded-xl border border-white/10 bg-white/5 p-5">
           <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-cyan-400" /> RAG Performance
+            <TrendingUp className="w-4 h-4 text-blue-400" /> RAG Performance
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
@@ -302,7 +302,7 @@ const AIObservabilityDashboard: React.FC = () => {
             {metrics.evalRegression.passesGate ? (
               <CheckCircle className="w-4 h-4 text-green-400" />
             ) : (
-              <XCircle className="w-4 h-4 text-red-400" />
+              <XCircle className="w-4 h-4 text-rose-400" />
             )}{' '}
             Eval Regression Gate
           </h3>
@@ -310,7 +310,7 @@ const AIObservabilityDashboard: React.FC = () => {
             <div className="flex justify-between">
               <span className="text-white/50 text-sm">Status</span>
               <span
-                className={`font-medium ${metrics.evalRegression.passesGate ? 'text-green-400' : 'text-red-400'}`}
+                className={`font-medium ${metrics.evalRegression.passesGate ? 'text-green-400' : 'text-rose-400'}`}
               >
                 {metrics.evalRegression.passesGate == null
                   ? 'No runs'

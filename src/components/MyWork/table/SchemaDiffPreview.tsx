@@ -124,7 +124,7 @@ function getChangeColor(type: DiffChange['type']): string {
       return 'bg-amber-500/10 border-amber-500/30 dark:bg-amber-500/15';
     case 'delete_field':
     case 'delete_table':
-      return 'bg-red-500/10 border-red-500/30 dark:bg-red-500/15';
+      return 'bg-rose-500/10 border-rose-500/30 dark:bg-rose-500/15';
     default:
       return '';
   }
@@ -139,7 +139,7 @@ function getChangeIcon(type: DiffChange['type']): React.ReactNode {
       return <RefreshCw size={10} className="text-amber-600 dark:text-amber-400" />;
     case 'delete_field':
     case 'delete_table':
-      return <Minus size={10} className="text-red-600 dark:text-red-400" />;
+      return <Minus size={10} className="text-rose-600 dark:text-rose-400" />;
     default:
       return null;
   }
@@ -169,7 +169,7 @@ const FieldRow: React.FC<{
         {field.type}
       </span>
       {field.required && (
-        <span className="text-[9px] text-red-500 font-semibold">
+        <span className="text-[9px] text-rose-500 font-semibold">
           {isPl ? 'wymagane' : 'required'}
         </span>
       )}
@@ -194,15 +194,15 @@ const FieldRow: React.FC<{
 };
 
 const DeletedFieldRow: React.FC<{ field: DiffField }> = ({ field }) => (
-  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent bg-red-500/10 dark:bg-red-500/15 border-red-500/30 line-through opacity-60">
-    <Columns3 size={12} className="text-red-400 flex-shrink-0" />
-    <span className="text-xs font-medium text-red-700 dark:text-red-300 min-w-[100px]">
+  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-transparent bg-rose-500/10 dark:bg-rose-500/15 border-rose-500/30 line-through opacity-60">
+    <Columns3 size={12} className="text-rose-400 flex-shrink-0" />
+    <span className="text-xs font-medium text-rose-700 dark:text-rose-300 min-w-[100px]">
       {field.name}
     </span>
-    <span className="text-[10px] text-red-500 font-mono px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30">
+    <span className="text-[10px] text-rose-500 font-mono px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/30">
       {field.type}
     </span>
-    <Minus size={10} className="text-red-600 dark:text-red-400 ml-auto" />
+    <Minus size={10} className="text-rose-600 dark:text-rose-400 ml-auto" />
   </div>
 );
 
@@ -219,7 +219,7 @@ const TableSection: React.FC<{
   const tableBg = isNew
     ? 'border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10'
     : isDeleted
-      ? 'border-red-500/30 bg-red-500/5 dark:bg-red-500/10 opacity-60'
+      ? 'border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 opacity-60'
       : 'border-slate-200/60 dark:border-zinc-700/60';
 
   return (
@@ -239,12 +239,12 @@ const TableSection: React.FC<{
             isNew
               ? 'text-emerald-600 dark:text-emerald-400'
               : isDeleted
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-violet-600 dark:text-violet-400'
+                ? 'text-rose-600 dark:text-rose-400'
+                : 'text-primary-600 dark:text-primary-400'
           }
         />
         <span
-          className={`text-xs font-semibold ${isDeleted ? 'text-red-700 dark:text-red-300 line-through' : 'text-slate-700 dark:text-zinc-200'}`}
+          className={`text-xs font-semibold ${isDeleted ? 'text-rose-700 dark:text-rose-300 line-through' : 'text-slate-700 dark:text-zinc-200'}`}
         >
           {table.name}
         </span>
@@ -333,7 +333,7 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
               </span>
             )}
             {delCount > 0 && (
-              <span className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold bg-red-500/15 text-red-700 dark:text-red-300">
+              <span className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-300">
                 <Minus size={9} /> {delCount}
               </span>
             )}
@@ -411,7 +411,7 @@ export const SchemaDiffPreview: React.FC<SchemaDiffPreviewProps> = ({
             {isPl ? 'Zmienione' : 'Modified'}
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
             {isPl ? 'Usunięte' : 'Deleted'}
           </span>
         </div>

@@ -173,7 +173,7 @@ const TableAIMenu: React.FC<{
           onToggle();
         }}
         disabled={busy}
-        className="p-1 rounded-md text-violet-500 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+        className="p-1 rounded-md text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
         title={isPolish ? 'AI' : 'AI'}
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
@@ -219,8 +219,8 @@ const statusBadgeClass = (status: string): string => {
   const map: Record<string, string> = {
     planned: 'bg-slate-100 dark:bg-slate-500/10 text-slate-600 dark:text-slate-400',
     active: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-300',
-    deprecated: 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400',
-    expired: 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400',
+    deprecated: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    expired: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400',
     renewed: 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300',
   };
   return map[status] || map.planned;
@@ -1749,7 +1749,7 @@ export const ResourcesSection: React.FC = () => {
               <button
                 onClick={() => void applyProposal()}
                 disabled={aiBusy || !hasAnyAdd}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {aiBusy ? <Loader2 size={13} className="animate-spin" /> : null}
                 {isPolish ? 'Zastosuj' : 'Apply'}
@@ -1990,7 +1990,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
                           {isPolish ? 'Usuń' : 'Delete'}
@@ -2188,7 +2188,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <Users size={16} className="text-teal-500" />
+          <Users size={16} className="text-blue-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPolish ? 'Zespół / Alokacja FTE' : 'Team / FTE Allocation'}
           </h3>
@@ -2198,7 +2198,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
             </span>
           )}
           {items.length > 0 && (
-            <span className="text-[10px] font-medium text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-full">
               {totalFTE.toFixed(1)} FTE
             </span>
           )}
@@ -2271,7 +2271,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                       (item.firstName ? `${item.firstName} ${item.lastName || ''}`.trim() : '—')}
                   </td>
                   <td className="py-2.5 pr-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">
                       {ROLE_OPTIONS.find((r) => r.value === item.role)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] ||
@@ -2313,7 +2313,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
                           {isPolish ? 'Usuń' : 'Delete'}
@@ -2328,7 +2328,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
               <motion.tr
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-teal-50/30 dark:bg-teal-500/5"
+                className="bg-blue-50/30 dark:bg-blue-500/5"
               >
                 <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
                   {items.length + 1}
@@ -2407,7 +2407,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                     <button
                       onClick={handleSubmit}
                       disabled={!newName.trim()}
-                      className="p-1 rounded-md text-teal-500 hover:bg-teal-500/10 disabled:opacity-30 transition-colors"
+                      className="p-1 rounded-md text-blue-500 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
                       title={isPolish ? 'Zapisz' : 'Save'}
                     >
                       <Check size={14} />
@@ -2437,7 +2437,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
       {items.length > 0 && (
         <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
           {isPolish ? 'Łączne FTE' : 'Total FTE'}:{' '}
-          <span className="ml-1 font-semibold text-teal-600 dark:text-teal-400">
+          <span className="ml-1 font-semibold text-blue-600 dark:text-blue-400">
             {totalFTE.toFixed(1)}
           </span>
         </div>
@@ -2628,7 +2628,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
                           {isPolish ? 'Usuń' : 'Delete'}
@@ -2851,7 +2851,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
   const typeIcon = (assetType: string) => {
     switch (assetType) {
       case 'training':
-        return <GraduationCap size={12} className="text-purple-400 flex-shrink-0" />;
+        return <GraduationCap size={12} className="text-primary-400 flex-shrink-0" />;
       case 'certification':
         return <BookOpen size={12} className="text-blue-400 flex-shrink-0" />;
       case 'knowledge':
@@ -2865,7 +2865,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <GraduationCap size={16} className="text-purple-500" />
+          <GraduationCap size={16} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPolish
               ? 'Licencje, szkolenia i wartości niematerialne'
@@ -2877,7 +2877,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
             </span>
           )}
           {items.length > 0 && totalCost > 0 && (
-            <span className="text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 rounded-full">
               {fmtCurrency(totalCost, cur, isPolish)}
             </span>
           )}
@@ -2998,7 +2998,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                             setMenuId(null);
                             void onDelete(item.id);
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
                           {isPolish ? 'Usuń' : 'Delete'}
@@ -3013,7 +3013,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
               <motion.tr
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-purple-50/30 dark:bg-purple-500/5"
+                className="bg-primary-50/30 dark:bg-primary-500/5"
               >
                 <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
                   {items.length + 1}
@@ -3103,7 +3103,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                     <button
                       onClick={handleSubmit}
                       disabled={!newName.trim()}
-                      className="p-1 rounded-md text-purple-500 hover:bg-purple-500/10 disabled:opacity-30 transition-colors"
+                      className="p-1 rounded-md text-primary-500 hover:bg-primary-500/10 disabled:opacity-30 transition-colors"
                       title={isPolish ? 'Zapisz' : 'Save'}
                     >
                       <Check size={14} />
@@ -3133,7 +3133,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
       {items.length > 0 && totalCost > 0 && (
         <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
           {isPolish ? 'Łączny koszt' : 'Total cost'}:{' '}
-          <span className="ml-1 font-semibold text-purple-600 dark:text-purple-400">
+          <span className="ml-1 font-semibold text-primary-600 dark:text-primary-400">
             {fmtCurrency(totalCost, cur, isPolish)}
           </span>
         </div>

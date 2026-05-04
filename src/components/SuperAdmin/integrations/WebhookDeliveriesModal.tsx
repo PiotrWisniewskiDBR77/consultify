@@ -106,13 +106,13 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
     if (delivery.next_retry_at) {
       return <Clock size={16} className="text-amber-400" />;
     }
-    return <XCircle size={16} className="text-red-400" />;
+    return <XCircle size={16} className="text-rose-400" />;
   };
 
   const getStatusColor = (status: number) => {
     if (status >= 200 && status < 300) return 'text-emerald-400';
     if (status >= 400 && status < 500) return 'text-amber-400';
-    return 'text-red-400';
+    return 'text-rose-400';
   };
 
   return (
@@ -149,7 +149,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 size={32} className="animate-spin text-violet-500" />
+              <Loader2 size={32} className="animate-spin text-primary-500" />
             </div>
           ) : deliveries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
@@ -201,7 +201,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                             handleRetry(delivery.id);
                           }}
                           disabled={retryingIds.has(delivery.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 rounded-lg text-sm transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 rounded-lg text-sm transition-colors disabled:opacity-50"
                         >
                           {retryingIds.has(delivery.id) ? (
                             <Loader2 size={14} className="animate-spin" />
@@ -223,9 +223,9 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                   {expandedId === delivery.id && (
                     <div className="border-t border-white/[0.06] p-4 space-y-4">
                       {delivery.error_message && (
-                        <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                          <AlertTriangle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-red-300">{delivery.error_message}</span>
+                        <div className="flex items-start gap-2 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg">
+                          <AlertTriangle size={16} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-rose-300">{delivery.error_message}</span>
                         </div>
                       )}
 

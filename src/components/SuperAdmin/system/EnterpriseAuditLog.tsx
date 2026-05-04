@@ -84,16 +84,16 @@ interface FilterState {
 const RISK_LEVELS = {
   LOW: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Info },
   MEDIUM: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
-  HIGH: { color: 'bg-orange-500', text: 'text-orange-400', icon: AlertCircle },
-  CRITICAL: { color: 'bg-red-500', text: 'text-red-400', icon: Shield },
+  HIGH: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertCircle },
+  CRITICAL: { color: 'bg-rose-500', text: 'text-rose-400', icon: Shield },
 };
 
 const COMPLIANCE_TAGS = [
   { id: 'GDPR', name: 'GDPR', color: 'bg-blue-500/20 text-blue-400' },
-  { id: 'SOC2', name: 'SOC2', color: 'bg-purple-500/20 text-purple-400' },
+  { id: 'SOC2', name: 'SOC2', color: 'bg-primary-500/20 text-primary-400' },
   { id: 'ISO27001', name: 'ISO 27001', color: 'bg-emerald-500/20 text-emerald-400' },
   { id: 'HIPAA', name: 'HIPAA', color: 'bg-pink-500/20 text-pink-400' },
-  { id: 'PMO', name: 'PMO Audit', color: 'bg-cyan-500/20 text-cyan-400' },
+  { id: 'PMO', name: 'PMO Audit', color: 'bg-blue-500/20 text-blue-400' },
 ];
 
 const ACTION_TYPES = [
@@ -422,7 +422,7 @@ export const EnterpriseAuditLog: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -452,13 +452,13 @@ export const EnterpriseAuditLog: React.FC = () => {
               <div className="text-sm text-slate-400 dark:text-slate-500">Medium Risk</div>
               <div className="text-2xl font-bold text-amber-400 mt-1">{stats.medium_risk || 0}</div>
             </div>
-            <div className="p-4 bg-orange-500/10 rounded-xl border border-orange-500/30">
+            <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
               <div className="text-sm text-slate-400 dark:text-slate-500">High Risk</div>
-              <div className="text-2xl font-bold text-orange-400 mt-1">{stats.high_risk || 0}</div>
+              <div className="text-2xl font-bold text-amber-400 mt-1">{stats.high_risk || 0}</div>
             </div>
-            <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
+            <div className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/30">
               <div className="text-sm text-slate-400 dark:text-slate-500">Critical</div>
-              <div className="text-2xl font-bold text-red-400 mt-1">{stats.critical_risk || 0}</div>
+              <div className="text-2xl font-bold text-rose-400 mt-1">{stats.critical_risk || 0}</div>
             </div>
           </div>
         )
@@ -478,14 +478,14 @@ export const EnterpriseAuditLog: React.FC = () => {
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               disabled={!!loadError}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <select
             value={filters.riskLevel}
             onChange={(e) => setFilters({ ...filters, riskLevel: e.target.value })}
             disabled={!!loadError}
-            className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="ALL">All Risk Levels</option>
             <option value="LOW">Low</option>
@@ -498,7 +498,7 @@ export const EnterpriseAuditLog: React.FC = () => {
             disabled={!!loadError}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters
-                ? 'bg-purple-600 border-purple-500 text-white'
+                ? 'bg-primary-600 border-primary-500 text-white'
                 : 'bg-white/5 border-white/10 text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/40'
             }`}
           >
@@ -869,7 +869,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               {/* Activity by Action Type */}
               <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                 <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-cyan-400" />
+                  <Activity className="w-4 h-4 text-blue-400" />
                   Activity by Action Type
                 </h3>
                 <div className="space-y-3">
@@ -883,7 +883,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                         </div>
                         <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
+                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
                             style={{ width: `${(count / analyticsActionMax) * 100}%` }}
                           />
                         </div>
@@ -896,7 +896,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               {/* Risk Distribution */}
               <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                 <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-purple-400" />
+                  <Shield className="w-4 h-4 text-primary-400" />
                   Risk Distribution
                 </h3>
                 <div className="space-y-3">

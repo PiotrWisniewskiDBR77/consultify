@@ -224,7 +224,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                 </button>
               )}
               <div className="flex items-center gap-2">
-                <Book size={24} className="text-purple-600" />
+                <Book size={24} className="text-primary-600" />
                 <h1 className="text-xl font-bold text-slate-900 dark:text-white">
                   {text.title[lang]}
                 </h1>
@@ -243,7 +243,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={text.search[lang]}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 border border-transparent focus:border-purple-500 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 outline-none"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 border border-transparent focus:border-primary-500 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 outline-none"
                 />
               </div>
             </div>
@@ -275,7 +275,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
                   !selectedModule
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
@@ -298,7 +298,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                       }}
                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
                         isSelected
-                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -327,7 +327,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                             onClick={() => selectContent(id as HelpModuleId, 'card', card.id)}
                             className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left ${
                               selectedContent?.type === 'card' && selectedContent?.id === card.id
-                                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                             }`}
                           >
@@ -364,15 +364,15 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                         }
                         className="w-full flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left transition-colors"
                       >
-                        <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
                           {result.type === 'module' && (
-                            <Book size={16} className="text-purple-600" />
+                            <Book size={16} className="text-primary-600" />
                           )}
                           {result.type === 'card' && (
-                            <FileText size={16} className="text-purple-600" />
+                            <FileText size={16} className="text-primary-600" />
                           )}
                           {result.type === 'faq' && (
-                            <HelpCircle size={16} className="text-purple-600" />
+                            <HelpCircle size={16} className="text-primary-600" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -396,7 +396,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                 {!selectedContent ? (
                   // Welcome / Overview
                   <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-sm text-center">
-                    <Book size={48} className="mx-auto text-purple-500 mb-4" />
+                    <Book size={48} className="mx-auto text-primary-500 mb-4" />
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                       {text.title[lang]}
                     </h2>
@@ -412,11 +412,11 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                             onClick={() => selectContent(id as HelpModuleId, 'overview', id)}
                             className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                           >
-                            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                               <DynamicIcon
                                 name={module.icon || 'HelpCircle'}
                                 size={24}
-                                className="text-purple-600 dark:text-purple-400"
+                                className="text-primary-600 dark:text-primary-400"
                               />
                             </div>
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">

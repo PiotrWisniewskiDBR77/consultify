@@ -62,14 +62,14 @@ const CATEGORY_CONFIG: Record<
   },
   constraint: {
     icon: Lock,
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
     label: 'Constraint',
   },
   decision: {
     icon: CheckCircle,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-100 dark:bg-primary-900/30',
     label: 'Decision',
   },
   dependency: {
@@ -80,8 +80,8 @@ const CATEGORY_CONFIG: Record<
   },
   success_criteria: {
     icon: Award,
-    color: 'text-teal-600 dark:text-teal-400',
-    bgColor: 'bg-teal-100 dark:bg-teal-900/30',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
     label: 'Success Criteria',
   },
 };

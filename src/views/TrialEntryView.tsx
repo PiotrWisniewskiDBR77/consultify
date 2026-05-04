@@ -239,7 +239,7 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
                 onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                 placeholder="WPROWADŹ KOD (np. REF-1234)"
                 className="
-                                    w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 
+                                    w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700
                                     rounded-xl py-4 pl-12 pr-4 text-center font-mono tracking-[0.3em] font-bold
                                     focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none
                                     transition-all duration-300 placeholder:text-slate-400 dark:text-slate-500 dark:placeholder:text-white/10
@@ -250,7 +250,7 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-red-500 text-sm font-medium bg-red-50 dark:bg-red-500/10 p-3 rounded-lg border border-red-100 dark:border-red-500/20">
+              <div className="flex items-center gap-2 text-rose-500 text-sm font-medium bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-100 dark:border-rose-500/20">
                 <Info size={16} />
                 {error}
               </div>
@@ -260,8 +260,8 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
               type="submit"
               disabled={!accessCode || isChecking}
               className="
-                                w-full group relative inline-flex items-center justify-center gap-3 
-                                bg-navy-900 dark:bg-white text-white dark:text-navy-900 font-bold text-lg 
+                                w-full group relative inline-flex items-center justify-center gap-3
+                                bg-navy-900 dark:bg-white text-white dark:text-navy-900 font-bold text-lg
                                 py-4 rounded-xl transition-all duration-300
                                 hover:bg-brand-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed
                             "

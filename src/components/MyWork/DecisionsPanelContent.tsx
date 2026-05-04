@@ -134,9 +134,9 @@ const getPriorityConfig = (priority?: string) => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
       return {
-        color: 'text-red-700 dark:text-red-400',
-        bg: 'bg-red-100 dark:bg-red-500/20',
-        dot: 'bg-red-500',
+        color: 'text-rose-700 dark:text-rose-400',
+        bg: 'bg-rose-100 dark:bg-rose-500/20',
+        dot: 'bg-rose-500',
         label: 'Critical',
         icon: Zap,
       };
@@ -187,9 +187,9 @@ const getStatusConfig = (status?: string) => {
       };
     case 'REJECTED':
       return {
-        color: 'text-red-700 dark:text-red-400',
-        bg: 'bg-red-100 dark:bg-red-500/20',
-        dot: 'bg-red-500',
+        color: 'text-rose-700 dark:text-rose-400',
+        bg: 'bg-rose-100 dark:bg-rose-500/20',
+        dot: 'bg-rose-500',
         label: 'Rejected',
       };
     case 'DEFERRED':
@@ -563,11 +563,11 @@ const DecisionTableRow: React.FC<{
             <div
               className={`flex items-center justify-center gap-1.5 text-xs ${
                 overdue
-                  ? 'text-red-700 dark:text-red-400 font-medium'
+                  ? 'text-rose-700 dark:text-rose-400 font-medium'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {overdue && <AlertTriangle size={12} className="text-red-600 dark:text-red-400" />}
+              {overdue && <AlertTriangle size={12} className="text-rose-600 dark:text-rose-400" />}
               <Calendar size={12} />
               <span>{formatDate(dueDate)}</span>
             </div>
@@ -675,8 +675,8 @@ const AwaitingDecisionTableRow: React.FC<{
     if (answer === 'REJECTED')
       return {
         label: 'Rejected',
-        color: 'text-red-700 dark:text-red-400',
-        bg: 'bg-red-100 dark:bg-red-500/20',
+        color: 'text-rose-700 dark:text-rose-400',
+        bg: 'bg-rose-100 dark:bg-rose-500/20',
         icon: X,
       };
     if (answer === 'DEFERRED')
@@ -733,7 +733,7 @@ const AwaitingDecisionTableRow: React.FC<{
         ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
-        ${overdue && !isSelected ? 'bg-red-50 dark:bg-red-500/5' : ''}
+        ${overdue && !isSelected ? 'bg-rose-50 dark:bg-rose-500/5' : ''}
       `}
     >
       <td className="w-10 px-2 py-2.5" style={{ width: columnWidths.select }}>
@@ -766,7 +766,7 @@ const AwaitingDecisionTableRow: React.FC<{
 
       <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
         <div
-          className={`w-2.5 h-2.5 rounded-full ${overdue ? 'bg-red-500 animate-pulse' : priorityConfig.dot}`}
+          className={`w-2.5 h-2.5 rounded-full ${overdue ? 'bg-rose-500 animate-pulse' : priorityConfig.dot}`}
           title={overdue ? (isPolish ? 'Po terminie' : 'Overdue') : priorityConfig.label}
         />
       </td>
@@ -814,12 +814,15 @@ const AwaitingDecisionTableRow: React.FC<{
             <div
               className={`flex items-center justify-center gap-1.5 text-xs ${
                 overdue
-                  ? 'text-red-700 dark:text-red-400 font-medium'
+                  ? 'text-rose-700 dark:text-rose-400 font-medium'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               {overdue ? (
-                <AlertTriangle size={12} className="animate-pulse text-red-600 dark:text-red-400" />
+                <AlertTriangle
+                  size={12}
+                  className="animate-pulse text-rose-600 dark:text-rose-400"
+                />
               ) : null}
               <Calendar size={12} />
               <span>{formatDate(dueDate)}</span>
@@ -836,7 +839,7 @@ const AwaitingDecisionTableRow: React.FC<{
       {!hiddenColumns?.has('project') && (
         <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.project }}>
           <div className="flex items-center justify-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
               {getInitials(decision.ownerName)}
             </div>
             <div className="flex min-w-0 flex-col text-left">
@@ -1629,7 +1632,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-purple-500" size={32} />
+        <Loader2 className="animate-spin text-primary-500" size={32} />
       </div>
     );
   }

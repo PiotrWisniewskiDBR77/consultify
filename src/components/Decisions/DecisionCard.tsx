@@ -72,15 +72,15 @@ interface DecisionCardProps {
 const getTypeInfo = (type: string): { icon: string; label: string; color: string } => {
   const types: Record<string, { icon: string; label: string; color: string }> = {
     INITIATIVE_APPROVAL: { icon: '🎯', label: 'Initiative', color: 'text-blue-600' },
-    PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-purple-600' },
+    PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-primary-600' },
     TASK_UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
     UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
-    CANCEL: { icon: '❌', label: 'Cancel', color: 'text-red-600' },
+    CANCEL: { icon: '❌', label: 'Cancel', color: 'text-rose-600' },
     BUDGET: { icon: '💰', label: 'Budget', color: 'text-amber-600' },
-    SCOPE_CHANGE: { icon: '📐', label: 'Scope', color: 'text-cyan-600' },
-    RISK_ACCEPTANCE: { icon: '⚠️', label: 'Risk', color: 'text-orange-600' },
+    SCOPE_CHANGE: { icon: '📐', label: 'Scope', color: 'text-blue-600' },
+    RISK_ACCEPTANCE: { icon: '⚠️', label: 'Risk', color: 'text-amber-600' },
     RESOURCE_ALLOCATION: { icon: '👥', label: 'Resource', color: 'text-indigo-600' },
-    STRATEGIC: { icon: '🎯', label: 'Strategic', color: 'text-purple-600' },
+    STRATEGIC: { icon: '🎯', label: 'Strategic', color: 'text-primary-600' },
     EXECUTION: { icon: '⚡', label: 'Execution', color: 'text-emerald-600' },
     GENERAL: { icon: '📋', label: 'General', color: 'text-slate-600 dark:text-slate-400' },
   };
@@ -91,14 +91,14 @@ const getTypeInfo = (type: string): { icon: string; label: string; color: string
 const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
   const config = {
     CRITICAL: {
-      bg: 'bg-red-500',
+      bg: 'bg-rose-500',
       text: 'text-slate-900 dark:text-white',
       icon: Zap,
       label: 'Critical',
       animate: true,
     },
     HIGH: {
-      bg: 'bg-orange-500',
+      bg: 'bg-amber-500',
       text: 'text-slate-900 dark:text-white',
       icon: Flag,
       label: 'High',
@@ -146,7 +146,7 @@ const EscalationBadge: React.FC<{ level?: string; daysOverdue?: number }> = ({
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
         isRed
-          ? 'bg-red-500 text-white animate-pulse'
+          ? 'bg-rose-500 text-white animate-pulse'
           : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
       }`}
     >
@@ -177,8 +177,8 @@ const StatusTimeline: React.FC<{
       <div
         className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
           daysOverdue > 7
-            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 animate-pulse'
-            : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+            ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 animate-pulse'
+            : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
         }`}
       >
         <AlertTriangle size={14} className="shrink-0" />
@@ -254,15 +254,15 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
   const getCardStyle = () => {
     if (decision.escalationLevelName === 'red' || (isOverdue && daysOverdue > 7)) {
-      return 'border-l-red-500 bg-gradient-to-r from-red-50 to-white dark:from-red-900/20 dark:to-navy-900 ring-1 ring-red-200 dark:ring-red-500/20';
+      return 'border-l-rose-500 bg-gradient-to-r from-rose-50 to-white dark:from-rose-900/20 dark:to-navy-900 ring-1 ring-rose-200 dark:ring-rose-500/20';
     } else if (decision.escalationLevelName === 'amber' || isOverdue) {
-      return 'border-l-orange-500 bg-gradient-to-r from-orange-50 to-white dark:from-orange-900/20 dark:to-navy-900';
+      return 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-white dark:from-amber-900/20 dark:to-navy-900';
     } else if (decision.priority === 'CRITICAL') {
-      return 'border-l-red-500 bg-white dark:bg-navy-900';
+      return 'border-l-rose-500 bg-white dark:bg-navy-900';
     } else if (decision.priority === 'HIGH') {
-      return 'border-l-orange-500 bg-white dark:bg-navy-900';
+      return 'border-l-amber-500 bg-white dark:bg-navy-900';
     }
-    return 'border-l-purple-500 bg-white dark:bg-navy-900';
+    return 'border-l-primary-500 bg-white dark:bg-navy-900';
   };
 
   // Minimal variant - just title and status
@@ -276,9 +276,9 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         className={`
           group p-2 cursor-pointer
           bg-white dark:bg-navy-900
-          border border-slate-200 dark:border-navy-700 
+          border border-slate-200 dark:border-navy-700
           rounded-lg
-          hover:border-purple-300 dark:hover:border-purple-500/50
+          hover:border-primary-300 dark:hover:border-primary-500/50
           transition-all duration-150
           ${isOverdue ? 'border-l-2 border-l-amber-500' : ''}
         `}
@@ -289,7 +289,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </span>
           <ChevronRight
             size={14}
-            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors shrink-0"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors shrink-0"
           />
         </div>
       </motion.div>
@@ -307,9 +307,9 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         className={`
           group p-3 cursor-pointer
           bg-white dark:bg-navy-900
-          border border-slate-200 dark:border-navy-700 
+          border border-slate-200 dark:border-navy-700
           rounded-lg border-l-4
-          hover:border-purple-300 dark:hover:border-purple-500/50
+          hover:border-primary-300 dark:hover:border-primary-500/50
           transition-all duration-150
           ${getCardStyle()}
         `}
@@ -328,11 +328,11 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </div>
           <ChevronRight
             size={14}
-            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
           />
         </div>
 
-        <h4 className="text-[13px] font-medium text-slate-800 dark:text-white mb-1 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+        <h4 className="text-[13px] font-medium text-slate-800 dark:text-white mb-1 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
           {decision.title}
         </h4>
 
@@ -407,8 +407,8 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         <div className="grid grid-cols-2 gap-2 mb-3">
           {decision.projectName && (
             <div className="flex items-center gap-2 text-xs">
-              <div className="w-6 h-6 rounded-md bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
-                <FileText size={12} className="text-purple-600 dark:text-purple-400" />
+              <div className="w-6 h-6 rounded-md bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+                <FileText size={12} className="text-primary-600 dark:text-primary-400" />
               </div>
               <span
                 className="text-slate-700 dark:text-slate-300 truncate"
@@ -432,10 +432,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
           {(decision.blockedItemsCount || 0) > 0 && (
             <div className="flex items-center gap-2 text-xs">
-              <div className="w-6 h-6 rounded-md bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
-                <AlertTriangle size={12} className="text-red-600 dark:text-red-400" />
+              <div className="w-6 h-6 rounded-md bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+                <AlertTriangle size={12} className="text-rose-600 dark:text-rose-400" />
               </div>
-              <span className="text-red-600 dark:text-red-400 font-medium">
+              <span className="text-rose-600 dark:text-rose-400 font-medium">
                 {decision.blockedItemsCount} {t('decisions.blocked', 'blocked')}
               </span>
             </div>
@@ -457,9 +457,9 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                 animate={{ width: `${Math.min(100, (decision.daysWaiting / 14) * 100)}%` }}
                 className={`h-full rounded-full ${
                   decision.daysWaiting > 10
-                    ? 'bg-red-500'
+                    ? 'bg-rose-500'
                     : decision.daysWaiting > 5
-                      ? 'bg-orange-500'
+                      ? 'bg-amber-500'
                       : 'bg-green-500'
                 }`}
               />
@@ -473,7 +473,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         <div
           className={`px-4 py-3 border-t flex items-center gap-2 ${
             isOverdue
-              ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-500/10'
+              ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-500/10'
               : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-navy-700'
           }`}
         >
@@ -502,7 +502,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                   }
                   onReject?.(decision.id);
                 }}
-                className="flex-1 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+                className="flex-1 px-3 py-2 rounded-lg bg-rose-500 text-white hover:bg-rose-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <XCircle size={14} />
                 {t('decisions.reject', 'Reject')}
@@ -540,7 +540,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                     e.stopPropagation();
                     onEscalate(decision.id);
                   }}
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   <TrendingUp size={14} />
                   {t('decisions.escalate', 'Escalate')}

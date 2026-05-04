@@ -328,7 +328,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
       {/* Date & Time Format */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Calendar size={20} className="text-purple-500" />
+          <Calendar size={20} className="text-primary-500" />
           {t('settings.regional.dateTimeTitle', 'Date & Time Format')}
         </h3>
 
@@ -346,8 +346,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                     key={format.code}
                     className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -367,20 +367,20 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           isSelected
-                            ? 'border-purple-500 bg-purple-500'
+                            ? 'border-primary-500 bg-primary-500'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >
                         {isSelected && <Check size={10} className="text-white" />}
                       </div>
                       <span
-                        className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
+                        className={`text-sm font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
                       >
                         {t(`settings.regional.dateFormats.${format.code}`, format.label)}
                       </span>
                     </div>
                     <span
-                      className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-xs font-mono ${isSelected ? 'text-primary-600' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {format.example}
                     </span>
@@ -403,8 +403,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                     key={format.code}
                     className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -424,7 +424,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           isSelected
-                            ? 'border-purple-500 bg-purple-500'
+                            ? 'border-primary-500 bg-primary-500'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >
@@ -434,18 +434,18 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         <Clock
                           size={16}
                           className={
-                            isSelected ? 'text-purple-500' : 'text-slate-400 dark:text-slate-500'
+                            isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
                           }
                         />
                         <span
-                          className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
+                          className={`text-sm font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
                         >
                           {t(`settings.regional.timeFormats.${format.code}`, format.label)}
                         </span>
                       </div>
                     </div>
                     <span
-                      className={`text-xs font-mono ${isSelected ? 'text-purple-600' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-xs font-mono ${isSelected ? 'text-primary-600' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {format.example}
                     </span>
@@ -464,7 +464,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                   onClick={() => updatePreference('firstDayOfWeek', 'monday')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     preferences.firstDayOfWeek === 'monday'
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'bg-slate-100 dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -474,7 +474,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                   onClick={() => updatePreference('firstDayOfWeek', 'sunday')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     preferences.firstDayOfWeek === 'sunday'
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'bg-slate-100 dark:bg-navy-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -601,7 +601,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
       </div>
 
       {/* Preview Card */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-500/5 dark:to-purple-500/5 border border-blue-200 dark:border-blue-500/20 rounded-xl p-6">
+      <div className="bg-gradient-to-r from-blue-50 to-primary-50 dark:from-blue-500/5 dark:to-primary-500/5 border border-blue-200 dark:border-blue-500/20 rounded-xl p-6">
         <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-3">
           {t('settings.regional.preview', 'Preview of Your Settings')}
         </h4>

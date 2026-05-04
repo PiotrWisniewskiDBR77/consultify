@@ -252,7 +252,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
   const sectionLabel =
     'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
   const inputClass =
-    'w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-violet-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
 
   return (
     <SettingsSection
@@ -276,7 +276,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
         {actionError && (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
           >
             {actionError}
           </div>
@@ -289,7 +289,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Moon size={14} className="text-violet-400" />
+                <Moon size={14} className="text-primary-400" />
                 {t('settings.availability.dnd', 'Do Not Disturb')}
               </h4>
               <p className="text-xs text-slate-500 mb-4">
@@ -298,20 +298,20 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
 
               {/* Active DND banner */}
               {dndEnabled && dndUntil && (
-                <div className="p-3 mb-4 bg-violet-600/10 border border-violet-500/20 rounded-lg flex items-center justify-between">
+                <div className="p-3 mb-4 bg-primary-600/10 border border-primary-500/20 rounded-lg flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-violet-300">
+                    <p className="text-sm font-medium text-primary-300">
                       {t('settings.availability.dndActive', 'DND is active')}
                     </p>
-                    <p className="text-xs text-violet-400 mt-0.5">
+                    <p className="text-xs text-primary-400 mt-0.5">
                       {t('settings.availability.until', 'Until')}: {formatUntil(dndUntil)}
                     </p>
                   </div>
                   <button
                     onClick={handleDisableDnd}
-                    className="p-1.5 hover:bg-violet-500/20 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-primary-500/20 rounded-lg transition-colors"
                   >
-                    <X size={14} className="text-violet-400" />
+                    <X size={14} className="text-primary-400" />
                   </button>
                 </div>
               )}
@@ -323,7 +323,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                     <button
                       key={preset.label}
                       onClick={() => handleDndPreset(preset)}
-                      className="px-4 py-2.5 bg-navy-800/50 border border-white/5 rounded-lg hover:border-violet-500/30 hover:bg-violet-600/5 transition-all text-sm text-slate-300"
+                      className="px-4 py-2.5 bg-navy-800/50 border border-white/5 rounded-lg hover:border-primary-500/30 hover:bg-primary-600/5 transition-all text-sm text-slate-300"
                     >
                       {t(`settings.availability.${preset.labelKey}`, preset.label)}
                     </button>
@@ -359,7 +359,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <BellOff size={14} className="text-violet-400" />
+                <BellOff size={14} className="text-primary-400" />
                 {t('settings.availability.quietHours', 'Scheduled Quiet Hours')}
               </h4>
 
@@ -394,7 +394,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Schedule */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <Clock size={14} className="text-violet-400" />
+                      <Clock size={14} className="text-primary-400" />
                       {t('settings.availability.schedule', 'Schedule')}
                     </h5>
                     <div className="grid grid-cols-2 gap-4 mb-5">
@@ -439,7 +439,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                           className={cn(
                             'px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
                             quietHours.daysOfWeek.includes(day.value)
-                              ? 'bg-violet-600/20 text-violet-300 border-violet-500'
+                              ? 'bg-primary-600/20 text-primary-300 border-primary-500'
                               : 'bg-navy-800/50 text-slate-400 border-white/5 hover:border-white/20'
                           )}
                         >
@@ -454,7 +454,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                         <button
                           key={preset.key}
                           onClick={() => applyQuietPreset(preset)}
-                          className="px-3 py-1.5 text-xs bg-navy-800/50 border border-white/5 rounded-lg text-slate-400 hover:text-white hover:border-violet-500/30 transition-all"
+                          className="px-3 py-1.5 text-xs bg-navy-800/50 border border-white/5 rounded-lg text-slate-400 hover:text-white hover:border-primary-500/30 transition-all"
                         >
                           {t(`settings.availability.preset_${preset.key}`, preset.label)}
                         </button>
@@ -465,7 +465,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Exceptions */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <AlertTriangle size={14} className="text-violet-400" />
+                      <AlertTriangle size={14} className="text-primary-400" />
                       {t('settings.availability.exceptions', 'Exceptions')}
                     </h5>
                     <p className="text-xs text-slate-500 mb-4">
@@ -512,7 +512,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                   {/* Auto Reply */}
                   <div className={cardClass}>
                     <h5 className={sectionLabel}>
-                      <MessageCircle size={14} className="text-violet-400" />
+                      <MessageCircle size={14} className="text-primary-400" />
                       {t('settings.availability.autoReply', 'Auto Reply')}
                     </h5>
                     <SettingsToggle

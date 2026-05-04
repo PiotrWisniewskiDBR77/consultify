@@ -190,14 +190,14 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('common.search', 'Search…')}
-            className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+            className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
 
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+          className="px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="ALL">{t('common.all', 'All')}</option>
           <option value="critical">{t('common.priority.critical', 'Critical')}</option>
@@ -303,7 +303,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                             <select
                               value={draft.status}
                               onChange={(e) => updateDraft(item.id, { status: e.target.value })}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
                             >
                               <option value="todo">todo</option>
                               <option value="in_progress">in_progress</option>
@@ -324,7 +324,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                                 'feedback.backlog.assigneePlaceholder',
                                 'Leave empty to unassign'
                               )}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
                             />
                           </label>
                           <label className="space-y-1 md:col-span-3">
@@ -339,7 +339,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                                 'Optional note saved on the task'
                               )}
                               rows={2}
-                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500"
                             />
                           </label>
                           <div className="md:col-span-3 flex justify-end">
@@ -347,7 +347,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                               type="button"
                               onClick={() => void saveTask(item)}
                               disabled={savingId === item.id}
-                              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {savingId === item.id && (
                                 <Loader2 size={12} className="animate-spin" />
@@ -362,7 +362,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                               href={`#/superadmin/feedback?feedbackId=${encodeURIComponent(
                                 item.feedbackId
                               )}`}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                               onClick={(e) => {
                                 // Keep it within the SPA — navigate to the
                                 // feedback registry and deep-link to this ticket.

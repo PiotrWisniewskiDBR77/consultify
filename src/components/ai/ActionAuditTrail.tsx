@@ -41,7 +41,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
       case 'APPROVED':
         return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
       case 'REJECTED':
-        return 'text-red-500 bg-red-500/10 border-red-500/20';
+        return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
       case 'MODIFIED':
         return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
       default:
@@ -117,7 +117,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
                 </div>
                 {/* Policy Engine Badge */}
                 {record.decided_by_user_id === 'SYSTEM_POLICY_ENGINE' && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[10px] font-bold border border-violet-200 dark:border-violet-500/20">
+                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-[10px] font-bold border border-primary-200 dark:border-primary-500/20">
                     <CheckCircle2 size={10} />
                     AUTO-APPROVED (Policy)
                   </div>
@@ -162,7 +162,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
               <div className="flex gap-4 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                 <span>PROPOSAL ID: {record.proposal_id}</span>
                 {record.policy_rule_id && (
-                  <span className="text-violet-400">RULE ID: {record.policy_rule_id}</span>
+                  <span className="text-primary-400">RULE ID: {record.policy_rule_id}</span>
                 )}
               </div>
             </div>

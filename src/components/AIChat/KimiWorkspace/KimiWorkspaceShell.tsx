@@ -221,7 +221,7 @@ function TaskProgressBar({
               ) : step.status === 'completed' ? (
                 <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" />
               ) : step.status === 'failed' ? (
-                <X size={12} className="text-red-500 flex-shrink-0" />
+                <X size={12} className="text-rose-500 flex-shrink-0" />
               ) : (
                 <div className="w-3 h-3 rounded-hig-full border border-slate-300 dark:border-navy-600 flex-shrink-0" />
               )}

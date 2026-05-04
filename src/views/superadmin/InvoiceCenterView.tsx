@@ -372,7 +372,7 @@ export const InvoiceCenterView: React.FC = () => {
       draft: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
       pending: 'bg-amber-500/10 text-amber-600',
       paid: 'bg-emerald-500/10 text-emerald-600',
-      overdue: 'bg-red-500/10 text-red-600',
+      overdue: 'bg-rose-500/10 text-rose-600',
       cancelled: 'bg-slate-500/10 text-slate-500 dark:text-slate-400',
       refunded: 'bg-blue-500/10 text-blue-600',
     };
@@ -412,7 +412,7 @@ export const InvoiceCenterView: React.FC = () => {
               {formatCurrency(stats.totalRevenue)}
             </div>
             <div
-              className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+              className={`mt-1 text-sm flex items-center gap-1 ${stats.monthlyGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
             >
               {stats.monthlyGrowth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
               {Math.abs(stats.monthlyGrowth)}% vs last month
@@ -448,12 +448,12 @@ export const InvoiceCenterView: React.FC = () => {
           <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-slate-500 dark:text-slate-400">Overdue</span>
-              <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="text-red-500" size={20} />
+              <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                <AlertTriangle className="text-rose-500" size={20} />
               </div>
             </div>
-            <div className="text-2xl font-bold text-red-600">{stats.overdueInvoices}</div>
-            <div className="mt-1 text-sm text-red-500">
+            <div className="text-2xl font-bold text-rose-600">{stats.overdueInvoices}</div>
+            <div className="mt-1 text-sm text-rose-500">
               {formatCurrency(stats.overdueAmount)} outstanding
             </div>
           </div>
@@ -504,7 +504,7 @@ export const InvoiceCenterView: React.FC = () => {
         <button
           onClick={() => setShowCreateInvoice(true)}
           disabled={!!loadError}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
         >
           <Plus size={18} />
           Create Invoice
@@ -556,7 +556,7 @@ export const InvoiceCenterView: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
                         {invoice.organizationName.charAt(0)}
                       </div>
                       <span className="text-slate-700 dark:text-slate-300">
@@ -582,7 +582,7 @@ export const InvoiceCenterView: React.FC = () => {
                     <span
                       className={`text-sm ${
                         invoice.status === 'overdue'
-                          ? 'text-red-600 font-medium'
+                          ? 'text-rose-600 font-medium'
                           : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -734,7 +734,7 @@ export const InvoiceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateInvoice}
                 disabled={creatingInvoice}
-                className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
               >
                 {creatingInvoice ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -877,7 +877,7 @@ export const InvoiceCenterView: React.FC = () => {
             <button
               onClick={handleSaveTier}
               disabled={savingTier}
-              className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center justify-center gap-2"
             >
               {savingTier ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -909,7 +909,7 @@ export const InvoiceCenterView: React.FC = () => {
         <button
           onClick={openCreateTier}
           disabled={!!usageTiersLoadError}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
         >
           <Plus size={18} />
           Add Tier
@@ -920,7 +920,7 @@ export const InvoiceCenterView: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         {usageTiersLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 size={28} className="animate-spin text-violet-500" />
+            <Loader2 size={28} className="animate-spin text-primary-500" />
           </div>
         ) : usageTiersLoadError ? (
           <div className="p-6">
@@ -1004,14 +1004,14 @@ export const InvoiceCenterView: React.FC = () => {
                         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                         title="Edit"
                       >
-                        <Pencil size={16} className="text-violet-500" />
+                        <Pencil size={16} className="text-primary-500" />
                       </button>
                       <button
                         onClick={() => handleDeleteTier(tier.id)}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                         title="Delete"
                       >
-                        <Trash2 size={16} className="text-red-400" />
+                        <Trash2 size={16} className="text-rose-400" />
                       </button>
                     </div>
                   </td>
@@ -1206,7 +1206,7 @@ export const InvoiceCenterView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -1219,7 +1219,7 @@ export const InvoiceCenterView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : (
         <>

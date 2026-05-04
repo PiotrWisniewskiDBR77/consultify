@@ -276,8 +276,8 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       case 'bug':
         return {
           icon: <Bug size={16} />,
-          color: 'text-red-500 dark:text-red-400',
-          bgColor: 'bg-red-100 dark:bg-red-900/30',
+          color: 'text-rose-500 dark:text-rose-400',
+          bgColor: 'bg-rose-100 dark:bg-rose-900/30',
           label: t('admin.feedback.types.bug', 'Błąd'),
         };
       case 'feature':
@@ -315,7 +315,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
     switch (status) {
       case 'new':
         return {
-          color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
+          color: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
           icon: <Star size={12} />,
           label: t('admin.feedback.statuses.new', 'Nowy'),
         };
@@ -333,7 +333,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
         };
       case 'reviewed':
         return {
-          color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400',
+          color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
           icon: <Eye size={12} />,
           label: t('admin.feedback.statuses.reviewed', 'Przejrzany'),
         };
@@ -361,9 +361,9 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
   const getPriorityConfig = (priority?: string) => {
     switch (priority) {
       case 'critical':
-        return { color: 'text-red-600 dark:text-red-400', label: 'Krytyczny' };
+        return { color: 'text-rose-600 dark:text-rose-400', label: 'Krytyczny' };
       case 'high':
-        return { color: 'text-orange-600 dark:text-orange-400', label: 'Wysoki' };
+        return { color: 'text-amber-600 dark:text-amber-400', label: 'Wysoki' };
       case 'medium':
         return { color: 'text-yellow-600 dark:text-yellow-400', label: 'Średni' };
       case 'low':
@@ -426,11 +426,11 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
         </div>
         <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-              <Star size={18} className="text-purple-600 dark:text-purple-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <Star size={18} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-purple-600">{stats.new}</p>
+              <p className="text-2xl font-bold text-primary-600">{stats.new}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t('admin.feedback.stats.new', 'Nowych')}
               </p>
@@ -452,11 +452,11 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
         </div>
         <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-              <Bug size={18} className="text-red-600 dark:text-red-400" />
+            <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+              <Bug size={18} className="text-rose-600 dark:text-rose-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-600">{stats.bugs}</p>
+              <p className="text-2xl font-bold text-rose-600">{stats.bugs}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t('admin.feedback.stats.openBugs', 'Otwarte błędy')}
               </p>

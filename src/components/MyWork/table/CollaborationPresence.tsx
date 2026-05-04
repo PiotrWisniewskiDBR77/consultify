@@ -47,15 +47,15 @@ interface WorkspaceLockIndicatorProps {
 }
 
 const PRESENCE_COLORS = [
-  '#8b5cf6',
-  '#06b6d4',
+  '#6366f1',
+  '#3b82f6',
   '#f59e0b',
-  '#ef4444',
+  '#f43f5e',
   '#10b981',
   '#ec4899',
   '#6366f1',
-  '#14b8a6',
-  '#f97316',
+  '#3b82f6',
+  '#f59e0b',
   '#84cc16',
 ];
 

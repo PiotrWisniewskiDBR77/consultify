@@ -30,7 +30,7 @@ import organizationContextService from '../services/organizationContext/Organiza
 import projectionService from '../services/tablePlatform/ProjectionService.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
 import {
-  normalizeTaskStatus,
+  normalizeTaskStatus as normalizeWorkflowTaskStatus,
   validateTaskStatusTransition,
 } from '../services/taskWorkflowService.js';
 import * as pfService from '../services/v8/processFlowService.js';
@@ -267,7 +267,7 @@ async function applyInboxTriageSideEffects({
     }
     await queryHelpers.queryRun(
       `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [normalizeTaskStatus('done'), rawId, orgId]
+      [normalizeWorkflowTaskStatus('done'), rawId, orgId]
     );
   }
 }
@@ -6518,8 +6518,8 @@ router.get(
           .slice(0, 3);
         for (const keyword of keywords) {
           const pages = await queryHelpers.queryAll<any>(
-            `SELECT id, title, 'notebook' as type FROM notebook_pages 
-             WHERE owner_user_id = ? AND organization_id = ? AND title LIKE ? 
+            `SELECT id, title, 'notebook' as type FROM notebook_pages
+             WHERE owner_user_id = ? AND organization_id = ? AND title LIKE ?
              AND id != ? LIMIT 3`,
             [userId, orgId, `%${keyword}%`, entityId]
           );
@@ -6544,8 +6544,8 @@ router.get(
         );
         if (dec?.initiative_id) {
           const tasks = await queryHelpers.queryAll<any>(
-            `SELECT id, title, status FROM tasks 
-             WHERE initiative_id = ? AND organization_id = ? AND id != ? 
+            `SELECT id, title, status FROM tasks
+             WHERE initiative_id = ? AND organization_id = ? AND id != ?
              LIMIT 5`,
             [dec.initiative_id, orgId, entityId]
           );
@@ -6564,8 +6564,8 @@ router.get(
             .slice(0, 2);
           for (const keyword of keywords) {
             const decs = await queryHelpers.queryAll<any>(
-              `SELECT id, title, status FROM decisions 
-               WHERE organization_id = ? AND title LIKE ? AND id != ? 
+              `SELECT id, title, status FROM decisions
+               WHERE organization_id = ? AND title LIKE ? AND id != ?
                LIMIT 3`,
               [orgId, `%${keyword}%`, entityId]
             );
@@ -6588,8 +6588,8 @@ router.get(
         const keyword = title.split(/\s+/).filter((w) => w.length > 3)[0];
         if (keyword) {
           const ideas = await queryHelpers.queryAll<any>(
-            `SELECT id, title FROM my_ideas 
-             WHERE user_id = ? AND organization_id = ? AND title LIKE ? 
+            `SELECT id, title FROM my_ideas
+             WHERE user_id = ? AND organization_id = ? AND title LIKE ?
              LIMIT 3`,
             [userId, orgId, `%${keyword}%`]
           );
@@ -6646,7 +6646,7 @@ router.post(
       const taskCols = await getTableColumns('tasks');
       if (taskCols.has('assignee_id')) {
         const completed = await queryHelpers.queryAll<any>(
-          `SELECT id, title, completed_at FROM tasks 
+          `SELECT id, title, completed_at FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
            AND updated_at > ${daysAgoSql(7)}
            ORDER BY updated_at DESC LIMIT 20`,
@@ -6659,8 +6659,8 @@ router.post(
       const decCols = await getTableColumns('decisions');
       if (decCols.has('decision_maker_id')) {
         const decided = await queryHelpers.queryAll<any>(
-          `SELECT id, title, status, updated_at FROM decisions 
-           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
+          `SELECT id, title, status, updated_at FROM decisions
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ?
            AND status IN ('approved', 'rejected') AND updated_at > ${daysAgoSql(7)}
            ORDER BY updated_at DESC LIMIT 10`,
           [userId, userId, orgId]
@@ -6671,7 +6671,7 @@ router.post(
 
       if (taskCols.has('due_date')) {
         const overdue = await queryHelpers.queryAll<any>(
-          `SELECT id, title, due_date FROM tasks 
+          `SELECT id, title, due_date FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
            AND due_date IS NOT NULL AND due_date < ${nowSql()}
            LIMIT 10`,
@@ -6682,7 +6682,7 @@ router.post(
       }
 
       const stuck = await queryHelpers.queryAll<any>(
-        `SELECT id, title, updated_at FROM tasks 
+        `SELECT id, title, updated_at FROM tasks
          WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
          AND updated_at < ${daysAgoSql(5)}
          LIMIT 5`,
@@ -6730,10 +6730,10 @@ router.get(
 
       if (taskCols.has('assignee_id')) {
         const weeklyVelocity = await queryHelpers.queryAll<any>(
-          `SELECT 
+          `SELECT
             ${weekBucketSql('updated_at')} as week,
             COUNT(*) as completed
-           FROM tasks 
+           FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
            AND updated_at > ${daysAgoSql(28)}
            GROUP BY week ORDER BY week`,
@@ -6750,7 +6750,7 @@ router.get(
       if (taskCols.has('created_at')) {
         const avgTime = await queryHelpers.queryOne<any>(
           `SELECT AVG(${dayDiffSql('updated_at', 'created_at')}) as avg_days
-           FROM tasks 
+           FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
            AND updated_at > ${daysAgoSql(30)}`,
           [userId, orgId]
@@ -6764,8 +6764,8 @@ router.get(
       if (decCols.has('decision_maker_id') && decCols.has('created_at')) {
         const avgDecision = await queryHelpers.queryOne<any>(
           `SELECT AVG(${dayDiffSql('updated_at', 'created_at')}) as avg_days
-           FROM decisions 
-           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
+           FROM decisions
+           WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ?
            AND status IN ('approved', 'rejected')
            AND updated_at > ${daysAgoSql(30)}`,
           [userId, userId, orgId]
@@ -6777,13 +6777,13 @@ router.get(
 
       if (taskCols.has('due_date')) {
         const totalWithDue = await queryHelpers.queryOne<any>(
-          `SELECT COUNT(*) as total FROM tasks 
+          `SELECT COUNT(*) as total FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
            AND updated_at > ${daysAgoSql(30)}`,
           [userId, orgId]
         );
         const overdueCompleted = await queryHelpers.queryOne<any>(
-          `SELECT COUNT(*) as total FROM tasks 
+          `SELECT COUNT(*) as total FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
            AND status IN ('done', 'completed') AND updated_at > due_date
            AND updated_at > ${daysAgoSql(30)}`,
@@ -6797,7 +6797,7 @@ router.get(
       }
 
       const openCount = await queryHelpers.queryOne<any>(
-        `SELECT COUNT(*) as total FROM tasks 
+        `SELECT COUNT(*) as total FROM tasks
          WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')`,
         [userId, orgId]
       );

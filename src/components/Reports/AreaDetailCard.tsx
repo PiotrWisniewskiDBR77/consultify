@@ -96,7 +96,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
   // Priority based on gap
   const getPriorityInfo = (gap: number) => {
     if (gap >= 3)
-      return { label: isPolish ? 'Krytyczny' : 'Critical', color: '#ef4444', bg: '#fef2f2' };
+      return { label: isPolish ? 'Krytyczny' : 'Critical', color: '#f43f5e', bg: '#fef2f2' };
     if (gap >= 2) return { label: isPolish ? 'Wysoki' : 'High', color: '#f59e0b', bg: '#fffbeb' };
     if (gap >= 1) return { label: isPolish ? 'Średni' : 'Medium', color: '#eab308', bg: '#fefce8' };
     return { label: isPolish ? 'Niski' : 'Low', color: '#22c55e', bg: '#f0fdf4' };
@@ -439,7 +439,7 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     overflow: hidden;
                     border-left: 4px solid ${priority.color};
                 }
-                
+
                 .card-header {
                     display: flex;
                     justify-content: space-between;
@@ -449,50 +449,50 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     background: #f8fafc;
                     transition: background 0.2s;
                 }
-                
+
                 .card-header:hover {
                     background: #f1f5f9;
                 }
-                
+
                 .header-left {
                     display: flex;
                     align-items: center;
                     gap: 12px;
                 }
-                
+
                 .area-icon {
                     font-size: 28px;
                 }
-                
+
                 .header-titles {
                     display: flex;
                     flex-direction: column;
                 }
-                
+
                 .area-name {
                     margin: 0;
                     font-size: 16px;
                     font-weight: 600;
                     color: #1e1b4b;
                 }
-                
+
                 .area-description {
                     font-size: 12px;
                     color: #64748b;
                 }
-                
+
                 .header-right {
                     display: flex;
                     align-items: center;
                     gap: 16px;
                 }
-                
+
                 .level-indicators {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                 }
-                
+
                 .level-badge {
                     display: flex;
                     flex-direction: column;
@@ -501,93 +501,93 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     border-radius: 8px;
                     min-width: 50px;
                 }
-                
+
                 .level-badge.current {
                     background: #3b82f610;
                     border: 2px solid #3b82f6;
                 }
-                
+
                 .level-badge.target {
                     background: #10b98110;
                     border: 2px solid #10b981;
                 }
-                
+
                 .level-badge.gap {
                     border: none;
                 }
-                
+
                 .level-badge .level-value {
                     font-size: 18px;
                     font-weight: 700;
                 }
-                
+
                 .level-badge .level-label {
                     font-size: 10px;
                     color: #64748b;
                 }
-                
+
                 .arrow {
                     color: #94a3b8;
                     font-weight: bold;
                 }
-                
+
                 .priority-badge {
                     padding: 4px 12px;
                     border-radius: 16px;
                     font-size: 12px;
                     font-weight: 600;
                 }
-                
+
                 .expand-toggle {
                     color: #94a3b8;
                     font-size: 12px;
                 }
-                
+
                 .card-content {
                     padding: 0 20px 20px;
                     overflow: hidden;
                 }
-                
+
                 .content-section {
                     padding: 16px 0;
                     border-bottom: 1px solid #e5e7eb;
                 }
-                
+
                 .content-section:last-child {
                     border-bottom: none;
                 }
-                
+
                 .section-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     margin-bottom: 12px;
                 }
-                
+
                 .section-header h4 {
                     margin: 0;
                     font-size: 14px;
                     font-weight: 600;
                     color: #1e1b4b;
                 }
-                
+
                 .level-tag {
                     padding: 2px 8px;
                     border-radius: 4px;
                     font-size: 11px;
                     font-weight: 600;
                 }
-                
+
                 .section-body {
                     font-size: 14px;
                     line-height: 1.6;
                     color: #374151;
                 }
-                
+
                 .description {
                     margin: 0 0 16px 0;
                 }
-                
+
                 .characteristics h5,
                 .tools h5,
                 .observations h5 {
@@ -596,22 +596,22 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     color: #64748b;
                     font-weight: 600;
                 }
-                
+
                 .characteristics ul {
                     margin: 0;
                     padding-left: 20px;
                 }
-                
+
                 .characteristics li {
                     margin-bottom: 4px;
                 }
-                
+
                 .tools-list {
                     display: flex;
                     flex-wrap: wrap;
                     gap: 8px;
                 }
-                
+
                 .tool-badge {
                     padding: 4px 10px;
                     background: #f1f5f9;
@@ -619,13 +619,13 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     font-size: 12px;
                     color: #475569;
                 }
-                
+
                 .tool-badge.target {
                     background: #10b98115;
                     color: #059669;
                     border: 1px solid #10b98140;
                 }
-                
+
                 /* Interview section */
                 .interview-meta {
                     display: flex;
@@ -636,22 +636,22 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     background: #f8fafc;
                     border-radius: 8px;
                 }
-                
+
                 .meta-item {
                     display: flex;
                     gap: 6px;
                 }
-                
+
                 .meta-label {
                     color: #64748b;
                     font-size: 13px;
                 }
-                
+
                 .meta-value {
                     font-weight: 600;
                     font-size: 13px;
                 }
-                
+
                 .key-quote {
                     margin: 16px 0;
                     padding: 16px 20px;
@@ -662,22 +662,22 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     color: #1e1b4b;
                     font-size: 15px;
                 }
-                
+
                 .notes-content {
                     margin-bottom: 16px;
                 }
-                
+
                 .observations ul {
                     margin: 0;
                     padding-left: 20px;
                 }
-                
+
                 /* Recommendations */
                 .recommendations-list {
                     margin: 0;
                     padding-left: 20px;
                 }
-                
+
                 .recommendation-item {
                     margin-bottom: 16px;
                     padding: 12px;
@@ -685,112 +685,112 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     border-radius: 8px;
                     border-left: 3px solid #e5e7eb;
                 }
-                
+
                 .recommendation-item.priority-high {
                     border-left-color: #f59e0b;
                 }
-                
+
                 .recommendation-item.priority-medium {
                     border-left-color: #eab308;
                 }
-                
+
                 .recommendation-item.priority-low {
                     border-left-color: #22c55e;
                 }
-                
+
                 .rec-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     margin-bottom: 8px;
                 }
-                
+
                 .rec-priority {
                     padding: 2px 8px;
                     border-radius: 4px;
                     font-size: 11px;
                     font-weight: 600;
                 }
-                
+
                 .rec-priority.high {
                     background: #fef3c7;
                     color: #d97706;
                 }
-                
+
                 .rec-priority.medium {
                     background: #fef9c3;
                     color: #ca8a04;
                 }
-                
+
                 .rec-priority.low {
                     background: #dcfce7;
                     color: #16a34a;
                 }
-                
+
                 .rec-description {
                     margin: 0 0 8px 0;
                     font-size: 13px;
                     color: #64748b;
                 }
-                
+
                 .rec-meta {
                     display: flex;
                     gap: 12px;
                 }
-                
+
                 .meta-tag {
                     font-size: 12px;
                     color: #64748b;
                 }
-                
+
                 /* Risks */
                 .risks-list {
                     margin: 0;
                     padding-left: 20px;
                 }
-                
+
                 .risk-item {
                     margin-bottom: 8px;
                     color: #b45309;
                 }
-                
+
                 /* KPIs */
                 .kpi-grid {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
                     gap: 12px;
                 }
-                
+
                 .kpi-card {
                     padding: 12px;
                     background: #f8fafc;
                     border-radius: 8px;
                 }
-                
+
                 .kpi-name {
                     font-weight: 600;
                     font-size: 13px;
                     color: #1e1b4b;
                     margin-bottom: 8px;
                 }
-                
+
                 .kpi-values {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                     margin-bottom: 8px;
                 }
-                
+
                 .kpi-values .current {
                     font-weight: 600;
                     color: #3b82f6;
                 }
-                
+
                 .kpi-values .target {
                     font-weight: 600;
                     color: #10b981;
                 }
-                
+
                 .kpi-benchmark {
                     display: flex;
                     flex-wrap: wrap;
@@ -798,43 +798,43 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     font-size: 11px;
                     color: #64748b;
                 }
-                
+
                 .benchmark-low {
-                    color: #ef4444;
+                    color: #f43f5e;
                 }
-                
+
                 .benchmark-high {
                     color: #22c55e;
                 }
-                
+
                 @media (max-width: 768px) {
                     .card-header {
                         flex-direction: column;
                         align-items: flex-start;
                         gap: 12px;
                     }
-                    
+
                     .header-right {
                         width: 100%;
                         justify-content: space-between;
                     }
-                    
+
                     .level-indicators {
                         flex-wrap: wrap;
                     }
                 }
-                
+
                 @media print {
                     .area-detail-card {
                         break-inside: avoid;
                         box-shadow: none;
                         border: 1px solid #e5e7eb;
                     }
-                    
+
                     .card-header {
                         background: none;
                     }
-                    
+
                     .expand-toggle {
                         display: none;
                     }

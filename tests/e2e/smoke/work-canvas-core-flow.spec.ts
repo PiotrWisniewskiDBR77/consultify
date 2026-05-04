@@ -4,11 +4,12 @@ import {
   collectPageSignals,
   createWorkCanvasDraft,
   expectNoRawInternals,
+  loginAsMember,
   loginAsOwner,
 } from './work-canvas-helpers';
 
 test.describe('V10 Work Canvas core flow smoke', () => {
-  test('proposal-first conversion, artifact save, and research renderer stay safe', async ({
+  test('admin approves proposal and records artifact promotion read-back', async ({
     page,
   }, testInfo) => {
     const signals = collectPageSignals(page);
@@ -35,36 +36,20 @@ test.describe('V10 Work Canvas core flow smoke', () => {
     await expect(page.getByText(/Idea:/)).toBeVisible();
     await expect(page.getByText('Status: proposed')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Approve proposal' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Reject' })).toBeVisible();
-
-    await page.getByRole('button', { name: 'Reject' }).click();
-    await expect(page.getByText('Status: rejected')).toBeVisible();
-    await expect(page.getByText(/targetObjectId/i)).toHaveCount(0);
-    await testInfo.attach('work-canvas-core-rejected', {
-      body: await page.screenshot({ fullPage: true }),
-      contentType: 'image/png',
-    });
-
-    await page.getByRole('button', { name: 'Dismiss proposal' }).click();
-    await page.getByRole('button', { name: /^Idea$/ }).click();
-    await expect(page.getByText('Status: proposed')).toBeVisible();
     await page.getByRole('button', { name: 'Approve proposal' }).click();
-
-    await expect(
-      page.getByText(/Status: approved|Capability required|not authorized|Nie można zatwierdzić/i)
-    ).toBeVisible();
+    await expect(page.getByText('Status: approved')).toBeVisible();
+    await expect(page.getByText(/approved_with_placeholder/i)).toBeVisible();
+    await expect(page.getByText(/placeholder_pending_conversion/i)).toBeVisible();
     await expectNoRawInternals(page);
-    await testInfo.attach('work-canvas-core-approved-or-denied', {
+    await testInfo.attach('work-canvas-core-approved', {
       body: await page.screenshot({ fullPage: true }),
       contentType: 'image/png',
     });
 
-    await page.getByRole('button', { name: 'Save artifact' }).click();
-    await expect(
-      page.getByText(
-        /Artifact read-back|Artifact could not be saved|Capability required|V8 artifact runtime/i
-      )
-    ).toBeVisible();
+    await page.getByRole('button', { name: 'Record artifact promotion' }).click();
+    await expect(page.getByText(/Draft artifact promotion read-back/i)).toBeVisible();
+    await expect(page.getByText(/promotion_recorded/i)).toBeVisible();
+    await expect(page.getByText(/artifact-/i)).toBeVisible();
     await expectNoRawInternals(page);
     await testInfo.attach('work-canvas-core-save-artifact', {
       body: await page.screenshot({ fullPage: true }),
@@ -81,5 +66,34 @@ test.describe('V10 Work Canvas core flow smoke', () => {
     });
 
     signals.assertClean({ allowFailedWorkCanvasPath: /save-as-artifact/ });
+  });
+
+  test('member receives capability denial when approving proposal', async ({ page }, testInfo) => {
+    const signals = collectPageSignals(page);
+    const token = await loginAsMember(page);
+    const draft = await createWorkCanvasDraft(page.request, token, {
+      title: 'Member capability check',
+    });
+
+    await page.goto(
+      `/ai/work-canvas?draftId=${draft.id}&conversationId=${draft.conversationId}`,
+      {
+        waitUntil: 'domcontentloaded',
+        timeout: 60000,
+      }
+    );
+
+    await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
+    await page.getByRole('button', { name: /^Idea$/ }).click();
+    await expect(page.getByText('Status: proposed')).toBeVisible();
+    await page.getByRole('button', { name: 'Approve proposal' }).click();
+    await expect(page.getByText(/Capability required|not authorized|Nie można zatwierdzić/i)).toBeVisible();
+    await expectNoRawInternals(page);
+    await testInfo.attach('work-canvas-core-member-denied', {
+      body: await page.screenshot({ fullPage: true }),
+      contentType: 'image/png',
+    });
+
+    signals.assertClean();
   });
 });

@@ -225,7 +225,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           </button>
           <button
             type="button"
-            className="rounded-lg bg-purple-600 text-white px-3 py-1.5 text-sm disabled:opacity-50"
+            className="rounded-lg bg-primary-600 text-white px-3 py-1.5 text-sm disabled:opacity-50"
             onClick={() =>
               void runAction(
                 () =>
@@ -498,7 +498,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-purple-300 px-3 py-2 text-sm text-purple-700 dark:text-purple-300"
+                className="rounded-lg border border-primary-300 px-3 py-2 text-sm text-primary-700 dark:text-primary-300"
                 disabled={isBusy || !canApproveUi}
                 onClick={() =>
                   void runAction(
@@ -603,7 +603,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-purple-300 px-3 py-2 text-sm text-purple-700 dark:text-purple-300"
+                className="rounded-lg border border-primary-300 px-3 py-2 text-sm text-primary-700 dark:text-primary-300"
                 disabled={isBusy || !overrideSummary.trim() || !canApproveUi}
                 onClick={() =>
                   void runAction(

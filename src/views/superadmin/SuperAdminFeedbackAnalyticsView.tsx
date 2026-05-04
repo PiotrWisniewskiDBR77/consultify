@@ -230,7 +230,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
             {[
               { label: '< 24h', value: data.aging.under24h, color: 'bg-emerald-500' },
               { label: '24–48h', value: data.aging.h24_48, color: 'bg-amber-500' },
-              { label: '2–7d', value: data.aging.d2_7, color: 'bg-orange-500' },
+              { label: '2–7d', value: data.aging.d2_7, color: 'bg-amber-500' },
               { label: '> 7d', value: data.aging.over7d, color: 'bg-rose-500' },
             ].map((bucket) => {
               const total =

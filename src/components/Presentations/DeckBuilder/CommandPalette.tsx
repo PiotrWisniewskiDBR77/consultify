@@ -323,7 +323,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <div ref={listRef} className="flex-1 overflow-y-auto py-2">
           {filtered.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <Sparkles size={16} className="mx-auto text-purple-400 mb-2" />
+              <Sparkles size={16} className="mx-auto text-primary-400 mb-2" />
               <p className="text-xs text-slate-500">Press Enter to ask AI: &quot;{query}&quot;</p>
             </div>
           ) : (
@@ -344,12 +344,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       onMouseEnter={() => setSelectedIndex(globalIdx)}
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
                         globalIdx === selectedIndex
-                          ? 'bg-purple-50 dark:bg-purple-500/10'
+                          ? 'bg-primary-50 dark:bg-primary-500/10'
                           : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
                       }`}
                     >
                       <span
-                        className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-purple-500' : 'text-slate-400'}`}
+                        className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-primary-500' : 'text-slate-400'}`}
                       >
                         {cmd.icon}
                       </span>

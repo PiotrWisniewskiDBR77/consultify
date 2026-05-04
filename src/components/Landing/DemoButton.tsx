@@ -57,9 +57,9 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         onClick={handleClick}
         whileHover={{ x: 4 }}
         className={`
-                    inline-flex items-center gap-2 
-                    text-purple-600 dark:text-purple-400 
-                    hover:text-purple-500 dark:hover:text-purple-300
+                    inline-flex items-center gap-2
+                    text-primary-600 dark:text-primary-400
+                    hover:text-primary-500 dark:hover:text-primary-300
                     font-semibold text-sm
                     transition-colors duration-200
                     group
@@ -85,7 +85,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         className={`
                     flex flex-col items-center gap-2 p-4
                     bg-white/5 backdrop-blur-sm
-                    border border-white/10 hover:border-purple-500/50
+                    border border-white/10 hover:border-primary-500/50
                     rounded-xl
                     transition-all duration-300
                     group
@@ -94,7 +94,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
       >
         <span className="text-3xl">{regionData.flag}</span>
         <span className="text-sm font-bold text-white">{regionData.name}</span>
-        <span className="text-xs text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
+        <span className="text-xs text-primary-400 group-hover:text-primary-300 flex items-center gap-1">
           {t('landing.demo.scheduleShort', 'Schedule')}{' '}
           <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
         </span>
@@ -112,21 +112,21 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         whileHover={{ y: -2 }}
         className={`
                     inline-flex items-center gap-3 px-6 py-4
-                    border-2 border-purple-500/50 hover:border-purple-500
+                    border-2 border-primary-500/50 hover:border-primary-500
                     rounded-xl
-                    bg-purple-500/5 hover:bg-purple-500/10
+                    bg-primary-500/5 hover:bg-primary-500/10
                     transition-all duration-300
                     group
                     ${className}
                 `}
       >
         <span className="text-lg font-black text-white">{t('landing.demo.getA', 'Get a')}</span>
-        <span className="text-lg font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+        <span className="text-lg font-black bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent">
           {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
           size={20}
-          className="text-purple-400 group-hover:translate-x-1 transition-transform"
+          className="text-primary-400 group-hover:translate-x-1 transition-transform"
         />
       </motion.a>
     );
@@ -149,12 +149,12 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         <span className="text-xl font-black text-navy-950 dark:text-white">
           {t('landing.demo.getA', 'Get a')}
         </span>
-        <span className="text-xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <span className="text-xl font-black bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
           {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
           size={20}
-          className="text-purple-500 group-hover:translate-x-1 transition-transform"
+          className="text-primary-500 group-hover:translate-x-1 transition-transform"
         />
       </motion.a>
     );
@@ -178,12 +178,12 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
           <span className="text-2xl font-black text-navy-950 dark:text-white tracking-tight">
             {t('landing.demo.bookA', 'Book a')}
           </span>
-          <span className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent tracking-tight">
+          <span className="text-2xl font-black bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent tracking-tight">
             {t('landing.demo.word', 'Demo')}
           </span>
           <ArrowRight
             size={22}
-            className="text-purple-500 group-hover:translate-x-2 transition-transform duration-300"
+            className="text-primary-500 group-hover:translate-x-2 transition-transform duration-300"
           />
         </div>
         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">

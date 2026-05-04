@@ -121,7 +121,7 @@ const DEFAULT_PROFILE: Partial<OrganizationProfile> = {
   website: '',
   logoUrl: '',
   faviconUrl: '',
-  brandColor: '#8B5CF6',
+  brandColor: '#6366F1',
   accentColor: '#10B981',
   customDomain: '',
   customDomainVerified: false,
@@ -327,7 +327,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -357,7 +357,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all
                         ${
                           hasChanges
-                            ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20'
+                            ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/20'
                             : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                         }
                     `}
@@ -374,7 +374,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
       {saveError && (
         <div
           role="alert"
-          className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
         >
           {saveError}
         </div>
@@ -391,7 +391,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                             flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2
                             ${
                               activeTab === tab.id
-                                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                             }
                         `}
@@ -420,7 +420,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                   {/* Logo Upload */}
                   <div className="flex-shrink-0">
                     <div
-                      className="w-24 h-24 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-700 dark:to-navy-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-violet-500 transition-all overflow-hidden"
+                      className="w-24 h-24 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-700 dark:to-navy-800 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all overflow-hidden"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       {profile.logoUrl ? (
@@ -470,7 +470,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.logoUrl || ''}
                         onChange={(e) => updateProfile('logoUrl', e.target.value)}
                         placeholder="/images/org-logos/plastmetcentrum.png"
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {t(
@@ -489,7 +489,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         onChange={(e) => updateProfile('description', e.target.value)}
                         rows={3}
                         placeholder="Brief description of your organization..."
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -510,7 +510,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.industry || ''}
                       onChange={(e) => updateProfile('industry', e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       {INDUSTRIES.map((industry) => (
                         <option key={industry} value={industry}>
@@ -526,7 +526,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.companySize || ''}
                       onChange={(e) => updateProfile('companySize', e.target.value as CompanySize)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       {COMPANY_SIZES.map((size) => (
                         <option key={size.value} value={size.value}>
@@ -549,7 +549,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.website || ''}
                         onChange={(e) => updateProfile('website', e.target.value)}
                         placeholder="https://example.com"
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                       />
                     </div>
                   </div>
@@ -576,7 +576,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.linkedinUrl || ''}
                         onChange={(e) => updateProfile('linkedinUrl', e.target.value)}
                         placeholder="https://linkedin.com/company/..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                       />
                     </div>
                   </div>
@@ -594,7 +594,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         value={profile.twitterUrl || ''}
                         onChange={(e) => updateProfile('twitterUrl', e.target.value)}
                         placeholder="https://twitter.com/..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                       />
                     </div>
                   </div>
@@ -625,13 +625,13 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
-                        value={profile.brandColor || '#8B5CF6'}
+                        value={profile.brandColor || '#6366F1'}
                         onChange={(e) => updateProfile('brandColor', e.target.value)}
                         className="w-12 h-12 rounded-lg border-0 cursor-pointer"
                       />
                       <input
                         type="text"
-                        value={profile.brandColor || '#8B5CF6'}
+                        value={profile.brandColor || '#6366F1'}
                         onChange={(e) => updateProfile('brandColor', e.target.value)}
                         className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
                       />
@@ -743,7 +743,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.defaultTimezone || 'UTC'}
                       onChange={(e) => updateProfile('defaultTimezone', e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       {TIMEZONES.map((tz) => (
                         <option key={tz} value={tz}>
@@ -760,7 +760,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.defaultLanguage || 'en'}
                       onChange={(e) => updateProfile('defaultLanguage', e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       {LANGUAGES.map((lang) => (
                         <option key={lang.code} value={lang.code}>
@@ -777,7 +777,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.dateFormat || 'DD/MM/YYYY'}
                       onChange={(e) => updateProfile('dateFormat', e.target.value as DateFormat)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2025)</option>
                       <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2025)</option>
@@ -792,7 +792,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.timeFormat || '24h'}
                       onChange={(e) => updateProfile('timeFormat', e.target.value as TimeFormat)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="24h">24-hour (14:30)</option>
                       <option value="12h">12-hour (2:30 PM)</option>
@@ -806,7 +806,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     <select
                       value={profile.currency || 'USD'}
                       onChange={(e) => updateProfile('currency', e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       {CURRENCIES.map((curr) => (
                         <option key={curr.code} value={curr.code}>
@@ -844,12 +844,12 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     value={profile.customDomain || ''}
                     onChange={(e) => updateProfile('customDomain', e.target.value)}
                     placeholder="pmo.yourcompany.com"
-                    className="flex-1 px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                    className="flex-1 px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                   />
                   <button
                     onClick={handleVerifyDomain}
                     disabled={verifyingDomain || !profile.customDomain}
-                    className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {verifyingDomain ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />

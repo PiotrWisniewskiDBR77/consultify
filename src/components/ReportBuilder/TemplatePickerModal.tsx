@@ -70,10 +70,10 @@ export interface TemplatePickerModalProps {
 
 const CATEGORY_COLORS: Record<string, string> = {
   strategic: 'from-blue-500 to-indigo-600',
-  portfolio: 'from-emerald-500 to-teal-600',
-  finance: 'from-amber-500 to-orange-600',
-  steering: 'from-violet-500 to-purple-600',
-  workshop: 'from-cyan-500 to-blue-600',
+  portfolio: 'from-emerald-500 to-blue-600',
+  finance: 'from-amber-500 to-amber-600',
+  steering: 'from-primary-500 to-primary-600',
+  workshop: 'from-blue-500 to-blue-600',
   assessment: 'from-pink-500 to-rose-600',
   general: 'from-slate-500 to-slate-600',
 };
@@ -96,8 +96,8 @@ const TemplateCard: FC<{
         relative w-full text-left rounded-xl border-2 transition-all overflow-hidden
         ${
           isSelected
-            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:border-purple-300 dark:hover:border-purple-700'
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+            : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:border-primary-300 dark:hover:border-primary-700'
         }
       `}
     >
@@ -105,7 +105,7 @@ const TemplateCard: FC<{
         {/* Selected indicator */}
         {isSelected && (
           <div className="absolute top-3 right-3">
-            <CheckCircle2 className="w-5 h-5 text-purple-500" />
+            <CheckCircle2 className="w-5 h-5 text-primary-500" />
           </div>
         )}
 
@@ -184,7 +184,7 @@ const TemplateCard: FC<{
               e.stopPropagation();
               setShowOutline(!showOutline);
             }}
-            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 hover:text-purple-500 dark:hover:text-purple-400 transition-colors"
+            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
           >
             {showOutline ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
             Preview outline
@@ -202,7 +202,7 @@ const TemplateCard: FC<{
                     {s.title}
                   </span>
                   {s.required && (
-                    <span className="text-[8px] text-purple-500 font-semibold">REQ</span>
+                    <span className="text-[8px] text-primary-500 font-semibold">REQ</span>
                   )}
                 </div>
               ))}
@@ -333,7 +333,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           {/* Header */}
           <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-primary-500 to-blue-600 text-white rounded-lg">
                 <FileText size={20} />
               </div>
               <div>
@@ -357,7 +357,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
               </div>
             ) : (
               <>
@@ -370,8 +370,8 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                         onClick={() => setCategoryFilter(cat)}
                         className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
                           categoryFilter === cat
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
-                            : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-700'
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                            : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300 dark:hover:border-primary-700'
                         }`}
                       >
                         {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -409,7 +409,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 {orgTemplates.length > 0 && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Building2 size={16} className="text-purple-500" />
+                      <Building2 size={16} className="text-primary-500" />
                       <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                         Organization Templates
                       </h3>
@@ -449,14 +449,14 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 <div className="border-t border-slate-200 dark:border-navy-700 pt-6">
                   <button
                     onClick={handleCreateClean}
-                    className="w-full p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 hover:border-purple-400 dark:hover:border-purple-600 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all group"
+                    className="w-full p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
                   >
                     <div className="flex items-center justify-center gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-navy-700 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
-                        <Plus className="w-5 h-5 text-slate-500 group-hover:text-purple-600 dark:group-hover:text-purple-400" />
+                      <div className="p-2 bg-slate-100 dark:bg-navy-700 rounded-lg group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
+                        <Plus className="w-5 h-5 text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
                       </div>
                       <div className="text-left">
-                        <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-400">
+                        <span className="block text-sm font-semibold text-slate-700 dark:text-slate-300 group-hover:text-primary-700 dark:group-hover:text-primary-400">
                           Add Clean
                         </span>
                         <span className="block text-xs text-slate-500 dark:text-slate-400">
@@ -485,7 +485,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg transition-colors
                 ${
                   selectedTemplateId && !creating
-                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                    ? 'bg-primary-500 hover:bg-primary-600 text-white'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-not-allowed'
                 }
               `}
@@ -599,7 +599,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   setIsNewTemplateMetaOpen(false);
                   setIsTemplateBuilderOpen(true);
                 }}
-                className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-medium transition-colors"
+                className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-medium transition-colors"
               >
                 Open generator
               </button>

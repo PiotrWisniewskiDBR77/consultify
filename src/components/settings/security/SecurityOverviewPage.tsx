@@ -331,7 +331,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
   const colorMap = {
     violet: {
-      icon: 'bg-violet-500/10 text-violet-400',
+      icon: 'bg-primary-500/10 text-primary-400',
       statusOk: 'text-emerald-400',
       statusBad: 'text-amber-400',
     },
@@ -450,7 +450,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         {/* Status Cards Grid */}
         <div>
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-            <Shield size={14} className="text-violet-400" />
+            <Shield size={14} className="text-primary-400" />
             {t('settings.securityOverview.protectionStatus', 'Protection Status')}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -461,7 +461,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 <button
                   key={card.id}
                   onClick={card.action}
-                  className="bg-navy-900/30 border border-white/5 rounded-lg p-4 text-left hover:border-violet-500/30 hover:bg-violet-600/5 transition-all group"
+                  className="bg-navy-900/30 border border-white/5 rounded-lg p-4 text-left hover:border-primary-500/30 hover:bg-primary-600/5 transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -482,7 +482,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     </div>
                     <ArrowRight
                       size={16}
-                      className="text-slate-600 group-hover:text-violet-400 transition-colors mt-1"
+                      className="text-slate-600 group-hover:text-primary-400 transition-colors mt-1"
                     />
                   </div>
                   <p className="text-xs text-slate-500 leading-relaxed">{card.description}</p>
@@ -541,12 +541,12 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <History size={14} className="text-violet-400" />
+              <History size={14} className="text-primary-400" />
               {t('settings.securityOverview.recentActivity', 'Recent Activity')}
             </h4>
             <button
               onClick={() => navigateTo('auth-access')}
-              className="text-xs text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1"
+              className="text-xs text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1"
             >
               {t('settings.securityOverview.viewFullHistory', 'View full history')}
               <ArrowRight size={12} />

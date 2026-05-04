@@ -16,6 +16,7 @@ import {
 } from '../services/artifacts/contentProjectionService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -194,6 +195,12 @@ function sendDraftConflict(
   baseUpdatedAt: string | null,
   action: string
 ) {
+  logger.warn('[work-canvas] canvas.draft.conflict_409', {
+    draftId: draft.id,
+    action,
+    baseUpdatedAt,
+    currentUpdatedAt: draft.updatedAt,
+  });
   return res.status(409).json({
     error:
       'Canvas changed since this action started. Reload the latest draft or retry from the current version.',
@@ -445,6 +452,14 @@ function authContext(req: AuthRequest) {
     userId: req.userId || req.user?.id || 'unknown-user',
     organizationId: req.organizationId || req.user?.organizationId || 'unknown-org',
   };
+}
+
+function canUseWorkCanvasCapability(req: AuthRequest, capability: string): boolean {
+  if (!capability.trim()) return true;
+  if (typeof req.can === 'function') return req.can(capability);
+
+  const role = String(req.userRole || req.user?.role || '').toUpperCase();
+  return ['SUPERADMIN', 'OWNER', 'ADMIN', 'ADMINISTRATOR'].includes(role);
 }
 
 function envelope<T>(data: T, extra: Record<string, unknown> = {}) {
@@ -702,6 +717,13 @@ function sourceCanvasUrl(draftId: string): string {
   return `/work-canvas?draftId=${encodeURIComponent(draftId)}`;
 }
 
+function suggestedWave5ArtifactType(outputType?: OutputType) {
+  if (outputType === 'presentation') return 'slide_deck';
+  if (outputType === 'table') return 'spreadsheet';
+  if (outputType === 'report') return 'report';
+  return null;
+}
+
 function outputMetadata(
   draft: WorkCanvasDraft,
   params: {
@@ -715,6 +737,7 @@ function outputMetadata(
   }
 ) {
   const lifecycleState = params.lifecycleState || draft.lifecycleState || 'draft';
+  const suggestedArtifactType = suggestedWave5ArtifactType(params.outputType);
   return {
     ownerId: draft.ownerId || draft.createdBy,
     lifecycleState,
@@ -735,6 +758,26 @@ function outputMetadata(
       createdBy: params.createdBy,
       createdAt: params.createdAt,
     },
+    artifactRuntimeHint: suggestedArtifactType
+      ? {
+          runtime: 'wave5',
+          suggestedArtifactType,
+          conversationId: draft.conversationId,
+          projectId: draft.projectId || null,
+          researchSessionId: draft.researchSessionId || null,
+          sourceRefsTemplate: [
+            {
+              sourceClass: 'work_canvas',
+              draftId: draft.id,
+              canvasVersionId: params.sourceVersionId || null,
+              outputResourceType: params.outputType || null,
+              outputResourceId: params.outputId || null,
+              title: draft.title,
+              url: sourceCanvasUrl(draft.id),
+            },
+          ],
+        }
+      : null,
     openInSourceCanvasUrl: sourceCanvasUrl(draft.id),
   };
 }
@@ -771,7 +814,7 @@ function tableBlockToCsv(block: CanvasArtifactBlock): string | null {
   return [
     columnNames.map(csvCell).join(','),
     ...rows.map((row) => {
-      const record =
+      const record: Record<string, unknown> =
         typeof row === 'object' && row !== null ? (row as Record<string, unknown>) : { Item: row };
       return columnNames.map((column) => csvCell(record[column])).join(',');
     }),
@@ -1388,12 +1431,18 @@ function diffSummary(before: string, after: string) {
   const afterLines = String(after || '').split('\n');
   const beforeSet = new Set(beforeLines);
   const afterSet = new Set(afterLines);
+  const addedLineSamples = afterLines.filter((line) => !beforeSet.has(line) && line.trim()).slice(0, 3);
+  const removedLineSamples = beforeLines
+    .filter((line) => !afterSet.has(line) && line.trim())
+    .slice(0, 3);
   const addedLines = afterLines.filter((line) => !beforeSet.has(line)).length;
   const removedLines = beforeLines.filter((line) => !afterSet.has(line)).length;
   return {
     addedLines,
     removedLines,
     summary: `${addedLines} lines added, ${removedLines} lines removed`,
+    addedLineSamples,
+    removedLineSamples,
   };
 }
 
@@ -2001,13 +2050,39 @@ async function ensureStorage(): Promise<void> {
 
 async function ownedDraft(req: AuthRequest, draftId: string): Promise<WorkCanvasDraft | null> {
   await ensureStorage();
-  const { organizationId } = authContext(req);
+  const { organizationId, userId } = authContext(req);
   const row = await dbGet<DraftRow>(
     `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
     [draftId, organizationId],
     { fallback: false }
   );
-  return row ? toDraft(row) : null;
+  if (!row) return null;
+  const draft = toDraft(row);
+  if (draft.visibility === 'project') return draft;
+  if (draft.createdBy === userId) return draft;
+  if (draft.ownerId && draft.ownerId === userId) return draft;
+  return null;
+}
+
+function sharedDraftPayload(draft: WorkCanvasDraft): {
+  token: string;
+  url: string;
+  title: string;
+  createdAt: string;
+  expiresAt: string;
+} | null {
+  const share = draft.provenance?.share;
+  if (!share || typeof share !== 'object') return null;
+  const record = share as Record<string, unknown>;
+  const token = typeof record.token === 'string' ? record.token : '';
+  if (!token.trim()) return null;
+  return {
+    token,
+    url: typeof record.url === 'string' ? record.url : `/work-canvas/shared/${token}`,
+    title: typeof record.title === 'string' ? record.title : draft.title,
+    createdAt: typeof record.createdAt === 'string' ? record.createdAt : draft.updatedAt,
+    expiresAt: typeof record.expiresAt === 'string' ? record.expiresAt : draft.updatedAt,
+  };
 }
 
 async function draftProposals(draftId: string): Promise<WorkCanvasProposal[]> {
@@ -2420,10 +2495,10 @@ router.get('/drafts', async (req: AuthRequest, res) => {
     whereParts.push('conversation_id = ?');
     queryParams.push(conversationId);
   }
-  const accessParts = ['project_id IS NULL', 'created_by = ?'];
-  queryParams.push(userId);
+  const accessParts = ['created_by = ?', 'owner_id = ?', "visibility = 'project'"];
+  queryParams.push(userId, userId);
   if (projectId) {
-    accessParts.push('project_id = ?');
+    whereParts.push('project_id = ?');
     queryParams.push(projectId);
   }
   whereParts.push(`(${accessParts.join(' OR ')})`);
@@ -2656,6 +2731,18 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/run-next', async (req: Au
   if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
     return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
   }
+  if (run.status === 'completed' || run.status === 'failed') {
+    return res.status(409).json({
+      error: 'Workflow run is already in a terminal state',
+      code: 'CANVAS_WORKFLOW_TERMINAL_STATE',
+      recoverable: true,
+      data: {
+        workflowRunId: run.id,
+        status: run.status,
+        outputCount: run.outputs?.length || 0,
+      },
+    });
+  }
 
   const pendingApproval = run.approvals.find((approval) => approval.status === 'pending');
   if (pendingApproval && req.body?.approved !== true) {
@@ -2664,6 +2751,27 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/run-next', async (req: Au
       code: 'CANVAS_WORKFLOW_APPROVAL_REQUIRED',
       recoverable: true,
       data: { workflowRunId: run.id, approval: pendingApproval },
+    });
+  }
+  const reviewLifecycle = run.collaboration?.lifecycle || 'draft';
+  const reviewGateRequired = Boolean(
+    run.collaboration?.reviewerId || reviewLifecycle === 'in_review'
+  );
+  if (reviewGateRequired && reviewLifecycle !== 'approved') {
+    logger.warn('[work-canvas] canvas.workflow.review_required', {
+      draftId: draft.id,
+      workflowRunId: run.id,
+      lifecycle: reviewLifecycle,
+    });
+    return res.status(409).json({
+      error: 'Workflow review lifecycle must be approved before generating a durable output',
+      code: 'CANVAS_WORKFLOW_REVIEW_REQUIRED',
+      recoverable: true,
+      data: {
+        workflowRunId: run.id,
+        lifecycle: reviewLifecycle,
+        reviewerId: run.collaboration?.reviewerId || null,
+      },
     });
   }
 
@@ -2971,24 +3079,112 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   if (hasDraftConflict(draft, baseUpdatedAt)) {
     return sendDraftConflict(res, draft, baseUpdatedAt, 'save_draft');
   }
+  const payload =
+    req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>) : {};
+  const nextKind = String(payload.kind || draft.kind) as DraftKind;
+  const allowedKinds: DraftKind[] = [
+    'markdown',
+    'table',
+    'checklist',
+    'research',
+    'decision',
+    'document',
+    'report',
+    'sheet',
+    'deck',
+  ];
+  const normalizedKind = allowedKinds.includes(nextKind) ? nextKind : draft.kind;
+  const nextSaveState =
+    payload.saveState === 'saved' || payload.saveState === 'failed' || payload.saveState === 'unsaved'
+      ? payload.saveState
+      : draft.saveState;
+  const nextLifecycleState =
+    payload.lifecycleState === 'draft' ||
+    payload.lifecycleState === 'proposed' ||
+    payload.lifecycleState === 'approved'
+      ? payload.lifecycleState
+      : draft.lifecycleState;
+  const nextVisibility =
+    payload.visibility === 'private' || payload.visibility === 'project'
+      ? payload.visibility
+      : draft.visibility;
+  const nextAuditStatus =
+    payload.auditStatus === 'not_required' || payload.auditStatus === 'logged'
+      ? payload.auditStatus
+      : draft.auditStatus;
   const updated: WorkCanvasDraft = {
     ...draft,
-    ...req.body,
+    conversationId:
+      typeof payload.conversationId === 'string' && payload.conversationId.trim()
+        ? payload.conversationId.trim()
+        : draft.conversationId,
+    kind: normalizedKind,
+    title:
+      typeof payload.title === 'string' && payload.title.trim()
+        ? payload.title.trim()
+        : draft.title,
+    content:
+      payload.content !== undefined
+        ? payload.content
+        : payload.contentMd !== undefined
+          ? String(payload.contentMd || '')
+          : draft.content,
+    sources: Array.isArray(payload.sources) ? payload.sources : draft.sources,
+    provenance:
+      payload.provenance && typeof payload.provenance === 'object'
+        ? (payload.provenance as Record<string, unknown>)
+        : draft.provenance,
+    projectId:
+      payload.projectId === null || typeof payload.projectId === 'string'
+        ? (payload.projectId as string | null)
+        : draft.projectId,
+    ownerId:
+      payload.ownerId === null || typeof payload.ownerId === 'string'
+        ? (payload.ownerId as string | null)
+        : draft.ownerId,
+    researchSessionId:
+      payload.researchSessionId === null || typeof payload.researchSessionId === 'string'
+        ? (payload.researchSessionId as string | null)
+        : draft.researchSessionId,
+    saveState: nextSaveState,
+    lifecycleState: nextLifecycleState,
+    visibility: nextVisibility,
+    auditStatus: nextAuditStatus,
+    canonicalFormat:
+      payload.canonicalFormat === 'json'
+        ? 'json'
+        : payload.canonicalFormat === 'markdown'
+          ? 'markdown'
+          : draft.canonicalFormat,
+    contentMd:
+      typeof payload.contentMd === 'string'
+        ? payload.contentMd
+        : typeof payload.content === 'string'
+          ? payload.content
+          : draft.contentMd,
+    contentJson: payload.contentJson !== undefined ? payload.contentJson : draft.contentJson,
+    blocks: Array.isArray(payload.blocks)
+      ? normalizeCanvasArtifactBlocks(payload.blocks)
+      : draft.blocks,
+    contentSchemaVersion:
+      typeof payload.contentSchemaVersion === 'string'
+        ? payload.contentSchemaVersion
+        : draft.contentSchemaVersion,
     id: draft.id,
     organizationId: draft.organizationId,
     createdBy: draft.createdBy,
     updatedAt: new Date().toISOString(),
   };
   updated.contentEnvelope = createArtifactContentEnvelope({
-    artifactType: updated.kind,
-    canonicalFormat: req.body?.canonicalFormat || updated.canonicalFormat,
+    artifactType: normalizedKind,
+    canonicalFormat: updated.canonicalFormat,
     contentMd:
-      req.body?.contentMd ??
+      updated.contentMd ??
       (typeof updated.content === 'string' ? updated.content : updated.contentMd),
-    contentJson: req.body?.contentJson ?? updated.contentJson,
-    blocks: req.body?.blocks ?? updated.blocks,
+    contentJson: updated.contentJson,
+    blocks: updated.blocks,
     contentSchemaVersion:
-      req.body?.contentSchemaVersion || updated.contentSchemaVersion || undefined,
+      updated.contentSchemaVersion || undefined,
   });
   updated.canonicalFormat = updated.contentEnvelope.canonicalFormat;
   updated.contentMd = updated.contentEnvelope.contentMd;
@@ -3145,18 +3341,30 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
   if (!proposal || proposal.organizationId !== authContext(req).organizationId) {
     return res.status(404).json({ error: 'Canvas proposal not found' });
   }
-  const targetObjectId = `${proposal.target}-${randomUUID()}`;
+  if (!canUseWorkCanvasCapability(req, proposal.requiredCapability)) {
+    logger.warn('[work-canvas] canvas.proposal.capability_denied', {
+      proposalId: proposal.id,
+      requiredCapability: proposal.requiredCapability,
+      userId: authContext(req).userId,
+    });
+    return res.status(403).json({
+      error: 'Canvas proposal approval requires additional capability',
+      code: 'CANVAS_PROPOSAL_CAPABILITY_REQUIRED',
+      recoverable: true,
+      requiredCapability: proposal.requiredCapability,
+    });
+  }
   const readBack = {
     target: proposal.target,
-    targetObjectId,
-    status: 'approved',
-    entityStatus: 'created',
+    targetObjectId: null,
+    status: 'approved_with_placeholder',
+    entityStatus: 'placeholder_pending_conversion',
     auditEventId: `ae-${randomUUID()}`,
   };
   const updated: WorkCanvasProposal = {
     ...proposal,
     status: 'approved',
-    targetObjectId,
+    targetObjectId: null,
     readBack,
     auditEventId: String(readBack.auditEventId),
     updatedAt: new Date().toISOString(),
@@ -3167,7 +3375,7 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
      WHERE id = ? AND organization_id = ?`,
     [
       updated.status,
-      updated.targetObjectId,
+      null,
       JSON.stringify(updated.readBack),
       updated.auditEventId,
       updated.updatedAt,
@@ -3366,14 +3574,58 @@ router.post('/drafts/:draftId/share', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const token = randomUUID().replace(/-/g, '');
+  const createdAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const share = {
     token,
     url: `/work-canvas/shared/${token}`,
     title: draft.title,
-    createdAt: new Date().toISOString(),
+    createdAt,
+    expiresAt,
   };
   const updated = await updateDraftAfterOperation(draft, { share });
   return res.json(envelope({ draft: updated, share }));
+});
+
+router.get('/shared/:token', async (req: AuthRequest, res) => {
+  await ensureStorage();
+  const { organizationId } = authContext(req);
+  const token = String(req.params.token || '').trim();
+  if (!token) return res.status(400).json({ error: 'Share token is required' });
+  const rows = await dbAll<DraftRow>(
+    `SELECT * FROM work_canvas_drafts
+     WHERE organization_id = ? AND provenance_json LIKE ?
+     ORDER BY updated_at DESC`,
+    [organizationId, `%${token}%`],
+    { fallback: false }
+  );
+  const match = rows
+    .map(toDraft)
+    .find((draft) => sharedDraftPayload(draft)?.token === token);
+  if (!match) {
+    return res.status(404).json({ error: 'Shared Canvas draft not found' });
+  }
+  const share = sharedDraftPayload(match);
+  if (!share) return res.status(404).json({ error: 'Shared Canvas draft not found' });
+  if (Date.parse(share.expiresAt) < Date.now()) {
+    return res.status(410).json({
+      error: 'Shared Canvas link expired',
+      code: 'CANVAS_SHARE_EXPIRED',
+      recoverable: true,
+      data: { token: share.token, expiredAt: share.expiresAt },
+    });
+  }
+  return res.json(
+    envelope({
+      draftId: match.id,
+      title: match.title,
+      kind: match.kind,
+      contentMd: match.contentMd,
+      markdownProjectionStatus: match.markdownProjectionStatus,
+      updatedAt: match.updatedAt,
+      share,
+    })
+  );
 });
 
 router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) => {
@@ -3423,6 +3675,11 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
       })
     );
   } catch (error) {
+    logger.error('[work-canvas] canvas.save.failed', {
+      draftId: draft.id,
+      target,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to save Canvas to workspace',
     });
@@ -3483,8 +3740,105 @@ router.post('/drafts/:draftId/create-output', async (req: AuthRequest, res) => {
       })
     );
   } catch (error) {
+    logger.error('[work-canvas] canvas.save.failed', {
+      draftId: draft.id,
+      outputType,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to create Canvas output',
+    });
+  }
+});
+
+router.post('/drafts/:draftId/research/finalize-report', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  if (draft.kind !== 'research') {
+    return res.status(409).json({
+      error: 'Research final report can only be created from a research Canvas draft',
+      code: 'CANVAS_RESEARCH_NOT_ELIGIBLE',
+      recoverable: true,
+    });
+  }
+
+  const { organizationId, userId } = authContext(req);
+  const now = new Date().toISOString();
+  try {
+    const version = await createVersionSnapshot(
+      draft,
+      'research_finalize_report',
+      'Finalized research report from Canvas draft',
+      userId
+    );
+    const outputResource = await createOutputResource(draft, 'report', userId, organizationId, version.id);
+    const evidenceSummary = (draft.blocks || [])
+      .filter((block) => block.kind === 'research')
+      .map((block) => {
+        const record = block.data && typeof block.data === 'object' ? (block.data as Record<string, unknown>) : {};
+        const sources = Array.isArray(record.sources) ? record.sources : [];
+        return {
+          blockId: block.id,
+          title: block.title,
+          sourceCount: sources.length,
+          confidence:
+            typeof record.confidence === 'string' && record.confidence.trim()
+              ? record.confidence
+              : 'unknown',
+        };
+      });
+    const updatedDraft = await updateDraftAfterOperation(draft, {
+      researchFinalReport: {
+        status: 'promotion_recorded',
+        sourceDraftId: draft.id,
+        sourceVersionId: version.id,
+        researchSessionId: draft.researchSessionId || null,
+        reportDraftId: outputResource.id,
+        reportTitle: outputResource.title,
+        reportUrl: outputResource.url,
+        finalizedAt: now,
+        evidenceSummary,
+      },
+    });
+    const readBack = {
+      target: 'research_final_report',
+      status: 'promotion_recorded',
+      sourceDraftId: draft.id,
+      sourceVersionId: version.id,
+      researchSessionId: draft.researchSessionId,
+      reportDraftId: outputResource.id,
+      reportTitle: outputResource.title,
+      reportUrl: outputResource.url,
+      evidenceSummary,
+    };
+    logger.info('[work-canvas] canvas.research.final_report_promoted', {
+      draftId: draft.id,
+      reportDraftId: outputResource.id,
+      researchSessionId: draft.researchSessionId,
+      evidenceBlocks: evidenceSummary.length,
+    });
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        reportResource: {
+          type: outputResource.type,
+          id: outputResource.id,
+          title: outputResource.title,
+          url: outputResource.url,
+          metadata: outputResource.metadata,
+        },
+        readBack,
+        version,
+      })
+    );
+  } catch (error) {
+    logger.error('[work-canvas] canvas.save.failed', {
+      draftId: draft.id,
+      target: 'research_final_report',
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to finalize Canvas research report',
     });
   }
 });
@@ -3493,20 +3847,41 @@ router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) =
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const artifactId = `artifact-${randomUUID()}`;
+  const artifactRunId = `run-${randomUUID()}`;
+  const now = new Date().toISOString();
+  const artifactPromotion = {
+    runtime: 'wave5',
+    status: 'promotion_recorded',
+    artifactId,
+    artifactRunId,
+    artifactVersion: 1,
+    source: {
+      type: 'work_canvas',
+      draftId: draft.id,
+      title: draft.title,
+      conversationId: draft.conversationId,
+      researchSessionId: draft.researchSessionId,
+    },
+    promotedAt: now,
+  };
   const updated: WorkCanvasDraft = {
     ...draft,
     artifactId,
-    artifactRunId: `run-${randomUUID()}`,
+    artifactRunId,
     artifactVersion: 1,
     saveState: 'saved',
     dirtyState: 'clean',
     auditStatus: 'logged',
-    updatedAt: new Date().toISOString(),
+    provenance: {
+      ...draft.provenance,
+      artifactPromotion,
+    },
+    updatedAt: now,
   };
   await dbRun(
     `UPDATE work_canvas_drafts
      SET artifact_id = ?, artifact_run_id = ?, artifact_version = ?, save_state = ?,
-         dirty_state = ?, audit_status = ?, updated_at = ?
+         dirty_state = ?, audit_status = ?, provenance_json = ?, updated_at = ?
      WHERE id = ? AND organization_id = ?`,
     [
       updated.artifactId,
@@ -3515,6 +3890,7 @@ router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) =
       updated.saveState,
       updated.dirtyState,
       updated.auditStatus,
+      JSON.stringify(updated.provenance),
       updated.updatedAt,
       updated.id,
       updated.organizationId,
@@ -3524,9 +3900,20 @@ router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) =
   const readBack = {
     target: 'artifact',
     targetObjectId: artifactId,
-    status: 'saved',
+    status: 'promotion_recorded',
+    runtime: 'wave5',
+    artifactId,
+    artifactRunId,
     artifactVersion: 1,
+    sourceDraftId: draft.id,
+    promotionStatus: 'promotion_recorded',
   };
+  logger.info('[work-canvas] canvas.artifact.promotion_recorded', {
+    draftId: draft.id,
+    artifactId,
+    artifactRunId,
+    artifactVersion: 1,
+  });
   return res.json(envelope(updated, { readBack, auditEventId: `ae-${randomUUID()}` }));
 });
 

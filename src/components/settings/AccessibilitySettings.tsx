@@ -253,7 +253,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -292,14 +292,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20 bg-navy-800/50'
                     )}
                   >
                     <div
                       className={cn(
                         'font-semibold transition-colors',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                       style={{ fontSize: opt.size }}
                     >
@@ -308,7 +308,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <div
                       className={cn(
                         'text-xs mt-2 transition-colors',
-                        isSelected ? 'text-violet-400' : 'text-slate-500'
+                        isSelected ? 'text-primary-400' : 'text-slate-500'
                       )}
                     >
                       {opt.label}
@@ -336,14 +336,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     className={cn(
                       'p-3 rounded-lg border-2 transition-all duration-200 text-left',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                     >
                       {opt.label}
@@ -551,14 +551,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     className={cn(
                       'p-3 rounded-xl border-2 transition-all duration-200 text-left',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
                     <div
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                     >
                       {t(opt.labelKey, opt.label)}
@@ -603,14 +603,14 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     className={cn(
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20'
                     )}
                   >
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-violet-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-300'
                       )}
                     >
                       {labels[style]}

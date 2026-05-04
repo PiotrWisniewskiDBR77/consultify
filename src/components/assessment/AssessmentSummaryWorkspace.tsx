@@ -191,7 +191,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                 }}
                 autoFocus={isEditingName}
                 placeholder="Nazwa assessmentu..."
-                className="text-2xl font-bold bg-transparent border-b-2 border-purple-500 focus:border-purple-400 outline-none text-navy-900 dark:text-white placeholder-slate-400 w-full max-w-md"
+                className="text-2xl font-bold bg-transparent border-b-2 border-primary-500 focus:border-primary-400 outline-none text-navy-900 dark:text-white placeholder-slate-400 w-full max-w-md"
               />
               <button
                 onClick={() => {
@@ -224,7 +224,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
         <div className="flex gap-4">
           {/* Progress: Axes Worked */}
           <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-navy-700 text-center min-w-[100px]">
-            <div className="text-3xl font-bold text-purple-500">
+            <div className="text-3xl font-bold text-primary-500">
               {overallProgress.axesWorked}
               <span className="text-lg text-slate-500 dark:text-slate-400">/{axes.length}</span>
             </div>
@@ -233,7 +233,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
             </div>
             <div className="mt-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-purple-500 rounded-full transition-all"
+                className="h-full bg-primary-500 rounded-full transition-all"
                 style={{ width: `${(overallProgress.axesWorked / axes.length) * 100}%` }}
               />
             </div>
@@ -263,7 +263,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
           </div>
           {/* Total Gap */}
           <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-navy-700 text-center min-w-[100px]">
-            <div className="text-3xl font-bold text-red-400">{totalGap}</div>
+            <div className="text-3xl font-bold text-rose-400">{totalGap}</div>
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-bold">
               Total Gap Points
             </div>
@@ -290,7 +290,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
               <span className="text-slate-600 dark:text-slate-400">Docelowy</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500/20 border border-dashed border-red-500 rounded-sm"></div>
+              <div className="w-3 h-3 bg-rose-500/20 border border-dashed border-rose-500 rounded-sm"></div>
               <span className="text-slate-600 dark:text-slate-400">Luka</span>
             </div>
           </div>
@@ -324,7 +324,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                 {gap > 0 && (
                   <div
                     style={{ height: `${gap * 10}%` }}
-                    className="w-full bg-red-500/10 border border-dashed border-red-500/30 rounded-t relative overflow-hidden"
+                    className="w-full bg-rose-500/10 border border-dashed border-rose-500/30 rounded-t relative overflow-hidden"
                   ></div>
                 )}
 
@@ -340,7 +340,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
 
                 <div className="mt-2 text-xs font-mono text-slate-500 dark:text-slate-400">
                   {actual} <span className="text-slate-600 dark:text-slate-400">/</span>{' '}
-                  <span className="text-purple-400 font-bold">{target}</span>
+                  <span className="text-primary-400 font-bold">{target}</span>
                 </div>
               </div>
             );

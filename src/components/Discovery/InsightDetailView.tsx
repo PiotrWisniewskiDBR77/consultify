@@ -110,14 +110,14 @@ const INSIGHT_TYPE_CONFIG: Record<
   problem: {
     label: 'Problem',
     icon: <AlertTriangle size={16} />,
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500/20',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/20',
   },
   recommendation: {
     label: 'Recommendation',
     icon: <Sparkles size={16} />,
-    color: 'text-violet-400',
-    bgColor: 'bg-violet-500/20',
+    color: 'text-primary-400',
+    bgColor: 'bg-primary-500/20',
   },
   priority: {
     label: 'Priority',
@@ -128,8 +128,8 @@ const INSIGHT_TYPE_CONFIG: Record<
   trends: {
     label: 'Trends',
     icon: <BarChart3 size={16} />,
-    color: 'text-cyan-400',
-    bgColor: 'bg-cyan-500/20',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
   },
   problems: {
     label: 'Problems',
@@ -140,8 +140,8 @@ const INSIGHT_TYPE_CONFIG: Record<
   recommendations: {
     label: 'Recommendations',
     icon: <Sparkles size={16} />,
-    color: 'text-violet-400',
-    bgColor: 'bg-violet-500/20',
+    color: 'text-primary-400',
+    bgColor: 'bg-primary-500/20',
   },
   comparison: {
     label: 'Comparison',
@@ -152,8 +152,8 @@ const INSIGHT_TYPE_CONFIG: Record<
   maturity: {
     label: 'Maturity Assessment',
     icon: <BarChart3 size={16} />,
-    color: 'text-teal-400',
-    bgColor: 'bg-teal-500/20',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
   },
   stakeholder_map: {
     label: 'Stakeholder Map',
@@ -190,9 +190,9 @@ const INSIGHT_TYPE_CONFIG: Record<
 const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
   strategy: { label: 'Strategy', color: 'text-blue-400' },
   operations: { label: 'Operations', color: 'text-emerald-400' },
-  digital: { label: 'Digital', color: 'text-violet-400' },
+  digital: { label: 'Digital', color: 'text-primary-400' },
   people: { label: 'People', color: 'text-amber-400' },
-  finance: { label: 'Finance', color: 'text-cyan-400' },
+  finance: { label: 'Finance', color: 'text-blue-400' },
 };
 
 const IMPACT_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
@@ -464,7 +464,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
               prose-table:border-collapse prose-table:w-full
               prose-th:bg-slate-100 dark:prose-th:bg-navy-800 prose-th:text-slate-200 prose-th:font-semibold prose-th:text-left prose-th:px-4 prose-th:py-2 prose-th:border prose-th:border-slate-300 dark:prose-th:border-navy-600
               prose-td:px-4 prose-td:py-2 prose-td:border prose-td:border-slate-200 dark:prose-td:border-navy-700 prose-td:text-slate-300
-              prose-code:bg-slate-100 dark:prose-code:bg-navy-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-cyan-400 prose-code:text-sm
+              prose-code:bg-slate-100 dark:prose-code:bg-navy-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-blue-400 prose-code:text-sm
               prose-pre:bg-slate-50 dark:prose-pre:bg-navy-950 prose-pre:border prose-pre:border-navy-700 prose-pre:rounded-lg
               prose-blockquote:border-l-4 prose-blockquote:border-amber-500/50 prose-blockquote:bg-slate-100/50 dark:prose-blockquote:bg-navy-800/50 prose-blockquote:px-4 prose-blockquote:py-2 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
               prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline

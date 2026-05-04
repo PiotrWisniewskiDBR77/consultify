@@ -75,13 +75,13 @@ const getActionIcon = (actionType: string) => {
     case 'CREATE_DRAFT_TASK':
       return <Briefcase size={12} className="text-blue-500" />;
     case 'CREATE_DRAFT_INITIATIVE':
-      return <FileText size={12} className="text-purple-500" />;
+      return <FileText size={12} className="text-primary-500" />;
     case 'SUGGEST_ROADMAP_CHANGE':
       return <Calendar size={12} className="text-emerald-500" />;
     case 'GENERATE_REPORT':
       return <FileText size={12} className="text-amber-500" />;
     case 'ANALYZE_RISKS':
-      return <AlertTriangle size={12} className="text-red-500" />;
+      return <AlertTriangle size={12} className="text-rose-500" />;
     default:
       return <Zap size={12} className="text-indigo-500" />;
   }
@@ -116,7 +116,7 @@ const getRiskBadge = (risk?: string) => {
   const colors = {
     LOW: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    HIGH: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    HIGH: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   };
 
   return (
@@ -236,7 +236,7 @@ export const PendingActionsIndicator: React.FC<PendingActionsIndicatorProps> = (
 
   return (
     <div
-      className={`bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200/60 dark:border-amber-700/30 rounded-xl overflow-hidden ${className}`}
+      className={`bg-gradient-to-r from-amber-50/80 to-amber-50/80 dark:from-amber-900/10 dark:to-amber-900/10 border border-amber-200/60 dark:border-amber-700/30 rounded-xl overflow-hidden ${className}`}
     >
       {/* Header */}
       <div
@@ -345,7 +345,7 @@ export const PendingActionsIndicator: React.FC<PendingActionsIndicatorProps> = (
                   <button
                     onClick={(e) => handleReject(action.id, e)}
                     disabled={isProcessing}
-                    className="p-1.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/40 text-red-600 dark:text-red-400 rounded-md transition-colors disabled:opacity-50"
+                    className="p-1.5 bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-800/40 text-rose-600 dark:text-rose-400 rounded-md transition-colors disabled:opacity-50"
                     title={t('ai.actions.reject', 'Reject')}
                   >
                     <X size={12} />

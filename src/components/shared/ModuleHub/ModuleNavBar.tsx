@@ -68,6 +68,7 @@ interface ModuleNavBarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onSearch: (query: string) => void;
+  searchValue?: string;
   // Command Row inputs (V3: one row; modes swap in place)
   openDocuments: OpenDocument[];
   activeDocumentId: string | null;
@@ -156,6 +157,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   viewMode,
   onViewModeChange,
   onSearch,
+  searchValue,
   openDocuments,
   activeDocumentId,
   onSelectDocument,
@@ -187,6 +189,11 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
   // Debounce search query (300ms)
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  useEffect(() => {
+    if (searchValue === undefined) return;
+    setSearchQuery(searchValue);
+  }, [searchValue]);
 
   // Call onSearch when debounced value changes
   useEffect(() => {

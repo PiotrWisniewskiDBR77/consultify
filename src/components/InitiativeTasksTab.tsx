@@ -86,7 +86,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       case 'in_progress':
         return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
       case 'blocked':
-        return 'text-red-400 bg-red-500/10 border-red-500/20';
+        return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
       default:
         return 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
     }
@@ -192,7 +192,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
             className={`px - 3 py - 1.5 bg - purple - 50 dark: bg - purple - 600 / 20 hover: bg - purple - 100 dark: hover: bg - purple - 600 / 30 text - purple - 600 dark: text - purple - 300 border border - purple - 200 dark: border - purple - 500 / 30 rounded text - xs font - medium flex items - center gap - 2 transition - colors ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} `}
           >
             {isGenerating ? (
-              <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-purple-400 animate-spin" />
+              <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-primary-400 animate-spin" />
             ) : (
               <span className="text-lg">✨</span>
             )}
@@ -324,7 +324,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                   </h4>
                   <div className="flex items-center gap-2">
                     {task.weight && task.weight > 1 && (
-                      <span className="text-[9px] font-bold text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] font-bold text-primary-500 bg-primary-50 dark:bg-primary-500/10 px-1.5 py-0.5 rounded">
                         {task.weight}x
                       </span>
                     )}
@@ -354,7 +354,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                     </span>
                   )}
                   <span
-                    className={`uppercase ${task.priority === 'urgent' ? 'text-red-500 dark:text-red-400' : task.priority === 'high' ? 'text-orange-500 dark:text-orange-400' : 'text-slate-500'}`}
+                    className={`uppercase ${task.priority === 'urgent' ? 'text-rose-500 dark:text-rose-400' : task.priority === 'high' ? 'text-amber-500 dark:text-amber-400' : 'text-slate-500'}`}
                   >
                     {task.priority}
                   </span>

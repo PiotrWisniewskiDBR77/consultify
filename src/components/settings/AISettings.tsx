@@ -576,7 +576,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   id: 'PREMIUM',
                   label: 'Premium Tier',
                   desc: 'Highest quality output. Best for complex analysis and creativity.',
-                  icon: <Sparkles size={24} className="text-purple-400" />,
+                  icon: <Sparkles size={24} className="text-primary-400" />,
                   color: 'purple',
                   example: 'GPT-4-Turbo, Opus',
                 },
@@ -688,7 +688,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <FileText size={16} className="text-purple-400" />
+                    <FileText size={16} className="text-primary-400" />
                     <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
                       Tokens
                     </span>
@@ -725,7 +725,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               {/* Usage by Tier */}
               <div className="bg-black/20 border border-white/10 rounded-xl p-6">
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <BarChart2 size={16} className="text-violet-400" />
+                  <BarChart2 size={16} className="text-primary-400" />
                   Usage by Tier
                 </h4>
                 <div className="space-y-3">
@@ -757,7 +757,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     Period: Jan 1 - Jan 31, 2026
                   </span>
-                  <button className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                  <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
                     View Full History <ChevronRight size={12} />
                   </button>
                 </div>
@@ -900,7 +900,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => removeLocalProvider(p.id)}
-                          className="text-slate-500 dark:text-slate-400 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                          className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-2 rounded hover:bg-rose-500/10 transition-colors"
                           title="Remove Key"
                         >
                           <Trash2 size={16} />
@@ -967,7 +967,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   {(currentUser.aiConfig as any)?.provider === 'ollama' ? (
                     <button
                       onClick={disableLocalInference}
-                      className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors"
+                      className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-rose-300 border border-rose-500/30 rounded-lg hover:bg-rose-500/10 transition-colors"
                     >
                       Disable
                     </button>
@@ -1091,7 +1091,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                           )}
                           <button
                             onClick={() => removeLocalProvider(p.id)}
-                            className="text-slate-500 dark:text-slate-400 hover:text-red-400 p-2 rounded hover:bg-red-500/10 transition-colors"
+                            className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-2 rounded hover:bg-rose-500/10 transition-colors"
                             title="Disconnect"
                           >
                             <Trash2 size={16} />
@@ -1178,10 +1178,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <label className="text-sm font-medium text-white flex items-center gap-2">
-                    <HardDrive size={16} className="text-purple-400" />
+                    <HardDrive size={16} className="text-primary-400" />
                     Max Output Tokens
                   </label>
-                  <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-purple-400">
+                  <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-primary-400">
                     {preferences.maxTokens ?? 4096}
                   </span>
                 </div>
@@ -1191,7 +1191,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   onChange={(e) =>
                     setPreferences({ ...preferences, maxTokens: parseInt(e.target.value) })
                   }
-                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-purple-500/50 outline-none transition-all font-mono"
+                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary-500/50 outline-none transition-all font-mono"
                 />
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
                   Maximum length of generated response.
@@ -1273,7 +1273,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   label: 'Deep Study',
                   desc: 'Kompleksowa analiza',
                   tokens: '1000-4000',
-                  icon: <Brain size={24} className="text-purple-400" />,
+                  icon: <Brain size={24} className="text-primary-400" />,
                   color: 'purple',
                 },
               ].map((mode) => (
@@ -1405,7 +1405,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     <span className="text-xs text-slate-400 dark:text-slate-500">
                       Deep Study Mode
                     </span>
-                    <span className="text-xs font-mono text-purple-400">
+                    <span className="text-xs font-mono text-primary-400">
                       {preferences.responseLength?.deepStudy || 'long'}
                     </span>
                   </div>
@@ -1413,7 +1413,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     type="range"
                     min="0"
                     max="2"
-                    className="w-full accent-purple-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
+                    className="w-full accent-primary-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer"
                     value={['medium', 'long', 'comprehensive'].indexOf(
                       preferences.responseLength?.deepStudy || 'long'
                     )}
@@ -1644,12 +1644,12 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div
                 className={`p-4 rounded-xl border transition-all ${
                   proactivityMode === 'BALANCED'
-                    ? 'bg-violet-600/20 border-violet-500/50'
+                    ? 'bg-primary-600/20 border-primary-500/50'
                     : 'bg-white/5 border-white/5'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Scale size={18} className="text-violet-400" />
+                  <Scale size={18} className="text-primary-400" />
                   <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
@@ -1728,7 +1728,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div className="p-6 rounded-xl border border-white/5 bg-slate-50/30 dark:bg-navy-950/20 hover:border-white/10 transition-colors">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
+                    <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400">
                       <Fingerprint size={20} />
                     </div>
                     <div>

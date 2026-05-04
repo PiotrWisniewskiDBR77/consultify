@@ -167,7 +167,7 @@ Be professional and concise.
             <div
               className={`
                 w-7 h-7 rounded-full flex items-center justify-center shrink-0
-                ${message.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-purple-500'}
+                ${message.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-primary-500'}
               `}
             >
               {message.role === 'user' ? (
@@ -182,7 +182,7 @@ Be professional and concise.
                 ${
                   message.role === 'user'
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
-                    : 'bg-purple-50 dark:bg-purple-900/20 text-slate-800 dark:text-slate-200'
+                    : 'bg-primary-50 dark:bg-primary-900/20 text-slate-800 dark:text-slate-200'
                 }
               `}
             >
@@ -193,11 +193,11 @@ Be professional and concise.
 
         {isLoading && (
           <div className="flex gap-2">
-            <div className="w-7 h-7 rounded-full bg-purple-500 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shrink-0">
               <Bot size={12} className="text-white" />
             </div>
-            <div className="px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-              <Loader2 size={14} className="text-purple-500 animate-spin" />
+            <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+              <Loader2 size={14} className="text-primary-500 animate-spin" />
             </div>
           </div>
         )}
@@ -215,13 +215,13 @@ Be professional and concise.
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Type your answer..."
-            className="flex-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:text-white"
+            className="flex-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={!inputValue.trim() || isLoading}
-            className="px-3 bg-purple-500 hover:bg-purple-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
+            className="px-3 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
           >
             <Send size={16} />
           </button>

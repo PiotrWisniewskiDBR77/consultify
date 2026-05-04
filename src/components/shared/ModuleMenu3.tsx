@@ -37,8 +37,8 @@ export const MENU_3_CHIP_INACTIVE = cn(
 
 export const MENU_3_CHIP_ACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-purple-500/40 bg-purple-500/10 text-purple-700 shadow-[inset_0_0_0_1px_rgba(168,85,247,0.10)]',
-  'dark:text-purple-200'
+  'border-primary-500/40 bg-primary-500/10 text-primary-700 shadow-[inset_0_0_0_1px_rgba(168,85,247,0.10)]',
+  'dark:text-primary-200'
 );
 
 export const MENU_3_BADGE_BASE =
@@ -51,11 +51,11 @@ export const MENU_3_BADGE_INACTIVE = cn(
 
 export const MENU_3_BADGE_ACTIVE = cn(
   MENU_3_BADGE_BASE,
-  'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+  'bg-primary-500/30 text-primary-700 dark:text-primary-200'
 );
 
 export const MENU_3_ACTION_BASE =
-  'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
 export const MENU_3_ACTION_NEUTRAL = cn(
   MENU_3_ACTION_BASE,
@@ -65,8 +65,8 @@ export const MENU_3_ACTION_NEUTRAL = cn(
 
 export const MENU_3_ACTION_DANGER = cn(
   MENU_3_ACTION_BASE,
-  'border-red-300/40 bg-red-50/70 text-red-700 hover:bg-red-100/80',
-  'dark:border-red-500/20 dark:bg-red-500/[0.08] dark:text-red-300 dark:hover:bg-red-500/[0.14]'
+  'border-rose-300/40 bg-rose-50/70 text-rose-700 hover:bg-rose-100/80',
+  'dark:border-rose-500/20 dark:bg-rose-500/[0.08] dark:text-rose-300 dark:hover:bg-rose-500/[0.14]'
 );
 
 export const MENU_3_ALL_DOT_CLASS = 'h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500';

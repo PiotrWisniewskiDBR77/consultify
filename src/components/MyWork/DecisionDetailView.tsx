@@ -225,8 +225,8 @@ const STATUS_CONFIG = {
   },
   rejected: {
     label: { en: 'Rejected', pl: 'Odrzucona' },
-    color: 'bg-red-500',
-    textColor: 'text-red-500',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-500',
   },
   deferred: {
     label: { en: 'Deferred', pl: 'Odroczona' },
@@ -235,8 +235,8 @@ const STATUS_CONFIG = {
   },
   escalated: {
     label: { en: 'Escalated', pl: 'Eskalowana' },
-    color: 'bg-orange-500',
-    textColor: 'text-orange-500',
+    color: 'bg-amber-500',
+    textColor: 'text-amber-500',
   },
 };
 
@@ -253,13 +253,13 @@ const PRIORITY_CONFIG = {
   },
   high: {
     label: { en: 'High', pl: 'Wysoki' },
-    color: 'bg-orange-400',
-    textColor: 'text-orange-500',
+    color: 'bg-amber-400',
+    textColor: 'text-amber-500',
   },
   critical: {
     label: { en: 'Critical', pl: 'Krytyczny' },
-    color: 'bg-red-500',
-    textColor: 'text-red-500',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-500',
   },
 };
 
@@ -314,7 +314,7 @@ const CATEGORY_CONFIG = {
 const IMPACT_LEVELS = {
   low: { label: { en: 'Low', pl: 'Niski' }, color: 'bg-emerald-500', emoji: '🟢' },
   medium: { label: { en: 'Medium', pl: 'Średni' }, color: 'bg-amber-500', emoji: '🟡' },
-  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'bg-red-500', emoji: '🔴' },
+  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'bg-rose-500', emoji: '🔴' },
 };
 
 // ── DEMO DATA (populate N/C views for testing) ────────────────────────────────
@@ -1340,7 +1340,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return {
         icon: <X size={12} />,
         label: isPolish ? 'Odrzucenie' : 'Rejection',
-        style: 'text-red-500 bg-red-500/10 border-red-400/30',
+        style: 'text-rose-500 bg-rose-500/10 border-rose-400/30',
       };
     if (type === 'escalated')
       return {
@@ -1376,13 +1376,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return {
         icon: <Flag size={12} />,
         label: isPolish ? 'Zmiana statusu' : 'Status change',
-        style: 'text-violet-500 bg-violet-500/10 border-violet-400/30',
+        style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
       };
     if (type === 'edit')
       return {
         icon: <Edit3 size={12} />,
         label: isPolish ? 'Edycja' : 'Edit',
-        style: 'text-cyan-500 bg-cyan-500/10 border-cyan-400/30',
+        style: 'text-blue-500 bg-blue-500/10 border-blue-400/30',
       };
     return {
       icon: <Plus size={12} />,
@@ -3320,7 +3320,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const getRiskScore = (risk: RiskItem) =>
     riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
   const getRiskScoreClass = (score: number) => {
-    if (score >= 12) return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30';
+    if (score >= 12) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
     if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
     if (score >= 4)
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -3329,9 +3329,9 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const getRiskLevelClass = (level?: string) => {
     const normalized = String(level || '').toLowerCase();
     if (normalized === 'critical')
-      return 'border-red-500/60 bg-red-500/10 text-red-700 dark:text-red-300';
+      return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
     if (normalized === 'high')
-      return 'border-orange-500/55 bg-orange-500/10 text-orange-700 dark:text-orange-300';
+      return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
     if (normalized === 'medium')
       return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
     return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
@@ -3762,7 +3762,7 @@ Context: ${JSON.stringify(projectContext)}`;
       <button
         onClick={() => setAiMenuOpenField((prev) => (prev === fieldKey ? null : fieldKey))}
         disabled={isDecisionStageLocked || !!aiFieldLoading[fieldKey]}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         title={isPolish ? 'Akcje AI dla tego pola' : 'AI actions for this field'}
       >
         {aiFieldLoading[fieldKey] ? (
@@ -3827,7 +3827,7 @@ Context: ${JSON.stringify(projectContext)}`;
   }, [createdAt, isPolish]);
   const statusAlertBorderClass =
     status === 'escalated' || status === 'rejected'
-      ? 'border-red-400/70 dark:border-red-500/50'
+      ? 'border-rose-400/70 dark:border-rose-500/50'
       : status === 'pending' || status === 'deferred'
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : status === 'approved'
@@ -3835,7 +3835,7 @@ Context: ${JSON.stringify(projectContext)}`;
           : 'border-slate-200 dark:border-navy-600/60';
   const priorityAlertBorderClass =
     priority === 'critical'
-      ? 'border-red-400/70 dark:border-red-500/50'
+      ? 'border-rose-400/70 dark:border-rose-500/50'
       : priority === 'high'
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : priority === 'medium'
@@ -3849,7 +3849,7 @@ Context: ${JSON.stringify(projectContext)}`;
     if (Number.isNaN(due.getTime())) return 'border-slate-200 dark:border-navy-600/60';
     const now = new Date();
     const daysDiff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysDiff < 0) return 'border-red-400/70 dark:border-red-500/50';
+    if (daysDiff < 0) return 'border-rose-400/70 dark:border-rose-500/50';
     if (daysDiff <= 3) return 'border-amber-400/70 dark:border-amber-500/50';
     return 'border-emerald-400/60 dark:border-emerald-500/40';
   }, [dueDate, status]);
@@ -3986,7 +3986,7 @@ Context: ${JSON.stringify(projectContext)}`;
 
   const getPriorityButtonClass = (priority: CommentPriorityLevel, isActive: boolean) => {
     if (isActive && priority === 'high') {
-      return 'border-red-400/80 text-red-300 bg-red-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]';
+      return 'border-rose-400/80 text-rose-300 bg-rose-500/20 shadow-[0_0_0_1px_rgba(244,63,94,0.3)]';
     }
     if (isActive && priority === 'normal') {
       return 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]';
@@ -4626,7 +4626,7 @@ Context: ${JSON.stringify(projectContext)}`;
                     </button>
                     <button
                       onClick={handleReject}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                     >
                       <X size={13} /> {isPolish ? 'Odrzuć' : 'Reject'}
                     </button>
@@ -4773,7 +4773,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             <button
                               onClick={generateDescriptionAI}
                               disabled={isDecisionStageLocked || isGeneratingDescription}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {isGeneratingDescription ? (
                                 <Loader2 size={13} className="animate-spin" />
@@ -4990,7 +4990,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       )}
                                       <button
                                         onClick={() => removeAlternative(alt.id)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -5045,7 +5045,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           />
                                           <button
                                             onClick={() => removeAlternativePro(alt.id, idx)}
-                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                                           >
                                             <X size={11} />
                                           </button>
@@ -5086,7 +5086,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
 
                                     <div className="space-y-1.5">
-                                      <span className="text-red-500 dark:text-red-400 font-medium">
+                                      <span className="text-rose-500 dark:text-rose-400 font-medium">
                                         − {alt.cons?.length || 0} {isPolish ? 'przeciw' : 'cons'}
                                       </span>
                                       {(alt.cons || []).map((con, idx) => (
@@ -5099,14 +5099,14 @@ Context: ${JSON.stringify(projectContext)}`;
                                             onChange={(e) =>
                                               updateAlternativeCon(alt.id, idx, e.target.value)
                                             }
-                                            className="flex-1 text-[11px] bg-transparent border-b border-red-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-red-400"
+                                            className="flex-1 text-[11px] bg-transparent border-b border-rose-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-rose-400"
                                             placeholder={
                                               isPolish ? 'Argument przeciw...' : 'Con argument...'
                                             }
                                           />
                                           <button
                                             onClick={() => removeAlternativeCon(alt.id, idx)}
-                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                                           >
                                             <X size={11} />
                                           </button>
@@ -5138,7 +5138,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           <button
                                             key={`${alt.id}-quick-con-${arg}`}
                                             onClick={() => addAlternativeCon(alt.id, arg)}
-                                            className="px-1.5 py-0.5 rounded border border-red-400/30 text-red-500 dark:text-red-400 text-[10px] hover:bg-red-500/10 transition-colors"
+                                            className="px-1.5 py-0.5 rounded border border-rose-400/30 text-rose-500 dark:text-rose-400 text-[10px] hover:bg-rose-500/10 transition-colors"
                                           >
                                             +{arg}
                                           </button>
@@ -5147,7 +5147,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
                                     {alt.riskLevel && (
                                       <span
-                                        className={`font-medium ${alt.riskLevel === 'high' ? 'text-red-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
+                                        className={`font-medium ${alt.riskLevel === 'high' ? 'text-rose-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
                                       >
                                         {isPolish ? 'ryzyko' : 'risk'}: {alt.riskLevel}
                                       </span>
@@ -5238,7 +5238,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   ? 'border-emerald-400/35 bg-emerald-500/5'
                                   : scenarioKey === 'neutral'
                                     ? 'border-amber-400/35 bg-amber-500/5'
-                                    : 'border-red-400/35 bg-red-500/5';
+                                    : 'border-rose-400/35 bg-rose-500/5';
                               return (
                                 <div
                                   key={scenarioKey}
@@ -5443,7 +5443,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     stakeholders.filter((item) => item.id !== s.id)
                                                   )
                                                 }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5575,7 +5575,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     reminders.filter((item) => item.id !== r.id)
                                                   )
                                                 }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5739,7 +5739,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     )
                                                   )
                                                 }
-                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5780,7 +5780,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     <button
                                       disabled={isDecisionStageLocked || isSuggestingStakeholders}
                                       onClick={suggestStakeholderDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                     >
                                       {isSuggestingStakeholders ? (
                                         <Loader2 size={12} className="animate-spin" />
@@ -5921,7 +5921,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             onClick={channel.toggle}
                                             className={`${channelChipClass} ${
                                               channel.active
-                                                ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                                                 : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                             }`}
                                           >
@@ -5961,7 +5961,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                               }}
                                               className={`${channelChipClass} ${
                                                 selected
-                                                  ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                               title={channel.scope}
@@ -6029,7 +6029,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       setEditingStakeholderId(null);
                                       setStakeholderDraft(null);
                                     }}
-                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                    className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
                                   >
                                     {isPolish ? 'Zapisz' : 'Save'}
                                   </button>
@@ -6063,7 +6063,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     <button
                                       disabled={isDecisionStageLocked || isSuggestingReminders}
                                       onClick={suggestReminderDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                     >
                                       {isSuggestingReminders ? (
                                         <Loader2 size={12} className="animate-spin" />
@@ -6209,7 +6209,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                               }
                                               className={`${channelChipClass} ${
                                                 enabled
-                                                  ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                             >
@@ -6251,7 +6251,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                               }
                                               className={`${channelChipClass} ${
                                                 enabled
-                                                  ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                  ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                                                   : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                               }`}
                                               title={channel.scope}
@@ -6338,7 +6338,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       setEditingReminderId(null);
                                       setReminderDraft(null);
                                     }}
-                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                    className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
                                   >
                                     {isPolish ? 'Zapisz' : 'Save'}
                                   </button>
@@ -6372,7 +6372,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     <button
                                       disabled={isDecisionStageLocked || isSuggestingEscalations}
                                       onClick={suggestEscalationDraftAI}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                     >
                                       {isSuggestingEscalations ? (
                                         <Loader2 size={12} className="animate-spin" />
@@ -6539,7 +6539,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             }
                                             className={`${channelChipClass} ${
                                               enabled
-                                                ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                                                 : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                             }`}
                                           >
@@ -6580,7 +6580,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             }
                                             className={`${channelChipClass} ${
                                               enabled
-                                                ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                ? 'border-primary-400/60 text-primary-500 bg-primary-500/10'
                                                 : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
                                             }`}
                                             title={channel.scope}
@@ -6662,7 +6662,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       setEditingEscalationId(null);
                                       setEscalationDraft(null);
                                     }}
-                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                    className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
                                   >
                                     {isPolish ? 'Zapisz' : 'Save'}
                                   </button>
@@ -7004,7 +7004,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             stakeholders.filter((item) => item.id !== s.id)
                                           )
                                         }
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7240,7 +7240,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                         onClick={() =>
                                           setReminders(reminders.filter((item) => item.id !== r.id))
                                         }
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7479,7 +7479,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <button
                                         disabled={isDecisionStageLocked}
                                         onClick={() => handleDeleteAttachment(a.id)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7561,7 +7561,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <button
                                         disabled={isDecisionStageLocked}
                                         onClick={() => handleRemoveLinkedItem(item)}
-                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7597,7 +7597,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </button>
                       <button
                         onClick={handleReject}
-                        className="px-3 py-2 rounded-xl border border-red-400/50 text-red-500 hover:bg-red-500/10 text-sm font-medium"
+                        className="px-3 py-2 rounded-xl border border-rose-400/50 text-rose-500 hover:bg-rose-500/10 text-sm font-medium"
                       >
                         {isPolish ? 'Odrzuć' : 'Reject'}
                       </button>

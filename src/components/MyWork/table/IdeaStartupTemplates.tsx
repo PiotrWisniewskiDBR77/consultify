@@ -49,10 +49,10 @@ const WORKSPACE_OPTIONS: {
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; ring: string }> = {
   violet: {
-    bg: 'bg-violet-500/10',
-    text: 'text-violet-500',
-    border: 'border-violet-500/30',
-    ring: 'ring-violet-500/40',
+    bg: 'bg-primary-500/10',
+    text: 'text-primary-500',
+    border: 'border-primary-500/30',
+    ring: 'ring-primary-500/40',
   },
   blue: {
     bg: 'bg-blue-500/10',
@@ -115,10 +115,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
       <div className="w-[520px] rounded-2xl border border-white/[0.06] bg-white/95 dark:bg-navy-900/[0.97] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* ── Header ─────────────────────────────────────────── */}
         <div className="relative flex items-center justify-between px-6 py-4 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <div className="absolute inset-0 bg-gradient-to-r from-violet-500/[0.03] via-transparent to-blue-500/[0.03] dark:from-violet-500/[0.06] dark:to-blue-500/[0.06]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-500/[0.03] via-transparent to-blue-500/[0.03] dark:from-primary-500/[0.06] dark:to-blue-500/[0.06]" />
           <div className="relative flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 flex items-center justify-center">
-              <Sparkles size={16} className="text-violet-500" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500/20 to-blue-500/20 flex items-center justify-center">
+              <Sparkles size={16} className="text-primary-500" />
             </div>
             <div>
               <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
@@ -143,7 +143,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         <div className="px-6 py-5 space-y-5">
           {/* Problem description */}
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-500/80 dark:text-violet-400/70 mb-1.5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-500/80 dark:text-primary-400/70 mb-1.5">
               {isPl ? 'Twój pomysł' : 'Your idea'}
             </div>
             <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
@@ -164,7 +164,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   : 'E.g. I want to structure transformation initiatives and find the best rollout order...'
               }
               autoFocus
-              className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-violet-500/30 resize-none transition-shadow duration-200"
+              className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400/70 focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none transition-shadow duration-200"
             />
           </div>
 
@@ -174,13 +174,13 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             <button
               type="button"
               onClick={() => handleSelect('describe_with_ai')}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-violet-500/20 bg-gradient-to-b from-violet-500/[0.08] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10 hover:-translate-y-0.5"
+              className="group flex flex-col items-center gap-2.5 rounded-xl border border-primary-500/20 bg-gradient-to-b from-primary-500/[0.08] to-transparent px-3 py-4 text-center transition-all duration-200 hover:border-primary-500/40 hover:shadow-lg hover:shadow-primary-500/10 hover:-translate-y-0.5"
             >
-              <div className="rounded-xl p-2.5 bg-violet-500/10 text-violet-500 transition-transform duration-200 group-hover:scale-110">
+              <div className="rounded-xl p-2.5 bg-primary-500/10 text-primary-500 transition-transform duration-200 group-hover:scale-110">
                 <Wand2 size={18} />
               </div>
               <div className="min-w-0">
-                <div className="text-[13px] font-semibold text-violet-600 dark:text-violet-300">
+                <div className="text-[13px] font-semibold text-primary-600 dark:text-primary-300">
                   Start with AI
                 </div>
                 <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 leading-snug">

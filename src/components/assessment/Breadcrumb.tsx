@@ -81,7 +81,7 @@ export const Breadcrumb: React.FC = () => {
           {crumb.viewId ? (
             <button
               onClick={() => setCurrentView(crumb.viewId!)}
-              className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center gap-1"
+              className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1"
             >
               {index === 0 && <Home className="w-4 h-4" />}
               {crumb.label}

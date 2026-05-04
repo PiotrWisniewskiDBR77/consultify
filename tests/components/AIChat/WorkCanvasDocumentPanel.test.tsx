@@ -43,12 +43,99 @@ describe('WorkCanvasDocumentPanel', () => {
     await user.click(screen.getByRole('button', { name: /Open Canvas templates/i }));
     expect(await screen.findByText('DBR77 work templates')).toBeInTheDocument();
     expect(screen.getByText(/decision, initiative, report, or presentation/i)).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-template-capability-document')).toHaveTextContent('Real');
+    expect(screen.getByTestId('canvas-template-capability-research')).toHaveTextContent('Partial');
 
     await user.click(screen.getByRole('button', { name: 'Markdown view' }));
 
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     expect(mdView.value).toContain('# Company Work Note');
     expect(mdView.value).not.toContain('{"');
+  });
+
+  it('shows capability honesty labels for the active Canvas and workflow template', async () => {
+    const user = userEvent.setup();
+    render(<WorkCanvasDocumentPanel />);
+
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+
+    expect(await screen.findByTestId('canvas-capability-status')).toHaveTextContent('Real');
+    expect(screen.getByTestId('canvas-capability-note')).toHaveTextContent(
+      'Markdown document, autosave, versions, export and Teresa context are backed.'
+    );
+    expect(screen.getByTestId('canvas-workflow-capability-status')).toHaveTextContent('Partial');
+    expect(screen.getByText(/ResearchSession planning linkage is backed/i)).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Workflow template'), 'decision_memo_to_execution_plan');
+    expect(screen.getByTestId('canvas-workflow-capability-status')).toHaveTextContent('Real');
+    expect(screen.getByText(/approval gate and output lineage are backed/i)).toBeInTheDocument();
+  });
+
+  it('links a research Canvas draft to a planned ResearchSession', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/research/sessions') {
+        expect(init?.method).toBe('POST');
+        const body = JSON.parse(String(init?.body));
+        expect(body).toMatchObject({
+          mission: 'Market Research Brief',
+          conversationId: 'conv-1',
+          expectedOutput: 'research_report',
+        });
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            session: {
+              sessionId: 'rs-canvas-1',
+              status: 'planned',
+              mission: 'Market Research Brief',
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts') {
+        expect(init?.method).toBe('POST');
+        const body = JSON.parse(String(init?.body));
+        expect(body).toMatchObject({
+          conversationId: 'conv-1',
+          kind: 'research',
+          title: 'Market Research Brief',
+          researchSessionId: 'rs-canvas-1',
+        });
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-research-1',
+              title: 'Market Research Brief',
+              kind: 'research',
+              contentMd: body.contentMd,
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+              researchSessionId: 'rs-canvas-1',
+            },
+          }),
+        } as Response;
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: /Open Canvas templates/i }));
+    await user.click(screen.getByRole('button', { name: /Zrób research/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/research/sessions', expect.any(Object)));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object))
+    );
+    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    expect(await screen.findByTestId('canvas-research-session-id')).toHaveTextContent('rs-canvas-1');
   });
 
   it('exports the active Canvas as Markdown, CSV and metadata JSON', async () => {
@@ -191,6 +278,25 @@ describe('WorkCanvasDocumentPanel', () => {
             markdownProjection: '### Approval Flow\n\nNodes: 2\nConnections: 1',
             markdownProjectionStatus: 'synced',
           },
+          {
+            id: 'research-1',
+            kind: 'research',
+            schemaVersion: 'canvas-block/v1',
+            title: 'Market Evidence',
+            status: 'ready',
+            capabilities: ['view'],
+            data: {
+              question: 'Which market risk matters most?',
+              confidence: 'medium',
+              findings: ['Buyers require proof of integration readiness.'],
+              sources: [],
+              gaps: ['Need customer interviews.'],
+              recommendations: ['Run validation interviews before committing roadmap.'],
+            },
+            provenance: { source: 'assistant', conversationId: 'conv-1' },
+            markdownProjection: '### Market Evidence\n\nConfidence: medium',
+            markdownProjectionStatus: 'synced',
+          },
         ]}
       />
     );
@@ -212,10 +318,29 @@ describe('WorkCanvasDocumentPanel', () => {
       'Mermaid diagram source'
     );
     expect(screen.getByText('draft → approve')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-artifact-block-research-1')).toHaveTextContent(
+      'Evidence degraded: no sources are attached to this research block yet.'
+    );
+    expect(screen.getByTestId('canvas-artifact-block-research-1')).toHaveTextContent(
+      'Need customer interviews.'
+    );
 
     await user.type(screen.getByLabelText('Filter Risk Register'), 'scope');
     expect(screen.queryByText('Supply delay')).not.toBeInTheDocument();
     expect(screen.getByText('Scope drift')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Filter Risk Register'));
+    const impactSortButton = screen.getByRole('button', { name: /Impact/ });
+    await user.click(impactSortButton);
+    await user.click(impactSortButton);
+    expect(impactSortButton).toHaveTextContent('↓');
+    await user.click(screen.getByLabelText('Select row 1'));
+    await user.click(screen.getByRole('button', { name: 'Export selected' }));
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(screen.getByTestId('canvas-action-feedback')).toHaveTextContent(
+      'Risk Register selected rows exported as CSV.'
+    );
+    await user.click(screen.getByRole('button', { name: 'Clear selection' }));
+    expect(screen.getByText('2 rows · 0 selected')).toBeInTheDocument();
 
     await user.click(screen.getAllByRole('button', { name: 'Copy' })[0]);
     expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('Risk Register'));
@@ -239,6 +364,92 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(screen.getByTestId('canvas-action-feedback')).toHaveTextContent(
       'Approval Flow diagram source exported.'
+    );
+  });
+
+  it('finalizes research report from diagnostics with lineage feedback', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts?conversationId=conv-1') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                id: 'draft-research-1',
+                title: 'Research brief',
+                kind: 'research',
+                contentMd: '# Research brief',
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+                blocks: [
+                  {
+                    id: 'research-block-1',
+                    kind: 'research',
+                    schemaVersion: 'canvas-block/v1',
+                    title: 'Evidence block',
+                    status: 'ready',
+                    capabilities: ['view'],
+                    data: {
+                      question: 'What changed in the market?',
+                      findings: ['Demand rising'],
+                      sources: ['Interview transcript'],
+                      confidence: 'high',
+                    },
+                    provenance: { source: 'assistant', conversationId: 'conv-1' },
+                    markdownProjection: '### Evidence block',
+                    markdownProjectionStatus: 'synced',
+                  },
+                ],
+              },
+            ],
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-research-1/research/finalize-report') {
+        expect(init?.method).toBe('POST');
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              draft: {
+                id: 'draft-research-1',
+                title: 'Research brief',
+                kind: 'research',
+                contentMd: '# Research brief',
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+              },
+              reportResource: {
+                type: 'report',
+                id: 'report-draft-1',
+                title: 'Report: Research brief',
+                url: '/work-canvas?draftId=report-draft-1',
+              },
+              readBack: {
+                target: 'research_final_report',
+                status: 'promotion_recorded',
+                evidenceSummary: [{ blockId: 'research-block-1' }],
+              },
+            },
+          }),
+        } as Response;
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    await user.click(screen.getByRole('button', { name: 'Finalize research report' }));
+    expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
+      'Research final report recorded (report-draft-1) with 1 evidence block.'
     );
   });
 
@@ -413,6 +624,212 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByText(/Confidence:/)).toHaveTextContent('medium');
     expect(screen.getByText(/Approval status:/)).toHaveTextContent('draft');
     expect(screen.getAllByText('Define the business question.').length).toBeGreaterThan(1);
+  });
+
+  it('previews and applies a governed edit for selected Canvas text', async () => {
+    const user = userEvent.setup();
+    const originalContent = '# Company Work Note\n\n- [ ] Define the business question.';
+    const replacement = '- [x] Define the business question and decision owner.';
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: originalContent,
+              blocks: [],
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+              updatedAt: '2026-05-03T19:00:00.000Z',
+            },
+          }),
+        };
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/operations') {
+        const body = JSON.parse(String(init?.body));
+        expect(body.operation.type).toBe('replace_selection');
+        expect(body.operation.selectedText).toBe('Define the business question.');
+        expect(body.operation.replacementMd).toBe(replacement);
+        if (body.previewOnly) {
+          expect(body.operation.approved).toBeUndefined();
+          return {
+            ok: true,
+            json: async () => ({
+              success: true,
+              data: {
+                preview: {
+                  proposedChange: 'Replace selected Canvas text',
+                  affectedBlocks: [],
+                  markdownDiff: {
+                    addedLines: 1,
+                    removedLines: 1,
+                    summary: '1 line added, 1 line removed',
+                    addedLineSamples: [replacement],
+                    removedLineSamples: ['- [ ] Define the business question.'],
+                  },
+                  approvalRequired: false,
+                },
+              },
+            }),
+          };
+        }
+        expect(body.operation.approved).toBe(true);
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              draft: {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: originalContent.replace('Define the business question.', replacement),
+                blocks: [],
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+                updatedAt: '2026-05-03T19:01:00.000Z',
+              },
+              diff: { addedLines: 1, removedLines: 1, summary: '1 line added, 1 line removed' },
+            },
+          }),
+        };
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/versions') {
+        return { ok: true, json: async () => ({ success: true, data: [] }) };
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+
+    const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
+    const selected = 'Define the business question.';
+    const start = mdView.value.indexOf(selected);
+    mdView.setSelectionRange(start, start + selected.length);
+    fireEvent.select(mdView);
+
+    expect(await screen.findByTestId('canvas-selection-edit-panel')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Selection edit replacement'), {
+      target: { value: replacement },
+    });
+    await user.click(screen.getByRole('button', { name: 'Preview edit' }));
+
+    expect(await screen.findByTestId('canvas-operation-preview')).toHaveTextContent(
+      'Replace selected Canvas text'
+    );
+    expect(screen.getByTestId('canvas-operation-preview')).toHaveTextContent(
+      '1 lines added, 1 lines removed'
+    );
+    expect(screen.getByTestId('canvas-operation-diff-preview')).toHaveTextContent(
+      '- [ ] Define the business question.'
+    );
+    expect(screen.getByTestId('canvas-operation-diff-preview')).toHaveTextContent(replacement);
+
+    await user.click(screen.getByRole('button', { name: 'Revise edit' }));
+    await waitFor(() => expect(screen.queryByTestId('canvas-operation-preview')).not.toBeInTheDocument());
+    expect(screen.getByLabelText('Selection edit replacement')).toHaveValue(replacement);
+    expect(screen.getByTestId('canvas-action-feedback')).toHaveTextContent(
+      'Selection edit reopened'
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Preview edit' }));
+    expect(await screen.findByTestId('canvas-operation-preview')).toHaveTextContent(
+      'Replace selected Canvas text'
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Apply edit suggestion' }));
+    expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
+      'Selection edit applied.'
+    );
+    expect((screen.getByTestId('canvas-md-view') as HTMLTextAreaElement).value).toContain(
+      replacement
+    );
+  });
+
+  it('uses writing shortcuts to draft replacement Markdown without bypassing preview', async () => {
+    const user = userEvent.setup();
+    const originalContent = '# Company Work Note\n\n- [ ] Define the business question.';
+    const replacement = '- [ ] Define the business question';
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: originalContent,
+              blocks: [],
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+              updatedAt: '2026-05-03T19:10:00.000Z',
+            },
+          }),
+        };
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/operations') {
+        const body = JSON.parse(String(init?.body));
+        expect(body.previewOnly).toBe(true);
+        expect(body.operation.type).toBe('replace_selection');
+        expect(body.operation.selectedText).toBe('Define the business question.');
+        expect(body.operation.replacementMd).toBe(replacement);
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              preview: {
+                proposedChange: 'Replace selected Canvas text',
+                affectedBlocks: [],
+                markdownDiff: {
+                  addedLines: 1,
+                  removedLines: 1,
+                  summary: '1 line added, 1 line removed',
+                  addedLineSamples: ['- [ ] Define the business question'],
+                  removedLineSamples: ['Define the business question.'],
+                },
+                approvalRequired: false,
+              },
+            },
+          }),
+        };
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+
+    const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
+    const selected = 'Define the business question.';
+    const start = mdView.value.indexOf(selected);
+    mdView.setSelectionRange(start, start + selected.length);
+    fireEvent.select(mdView);
+
+    const shortcuts = await screen.findByTestId('canvas-selection-writing-shortcuts');
+    await user.click(within(shortcuts).getByRole('button', { name: 'Action list' }));
+
+    expect(screen.getByLabelText('Selection edit replacement')).toHaveValue(replacement);
+    expect(screen.queryByTestId('canvas-operation-preview')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Preview edit' }));
+    expect(await screen.findByTestId('canvas-operation-preview')).toHaveTextContent(
+      'Replace selected Canvas text'
+    );
+    expect(screen.getByTestId('canvas-operation-diff-preview')).toHaveTextContent(
+      '- [ ] Define the business question'
+    );
   });
 
   it('turns an uploaded CSV dataset into a KPI dashboard block', async () => {
@@ -872,6 +1289,7 @@ describe('WorkCanvasDocumentPanel', () => {
       createdAt: '2026-05-03T00:00:00.000Z',
       updatedAt: '2026-05-03T00:00:00.000Z',
     };
+    let reviewGateActive = false;
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/work-canvas/drafts') {
         return {
@@ -891,7 +1309,7 @@ describe('WorkCanvasDocumentPanel', () => {
       }
       if (url === '/api/work-canvas/drafts/draft-1/workflows') {
         const body = JSON.parse(String(init?.body));
-        expect(body).toEqual({ template: 'client_proposal_to_deck' });
+        expect(body).toMatchObject({ baseUpdatedAt: null, template: 'client_proposal_to_deck' });
         const selectedWorkflowRun = {
           ...workflowRun,
           template: 'client_proposal_to_deck',
@@ -985,7 +1403,28 @@ describe('WorkCanvasDocumentPanel', () => {
       }
       if (url === '/api/work-canvas/drafts/draft-1/workflows/workflow-1/run-next') {
         const body = JSON.parse(String(init?.body));
-        expect(body).toEqual({ approved: true });
+        expect(body).toMatchObject({ baseUpdatedAt: null, approved: true });
+        if (reviewGateActive) {
+          const payload = {
+            error: 'Workflow review lifecycle must be approved before generating a durable output',
+            code: 'CANVAS_WORKFLOW_REVIEW_REQUIRED',
+            recoverable: true,
+            data: {
+              workflowRunId: 'workflow-1',
+              lifecycle: 'in_review',
+              reviewerId: 'reviewer-1',
+            },
+          };
+          return {
+            ok: false,
+            status: 409,
+            statusText: 'Conflict',
+            url: '/api/work-canvas/drafts/draft-1/workflows/workflow-1/run-next',
+            clone: () => ({ json: async () => payload }),
+            json: async () => payload,
+            text: async () => JSON.stringify(payload),
+          };
+        }
         const completed = {
           ...workflowRun,
           status: 'completed',
@@ -1053,6 +1492,7 @@ describe('WorkCanvasDocumentPanel', () => {
         const body = JSON.parse(String(init?.body));
         expect(init?.method).toBe('PATCH');
         expect(body).toMatchObject({ reviewerId: 'reviewer-1', lifecycle: 'in_review' });
+        reviewGateActive = true;
         const reviewed = {
           ...workflowRun,
           collaboration: {
@@ -1096,7 +1536,7 @@ describe('WorkCanvasDocumentPanel', () => {
       if (url === '/api/work-canvas/drafts/draft-1/workflows/workflow-1/comments') {
         const body = JSON.parse(String(init?.body));
         expect(init?.method).toBe('POST');
-        expect(body).toEqual({ body: 'Check assumptions' });
+        expect(body).toMatchObject({ baseUpdatedAt: null, body: 'Check assumptions' });
         const commented = {
           ...workflowRun,
           collaboration: {
@@ -1164,8 +1604,11 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(ledger).toHaveTextContent('approval required');
     expect(ledger).toHaveTextContent('Timeline');
     expect(ledger).toHaveTextContent('Workflow created from template: Client proposal to deck.');
+    expect(ledger).toHaveTextContent(
+      'Approval checkpoint: Approve deck outline awaits explicit approval.'
+    );
 
-    await user.click(within(ledger).getByRole('button', { name: 'Run next' }));
+    await user.click(within(ledger).getByRole('button', { name: 'Approve and run' }));
     expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
       'Workflow output created: Report: Company Work Note. report-1'
     );
@@ -1180,6 +1623,10 @@ describe('WorkCanvasDocumentPanel', () => {
       'href',
       '/work-canvas?draftId=report-1'
     );
+    expect(screen.getByTestId('canvas-workflow-ledger')).toHaveTextContent(
+      'Workflow completed: output is available in the ledger.'
+    );
+    expect(screen.getByRole('button', { name: 'Completed' })).toBeDisabled();
 
     await user.click(within(ledger).getByRole('button', { name: 'Resume' }));
     expect(await screen.findByTestId('canvas-workflow-ledger')).toHaveTextContent(
@@ -1192,11 +1639,19 @@ describe('WorkCanvasDocumentPanel', () => {
       'Reviewer: reviewer-1'
     );
     expect(screen.getByTestId('canvas-workflow-ledger')).toHaveTextContent('Lifecycle: in_review');
+    expect(screen.getByTestId('canvas-workflow-ledger')).toHaveTextContent(
+      'Review gate: mark approved before running next.'
+    );
+    expect(screen.getByRole('button', { name: 'Approve and run' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send to review' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Mark approved' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Add comment' })).toBeDisabled();
 
     await user.type(
       screen.getByLabelText('Comment for Market research to report'),
       'Check assumptions'
     );
+    expect(screen.getByRole('button', { name: 'Add comment' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Add comment' }));
     expect(await screen.findByTestId('canvas-workflow-ledger')).toHaveTextContent(
       'user-1: Check assumptions'
@@ -1204,6 +1659,430 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByTestId('canvas-workflow-ledger')).toHaveTextContent(
       'Workflow comment added.'
     );
+  });
+
+  it('disables workflow creation while start workflow is in flight', async () => {
+    const user = userEvent.setup();
+    const workflowRun = {
+      id: 'workflow-1',
+      draftId: 'draft-1',
+      conversationId: 'conv-1',
+      template: 'market_research_to_report',
+      title: 'Market research to report',
+      status: 'active',
+      steps: [],
+      approvals: [],
+      outputs: [],
+      events: [],
+      createdBy: 'user-1',
+      createdAt: '2026-05-03T00:00:00.000Z',
+      updatedAt: '2026-05-03T00:00:00.000Z',
+    };
+    let resolveCreateWorkflow: ((response: Response) => void) | null = null;
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: '# Company Work Note',
+              blocks: [],
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/workflows') {
+        return new Promise<Response>((resolve) => {
+          resolveCreateWorkflow = resolve;
+        });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    const startingButton = await screen.findByRole('button', { name: 'Starting...' });
+    expect(startingButton).toBeDisabled();
+    fireEvent.click(startingButton);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    resolveCreateWorkflow?.({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          draft: {
+            id: 'draft-1',
+            title: 'Company Work Note',
+            contentMd: '# Company Work Note',
+            blocks: [],
+            saveState: 'saved',
+            lifecycleState: 'draft',
+            markdownProjectionStatus: 'synced',
+            provenance: { workflowRuns: [workflowRun] },
+          },
+          workflowRun,
+          readBack: { status: 'created' },
+        },
+      }),
+    } as Response);
+    expect(await screen.findByText('Market research to report')).toBeInTheDocument();
+  });
+
+  it('shows friendly conflict copy when starting a workflow from a stale draft', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: '# Company Work Note',
+              blocks: [],
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/workflows') {
+        const payload = {
+          error: 'Canvas draft changed since the request started',
+          code: 'CANVAS_DRAFT_CONFLICT',
+          recoverable: true,
+        };
+        return {
+          ok: false,
+          status: 409,
+          statusText: 'Conflict',
+          url: '/api/work-canvas/drafts/draft-1/workflows',
+          clone: () => ({ json: async () => payload }),
+          json: async () => payload,
+          text: async () => JSON.stringify(payload),
+        } as unknown as Response;
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
+      'Canvas changed elsewhere. Your local edits are still visible. Reload latest or retry from the current draft before applying this action.'
+    );
+    expect(screen.getByRole('button', { name: 'Start workflow' })).toBeEnabled();
+  });
+
+  it('preserves an existing workflow reviewer when approving without editing the reviewer field', async () => {
+    const user = userEvent.setup();
+    const workflowRun = {
+      id: 'workflow-1',
+      draftId: 'draft-1',
+      conversationId: 'conv-1',
+      template: 'market_research_to_report',
+      title: 'Market research to report',
+      status: 'active',
+      steps: [],
+      approvals: [],
+      outputs: [],
+      events: [],
+      collaboration: {
+        ownerId: 'user-1',
+        reviewerId: 'reviewer-1',
+        lifecycle: 'in_review',
+        comments: [],
+      },
+      createdBy: 'user-1',
+      createdAt: '2026-05-03T00:00:00.000Z',
+      updatedAt: '2026-05-03T00:00:00.000Z',
+    };
+    let resolveCollaboration: ((response: Response) => void) | null = null;
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: '# Company Work Note',
+              blocks: [],
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/workflows') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              draft: {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: '# Company Work Note',
+                blocks: [],
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+                provenance: { workflowRuns: [workflowRun] },
+              },
+              workflowRun,
+              readBack: { status: 'created' },
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/workflows/workflow-1/collaboration') {
+        const body = JSON.parse(String(init?.body));
+        expect(body).toMatchObject({ reviewerId: 'reviewer-1', lifecycle: 'approved' });
+        const approved = {
+          ...workflowRun,
+          collaboration: {
+            ...workflowRun.collaboration,
+            lifecycle: 'approved',
+          },
+        };
+        return new Promise<Response>((resolve) => {
+          resolveCollaboration = resolve;
+        }).then(
+          () =>
+            ({
+              ok: true,
+              json: async () => ({
+                success: true,
+                data: {
+                  draft: {
+                    id: 'draft-1',
+                    title: 'Company Work Note',
+                    contentMd: '# Company Work Note',
+                    blocks: [],
+                    saveState: 'saved',
+                    lifecycleState: 'draft',
+                    markdownProjectionStatus: 'synced',
+                    provenance: { workflowRuns: [approved] },
+                  },
+                  workflowRun: approved,
+                  readBack: { status: 'updated' },
+                },
+              }),
+            }) as Response
+        );
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Start workflow' }));
+    const reviewerInput = await screen.findByLabelText('Reviewer for Market research to report');
+    expect(reviewerInput).toHaveValue('reviewer-1');
+
+    await user.click(screen.getByRole('button', { name: 'Mark approved' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Updating...' })).toHaveLength(2);
+      expect(reviewerInput).toBeDisabled();
+    });
+    resolveCollaboration?.({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          draft: {
+            id: 'draft-1',
+            title: 'Company Work Note',
+            contentMd: '# Company Work Note',
+            blocks: [],
+            saveState: 'saved',
+            lifecycleState: 'draft',
+            markdownProjectionStatus: 'synced',
+            provenance: {
+              workflowRuns: [
+                {
+                  ...workflowRun,
+                  collaboration: {
+                    ...workflowRun.collaboration,
+                    lifecycle: 'approved',
+                  },
+                },
+              ],
+            },
+          },
+          workflowRun: {
+            ...workflowRun,
+            collaboration: {
+              ...workflowRun.collaboration,
+              lifecycle: 'approved',
+            },
+          },
+          readBack: { status: 'updated' },
+        },
+      }),
+    } as Response);
+
+    expect(await screen.findByTestId('canvas-workflow-ledger')).toHaveTextContent(
+      'Lifecycle: approved'
+    );
+    expect(screen.getByRole('button', { name: 'Mark approved' })).toBeDisabled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/work-canvas/drafts/draft-1/workflows/workflow-1/collaboration',
+      expect.objectContaining({ method: 'PATCH' })
+    );
+  });
+
+  it('disables workflow execution while run-next is in flight', async () => {
+    const user = userEvent.setup();
+    const workflowRun = {
+      id: 'workflow-1',
+      draftId: 'draft-1',
+      conversationId: 'conv-1',
+      template: 'market_research_to_report',
+      title: 'Market research to report',
+      status: 'active',
+      steps: [
+        {
+          id: 'step-1',
+          kind: 'teresa_action',
+          title: 'Frame the workflow',
+          summary: 'Prepare workflow',
+          status: 'completed',
+          createdAt: '2026-05-03T00:00:00.000Z',
+        },
+        {
+          id: 'step-2',
+          kind: 'user_approval',
+          title: 'Approve report',
+          summary: 'Approve before durable output.',
+          status: 'pending',
+          approvalRequired: true,
+          createdAt: '2026-05-03T00:00:00.000Z',
+        },
+      ],
+      approvals: [{ stepId: 'step-2', status: 'pending', requiredCapability: 'approve' }],
+      outputs: [],
+      events: [],
+      createdBy: 'user-1',
+      createdAt: '2026-05-03T00:00:00.000Z',
+      updatedAt: '2026-05-03T00:00:00.000Z',
+    };
+    let resolveRunNext: ((response: Response) => void) | null = null;
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: '# Company Work Note',
+              blocks: [],
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/workflows') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              draft: {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: '# Company Work Note',
+                blocks: [],
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+                provenance: { workflowRuns: [workflowRun] },
+              },
+              workflowRun,
+              readBack: { status: 'created' },
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/workflows/workflow-1/run-next') {
+        expect(JSON.parse(String(init?.body))).toMatchObject({ approved: true });
+        return new Promise<Response>((resolve) => {
+          resolveRunNext = resolve;
+        });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await user.click(await screen.findByRole('button', { name: 'Approve and run' }));
+    const runningButton = await screen.findByRole('button', { name: 'Running...' });
+    expect(runningButton).toBeDisabled();
+    fireEvent.click(runningButton);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    const completed = {
+      ...workflowRun,
+      status: 'completed',
+      approvals: [{ stepId: 'step-2', status: 'approved', requiredCapability: 'approve' }],
+      outputs: [
+        {
+          stepId: 'step-2',
+          type: 'report',
+          id: 'report-1',
+          title: 'Report: Company Work Note',
+          url: '/work-canvas?draftId=report-1',
+        },
+      ],
+    };
+    resolveRunNext?.({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          draft: {
+            id: 'draft-1',
+            title: 'Company Work Note',
+            contentMd: '# Company Work Note',
+            blocks: [],
+            saveState: 'saved',
+            lifecycleState: 'draft',
+            markdownProjectionStatus: 'synced',
+            provenance: { workflowRuns: [completed] },
+          },
+          workflowRun: completed,
+          outputResource: completed.outputs[0],
+          readBack: { status: 'completed' },
+        },
+      }),
+    } as Response);
+    expect(await screen.findByRole('button', { name: 'Completed' })).toBeDisabled();
   });
 
   it('keeps Canvas visible when an artifact block renderer falls back', async () => {
@@ -1328,7 +2207,73 @@ describe('WorkCanvasDocumentPanel', () => {
 
   it('shows quiet projection degraded state with retry', async () => {
     const user = userEvent.setup();
-    render(<WorkCanvasDocumentPanel initialProjectionStatus="failed" />);
+    const failedBlock = {
+      id: 'chart-failed',
+      kind: 'chart',
+      schemaVersion: 'canvas-block/v1',
+      title: 'Failed chart',
+      status: 'failed',
+      capabilities: ['view'],
+      data: { metrics: [{ label: 'A', value: 1 }] },
+      markdownProjection: '### Failed chart',
+      markdownProjectionStatus: 'failed' as const,
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              id: 'draft-projection-1',
+              title: 'Projection doc',
+              kind: 'document',
+              contentMd: '# Projection doc',
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'failed',
+              blocks: [failedBlock],
+            },
+          }),
+        } as Response;
+      }
+      if (url === '/api/work-canvas/drafts/draft-projection-1/operations') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              draft: {
+                id: 'draft-projection-1',
+                title: 'Projection doc',
+                kind: 'document',
+                contentMd: '# Projection doc',
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+                blocks: [
+                  {
+                    ...failedBlock,
+                    markdownProjectionStatus: 'synced',
+                  },
+                ],
+              },
+            },
+          }),
+        } as Response;
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <WorkCanvasDocumentPanel
+        conversationId="conv-1"
+        initialStarterId="document"
+        initialProjectionStatus="failed"
+        initialBlocks={[failedBlock]}
+      />
+    );
 
     await screen.findByTestId('canvas-document-view');
     await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
@@ -1339,6 +2284,9 @@ describe('WorkCanvasDocumentPanel', () => {
     await user.click(screen.getByRole('button', { name: /Retry projection/i }));
     await waitFor(() =>
       expect(screen.getByTestId('canvas-projection-status')).toHaveTextContent('Projection synced')
+    );
+    expect(screen.getByTestId('canvas-action-feedback')).toHaveTextContent(
+      'Projection retried from backend runtime.'
     );
   });
 

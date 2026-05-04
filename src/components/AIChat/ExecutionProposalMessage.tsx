@@ -233,8 +233,8 @@ function lifecycleVisual(
         label: t('chatProposal.state.audited', 'Audited'),
         Icon: FileSearch,
         pillClassName:
-          'bg-violet-50 dark:bg-violet-950/30 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-900/40',
-        cardAccentClassName: 'border-violet-200 dark:border-violet-900/40',
+          'bg-primary-50 dark:bg-primary-950/30 text-primary-800 dark:text-primary-200 border-primary-200 dark:border-primary-900/40',
+        cardAccentClassName: 'border-primary-200 dark:border-primary-900/40',
       };
     case 'closed':
       return {

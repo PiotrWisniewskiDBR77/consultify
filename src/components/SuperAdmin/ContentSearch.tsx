@@ -182,7 +182,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
         <div
           className={`flex items-center bg-slate-800/80 border rounded-xl transition-all ${
             isFocused
-              ? 'border-violet-500/50 ring-2 ring-violet-500/20'
+              ? 'border-primary-500/50 ring-2 ring-primary-500/20'
               : 'border-slate-700/50 hover:border-slate-600'
           }`}
         >
@@ -251,13 +251,13 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
               onClick={() => setShowFiltersPanel(!showFiltersPanel)}
               className={`p-2 mr-2 rounded-lg transition-colors ${
                 hasActiveFilters || showFiltersPanel
-                  ? 'bg-violet-500/20 text-violet-400'
+                  ? 'bg-primary-500/20 text-primary-400'
                   : 'text-slate-500 dark:text-slate-400 hover:text-white hover:bg-slate-700/50'
               }`}
             >
               <Filter size={16} />
               {hasActiveFilters && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-violet-500 rounded-full" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-primary-500 rounded-full" />
               )}
             </button>
           )}
@@ -360,7 +360,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                   sortOrder: 'desc',
                 })
               }
-              className="text-sm text-violet-400 hover:text-violet-300"
+              className="text-sm text-primary-400 hover:text-primary-300"
             >
               Reset all
             </button>
@@ -375,7 +375,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
               <select
                 value={filters.contentType}
                 onChange={(e) => handleFilterChange('contentType', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="ALL">All Types</option>
                 <option value="PLAYBOOK">Playbooks</option>
@@ -393,7 +393,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('status', e.target.value ? [e.target.value] : [])
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="">All Statuses</option>
                 <option value="DRAFT">Draft</option>
@@ -412,7 +412,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('sortBy', e.target.value as SearchFilters['sortBy'])
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="relevance">Relevance</option>
                 <option value="date">Date</option>
@@ -431,7 +431,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 onChange={(e) =>
                   handleFilterChange('sortOrder', e.target.value as SearchFilters['sortOrder'])
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>
@@ -443,7 +443,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-700">
               {filters.contentType && filters.contentType !== 'ALL' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-violet-500/20 text-violet-400 text-xs rounded-full">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-500/20 text-primary-400 text-xs rounded-full">
                   {filters.contentType === 'PLAYBOOK' ? <Play size={10} /> : <Mail size={10} />}
                   {filters.contentType}
                   <button

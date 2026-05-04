@@ -1037,9 +1037,9 @@ const MeetingOperatorBriefCard: React.FC<{
   className?: string;
 }> = ({ isPolish, brief, loading = false, className = '' }) => (
   <div
-    className={`rounded-xl border border-purple-200/70 dark:border-purple-500/20 bg-purple-50/60 dark:bg-purple-500/5 p-3 ${className}`.trim()}
+    className={`rounded-xl border border-primary-200/70 dark:border-primary-500/20 bg-primary-50/60 dark:bg-primary-500/5 p-3 ${className}`.trim()}
   >
-    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">
+    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
       <Sparkles size={14} />
       <span>{isPolish ? 'Operator brief' : 'Operator brief'}</span>
     </div>

@@ -573,7 +573,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
           {actionError ? (
             <div
               role="alert"
-              className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+              className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
             >
               {actionError}
             </div>
@@ -779,7 +779,7 @@ export const PurposeAssignmentsTab: React.FC = () => {
                           <button
                             onClick={() => handleRemoveAssignment(a)}
                             disabled={saving}
-                            className="p-2 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
+                            className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-400 transition-colors"
                             title="Remove"
                           >
                             <Trash2 size={16} />

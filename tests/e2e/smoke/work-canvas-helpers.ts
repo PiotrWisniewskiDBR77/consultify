@@ -1,15 +1,20 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 export const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-export const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL || 'piotr.wisniewski@dbr77.com';
-export const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD || '123456';
+export const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL || '';
+export const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD || '';
+export const MEMBER_EMAIL = process.env.E2E_MEMBER_EMAIL || '';
+export const MEMBER_PASSWORD = process.env.E2E_MEMBER_PASSWORD || '';
 
-export async function loginAsOwner(page: Page): Promise<string> {
+function assertCredentials(email: string, password: string, label: string) {
+  expect(email.trim().length, `${label}: missing email env`).toBeGreaterThan(0);
+  expect(password.trim().length, `${label}: missing password env`).toBeGreaterThan(0);
+}
+
+export async function loginAsUser(page: Page, email: string, password: string): Promise<string> {
+  assertCredentials(email, password, 'E2E user credentials');
   const loginResponse = await page.request.post(`${API_BASE_URL}/api/auth/login`, {
-    data: {
-      email: OWNER_EMAIL,
-      password: OWNER_PASSWORD,
-    },
+    data: { email, password },
   });
   expect(loginResponse.ok()).toBe(true);
 
@@ -37,6 +42,16 @@ export async function loginAsOwner(page: Page): Promise<string> {
   }, token);
 
   return token;
+}
+
+export async function loginAsOwner(page: Page): Promise<string> {
+  assertCredentials(OWNER_EMAIL, OWNER_PASSWORD, 'E2E owner credentials');
+  return loginAsUser(page, OWNER_EMAIL, OWNER_PASSWORD);
+}
+
+export async function loginAsMember(page: Page): Promise<string> {
+  assertCredentials(MEMBER_EMAIL, MEMBER_PASSWORD, 'E2E member credentials');
+  return loginAsUser(page, MEMBER_EMAIL, MEMBER_PASSWORD);
 }
 
 export async function createWorkCanvasDraft(

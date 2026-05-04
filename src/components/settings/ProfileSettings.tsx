@@ -324,11 +324,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   // Input class for consistent styling
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
   const inputWithIconClass =
-    'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
   const selectClass =
-    'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all appearance-none cursor-pointer';
+    'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer';
   const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
   const sectionTitleClass =
     'text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-navy-700 pb-2';
@@ -352,7 +352,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving
@@ -389,7 +389,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             {formState.pronouns && (
               <p className="text-slate-400 dark:text-slate-500 text-xs">({formState.pronouns})</p>
             )}
-            <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">
+            <p className="text-primary-600 dark:text-primary-400 text-sm font-medium">
               {currentUser.companyName}
             </p>
 
@@ -645,7 +645,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                             setFormState({ ...formState, jobTitle: getJobTitleLabel(title) });
                             setShowJobTitleSuggestions(false);
                           }}
-                          className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+                          className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
                         >
                           {getJobTitleLabel(title)}
                         </button>
@@ -877,8 +877,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       key={fmt.value}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all ${
                         formState.timeFormat === fmt.value
-                          ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'
-                          : 'bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                          ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
+                          : 'bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
                       }`}
                     >
                       <input
@@ -930,7 +930,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     </button>
                     <button
                       onClick={() => toggleTheme('system')}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'system' ? 'bg-white dark:bg-navy-800 shadow text-purple-600' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'system' ? 'bg-white dark:bg-navy-800 shadow text-primary-600' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {t('settings.profile.system', 'System')}
                     </button>
@@ -985,7 +985,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       {saveStatus === 'error' && saveError && (
         <div
           role="alert"
-          className="fixed bottom-8 right-8 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"
+          className="fixed bottom-8 right-8 bg-rose-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"
         >
           {saveError}
         </div>

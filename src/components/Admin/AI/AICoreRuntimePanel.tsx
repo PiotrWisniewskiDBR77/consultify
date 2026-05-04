@@ -480,7 +480,7 @@ export const AICoreRuntimePanel: React.FC = () => {
 
               {policyError && (
                 <div
-                  className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
+                  className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200"
                   role="alert"
                 >
                   {t('superadmin.aiCoreRuntime.policyLoadError', {
@@ -635,7 +635,7 @@ export const AICoreRuntimePanel: React.FC = () => {
 
             {trustError && (
               <div
-                className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
+                className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200"
                 role="alert"
               >
                 {t('superadmin.aiCoreRuntime.trustLoadError', {

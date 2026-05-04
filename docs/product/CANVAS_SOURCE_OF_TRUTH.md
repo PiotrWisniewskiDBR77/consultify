@@ -59,6 +59,32 @@ Ten dokument konsoliduje:
 - `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_21_WORKFLOW_CONTEXT_GATE.md`
 - `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_22_WORKFLOW_OUTPUT_LEDGER_GATE.md`
 - `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_23_SAFE_WORKFLOW_CONTEXT_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_24_REVIEWER_LIFECYCLE_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_25_CONFLICT_SAFE_WORKFLOW_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_26_REVIEW_AWARE_CONTROLS_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_27_APPROVAL_AWARE_EXECUTION_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_28_STATUS_AWARE_COMPLETION_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_29_TERMINAL_WORKFLOW_SERVER_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_30_WORKFLOW_IN_FLIGHT_GUARD.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_31_WORKFLOW_MUTATION_IN_FLIGHT_GUARDS.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_32_WORKFLOW_ERROR_COPY_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_33_WORKFLOW_COMMENT_INPUT_GUARD.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_34_REVIEWER_PRESERVATION_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_35_WORKFLOW_INPUT_IN_FLIGHT_LOCKS.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_36_LIFECYCLE_AWARE_REVIEW_CONTROLS.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_37_FULL_CANVAS_ROLLOUT_E2E_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_38_CAPABILITY_HONESTY_LABELS.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_39_RESEARCH_SESSION_INTEGRATION.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_40_ARTIFACT_RUNTIME_UNIFICATION_METADATA.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_41_CHAT_TO_CANVAS_COMMAND_ROUTING.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_42_DOCUMENT_CANVAS_SELECTION_EDIT_LOOP.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_43_VISIBLE_DIFF_PREVIEW.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_44_DOCUMENT_CANVAS_WRITING_SHORTCUTS.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_45_REVISE_SELECTION_EDIT_BEFORE_APPLY.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_TESTING_STEP_1_2.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_FINAL_ROLLOUT_SIGNOFF.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_GA_READINESS_AUDIT.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_54_RICH_EDITOR_DECISION.md`
 - `consultify/docs/product/CANVAS_INTERACTIVITY_RESEARCH_AND_IMPLEMENTATION_BLUEPRINT.md`
 - obecny kod: `WorkCanvasRuntime`, `UnifiedChatPanel`, `ResearchSessionsDock`, `Wave5ArtifactRuntimePanel`, `work-canvas.routes.ts`
 
@@ -88,11 +114,37 @@ Jeśli dokumenty są sprzeczne, obowiązuje kolejność:
 22. `BUSINESS_WORK_CANVAS_STAGE_21_WORKFLOW_CONTEXT_GATE.md` dla integracji timeline workflow z kontekstem AI.
 23. `BUSINESS_WORK_CANVAS_STAGE_22_WORKFLOW_OUTPUT_LEDGER_GATE.md` dla widocznego ledgeru outputów workflow.
 24. `BUSINESS_WORK_CANVAS_STAGE_23_SAFE_WORKFLOW_CONTEXT_GATE.md` dla bezpiecznej projekcji workflow w kontekście AI.
-25. Ten dokument dla skonsolidowanej definicji produktu Canvas.
-26. `CANVAS_INTERACTIVITY_RESEARCH_AND_IMPLEMENTATION_BLUEPRINT.md` dla szczegółowej macierzy konkurencji, bloków artefaktów i rendererów.
-27. Najnowsze acceptance matrices / test packs dla Canvas.
-28. Starsze dokumenty Workstation Canvas / Idea Workspace jako inspiracja i backlog funkcji.
-29. Aktualny kod jako stan implementacji, nie jako prawda produktowa.
+25. `BUSINESS_WORK_CANVAS_STAGE_24_REVIEWER_LIFECYCLE_GATE.md` dla wymuszania review lifecycle przed outputem workflow.
+26. `BUSINESS_WORK_CANVAS_STAGE_25_CONFLICT_SAFE_WORKFLOW_GATE.md` dla optimistic locking workflow actions.
+27. `BUSINESS_WORK_CANVAS_STAGE_26_REVIEW_AWARE_CONTROLS_GATE.md` dla kontroli workflow świadomych review gate.
+28. `BUSINESS_WORK_CANVAS_STAGE_27_APPROVAL_AWARE_EXECUTION_GATE.md` dla jawnego UX approval checkpoint przed outputem.
+29. `BUSINESS_WORK_CANVAS_STAGE_28_STATUS_AWARE_COMPLETION_GATE.md` dla terminal-state UX workflow po output creation.
+30. `BUSINESS_WORK_CANVAS_STAGE_29_TERMINAL_WORKFLOW_SERVER_GATE.md` dla backendowego guardu terminalnych workflow.
+31. `BUSINESS_WORK_CANVAS_STAGE_30_WORKFLOW_IN_FLIGHT_GUARD.md` dla frontendowej blokady double-click run-next.
+32. `BUSINESS_WORK_CANVAS_STAGE_31_WORKFLOW_MUTATION_IN_FLIGHT_GUARDS.md` dla in-flight guardów start/resume/review/comment workflow.
+33. `BUSINESS_WORK_CANVAS_STAGE_32_WORKFLOW_ERROR_COPY_GATE.md` dla spójnego mapowania błędów workflow mutations.
+34. `BUSINESS_WORK_CANVAS_STAGE_33_WORKFLOW_COMMENT_INPUT_GUARD.md` dla blokady pustych komentarzy workflow w UI.
+35. `BUSINESS_WORK_CANVAS_STAGE_34_REVIEWER_PRESERVATION_GATE.md` dla zachowania reviewera przy lifecycle-only updates.
+36. `BUSINESS_WORK_CANVAS_STAGE_35_WORKFLOW_INPUT_IN_FLIGHT_LOCKS.md` dla locków reviewer/comment input podczas zapisu.
+37. `BUSINESS_WORK_CANVAS_STAGE_36_LIFECYCLE_AWARE_REVIEW_CONTROLS.md` dla blokady redundantnych lifecycle review actions.
+38. `BUSINESS_WORK_CANVAS_STAGE_37_FULL_CANVAS_ROLLOUT_E2E_GATE.md` dla end-to-end gate kontekstu aktywnego Canvas przed dalszym rolloutem.
+39. `BUSINESS_WORK_CANVAS_STAGE_38_CAPABILITY_HONESTY_LABELS.md` dla widocznych etykiet real/partial/scaffold/missing/out_of_scope w Canvas UI.
+40. `BUSINESS_WORK_CANVAS_STAGE_39_RESEARCH_SESSION_INTEGRATION.md` dla pierwszego realnego spięcia ResearchCanvas z ResearchSession.
+41. `BUSINESS_WORK_CANVAS_STAGE_40_ARTIFACT_RUNTIME_UNIFICATION_METADATA.md` dla pierwszego wspólnego kontraktu Canvas output -> Wave 5 artifact runtime.
+42. `BUSINESS_WORK_CANVAS_STAGE_41_CHAT_TO_CANVAS_COMMAND_ROUTING.md` dla jawnych komend z chatu do prawego Canvas.
+43. `BUSINESS_WORK_CANVAS_STAGE_42_DOCUMENT_CANVAS_SELECTION_EDIT_LOOP.md` dla pierwszego governed DocumentCanvas edit loop.
+44. `BUSINESS_WORK_CANVAS_STAGE_43_VISIBLE_DIFF_PREVIEW.md` dla konkretnego diff preview przed zatwierdzeniem edycji.
+45. `BUSINESS_WORK_CANVAS_STAGE_44_DOCUMENT_CANVAS_WRITING_SHORTCUTS.md` dla deterministic writing shortcuts w DocumentCanvas.
+46. `BUSINESS_WORK_CANVAS_STAGE_45_REVISE_SELECTION_EDIT_BEFORE_APPLY.md` dla poprawiania preview przed apply.
+47. `BUSINESS_WORK_CANVAS_TESTING_STEP_1_2.md` dla przepływów testowych i pierwszego Playwright gate.
+48. `BUSINESS_WORK_CANVAS_FINAL_ROLLOUT_SIGNOFF.md` dla finalnego sign-off obecnego Markdown-first cutline.
+49. `BUSINESS_WORK_CANVAS_GA_READINESS_AUDIT.md` dla programu doprowadzenia Canvas do produkcyjnego GA.
+50. `BUSINESS_WORK_CANVAS_STAGE_54_RICH_EDITOR_DECISION.md` dla formalnej decyzji Stage 54 (rich editor/collaboration).
+51. Ten dokument dla skonsolidowanej definicji produktu Canvas.
+52. `CANVAS_INTERACTIVITY_RESEARCH_AND_IMPLEMENTATION_BLUEPRINT.md` dla szczegółowej macierzy konkurencji, bloków artefaktów i rendererów.
+53. Najnowsze acceptance matrices / test packs dla Canvas.
+54. Starsze dokumenty Workstation Canvas / Idea Workspace jako inspiracja i backlog funkcji.
+55. Aktualny kod jako stan implementacji, nie jako prawda produktowa.
 
 Decyzja formatu treści jest zamrożona w `docs/architecture/adr/0001-markdown-first-json-native-markdown-projection.md`.
 
@@ -446,6 +498,7 @@ Docelowe encje centralne z `AI_dev_fin.md`:
 - `ResearchSession`
 - `AIRun`
 - `Artifact`
+- `artifactRuntimeHint`
 
 Każdy trwały output musi mieć:
 
@@ -563,18 +616,25 @@ Te funkcje są backlogiem Canvas, ale nie powinny blokować pierwszego dobrego w
 - `server/src/services/wave5ArtifactRuntimeService.ts`
   - artifact runtime.
 
-### 13.2 Największe luki
+### 13.2 Największe luki - status po finalnym cutline
 
-1. `WorkCanvasRuntime` jest bardziej scaffoldem niż docelowym Canvas.
-2. Right panel nie jest jeszcze prawdziwym edytorem.
-3. ResearchSession nie jest realnie spięty z Canvas draftem.
-4. Work Canvas save-as-artifact nie jest jednym światem z Wave 5 artifacts.
-5. Proposals w Work Canvas są częściowo syntetyczne.
-6. Access control Work Canvas API różni się od research/artifacts.
-7. KIMI/document/sheet/deck lanes są bardziej obietnicą niż runtime.
-8. Brakuje jednego modelu Canvas document state.
-9. Brakuje jasnych entry points z chatu do konkretnego typu pracy.
-10. Brakuje dopracowanego empty state i command surface dla Canvas.
+#### Addressed for current rollout cutline
+
+1. Right panel ma pierwszy edytowalny `DocumentCanvas` oparty o Markdown source, Document/MD view, autosave, versions i export.
+2. Selection edit loop jest proposal-first: selection -> replacement Markdown -> preview -> visible diff -> revise/apply/reject.
+3. Entry points z chatu mają jawny routing do Canvas, a Playwright gate pokrywa stabilne otwarcie DocumentCanvas z chatu.
+4. ResearchSession ma pierwsze spięcie z Canvas draftem przez `researchSessionId`.
+5. Work Canvas outputs mają pierwszy wspólny kontrakt metadanych z Wave 5 przez `artifactRuntimeHint`.
+6. Server/client mapping nie ukrywa już `proposed` lifecycle ani kindów `markdown`, `checklist`, `sheet`, `deck`.
+
+#### Post-cutline backlog
+
+1. Evidence/source panel i final artifact handoff dla ResearchCanvas nadal są częściowe.
+2. Pełny zapis/promocja do Wave 5 artifacts nadal wymaga osobnego gate.
+3. KIMI/document/sheet/deck lanes poza metadata/export pozostają backlogiem, nie częścią tego rollout cutline.
+4. Pełne `Review in Canvas` z istniejących artefaktów nadal wymaga dalszego gate.
+5. TipTap/ProseMirror, inline comments, multi-user collaboration, HTML/React sandbox i Python/data sandbox pozostają przyszłymi etapami.
+6. Empty state i command surface można dalej polerować, ale nie blokują obecnego Markdown-first cutline.
 
 ## 14. Docelowe moduły prawego panelu
 
@@ -642,6 +702,7 @@ Canvas passes only when:
 - chat-to-canvas nie tworzy osobnego chatu,
 - typ pracy jest jasny,
 - ważna mutacja jest proposal-first,
+- proposal pokazuje czytelny diff zmian, jeśli zmienia Markdown,
 - reject nie mutuje danych,
 - approve daje read-back/audit,
 - research ma lifecycle i evidence,
@@ -689,8 +750,61 @@ Najmniejszy sensowny Canvas, od którego warto zacząć:
    - `Przygotuj decyzję`
    - `Rozpisz plan`
 4. Po kliknięciu `Napisz dokument`: powstaje edytowalny `DocumentCanvas`.
-5. Teresa może dopisać do aktywnego dokumentu przez jawne akcje.
-6. Draft zapisuje się i przeżywa refresh.
-7. `Save as artifact` jest uczciwie oznaczone jako draft artifact albo realnie spięte z artifact runtime.
+5. Teresa i użytkownik mogą zmieniać aktywny dokument przez jawne, proposal-first akcje, w tym zaznaczenie tekstu -> preview edit -> apply/reject.
+6. Użytkownik może wrócić z preview do korekty replacement Markdown bez utraty propozycji.
+7. Użytkownik ma pierwsze bezpieczne writing shortcuts, które wypełniają replacement Markdown, ale nie mutują draftu bez preview/apply.
+8. Draft zapisuje się i przeżywa refresh.
+9. `Save as artifact` jest uczciwie oznaczone jako draft artifact albo realnie spięte z artifact runtime.
 
 To jest baza. Dopiero potem dokładamy governance, research lifecycle, deliverables i workstation canvases.
+
+### 17.1 Final rollout cutline sign-off
+
+Status: `PASSED / CURRENT ROLLOUT COMPLETE`
+
+Ten sign-off oznacza 100% wdrożenia **obecnego cutline**, nie 100% całej przyszłej wizji Canvas.
+
+Zakres finalnego cutline:
+
+- prawy `DocumentCanvas` otwierany z chatu,
+- rozmowa z Teresą zachowana po lewej stronie,
+- Markdown-first document source,
+- edycja tytułu i treści,
+- autosave/manual save,
+- selection edit loop z preview, visible diff, revise, apply/reject,
+- writing shortcuts jako deterministic Markdown helpers,
+- versions/restore/show changes,
+- export/copy,
+- capability honesty labels,
+- ResearchSession anchor jako partial-but-real linkage,
+- Wave 5 artifact bridge jako metadata-only `artifactRuntimeHint`,
+- safe Canvas context packet dla Teresy,
+- Playwright gate dla nowoczesnego editor flow.
+
+Poza finalnym cutline:
+
+- TipTap/ProseMirror rich editor,
+- live collaboration,
+- full Research evidence runtime,
+- full Wave 5 artifact promotion/write path,
+- HTML/React sandbox,
+- Python/data execution sandbox,
+- pełne `Review in Canvas` dla istniejących artefaktów.
+
+## 18. Canvas GA / Production 100%
+
+`Canvas GA / Production 100%` jest kolejnym milestone po obecnym cutline.
+
+GA oznacza, że Canvas może być traktowany jako trwała, produkcyjna przestrzeń operacyjna dla pracy biznesowej:
+
+- jeden canonical shell i jasna strategia dla legacy `/ai/work-canvas`,
+- governance egzekwowane backend-side,
+- save-as-artifact z czytelnym promotion read-back i lineage,
+- Research Canvas z evidence/source lifecycle,
+- typed business blocks z interakcją i Markdown projection,
+- release-grade tests i role matrix,
+- observability dla save/conflict/approval/promotion failures,
+- capability labels zgodne z faktycznym runtime.
+
+Źródłem audytu GA jest `BUSINESS_WORK_CANVAS_GA_READINESS_AUDIT.md`.
+Decyzja Stage 54 jest utrwalona w `BUSINESS_WORK_CANVAS_STAGE_54_RICH_EDITOR_DECISION.md`.

@@ -145,7 +145,7 @@ const DBR77DimensionToggle: React.FC<{
       onClick={() => onDimensionChange('WORKSTATIONS')}
       className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
         activeDimension === 'WORKSTATIONS'
-          ? 'bg-purple-500 text-white'
+          ? 'bg-primary-500 text-white'
           : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
       }`}
     >
@@ -340,7 +340,7 @@ const ProcessCard: React.FC<{
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
             >
               <Trash2 size={16} />
             </button>
@@ -656,7 +656,7 @@ const ProcessCard: React.FC<{
                         disabled={readOnly}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                           isSelected
-                            ? 'bg-purple-500 text-white'
+                            ? 'bg-primary-500 text-white'
                             : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                         } ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
                       >
@@ -727,7 +727,7 @@ const WorkstationCard: React.FC<{
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
             >
               <Trash2 size={16} />
             </button>
@@ -1030,9 +1030,9 @@ const WorkstationCard: React.FC<{
  * Legal Notice Banner
  */
 const DBR77LegalNotice: React.FC = () => (
-  <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-500/30 rounded-lg p-4 flex items-start gap-3">
-    <Info className="w-5 h-5 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
-    <div className="text-sm text-cyan-800 dark:text-cyan-200">
+  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 flex items-start gap-3">
+    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+    <div className="text-sm text-blue-800 dark:text-blue-200">
       <strong>Metoda DBR77 Lean 4.0</strong> (Pomierz-Zoptymalizuj-Automatyzuj) jest{' '}
       <strong>autorską metodą Consultify</strong>, łączącą klasyczne narzędzia Lean z oceną
       potencjału automatyzacji i AI. Metoda pozwala na kompleksową analizę procesów i stanowisk
@@ -1167,7 +1167,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <Zap className="text-cyan-500" />
+              <Zap className="text-blue-500" />
               Lean 4.0 Assessment
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -1181,11 +1181,11 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
               </div>
               <div className="text-xs text-green-600/70">Lean Maturity</div>
             </div>
-            <div className="bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-xl text-center">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <div className="bg-primary-100 dark:bg-primary-900/30 px-4 py-2 rounded-xl text-center">
+              <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                 {stats.automationPotential.toFixed(1)}
               </div>
-              <div className="text-xs text-purple-600/70">Auto Potential</div>
+              <div className="text-xs text-primary-600/70">Auto Potential</div>
             </div>
             <div className="bg-emerald-100 dark:bg-emerald-900/30 px-4 py-2 rounded-xl text-center">
               <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -1258,7 +1258,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
               {!readOnly && (
                 <button
                   onClick={addWorkstation}
-                  className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-purple-500 hover:text-purple-500 transition-all"
+                  className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-all"
                 >
                   <Plus size={20} />
                   <span>Dodaj Stanowisko</span>
@@ -1271,9 +1271,9 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
         {/* Summary Closure */}
         {(data.processes.length > 0 || data.workstations.length > 0) && (
           <div className="space-y-4 mt-6 border-t border-slate-200 dark:border-white/10 pt-6">
-            <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20 rounded-xl p-5">
+            <div className="bg-gradient-to-r from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20 rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
-                <BarChart3 className="text-cyan-500" size={20} />
+                <BarChart3 className="text-blue-500" size={20} />
                 <h3 className="font-bold text-slate-900 dark:text-white">
                   {t('assessment.lean.overallDashboard', 'Overall Assessment Dashboard')}
                 </h3>
@@ -1289,7 +1289,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                   <div className="text-xs text-slate-400">/5.0</div>
                 </div>
                 <div className="bg-white/80 dark:bg-navy-800/80 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-purple-600">
+                  <div className="text-3xl font-bold text-primary-600">
                     {stats.automationPotential.toFixed(0)}%
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
@@ -1310,7 +1310,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
             {stats.topWastes.length > 0 && (
               <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="text-orange-500" size={18} />
+                  <AlertTriangle className="text-amber-500" size={18} />
                   <h3 className="font-bold text-slate-900 dark:text-white">
                     {t('assessment.lean.topWastes', 'Top Wastes')}
                   </h3>
@@ -1370,7 +1370,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                           </span>
                         )}
                         {!p.leanAssessment.standardWorkDefined && (
-                          <span className="text-xs px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 rounded">
+                          <span className="text-xs px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 rounded">
                             {t('assessment.lean.noStdWork', 'No Std Work')}
                           </span>
                         )}
@@ -1392,7 +1392,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
               return (
                 <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Cpu className="text-purple-500" size={18} />
+                    <Cpu className="text-primary-500" size={18} />
                     <h3 className="font-bold text-slate-900 dark:text-white">
                       {t('assessment.lean.automationOps', 'Top Automation Opportunities')}
                     </h3>
@@ -1401,7 +1401,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                     {ao.map((p) => (
                       <div
                         key={p.id}
-                        className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/10 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-primary-50 dark:bg-primary-900/10 rounded-lg"
                       >
                         <div>
                           <span className="font-medium text-slate-700 dark:text-slate-200">
@@ -1417,7 +1417,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm font-bold text-purple-600">
+                          <div className="text-sm font-bold text-primary-600">
                             {p.automationPotential.roi}% ROI
                           </div>
                           <div className="text-xs text-slate-500">

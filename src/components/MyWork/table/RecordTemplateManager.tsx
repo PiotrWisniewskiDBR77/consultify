@@ -115,7 +115,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                   setEditingTemplate(null);
                   setShowCreate(true);
                 }}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
               >
                 <Plus size={12} />
                 {isPl ? 'Nowy' : 'New'}
@@ -153,8 +153,8 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                   className="group rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
                 >
                   <div className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/20 flex items-center justify-center flex-shrink-0">
-                      <FileText size={14} className="text-violet-500" />
+                    <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center flex-shrink-0">
+                      <FileText size={14} className="text-primary-500" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 truncate">
@@ -187,7 +187,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                           </button>
                           <button
                             onClick={() => handleDelete(tpl.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                             title={isPl ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={12} />
@@ -366,7 +366,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Zadanie standardowe' : 'e.g. Standard Task'}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
               autoFocus
             />
           </div>
@@ -446,7 +446,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
   isPl,
 }) => {
   const inputClass =
-    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30';
+    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30';
 
   const renderInput = () => {
     switch (field.fieldType) {
@@ -457,7 +457,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
               type="checkbox"
               checked={!!value}
               onChange={(e) => onChange(e.target.checked)}
-              className="rounded border-slate-300 text-violet-500 focus:ring-violet-500/30"
+              className="rounded border-slate-300 text-primary-500 focus:ring-primary-500/30"
             />
             <span className="text-[11px] text-slate-600 dark:text-slate-400">
               {isPl ? 'Zaznaczony' : 'Checked'}
@@ -634,7 +634,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors text-left"
               >
-                <FileText size={12} className="text-violet-500 flex-shrink-0" />
+                <FileText size={12} className="text-primary-500 flex-shrink-0" />
                 <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
                   {tpl.name}
                 </span>
@@ -649,7 +649,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
               onClose();
               onManageTemplates();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[10px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
           >
             <Edit3 size={11} />
             {isPl ? 'Zarządzaj szablonami' : 'Manage templates'}

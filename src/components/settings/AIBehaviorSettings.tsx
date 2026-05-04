@@ -239,7 +239,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
       {actionError && (
         <div
           role="alert"
-          className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -332,7 +332,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           {/* Tone & Communication */}
           <div>
             <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <Sparkles size={14} className="text-violet-400" />
+              <Sparkles size={14} className="text-primary-400" />
               {t('settings.ai.toneSection', 'Tone & Communication')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -397,11 +397,11 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           </div>
 
           {/* Tips */}
-          <div className="p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg">
+          <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
             <div className="flex items-start gap-3">
-              <Sparkles size={18} className="text-violet-400 flex-shrink-0 mt-0.5" />
+              <Sparkles size={18} className="text-primary-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-violet-300 mb-1">
+                <h4 className="text-sm font-medium text-primary-300 mb-1">
                   {t('settings.ai.tips', 'Pro Tips')}
                 </h4>
                 <ul className="text-xs text-slate-500 space-y-1">

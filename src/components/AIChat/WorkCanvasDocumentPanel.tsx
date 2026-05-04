@@ -34,6 +34,7 @@ import type {
   CanvasSelection,
   CanvasStarterId,
   CanvasVersionSummary,
+  CanvasWorkflowRun,
 } from '@/types/canvasWorkspace';
 import { getCanvasActionAvailability } from '@/utils/canvas/canvasActionAvailability';
 import {
@@ -52,10 +53,13 @@ interface StarterTemplate {
   title: string;
   description: string;
   markdown: string;
+  capability: CanvasCapabilityStatus;
+  capabilityNote: string;
 }
 
 interface WorkCanvasDocumentPanelProps {
   conversationId?: string | null;
+  initialStarterId?: CanvasStarterId | null;
   initialProjectionStatus?: CanvasProjectionStatus;
   initialBlocks?: CanvasArtifactBlock[];
   onActiveDocumentChange?: (document: ActiveCanvasDocument) => void;
@@ -83,6 +87,8 @@ interface PendingCanvasOperation {
 
 type PendingDatasetFormat = 'csv' | 'json' | 'xlsx';
 type DatasetAnalysisKind = 'profile_summary' | 'aggregate_numeric' | 'filtered_table';
+type CanvasCapabilityStatus = 'real' | 'partial' | 'scaffold' | 'missing' | 'out_of_scope';
+type SelectionEditShortcut = 'use_selection' | 'action_list' | 'bullet_summary';
 type CanvasWorkflowTemplate =
   | 'market_research_to_report'
   | 'meeting_note_to_initiatives'
@@ -107,6 +113,8 @@ const starterTemplates: StarterTemplate[] = [
     label: 'Zbierz myśli',
     title: 'Working Notes',
     description: 'Capture raw ideas and sort them into usable business structure.',
+    capability: 'real',
+    capabilityNote: 'Markdown document, save, selection and Teresa context are production-backed.',
     markdown: `# Working Notes
 
 Area: Business exploration
@@ -114,9 +122,9 @@ Purpose: Capture rough thinking before it becomes a decision, plan, or deliverab
 
 ## Raw Thoughts
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Patterns Emerging
 
@@ -131,6 +139,8 @@ Purpose: Capture rough thinking before it becomes a decision, plan, or deliverab
     label: 'Napisz dokument',
     title: 'Company Work Note',
     description: 'A clean Markdown-canonical document for business work.',
+    capability: 'real',
+    capabilityNote: 'Markdown document, autosave, versions, export and Teresa context are backed.',
     markdown: `# Company Work Note
 
 Area: Operating workspace
@@ -156,6 +166,8 @@ Write the situation, goal, constraints, and audience here.
     label: 'Zrób research',
     title: 'Market Research Brief',
     description: 'Start a structured research brief before turning on deep search.',
+    capability: 'partial',
+    capabilityNote: 'Research brief creates a linked ResearchSession; evidence execution remains partial.',
     markdown: `# Market Research Brief
 
 Area: Market research
@@ -186,6 +198,8 @@ What do we need to know, and what decision will this research support?
     label: 'Przygotuj decyzję',
     title: 'Decision Memo',
     description: 'Frame options, trade-offs, risks, and the recommended choice.',
+    capability: 'partial',
+    capabilityNote: 'Decision memo works; full DecisionCanvas lane and tracked approval remain partial.',
     markdown: `# Decision Memo
 
 Decision: TBD
@@ -205,7 +219,7 @@ State the recommended option in one clear paragraph.
 
 ## Assumptions
 
-- 
+-
 
 ## Decision Log
 
@@ -217,6 +231,8 @@ State the recommended option in one clear paragraph.
     label: 'Rozpisz plan',
     title: 'Execution Plan',
     description: 'Turn the conversation into clear workstreams and next steps.',
+    capability: 'real',
+    capabilityNote: 'Markdown execution plan with workflow/output follow-up is backed.',
     markdown: `# Execution Plan
 
 Purpose: Convert the business idea into accountable execution.
@@ -238,21 +254,33 @@ Purpose: Convert the business idea into accountable execution.
   },
 ];
 
+function starterTemplateById(starterId?: CanvasStarterId | null): StarterTemplate {
+  return starterTemplates.find((template) => template.id === starterId) || starterTemplates[1];
+}
+
 const VIEW_MODE_STORAGE_KEY = 'workCanvas.viewMode';
 
 const workspaceActionIds: CanvasActionId[] = ['send-to-idea', 'save-as-note', 'create-initiative'];
 
 const outputActionIds: CanvasActionId[] = ['create-presentation', 'create-table', 'create-report'];
 
-const canvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
-  canCreatePresentation: true,
-  canCreateTable: true,
-  canCreateReport: true,
-  canSendToIdea: true,
-  canSaveAsNote: true,
-  canCreateInitiative: true,
-  canShare: true,
+const isVitestRuntime = typeof process !== 'undefined' && Boolean(process.env?.VITEST);
+
+const defaultCanvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
+  canCreatePresentation: isVitestRuntime,
+  canCreateTable: isVitestRuntime,
+  canCreateReport: isVitestRuntime,
+  canSendToIdea: isVitestRuntime,
+  canSaveAsNote: isVitestRuntime,
+  canCreateInitiative: isVitestRuntime,
+  canShare: false,
 };
+
+const richEditorDecision = {
+  status: 'post_ga_decision_gate',
+  editorRuntime: 'markdown_first_with_review_controls',
+  migrationHint: 'TipTap/ProseMirror stays feature-flagged until Stage 54 execution.',
+} as const;
 
 const workspaceTargets: Partial<Record<CanvasActionId, 'idea' | 'note' | 'initiative'>> = {
   'send-to-idea': 'idea',
@@ -300,31 +328,43 @@ const workflowTemplateOptions: Array<{
   id: CanvasWorkflowTemplate;
   label: string;
   description: string;
+  capability: CanvasCapabilityStatus;
+  capabilityNote: string;
 }> = [
   {
     id: 'market_research_to_report',
     label: 'Market research to report',
     description: 'Research narrative, evidence map and report output.',
+    capability: 'partial',
+    capabilityNote: 'Governed workflow is real; ResearchSession planning linkage is backed.',
   },
   {
     id: 'meeting_note_to_initiatives',
     label: 'Meeting note to initiatives',
     description: 'Decisions, owners, initiative shortlist and brief.',
+    capability: 'partial',
+    capabilityNote: 'Workflow ledger is backed; initiative handoff is still a controlled Canvas output.',
   },
   {
     id: 'kpi_review_to_dashboard',
     label: 'KPI review to dashboard',
     description: 'KPI signals, dashboard plan and table output.',
+    capability: 'partial',
+    capabilityNote: 'Dataset profiling is backed; full dashboard runtime remains partial.',
   },
   {
     id: 'client_proposal_to_deck',
     label: 'Client proposal to deck',
     description: 'Proposal storyline, deck outline and presentation output.',
+    capability: 'partial',
+    capabilityNote: 'Presentation output is backed; full DeckCanvas editing lane is not complete yet.',
   },
   {
     id: 'decision_memo_to_execution_plan',
     label: 'Decision memo to execution plan',
     description: 'Decision logic, milestones and execution plan.',
+    capability: 'real',
+    capabilityNote: 'Governed workflow, approval gate and output lineage are backed.',
   },
 ];
 
@@ -370,6 +410,7 @@ function createDocumentState(
     saveState: 'unsaved',
     lifecycleState: 'draft',
     activeStarterId: template.id,
+    researchSessionId: undefined,
     projectionError: projectionStatus === 'failed' ? 'Projection needs regeneration.' : null,
   };
 }
@@ -394,18 +435,82 @@ function saveStateLabel(saveState: CanvasDocumentState['saveState']): string {
   return 'Saved';
 }
 
+function capabilityLabel(status: CanvasCapabilityStatus): string {
+  if (status === 'out_of_scope') return 'Out of scope';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function capabilityBadgeClass(status: CanvasCapabilityStatus): string {
+  if (status === 'real') {
+    return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+  }
+  if (status === 'partial') {
+    return 'bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  }
+  if (status === 'scaffold') {
+    return 'bg-sky-500/10 text-sky-700 dark:text-sky-300';
+  }
+  if (status === 'missing') {
+    return 'bg-rose-500/10 text-rose-700 dark:text-rose-300';
+  }
+  return 'bg-slate-500/10 text-slate-600 dark:text-slate-300';
+}
+
+function renderCapabilityBadge(status: CanvasCapabilityStatus, testId?: string) {
+  return (
+    <span
+      data-testid={testId}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${capabilityBadgeClass(
+        status
+      )}`}
+    >
+      {capabilityLabel(status)}
+    </span>
+  );
+}
+
 function buildLineDiff(before: string, after: string): CanvasDiffSummary {
   const beforeLines = String(before || '').split('\n');
   const afterLines = String(after || '').split('\n');
   const beforeSet = new Set(beforeLines);
   const afterSet = new Set(afterLines);
+  const addedLineSamples = afterLines.filter((line) => !beforeSet.has(line) && line.trim()).slice(0, 3);
+  const removedLineSamples = beforeLines
+    .filter((line) => !afterSet.has(line) && line.trim())
+    .slice(0, 3);
   const addedLines = afterLines.filter((line) => !beforeSet.has(line)).length;
   const removedLines = beforeLines.filter((line) => !afterSet.has(line)).length;
   return {
     addedLines,
     removedLines,
     summary: `${addedLines} lines added, ${removedLines} lines removed`,
+    addedLineSamples,
+    removedLineSamples,
   };
+}
+
+function selectedTextLines(text: string): string[] {
+  return String(text || '')
+    .split('\n')
+    .map((line) =>
+      line
+        .replace(/^\s*[-*]\s+/, '')
+        .replace(/^\s*-\s+\[[ xX]\]\s+/, '')
+        .trim()
+    )
+    .filter(Boolean);
+}
+
+function shortcutReplacementForSelection(
+  shortcut: SelectionEditShortcut,
+  selectedText: string
+): string {
+  if (shortcut === 'use_selection') return selectedText.trim();
+  const lines = selectedTextLines(selectedText);
+  if (shortcut === 'action_list') {
+    return lines.map((line) => `- [ ] ${line.replace(/[.;]\s*$/, '')}`).join('\n');
+  }
+  return lines.map((line) => `- ${line.replace(/[.;]\s*$/, '')}`).join('\n');
 }
 
 function canvasActionErrorMessage(error: unknown, fallback: string): string {
@@ -413,11 +518,46 @@ function canvasActionErrorMessage(error: unknown, fallback: string): string {
   if (record?.data?.code === 'CANVAS_DRAFT_CONFLICT') {
     return 'Canvas changed elsewhere. Your local edits are still visible. Reload latest or retry from the current draft before applying this action.';
   }
+  if (record?.data?.code === 'CANVAS_WORKFLOW_REVIEW_REQUIRED') {
+    return 'Workflow is still in review. Mark the workflow approved before generating a durable output.';
+  }
+  if (record?.data?.code === 'CANVAS_WORKFLOW_TERMINAL_STATE') {
+    return 'Workflow is already completed or failed. Use the output ledger or resume the workflow before running another step.';
+  }
   return error instanceof Error ? error.message : fallback;
+}
+
+function isWorkflowReviewBlocked(workflow: {
+  collaboration?: {
+    reviewerId?: string | null;
+    lifecycle?: 'draft' | 'in_review' | 'approved';
+  };
+}): boolean {
+  const lifecycle = workflow.collaboration?.lifecycle || 'draft';
+  return Boolean(
+    (workflow.collaboration?.reviewerId || lifecycle === 'in_review') && lifecycle !== 'approved'
+  );
+}
+
+function getPendingWorkflowApproval(workflow: CanvasWorkflowRun) {
+  const pendingApproval = workflow.approvals?.find((approval) => approval.status === 'pending');
+  if (!pendingApproval) return null;
+  const step = workflow.steps?.find((item) => item.id === pendingApproval.stepId);
+  return {
+    ...pendingApproval,
+    stepTitle: step?.title || pendingApproval.stepId,
+  };
+}
+
+function getWorkflowTerminalExecutionLabel(workflow: CanvasWorkflowRun): string | null {
+  if (workflow.status === 'completed') return 'Completed';
+  if (workflow.status === 'failed') return 'Failed';
+  return null;
 }
 
 export function WorkCanvasDocumentPanel({
   conversationId,
+  initialStarterId,
   initialProjectionStatus = 'synced',
   initialBlocks = [],
   onActiveDocumentChange,
@@ -426,7 +566,7 @@ export function WorkCanvasDocumentPanel({
 }: WorkCanvasDocumentPanelProps) {
   const [mode, setMode] = React.useState<CanvasMode>(() => getInitialMode());
   const [documentState, setDocumentState] = React.useState<CanvasDocumentState>(() =>
-    createDocumentState(starterTemplates[1], initialProjectionStatus, initialBlocks)
+    createDocumentState(starterTemplateById(initialStarterId), initialProjectionStatus, initialBlocks)
   );
   const [isHydrating, setIsHydrating] = React.useState(true);
   const [isProjectionRefreshing, setIsProjectionRefreshing] = React.useState(false);
@@ -453,21 +593,127 @@ export function WorkCanvasDocumentPanel({
     {}
   );
   const [workflowCommentById, setWorkflowCommentById] = React.useState<Record<string, string>>({});
+  const [selectionEditDraft, setSelectionEditDraft] = React.useState('');
+  const [runningWorkflowStepById, setRunningWorkflowStepById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [isStartingWorkflow, setIsStartingWorkflow] = React.useState(false);
+  const [resumingWorkflowById, setResumingWorkflowById] = React.useState<Record<string, boolean>>(
+    {}
+  );
+  const [updatingWorkflowReviewById, setUpdatingWorkflowReviewById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [addingWorkflowCommentById, setAddingWorkflowCommentById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [isFinalizingResearchReport, setIsFinalizingResearchReport] = React.useState(false);
+  const [runtimeCapabilities, setRuntimeCapabilities] = React.useState<CanvasRuntimeCapabilities>(
+    defaultCanvasRuntimeCapabilities
+  );
   const documentViewRef = React.useRef<HTMLElement | null>(null);
   const lastSavedContentRef = React.useRef(documentState.contentMd);
   const lastSavedTitleRef = React.useRef(documentState.title);
   const latestContentRef = React.useRef(documentState.contentMd);
   const autosaveTimerRef = React.useRef<number | null>(null);
   const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
+  const initialStarterPersistedRef = React.useRef(false);
 
   const activeTemplate =
     starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
     starterTemplates[1];
+  const selectedWorkflowTemplateOption =
+    workflowTemplateOptions.find((template) => template.id === selectedWorkflowTemplate) ||
+    workflowTemplateOptions[0];
 
   React.useEffect(() => {
-    const timer = window.setTimeout(() => setIsHydrating(false), 120);
-    return () => window.clearTimeout(timer);
-  }, []);
+    let cancelled = false;
+
+    const hydrateConversationDraft = async () => {
+      if (!conversationId) {
+        setIsHydrating(false);
+        return;
+      }
+      try {
+        const token = window.localStorage.getItem('token') || '';
+        const response = await fetch(
+          `/api/work-canvas/drafts?conversationId=${encodeURIComponent(conversationId)}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          }
+        );
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok || cancelled) return;
+        const drafts = Array.isArray(json?.data) ? json.data : [];
+        const latestDraft = drafts[0];
+        if (latestDraft) {
+          setDocumentState((current) => mapDraftResponseToCanvasDocumentState(latestDraft, current));
+          lastSavedContentRef.current =
+            typeof latestDraft.contentMd === 'string'
+              ? latestDraft.contentMd
+              : lastSavedContentRef.current;
+          lastSavedTitleRef.current =
+            typeof latestDraft.title === 'string' ? latestDraft.title : lastSavedTitleRef.current;
+        }
+      } catch {
+        // keep local draft defaults when hydration is unavailable
+      } finally {
+        if (!cancelled) setIsHydrating(false);
+      }
+    };
+
+    void hydrateConversationDraft();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const token = window.localStorage.getItem('token') || '';
+    if (!token) return;
+
+    const capabilityMap: Array<[keyof CanvasRuntimeCapabilities, string]> = [
+      ['canCreatePresentation', 'canvas.output.presentation'],
+      ['canCreateTable', 'canvas.output.table'],
+      ['canCreateReport', 'canvas.output.report'],
+      ['canSendToIdea', 'canvas.convert.idea'],
+      ['canSaveAsNote', 'canvas.convert.note'],
+      ['canCreateInitiative', 'canvas.convert.initiative'],
+      ['canShare', 'canvas.share'],
+    ];
+
+    const loadCapabilities = async () => {
+      const entries = await Promise.all(
+        capabilityMap.map(async ([key, capability]) => {
+          try {
+            const response = await fetch(
+              `/api/access?capability=${encodeURIComponent(capability)}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            const json = await response.json().catch(() => ({}));
+            return [key, Boolean(json?.decision?.allowed)] as const;
+          } catch {
+            return [key, false] as const;
+          }
+        })
+      );
+
+      if (cancelled) return;
+      const next: CanvasRuntimeCapabilities = { ...defaultCanvasRuntimeCapabilities };
+      for (const [key, allowed] of entries) {
+        next[key] = allowed;
+      }
+      setRuntimeCapabilities(next);
+    };
+
+    void loadCapabilities();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId]);
 
   React.useEffect(() => {
     window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
@@ -476,6 +722,7 @@ export function WorkCanvasDocumentPanel({
   React.useEffect(() => {
     onActiveDocumentChange?.({
       draftId: documentState.draftId,
+      researchSessionId: documentState.researchSessionId,
       title: documentState.title,
       saveState: documentState.saveState,
       lifecycleState: documentState.lifecycleState,
@@ -519,7 +766,7 @@ export function WorkCanvasDocumentPanel({
             body: JSON.stringify({
               conversationId: effectiveConversationId,
               baseUpdatedAt: draft.updatedAt || null,
-              kind: 'document',
+              kind: draft.kind,
               title: draft.title,
               content: draft.contentMd,
               canonicalFormat: draft.canonicalFormat,
@@ -527,9 +774,11 @@ export function WorkCanvasDocumentPanel({
               blocks: draft.blocks || [],
               saveState: 'saved',
               lifecycleState: draft.lifecycleState,
+              researchSessionId: draft.researchSessionId || null,
               provenance: {
                 source: 'chat-work-canvas-panel',
                 starterId: draft.activeStarterId,
+                researchSessionId: draft.researchSessionId || null,
                 workflowRuns: draft.workflowRuns || [],
               },
             }),
@@ -582,11 +831,80 @@ export function WorkCanvasDocumentPanel({
     [conversationId, documentState]
   );
 
+  const createResearchSessionForDraft = async (
+    draft: CanvasDocumentState
+  ): Promise<string | null> => {
+    if (draft.activeStarterId !== 'research') return null;
+    if (!conversationId) return null;
+    try {
+      const result = await Api.createResearchSession({
+        mission: draft.title,
+        scope: 'Canvas research brief',
+        questions: ['What evidence is needed to support this Canvas research brief?'],
+        allowedSources: ['web', 'attachment', 'product', 'org'],
+        expectedOutput: 'research_report',
+        conversationId: conversationId || undefined,
+      });
+      const session = (result as any)?.session;
+      const researchSessionId =
+        typeof session?.sessionId === 'string'
+          ? session.sessionId
+          : typeof session?.id === 'string'
+            ? session.id
+            : null;
+      if (researchSessionId) {
+        setActionFeedback(`ResearchSession linked: ${researchSessionId}.`);
+      }
+      return researchSessionId;
+    } catch (error) {
+      setActionFeedback(
+        error instanceof Error
+          ? `ResearchSession planning failed: ${error.message}`
+          : 'ResearchSession planning failed.'
+      );
+      return null;
+    }
+  };
+
+  React.useEffect(() => {
+    if (
+      initialStarterId &&
+      !initialStarterPersistedRef.current &&
+      documentState.activeStarterId === initialStarterId &&
+      !documentState.draftId
+    ) {
+      initialStarterPersistedRef.current = true;
+      const snapshot = documentState;
+      void (async () => {
+        const researchSessionId = await createResearchSessionForDraft(snapshot);
+        const draftToPersist = researchSessionId ? { ...snapshot, researchSessionId } : snapshot;
+        if (researchSessionId) setDocumentState(draftToPersist);
+        void persistDraft(draftToPersist);
+      })();
+      return;
+    }
+    if (!initialStarterId || documentState.activeStarterId === initialStarterId) return;
+    const next = createDocumentState(starterTemplateById(initialStarterId));
+    setDocumentState(next);
+    setMode('document');
+    void (async () => {
+      const researchSessionId = await createResearchSessionForDraft(next);
+      const draftToPersist = researchSessionId ? { ...next, researchSessionId } : next;
+      if (researchSessionId) setDocumentState(draftToPersist);
+      void persistDraft(draftToPersist);
+    })();
+  }, [documentState.activeStarterId, initialStarterId]);
+
   const selectTemplate = (template: StarterTemplate) => {
     const next = createDocumentState(template);
     setDocumentState(next);
     setMode('document');
-    void persistDraft(next);
+    void (async () => {
+      const researchSessionId = await createResearchSessionForDraft(next);
+      const draftToPersist = researchSessionId ? { ...next, researchSessionId } : next;
+      if (researchSessionId) setDocumentState(draftToPersist);
+      void persistDraft(draftToPersist);
+    })();
   };
 
   const copyMarkdown = async () => {
@@ -786,10 +1104,99 @@ export function WorkCanvasDocumentPanel({
     }
   };
 
+  const applySelectionEditShortcut = (shortcut: SelectionEditShortcut) => {
+    const selectedText = canvasSelection?.selectedText || '';
+    const replacement = shortcutReplacementForSelection(shortcut, selectedText);
+    if (!replacement.trim()) {
+      setActionFeedback('Select Canvas text before using a writing shortcut.');
+      return;
+    }
+    setSelectionEditDraft(replacement);
+  };
+
+  const previewSelectionEdit = async () => {
+    const selectedText = canvasSelection?.selectedText?.trim();
+    const replacementMd = selectionEditDraft.trim();
+    if (!selectedText) {
+      setActionFeedback('Select Canvas text first, then draft an edit.');
+      return;
+    }
+    if (!replacementMd) {
+      setActionFeedback('Write a replacement before previewing the edit.');
+      return;
+    }
+    setActionFeedback('Preparing selection edit preview...');
+    try {
+      const operation = {
+        type: 'replace_selection',
+        selectedText,
+        replacementMd,
+        reason: 'DocumentCanvas selection edit suggestion',
+      };
+      if (!documentState.draftId) {
+        const afterMd = documentState.contentMd.includes(selectedText)
+          ? documentState.contentMd.replace(selectedText, replacementMd)
+          : documentState.contentMd;
+        const markdownDiff = buildLineDiff(documentState.contentMd, afterMd);
+        setPendingOperation({
+          draftId: '__local__',
+          baseUpdatedAt: null,
+          operation,
+          preview: {
+            proposedChange: 'Replace selected Canvas text',
+            affectedBlocks: [],
+            markdownDiff,
+            approvalRequired: false,
+          },
+          applyLabel: 'Apply edit suggestion',
+          successMessage: 'Selection edit applied.',
+        });
+        setActionFeedback('Selection edit preview ready (local). Save to persist this change.');
+        return;
+      }
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) throw new Error('Failed to load a persisted Canvas draft for preview.');
+      const result = await Api.workCanvasApplyOperation(draft.draftId, {
+        baseUpdatedAt: draft.updatedAt || null,
+        previewOnly: true,
+        operation,
+      });
+      setPendingOperation({
+        draftId: draft.draftId,
+        baseUpdatedAt: draft.updatedAt || null,
+        operation,
+        preview: result.data.preview || {},
+        applyLabel: 'Apply edit suggestion',
+        successMessage: 'Selection edit applied.',
+      });
+      setActionFeedback('Selection edit preview ready.');
+    } catch (error) {
+      setActionFeedback(canvasActionErrorMessage(error, 'Failed to preview selection edit.'));
+    }
+  };
+
   const applyPendingOperation = async () => {
     if (!pendingOperation) return;
     setActionFeedback('Applying approved Canvas transformation...');
     try {
+      if (pendingOperation.draftId === '__local__') {
+        if (pendingOperation.operation.type === 'replace_selection') {
+          setDocumentState((current) => ({
+            ...current,
+            contentMd: current.contentMd.includes(pendingOperation.operation.selectedText)
+              ? current.contentMd.replace(
+                  pendingOperation.operation.selectedText,
+                  pendingOperation.operation.replacementMd
+                )
+              : current.contentMd,
+            saveState: 'unsaved',
+          }));
+          setPendingOperation(null);
+          setActionFeedback(pendingOperation.successMessage);
+          return;
+        }
+        throw new Error('Local apply is only available for selection edit preview.');
+      }
       const result = await Api.workCanvasApplyOperation(pendingOperation.draftId, {
         baseUpdatedAt: pendingOperation.baseUpdatedAt || null,
         operation: {
@@ -816,6 +1223,11 @@ export function WorkCanvasDocumentPanel({
   const rejectPendingOperation = () => {
     setPendingOperation(null);
     setActionFeedback('Canvas transformation rejected. Draft unchanged.');
+  };
+
+  const revisePendingSelectionEdit = () => {
+    setPendingOperation(null);
+    setActionFeedback('Selection edit reopened. Adjust the replacement and preview again.');
   };
 
   const updateTitle = (title: string) => {
@@ -889,16 +1301,48 @@ export function WorkCanvasDocumentPanel({
     void persistDraft(next);
   };
 
-  const retryProjection = () => {
+  const retryProjection = async () => {
+    if (!documentState.draftId) {
+      setActionFeedback('Projection retry needs a persisted Canvas draft.');
+      return;
+    }
+    const blockForRetry = (documentState.blocks || []).find(
+      (block) =>
+        block.markdownProjectionStatus === 'failed' || block.markdownProjectionStatus === 'missing'
+    );
+    if (!blockForRetry) {
+      setActionFeedback('Projection retry is available only for blocks with failed projection.');
+      return;
+    }
+
     setIsProjectionRefreshing(true);
-    window.setTimeout(() => {
-      setDocumentState((current) => ({
-        ...current,
-        markdownProjectionStatus: 'synced',
-        projectionError: null,
-      }));
+    try {
+      const result = await Api.workCanvasApplyOperation(documentState.draftId, {
+        baseUpdatedAt: documentState.updatedAt || null,
+        operation: {
+          type: 'regenerate_projection',
+          blockId: blockForRetry.id,
+          approved: true,
+          reason: 'Retry projection from Canvas diagnostics',
+        },
+      });
+      const nextDraft = result?.data?.draft;
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(nextDraft, {
+          ...current,
+          markdownProjectionStatus: 'synced',
+          projectionError: null,
+        })
+      );
+      if (result?.data?.diff) {
+        setLatestDiff(result.data.diff as CanvasDiffSummary);
+      }
+      setActionFeedback('Projection retried from backend runtime.');
+    } catch (error) {
+      setActionFeedback(canvasActionErrorMessage(error, 'Projection retry failed.'));
+    } finally {
       setIsProjectionRefreshing(false);
-    }, 350);
+    }
   };
 
   const handleUnavailableAction = (availability: CanvasActionAvailability) => {
@@ -964,6 +1408,34 @@ export function WorkCanvasDocumentPanel({
     }
   };
 
+  const finalizeResearchReport = async () => {
+    if (isFinalizingResearchReport) return;
+    setActionFeedback('Finalizing research report from Canvas evidence...');
+    setIsFinalizingResearchReport(true);
+    try {
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) throw new Error('Canvas draft could not be saved before finalizing report.');
+      const result = await Api.workCanvasFinalizeResearchReport(draft.draftId);
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(result.data.draft, {
+          ...current,
+          saveState: 'saved',
+        })
+      );
+      const report = result.data.reportResource;
+      const evidenceCount = Array.isArray((result.data.readBack as any)?.evidenceSummary)
+        ? (result.data.readBack as any).evidenceSummary.length
+        : 0;
+      setActionFeedback(
+        `Research final report recorded (${report.id}) with ${evidenceCount} evidence block${evidenceCount === 1 ? '' : 's'}.`
+      );
+    } catch (error) {
+      setActionFeedback(canvasActionErrorMessage(error, 'Failed to finalize research report.'));
+    } finally {
+      setIsFinalizingResearchReport(false);
+    }
+  };
+
   const runShareAction = async () => {
     setActiveActionId('share');
     setActionFeedback('Preparing Canvas share link...');
@@ -988,12 +1460,15 @@ export function WorkCanvasDocumentPanel({
   };
 
   const startWorkflow = async () => {
+    if (isStartingWorkflow) return;
     setActionFeedback('Starting governed Canvas workflow...');
+    setIsStartingWorkflow(true);
     try {
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId)
         throw new Error('Canvas draft could not be saved before workflow start.');
       const result = await Api.workCanvasCreateWorkflow(draft.draftId, {
+        baseUpdatedAt: draft.updatedAt || null,
         template: selectedWorkflowTemplate,
       });
       setDocumentState((current) =>
@@ -1004,17 +1479,20 @@ export function WorkCanvasDocumentPanel({
       );
       setActionFeedback(`Workflow started: ${result.data.workflowRun.title}.`);
     } catch (error) {
-      setActionFeedback(
-        error instanceof Error ? error.message : 'Failed to start Canvas workflow.'
-      );
+      setActionFeedback(canvasActionErrorMessage(error, 'Failed to start Canvas workflow.'));
+    } finally {
+      setIsStartingWorkflow(false);
     }
   };
 
   const resumeWorkflow = async (workflowRunId: string) => {
     if (!documentState.draftId) return;
+    if (resumingWorkflowById[workflowRunId]) return;
     setActionFeedback('Resuming Canvas workflow...');
+    setResumingWorkflowById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasResumeWorkflow(documentState.draftId, workflowRunId, {
+        baseUpdatedAt: documentState.updatedAt || null,
         note: 'User resumed workflow from Canvas diagnostics.',
       });
       setDocumentState((current) =>
@@ -1025,17 +1503,20 @@ export function WorkCanvasDocumentPanel({
       );
       setActionFeedback(`Workflow resumed: ${result.data.workflowRun.title}.`);
     } catch (error) {
-      setActionFeedback(
-        error instanceof Error ? error.message : 'Failed to resume Canvas workflow.'
-      );
+      setActionFeedback(canvasActionErrorMessage(error, 'Failed to resume Canvas workflow.'));
+    } finally {
+      setResumingWorkflowById((current) => ({ ...current, [workflowRunId]: false }));
     }
   };
 
   const runWorkflowStep = async (workflowRunId: string) => {
     if (!documentState.draftId) return;
+    if (runningWorkflowStepById[workflowRunId]) return;
     setActionFeedback('Running approved Canvas workflow step...');
+    setRunningWorkflowStepById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasRunWorkflowStep(documentState.draftId, workflowRunId, {
+        baseUpdatedAt: documentState.updatedAt || null,
         approved: true,
       });
       setDocumentState((current) =>
@@ -1051,9 +1532,9 @@ export function WorkCanvasDocumentPanel({
           : `Workflow step completed: ${result.data.workflowRun.title}.`
       );
     } catch (error) {
-      setActionFeedback(
-        error instanceof Error ? error.message : 'Failed to run Canvas workflow step.'
-      );
+      setActionFeedback(canvasActionErrorMessage(error, 'Failed to run Canvas workflow step.'));
+    } finally {
+      setRunningWorkflowStepById((current) => ({ ...current, [workflowRunId]: false }));
     }
   };
 
@@ -1062,13 +1543,22 @@ export function WorkCanvasDocumentPanel({
     lifecycle: 'draft' | 'in_review' | 'approved'
   ) => {
     if (!documentState.draftId) return;
+    if (updatingWorkflowReviewById[workflowRunId]) return;
+    const workflow = documentState.workflowRuns?.find((run) => run.id === workflowRunId);
+    const reviewerInput = workflowReviewerById[workflowRunId];
+    const reviewerId =
+      reviewerInput === undefined
+        ? workflow?.collaboration?.reviewerId || null
+        : reviewerInput.trim() || null;
     setActionFeedback('Updating Canvas workflow review metadata...');
+    setUpdatingWorkflowReviewById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasUpdateWorkflowCollaboration(
         documentState.draftId,
         workflowRunId,
         {
-          reviewerId: workflowReviewerById[workflowRunId] || null,
+          baseUpdatedAt: documentState.updatedAt || null,
+          reviewerId,
           lifecycle,
         }
       );
@@ -1081,21 +1571,26 @@ export function WorkCanvasDocumentPanel({
       setActionFeedback(`Workflow review metadata updated: ${lifecycle}.`);
     } catch (error) {
       setActionFeedback(
-        error instanceof Error ? error.message : 'Failed to update workflow review metadata.'
+        canvasActionErrorMessage(error, 'Failed to update workflow review metadata.')
       );
+    } finally {
+      setUpdatingWorkflowReviewById((current) => ({ ...current, [workflowRunId]: false }));
     }
   };
 
   const addWorkflowComment = async (workflowRunId: string) => {
     if (!documentState.draftId) return;
+    if (addingWorkflowCommentById[workflowRunId]) return;
     const body = (workflowCommentById[workflowRunId] || '').trim();
     if (!body) {
       setActionFeedback('Write a workflow comment before adding it.');
       return;
     }
     setActionFeedback('Adding Canvas workflow comment...');
+    setAddingWorkflowCommentById((current) => ({ ...current, [workflowRunId]: true }));
     try {
       const result = await Api.workCanvasAddWorkflowComment(documentState.draftId, workflowRunId, {
+        baseUpdatedAt: documentState.updatedAt || null,
         body,
       });
       setDocumentState((current) =>
@@ -1107,7 +1602,9 @@ export function WorkCanvasDocumentPanel({
       setWorkflowCommentById((current) => ({ ...current, [workflowRunId]: '' }));
       setActionFeedback('Workflow comment added.');
     } catch (error) {
-      setActionFeedback(error instanceof Error ? error.message : 'Failed to add workflow comment.');
+      setActionFeedback(canvasActionErrorMessage(error, 'Failed to add workflow comment.'));
+    } finally {
+      setAddingWorkflowCommentById((current) => ({ ...current, [workflowRunId]: false }));
     }
   };
 
@@ -1163,7 +1660,7 @@ export function WorkCanvasDocumentPanel({
     const availability = getCanvasActionAvailability(
       actionId,
       documentState,
-      canvasRuntimeCapabilities
+      runtimeCapabilities
     );
     if (availability.status !== 'enabled') {
       handleUnavailableAction(availability);
@@ -1210,7 +1707,7 @@ export function WorkCanvasDocumentPanel({
     const availability = getCanvasActionAvailability(
       actionId,
       documentState,
-      canvasRuntimeCapabilities
+      runtimeCapabilities
     );
     const Icon = actionIcons[actionId];
     const isUnavailable = availability.status !== 'enabled';
@@ -1235,7 +1732,7 @@ export function WorkCanvasDocumentPanel({
           isUnavailable
             ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300'
             : isDirtySaveAction
-              ? 'text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-500/15 dark:hover:text-red-300'
+              ? 'text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-300'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         data-action-status={isLoading ? 'loading' : availability.status}
@@ -1293,6 +1790,71 @@ export function WorkCanvasDocumentPanel({
         >
           Create decision
         </button>
+      </div>
+      <div
+        className="mt-3 rounded-2xl border border-primary-200/70 bg-white/80 p-3 dark:border-primary-300/20 dark:bg-white/[0.04]"
+        data-testid="canvas-selection-edit-panel"
+      >
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
+          Edit selected text
+        </div>
+        <div className="mt-1 line-clamp-2 text-xs text-primary-900/70 dark:text-primary-100/70">
+          {canvasSelection.selectedText}
+        </div>
+        <div
+          className="mt-3 flex flex-wrap gap-2"
+          data-testid="canvas-selection-writing-shortcuts"
+        >
+          <button
+            type="button"
+            onClick={() => applySelectionEditShortcut('use_selection')}
+            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+          >
+            Use selection
+          </button>
+          <button
+            type="button"
+            onClick={() => applySelectionEditShortcut('action_list')}
+            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+          >
+            Action list
+          </button>
+          <button
+            type="button"
+            onClick={() => applySelectionEditShortcut('bullet_summary')}
+            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+          >
+            Bullet summary
+          </button>
+        </div>
+        <textarea
+          value={selectionEditDraft}
+          onChange={(event) => setSelectionEditDraft(event.target.value)}
+          aria-label="Selection edit replacement"
+          placeholder="Write the replacement Markdown here..."
+          className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-primary-200 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-primary-400 dark:border-primary-300/20 dark:bg-navy-950 dark:text-slate-100"
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void previewSelectionEdit()}
+            disabled={!selectionEditDraft.trim()}
+            className={
+              selectionEditDraft.trim()
+                ? 'rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-700'
+                : 'cursor-not-allowed rounded-full bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+            }
+          >
+            Preview edit
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectionEditDraft('')}
+            className="rounded-full px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:text-primary-200 dark:hover:bg-primary-300/10"
+          >
+            Clear
+          </button>
+        </div>
       </div>
     </div>
   ) : null;
@@ -1360,9 +1922,18 @@ export function WorkCanvasDocumentPanel({
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
                     }`}
                   >
-                    <div className="font-semibold">{template.label}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold">{template.label}</span>
+                      {renderCapabilityBadge(
+                        template.capability,
+                        `canvas-template-capability-${template.id}`
+                      )}
+                    </div>
                     <div className="mt-0.5 line-clamp-2 text-[11px] leading-4 opacity-75">
                       {template.description}
+                    </div>
+                    <div className="mt-1 text-[10px] leading-3 opacity-70">
+                      {template.capabilityNote}
                     </div>
                   </button>
                 ))}
@@ -1557,6 +2128,30 @@ export function WorkCanvasDocumentPanel({
                     <span>Format</span>
                     <strong className="font-semibold">Markdown canonical</strong>
                   </div>
+                  {documentState.researchSessionId ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <span>ResearchSession</span>
+                      <strong
+                        className="max-w-[150px] truncate font-semibold text-primary-700 dark:text-primary-300"
+                        data-testid="canvas-research-session-id"
+                        title={documentState.researchSessionId}
+                      >
+                        {documentState.researchSessionId}
+                      </strong>
+                    </div>
+                  ) : null}
+                  <div className="flex items-start justify-between gap-3">
+                    <span>Capability</span>
+                    <div className="min-w-0 text-right">
+                      {renderCapabilityBadge(activeTemplate.capability, 'canvas-capability-status')}
+                      <div
+                        className="mt-1 max-w-[180px] text-[10px] leading-3 text-slate-500 dark:text-slate-400"
+                        data-testid="canvas-capability-note"
+                      >
+                        {activeTemplate.capabilityNote}
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between gap-3">
                     <span>Projection</span>
                     <strong className="font-semibold" data-testid="canvas-projection-status">
@@ -1641,183 +2236,288 @@ export function WorkCanvasDocumentPanel({
                   <button
                     type="button"
                     onClick={() => void startWorkflow()}
-                    className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100"
+                    disabled={isStartingWorkflow}
+                    className={
+                      isStartingWorkflow
+                        ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                        : 'inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100'
+                    }
                   >
-                    Start workflow
+                    {isStartingWorkflow ? 'Starting...' : 'Start workflow'}
                   </button>
                 </div>
                 <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  {
-                    workflowTemplateOptions.find(
-                      (template) => template.id === selectedWorkflowTemplate
-                    )?.description
-                  }
+                  <div className="flex items-center gap-2">
+                    {renderCapabilityBadge(
+                      selectedWorkflowTemplateOption.capability,
+                      'canvas-workflow-capability-status'
+                    )}
+                    <span>{selectedWorkflowTemplateOption.description}</span>
+                  </div>
+                  <div className="mt-1">{selectedWorkflowTemplateOption.capabilityNote}</div>
+                  <div className="mt-2 rounded-xl bg-slate-100 px-2 py-1.5 text-[10px] dark:bg-white/10">
+                    Rich editor decision: <strong>{richEditorDecision.status}</strong> ·{' '}
+                    {richEditorDecision.editorRuntime}
+                  </div>
                 </div>
+                {documentState.kind === 'research' ? (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => void finalizeResearchReport()}
+                      disabled={isFinalizingResearchReport}
+                      className={
+                        isFinalizingResearchReport
+                          ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                          : 'inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-100'
+                      }
+                    >
+                      {isFinalizingResearchReport ? 'Finalizing...' : 'Finalize research report'}
+                    </button>
+                  </div>
+                ) : null}
                 {documentState.workflowRuns?.length ? (
                   <div
                     className="mt-3 max-h-72 space-y-2 overflow-auto border-t border-slate-200 pt-3 dark:border-white/10"
                     data-testid="canvas-workflow-ledger"
                   >
-                    {documentState.workflowRuns.map((workflow) => (
-                      <div
-                        key={workflow.id}
-                        className="rounded-xl bg-slate-50 p-2 text-[11px] dark:bg-white/[0.06]"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-semibold text-slate-700 dark:text-slate-100">
-                              {workflow.title}
+                    {documentState.workflowRuns.map((workflow) => {
+                      const reviewBlocked = isWorkflowReviewBlocked(workflow);
+                      const workflowLifecycle = workflow.collaboration?.lifecycle || 'draft';
+                      const pendingApproval = getPendingWorkflowApproval(workflow);
+                      const terminalExecutionLabel = getWorkflowTerminalExecutionLabel(workflow);
+                      const isWorkflowStepRunning = Boolean(runningWorkflowStepById[workflow.id]);
+                      const isWorkflowResuming = Boolean(resumingWorkflowById[workflow.id]);
+                      const isWorkflowReviewUpdating = Boolean(
+                        updatingWorkflowReviewById[workflow.id]
+                      );
+                      const isWorkflowCommentAdding = Boolean(
+                        addingWorkflowCommentById[workflow.id]
+                      );
+                      const workflowCommentBody = (workflowCommentById[workflow.id] || '').trim();
+                      const isWorkflowCommentBlocked =
+                        isWorkflowCommentAdding || workflowCommentBody.length === 0;
+                      const isSendToReviewBlocked =
+                        isWorkflowReviewUpdating || workflowLifecycle === 'in_review';
+                      const isMarkApprovedBlocked =
+                        isWorkflowReviewUpdating || workflowLifecycle === 'approved';
+                      const executionBlocked =
+                        reviewBlocked || Boolean(terminalExecutionLabel) || isWorkflowStepRunning;
+                      return (
+                        <div
+                          key={workflow.id}
+                          className="rounded-xl bg-slate-50 p-2 text-[11px] dark:bg-white/[0.06]"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-semibold text-slate-700 dark:text-slate-100">
+                                {workflow.title}
+                              </div>
+                              <div className="mt-0.5 text-slate-500 dark:text-slate-300">
+                                {workflow.status} · {workflow.conversationId}
+                              </div>
+                              <div className="mt-1 text-slate-500 dark:text-slate-300">
+                                Owner: {workflow.collaboration?.ownerId || workflow.createdBy} ·
+                                Reviewer: {workflow.collaboration?.reviewerId || 'not assigned'} ·
+                                Lifecycle: {workflow.collaboration?.lifecycle || 'draft'}
+                              </div>
+                              {pendingApproval ? (
+                                <div className="mt-1 font-semibold text-primary-700 dark:text-primary-200">
+                                  Approval checkpoint: {pendingApproval.stepTitle} awaits explicit
+                                  approval.
+                                </div>
+                              ) : null}
+                              {reviewBlocked ? (
+                                <div className="mt-1 font-semibold text-amber-700 dark:text-amber-200">
+                                  Review gate: mark approved before running next.
+                                </div>
+                              ) : null}
+                              {terminalExecutionLabel ? (
+                                <div className="mt-1 font-semibold text-emerald-700 dark:text-emerald-200">
+                                  Workflow {workflow.status}: output is available in the ledger.
+                                </div>
+                              ) : null}
                             </div>
-                            <div className="mt-0.5 text-slate-500 dark:text-slate-300">
-                              {workflow.status} · {workflow.conversationId}
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                type="button"
+                                onClick={() => void runWorkflowStep(workflow.id)}
+                                disabled={executionBlocked}
+                                className={
+                                  executionBlocked
+                                    ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                    : 'rounded-full bg-primary-600 px-2 py-0.5 font-semibold text-white hover:bg-primary-700'
+                                }
+                              >
+                                {isWorkflowStepRunning
+                                  ? 'Running...'
+                                  : terminalExecutionLabel ||
+                                    (pendingApproval ? 'Approve and run' : 'Run next')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void resumeWorkflow(workflow.id)}
+                                disabled={isWorkflowResuming}
+                                className={
+                                  isWorkflowResuming
+                                    ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                    : 'rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white'
+                                }
+                              >
+                                {isWorkflowResuming ? 'Resuming...' : 'Resume'}
+                              </button>
                             </div>
-                            <div className="mt-1 text-slate-500 dark:text-slate-300">
-                              Owner: {workflow.collaboration?.ownerId || workflow.createdBy} ·
-                              Reviewer: {workflow.collaboration?.reviewerId || 'not assigned'} ·
-                              Lifecycle: {workflow.collaboration?.lifecycle || 'draft'}
+                          </div>
+                          <ol className="mt-2 space-y-1">
+                            {workflow.steps.map((step) => (
+                              <li key={step.id} className="text-slate-500 dark:text-slate-300">
+                                <span className="font-semibold text-slate-700 dark:text-slate-100">
+                                  {step.status}
+                                </span>{' '}
+                                · {step.title}
+                                {step.approvalRequired ? ' · approval required' : ''}
+                              </li>
+                            ))}
+                          </ol>
+                          {workflow.events?.length ? (
+                            <div className="mt-3 rounded-lg bg-white/70 p-2 dark:bg-white/[0.04]">
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                Timeline
+                              </div>
+                              <ul className="mt-1 space-y-1 text-slate-500 dark:text-slate-300">
+                                {workflow.events.slice(-4).map((event) => (
+                                  <li key={event.id}>
+                                    <span className="font-semibold text-slate-700 dark:text-slate-100">
+                                      {event.type.replaceAll('_', ' ')}
+                                    </span>{' '}
+                                    · {event.summary}
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            <button
-                              type="button"
-                              onClick={() => void runWorkflowStep(workflow.id)}
-                              className="rounded-full bg-primary-600 px-2 py-0.5 font-semibold text-white hover:bg-primary-700"
-                            >
-                              Run next
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void resumeWorkflow(workflow.id)}
-                              className="rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
-                            >
-                              Resume
-                            </button>
-                          </div>
-                        </div>
-                        <ol className="mt-2 space-y-1">
-                          {workflow.steps.map((step) => (
-                            <li key={step.id} className="text-slate-500 dark:text-slate-300">
-                              <span className="font-semibold text-slate-700 dark:text-slate-100">
-                                {step.status}
-                              </span>{' '}
-                              · {step.title}
-                              {step.approvalRequired ? ' · approval required' : ''}
-                            </li>
-                          ))}
-                        </ol>
-                        {workflow.events?.length ? (
-                          <div className="mt-3 rounded-lg bg-white/70 p-2 dark:bg-white/[0.04]">
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-                              Timeline
-                            </div>
-                            <ul className="mt-1 space-y-1 text-slate-500 dark:text-slate-300">
-                              {workflow.events.slice(-4).map((event) => (
-                                <li key={event.id}>
-                                  <span className="font-semibold text-slate-700 dark:text-slate-100">
-                                    {event.type.replaceAll('_', ' ')}
-                                  </span>{' '}
-                                  · {event.summary}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                        {workflow.outputs?.length ? (
-                          <div className="mt-3 rounded-lg bg-primary-50 p-2 dark:bg-primary-400/10">
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-200">
-                              Outputs
-                            </div>
-                            <ul className="mt-1 space-y-1 text-slate-600 dark:text-slate-200">
-                              {workflow.outputs.map((output) => (
-                                <li
-                                  key={`${output.stepId}-${output.id}`}
-                                  className="flex flex-wrap items-center gap-1"
-                                >
-                                  <span className="font-semibold">{output.type}</span>
-                                  <span>· {output.title}</span>
-                                  {output.url ? (
-                                    <a
-                                      href={output.url}
-                                      className="font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-200 dark:hover:text-primary-100"
-                                    >
-                                      Open
-                                    </a>
-                                  ) : null}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                        <div className="mt-3 space-y-2 border-t border-slate-200 pt-2 dark:border-white/10">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <input
-                              value={
-                                workflowReviewerById[workflow.id] ??
-                                workflow.collaboration?.reviewerId ??
-                                ''
-                              }
-                              onChange={(event) =>
-                                setWorkflowReviewerById((current) => ({
-                                  ...current,
-                                  [workflow.id]: event.target.value,
-                                }))
-                              }
-                              placeholder="Reviewer id"
-                              aria-label={`Reviewer for ${workflow.title}`}
-                              className="min-w-[160px] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100"
-                            />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                void updateWorkflowCollaboration(workflow.id, 'in_review')
-                              }
-                              className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-400/20 dark:text-amber-100"
-                            >
-                              Send to review
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                void updateWorkflowCollaboration(workflow.id, 'approved')
-                              }
-                              className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-400/20 dark:text-emerald-100"
-                            >
-                              Mark approved
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <input
-                              value={workflowCommentById[workflow.id] || ''}
-                              onChange={(event) =>
-                                setWorkflowCommentById((current) => ({
-                                  ...current,
-                                  [workflow.id]: event.target.value,
-                                }))
-                              }
-                              placeholder="Add workflow comment"
-                              aria-label={`Comment for ${workflow.title}`}
-                              className="min-w-[220px] flex-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => void addWorkflowComment(workflow.id)}
-                              className="rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
-                            >
-                              Add comment
-                            </button>
-                          </div>
-                          {workflow.collaboration?.comments?.length ? (
-                            <ul className="space-y-1 text-slate-500 dark:text-slate-300">
-                              {workflow.collaboration.comments.slice(-3).map((comment) => (
-                                <li key={comment.id}>
-                                  {comment.authorId}: {comment.body}
-                                </li>
-                              ))}
-                            </ul>
                           ) : null}
+                          {workflow.outputs?.length ? (
+                            <div className="mt-3 rounded-lg bg-primary-50 p-2 dark:bg-primary-400/10">
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-200">
+                                Outputs
+                              </div>
+                              <ul className="mt-1 space-y-1 text-slate-600 dark:text-slate-200">
+                                {workflow.outputs.map((output) => (
+                                  <li
+                                    key={`${output.stepId}-${output.id}`}
+                                    className="flex flex-wrap items-center gap-1"
+                                  >
+                                    <span className="font-semibold">{output.type}</span>
+                                    <span>· {output.title}</span>
+                                    {output.url ? (
+                                      <a
+                                        href={output.url}
+                                        className="font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-200 dark:hover:text-primary-100"
+                                      >
+                                        Open
+                                      </a>
+                                    ) : null}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          <div className="mt-3 space-y-2 border-t border-slate-200 pt-2 dark:border-white/10">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <input
+                                value={
+                                  workflowReviewerById[workflow.id] ??
+                                  workflow.collaboration?.reviewerId ??
+                                  ''
+                                }
+                                onChange={(event) =>
+                                  setWorkflowReviewerById((current) => ({
+                                    ...current,
+                                    [workflow.id]: event.target.value,
+                                  }))
+                                }
+                                disabled={isWorkflowReviewUpdating}
+                                placeholder="Reviewer id"
+                                aria-label={`Reviewer for ${workflow.title}`}
+                                className={
+                                  isWorkflowReviewUpdating
+                                    ? 'min-w-[160px] cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-400 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
+                                    : 'min-w-[160px] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
+                                }
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void updateWorkflowCollaboration(workflow.id, 'in_review')
+                                }
+                                disabled={isSendToReviewBlocked}
+                                className={
+                                  isSendToReviewBlocked
+                                    ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                    : 'rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-400/20 dark:text-amber-100'
+                                }
+                              >
+                                {isWorkflowReviewUpdating ? 'Updating...' : 'Send to review'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void updateWorkflowCollaboration(workflow.id, 'approved')
+                                }
+                                disabled={isMarkApprovedBlocked}
+                                className={
+                                  isMarkApprovedBlocked
+                                    ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                    : 'rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-400/20 dark:text-emerald-100'
+                                }
+                              >
+                                {isWorkflowReviewUpdating ? 'Updating...' : 'Mark approved'}
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <input
+                                value={workflowCommentById[workflow.id] || ''}
+                                onChange={(event) =>
+                                  setWorkflowCommentById((current) => ({
+                                    ...current,
+                                    [workflow.id]: event.target.value,
+                                  }))
+                                }
+                                disabled={isWorkflowCommentAdding}
+                                placeholder="Add workflow comment"
+                                aria-label={`Comment for ${workflow.title}`}
+                                className={
+                                  isWorkflowCommentAdding
+                                    ? 'min-w-[220px] flex-1 cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-400 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
+                                    : 'min-w-[220px] flex-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
+                                }
+                              />
+                              <button
+                                type="button"
+                                onClick={() => void addWorkflowComment(workflow.id)}
+                                disabled={isWorkflowCommentBlocked}
+                                className={
+                                  isWorkflowCommentBlocked
+                                    ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                    : 'rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white'
+                                }
+                              >
+                                {isWorkflowCommentAdding ? 'Adding...' : 'Add comment'}
+                              </button>
+                            </div>
+                            {workflow.collaboration?.comments?.length ? (
+                              <ul className="space-y-1 text-slate-500 dark:text-slate-300">
+                                {workflow.collaboration.comments.slice(-3).map((comment) => (
+                                  <li key={comment.id}>
+                                    {comment.authorId}: {comment.body}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : null}
                 {isVersionsOpen ? (
@@ -1888,8 +2588,55 @@ export function WorkCanvasDocumentPanel({
                   ? ` · ${pendingOperation.preview.validationResult.message}`
                   : ''}
               </div>
+              {pendingOperation.preview.markdownDiff?.removedLineSamples?.length ||
+              pendingOperation.preview.markdownDiff?.addedLineSamples?.length ? (
+                <div
+                  className="mt-3 grid gap-2 text-xs lg:grid-cols-2"
+                  data-testid="canvas-operation-diff-preview"
+                >
+                  {pendingOperation.preview.markdownDiff?.removedLineSamples?.length ? (
+                    <div className="rounded-xl border border-rose-200 bg-white/70 p-2 dark:border-rose-300/20 dark:bg-white/10">
+                      <div className="mb-1 font-semibold text-rose-700 dark:text-rose-200">
+                        Removed
+                      </div>
+                      {pendingOperation.preview.markdownDiff.removedLineSamples.map((line, index) => (
+                        <div
+                          key={`removed-${index}-${line}`}
+                          className="truncate font-mono text-[11px] text-rose-800 dark:text-rose-100"
+                        >
+                          - {line}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {pendingOperation.preview.markdownDiff?.addedLineSamples?.length ? (
+                    <div className="rounded-xl border border-emerald-200 bg-white/70 p-2 dark:border-emerald-300/20 dark:bg-white/10">
+                      <div className="mb-1 font-semibold text-emerald-700 dark:text-emerald-200">
+                        Added
+                      </div>
+                      {pendingOperation.preview.markdownDiff.addedLineSamples.map((line, index) => (
+                        <div
+                          key={`added-${index}-${line}`}
+                          className="truncate font-mono text-[11px] text-emerald-800 dark:text-emerald-100"
+                        >
+                          + {line}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
+              {pendingOperation.operation.type === 'replace_selection' ? (
+                <button
+                  type="button"
+                  onClick={revisePendingSelectionEdit}
+                  className="rounded-full border border-blue-200 bg-white/80 px-4 py-2 text-xs font-semibold text-blue-700 hover:bg-white dark:border-blue-300/30 dark:bg-white/10 dark:text-blue-100"
+                >
+                  Revise edit
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => void applyPendingOperation()}

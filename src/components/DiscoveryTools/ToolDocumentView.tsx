@@ -116,7 +116,7 @@ const TOOL_META: Partial<
     namePl: 'Ścieżki Wzrostu',
     badge: 'ANS',
     category: 'strategic',
-    statusDot: 'bg-purple-400',
+    statusDot: 'bg-primary-400',
   },
   'portfolio-priority': {
     name: 'Portfolio Priority',
@@ -193,12 +193,12 @@ const statusLabel = (
 type ToolSaveState = 'saved' | 'saving' | 'dirty' | 'error';
 
 const getPriorityDotClass = (priority: CommentPriority) =>
-  priority === 'high' ? 'bg-red-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
+  priority === 'high' ? 'bg-rose-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
 
 const getPriorityButtonClass = (priority: CommentPriority, isActive: boolean) =>
   isActive
     ? priority === 'high'
-      ? 'border-red-400/80 text-red-300 bg-red-500/20'
+      ? 'border-rose-400/80 text-rose-300 bg-rose-500/20'
       : priority === 'low'
         ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20'
         : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15'

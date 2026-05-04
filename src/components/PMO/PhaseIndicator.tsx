@@ -49,14 +49,14 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
   const getPhaseColor = () => {
     if (gateStatus === 'NOT_READY') return 'text-amber-500 dark:text-amber-400';
     if (phaseIndex >= 4) return 'text-green-500 dark:text-green-400'; // Execution or later
-    return 'text-purple-500 dark:text-purple-400';
+    return 'text-primary-500 dark:text-primary-400';
   };
 
   const getBgColor = () => {
     if (gateStatus === 'NOT_READY')
       return 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/30';
     if (phaseIndex >= 4) return 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30';
-    return 'bg-purple-500/10 dark:bg-purple-500/20 border-purple-500/30';
+    return 'bg-primary-500/10 dark:bg-primary-500/20 border-primary-500/30';
   };
 
   const getStatusIcon = () => {
@@ -66,7 +66,7 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
     if (phaseIndex >= 4) {
       return <CheckCircle2 size={14} className="text-green-500" />;
     }
-    return <Target size={14} className="text-purple-500" />;
+    return <Target size={14} className="text-primary-500" />;
   };
 
   if (compact) {
@@ -100,7 +100,7 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
               i < phaseIndex
                 ? 'bg-green-500'
                 : i === phaseIndex
-                  ? 'bg-purple-500 ring-2 ring-purple-500/30'
+                  ? 'bg-primary-500 ring-2 ring-primary-500/30'
                   : 'bg-slate-300 dark:bg-slate-600'
             }`}
           />

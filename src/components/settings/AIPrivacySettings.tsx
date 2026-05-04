@@ -148,7 +148,7 @@ export const AIPrivacySettings: React.FC<{ className?: string }> = ({ className 
               {/* Data Access Scope */}
               <div>
                 <h4 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
-                  <Eye size={14} className="text-violet-400" />
+                  <Eye size={14} className="text-primary-400" />
                   {t('settings.ai.dataAccessScope', 'Data Access Scope')}
                 </h4>
                 <p className="text-xs text-slate-500 mb-4">
@@ -236,7 +236,7 @@ export const AIPrivacySettings: React.FC<{ className?: string }> = ({ className 
               {/* Audit & Compliance */}
               <div>
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <EyeOff size={14} className="text-violet-400" />
+                  <EyeOff size={14} className="text-primary-400" />
                   {t('settings.ai.auditCompliance', 'Audit & Compliance')}
                 </h4>
                 <div className="space-y-4">

@@ -54,7 +54,7 @@ const INITIATIVE_TYPE_META: Record<
 > = {
   strategic: {
     label: { en: 'Strategic', pl: 'Strategiczna' },
-    color: 'text-violet-600 dark:text-violet-400',
+    color: 'text-primary-600 dark:text-primary-400',
     icon: Target,
   },
   operational: {
@@ -141,7 +141,7 @@ function ContentSelector({
             !s.available
               ? 'cursor-not-allowed border-slate-100 bg-slate-50/30 opacity-50 dark:border-navy-800 dark:bg-navy-950/20'
               : selected.has(s.id)
-                ? 'border-violet-300 bg-violet-50/40 dark:border-violet-800 dark:bg-violet-950/20'
+                ? 'border-primary-300 bg-primary-50/40 dark:border-primary-800 dark:bg-primary-950/20'
                 : 'border-slate-200/60 bg-white/60 hover:border-slate-300 dark:border-navy-700/50 dark:bg-navy-950/30 dark:hover:border-navy-600'
           }`}
         >
@@ -150,7 +150,7 @@ function ContentSelector({
             checked={selected.has(s.id)}
             onChange={() => s.available && onToggle(s.id)}
             disabled={!s.available}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 dark:border-navy-600"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-600"
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -398,7 +398,7 @@ function DynamicSwotOutputs({
               {
                 label: isPolish ? 'Ruchy' : 'Moves',
                 value: moves.length,
-                color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+                color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
               },
               {
                 label: isPolish ? 'Inicjatywy' : 'Initiatives',
@@ -685,7 +685,7 @@ function DynamicSwotOutputs({
                 <button
                   onClick={() => setPresCreated(true)}
                   disabled={presSections.size === 0}
-                  className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-40 dark:bg-violet-500 dark:hover:bg-violet-600"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-700 disabled:opacity-40 dark:bg-primary-500 dark:hover:bg-primary-600"
                 >
                   <Presentation className="h-3.5 w-3.5" />
                   {isPolish ? 'Generuj prezentację' : 'Generate presentation'}
@@ -1203,7 +1203,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
                     <span
                       className={`px-2 py-0.5 text-xs rounded-full ${
                         initiative.type === 'strategic'
-                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                          ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                           : initiative.type === 'operational'
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                             : initiative.type === 'defensive'

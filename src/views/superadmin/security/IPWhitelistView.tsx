@@ -227,7 +227,7 @@ export const IPWhitelistView: React.FC = () => {
           <button
             onClick={() => setShowAddModal(true)}
             disabled={!selectedOrgId || Boolean(loadError)}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center gap-2"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2"
           >
             <Plus size={18} />
             Add IP
@@ -240,7 +240,7 @@ export const IPWhitelistView: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+          className="rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -305,7 +305,7 @@ export const IPWhitelistView: React.FC = () => {
                       <button
                         onClick={() => handleRemoveIP(ip.id)}
                         aria-label={`Remove IP ${ip.ip_address}`}
-                        className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                        className="text-rose-700 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -371,7 +371,7 @@ export const IPWhitelistView: React.FC = () => {
               </button>
               <button
                 onClick={handleAddIP}
-                className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg"
+                className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
               >
                 Add IP
               </button>

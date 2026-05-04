@@ -329,13 +329,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
   const sectionHeaderClass =
     'p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors';
   const inputClass =
-    'w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all';
+    'w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
           <ShieldCheck className="w-6 h-6 text-slate-900 dark:text-white" />
         </div>
         <div>
@@ -352,8 +352,8 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       <div className={sectionClass}>
         <button onClick={() => toggleSection('password')} className={sectionHeaderClass}>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-lg">
-              <Key className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
+              <Key className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
             <div className="text-left">
               <h3 className="font-semibold text-slate-900 dark:text-white">
@@ -434,7 +434,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                         className={`h-1.5 flex-1 rounded-full ${
                           i <= passwordStrength
                             ? passwordStrength <= 2
-                              ? 'bg-red-500'
+                              ? 'bg-rose-500'
                               : passwordStrength <= 4
                                 ? 'bg-yellow-500'
                                 : 'bg-emerald-500'
@@ -492,7 +492,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     {passwordRequirements.passwordsMatch ? (
                       <CheckCircle className="w-5 h-5 text-emerald-500" />
                     ) : (
-                      <AlertCircle className="w-5 h-5 text-red-500" />
+                      <AlertCircle className="w-5 h-5 text-rose-500" />
                     )}
                   </div>
                 )}
@@ -501,7 +501,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
             {/* Error/Success Messages */}
             {passwordError && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {passwordError}
               </div>
@@ -518,7 +518,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             <button
               onClick={handleChangePassword}
               disabled={!isPasswordValid || !currentPassword || isChangingPassword}
-              className="w-full py-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-lg bg-primary-600 hover:bg-primary-500 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isChangingPassword ? (
                 <>
@@ -613,7 +613,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
               <div className="p-4 border-b border-slate-100 dark:border-navy-700 flex justify-end">
                 <button
                   onClick={handleRevokeAllSessions}
-                  className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-2"
+                  className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
                   Log Out All Others
@@ -623,7 +623,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             <div className="divide-y divide-slate-100 dark:divide-white/5">
               {isLoadingSessions ? (
                 <div className="p-8 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -668,7 +668,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                         <button
                           onClick={() => handleRevokeSession(session.id)}
                           disabled={isRevokingSession === session.id}
-                          className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                          className="px-3 py-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
                         >
                           {isRevokingSession === session.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -714,7 +714,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             {recoveryLoadError ? (
               <div
                 role="alert"
-                className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
               >
                 Recovery options unavailable: {recoveryLoadError}
               </div>
@@ -778,7 +778,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
                 <button
                   onClick={() => setEditingRecovery(true)}
-                  className="w-full py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
+                  className="w-full py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
                 >
                   Edit Recovery Options
                 </button>
@@ -788,7 +788,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 {recoveryActionError && (
                   <div
                     role="alert"
-                    className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                    className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
                   >
                     {recoveryActionError}
                   </div>
@@ -827,7 +827,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   <button
                     onClick={handleSaveRecovery}
                     disabled={savingRecovery}
-                    className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {savingRecovery ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -876,7 +876,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
           <div className="border-t border-slate-100 dark:border-navy-700">
             {loadingEvents ? (
               <div className="p-8 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
               </div>
             ) : securityEvents.length === 0 ? (
               <div className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -892,7 +892,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                           ? 'bg-emerald-100 dark:bg-emerald-500/20'
                           : event.status === 'warning'
                             ? 'bg-amber-100 dark:bg-amber-500/20'
-                            : 'bg-red-100 dark:bg-red-500/20'
+                            : 'bg-rose-100 dark:bg-rose-500/20'
                       }`}
                     >
                       {event.status === 'success' ? (
@@ -900,7 +900,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                       ) : event.status === 'warning' ? (
                         <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       ) : (
-                        <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

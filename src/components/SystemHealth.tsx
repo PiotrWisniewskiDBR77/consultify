@@ -116,11 +116,11 @@ export const SystemHealth = () => {
           type="button"
           disabled
           title={t('system.demoDataTitle', 'Demo data session')}
-          className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-violet-400/30 bg-violet-500/10 text-violet-700 dark:text-violet-200 cursor-default"
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-primary-400/30 bg-primary-500/10 text-primary-700 dark:text-primary-200 cursor-default"
         >
-          <div className="w-2 h-2 rounded-full bg-violet-500" />
+          <div className="w-2 h-2 rounded-full bg-primary-500" />
           <span className="text-xs font-medium">{t('system.demoData', 'Demo Data')}</span>
-          <ChevronDown size={14} className="text-violet-300/80" />
+          <ChevronDown size={14} className="text-primary-300/80" />
         </button>
       </div>
     );
@@ -151,7 +151,7 @@ export const SystemHealth = () => {
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs font-medium transition-colors duration-150 ${
           status === 'offline'
-            ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
+            ? 'bg-rose-50/70 dark:bg-rose-500/10 border-rose-400/50 dark:border-rose-500/40 hover:bg-rose-100/70 dark:hover:bg-rose-500/15'
             : status === 'degraded'
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
@@ -163,7 +163,7 @@ export const SystemHealth = () => {
               ? 'bg-green-500'
               : status === 'degraded'
                 ? 'bg-amber-500'
-                : 'bg-red-500'
+                : 'bg-rose-500'
           }`}
         />
         <span>{t('system.data', 'Data')}</span>
@@ -184,7 +184,7 @@ export const SystemHealth = () => {
                     ? 'bg-green-500 animate-pulse'
                     : status === 'degraded'
                       ? 'bg-amber-500 animate-pulse'
-                      : 'bg-red-500'
+                      : 'bg-rose-500'
                 }`}
               />
               <span className="text-sm font-semibold text-navy-900 dark:text-white">
@@ -206,7 +206,7 @@ export const SystemHealth = () => {
                 <span className="text-slate-500 dark:text-slate-400">
                   {t('system.status', 'Status')}
                 </span>
-                <span className={metrics.dbStatus === 'online' ? 'text-green-500' : 'text-red-500'}>
+                <span className={metrics.dbStatus === 'online' ? 'text-green-500' : 'text-rose-500'}>
                   {metrics.dbStatus === 'online'
                     ? t('system.connected', 'Connected')
                     : t('system.disconnected', 'Disconnected')}
@@ -230,7 +230,7 @@ export const SystemHealth = () => {
           {/* Resources Section */}
           <div className="px-4 py-3">
             <div className="flex items-center gap-2 mb-2">
-              <Cpu size={14} className="text-violet-500" />
+              <Cpu size={14} className="text-primary-500" />
               <span className="text-xs font-medium text-navy-900 dark:text-white">
                 {t('system.resources', 'Your Resources')}
               </span>
@@ -269,7 +269,7 @@ export const SystemHealth = () => {
                 </div>
                 <div className="h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${apiPercent > 80 ? 'bg-amber-500' : 'bg-violet-500'}`}
+                    className={`h-full rounded-full transition-all ${apiPercent > 80 ? 'bg-amber-500' : 'bg-primary-500'}`}
                     style={{ width: `${Math.min(apiPercent, 100)}%` }}
                   />
                 </div>

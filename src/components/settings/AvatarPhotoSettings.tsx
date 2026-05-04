@@ -204,7 +204,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
         <div className="flex flex-col items-center">
           {/* Large Avatar */}
           <div
-            className="relative w-48 h-48 rounded-full overflow-hidden bg-gradient-to-br from-brand/20 to-purple-500/20 border-4 border-white dark:border-navy-700 shadow-xl"
+            className="relative w-48 h-48 rounded-full overflow-hidden bg-gradient-to-br from-brand/20 to-primary-500/20 border-4 border-white dark:border-navy-700 shadow-xl"
             style={{ transform: `scale(${zoom})` }}
           >
             {currentAvatar ? (
@@ -214,7 +214,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand to-purple-600">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand to-primary-600">
                 <span className="text-5xl font-bold text-white">{getInitials()}</span>
               </div>
             )}
@@ -268,7 +268,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
       {error && (
         <div
           role="alert"
-          className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400"
+          className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-600 dark:text-rose-400"
         >
           <AlertCircle size={20} />
           <span>{error}</span>
@@ -393,7 +393,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
 
       {/* Remove Photo Section */}
       {currentUser?.avatarUrl && !selectedFile && (
-        <div className="border border-red-200 dark:border-red-800/50 rounded-xl p-4">
+        <div className="border border-rose-200 dark:border-rose-800/50 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-medium text-slate-900 dark:text-white">
@@ -406,7 +406,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
             <button
               onClick={handleRemove}
               disabled={isRemoving}
-              className="px-4 py-2 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {isRemoving ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
               {t('settings.avatar.remove', 'Remove Photo')}

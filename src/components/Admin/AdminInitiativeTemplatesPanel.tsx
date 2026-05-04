@@ -101,8 +101,8 @@ const LEVEL_CONFIG: Record<
   },
   enterprise: {
     label: 'Enterprise',
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/20',
+    color: 'text-primary-400',
+    bg: 'bg-primary-500/20',
     icon: Target,
     description: 'Full governance with gates and RACI',
   },
@@ -263,19 +263,19 @@ const rowVariants = {
 const getTypeBadgeConfig = (isSystem: boolean) => {
   if (isSystem) {
     return {
-      color: 'text-cyan-400',
-      bg: 'bg-cyan-500/20',
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/20',
       label: 'APP',
       icon: Package,
-      dot: 'bg-cyan-500',
+      dot: 'bg-blue-500',
     };
   }
   return {
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/20',
+    color: 'text-primary-400',
+    bg: 'bg-primary-500/20',
     label: 'ORG',
     icon: Building2,
-    dot: 'bg-purple-500',
+    dot: 'bg-primary-500',
   };
 };
 
@@ -509,7 +509,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -526,7 +526,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               onClick={() => setShowSearch(!showSearch)}
               className={`flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-200 ${
                 showSearch
-                  ? 'bg-purple-500/15 border-purple-500 text-purple-400'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
               }`}
               title="Search"
@@ -539,7 +539,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               onClick={() => setFilter('all')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'all'
-                  ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
               }`}
             >
@@ -548,7 +548,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               <span
                 className={`px-1.5 text-xs rounded-full ${
                   filter === 'all'
-                    ? 'bg-purple-500/30 text-purple-300'
+                    ? 'bg-primary-500/30 text-primary-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
                 }`}
               >
@@ -561,7 +561,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               onClick={() => setFilter('app')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'app'
-                  ? 'bg-cyan-500/15 border-cyan-500 text-cyan-300'
+                  ? 'bg-blue-500/15 border-blue-500 text-blue-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
               }`}
             >
@@ -570,7 +570,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               <span
                 className={`px-1.5 text-xs rounded-full ${
                   filter === 'app'
-                    ? 'bg-cyan-500/30 text-cyan-300'
+                    ? 'bg-blue-500/30 text-blue-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
                 }`}
               >
@@ -583,7 +583,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               onClick={() => setFilter('org')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'org'
-                  ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
               }`}
             >
@@ -592,7 +592,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               <span
                 className={`px-1.5 text-xs rounded-full ${
                   filter === 'org'
-                    ? 'bg-purple-500/30 text-purple-300'
+                    ? 'bg-primary-500/30 text-primary-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
                 }`}
               >
@@ -605,7 +605,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleOpenEditor(null)}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-purple-500/25 transition-all duration-200"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200"
             >
               <Plus size={14} />
               <span>New Template</span>
@@ -627,7 +627,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search initiative templates..."
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
               />
               {searchQuery && (
                 <button
@@ -672,10 +672,10 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                       onClick={() => handleSelectAll(!allSelected)}
                       className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                         allSelected
-                          ? 'bg-purple-500 border-purple-500 text-white'
+                          ? 'bg-primary-500 border-primary-500 text-white'
                           : someSelected
-                            ? 'bg-purple-500/50 border-purple-500 text-white'
-                            : 'border-slate-300 dark:border-navy-500 hover:border-purple-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
+                            ? 'bg-primary-500/50 border-primary-500 text-white'
+                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
                       }`}
                     >
                       {allSelected ? (
@@ -695,7 +695,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                   >
                     <div className="flex items-center gap-1">
                       <span
-                        className={(tableFilters.type as string[])?.length ? 'text-purple-500' : ''}
+                        className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}
                       >
                         Type
                       </span>
@@ -733,7 +733,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <span
                         className={
-                          (tableFilters.level as string[])?.length ? 'text-purple-500' : ''
+                          (tableFilters.level as string[])?.length ? 'text-primary-500' : ''
                         }
                       >
                         Level
@@ -764,7 +764,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <span
                         className={
-                          (tableFilters.source as string[])?.length ? 'text-purple-500' : ''
+                          (tableFilters.source as string[])?.length ? 'text-primary-500' : ''
                         }
                       >
                         Sources
@@ -848,7 +848,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                           onClick={() => setExpandedId(isExpanded ? null : template.id)}
                           className={`
                             group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
-                            ${selectedIds.has(template.id) ? 'bg-purple-50 dark:bg-purple-500/10' : ''}
+                            ${selectedIds.has(template.id) ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
                             ${isExpanded ? 'bg-slate-50 dark:bg-navy-800/50' : ''}
                             transition-colors duration-150
                             hover:bg-slate-50 dark:hover:bg-navy-800/50
@@ -863,8 +863,8 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(template.id)
-                                  ? 'bg-purple-500 border-purple-500 text-white'
-                                  : 'border-slate-300 dark:border-navy-500 hover:border-purple-400'
+                                  ? 'bg-primary-500 border-primary-500 text-white'
+                                  : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                               }`}
                             >
                               {selectedIds.has(template.id) && <CheckSquare size={12} />}
@@ -989,7 +989,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                     e.stopPropagation();
                                     handleDuplicate(template);
                                   }}
-                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                                   title="Duplicate to organization"
                                 >
                                   <Copy size={15} />
@@ -1011,7 +1011,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                       e.stopPropagation();
                                       handleDelete(template.id);
                                     }}
-                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                                     title="Delete"
                                   >
                                     <Trash2 size={15} />
@@ -1118,7 +1118,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                           (p: string) => (
                                             <span
                                               key={p}
-                                              className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/15 text-violet-400"
+                                              className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-500/15 text-primary-400"
                                             >
                                               {p}
                                             </span>

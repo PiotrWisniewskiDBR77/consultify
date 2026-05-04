@@ -166,13 +166,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                 ${
                                   errors.name
-                                    ? 'border-red-300 dark:border-red-500/50 focus:ring-red-500'
-                                    : 'border-slate-200 dark:border-navy-700 focus:ring-purple-500'
+                                    ? 'border-rose-300 dark:border-rose-500/50 focus:ring-rose-500'
+                                    : 'border-slate-200 dark:border-navy-700 focus:ring-primary-500'
                                 }
                             `}
               placeholder={t('initiatives.form.namePlaceholder')}
             />
-            {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+            {errors.name && <p className="text-xs text-rose-500">{errors.name}</p>}
           </div>
 
           {/* Description */}
@@ -188,13 +188,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white resize-none
                                 ${
                                   errors.description
-                                    ? 'border-red-300 dark:border-red-500/50 focus:ring-red-500'
-                                    : 'border-slate-200 dark:border-navy-700 focus:ring-purple-500'
+                                    ? 'border-rose-300 dark:border-rose-500/50 focus:ring-rose-500'
+                                    : 'border-slate-200 dark:border-navy-700 focus:ring-primary-500'
                                 }
                             `}
               placeholder={t('initiatives.form.descriptionPlaceholder')}
             />
-            {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+            {errors.description && <p className="text-xs text-rose-500">{errors.description}</p>}
           </div>
 
           {/* Grid: Axis + Risk */}
@@ -248,13 +248,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                     ${
                                       errors.estimatedBudget
-                                        ? 'border-red-300 dark:border-red-500/50'
+                                        ? 'border-rose-300 dark:border-rose-500/50'
                                         : 'border-slate-200 dark:border-navy-700'
                                     }
                                 `}
               />
               {errors.estimatedBudget && (
-                <p className="text-xs text-red-500">{errors.estimatedBudget}</p>
+                <p className="text-xs text-rose-500">{errors.estimatedBudget}</p>
               )}
             </div>
 
@@ -271,12 +271,12 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-navy-950 text-navy-900 dark:text-white
                                     ${
                                       errors.estimatedROI
-                                        ? 'border-red-300 dark:border-red-500/50'
+                                        ? 'border-rose-300 dark:border-rose-500/50'
                                         : 'border-slate-200 dark:border-navy-700'
                                     }
                                 `}
               />
-              {errors.estimatedROI && <p className="text-xs text-red-500">{errors.estimatedROI}</p>}
+              {errors.estimatedROI && <p className="text-xs text-rose-500">{errors.estimatedROI}</p>}
             </div>
 
             <div className="space-y-2">
@@ -310,13 +310,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                     key={idx}
                     className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-navy-950 rounded-lg"
                   >
-                    <span className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-600 dark:text-purple-400 shrink-0">
+                    <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-600 dark:text-primary-400 shrink-0">
                       {idx + 1}
                     </span>
                     <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{obj}</span>
                     <button
                       onClick={() => handleRemoveObjective(idx)}
-                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -337,7 +337,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
               <button
                 onClick={handleAddObjective}
                 disabled={!newObjective.trim()}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
               >
                 <Plus size={18} />
               </button>
@@ -371,7 +371,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
           <button
             onClick={handleSave}
             disabled={!isValid}
-            className="flex items-center gap-2 p-4 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
+            className="flex items-center gap-2 p-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
           >
             <Save size={18} />
             {t('initiatives.form.save')}

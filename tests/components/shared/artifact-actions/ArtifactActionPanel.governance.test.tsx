@@ -45,6 +45,14 @@ const source = {
       },
     ],
   },
+  reportPack: {
+    id: 'irp-insight-1',
+    status: 'draft',
+    readinessStatus: 'ready_with_warnings',
+    completenessScore: 82,
+    degraded: true,
+    degradedReasons: ['Material quality requires review.'],
+  },
 };
 
 describe('ArtifactActionPanel governance confirmation', () => {
@@ -101,10 +109,53 @@ describe('ArtifactActionPanel governance confirmation', () => {
       expect.objectContaining({
         evidenceRefs: ['answer-1', 'ptr-1'],
         sourcePack: source.sourcePack,
+        reportPack: source.reportPack,
         payload: expect.objectContaining({
-          actionContract: expect.objectContaining({ target: 'idea' }),
+          actionContract: expect.objectContaining({
+            target: 'idea',
+            lineage: expect.objectContaining({ reportPack: source.reportPack }),
+          }),
         }),
       })
     );
+  });
+
+  it('requires explicit confirmation before document generators create artifacts', async () => {
+    render(<ArtifactActionPanel source={source} isPolish={false} />);
+
+    const reportCard = screen.getByText('Create report').closest('div.rounded-2xl');
+    const openGeneratorButton = reportCard?.querySelector('button');
+    expect(openGeneratorButton).toBeTruthy();
+
+    fireEvent.click(openGeneratorButton!);
+
+    expect(screen.getByText('Document generator')).toBeInTheDocument();
+    expect(screen.getByText('Downstream limits')).toBeInTheDocument();
+    expect(apiPostMock).not.toHaveBeenCalled();
+
+    const runButton = screen.getByRole('button', { name: 'Run generator' });
+    expect(runButton).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(runButton);
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/report-builder',
+        expect.objectContaining({
+          config: expect.objectContaining({
+            reportPack: source.reportPack,
+            actionContract: expect.objectContaining({
+              target: 'report',
+              governance: expect.objectContaining({
+                proposalRequired: true,
+                confirmationRequired: true,
+              }),
+              lineage: expect.objectContaining({ reportPack: source.reportPack }),
+            }),
+          }),
+        })
+      );
+    });
   });
 });

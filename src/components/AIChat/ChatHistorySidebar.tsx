@@ -281,7 +281,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                 onDeleteProject(project.id);
                                 setMenuId(null);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                             >
                               <Trash2 size={13} />
                               {t('common.delete', 'Delete')}
@@ -652,7 +652,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           }}
           className={`
                 fixed top-0 h-full z-40
-                bg-slate-50 dark:bg-navy-900 
+                bg-slate-50 dark:bg-navy-900
                 border-r border-slate-200 dark:border-navy-800
                 shadow-2xl
                 flex flex-col

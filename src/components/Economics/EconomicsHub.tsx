@@ -383,7 +383,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
     return (
       <div className="flex flex-col h-full">
         {/* Context Bar */}
-        <div className="bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border-b border-emerald-500/20 px-6 py-3 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-emerald-600/10 to-blue-600/10 border-b border-emerald-500/20 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
               <Calculator size={20} className="text-emerald-400" />

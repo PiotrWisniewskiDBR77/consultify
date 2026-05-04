@@ -157,7 +157,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
           step="100"
           value={maxTokens}
           onChange={(e) => setMaxTokens(Number(e.target.value))}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
       </div>
 
@@ -174,7 +174,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
         <select
           value={contextWindowSize}
           onChange={(e) => setContextWindowSize(Number(e.target.value))}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         >
           <option value="2000">2,000 tokens</option>
           <option value="4000">4,000 tokens</option>
@@ -196,14 +196,14 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
               onClick={() => setResponseSpeed(option.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 responseSpeed === option.value
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
               }`}
             >
               <div
                 className={`text-sm font-medium ${
                   responseSpeed === option.value
-                    ? 'text-purple-700 dark:text-purple-300'
+                    ? 'text-primary-700 dark:text-primary-300'
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
@@ -222,7 +222,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -246,7 +246,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.ai.parameters.error', 'Failed to save AI parameters')}
         </div>

@@ -33,10 +33,10 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
     label: 'Blokujące Fazę',
     emoji: '🔴',
     color: {
-      border: 'border-red-400/60',
-      bg: 'bg-red-100 dark:bg-red-500/20',
-      text: 'text-red-700 dark:text-red-400',
-      icon: 'text-red-500',
+      border: 'border-rose-400/60',
+      bg: 'bg-rose-100 dark:bg-rose-500/20',
+      text: 'text-rose-700 dark:text-rose-400',
+      icon: 'text-rose-500',
     },
     priority: 1,
   },
@@ -161,8 +161,8 @@ export const PMOPriorityBadge: React.FC<PMOPriorityBadgeProps> = ({
     <span
       className={`
                 inline-flex items-center font-medium rounded-md border
-                ${config.color.bg} 
-                ${config.color.text} 
+                ${config.color.bg}
+                ${config.color.text}
                 ${config.color.border}
                 ${sizeClasses[size]}
                 ${className}

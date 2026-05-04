@@ -94,7 +94,7 @@ const CATEGORY_COLORS: Record<SavedPrompt['category'], string> = {
   interview: 'bg-blue-500/20 text-blue-400',
   analysis: 'bg-emerald-500/20 text-emerald-400',
   report: 'bg-amber-500/20 text-amber-400',
-  general: 'bg-violet-500/20 text-violet-400',
+  general: 'bg-primary-500/20 text-primary-400',
 };
 
 const getCategoryLabel = (t: TFunction, category: SavedPrompt['category']) =>
@@ -312,7 +312,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
             onClick={() => openEditor()}
             disabled={saving || !!loadError}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
-              bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors disabled:opacity-50"
+              bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors disabled:opacity-50"
           >
             <Plus size={14} />
             {t('settings.ai.newPrompt', 'New Prompt')}
@@ -327,7 +327,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
               {actionError && (
                 <div
                   role="alert"
-                  className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
+                  className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200"
                 >
                   {actionError}
                 </div>
@@ -341,7 +341,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     className={cn(
                       'px-3 py-1 text-xs rounded-md transition-colors',
                       filterCategory === cat
-                        ? 'bg-violet-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                     )}
                   >
@@ -402,7 +402,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                           {!prompt.id.startsWith('builtin-') && (
                             <button
                               onClick={() => deletePrompt(prompt.id)}
-                              className="p-1.5 text-slate-500 hover:text-red-400 rounded transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-rose-400 rounded transition-colors"
                               title={t('common.delete', 'Delete')}
                             >
                               <Trash2 size={14} />
@@ -419,7 +419,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
               {showEditor && (
                 <>
                   <SettingsDivider />
-                  <div className="p-4 bg-navy-900/80 border border-violet-500/20 rounded-lg space-y-4">
+                  <div className="p-4 bg-navy-900/80 border border-primary-500/20 rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-semibold text-white">
                         {editingPrompt
@@ -483,7 +483,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                       <button
                         onClick={savePrompt}
                         disabled={saving}
-                        className="px-4 py-1.5 text-sm font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors"
+                        className="px-4 py-1.5 text-sm font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors"
                       >
                         {editingPrompt ? t('common.save', 'Save') : t('common.create', 'Create')}
                       </button>

@@ -30,14 +30,14 @@ export const KpiWidgetBlock: React.FC<Props> = ({ block, theme }) => {
       {(trend || change) && (
         <div className="flex items-center justify-center gap-1 mt-1">
           {trend === 'up' && <TrendingUp size={12} className="text-green-500" />}
-          {trend === 'down' && <TrendingDown size={12} className="text-red-500" />}
+          {trend === 'down' && <TrendingDown size={12} className="text-rose-500" />}
           {change && (
             <span
               className={`text-xs font-medium ${
                 trend === 'up'
                   ? 'text-green-500'
                   : trend === 'down'
-                    ? 'text-red-500'
+                    ? 'text-rose-500'
                     : 'text-slate-400'
               }`}
             >

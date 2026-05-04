@@ -234,7 +234,7 @@ export function GrowthPathsOptionsPhase({
                 <div key={option.id} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
                   <div className="mb-2 flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wide text-violet-500">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
                         {proposalBadge(option.proposalStatus, isPolish)}
                       </div>
                       <h4 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -331,7 +331,7 @@ export function GrowthPathsInsightsPhase({
           >
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-violet-500">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
                   {proposalBadge(comparison.proposalStatus, isPolish)}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">

@@ -53,7 +53,7 @@ const PMO_DOMAIN_INFO: Record<
   GOVERNANCE_DECISION_MAKING: {
     label: 'Governance',
     icon: <Shield size={14} />,
-    color: 'bg-purple-500',
+    color: 'bg-primary-500',
   },
   SCOPE_CHANGE_CONTROL: {
     label: 'Scope Control',
@@ -68,12 +68,12 @@ const PMO_DOMAIN_INFO: Record<
   RISK_ISSUE_MANAGEMENT: {
     label: 'Risk Mgmt',
     icon: <Shield size={14} />,
-    color: 'bg-red-500',
+    color: 'bg-rose-500',
   },
   RESOURCE_RESPONSIBILITY: {
     label: 'Resources',
     icon: <Users size={14} />,
-    color: 'bg-orange-500',
+    color: 'bg-amber-500',
   },
   PERFORMANCE_MONITORING: {
     label: 'Performance',
@@ -83,7 +83,7 @@ const PMO_DOMAIN_INFO: Record<
   BENEFITS_REALIZATION: {
     label: 'Benefits',
     icon: <TrendingUp size={14} />,
-    color: 'bg-teal-500',
+    color: 'bg-blue-500',
   },
 };
 
@@ -256,7 +256,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
                   ? 'bg-emerald-500'
                   : metrics.ecosystemHealthScore >= 60
                     ? 'bg-amber-500'
-                    : 'bg-red-500'
+                    : 'bg-rose-500'
               }`}
               style={{ width: `${metrics.ecosystemHealthScore}%` }}
             />
@@ -332,7 +332,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
       </div>
       {trend && (
         <div
-          className={`flex items-center gap-1 text-xs font-semibold ${trendUp ? 'text-emerald-500' : 'text-red-500'}`}
+          className={`flex items-center gap-1 text-xs font-semibold ${trendUp ? 'text-emerald-500' : 'text-rose-500'}`}
         >
           <TrendingUp size={12} className={trendUp ? '' : 'rotate-180'} />
           {trend}
@@ -355,7 +355,7 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({ label, status, value 
   const statusColors = {
     healthy: 'bg-emerald-500',
     warning: 'bg-amber-500',
-    critical: 'bg-red-500',
+    critical: 'bg-rose-500',
   };
 
   return (

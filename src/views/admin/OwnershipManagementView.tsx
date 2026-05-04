@@ -180,7 +180,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -209,28 +209,28 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl"
+              className="p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl"
             >
               <div className="flex items-start gap-3">
-                <Crown className="w-5 h-5 text-violet-600 dark:text-violet-400 mt-0.5" />
+                <Crown className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />
                 <div className="flex-1">
-                  <h4 className="font-medium text-violet-800 dark:text-violet-200">
+                  <h4 className="font-medium text-primary-800 dark:text-primary-200">
                     Ownership Transfer Pending
                   </h4>
-                  <p className="text-sm text-violet-600 dark:text-violet-300 mt-1">
+                  <p className="text-sm text-primary-600 dark:text-primary-300 mt-1">
                     You have been selected to become the new organization owner for this team.
                   </p>
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={handleAcceptTransfer}
-                      className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium"
                     >
                       <Check size={16} />
                       Accept Ownership
                     </button>
                     <button
                       onClick={handleCancelTransfer}
-                      className="flex items-center gap-2 px-4 py-2 border border-violet-300 dark:border-violet-600 text-violet-700 dark:text-violet-300 rounded-lg text-sm font-medium hover:bg-violet-50 dark:hover:bg-violet-900/30"
+                      className="flex items-center gap-2 px-4 py-2 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300 rounded-lg text-sm font-medium hover:bg-primary-50 dark:hover:bg-primary-900/30"
                     >
                       <X size={16} />
                       Decline
@@ -249,9 +249,9 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
           )}
 
           {/* Owner Card */}
-          <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+          <div className="p-6 bg-gradient-to-br from-amber-50 to-amber-50 dark:from-amber-900/20 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-amber-500/30">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-amber-500/30">
                 {ownerUser?.firstName?.[0] || 'O'}
               </div>
               <div className="flex-1">

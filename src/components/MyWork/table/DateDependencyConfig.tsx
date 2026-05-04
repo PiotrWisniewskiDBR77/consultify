@@ -148,7 +148,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.startDateFieldId ?? ''}
           onChange={(e) => updateConfig({ startDateFieldId: e.target.value })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {dateFields.map((f) => (
@@ -168,7 +168,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.endDateFieldId ?? ''}
           onChange={(e) => updateConfig({ endDateFieldId: e.target.value })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {dateFields.map((f) => (
@@ -188,7 +188,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.durationFieldId ?? ''}
           onChange={(e) => updateConfig({ durationFieldId: e.target.value || undefined })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {numberFields.map((f) => (
@@ -208,7 +208,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.predecessorFieldId ?? ''}
           onChange={(e) => updateConfig({ predecessorFieldId: e.target.value || undefined })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {linkedRecordFields.map((f) => (
@@ -233,7 +233,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
               disabled={locked}
               className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                 config?.defaultDependencyType === value
-                  ? 'bg-violet-500/20 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/30'
+                  ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/30'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
               } disabled:opacity-50`}
             >
@@ -253,7 +253,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.defaultLagDays ?? 0}
           onChange={(e) => updateConfig({ defaultLagDays: Number(e.target.value) || 0 })}
           disabled={locked}
-          className="w-20 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-violet-500/30 disabled:opacity-50"
+          className="w-20 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50"
         />
       </div>
 
@@ -267,7 +267,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
             disabled={locked}
             className="sr-only peer"
           />
-          <div className="w-9 h-5 rounded-full bg-slate-200 dark:bg-navy-700 peer-checked:bg-violet-500 peer-disabled:opacity-50 peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
+          <div className="w-9 h-5 rounded-full bg-slate-200 dark:bg-navy-700 peer-checked:bg-primary-500 peer-disabled:opacity-50 peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
           <span className="ml-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
             {isPl ? 'Pomijaj weekendy' : 'Skip weekends'}
           </span>
@@ -298,7 +298,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
         <button
           onClick={handleRecalculate}
           disabled={recalculating || !hasValidConfig || locked}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-40"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-40"
         >
           {recalculating ? <Loader2 size={10} className="animate-spin" /> : <Calendar size={10} />}
           {isPl ? 'Przelicz daty' : 'Recalculate'}

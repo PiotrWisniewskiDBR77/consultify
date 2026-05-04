@@ -169,13 +169,13 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
   };
 
   const getUsageStatusColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-red-400';
+    if (percentage >= 90) return 'text-rose-400';
     if (percentage >= 75) return 'text-amber-400';
     return 'text-slate-400 dark:text-slate-500';
   };
 
   const getProgressBarColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-red-500';
+    if (percentage >= 90) return 'bg-rose-500';
     if (percentage >= 75) return 'bg-amber-500';
     return 'bg-slate-500';
   };
@@ -414,7 +414,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
           <div
             className={`admin-card p-4 border ${
               organizationContextQuota.tone === 'critical'
-                ? 'border-red-500/30 bg-red-500/5'
+                ? 'border-rose-500/30 bg-rose-500/5'
                 : organizationContextQuota.tone === 'warning'
                   ? 'border-amber-500/30 bg-amber-500/5'
                   : 'border-white/[0.08]'
@@ -426,7 +426,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   size={20}
                   className={
                     organizationContextQuota.tone === 'critical'
-                      ? 'text-red-400'
+                      ? 'text-rose-400'
                       : organizationContextQuota.tone === 'warning'
                         ? 'text-amber-400'
                         : 'text-slate-400'
@@ -439,7 +439,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   <h3
                     className={`text-sm font-medium mt-1 ${
                       organizationContextQuota.tone === 'critical'
-                        ? 'text-red-300'
+                        ? 'text-rose-300'
                         : organizationContextQuota.tone === 'warning'
                           ? 'text-amber-300'
                           : 'text-white'
@@ -714,18 +714,18 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
             <div
               className={`admin-card p-4 border ${
                 usage.tokens.percentage >= 90
-                  ? 'border-red-500/30 bg-red-500/5'
+                  ? 'border-rose-500/30 bg-rose-500/5'
                   : 'border-amber-500/30 bg-amber-500/5'
               }`}
             >
               <div className="flex items-start gap-3">
                 <Zap
-                  className={usage.tokens.percentage >= 90 ? 'text-red-400' : 'text-amber-400'}
+                  className={usage.tokens.percentage >= 90 ? 'text-rose-400' : 'text-amber-400'}
                   size={20}
                 />
                 <div className="flex-1">
                   <h4
-                    className={`text-sm font-medium ${usage.tokens.percentage >= 90 ? 'text-red-400' : 'text-amber-400'}`}
+                    className={`text-sm font-medium ${usage.tokens.percentage >= 90 ? 'text-rose-400' : 'text-amber-400'}`}
                   >
                     {usage.tokens.percentage >= 90 ? 'Usage Critical' : 'High Usage Warning'}
                   </h4>

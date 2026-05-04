@@ -752,7 +752,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
       {/* Live Transcript Indicator */}
       {(isDictating || isVoiceConversationVal) && (
-        <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-primary-50 dark:from-blue-900/20 dark:to-primary-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
           {/* Audio Level Bars */}
           <div className="flex items-center gap-0.5 h-4">
             {[...Array(5)].map((_, i) => (
@@ -818,10 +818,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
         {/* Action Bar */}
         <div
-          className={`flex items-center justify-between px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
+          className={`flex items-center justify-between gap-2 min-w-0 px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
         >
           {/* Left Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pr-1 scrollbar-none">
             <AddFilesMenu
               onFileSelect={handleFileSelect}
               onUrlAdd={handleUrlAdd}
@@ -856,7 +856,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* VM3 — voice modes legend. Sits immediately before the mic so
                 the "?" reads as "what does this mic button do?". Component
                 self-gates on `isVoiceModeLegendEnabled()`; when the flag is
@@ -882,7 +882,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   flex items-center gap-1.5 p-2 rounded-lg transition-all
                   ${
                     teresaVoiceMuted
-                      ? 'bg-red-500/80 text-white shadow-lg shadow-red-500/30'
+                      ? 'bg-rose-500/80 text-white shadow-lg shadow-rose-500/30'
                       : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }
                   ${teresaVoiceStatus !== 'live' ? 'cursor-not-allowed opacity-50' : ''}
@@ -904,7 +904,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   flex items-center gap-1.5 p-2 rounded-lg transition-all
                   ${
                     isDictating
-                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
                       : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }
                   ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
@@ -924,7 +924,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               <button
                 onClick={() => onStopGenerating?.()}
                 disabled={isDisabled}
-                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/25"
+                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-500/25"
                 title={t('aiChat.stopGenerating', 'Stop generating')}
               >
                 <Square size={18} className="fill-current" />
@@ -944,7 +944,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 disabled={isDisabled}
                 className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
                   teresaVoiceStatus === 'live'
-                    ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
+                    ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/25'
                     : 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
                 }`}
                 title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
@@ -953,7 +953,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <>
-                    <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/20 pointer-events-none" />
+                    <span className="absolute inset-0 rounded-xl animate-ping bg-rose-500/20 pointer-events-none" />
                     <AudioLines size={18} />
                   </>
                 )}

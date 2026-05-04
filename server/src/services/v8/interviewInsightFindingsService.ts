@@ -1162,7 +1162,12 @@ function collectLinkedOpportunities(insight: Insight, answerId: string): string[
 
 async function loadAnswerSourceMetadata(
   answerIds: string[]
-): Promise<Record<string, { sessionId?: string; respondentLabel?: string; respondentRole?: string; department?: string }>> {
+): Promise<
+  Record<
+    string,
+    { sessionId?: string; respondentLabel?: string; respondentRole?: string; department?: string }
+  >
+> {
   if (answerIds.length === 0) return {};
   const placeholders = answerIds.map(() => '?').join(', ');
   const rows = await queryHelpers.queryAll<any>(
@@ -1179,20 +1184,22 @@ async function loadAnswerSourceMetadata(
      WHERE q.id IN (${placeholders})`,
     answerIds
   );
-  return (rows || []).reduce<Record<string, { sessionId?: string; respondentLabel?: string; respondentRole?: string; department?: string }>>(
-    (acc, row) => {
-      const answerId = String(row.answer_id || '').trim();
-      if (!answerId) return acc;
-      acc[answerId] = {
-        sessionId: row.session_id ? String(row.session_id) : undefined,
-        respondentLabel: String(row.respondent_label || '').trim() || undefined,
-        respondentRole: row.job_title ? String(row.job_title) : undefined,
-        department: row.department ? String(row.department) : undefined,
-      };
-      return acc;
-    },
-    {}
-  );
+  return (rows || []).reduce<
+    Record<
+      string,
+      { sessionId?: string; respondentLabel?: string; respondentRole?: string; department?: string }
+    >
+  >((acc, row) => {
+    const answerId = String(row.answer_id || '').trim();
+    if (!answerId) return acc;
+    acc[answerId] = {
+      sessionId: row.session_id ? String(row.session_id) : undefined,
+      respondentLabel: String(row.respondent_label || '').trim() || undefined,
+      respondentRole: row.job_title ? String(row.job_title) : undefined,
+      department: row.department ? String(row.department) : undefined,
+    };
+    return acc;
+  }, {});
 }
 
 export async function buildSourcePack(insightId: string): Promise<P10SourcePack | null> {
@@ -1215,7 +1222,15 @@ export async function buildSourcePack(insightId: string): Promise<P10SourcePack 
   const answerIds = (insight.evidenceMap || [])
     .map((entry) => String(entry.answer_id || '').trim())
     .filter(Boolean);
-  const sourceMeta = await loadAnswerSourceMetadata(answerIds).catch(() => ({}));
+  const sourceMeta: Record<
+    string,
+    {
+      sessionId?: string;
+      respondentLabel?: string;
+      respondentRole?: string;
+      department?: string;
+    }
+  > = await loadAnswerSourceMetadata(answerIds).catch(() => ({}));
   const entries = (insight.evidenceMap || []).map((entry) => {
     const answerId = String(entry.answer_id || '').trim();
     const capturedPointers = pointerByAnswer.get(answerId) || [];

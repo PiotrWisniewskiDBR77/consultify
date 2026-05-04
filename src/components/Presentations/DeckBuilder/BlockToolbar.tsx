@@ -66,7 +66,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
               title={t(item.labelKey, item.id || '')}
               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
-                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                   : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >

@@ -29,7 +29,8 @@ export type InsightPromptType =
   | 'risk_assessment'
   | 'opportunity_scan'
   | 'maturity'
-  | 'stakeholder_map';
+  | 'stakeholder_map'
+  | 'between_the_lines';
 export type InsightStatus =
   | 'generating'
   | 'completed'
@@ -37,6 +38,32 @@ export type InsightStatus =
   | 'draft'
   | 'in_review'
   | 'published';
+
+export const INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION =
+  'interview_insight_generation_v6_report_pack_2026_05_03';
+
+export const INTERVIEW_INSIGHT_GENERATION_SECTIONS = [
+  'executive_summary',
+  'themes',
+  'issues',
+  'opportunities',
+  'signals',
+  'evidence_map',
+  'missing_data',
+  'material_quality',
+] as const;
+
+export function buildInsightGenerationContract(): {
+  contract: string;
+  schemaVersion: string;
+  requiredSections: string[];
+} {
+  return {
+    contract: 'interview_insight_scope_builder_v1',
+    schemaVersion: INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION,
+    requiredSections: [...INTERVIEW_INSIGHT_GENERATION_SECTIONS],
+  };
+}
 
 export type InsightAnalysisMode =
   | 'general_consulting_synthesis'
@@ -47,9 +74,24 @@ export type InsightAnalysisMode =
   | 'hypothesis_validation'
   | 'between_the_lines';
 
+// InsightContextMode includes both Interview Insight legacy values and the 4 Source Of Truth
+// workflow modes from docs/product/ORGANIZATION_CONTEXT_ENGINE_SOURCE_OF_TRUTH.md §4.3.
+// Legacy mapping: selected_interview_material_only ↔ selected_material_only,
+// selected_material_plus_approved_org_knowledge ↔ selected_material_plus_approved_org_context.
 export type InsightContextMode =
   | 'selected_interview_material_only'
-  | 'selected_material_plus_approved_org_knowledge';
+  | 'selected_material_plus_approved_org_knowledge'
+  | 'selected_material_only'
+  | 'selected_material_plus_selected_context'
+  | 'selected_material_plus_approved_org_context'
+  | 'org_context_research_mode';
+
+export const SOURCE_OF_TRUTH_CONTEXT_MODES = [
+  'selected_material_only',
+  'selected_material_plus_selected_context',
+  'selected_material_plus_approved_org_context',
+  'org_context_research_mode',
+] as const;
 
 export interface InsightContextDocumentSelection {
   requestedIds: string[];
@@ -87,6 +129,8 @@ export interface InsightMaterialQuality {
   missing_voices: string[];
   evidence_gap_count: number;
   contradiction_count: number;
+  confidence_downgrade_required: boolean;
+  recommendation_posture: 'decision_ready' | 'review_required' | 'hypothesis_only';
   limitations: string[];
   recommended_followups: string[];
 }
@@ -265,6 +309,7 @@ export interface InsightEvidenceMapEntry {
 }
 
 export interface ParsedInsightGenerationData {
+  schema_version?: string;
   executive_summary: string;
   themes: InsightTheme[];
   issues: InsightIssue[];
@@ -501,10 +546,27 @@ Interview Data:
 {DATA}
 
 Provide the analysis in a clear, professional consulting format using markdown. Include the stakeholder table.`,
+
+  between_the_lines: `Analyze the following interview responses for hidden signals, evasions, contradictions, and unspoken tensions.
+
+Structure your response as follows:
+1. **Explicit Claims** - What respondents directly said
+2. **Implicit Signals** - What their phrasing, omissions, or contradictions may indicate
+3. **Tensions & Evasions** - Topics where answers avoid, soften, or contradict important facts
+4. **Confidence Limits** - Where interpretation is weak and needs follow-up
+5. **Suggested Follow-up Questions** - Questions that would validate or disprove the interpretation
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown. Label all inferred signals as hypotheses, not facts.`,
 };
 
 const DEFAULT_ANALYSIS_MODE: InsightAnalysisMode = 'general_consulting_synthesis';
 const DEFAULT_CONTEXT_MODE: InsightContextMode = 'selected_interview_material_only';
+const VALID_PROMPT_TYPES = new Set<InsightPromptType>(
+  Object.keys(PROMPT_TEMPLATES) as InsightPromptType[]
+);
 const VALID_ANALYSIS_MODES = new Set<InsightAnalysisMode>([
   'general_consulting_synthesis',
   'focused_topic_synthesis',
@@ -556,10 +618,49 @@ function normalizeAnalysisMode(value?: string | null): InsightAnalysisMode {
   }
 }
 
+function normalizePromptType(value?: string | null): InsightPromptType {
+  const normalized = String(value || '').trim() as InsightPromptType;
+  return VALID_PROMPT_TYPES.has(normalized) ? normalized : 'summary';
+}
+
+const VALID_INSIGHT_CONTEXT_MODES: ReadonlySet<InsightContextMode> = new Set([
+  'selected_interview_material_only',
+  'selected_material_plus_approved_org_knowledge',
+  'selected_material_only',
+  'selected_material_plus_selected_context',
+  'selected_material_plus_approved_org_context',
+  'org_context_research_mode',
+]);
+
 function normalizeContextMode(value?: string | null): InsightContextMode {
-  return value === 'selected_material_plus_approved_org_knowledge'
-    ? 'selected_material_plus_approved_org_knowledge'
-    : DEFAULT_CONTEXT_MODE;
+  const raw = String(value || '').trim();
+  if (raw && VALID_INSIGHT_CONTEXT_MODES.has(raw as InsightContextMode)) {
+    return raw as InsightContextMode;
+  }
+  return DEFAULT_CONTEXT_MODE;
+}
+
+export function mapInsightContextModeToWorkflowMode(
+  mode: InsightContextMode
+):
+  | 'selected_material_only'
+  | 'selected_material_plus_selected_context'
+  | 'selected_material_plus_approved_org_context'
+  | 'org_context_research_mode' {
+  switch (mode) {
+    case 'selected_material_only':
+    case 'selected_interview_material_only':
+      return 'selected_material_only';
+    case 'selected_material_plus_selected_context':
+      return 'selected_material_plus_selected_context';
+    case 'selected_material_plus_approved_org_knowledge':
+    case 'selected_material_plus_approved_org_context':
+      return 'selected_material_plus_approved_org_context';
+    case 'org_context_research_mode':
+      return 'org_context_research_mode';
+    default:
+      return 'selected_material_only';
+  }
 }
 
 function normalizeDateBound(value: unknown, bound: 'from' | 'to'): string | undefined {
@@ -699,14 +800,18 @@ export function buildInsightGenerationPreferences(params: {
   analysisScope: InsightAnalysisScope;
 }): InsightGenerationPreferences {
   const filters = params.filters || {};
-  const outputTypes = safeStringArray((filters as any).outputTypes);
+  const normalizedPromptType = normalizePromptType(params.promptType);
+  const outputTypes = safeStringArray((filters as any).outputTypes)
+    .filter((type) => VALID_PROMPT_TYPES.has(type as InsightPromptType))
+    .map((type) => normalizePromptType(type))
+    .filter((type, index, all) => all.indexOf(type) === index);
   const analysisModes = safeStringArray((filters as any).analysisModes)
     .filter((mode) => VALID_ANALYSIS_MODES.has(mode as InsightAnalysisMode))
     .map((mode) => normalizeAnalysisMode(mode))
     .filter((mode, index, all) => all.indexOf(mode) === index);
 
   return {
-    outputTypes: outputTypes.length > 0 ? outputTypes : [params.promptType],
+    outputTypes: outputTypes.length > 0 ? outputTypes : [normalizedPromptType],
     analysisModes:
       analysisModes.length > 0
         ? analysisModes
@@ -781,6 +886,133 @@ export function validateInsightEvidenceRefs(
       degraded: warnings.length > 0,
       warnings,
     },
+  };
+}
+
+export function buildInsightMaterialQuality(
+  sessionData: any[],
+  v6Data: ParsedInsightGenerationData
+): InsightMaterialQuality {
+  const answeredTotal = sessionData.reduce(
+    (sum, session) => sum + Number(session.answered_questions || session.answers?.length || 0),
+    0
+  );
+  const questionTotal = sessionData.reduce(
+    (sum, session) => sum + Number(session.total_questions || session.answers?.length || 0),
+    0
+  );
+  const roles = safeStringArray(sessionData.map((session) => session.job_title));
+  const departments = safeStringArray(sessionData.map((session) => session.department));
+  const thinAnswers = sessionData
+    .flatMap((session) => session.answers || [])
+    .filter((answer) => {
+      const text = String(answer.answer_text || '').trim();
+      return text.length < 80 || (answer.confidence_score && Number(answer.confidence_score) < 3);
+    }).length;
+  const contradictionCount = (v6Data.signals || []).filter((signal) =>
+    /contradiction|tension/i.test(`${signal.type} ${signal.title} ${signal.description}`)
+  ).length;
+  const evidenceGapCount =
+    (v6Data.missing_data || []).length +
+    [...(v6Data.themes || []), ...(v6Data.issues || []), ...(v6Data.opportunities || [])].filter(
+      (item: any) => !Array.isArray(item.evidence_refs) || item.evidence_refs.length === 0
+    ).length;
+  const coverageRatio = questionTotal > 0 ? answeredTotal / questionTotal : 0;
+  const aiQuality = v6Data.material_quality || {};
+  const aiScore = Number((aiQuality as any).overall_material_score);
+  const calculatedScore = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        coverageRatio * 55 +
+          Math.min(sessionData.length, 4) * 8 +
+          Math.min(roles.length + departments.length, 6) * 3 -
+          thinAnswers * 2 -
+          evidenceGapCount * 3 -
+          contradictionCount * 2
+      )
+    )
+  );
+  const score = Number.isFinite(aiScore) ? Math.max(0, Math.min(100, aiScore)) : calculatedScore;
+
+  const answerQuality =
+    (aiQuality as any).answer_quality_posture ||
+    (score >= 80 ? 'strong' : score >= 60 ? 'usable' : score >= 40 ? 'thin' : 'poor');
+  const coveragePosture =
+    (aiQuality as any).coverage_posture ||
+    (sessionData.length <= 1
+      ? 'single_perspective'
+      : roles.length >= 3 || departments.length >= 3
+        ? 'strong_cross_function_coverage'
+        : sessionData.length >= 3
+          ? 'good_coverage'
+          : 'partial_coverage');
+  const missingVoices = safeStringArray((aiQuality as any).missing_voices);
+  const derivedMissingVoices = [
+    ...(roles.length <= 1 ? ['Additional roles are missing from the evidence base.'] : []),
+    ...(departments.length <= 1
+      ? ['Additional departments are missing from the evidence base.']
+      : []),
+  ];
+  const confidenceDowngradeRequired =
+    score < 70 ||
+    answerQuality === 'thin' ||
+    answerQuality === 'poor' ||
+    coveragePosture === 'single_perspective' ||
+    evidenceGapCount > 0;
+  const recommendationPosture: InsightMaterialQuality['recommendation_posture'] =
+    answerQuality === 'poor' || score < 40
+      ? 'hypothesis_only'
+      : confidenceDowngradeRequired
+        ? 'review_required'
+        : 'decision_ready';
+  const baseLimitations = safeStringArray((aiQuality as any).limitations || v6Data.missing_data);
+  const derivedLimitations = [
+    ...(confidenceDowngradeRequired
+      ? ['Recommendations must remain evidence-bounded hypotheses until reviewed.']
+      : []),
+    ...(coveragePosture === 'single_perspective'
+      ? [
+          'Material represents a single perspective and should not be generalized as organization-wide.',
+        ]
+      : []),
+    ...(thinAnswers > 0
+      ? [`${thinAnswers} thin or low-confidence answers reduce recommendation certainty.`]
+      : []),
+    ...(contradictionCount > 0
+      ? [`${contradictionCount} contradictions or tensions require operator review before action.`]
+      : []),
+  ];
+  const recommendedFollowups = safeStringArray((aiQuality as any).recommended_followups);
+
+  return {
+    overall_material_score: score,
+    answer_quality_posture: answerQuality,
+    coverage_posture: coveragePosture,
+    approved_session_count: sessionData.length,
+    respondent_count: new Set(sessionData.map((session) => session.owner_id || session.id)).size,
+    role_coverage: roles,
+    department_coverage: departments,
+    thin_answer_count: thinAnswers,
+    missing_voices: [...missingVoices, ...derivedMissingVoices].filter(
+      (item, index, all) => all.indexOf(item) === index
+    ),
+    evidence_gap_count: evidenceGapCount,
+    contradiction_count: contradictionCount,
+    confidence_downgrade_required: confidenceDowngradeRequired,
+    recommendation_posture: recommendationPosture,
+    limitations: [...baseLimitations, ...derivedLimitations].filter(
+      (item, index, all) => all.indexOf(item) === index
+    ),
+    recommended_followups:
+      recommendedFollowups.length > 0
+        ? recommendedFollowups
+        : confidenceDowngradeRequired
+          ? [
+              'Collect additional interviews or evidence before converting recommendations into actions.',
+            ]
+          : [],
   };
 }
 
@@ -938,8 +1170,10 @@ class InterviewInsightService {
     sourceMaterialSummary?: InsightSourceMaterialSummary;
     evidenceValidation?: InsightEvidenceValidationResult;
   }): Record<string, any> {
+    const generationContract = buildInsightGenerationContract();
+
     return {
-      contract: 'interview_insight_scope_builder_v1',
+      ...generationContract,
       contextMode: params.analysisScope.context_mode,
       analysisMode: params.analysisScope.analysis_mode,
       topicFocus: params.analysisScope.topic_focus,
@@ -1245,6 +1479,7 @@ class InterviewInsightService {
     const now = new Date().toISOString();
     const id = `ii_${uuidv4()}`;
     const normalizedSessionIds = safeStringArray(input.sessionIds);
+    const promptType = normalizePromptType(input.promptType);
 
     if (normalizedSessionIds.length === 0) {
       throw Object.assign(new Error('sessionId or sessionIds is required'), {
@@ -1290,7 +1525,7 @@ class InterviewInsightService {
       leadingQuestion: input.leadingQuestion,
     });
     const generationPreferences = buildInsightGenerationPreferences({
-      promptType: input.promptType,
+      promptType,
       filters: input.filters,
       analysisScope,
     });
@@ -1302,7 +1537,7 @@ class InterviewInsightService {
       organizationId: input.organizationId,
       userId: input.createdBy,
       selectedContextDocumentIds: input.selectedContextDocumentIds,
-      promptType: input.promptType,
+      promptType,
       analysisScope,
       customPrompt: input.customPrompt,
     });
@@ -1317,7 +1552,7 @@ class InterviewInsightService {
     // Create insight record
     await db.run(
       `INSERT INTO interview_insights
-       (id, session_id, organization_id, category, title, prompt_type, source_session_ids, filters, 
+       (id, session_id, organization_id, category, title, prompt_type, source_session_ids, filters,
         status, source_session_count, analysis_scope_json, context_mode, analysis_mode, topic_focus_json,
         generation_context_json, created_by, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -1327,7 +1562,7 @@ class InterviewInsightService {
         input.organizationId,
         'general',
         input.title,
-        input.promptType,
+        promptType,
         JSON.stringify(normalizedSessionIds),
         storedFilters ? JSON.stringify(storedFilters) : null,
         'generating',
@@ -1350,7 +1585,7 @@ class InterviewInsightService {
       eventType: 'interview_insight_context_selected',
       contextDocumentPack,
       metadata: {
-        promptType: input.promptType,
+        promptType,
         analysisMode: analysisScope.analysis_mode,
         contextMode: analysisScope.context_mode,
       },
@@ -1361,7 +1596,7 @@ class InterviewInsightService {
       id,
       normalizedSessionIds,
       input.organizationId,
-      input.promptType,
+      promptType,
       input.customPrompt,
       analysisScope,
       approvedOrgKnowledgePack,
@@ -1394,7 +1629,7 @@ class InterviewInsightService {
     const offset = options?.offset || 0;
 
     const rows = await db.all<any>(
-      `SELECT * FROM interview_insights 
+      `SELECT * FROM interview_insights
        WHERE organization_id = ?
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
@@ -1415,7 +1650,7 @@ class InterviewInsightService {
     const now = new Date().toISOString();
 
     await db.run(
-      `UPDATE interview_insights 
+      `UPDATE interview_insights
        SET status = 'generating',
            content = NULL,
            executive_summary = NULL,
@@ -1439,7 +1674,19 @@ class InterviewInsightService {
     const generationPreferences = buildInsightGenerationPreferences({
       promptType: insight.promptType,
       filters: insight.filters as Record<string, unknown> | undefined,
-      analysisScope: insight.analysisScope,
+      analysisScope: insight.analysisScope || {
+        source_session_ids: insight.sourceSessionIds,
+        source_scope_status: 'approved_only',
+        respondent_filters: [],
+        role_filters: [],
+        department_filters: [],
+        template_filters: [],
+        topic_focus: [],
+        analysis_mode: insight.analysisMode || 'general_consulting_synthesis',
+        context_mode: insight.contextMode || 'selected_interview_material_only',
+        consultant_note: 'Recovered default analysis scope during regeneration.',
+        leading_question: null,
+      },
     });
     void this.generateInsight(
       id,
@@ -1507,6 +1754,8 @@ class InterviewInsightService {
       null,
       2
     );
+    const generationContract = buildInsightGenerationContract();
+    const generationContractBlock = JSON.stringify(generationContract, null, 2);
 
     const crossSessionBlock = isMultiSession
       ? `
@@ -1578,6 +1827,9 @@ ${scopeBlock}
 Requested Output And Analysis Lenses:
 ${preferenceBlock}
 
+Structured Output Contract:
+${generationContractBlock}
+
 ${orgKnowledgeContext}
 
 ${contextDocumentBlock}
@@ -1600,6 +1852,7 @@ ${formattedData}
 Return ONLY a valid JSON object (no markdown fences, no commentary outside the JSON) with this exact structure:
 
 {
+  "schema_version": "${INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION}",
   "executive_summary": "2-4 sentence overview of the most important findings",
   "themes": [
     {
@@ -1706,6 +1959,7 @@ Rules:
       });
 
     return {
+      schema_version: typeof parsed.schema_version === 'string' ? parsed.schema_version : undefined,
       executive_summary: String(parsed.executive_summary || ''),
       themes: Array.isArray(parsed.themes) ? mapCrossSession(parsed.themes) : [],
       issues: Array.isArray(parsed.issues) ? mapCrossSession(parsed.issues) : [],
@@ -1792,76 +2046,7 @@ Rules:
     sessionData: any[],
     v6Data: ReturnType<typeof InterviewInsightService.prototype.parseV6Response>
   ): InsightMaterialQuality {
-    const answeredTotal = sessionData.reduce(
-      (sum, session) => sum + Number(session.answered_questions || session.answers?.length || 0),
-      0
-    );
-    const questionTotal = sessionData.reduce(
-      (sum, session) => sum + Number(session.total_questions || session.answers?.length || 0),
-      0
-    );
-    const roles = safeStringArray(sessionData.map((session) => session.job_title));
-    const departments = safeStringArray(sessionData.map((session) => session.department));
-    const thinAnswers = sessionData
-      .flatMap((session) => session.answers || [])
-      .filter((answer) => {
-        const text = String(answer.answer_text || '').trim();
-        return text.length < 80 || (answer.confidence_score && Number(answer.confidence_score) < 3);
-      }).length;
-    const contradictionCount = (v6Data.signals || []).filter((signal) =>
-      /contradiction|tension/i.test(`${signal.type} ${signal.title} ${signal.description}`)
-    ).length;
-    const evidenceGapCount =
-      (v6Data.missing_data || []).length +
-      [...(v6Data.themes || []), ...(v6Data.issues || []), ...(v6Data.opportunities || [])].filter(
-        (item: any) => !Array.isArray(item.evidence_refs) || item.evidence_refs.length === 0
-      ).length;
-    const coverageRatio = questionTotal > 0 ? answeredTotal / questionTotal : 0;
-    const aiQuality = v6Data.material_quality || {};
-    const aiScore = Number((aiQuality as any).overall_material_score);
-    const calculatedScore = Math.max(
-      0,
-      Math.min(
-        100,
-        Math.round(
-          coverageRatio * 55 +
-            Math.min(sessionData.length, 4) * 8 +
-            Math.min(roles.length + departments.length, 6) * 3 -
-            thinAnswers * 2 -
-            evidenceGapCount * 3
-        )
-      )
-    );
-    const score = Number.isFinite(aiScore) ? Math.max(0, Math.min(100, aiScore)) : calculatedScore;
-
-    const answerQuality =
-      (aiQuality as any).answer_quality_posture ||
-      (score >= 80 ? 'strong' : score >= 60 ? 'usable' : score >= 40 ? 'thin' : 'poor');
-    const coveragePosture =
-      (aiQuality as any).coverage_posture ||
-      (sessionData.length <= 1
-        ? 'single_perspective'
-        : roles.length >= 3 || departments.length >= 3
-          ? 'strong_cross_function_coverage'
-          : sessionData.length >= 3
-            ? 'good_coverage'
-            : 'partial_coverage');
-
-    return {
-      overall_material_score: score,
-      answer_quality_posture: answerQuality,
-      coverage_posture: coveragePosture,
-      approved_session_count: sessionData.length,
-      respondent_count: new Set(sessionData.map((session) => session.owner_id || session.id)).size,
-      role_coverage: roles,
-      department_coverage: departments,
-      thin_answer_count: thinAnswers,
-      missing_voices: safeStringArray((aiQuality as any).missing_voices),
-      evidence_gap_count: evidenceGapCount,
-      contradiction_count: contradictionCount,
-      limitations: safeStringArray((aiQuality as any).limitations || v6Data.missing_data),
-      recommended_followups: safeStringArray((aiQuality as any).recommended_followups),
-    };
+    return buildInsightMaterialQuality(sessionData, v6Data);
   }
 
   /**
@@ -1951,7 +2136,7 @@ Rules:
       const materialQuality = this.buildMaterialQuality(sessionData, v6Data);
 
       await db.run(
-        `UPDATE interview_insights 
+        `UPDATE interview_insights
          SET status = 'completed',
              content = ?,
              executive_summary = ?,
@@ -2036,7 +2221,7 @@ Rules:
       logger.error(`[InterviewInsightService] Failed to generate insight ${insightId}:`, err);
 
       await db.run(
-        `UPDATE interview_insights 
+        `UPDATE interview_insights
          SET status = 'failed', error_message = ?, updated_at = ?
          WHERE id = ?`,
         [err.message, new Date().toISOString(), insightId]
@@ -2085,7 +2270,7 @@ Rules:
     const scopeWhere = buildInsightScopeSessionWhereClause(analysisScope);
 
     const sessions = await db.all<any>(
-      `SELECT 
+      `SELECT
         s.id, s.name, s.status, s.completed_at, s.owner_id,
         s.answered_questions, s.total_questions,
         t.name as template_name, t.category as template_category,
@@ -2111,7 +2296,7 @@ Rules:
     // Fetch answers for each session
     const sessionDataPromises = (sessions || []).map(async (session: any) => {
       const answers = await db.all<any>(
-        `SELECT 
+        `SELECT
           q.id,
           q.question_text,
           q.category,

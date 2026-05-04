@@ -37,14 +37,14 @@ const ENTITY_CONFIG: Record<
   },
   roadmap: {
     icon: Map,
-    color: 'text-violet-500',
-    activeColor: 'text-violet-600',
+    color: 'text-primary-500',
+    activeColor: 'text-primary-600',
     label: 'Roadmap',
   },
   task: {
     icon: CheckSquare,
-    color: 'text-orange-500',
-    activeColor: 'text-orange-600',
+    color: 'text-amber-500',
+    activeColor: 'text-amber-600',
     label: 'Task',
   },
   decision: {

@@ -41,8 +41,8 @@ const LANE_META: Record<
   wordy: {
     icon: FileText,
     route: '/wordy',
-    accentBg: 'bg-purple-500/10',
-    accentText: 'text-purple-500',
+    accentBg: 'bg-primary-500/10',
+    accentText: 'text-primary-500',
   },
   excele: {
     icon: FileSpreadsheet,

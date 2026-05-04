@@ -86,7 +86,7 @@ const PII_SENSITIVITY_OPTIONS = [
     value: 'high',
     label: 'High',
     description: 'Aggressive detection (+ financial, health data)',
-    color: 'text-red-400',
+    color: 'text-rose-400',
   },
 ];
 
@@ -374,7 +374,7 @@ export const SuperAdminAISettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <RefreshCw size={32} className="animate-spin text-violet-400" />
+        <RefreshCw size={32} className="animate-spin text-primary-400" />
       </div>
     );
   }
@@ -400,8 +400,8 @@ export const SuperAdminAISettings: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-600/10">
-              <Settings size={24} className="text-violet-400" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/10">
+              <Settings size={24} className="text-primary-400" />
             </div>
             Global AI Settings
           </h2>
@@ -421,7 +421,7 @@ export const SuperAdminAISettings: React.FC = () => {
             disabled={!hasChanges || saving}
             className={`flex items-center gap-2 p-4 py-2.5 rounded-xl font-medium transition-all ${
               hasChanges
-                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:shadow-lg hover:shadow-violet-500/25'
+                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:shadow-lg hover:shadow-primary-500/25'
                 : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'
             }`}
           >
@@ -434,7 +434,7 @@ export const SuperAdminAISettings: React.FC = () => {
       {saveError ? (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
         >
           {saveError}
         </div>
@@ -465,7 +465,7 @@ export const SuperAdminAISettings: React.FC = () => {
             <select
               value={settings.defaultProvider || ''}
               onChange={(e) => updateSetting('defaultProvider', e.target.value || null)}
-              className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+              className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
             >
               <option value="">Auto-select</option>
               {providers.map((p) => (
@@ -512,7 +512,7 @@ export const SuperAdminAISettings: React.FC = () => {
                       </span>
                       <button
                         onClick={() => removeFromFallbackChain(providerId)}
-                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -571,7 +571,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
             </div>
 
@@ -589,7 +589,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
             </div>
 
@@ -601,7 +601,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.globalTokenLimit || 10000000}
                 onChange={(e) => updateSetting('globalTokenLimit', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {((settings.globalTokenLimit || 10000000) / 1000000).toFixed(1)}M tokens
@@ -616,7 +616,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.maxTokensPerRequest || 8192}
                 onChange={(e) => updateSetting('maxTokensPerRequest', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
             </div>
 
@@ -628,7 +628,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.maxContextWindowSize || 128000}
                 onChange={(e) => updateSetting('maxContextWindowSize', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {((settings.maxContextWindowSize || 128000) / 1000).toFixed(0)}K context
@@ -640,8 +640,8 @@ export const SuperAdminAISettings: React.FC = () => {
         {/* Security & PII */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-red-500/20">
-              <Shield size={20} className="text-red-400" />
+            <div className="p-2 rounded-lg bg-rose-500/20">
+              <Shield size={20} className="text-rose-400" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">
@@ -665,7 +665,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     key={option.value}
                     className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.piiDetectionSensitivity === option.value
-                        ? 'bg-violet-500/10 border-violet-500/50'
+                        ? 'bg-primary-500/10 border-primary-500/50'
                         : 'bg-navy-900/30 border-white/10 hover:border-white/20'
                     }`}
                   >
@@ -692,7 +692,7 @@ export const SuperAdminAISettings: React.FC = () => {
                       </div>
                     </div>
                     {settings.piiDetectionSensitivity === option.value && (
-                      <CheckCircle size={20} className="text-violet-400" />
+                      <CheckCircle size={20} className="text-primary-400" />
                     )}
                   </label>
                 ))}
@@ -726,8 +726,8 @@ export const SuperAdminAISettings: React.FC = () => {
         {/* Circuit Breaker & Data Residency */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-cyan-500/20">
-              <Activity size={20} className="text-cyan-400" />
+            <div className="p-2 rounded-lg bg-blue-500/20">
+              <Activity size={20} className="text-blue-400" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">
@@ -800,7 +800,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     key={option.value || 'none'}
                     className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.dataResidency === option.value
-                        ? 'bg-violet-500/10 border-violet-500/50'
+                        ? 'bg-primary-500/10 border-primary-500/50'
                         : 'bg-navy-900/30 border-white/10 hover:border-white/20'
                     }`}
                   >
@@ -817,7 +817,7 @@ export const SuperAdminAISettings: React.FC = () => {
                         size={16}
                         className={
                           settings.dataResidency === option.value
-                            ? 'text-violet-400'
+                            ? 'text-primary-400'
                             : 'text-slate-400 dark:text-slate-500'
                         }
                       />

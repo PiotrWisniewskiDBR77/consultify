@@ -132,7 +132,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
         className={cn(
           'w-full flex items-center justify-between px-3 py-2.5 bg-white dark:bg-navy-800 border rounded-lg transition-all',
           isOpen
-            ? 'border-violet-500 ring-2 ring-violet-500/20'
+            ? 'border-primary-500 ring-2 ring-primary-500/20'
             : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
@@ -203,7 +203,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                   'admin.team.manager.searchPlaceholder',
                   'Search by name or email...'
                 )}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border-0 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-violet-500"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border-0 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -230,7 +230,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                     className={cn(
                       'w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors',
                       isSelected
-                        ? 'bg-violet-50 dark:bg-violet-900/20'
+                        ? 'bg-primary-50 dark:bg-primary-900/20'
                         : 'hover:bg-slate-50 dark:hover:bg-navy-700'
                     )}
                   >
@@ -244,7 +244,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                         className={cn(
                           'text-sm font-medium truncate',
                           isSelected
-                            ? 'text-violet-700 dark:text-violet-300'
+                            ? 'text-primary-700 dark:text-primary-300'
                             : 'text-navy-900 dark:text-white'
                         )}
                       >
@@ -255,7 +255,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                       </p>
                     </div>
                     {isSelected && (
-                      <Check size={16} className="text-violet-600 dark:text-violet-400" />
+                      <Check size={16} className="text-primary-600 dark:text-primary-400" />
                     )}
                   </button>
                 );

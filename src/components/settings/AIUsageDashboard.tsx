@@ -237,19 +237,19 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-violet-200 dark:border-violet-800">
+        <Card className="bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20 border-primary-200 dark:border-primary-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-violet-600 dark:text-violet-400 font-medium">
+                <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">
                   {t('settings.aiUsage.totalRequests', 'Total Requests')}
                 </p>
-                <p className="text-2xl font-bold text-violet-900 dark:text-violet-100 mt-1">
+                <p className="text-2xl font-bold text-primary-900 dark:text-primary-100 mt-1">
                   {formatNumber(periodStats?.totalRequests || 0)}
                 </p>
               </div>
-              <div className="p-3 bg-violet-100 dark:bg-violet-800/50 rounded-xl">
-                <Sparkles className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+              <div className="p-3 bg-primary-100 dark:bg-primary-800/50 rounded-xl">
+                <Sparkles className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </CardContent>
@@ -273,7 +273,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+        <Card className="bg-gradient-to-br from-amber-50 to-amber-50 dark:from-amber-900/20 dark:to-amber-900/20 border-amber-200 dark:border-amber-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -291,7 +291,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -321,7 +321,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
               className={cn(
                 'text-sm font-medium',
                 isOverLimit
-                  ? 'text-red-600'
+                  ? 'text-rose-600'
                   : isNearLimit
                     ? 'text-amber-600'
                     : 'text-slate-600 dark:text-slate-400'
@@ -338,10 +338,10 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
             className={cn(
               'h-3',
               isOverLimit
-                ? '[&>div]:bg-red-500'
+                ? '[&>div]:bg-rose-500'
                 : isNearLimit
                   ? '[&>div]:bg-amber-500'
-                  : '[&>div]:bg-violet-500'
+                  : '[&>div]:bg-primary-500'
             )}
           />
           {isNearLimit && !isOverLimit && (
@@ -353,7 +353,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
             </div>
           )}
           {isOverLimit && (
-            <div className="flex items-center gap-2 mt-3 text-red-600 dark:text-red-400">
+            <div className="flex items-center gap-2 mt-3 text-rose-600 dark:text-rose-400">
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">
                 {t('settings.aiUsage.overLimit', 'You have exceeded your usage limit')}
@@ -412,7 +412,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                           <span
                             className={cn(
                               'flex items-center gap-1',
-                              stat.trend > 0 ? 'text-emerald-600' : 'text-red-600'
+                              stat.trend > 0 ? 'text-emerald-600' : 'text-rose-600'
                             )}
                           >
                             {stat.trend > 0 ? (
@@ -467,7 +467,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                 return (
                   <div
                     key={day.date}
-                    className="flex-1 bg-violet-200 dark:bg-violet-800 rounded-t hover:bg-violet-300 dark:hover:bg-violet-700 transition-colors cursor-pointer group relative"
+                    className="flex-1 bg-primary-200 dark:bg-primary-800 rounded-t hover:bg-primary-300 dark:hover:bg-primary-700 transition-colors cursor-pointer group relative"
                     style={{ height: `${height}%` }}
                     title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
                   >

@@ -86,7 +86,7 @@ export const ChatTracesViewer: React.FC = () => {
         </div>
 
         {error && (
-          <div className="px-4 py-3 text-sm text-red-600 dark:text-red-400 border-b border-slate-200 dark:border-navy-700">
+          <div className="px-4 py-3 text-sm text-rose-600 dark:text-rose-400 border-b border-slate-200 dark:border-navy-700">
             {error}
           </div>
         )}
@@ -125,7 +125,7 @@ export const ChatTracesViewer: React.FC = () => {
                           r.status === 'completed'
                             ? 'border-green-200 text-green-700 dark:border-green-700/40 dark:text-green-300'
                             : r.status === 'error'
-                              ? 'border-red-200 text-red-700 dark:border-red-700/40 dark:text-red-300'
+                              ? 'border-rose-200 text-rose-700 dark:border-rose-700/40 dark:text-rose-300'
                               : 'border-slate-200 text-slate-600 dark:border-navy-600 dark:text-slate-300'
                         }`}
                       >

@@ -69,9 +69,9 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({
   const getSeverityColor = (sev: string) => {
     switch (sev) {
       case 'Critical':
-        return 'text-red-600 bg-red-100 dark:bg-red-900/50 dark:text-red-400';
+        return 'text-rose-600 bg-rose-100 dark:bg-rose-900/50 dark:text-rose-400';
       case 'High':
-        return 'text-orange-600 bg-orange-100 dark:bg-orange-900/50 dark:text-orange-400';
+        return 'text-amber-600 bg-amber-100 dark:bg-amber-900/50 dark:text-amber-400';
       case 'Medium':
         return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/50 dark:text-yellow-400';
       default:
@@ -84,7 +84,7 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({
       <div className="flex justify-between items-center mb-2">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <AlertOctagon className="text-red-500" />
+            <AlertOctagon className="text-rose-500" />
             RAID Log
           </h2>
           <p className="text-slate-500 dark:text-slate-400">
@@ -93,7 +93,7 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({
         </div>
         <button
           onClick={addItem}
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"
+          className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"
         >
           <Plus size={18} /> Add {activeType}
         </button>
@@ -102,17 +102,17 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700 pb-1">
         {[
-          { id: 'Risk', icon: AlertOctagon, color: 'text-red-500' },
-          { id: 'Issue', icon: AlertTriangle, color: 'text-orange-500' },
+          { id: 'Risk', icon: AlertOctagon, color: 'text-rose-500' },
+          { id: 'Issue', icon: AlertTriangle, color: 'text-amber-500' },
           { id: 'Assumption', icon: HelpCircle, color: 'text-blue-500' },
-          { id: 'Dependency', icon: LinkIcon, color: 'text-purple-500' },
+          { id: 'Dependency', icon: LinkIcon, color: 'text-primary-500' },
         ].map((type) => (
           <button
             key={type.id}
             onClick={() => setActiveType(type.id as any)}
             className={`px-4 py-3 font-bold text-sm flex items-center gap-2 rounded-t-lg transition-colors border-b-2 ${
               activeType === type.id
-                ? 'bg-slate-50 dark:bg-white/5 border-red-500 text-slate-800 dark:text-white'
+                ? 'bg-slate-50 dark:bg-white/5 border-rose-500 text-slate-800 dark:text-white'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 border-transparent'
             }`}
           >
@@ -228,7 +228,7 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({
                           </div>
                         </div>
                         <div className="mt-4 flex justify-end">
-                          <button className="text-red-500 hover:text-red-600 text-xs font-bold flex items-center gap-1">
+                          <button className="text-rose-500 hover:text-rose-600 text-xs font-bold flex items-center gap-1">
                             <Trash2 size={12} /> Delete Item
                           </button>
                         </div>

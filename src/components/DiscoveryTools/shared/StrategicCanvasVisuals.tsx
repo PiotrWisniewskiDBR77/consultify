@@ -97,7 +97,7 @@ export function AnsoffMatrixVisual({ data, isPolish }: { data: GrowthPathsData; 
       <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Ansoff 2x2</div>
       <div className="grid grid-cols-2 gap-2">
         {cells.map(([id, label]) => (
-          <div key={id} className="rounded-xl bg-violet-50 p-3 text-violet-700 dark:bg-violet-950/20 dark:text-violet-300">
+          <div key={id} className="rounded-xl bg-primary-50 p-3 text-primary-700 dark:bg-primary-950/20 dark:text-primary-300">
             <div className="text-xs font-semibold">{label}</div>
             <div className="mt-2 text-2xl font-bold">{(data.quadrants?.[id] || []).length}</div>
           </div>

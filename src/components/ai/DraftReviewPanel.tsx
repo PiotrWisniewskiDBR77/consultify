@@ -46,7 +46,7 @@ const DRAFT_TYPE_LABELS: Record<string, string> = {
 const CONFIDENCE_LEVELS = {
   HIGH: { min: 0.8, color: 'text-green-600', bg: 'bg-green-100' },
   MEDIUM: { min: 0.6, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-  LOW: { min: 0, color: 'text-red-600', bg: 'bg-red-100' },
+  LOW: { min: 0, color: 'text-rose-600', bg: 'bg-rose-100' },
 };
 
 function getConfidenceLevel(score: number) {
@@ -165,14 +165,14 @@ export function DraftReviewPanel({
         key={draft.id}
         className={`border rounded-lg transition-all ${
           isExpiringSoon
-            ? 'border-orange-300 bg-orange-50/50'
+            ? 'border-amber-300 bg-amber-50/50'
             : 'border-gray-200 dark:border-gray-700'
         } ${compact ? 'p-3' : 'p-4'}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Sparkles className="w-4 h-4 text-purple-500 flex-shrink-0" />
+            <Sparkles className="w-4 h-4 text-primary-500 flex-shrink-0" />
             <span className="font-medium truncate">
               {DRAFT_TYPE_LABELS[draft.draft_type] || draft.draft_type}
             </span>
@@ -182,7 +182,7 @@ export function DraftReviewPanel({
               {Math.round(draft.confidence_score * 100)}% pewności
             </span>
             {isExpiringSoon && (
-              <span className="text-xs text-orange-600 flex items-center gap-1">
+              <span className="text-xs text-amber-600 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 Wygasa wkrótce
               </span>
@@ -203,7 +203,7 @@ export function DraftReviewPanel({
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full h-48 p-3 border rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-purple-500"
+              className="w-full h-48 p-3 border rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-primary-500"
             />
           ) : (
             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -225,8 +225,8 @@ export function DraftReviewPanel({
         {/* Original vs Suggested (if has diff) */}
         {isExpanded && draft.original_content && draft.diff_data?.hasChanges && (
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-              <p className="text-xs font-medium text-red-700 mb-1">Oryginał:</p>
+            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+              <p className="text-xs font-medium text-rose-700 mb-1">Oryginał:</p>
               <div className="text-sm">{renderContent(draft.original_content)}</div>
             </div>
             <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -271,7 +271,7 @@ export function DraftReviewPanel({
               <>
                 <button
                   onClick={() => handleReject(draft)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                  className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"
                   disabled={isProcessing}
                   title="Odrzuć"
                 >
@@ -307,7 +307,7 @@ export function DraftReviewPanel({
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2">
+      <div className="p-4 bg-rose-50 text-rose-700 rounded-lg flex items-center gap-2">
         <AlertTriangle className="w-5 h-5" />
         <span>{error}</span>
         <button onClick={fetchDrafts} className="ml-auto text-sm underline">
@@ -321,13 +321,13 @@ export function DraftReviewPanel({
     <div className="space-y-4">
       {/* Header with Stats */}
       {showStats && stats && (
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-purple-600" />
+              <FileText className="w-5 h-5 text-primary-600" />
               <span className="font-medium">Sugestie AI</span>
               {pendingCount > 0 && (
-                <span className="bg-purple-600 text-white text-xs px-2 py-0.5 rounded-full">
+                <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full">
                   {pendingCount} do przeglądu
                 </span>
               )}
@@ -340,7 +340,7 @@ export function DraftReviewPanel({
               <p className="text-gray-500 dark:text-gray-400 text-xs">Zaakceptowane</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-red-600">{stats.rejected || 0}</p>
+              <p className="text-lg font-semibold text-rose-600">{stats.rejected || 0}</p>
               <p className="text-gray-500 dark:text-gray-400 text-xs">Odrzucone</p>
             </div>
             {stats.acceptanceRate !== null && (
@@ -356,7 +356,7 @@ export function DraftReviewPanel({
       {/* Loading State */}
       {loading && filteredDrafts.length === 0 && (
         <div className="flex items-center justify-center py-8">
-          <RefreshCw className="w-6 h-6 animate-spin text-purple-500" />
+          <RefreshCw className="w-6 h-6 animate-spin text-primary-500" />
           <span className="ml-2 text-gray-500 dark:text-gray-400">Ładowanie sugestii...</span>
         </div>
       )}

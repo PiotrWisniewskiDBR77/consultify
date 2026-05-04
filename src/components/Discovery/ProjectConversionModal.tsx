@@ -114,9 +114,9 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
               {t('discovery.conversion.whatWillBeTransferred', 'What will be transferred')}
             </h3>
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                <AlertCircle size={18} className="text-red-500" />
-                <span className="text-sm text-red-700 dark:text-red-300">
+              <div className="flex items-center gap-3 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+                <AlertCircle size={18} className="text-rose-500" />
+                <span className="text-sm text-rose-700 dark:text-rose-300">
                   {t('discovery.conversion.painPointsCount', '{{count}} pain points', {
                     count: painPointsCount,
                   })}
@@ -146,9 +146,9 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
                 </div>
               )}
               {recommendations.frameworks.length > 0 && (
-                <div className="flex items-center gap-3 p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg">
-                  <ClipboardList size={18} className="text-cyan-500" />
-                  <span className="text-sm text-cyan-700 dark:text-cyan-300">
+                <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <ClipboardList size={18} className="text-blue-500" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
                     {t(
                       'discovery.conversion.suggestedAssessments',
                       '{{count}} suggested assessments',
@@ -190,7 +190,7 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
+            <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-600 dark:text-rose-400 text-sm">
               <AlertCircle size={16} />
               {error}
             </div>

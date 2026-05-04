@@ -225,7 +225,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
         {saveError && (
           <div
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
           >
             {saveError}
           </div>
@@ -236,7 +236,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Online Status ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Eye size={14} className="text-violet-400" />
+                <Eye size={14} className="text-primary-400" />
                 {t('settings.privacy.statusTitle', 'Online Status')}
               </h4>
               <div className="space-y-3">
@@ -266,7 +266,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Activity Visibility ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <Users size={14} className="text-violet-400" />
+                <Users size={14} className="text-primary-400" />
                 {t('settings.privacy.activityTitle', 'Activity Visibility')}
               </h4>
               <p className="text-xs text-slate-500 mb-4">
@@ -286,18 +286,18 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       className={cn(
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
-                          ? 'bg-violet-600/10 border-violet-500 shadow-sm'
+                          ? 'bg-primary-600/10 border-primary-500 shadow-sm'
                           : 'bg-navy-800/50 border-white/5 hover:border-white/20'
                       )}
                     >
                       <Icon
                         size={20}
-                        className={isSelected ? 'text-violet-400' : 'text-slate-500'}
+                        className={isSelected ? 'text-primary-400' : 'text-slate-500'}
                       />
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-violet-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-300'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}
@@ -316,7 +316,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Profile Visibility ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <UserCircle size={14} className="text-violet-400" />
+                <UserCircle size={14} className="text-primary-400" />
                 {t('settings.privacy.profileTitle', 'Profile Visibility')}
               </h4>
               <p className="text-xs text-slate-500 mb-4">
@@ -336,18 +336,18 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       className={cn(
                         'p-4 rounded-lg border transition-all text-left',
                         isSelected
-                          ? 'bg-violet-600/10 border-violet-500 shadow-sm'
+                          ? 'bg-primary-600/10 border-primary-500 shadow-sm'
                           : 'bg-navy-800/50 border-white/5 hover:border-white/20'
                       )}
                     >
                       <Icon
                         size={20}
-                        className={isSelected ? 'text-violet-400' : 'text-slate-500'}
+                        className={isSelected ? 'text-primary-400' : 'text-slate-500'}
                       />
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-violet-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-300'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}
@@ -366,7 +366,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
             {/* ─── Communication & AI ─── */}
             <div>
               <h4 className={sectionLabel}>
-                <AtSign size={14} className="text-violet-400" />
+                <AtSign size={14} className="text-primary-400" />
                 {t('settings.privacy.communicationTitle', 'Communication & AI')}
               </h4>
               <div className="space-y-3">

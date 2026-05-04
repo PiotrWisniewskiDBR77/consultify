@@ -179,7 +179,7 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
   if (effectiveLoading) {
     return (
       <div className="p-6 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -201,18 +201,18 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3 px-4 py-2">
-        <Shield size={16} className="text-red-400" />
+        <Shield size={16} className="text-rose-400" />
         <span className="text-sm font-semibold text-slate-900 dark:text-white">
           {t('execution.riskSignals.title')}
         </span>
         <span className="text-xs text-slate-500">({visibleSignals.length})</span>
         {critical > 0 && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-medium">
             {critical} {t('execution.riskSignals.critical')}
           </span>
         )}
         {high > 0 && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-medium">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">
             {high} {t('execution.riskSignals.high')}
           </span>
         )}
@@ -263,7 +263,7 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
                     <span className="text-[10px] uppercase font-semibold text-slate-400 shrink-0 mt-px">
                       {t('execution.riskSignals.suggestedAction')}:
                     </span>
-                    <p className="text-xs text-cyan-600 dark:text-cyan-400">
+                    <p className="text-xs text-blue-600 dark:text-blue-400">
                       {signal.suggestedAction}
                     </p>
                   </div>
@@ -281,7 +281,7 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
                         e.stopPropagation();
                         handleDismiss(signal.id);
                       }}
-                      className="text-xs px-2.5 py-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1"
+                      className="text-xs px-2.5 py-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-1"
                     >
                       <XCircle size={12} />
                       {t('execution.riskSignals.dismiss')}

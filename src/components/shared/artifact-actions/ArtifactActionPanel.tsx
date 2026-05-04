@@ -34,6 +34,15 @@ interface ArtifactActionSource {
   evidenceCount?: number;
   sourceSessionCount?: number;
   sourcePack?: Record<string, unknown> | null;
+  reportPack?: {
+    id?: string;
+    status?: string;
+    readinessStatus?: string;
+    completenessScore?: number;
+    degraded?: boolean;
+    degradedReasons?: string[];
+    manifestHash?: string | null;
+  } | null;
 }
 
 interface CreatedTarget {
@@ -136,9 +145,49 @@ function buildInsightMarkdown(source: ArtifactActionSource): string {
     source.confidence ? `- Confidence: ${source.confidence}` : null,
     source.evidenceCount != null ? `- Evidence count: ${source.evidenceCount}` : null,
     source.sourceSessionCount != null ? `- Source sessions: ${source.sourceSessionCount}` : null,
+    source.reportPack?.id ? `- Report pack: ${source.reportPack.id}` : null,
+    source.reportPack?.status ? `- Report pack status: ${source.reportPack.status}` : null,
+    source.reportPack?.readinessStatus
+      ? `- Report pack readiness: ${source.reportPack.readinessStatus}`
+      : null,
+    source.reportPack?.manifestHash ? `- Manifest hash: ${source.reportPack.manifestHash}` : null,
     source.limits ? `- Limits: ${source.limits}` : null,
   ].filter(Boolean);
   return lines.join('\n');
+}
+
+function downstreamReadinessWarnings(source: ArtifactActionSource, isPolish: boolean): string[] {
+  const reportPack = source.reportPack;
+  const warnings: string[] = [];
+  if (!reportPack?.id) {
+    warnings.push(
+      isPolish
+        ? 'Brak powiązanego Report Pack w lineage downstream action.'
+        : 'No linked Report Pack is present in downstream action lineage.'
+    );
+  }
+  if (reportPack?.status && reportPack.status !== 'published') {
+    warnings.push(
+      isPolish
+        ? `Report Pack ma status ${reportPack.status}; tworzony artefakt musi pozostać draftem/propozycją.`
+        : `Report Pack is ${reportPack.status}; created artifact must remain a draft/proposal.`
+    );
+  }
+  if (reportPack?.readinessStatus && reportPack.readinessStatus !== 'ready_for_review') {
+    warnings.push(
+      isPolish
+        ? `Readiness gate: ${reportPack.readinessStatus}; downstream wymaga review operatora.`
+        : `Readiness gate: ${reportPack.readinessStatus}; downstream requires operator review.`
+    );
+  }
+  if (reportPack?.degraded) {
+    warnings.push(
+      isPolish
+        ? 'Report Pack jest zdegradowany; ograniczenia muszą pozostać widoczne w artefakcie.'
+        : 'Report Pack is degraded; limitations must remain visible in the artifact.'
+    );
+  }
+  return warnings;
 }
 
 function buildInitiativeDraftDescription(source: ArtifactActionSource): string {
@@ -183,15 +232,17 @@ function buildActionContract(
       confidence: source.confidence || null,
       evidenceCount: source.evidenceCount ?? 0,
       sourceSessionCount: source.sourceSessionCount ?? 0,
+      reportPack: source.reportPack || null,
     },
     composer: composer || null,
     lineage: {
       sourcePack: source.sourcePack || {},
+      reportPack: source.reportPack || null,
       evidenceRefs: extractEvidenceRefs(source),
     },
     governance: {
-      proposalRequired: ['idea', 'note', 'initiative'].includes(target),
-      confirmationRequired: ['idea', 'note', 'initiative'].includes(target),
+      proposalRequired: true,
+      confirmationRequired: true,
       proposal: governanceProposal || null,
       auditIntent: `Create ${target} from interview insight`,
     },
@@ -211,6 +262,7 @@ function buildGovernanceProposal(
       confidence: source.confidence || null,
       evidenceCount: source.evidenceCount ?? 0,
       sourceSessionCount: source.sourceSessionCount ?? 0,
+      reportPack: source.reportPack || null,
     },
     target,
     targetLabel,
@@ -219,6 +271,7 @@ function buildGovernanceProposal(
       : `I confirm creating "${targetLabel}" from insight "${source.title}". I reviewed the limits, evidence count (${source.evidenceCount ?? 0}), and confidence (${source.confidence || 'none'}).`,
     limits: source.limits || null,
     evidenceRefs: extractEvidenceRefs(source),
+    readinessWarnings: downstreamReadinessWarnings(source, isPolish),
   };
 }
 
@@ -234,12 +287,17 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
   >({});
   const [composerTarget, setComposerTarget] = useState<ArtifactActionTarget | null>(null);
   const [composerTemplate, setComposerTemplate] = useState('ai_freeform');
+  const [composerConfirmed, setComposerConfirmed] = useState(false);
   const [proposalTarget, setProposalTarget] = useState<ArtifactActionTarget | null>(null);
   const [proposalConfirmed, setProposalConfirmed] = useState(false);
 
   const isCompact = variant === 'compact';
   const sourceMarkdown = useMemo(() => buildInsightMarkdown(source), [source]);
   const isActionDisabled = source.status === 'generating' || source.status === 'failed';
+  const readinessWarnings = useMemo(
+    () => downstreamReadinessWarnings(source, isPolish),
+    [isPolish, source]
+  );
 
   const recordConversion = async (target: CreatedTarget, payload: Record<string, unknown>) => {
     const actionContract = payload.actionContract as Record<string, unknown> | undefined;
@@ -255,6 +313,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
       limits: source.limits || null,
       evidenceRefs: extractEvidenceRefs(source),
       sourcePack: source.sourcePack || {},
+      reportPack: source.reportPack || null,
       payload: {
         ...payload,
         actionContract,
@@ -297,6 +356,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               actionComposer: composer || null,
               actionContract,
               sourcePack: source.sourcePack || {},
+              reportPack: source.reportPack || null,
               evidenceRefs,
               sourcesLedger: [
                 {
@@ -305,6 +365,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   sourceName: source.title,
                   evidenceCount: source.evidenceCount ?? null,
                   confidence: source.confidence ?? null,
+                  reportPack: source.reportPack || null,
                 },
               ],
             },
@@ -330,6 +391,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             actionComposer: composer || null,
             actionContract,
             sourcePack: source.sourcePack || {},
+            reportPack: source.reportPack || null,
             evidenceRefs,
             slides: [
               {
@@ -381,11 +443,13 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               sourceId: source.id,
               title: source.title,
               sourcePack: source.sourcePack || {},
+              reportPack: source.reportPack || null,
               actionComposer: composer || null,
               actionContract,
               evidenceRefs,
             },
             sourcePack: source.sourcePack || {},
+            reportPack: source.reportPack || null,
             actionContract,
             evidenceRefs,
             language: isPolish ? 'pl' : 'en',
@@ -411,6 +475,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             sourceType: source.type,
             sourceConversationId: source.id,
             sourcePack: source.sourcePack || {},
+            reportPack: source.reportPack || null,
             actionContract,
             evidenceRefs,
           })
@@ -445,6 +510,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             sourceType: source.type,
             sourceId: source.id,
             sourcePack: source.sourcePack || {},
+            reportPack: source.reportPack || null,
             actionContract,
             evidenceRefs,
             icon: 'Lightbulb',
@@ -480,6 +546,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             sourceType: source.type,
             sourceId: source.id,
             sourcePack: source.sourcePack || {},
+            reportPack: source.reportPack || null,
             actionContract,
             evidenceRefs,
             reportName: isPolish
@@ -579,7 +646,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-purple-700 dark:text-purple-200">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
               <BookOpen size={12} />
               {isPolish ? 'Co dalej z tym insightem?' : 'What next with this insight?'}
             </div>
@@ -589,6 +656,18 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   ? 'Insight jest artefaktem źródłowym. Z tego miejsca tworzysz dokumenty albo działania w aplikacji, a system zapisuje pełny backlink i lineage.'
                   : 'This insight is the source artifact. Create documents or app actions here while the system keeps backlink and lineage.'}
               </p>
+            )}
+            {!isCompact && readinessWarnings.length > 0 && (
+              <div className="mt-3 rounded-2xl border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
+                <div className="font-semibold">
+                  {isPolish ? 'Warunki downstream' : 'Downstream conditions'}
+                </div>
+                <ul className="mt-1 list-disc space-y-1 pl-4">
+                  {readinessWarnings.slice(0, 3).map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
           {!isCompact && (
@@ -664,7 +743,10 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setComposerTarget(null)}
+                onClick={() => {
+                  setComposerTarget(null);
+                  setComposerConfirmed(false);
+                }}
                 className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
               >
                 {isPolish ? 'Zamknij' : 'Close'}
@@ -687,6 +769,18 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   {isPolish ? 'Pewność' : 'Confidence'}: {source.confidence || '-'}
                 </div>
               </div>
+              {readinessWarnings.length > 0 && (
+                <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
+                  <div className="font-semibold">
+                    {isPolish ? 'Ograniczenia downstream' : 'Downstream limits'}
+                  </div>
+                  <ul className="mt-1 list-disc space-y-1 pl-4">
+                    {readinessWarnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="mt-4">
@@ -715,21 +809,39 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               </select>
             </div>
 
+            <label className="mt-4 flex items-start gap-2 text-xs text-slate-300">
+              <input
+                type="checkbox"
+                checked={composerConfirmed}
+                onChange={(event) => setComposerConfirmed(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                {isPolish
+                  ? 'Potwierdzam utworzenie draftu/propozycji z widocznym lineage i ograniczeniami Report Pack.'
+                  : 'I confirm creating a draft/proposal with visible lineage and Report Pack limits.'}
+              </span>
+            </label>
+
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setComposerTarget(null)}
+                onClick={() => {
+                  setComposerTarget(null);
+                  setComposerConfirmed(false);
+                }}
                 className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
               >
                 {isPolish ? 'Anuluj' : 'Cancel'}
               </button>
               <button
                 type="button"
-                disabled={Boolean(loadingTarget)}
+                disabled={!composerConfirmed || Boolean(loadingTarget)}
                 onClick={() => {
                   const target = composerTarget;
                   if (!target) return;
                   setComposerTarget(null);
+                  setComposerConfirmed(false);
                   createTarget(target, {
                     templateMode: composerTemplate,
                     contextMode: 'insight_with_source_pack',
@@ -794,6 +906,18 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
                   <span className="font-semibold">{isPolish ? 'Ograniczenia:' : 'Limits:'}</span>{' '}
                   {source.limits}
+                </div>
+              )}
+              {readinessWarnings.length > 0 && (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
+                  <div className="font-semibold">
+                    {isPolish ? 'Warunki Report Pack:' : 'Report Pack conditions:'}
+                  </div>
+                  <ul className="mt-1 list-disc space-y-1 pl-4">
+                    {readinessWarnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
               <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-xs text-slate-300">

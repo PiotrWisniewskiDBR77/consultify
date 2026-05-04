@@ -162,7 +162,7 @@ const CATEGORY_CONFIG: Record<
     icon: GitBranch,
     labelPl: 'Sugestie gałęzi',
     labelEn: 'Branch suggestions',
-    color: 'text-violet-600 dark:text-violet-400',
+    color: 'text-primary-600 dark:text-primary-400',
   },
   row_suggestions: {
     icon: Target,
@@ -174,13 +174,13 @@ const CATEGORY_CONFIG: Record<
     icon: GitBranch,
     labelPl: 'Połączenia',
     labelEn: 'Connections',
-    color: 'text-cyan-600 dark:text-cyan-400',
+    color: 'text-blue-600 dark:text-blue-400',
   },
   risk_flags: {
     icon: AlertTriangle,
     labelPl: 'Flagi ryzyka',
     labelEn: 'Risk flags',
-    color: 'text-red-600 dark:text-red-400',
+    color: 'text-rose-600 dark:text-rose-400',
   },
   framework_recommendations: {
     icon: Wrench,
@@ -411,8 +411,8 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
       title={isPl ? 'Sugestie AI' : 'AI Suggestions'}
       subtitle={isPl ? 'Kontekst firmy + AI' : 'Company context + AI'}
       icon={
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/15 flex items-center justify-center">
-          <MessageSquareWarning size={14} className="text-violet-600 dark:text-violet-400" />
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500/20 to-indigo-500/15 flex items-center justify-center">
+          <MessageSquareWarning size={14} className="text-primary-600 dark:text-primary-400" />
         </div>
       }
       onClose={onClose}
@@ -454,7 +454,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
       <div className="px-3 py-2 flex-1 overflow-auto">
         {loading ? (
           <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 px-1 py-8 justify-center">
-            <Loader2 size={14} className="animate-spin text-violet-400" />
+            <Loader2 size={14} className="animate-spin text-primary-400" />
             {isPl
               ? 'Generuję sugestie z kontekstu firmy…'
               : 'Generating suggestions from company context…'}
@@ -506,7 +506,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                               <div className="flex items-center gap-1">
                                 <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                                   <div
-                                    className={`h-full rounded-full ${sug.confidence >= 0.7 ? 'bg-emerald-500' : sug.confidence >= 0.4 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                    className={`h-full rounded-full ${sug.confidence >= 0.7 ? 'bg-emerald-500' : sug.confidence >= 0.4 ? 'bg-amber-500' : 'bg-rose-500'}`}
                                     style={{ width: `${Math.round(sug.confidence * 100)}%` }}
                                   />
                                 </div>
@@ -533,7 +533,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                             {onInsertToWorkspace && (
                               <button
                                 onClick={() => handleInsert(sug)}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
                               >
                                 <Download size={9} />
                                 {isPl ? 'Wstaw' : 'Insert'}
@@ -541,7 +541,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                             )}
                             <button
                               onClick={() => dismissSuggestion(sug.id)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors ml-auto"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors ml-auto"
                               title={isPl ? 'Odrzuć' : 'Dismiss'}
                             >
                               <XCircle size={9} />
@@ -574,12 +574,12 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
             onChange={(e) => setNlInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleNlSubmit()}
             placeholder={isPl ? 'Zapytaj AI o ten pomysł…' : 'Ask AI about this idea…'}
-            className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+            className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
           />
           <button
             onClick={handleNlSubmit}
             disabled={!nlInput.trim() || nlLoading}
-            className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors disabled:opacity-40"
+            className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors disabled:opacity-40"
           >
             {nlLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
           </button>
@@ -618,9 +618,9 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                     );
                   }}
                   disabled={!isAccepted}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-violet-500/5 transition-colors disabled:opacity-40"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-primary-500/5 transition-colors disabled:opacity-40"
                 >
-                  <Icon size={12} className="text-violet-500 shrink-0" />
+                  <Icon size={12} className="text-primary-500 shrink-0" />
                   {isPl ? gen.labelPl : gen.labelEn}
                 </button>
               );

@@ -262,7 +262,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -285,7 +285,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         <button
           onClick={openCreateModal}
           disabled={!!alertsLoadError}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
         >
           <Plus size={18} />
           Create Alert
@@ -335,7 +335,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                       {type.label}
                     </span>
                   </div>
-                  {hasAlert && <Bell size={14} className="text-violet-500" />}
+                  {hasAlert && <Bell size={14} className="text-primary-500" />}
                 </div>
                 <div className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                   {usageData ? `${usagePercent}%` : '--'}
@@ -345,7 +345,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     <div
                       className={`h-2 rounded-full ${
                         usagePercent > 80
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : usagePercent > 60
                             ? 'bg-amber-500'
                             : 'bg-green-500'
@@ -377,7 +377,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
           <button
             onClick={openCreateModal}
             disabled={!!alertsLoadError}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
           >
             Create Alert
           </button>
@@ -402,13 +402,13 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     <div
                       className={`p-3 rounded-lg ${
                         alert.isActive
-                          ? 'bg-violet-100 dark:bg-violet-900/30'
+                          ? 'bg-primary-100 dark:bg-primary-900/30'
                           : 'bg-slate-100 dark:bg-navy-700'
                       }`}
                     >
                       <Icon
                         className={
-                          alert.isActive ? 'text-violet-600' : 'text-slate-400 dark:text-slate-500'
+                          alert.isActive ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'
                         }
                         size={20}
                       />
@@ -455,7 +455,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     </button>
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600"
+                      className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -574,7 +574,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         <button
                           type="button"
                           onClick={() => removeEmailField(idx)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -584,7 +584,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                   <button
                     type="button"
                     onClick={addEmailField}
-                    className="text-sm text-violet-600 hover:text-violet-500"
+                    className="text-sm text-primary-600 hover:text-primary-500"
                   >
                     + Add another email
                   </button>
@@ -600,7 +600,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                 <button
                   onClick={handleSaveAlert}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                   {editingAlert ? 'Save Changes' : 'Create Alert'}

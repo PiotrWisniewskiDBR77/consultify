@@ -46,7 +46,7 @@ function HealthIcon({ status }: { status?: HealthStatus }) {
     case 'degraded':
       return <AlertTriangle size={14} className="text-amber-400" />;
     case 'unhealthy':
-      return <XCircle size={14} className="text-red-400" />;
+      return <XCircle size={14} className="text-rose-400" />;
     default:
       return <Server size={14} className="text-slate-400" />;
   }
@@ -444,7 +444,7 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
                               e.stopPropagation();
                               handleRemove(assignment);
                             }}
-                            className="p-2 text-slate-400 hover:text-red-400 transition-colors shrink-0"
+                            className="p-2 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
                           >
                             <Trash2 size={16} />
                           </button>

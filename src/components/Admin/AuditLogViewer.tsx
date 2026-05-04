@@ -206,7 +206,7 @@ export function AuditLogViewer() {
     if (flagged) {
       return (
         <span
-          className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1`}
+          className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 flex items-center gap-1`}
         >
           <AlertTriangle size={12} />
           FLAGGED
@@ -216,7 +216,7 @@ export function AuditLogViewer() {
     switch (riskLevel) {
       case 'HIGH':
         return (
-          <span className={`${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}>
+          <span className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400`}>
             HIGH
           </span>
         );
@@ -261,8 +261,8 @@ export function AuditLogViewer() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-xl">
-              <Shield size={24} className="text-purple-500" />
+            <div className="p-3 bg-primary-500/10 rounded-xl">
+              <Shield size={24} className="text-primary-500" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AI Audit Log</h1>
@@ -284,7 +284,7 @@ export function AuditLogViewer() {
             <button
               onClick={handleExportCSV}
               disabled={exporting}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
               Export CSV
@@ -310,12 +310,12 @@ export function AuditLogViewer() {
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-500/10 rounded-lg">
-                  <AlertTriangle size={18} className="text-red-500" />
+                <div className="p-2 bg-rose-500/10 rounded-lg">
+                  <AlertTriangle size={18} className="text-rose-500" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Flagged</p>
-                  <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                  <p className="text-xl font-bold text-rose-600 dark:text-rose-400">
                     {stats.flagged_requests || 0}
                   </p>
                 </div>
@@ -323,8 +323,8 @@ export function AuditLogViewer() {
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-500/10 rounded-lg">
-                  <AlertCircle size={18} className="text-red-500" />
+                <div className="p-2 bg-rose-500/10 rounded-lg">
+                  <AlertCircle size={18} className="text-rose-500" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">High Risk</p>
@@ -406,7 +406,7 @@ export function AuditLogViewer() {
                 type="checkbox"
                 checked={filters.flaggedOnly}
                 onChange={(e) => setFilters({ ...filters, flaggedOnly: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-purple-600 focus:ring-purple-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">Flagged Only</span>
             </label>
@@ -428,7 +428,7 @@ export function AuditLogViewer() {
               filters.endDate) && (
               <button
                 onClick={() => setFilters(defaultFilters)}
-                className="flex items-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm"
+                className="flex items-center gap-1 px-3 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors text-sm"
               >
                 <X size={14} />
                 Clear
@@ -493,15 +493,15 @@ export function AuditLogViewer() {
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 size={32} className="animate-spin text-purple-500" />
+              <Loader2 size={32} className="animate-spin text-primary-500" />
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-20 text-red-500">
+            <div className="flex flex-col items-center justify-center py-20 text-rose-500">
               <AlertTriangle size={32} className="mb-2" />
               <p>{error}</p>
               <button
                 onClick={fetchLogs}
-                className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
+                className="mt-4 px-4 py-2 bg-rose-100 dark:bg-rose-900/20 text-rose-600 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/30 transition-colors"
               >
                 Retry
               </button>
@@ -548,7 +548,7 @@ export function AuditLogViewer() {
                     <tr
                       key={log.id}
                       className={`hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
-                        log.flagged ? 'bg-red-50/50 dark:bg-red-900/10' : ''
+                        log.flagged ? 'bg-rose-50/50 dark:bg-rose-900/10' : ''
                       }`}
                     >
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
@@ -685,12 +685,12 @@ export function AuditLogViewer() {
               </div>
 
               {selectedLog.flagged && selectedLog.flag_reason && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                  <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-medium mb-1">
+                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
+                  <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-medium mb-1">
                     <AlertTriangle size={16} />
                     Flag Reason
                   </div>
-                  <p className="text-red-600 dark:text-red-300">{selectedLog.flag_reason}</p>
+                  <p className="text-rose-600 dark:text-rose-300">{selectedLog.flag_reason}</p>
                 </div>
               )}
 

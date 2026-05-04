@@ -49,7 +49,7 @@ interface UserModelPrefs {
 }
 
 const TIER_BADGE: Record<string, { label: string; className: string } | null> = {
-  PLATFORM: { label: 'PLATFORM', className: 'bg-violet-600 text-white' },
+  PLATFORM: { label: 'PLATFORM', className: 'bg-primary-600 text-white' },
   PREMIUM: { label: 'PRO', className: 'bg-amber-500/20 text-amber-400' },
   REASONING: { label: 'REASONING', className: 'bg-blue-500/20 text-blue-400' },
   STANDARD: null,
@@ -207,8 +207,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           'flex items-center justify-between p-3 rounded-lg border transition-all duration-200 cursor-pointer',
           isEnabled
             ? isPlatform
-              ? 'border-violet-500/50 bg-gradient-to-r from-violet-600/10 to-violet-500/5'
-              : 'border-violet-500/40 bg-violet-600/5'
+              ? 'border-primary-500/50 bg-gradient-to-r from-primary-600/10 to-primary-500/5'
+              : 'border-primary-500/40 bg-primary-600/5'
             : 'border-white/5 bg-navy-900/30 hover:border-white/10'
         )}
         onClick={() => toggleModel(model.id)}
@@ -217,7 +217,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           <div
             className={cn(
               'flex-shrink-0',
-              isEnabled ? (isPlatform ? 'text-violet-300' : 'text-violet-400') : 'text-slate-600'
+              isEnabled ? (isPlatform ? 'text-primary-300' : 'text-primary-400') : 'text-slate-600'
             )}
           >
             {isEnabled ? <CheckCircle size={18} /> : <Circle size={18} />}
@@ -225,7 +225,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={cn('text-sm font-medium', isPlatform ? 'text-violet-200' : 'text-white')}
+                className={cn('text-sm font-medium', isPlatform ? 'text-primary-200' : 'text-white')}
               >
                 {model.name}
               </span>
@@ -245,7 +245,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
                 </span>
               )}
               {isPreferred && (
-                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-violet-600 text-white rounded">
+                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-primary-600 text-white rounded">
                   {t('settings.ai.preferred', 'PREFERRED')}
                 </span>
               )}
@@ -266,8 +266,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
             className={cn(
               'px-2.5 py-1 text-xs rounded-md transition-colors flex-shrink-0',
               isPreferred
-                ? 'bg-violet-600 text-white'
-                : 'bg-white/5 text-slate-400 hover:bg-violet-600/20 hover:text-violet-300'
+                ? 'bg-primary-600 text-white'
+                : 'bg-white/5 text-slate-400 hover:bg-primary-600/20 hover:text-primary-300'
             )}
           >
             {isPreferred
@@ -340,14 +340,14 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
             renderSection(
               t('settings.ai.platformModel', 'Platform Model'),
               Zap,
-              'text-violet-400',
+              'text-primary-400',
               platform,
               platform.length > 0 && (
-                <div className="mt-3 p-3 bg-gradient-to-r from-violet-600/10 to-indigo-600/5 border border-violet-500/20 rounded-lg">
+                <div className="mt-3 p-3 bg-gradient-to-r from-primary-600/10 to-indigo-600/5 border border-primary-500/20 rounded-lg">
                   <div className="flex items-start gap-3">
-                    <Sparkles size={16} className="text-violet-400 flex-shrink-0 mt-0.5" />
+                    <Sparkles size={16} className="text-primary-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-violet-300 font-medium mb-1">
+                      <p className="text-xs text-primary-300 font-medium mb-1">
                         Vector DBR77 — Platform AI
                       </p>
                       <p className="text-xs text-slate-400 leading-relaxed">
@@ -421,7 +421,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               {/* Generation Parameters */}
               <div>
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <Sparkles size={14} className="text-violet-400" />
+                  <Sparkles size={14} className="text-primary-400" />
                   {t('settings.ai.generationParams', 'Generation Parameters')}
                 </h4>
 
@@ -444,7 +444,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
                           onChange={(e) =>
                             setPrefs((prev) => ({ ...prev, temperature: Number(e.target.value) }))
                           }
-                          className="flex-1 accent-violet-500"
+                          className="flex-1 accent-primary-500"
                         />
                         <span className="text-sm font-mono text-white w-10 text-right">
                           {prefs.temperature.toFixed(1)}

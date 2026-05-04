@@ -208,7 +208,7 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
       {actionError && (
         <div
           role="alert"
-          className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
         >
           {actionError}
         </div>
@@ -230,8 +230,8 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-              <FileArchive className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <FileArchive className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <CardTitle>{t('settings.export.title', 'Export Your Data')}</CardTitle>

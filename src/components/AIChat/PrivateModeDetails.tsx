@@ -48,7 +48,7 @@ interface PrivateModeDetailsProps {
 }
 
 const BADGE_CLASSNAME =
-  'mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300';
+  'mr-1 inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:border-primary-800/70 dark:bg-primary-900/25 dark:text-primary-300';
 
 export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
   isEnabled = isPrivateModeDetailsEnabled,
@@ -128,7 +128,7 @@ export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
         aria-expanded={open}
         aria-label={label}
         title={open ? undefined : tooltip}
-        className={`${BADGE_CLASSNAME} cursor-pointer hover:bg-violet-100 dark:hover:bg-violet-900/40 focus:outline-none focus:ring-2 focus:ring-violet-400/50`}
+        className={`${BADGE_CLASSNAME} cursor-pointer hover:bg-primary-100 dark:hover:bg-primary-900/40 focus:outline-none focus:ring-2 focus:ring-primary-400/50`}
       >
         <Lock size={11} strokeWidth={2} />
         <span>{label}</span>

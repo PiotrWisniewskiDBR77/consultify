@@ -379,7 +379,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -430,7 +430,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               {/* Preset Selection */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-3">
-                  <Settings size={14} className="inline mr-1.5 text-violet-400" />
+                  <Settings size={14} className="inline mr-1.5 text-primary-400" />
                   {t('settings.shortcuts.preset', 'Shortcut Preset')}
                 </label>
                 <div className="grid grid-cols-5 gap-3">
@@ -443,14 +443,14 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         className={cn(
                           'p-3 rounded-lg border-2 text-left transition-all duration-200',
                           isSelected
-                            ? 'border-violet-500 bg-violet-500/5'
+                            ? 'border-primary-500 bg-primary-500/5'
                             : 'border-white/10 hover:border-white/20'
                         )}
                       >
                         <p
                           className={cn(
                             'text-sm font-medium',
-                            isSelected ? 'text-violet-400' : 'text-white'
+                            isSelected ? 'text-primary-400' : 'text-white'
                           )}
                         >
                           {t(`settings.shortcuts.presets.${preset.value}.label`, preset.label)}
@@ -480,7 +480,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
-              className="w-full pl-10 pr-4 py-2.5 bg-navy-800/50 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:ring-2 focus:ring-violet-500/50 focus:border-transparent outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-navy-800/50 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500/50 focus:border-transparent outline-none transition-all"
             />
           </div>
 
@@ -531,7 +531,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 'settings.shortcuts.pressKeysPlaceholder',
                                 'Press keys...'
                               )}
-                              className="w-32 px-2 py-1 text-sm bg-navy-900 border border-violet-500 rounded text-white outline-none placeholder:text-slate-600"
+                              className="w-32 px-2 py-1 text-sm bg-navy-900 border border-primary-500 rounded text-white outline-none placeholder:text-slate-600"
                             />
                             <button
                               onClick={() => saveCustomShortcut(shortcut.id)}
@@ -554,7 +554,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                             <KeyBadge keys={getShortcutKey(shortcut)} />
                             <button
                               onClick={() => setEditingShortcut(shortcut.id)}
-                              className="p-1 text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 rounded transition-colors"
+                              className="p-1 text-slate-500 hover:text-primary-400 hover:bg-primary-500/10 rounded transition-colors"
                             >
                               <Edit2 size={14} />
                             </button>
@@ -562,7 +562,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                               onClick={() => toggleShortcut(shortcut.id)}
                               className={cn(
                                 'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
-                                isDisabled ? 'bg-white/10' : 'bg-violet-600'
+                                isDisabled ? 'bg-white/10' : 'bg-primary-600'
                               )}
                             >
                               <span
@@ -583,10 +583,10 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
           ))}
 
           {/* Tip */}
-          <div className="flex items-start gap-3 p-4 bg-violet-500/5 border border-violet-500/10 rounded-xl">
-            <Info size={16} className="text-violet-400 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-3 p-4 bg-primary-500/5 border border-primary-500/10 rounded-xl">
+            <Info size={16} className="text-primary-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-violet-300">
+              <p className="text-sm font-medium text-primary-300">
                 {t('settings.shortcuts.tip', 'Tip')}
               </p>
               <p className="text-sm text-slate-400 mt-0.5">

@@ -61,7 +61,7 @@ const EFFORT_LABELS: Record<string, { en: string; pl: string; color: string }> =
   high: {
     en: 'High',
     pl: 'Wysoki',
-    color: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/20',
+    color: 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/20',
   },
 };
 
@@ -79,7 +79,7 @@ const IMPACT_LABELS: Record<string, { en: string; pl: string; color: string }> =
   high: {
     en: 'High',
     pl: 'Wysoki',
-    color: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/20',
+    color: 'text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-500/20',
   },
 };
 
@@ -191,7 +191,7 @@ const InitiativeCard: React.FC<{
           <PriorityIcon
             className={`w-5 h-5 ${
               initiative.priority === 'high'
-                ? 'text-red-500'
+                ? 'text-rose-500'
                 : initiative.priority === 'medium'
                   ? 'text-yellow-500'
                   : 'text-slate-400 dark:text-slate-500'
@@ -246,7 +246,7 @@ const EffortImpactMatrix: React.FC<{ initiatives: Initiative[]; isPolish: boolea
     'high-high': {
       en: 'Strategic',
       pl: 'Strategiczne',
-      color: 'bg-purple-100 dark:bg-purple-500/20 border-purple-200 dark:border-purple-500/30',
+      color: 'bg-primary-100 dark:bg-primary-500/20 border-primary-200 dark:border-primary-500/30',
     },
     'low-medium': {
       en: 'Fill-ins',
@@ -276,7 +276,7 @@ const EffortImpactMatrix: React.FC<{ initiatives: Initiative[]; isPolish: boolea
     'high-low': {
       en: 'Avoid',
       pl: 'Unikaj',
-      color: 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20',
+      color: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20',
     },
   };
 
@@ -421,9 +421,9 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
   // Error state
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-500/10 rounded-lg p-4 text-center">
-        <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      <div className="bg-rose-50 dark:bg-rose-500/10 rounded-lg p-4 text-center">
+        <AlertCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
+        <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
       </div>
     );
   }
@@ -451,12 +451,12 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
           </div>
           <div className="text-xs text-green-600 dark:text-green-400">Quick Wins</div>
         </div>
-        <div className="bg-purple-50 dark:bg-purple-500/10 rounded-lg p-4 text-center">
-          <Target className="w-6 h-6 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-purple-700 dark:text-purple-400">
+        <div className="bg-primary-50 dark:bg-primary-500/10 rounded-lg p-4 text-center">
+          <Target className="w-6 h-6 text-primary-600 dark:text-primary-400 mx-auto mb-2" />
+          <div className="text-2xl font-bold text-primary-700 dark:text-primary-400">
             {strategic.length}
           </div>
-          <div className="text-xs text-purple-600 dark:text-purple-400">
+          <div className="text-xs text-primary-600 dark:text-primary-400">
             {isPolish ? 'Strategiczne' : 'Strategic'}
           </div>
         </div>
@@ -498,7 +498,7 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
       {strategic.length > 0 && (
         <div>
           <h4 className="flex items-center gap-2 text-sm font-semibold text-navy-900 dark:text-white mb-3">
-            <Target className="w-4 h-4 text-purple-500" />
+            <Target className="w-4 h-4 text-primary-500" />
             {isPolish ? 'Inicjatywy Strategiczne' : 'Strategic Initiatives'} ({strategic.length})
           </h4>
           <div className="space-y-3">

@@ -193,6 +193,10 @@ server/exports/
 
 # Local backups
 _backup/
+/backups/
+/data/
+/tests/
+# dist/ already ignored above
 
 # Personal tooling
 Piotr_Tools/

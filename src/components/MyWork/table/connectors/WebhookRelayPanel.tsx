@@ -540,7 +540,7 @@ const MenuBtn: React.FC<{
     onClick={onClick}
     className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
       danger
-        ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
+        ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10'
         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
     }`}
   >

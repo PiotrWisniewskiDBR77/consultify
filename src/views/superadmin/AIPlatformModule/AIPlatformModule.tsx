@@ -496,7 +496,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       ? 'bg-amber-500'
       : internetSignal.webSearchAvailable
         ? 'bg-emerald-500'
-        : 'bg-red-500';
+        : 'bg-rose-500';
 
   const internetLabel = internetSignal.loading
     ? 'Internet: checking'

@@ -227,7 +227,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
   const getUtilizationColor = (allocated: number, capacity: number) => {
     const rate = (allocated / capacity) * 100;
-    if (rate > 100) return 'text-red-500';
+    if (rate > 100) return 'text-rose-500';
     if (rate >= 80) return 'text-amber-500';
     if (rate >= 50) return 'text-green-500';
     return 'text-blue-500';
@@ -235,7 +235,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
   const getProgressColor = (allocated: number, capacity: number) => {
     const rate = (allocated / capacity) * 100;
-    if (rate > 100) return 'bg-red-500';
+    if (rate > 100) return 'bg-rose-500';
     if (rate >= 80) return 'bg-amber-500';
     if (rate >= 50) return 'bg-green-500';
     return 'bg-blue-500';
@@ -244,7 +244,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -255,7 +255,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Users className="text-cyan-500" size={24} />
+            <Users className="text-blue-500" size={24} />
             Capacity Planning
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -288,7 +288,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Allocated</div>
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
             {totalAllocated}h
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">committed</div>
@@ -298,7 +298,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
           <div
             className={`text-2xl font-bold ${
               utilizationRate > 100
-                ? 'text-red-600'
+                ? 'text-rose-600'
                 : utilizationRate >= 80
                   ? 'text-amber-600'
                   : 'text-green-600'
@@ -311,7 +311,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Overallocated</div>
           <div
-            className={`text-2xl font-bold ${overallocatedCount > 0 ? 'text-red-600' : 'text-green-600'}`}
+            className={`text-2xl font-bold ${overallocatedCount > 0 ? 'text-rose-600' : 'text-green-600'}`}
           >
             {overallocatedCount}
           </div>
@@ -321,14 +321,14 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
       {/* Overallocation Warning */}
       {overallocatedCount > 0 && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 rounded-xl">
-          <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20 rounded-xl">
+          <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-red-700 dark:text-red-300">
+            <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
               {overallocatedCount} team member{overallocatedCount > 1 ? 's are' : ' is'}{' '}
               overallocated
             </p>
-            <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
+            <p className="text-xs text-rose-600/70 dark:text-rose-400/70 mt-1">
               Review task assignments or consider adding resources to maintain delivery quality
             </p>
           </div>
@@ -337,8 +337,8 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
       {/* AI Suggestions */}
       {capacitySummary?.suggestions && capacitySummary.suggestions.length > 0 && (
-        <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-500/20 rounded-xl p-4">
-          <h4 className="font-semibold text-purple-700 dark:text-purple-300 mb-3">
+        <div className="bg-primary-50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-500/20 rounded-xl p-4">
+          <h4 className="font-semibold text-primary-700 dark:text-primary-300 mb-3">
             AI Recommendations
           </h4>
           <div className="space-y-2">
@@ -382,14 +382,14 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
             >
               <div
                 className={`p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors ${
-                  isOverallocated ? 'border-l-4 border-l-red-500' : ''
+                  isOverallocated ? 'border-l-4 border-l-rose-500' : ''
                 }`}
                 onClick={() => setExpandedMember(isExpanded ? null : member.id)}
               >
                 <div className="flex items-center gap-4">
                   {/* Avatar & Name */}
                   <div className="w-48 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold">
+                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
                       {member.name
                         .split(' ')
                         .map((n) => n[0])
@@ -398,7 +398,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
                     <div>
                       <div className="font-medium text-navy-900 dark:text-white">{member.name}</div>
                       {isOverallocated && (
-                        <span className="text-xs text-red-500 font-medium">Overallocated</span>
+                        <span className="text-xs text-rose-500 font-medium">Overallocated</span>
                       )}
                     </div>
                   </div>
@@ -481,7 +481,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
                               Week of {new Date(week.weekStart).toLocaleDateString('pl-PL')}
                             </span>
                             <span
-                              className={`font-medium ${week.isOverloaded ? 'text-red-600' : 'text-purple-600'}`}
+                              className={`font-medium ${week.isOverloaded ? 'text-rose-600' : 'text-primary-600'}`}
                             >
                               {week.allocatedHours}h ({week.utilizationPercent}%)
                             </span>
@@ -535,7 +535,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
             </div>
           </div>
           <div className="text-center p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400">
               {members.filter((m) => m.allocated > m.capacity).length}
             </div>
             <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">

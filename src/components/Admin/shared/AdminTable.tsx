@@ -81,7 +81,7 @@ export function AdminTable<T extends Record<string, any>>({
                   key={String(col.key)}
                   style={{ width: col.width }}
                   className={`
-                                        ${paddingClass} text-xs font-medium text-slate-600 dark:text-slate-400 
+                                        ${paddingClass} text-xs font-medium text-slate-600 dark:text-slate-400
                                         uppercase tracking-wider
                                         ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'}
                                         ${col.className || ''}
@@ -212,7 +212,7 @@ export const TableAction: React.FC<TableActionProps> = ({
       }}
       className={`p-1.5 rounded-lg transition-colors ${
         variant === 'danger'
-          ? 'text-slate-600 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10'
+          ? 'text-slate-600 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10'
           : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]'
       }`}
       title={label}

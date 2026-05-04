@@ -111,7 +111,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
         <p className="text-slate-400 dark:text-slate-500 animate-pulse">
           Synchronizing project intelligence...
         </p>
@@ -140,10 +140,10 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
       {/* Project Header - DBR77 Compatible */}
       <div className="flex flex-wrap justify-between items-start gap-4 bg-gradient-to-r from-primary-600 to-secondary-700 dark:bg-navy-900/40 dark:from-transparent dark:to-transparent backdrop-blur-md p-8 rounded-xl border border-primary-500/20 dark:border-navy-700 shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-purple-600/5 blur-[100px] pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-primary-600/5 blur-[100px] pointer-events-none"></div>
 
         <div className="flex gap-6 items-start z-10">
-          <div className="p-5 rounded-xl bg-white/20 dark:bg-gradient-to-br dark:from-purple-600 dark:to-indigo-600 text-white shadow-xl shadow-purple-900/20">
+          <div className="p-5 rounded-xl bg-white/20 dark:bg-gradient-to-br dark:from-primary-600 dark:to-indigo-600 text-white shadow-xl shadow-primary-900/20">
             <Layers size={32} />
           </div>
           <div>
@@ -248,7 +248,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none"
+                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none"
                       />
                     </div>
                     <div>
@@ -259,7 +259,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         value={editForm.description}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                         rows={4}
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none resize-none"
+                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none resize-none"
                       />
                     </div>
                     <div>
@@ -269,7 +269,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.goal}
                         onChange={(e) => setEditForm({ ...editForm, goal: e.target.value })}
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none"
+                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none"
                       />
                     </div>
                     <div>
@@ -284,7 +284,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                             status: e.target.value as Project['status'],
                           })
                         }
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-purple-500 outline-none appearance-none"
+                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none appearance-none"
                       >
                         <option value="active">Active</option>
                         <option value="archived">Archived</option>
@@ -295,7 +295,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                   <div className="flex gap-4">
                     <button
                       type="submit"
-                      className="flex-1 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/30 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold shadow-lg shadow-primary-900/30 transition-all flex items-center justify-center gap-2"
                     >
                       <Check size={20} /> Save Changes
                     </button>
@@ -311,7 +311,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
               ) : (
                 <div className="space-y-6">
                   <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-8 space-y-6 relative overflow-hidden shadow-sm dark:shadow-none">
-                    <div className="flex items-center gap-3 text-primary-600 dark:text-purple-400 mb-2">
+                    <div className="flex items-center gap-3 text-primary-600 dark:text-primary-400 mb-2">
                       <Info size={18} />
                       <h3 className="text-sm font-bold uppercase tracking-widest">About Project</h3>
                     </div>
@@ -396,7 +396,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
               {/* Project Ownership Panel - DBR77 Compatible */}
               <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 shadow-sm dark:shadow-none">
                 <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-primary-600 dark:text-purple-400" />
+                  <ShieldCheck size={16} className="text-primary-600 dark:text-primary-400" />
                   Project Director
                 </h3>
                 <div className="flex items-center gap-4 bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-navy-700">
@@ -474,10 +474,10 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                 project.initiatives?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="bg-navy-900 border border-white/10 p-6 rounded-xl hover:border-purple-500/30 transition-all flex justify-between items-start group"
+                    className="bg-navy-900 border border-white/10 p-6 rounded-xl hover:border-primary-500/30 transition-all flex justify-between items-start group"
                   >
                     <div>
-                      <h4 className="font-bold text-white mb-1 group-hover:text-purple-400 transition-colors">
+                      <h4 className="font-bold text-white mb-1 group-hover:text-primary-400 transition-colors">
                         {item.title}
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
@@ -507,7 +507,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
           <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-white">Project Assessments</h3>
-              <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-900/20">
+              <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary-900/20">
                 <Plus size={16} /> Run New Assessment
               </button>
             </div>
@@ -625,7 +625,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-red-400 transition-colors">
+                      <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-rose-400 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </div>

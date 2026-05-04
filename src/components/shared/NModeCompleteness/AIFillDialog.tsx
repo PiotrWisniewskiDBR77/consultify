@@ -180,7 +180,7 @@ export const AIFillDialog: React.FC<AIFillDialogProps> = ({
                   <button
                     type="button"
                     onClick={() => handleReject(p.fieldId)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                   >
                     <X size={14} />
                     {t('nmodeCompleteness.reject')}

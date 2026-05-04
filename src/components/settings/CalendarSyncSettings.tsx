@@ -184,7 +184,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -221,7 +221,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
                   </span>
                   <button
                     onClick={() => disconnectCalendar(cal.id)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 rounded transition-colors"
+                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded transition-colors"
                     title={t('common.disconnect', 'Disconnect')}
                   >
                     <X size={16} />

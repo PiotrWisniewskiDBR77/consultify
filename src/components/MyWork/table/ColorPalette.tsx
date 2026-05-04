@@ -45,7 +45,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             onClick={() => onPaletteChange(id)}
             className={`w-full flex items-center gap-2 p-2 rounded-xl transition-colors ${
               activePalette === id
-                ? 'bg-violet-500/10 ring-1 ring-violet-500/30'
+                ? 'bg-primary-500/10 ring-1 ring-primary-500/30'
                 : 'hover:bg-slate-50 dark:hover:bg-navy-800'
             }`}
           >
@@ -57,7 +57,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 flex-1 text-left">
               {palette.name}
             </span>
-            {activePalette === id && <Check size={12} className="text-violet-500" />}
+            {activePalette === id && <Check size={12} className="text-primary-500" />}
           </button>
         ))}
       </div>
@@ -68,7 +68,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             onAutoAssign();
             onClose();
           }}
-          className="w-full px-3 py-2 rounded-xl text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+          className="w-full px-3 py-2 rounded-xl text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
         >
           {isPl ? 'Auto-przypisz kolory do wierszy' : 'Auto-assign colors to rows'}
         </button>

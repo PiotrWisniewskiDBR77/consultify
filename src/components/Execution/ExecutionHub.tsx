@@ -1915,7 +1915,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <span className="text-[11px] font-semibold tabular-nums text-amber-500">
             {execTopline.pendingDecisions}
           </span>
-          <span className="text-[11px] font-semibold tabular-nums text-violet-500">
+          <span className="text-[11px] font-semibold tabular-nums text-primary-500">
             {execTopline.overdueTasks}
           </span>
         </button>
@@ -2593,7 +2593,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 {portfolioMetrics.budgetHealth === null ? '—' : `${portfolioMetrics.budgetHealth}%`}
               </p>
             </div>
-            <LayoutDashboard className="text-violet-400" />
+            <LayoutDashboard className="text-primary-400" />
           </div>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
@@ -3404,7 +3404,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Redistribute idle capacity',
           'Flag resource gaps to hiring',
         ],
-        icon: <Users size={18} className="text-violet-500" />,
+        icon: <Users size={18} className="text-primary-500" />,
         highlights: [{ label: 'Tasks', value: totalTasks }],
       },
       {
@@ -3773,7 +3773,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'execution.manager.suggestions.smoothExpected',
           'Workload spread evenly; no single-point overload.'
         ),
-        icon: <Users size={14} className="text-violet-500" />,
+        icon: <Users size={14} className="text-primary-500" />,
         severity: 'low',
       });
     }

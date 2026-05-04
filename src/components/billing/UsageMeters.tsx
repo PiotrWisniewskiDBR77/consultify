@@ -29,15 +29,15 @@ const formatNumber = (num: number): string => {
 };
 
 const getStatusColor = (percentage: number): string => {
-  if (percentage >= 95) return 'bg-red-500';
-  if (percentage >= 80) return 'bg-orange-500';
+  if (percentage >= 95) return 'bg-rose-500';
+  if (percentage >= 80) return 'bg-amber-500';
   if (percentage >= 60) return 'bg-yellow-500';
   return 'bg-emerald-500';
 };
 
 const getTextColor = (percentage: number): string => {
-  if (percentage >= 95) return 'text-red-500';
-  if (percentage >= 80) return 'text-orange-500';
+  if (percentage >= 95) return 'text-rose-500';
+  if (percentage >= 80) return 'text-amber-500';
   return 'text-gray-600 dark:text-gray-400';
 };
 
@@ -63,7 +63,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
 
         {/* Storage */}
         <div className="flex items-center gap-2">
-          <HardDrive className="w-4 h-4 text-purple-500" />
+          <HardDrive className="w-4 h-4 text-primary-500" />
           <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={`h-full ${getStatusColor(storage.percentage)} transition-all`}
@@ -95,7 +95,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
             </div>
           </div>
           {tokens.percentage >= 80 && (
-            <div className="flex items-center gap-1.5 text-orange-500">
+            <div className="flex items-center gap-1.5 text-amber-500">
               <AlertTriangle className="w-4 h-4" />
               <span className="text-sm font-medium">
                 {tokens.percentage >= 95 ? 'Critical' : 'Warning'}
@@ -129,8 +129,8 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <HardDrive className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <HardDrive className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">Storage Usage</h3>
@@ -138,7 +138,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
             </div>
           </div>
           {storage.percentage >= 80 && (
-            <div className="flex items-center gap-1.5 text-orange-500">
+            <div className="flex items-center gap-1.5 text-amber-500">
               <AlertTriangle className="w-4 h-4" />
               <span className="text-sm font-medium">
                 {storage.percentage >= 95 ? 'Critical' : 'Warning'}

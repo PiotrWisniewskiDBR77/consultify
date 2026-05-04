@@ -63,7 +63,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
             setRating('negative');
             setShowModal(true);
           }}
-          className="p-1 hover:bg-red-500/10 rounded text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
+          className="p-1 hover:bg-rose-500/10 rounded text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
           title="Not Helpful"
         >
           <ThumbsDown size={14} />
@@ -75,7 +75,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
           <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-sm shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-white flex items-center gap-2">
-                <MessageSquare size={16} className="text-purple-400" />
+                <MessageSquare size={16} className="text-primary-400" />
                 Provide Feedback
               </h3>
               <button
@@ -101,8 +101,8 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
                 onClick={() => setRating('negative')}
                 className={`p-3 rounded-xl border transition-all ${
                   rating === 'negative'
-                    ? 'bg-red-500/20 border-red-500 text-red-400'
-                    : 'bg-navy-950 border-white/5 text-slate-400 dark:text-slate-500 hover:border-red-500/50'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-400'
+                    : 'bg-navy-950 border-white/5 text-slate-400 dark:text-slate-500 hover:border-rose-500/50'
                 }`}
               >
                 <ThumbsDown size={24} />
@@ -113,7 +113,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Tell us more about your experience... (optional)"
-              className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-sm text-white focus:border-purple-500 outline-none h-24 mb-4 resize-none"
+              className="w-full bg-navy-950 border border-white/10 rounded-lg p-3 text-sm text-white focus:border-primary-500 outline-none h-24 mb-4 resize-none"
             />
 
             <div className="flex justify-end">

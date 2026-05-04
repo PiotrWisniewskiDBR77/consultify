@@ -73,13 +73,13 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
       );
     case 'running':
       return (
-        <div className="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
+        <div className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
           <Loader2 size={12} className="text-white animate-spin" />
         </div>
       );
     case 'failed':
       return (
-        <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center transition-all duration-300 animate-in zoom-in">
+        <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center transition-all duration-300 animate-in zoom-in">
           <AlertCircle size={12} className="text-white" />
         </div>
       );
@@ -118,10 +118,10 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
   }, [operations]);
 
   const progressColor = stats.hasErrors
-    ? 'bg-red-500'
+    ? 'bg-rose-500'
     : stats.allDone
       ? 'bg-emerald-500'
-      : 'bg-violet-500';
+      : 'bg-primary-500';
 
   const statusLabel = stats.allDone
     ? stats.hasErrors
@@ -136,14 +136,14 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
       : 'Executing…';
 
   return (
-    <div className="rounded-2xl border border-violet-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
       {/* Header + Progress bar */}
       <div className="px-4 py-3 border-b border-slate-200/60 dark:border-zinc-700/60">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            {!stats.allDone && <Loader2 size={14} className="animate-spin text-violet-500" />}
+            {!stats.allDone && <Loader2 size={14} className="animate-spin text-primary-500" />}
             {stats.allDone && !stats.hasErrors && <Check size={14} className="text-emerald-500" />}
-            {stats.allDone && stats.hasErrors && <AlertCircle size={14} className="text-red-500" />}
+            {stats.allDone && stats.hasErrors && <AlertCircle size={14} className="text-rose-500" />}
             <span className="text-xs font-semibold text-slate-700 dark:text-zinc-200">
               {statusLabel}
             </span>
@@ -173,9 +173,9 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
               key={op.id}
               className={`flex items-start gap-2.5 px-3 py-2 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/20'
+                  ? 'bg-primary-500/5 dark:bg-primary-500/10 border border-primary-500/20'
                   : isFailed
-                    ? 'bg-red-500/5 dark:bg-red-500/10 border border-red-500/20'
+                    ? 'bg-rose-500/5 dark:bg-rose-500/10 border border-rose-500/20'
                     : isDone
                       ? 'bg-emerald-500/5 dark:bg-emerald-500/5 border border-transparent'
                       : 'border border-transparent opacity-60'
@@ -204,9 +204,9 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                       isDone
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : isFailed
-                          ? 'text-red-600 dark:text-red-400'
+                          ? 'text-rose-600 dark:text-rose-400'
                           : isActive
-                            ? 'text-violet-600 dark:text-violet-400'
+                            ? 'text-primary-600 dark:text-primary-400'
                             : 'text-slate-400 dark:text-zinc-500'
                     }`}
                   />
@@ -215,7 +215,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                       isDone
                         ? 'text-emerald-700 dark:text-emerald-300'
                         : isFailed
-                          ? 'text-red-700 dark:text-red-300'
+                          ? 'text-rose-700 dark:text-rose-300'
                           : isActive
                             ? 'text-slate-700 dark:text-zinc-200'
                             : 'text-slate-500 dark:text-zinc-400'
@@ -225,7 +225,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                   </span>
                 </div>
                 {isFailed && op.error && (
-                  <p className="mt-1 text-[10px] text-red-600 dark:text-red-400 leading-tight">
+                  <p className="mt-1 text-[10px] text-rose-600 dark:text-rose-400 leading-tight">
                     {op.error}
                   </p>
                 )}
@@ -251,8 +251,8 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
 
       {/* Error summary */}
       {stats.allDone && stats.hasErrors && (
-        <div className="px-4 py-3 border-t border-red-200/60 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/20">
-          <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+        <div className="px-4 py-3 border-t border-rose-200/60 dark:border-rose-800/40 bg-rose-50/50 dark:bg-rose-950/20">
+          <p className="text-xs text-rose-700 dark:text-rose-300 font-medium">
             {isPl
               ? `${stats.failed} z ${stats.total} operacji nie powiodło się`
               : `${stats.failed} of ${stats.total} operations failed`}

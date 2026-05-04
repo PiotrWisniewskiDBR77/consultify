@@ -88,7 +88,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
     trend === 'up'
       ? 'text-green-500'
       : trend === 'down'
-        ? 'text-red-500'
+        ? 'text-rose-500'
         : 'text-slate-400 dark:text-slate-500';
 
   if (loading && !metrics) {

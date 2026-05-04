@@ -64,7 +64,7 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({ projectId, organ
         </h2>
 
         {/* Overall Score */}
-        <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl p-8 mb-6">
+        <div className="bg-gradient-to-br from-blue-500 to-primary-600 text-white rounded-xl p-8 mb-6">
           <div className="text-center">
             <div className="text-6xl font-bold">{results.overall_score.toFixed(1)}</div>
             <div className="text-xl mt-2">Overall Change Readiness</div>
@@ -88,7 +88,7 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({ projectId, organ
                   </div>
                   <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${score >= 3.5 ? 'bg-green-500' : score >= 2.5 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      className={`h-full ${score >= 3.5 ? 'bg-green-500' : score >= 2.5 ? 'bg-yellow-500' : 'bg-rose-500'}`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -112,7 +112,7 @@ export const ADKARWorkspace: React.FC<ADKARWorkspaceProps> = ({ projectId, organ
                   <span
                     className={`px-2 py-1 text-xs rounded ${
                       rec.priority === 'High'
-                        ? 'bg-red-100 text-red-700'
+                        ? 'bg-rose-100 text-rose-700'
                         : 'bg-yellow-100 text-yellow-700'
                     }`}
                   >

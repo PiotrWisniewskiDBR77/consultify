@@ -575,23 +575,23 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
   const discoveredDepsPanel =
     discoveredDeps !== null ? (
-      <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+      <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
               {t(
                 'initiatives.analysis.logic.discoveredDeps',
                 'AI discovered potential dependencies'
               )}
             </h3>
-            <span className="text-xs text-purple-500 dark:text-purple-400">
+            <span className="text-xs text-primary-500 dark:text-primary-400">
               ({discoveredDeps.length})
             </span>
           </div>
           <button
             onClick={closeWorkspacePanels}
-            className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+            className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
           >
             <X size={14} />
           </button>
@@ -604,7 +604,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+          <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
             {discoveredDeps.map((dep, idx) => {
               const key = `${dep.fromId}::${dep.toId}`;
               const isAccepted = acceptedDiscovered.has(key);
@@ -630,7 +630,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
                         {dep.fromName}
                       </span>
-                      <ArrowRight size={14} className="text-purple-400 shrink-0" />
+                      <ArrowRight size={14} className="text-primary-400 shrink-0" />
                       <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
                         {dep.toName}
                       </span>
@@ -685,14 +685,14 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       <div
         className={`m-4 rounded-xl border overflow-hidden ${
           cycles.length > 0
-            ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
+            ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
             : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
         }`}
       >
         <div
           className={`px-4 py-3 border-b flex items-center justify-between ${
             cycles.length > 0
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
+              ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/50'
               : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
           }`}
         >
@@ -701,14 +701,14 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               size={16}
               className={
                 cycles.length > 0
-                  ? 'text-red-600 dark:text-red-400'
+                  ? 'text-rose-600 dark:text-rose-400'
                   : 'text-emerald-600 dark:text-emerald-400'
               }
             />
             <h3
               className={`text-sm font-semibold ${
                 cycles.length > 0
-                  ? 'text-red-700 dark:text-red-300'
+                  ? 'text-rose-700 dark:text-rose-300'
                   : 'text-emerald-700 dark:text-emerald-300'
               }`}
             >
@@ -727,21 +727,21 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
           </button>
         </div>
         {cycles.map((c, idx) => (
-          <div key={idx} className="px-4 py-3 border-b border-red-200/50 dark:border-red-900/30">
+          <div key={idx} className="px-4 py-3 border-b border-rose-200/50 dark:border-rose-900/30">
             <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
               {c.pathNames.map((name, ni) => (
                 <React.Fragment key={ni}>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded ${
                       ni === 0 || ni === c.pathNames.length - 1
-                        ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                        ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
                         : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     {name}
                   </span>
                   {ni < c.pathNames.length - 1 && (
-                    <ArrowRight size={12} className="text-red-400 shrink-0" />
+                    <ArrowRight size={12} className="text-rose-400 shrink-0" />
                   )}
                 </React.Fragment>
               ))}
@@ -1043,12 +1043,12 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
           <div
             className={`rounded-xl border p-3 ${
               conflictCount > 0
-                ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
+                ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
                 : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
             }`}
           >
             <div
-              className={`text-xl font-semibold ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}
+              className={`text-xl font-semibold ${conflictCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}
             >
               {conflictCount}
             </div>
@@ -1149,23 +1149,23 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
       {/* AI Discover Dependencies panel */}
       {!onRegisterWorkspacePanel && discoveredDeps !== null && (
-        <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+        <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
                 {t(
                   'initiatives.analysis.logic.discoveredDeps',
                   'AI discovered potential dependencies'
                 )}
               </h3>
-              <span className="text-xs text-purple-500 dark:text-purple-400">
+              <span className="text-xs text-primary-500 dark:text-primary-400">
                 ({discoveredDeps.length})
               </span>
             </div>
             <button
               onClick={() => setDiscoveredDeps(null)}
-              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+              className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
             >
               <X size={14} />
             </button>
@@ -1178,7 +1178,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
               {discoveredDeps.map((dep, idx) => {
                 const key = `${dep.fromId}::${dep.toId}`;
                 const isAccepted = acceptedDiscovered.has(key);
@@ -1203,7 +1203,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                         <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
                           {dep.fromName}
                         </span>
-                        <ArrowRight size={14} className="text-purple-400 shrink-0" />
+                        <ArrowRight size={14} className="text-primary-400 shrink-0" />
                         <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
                           {dep.toName}
                         </span>
@@ -1261,14 +1261,14 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         <div
           className={`rounded-xl border overflow-hidden ${
             cycles.length > 0
-              ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
+              ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
               : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
           }`}
         >
           <div
             className={`px-4 py-3 border-b flex items-center justify-between ${
               cycles.length > 0
-                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
+                ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/50'
                 : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
             }`}
           >
@@ -1277,12 +1277,12 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 size={16}
                 className={
                   cycles.length > 0
-                    ? 'text-red-600 dark:text-red-400'
+                    ? 'text-rose-600 dark:text-rose-400'
                     : 'text-emerald-600 dark:text-emerald-400'
                 }
               />
               <h3
-                className={`text-sm font-semibold ${cycles.length > 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+                className={`text-sm font-semibold ${cycles.length > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}
               >
                 {cycles.length > 0
                   ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
@@ -1299,21 +1299,21 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             </button>
           </div>
           {cycles.map((c, idx) => (
-            <div key={idx} className="px-4 py-3 border-b border-red-200/50 dark:border-red-900/30">
+            <div key={idx} className="px-4 py-3 border-b border-rose-200/50 dark:border-rose-900/30">
               <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
                 {c.pathNames.map((name, ni) => (
                   <React.Fragment key={ni}>
                     <span
                       className={`text-xs font-medium px-2 py-0.5 rounded ${
                         ni === 0 || ni === c.pathNames.length - 1
-                          ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                          ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       {name}
                     </span>
                     {ni < c.pathNames.length - 1 && (
-                      <ArrowRight size={12} className="text-red-400 shrink-0" />
+                      <ArrowRight size={12} className="text-rose-400 shrink-0" />
                     )}
                   </React.Fragment>
                 ))}
@@ -1548,7 +1548,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     <tr
                       className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
                         hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
-                        ${d.hasTimingConflict ? 'bg-red-500/5 dark:bg-red-500/10' : ''}`}
+                        ${d.hasTimingConflict ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
                       onClick={() => setExpandedDep(isExpanded ? null : depKey)}
                     >
                       <td className="px-4 py-3 text-slate-400">
@@ -1568,7 +1568,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       <td className="text-center">
                         <ArrowRight
                           size={14}
-                          className={d.hasTimingConflict ? 'text-red-400' : 'text-slate-400'}
+                          className={d.hasTimingConflict ? 'text-rose-400' : 'text-slate-400'}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1589,7 +1589,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       </td>
                       <td className="px-4 py-3 text-center">
                         {d.hasTimingConflict ? (
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400">
                             Conflict
                           </span>
                         ) : (
@@ -1608,12 +1608,12 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                               {relatedIssue && (
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                                    <AlertTriangle size={12} className="inline mr-1 text-red-500" />
+                                    <AlertTriangle size={12} className="inline mr-1 text-rose-500" />
                                     {relatedIssue.description}
                                   </p>
                                   {relatedIssue.fixSuggestion && (
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                      <Sparkles size={10} className="inline mr-1 text-purple-500" />
+                                      <Sparkles size={10} className="inline mr-1 text-primary-500" />
                                       {relatedIssue.fixSuggestion}
                                     </p>
                                   )}
@@ -1625,7 +1625,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                       }}
                                       disabled={applyingFix === relatedIssue.id}
                                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                                        bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20
+                                        bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20
                                         disabled:opacity-50 transition-colors"
                                     >
                                       {applyingFix === relatedIssue.id ? (
@@ -1702,9 +1702,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 onClick={computeDiscoverDeps}
                 disabled={discoverRunning}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
-                bg-gradient-to-r from-purple-600 to-indigo-600 text-white
-                hover:from-purple-700 hover:to-indigo-700
-                disabled:opacity-60 shadow-lg shadow-purple-500/20 transition-all"
+                bg-gradient-to-r from-primary-600 to-indigo-600 text-white
+                hover:from-primary-700 hover:to-indigo-700
+                disabled:opacity-60 shadow-lg shadow-primary-500/20 transition-all"
               >
                 {discoverRunning ? (
                   <Loader2 size={16} className="animate-spin" />

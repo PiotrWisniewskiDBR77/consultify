@@ -229,12 +229,12 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
               <SettingsDivider />
 
               {/* Danger zone: Clear Memory */}
-              <div className="p-4 border border-red-500/20 rounded-lg bg-red-500/5">
+              <div className="p-4 border border-rose-500/20 rounded-lg bg-rose-500/5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle size={18} className="text-rose-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-sm font-medium text-red-300">
+                      <h4 className="text-sm font-medium text-rose-300">
                         {t('settings.ai.dangerZone', 'Danger Zone')}
                       </h4>
                       <p className="text-xs text-slate-500 mt-1">
@@ -249,8 +249,8 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                     <button
                       onClick={() => setShowClearConfirm(true)}
                       className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium
-                    border border-red-500/30 text-red-400 rounded-lg
-                    hover:bg-red-500/10 transition-colors flex-shrink-0"
+                    border border-rose-500/30 text-rose-400 rounded-lg
+                    hover:bg-rose-500/10 transition-colors flex-shrink-0"
                     >
                       <Trash2 size={14} />
                       {t('settings.ai.clearMemory', 'Clear All Memory')}
@@ -267,7 +267,7 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                         onClick={handleClearMemory}
                         disabled={clearing}
                         className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium
-                      bg-red-600 text-white rounded-lg hover:bg-red-500
+                      bg-rose-600 text-white rounded-lg hover:bg-rose-500
                       disabled:opacity-50 transition-colors"
                       >
                         {clearing ? (

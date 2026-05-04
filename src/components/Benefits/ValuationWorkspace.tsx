@@ -57,8 +57,8 @@ function sensitivityHeatmapColor(value: number, min: number, max: number): strin
   if (ratio >= 0.4)
     return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
   if (ratio >= 0.2)
-    return 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300';
-  return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+    return 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300';
+  return 'bg-rose-100 dark:bg-rose-900/20 text-rose-800 dark:text-rose-300';
 }
 
 function safeNumber(v: unknown, fb: number): number {
@@ -497,7 +497,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-3 py-2 rounded-lg text-sm bg-purple-600 text-white hover:bg-purple-500 inline-flex items-center gap-2"
+            className="px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 inline-flex items-center gap-2"
           >
             <Plus size={16} /> {t('valuation.create.cta', 'New valuation')}
           </button>
@@ -583,7 +583,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                               navigate(`/economics?tab=prediction&openId=${selected.source_id}`);
                             }
                           }}
-                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition font-medium"
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition font-medium"
                         >
                           <ExternalLink size={10} />
                           {t('valuation.detail.viewSource', 'View source')}
@@ -627,7 +627,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                     <div className="relative mb-3">
                       <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 bg-slate-200 dark:bg-navy-700 rounded-full" />
                       <div
-                        className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-purple-600 rounded-full transition-all duration-300"
+                        className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-primary-600 rounded-full transition-all duration-300"
                         style={{ width: `${progressPercent}%` }}
                       />
                       <div className="relative flex justify-between">
@@ -637,7 +637,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             className={[
                               'w-3 h-3 rounded-full border-2 transition-colors',
                               idx <= activeIndex
-                                ? 'bg-purple-600 border-purple-600'
+                                ? 'bg-primary-600 border-primary-600'
                                 : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600',
                             ].join(' ')}
                           />
@@ -660,7 +660,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                           className={[
                             'px-3 py-1.5 rounded-lg text-sm border transition',
                             activeStep === s
-                              ? 'bg-purple-600 text-white border-purple-600'
+                              ? 'bg-primary-600 text-white border-primary-600'
                               : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800',
                           ].join(' ')}
                         >
@@ -684,7 +684,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               {activeStep === 'assumptions' && (
                 <div className="space-y-4">
                   {validationError && (
-                    <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-3 text-sm">
+                    <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl p-3 text-sm">
                       {validationError}
                     </div>
                   )}
@@ -781,8 +781,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   className={[
                                     'text-[10px] px-1.5 py-0.5 rounded border transition-colors',
                                     assumptions.terminalGrowthPercent === preset.value
-                                      ? 'border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-300'
-                                      : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-purple-300',
+                                      ? 'border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-300'
+                                      : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-primary-300',
                                   ].join(' ')}
                                 >
                                   {preset.label}
@@ -831,7 +831,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <button
                           disabled={busy}
                           onClick={handleSaveAssumptions}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60"
                         >
                           {t('valuation.assumptions.save', 'Save assumptions')}
                         </button>
@@ -920,7 +920,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <button
                           disabled={busy}
                           onClick={handleSaveComps}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60"
                         >
                           {t('valuation.comps.save', 'Save comps')}
                         </button>
@@ -1026,7 +1026,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <button
                           disabled={busy || selected?.status !== 'APPROVED'}
                           onClick={handleGenerateAdvisory}
-                          className="px-3 py-1.5 rounded-lg text-xs bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-60"
+                          className="px-3 py-1.5 rounded-lg text-xs bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60"
                         >
                           {t('valuation.advisory.generate', 'Generate')}
                         </button>
@@ -1089,7 +1089,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                       <td className="px-3 py-1.5 text-right font-mono text-slate-600 dark:text-slate-400">
                                         {d.currentValue}
                                       </td>
-                                      <td className="px-3 py-1.5 text-right font-mono text-purple-600 dark:text-purple-400">
+                                      <td className="px-3 py-1.5 text-right font-mono text-primary-600 dark:text-primary-400">
                                         {d.change}
                                       </td>
                                       <td className="px-3 py-1.5 text-right font-mono text-emerald-600 dark:text-emerald-400">
@@ -1121,20 +1121,20 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
                                 medium:
                                   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-                                high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                                high: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
                               };
                               const impactKey = String(r.impactTier || '').toLowerCase();
                               const effortKey = String(r.effort || '').toLowerCase();
                               return (
                                 <div
                                   key={r.id}
-                                  className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
+                                  className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="text-sm font-semibold text-slate-900 dark:text-white">
                                       {r.title}
                                     </div>
-                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 font-medium">
+                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 font-medium">
                                       {r.category}
                                     </span>
                                   </div>
@@ -1163,7 +1163,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     <button
                                       disabled={busy}
                                       onClick={() => handleConvertRecommendation(String(r.id))}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-60 transition-colors"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-60 transition-colors"
                                     >
                                       <Plus size={12} />
                                       {t('valuation.advisory.convert', 'Create initiative')}
@@ -1393,7 +1393,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 </table>
                                 <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400">
                                   <span>{t('valuation.sensitivity.legend', 'Legend')}:</span>
-                                  <span className="inline-block w-3 h-3 rounded bg-red-100 dark:bg-red-900/20" />
+                                  <span className="inline-block w-3 h-3 rounded bg-rose-100 dark:bg-rose-900/20" />
                                   <span>{t('valuation.sensitivity.lower', 'Lower')}</span>
                                   <span className="inline-block w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/20" />
                                   <span>{t('valuation.sensitivity.mid', 'Mid')}</span>
@@ -1444,7 +1444,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                     <button
                       disabled={busy}
                       onClick={handleExportPptx}
-                      className="px-3 py-2 rounded-lg text-sm bg-purple-600 text-white hover:bg-purple-500 inline-flex items-center gap-2 disabled:opacity-60"
+                      className="px-3 py-2 rounded-lg text-sm bg-primary-600 text-white hover:bg-primary-500 inline-flex items-center gap-2 disabled:opacity-60"
                     >
                       {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download size={16} />}
                       {t('valuation.export.pptx', 'Export PPTX')}
@@ -1558,7 +1558,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               <button
                 disabled={busy}
                 onClick={handleCreate}
-                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500 disabled:opacity-60"
+                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 disabled:opacity-60"
               >
                 {busy ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

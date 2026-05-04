@@ -86,8 +86,8 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
           <p className="font-bold text-navy-900 dark:text-white mb-2">Rok {label}</p>
           <div className="space-y-1.5 text-sm">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-red-500 flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-red-500" />
+              <span className="text-rose-500 flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-rose-500" />
                 Costs:
               </span>
               <span className="font-medium text-navy-900 dark:text-white">
@@ -114,7 +114,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
                   Netto:
                 </span>
                 <span
-                  className={`font-bold ${data.netCashFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                  className={`font-bold ${data.netCashFlow >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
                 >
                   {new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(
                     data.netCashFlow
@@ -124,12 +124,12 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
             </div>
             {showCumulative && (
               <div className="flex items-center justify-between gap-4">
-                <span className="text-purple-500 flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full border-2 border-purple-500" />
+                <span className="text-primary-500 flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full border-2 border-primary-500" />
                   Skumulowane:
                 </span>
                 <span
-                  className={`font-bold ${data.cumulativeCashFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                  className={`font-bold ${data.cumulativeCashFlow >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
                 >
                   {new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(
                     data.cumulativeCashFlow
@@ -173,7 +173,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
         <div className="flex items-center gap-6">
           <div className="text-right">
             <p className="text-xs text-slate-500 dark:text-slate-400">Total costs</p>
-            <p className="text-sm font-bold text-red-600 dark:text-red-400">
+            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
               {new Intl.NumberFormat('pl-PL', {
                 style: 'currency',
                 currency,
@@ -231,7 +231,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
           )}
 
           {/* Bars for costs and benefits */}
-          <Bar dataKey="costs" name="Costs" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={50} />
+          <Bar dataKey="costs" name="Costs" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={50} />
           <Bar
             dataKey="benefits"
             name="Benefits"
@@ -256,10 +256,10 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
               type="monotone"
               dataKey="cumulativeCashFlow"
               name="Skumulowane"
-              stroke="#8b5cf6"
+              stroke="#6366f1"
               strokeWidth={3}
-              dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, fill: '#8b5cf6' }}
+              dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, fill: '#6366f1' }}
             />
           )}
         </ComposedChart>
@@ -269,7 +269,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
         <div className="flex items-center justify-center gap-8 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-red-500" />
+            <div className="w-4 h-4 rounded bg-rose-500" />
             <span>Costs (wydatki)</span>
           </div>
           <div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
           </div>
           {showCumulative && (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-1 rounded bg-purple-500" />
+              <div className="w-4 h-1 rounded bg-primary-500" />
               <span>Skumulowane</span>
             </div>
           )}

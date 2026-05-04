@@ -89,14 +89,14 @@ export const UsageStatsPanel: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       {loadError && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-red-700 dark:text-red-300">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-rose-700 dark:text-rose-300">
           <div className="flex items-center gap-2">
             <AlertTriangle size={18} />
             <span>{loadError}</span>
           </div>
           <button
             onClick={fetchUsageData}
-            className="px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-sm font-medium"
+            className="px-3 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-sm font-medium"
           >
             Retry
           </button>
@@ -133,7 +133,7 @@ export const UsageStatsPanel: React.FC = () => {
         </div>
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp size={20} className="text-purple-400" />
+            <TrendingUp size={20} className="text-primary-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Tokens Used</span>
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -190,7 +190,7 @@ export const UsageStatsPanel: React.FC = () => {
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
                         org.plan === 'enterprise'
-                          ? 'bg-purple-500/20 text-purple-400'
+                          ? 'bg-primary-500/20 text-primary-400'
                           : org.plan === 'pro'
                             ? 'bg-blue-500/20 text-blue-400'
                             : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'

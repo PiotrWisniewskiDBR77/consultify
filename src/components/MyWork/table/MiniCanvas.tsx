@@ -46,13 +46,13 @@ type ToolType = 'pen' | 'rect' | 'circle' | 'arrow' | 'eraser';
 
 const STROKE_COLORS = [
   '#1e293b',
-  '#ef4444',
+  '#f43f5e',
   '#3b82f6',
   '#10b981',
   '#f59e0b',
-  '#8b5cf6',
+  '#6366f1',
   '#ec4899',
-  '#06b6d4',
+  '#3b82f6',
 ];
 
 export const MiniCanvas: React.FC<MiniCanvasProps> = ({
@@ -332,7 +332,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
               <button
                 key={t.id}
                 onClick={() => setTool(t.id)}
-                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                 title={t.label}
               >
                 <Icon size={13} />
@@ -390,7 +390,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
           <button
             onClick={handleClear}
             disabled={value.length === 0}
-            className="p-1 rounded text-slate-400 hover:text-red-500 disabled:opacity-30"
+            className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30"
           >
             <Trash2 size={12} />
           </button>

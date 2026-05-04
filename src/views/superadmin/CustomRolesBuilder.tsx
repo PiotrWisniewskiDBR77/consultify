@@ -83,19 +83,19 @@ type TabType = 'roles' | 'permissions' | 'templates';
 
 const ROLE_COLORS = [
   '#6366f1',
-  '#8b5cf6',
+  '#6366f1',
   '#a855f7',
   '#d946ef',
   '#ec4899',
   '#f43f5e',
-  '#ef4444',
-  '#f97316',
+  '#f43f5e',
+  '#f59e0b',
   '#eab308',
   '#84cc16',
   '#22c55e',
   '#10b981',
-  '#14b8a6',
-  '#06b6d4',
+  '#3b82f6',
+  '#3b82f6',
   '#0ea5e9',
   '#3b82f6',
 ];
@@ -282,7 +282,7 @@ const CustomRolesBuilder: React.FC = () => {
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Roles</h3>
           <button
             onClick={() => setShowRoleModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"
           >
             <Plus size={16} />
             New Role
@@ -296,7 +296,7 @@ const CustomRolesBuilder: React.FC = () => {
               onClick={() => setSelectedRole(role)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 selectedRole?.id === role.id
-                  ? 'bg-violet-500/10 border-violet-500/50'
+                  ? 'bg-primary-500/10 border-primary-500/50'
                   : 'bg-white dark:bg-gray-800/50 border-slate-200 dark:border-gray-700 hover:border-slate-300 dark:hover:border-gray-600'
               }`}
             >
@@ -316,7 +316,7 @@ const CustomRolesBuilder: React.FC = () => {
                       {role.isSystem || role.roleType === 'system' ? (
                         <span className="text-xs text-slate-500 dark:text-gray-400">System</span>
                       ) : (
-                        <span className="text-xs text-violet-700 dark:text-violet-300">Custom</span>
+                        <span className="text-xs text-primary-700 dark:text-primary-300">Custom</span>
                       )}
                       {role.userCount > 0 && (
                         <span className="text-xs text-slate-500 dark:text-gray-400">
@@ -332,7 +332,7 @@ const CustomRolesBuilder: React.FC = () => {
                       e.stopPropagation();
                       handleDeleteRole(role.id);
                     }}
-                    className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -435,7 +435,7 @@ const CustomRolesBuilder: React.FC = () => {
                                 key={perm.id}
                                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                                   isAssigned
-                                    ? 'bg-violet-500/10 border border-violet-500/30'
+                                    ? 'bg-primary-500/10 border border-primary-500/30'
                                     : 'bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-700 hover:border-slate-300 dark:hover:border-gray-600'
                                 }`}
                               >
@@ -443,7 +443,7 @@ const CustomRolesBuilder: React.FC = () => {
                                   type="checkbox"
                                   checked={isAssigned}
                                   onChange={() => handleTogglePermission(perm.id, isAssigned)}
-                                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
+                                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
@@ -452,7 +452,7 @@ const CustomRolesBuilder: React.FC = () => {
                                     </span>
                                     {perm.riskLevel === 'critical' && (
                                       <AlertTriangle
-                                        className="text-red-400 flex-shrink-0"
+                                        className="text-rose-400 flex-shrink-0"
                                         size={14}
                                       />
                                     )}
@@ -485,7 +485,7 @@ const CustomRolesBuilder: React.FC = () => {
                   </span>
                   <div className="flex items-center gap-2">
                     {rolePermissions.some((p) => p.riskLevel === 'critical') && (
-                      <span className="flex items-center gap-1 text-xs text-red-400">
+                      <span className="flex items-center gap-1 text-xs text-rose-400">
                         <AlertTriangle size={12} />
                         Critical permissions enabled
                       </span>
@@ -527,7 +527,7 @@ const CustomRolesBuilder: React.FC = () => {
               key={level}
               className={`px-2 py-1 text-xs rounded ${
                 level === 'critical'
-                  ? 'bg-red-500/20 text-red-300'
+                  ? 'bg-rose-500/20 text-rose-300'
                   : level === 'high'
                     ? 'bg-amber-500/20 text-amber-300'
                     : level === 'medium'
@@ -557,7 +557,7 @@ const CustomRolesBuilder: React.FC = () => {
                   <span
                     className={`w-2 h-2 rounded-full ${
                       perm.riskLevel === 'critical'
-                        ? 'bg-red-400'
+                        ? 'bg-rose-400'
                         : perm.riskLevel === 'high'
                           ? 'bg-amber-400'
                           : perm.riskLevel === 'medium'
@@ -624,7 +624,7 @@ const CustomRolesBuilder: React.FC = () => {
             </div>
             <button
               onClick={() => handleCreateFromTemplate(template.name)}
-              className="w-full py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors text-sm"
+              className="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm"
             >
               Create Role from Template
             </button>
@@ -657,7 +657,7 @@ const CustomRolesBuilder: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-violet-600 text-slate-900 dark:text-white'
+                    ? 'border-primary-600 text-slate-900 dark:text-white'
                     : 'border-transparent text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -672,18 +672,18 @@ const CustomRolesBuilder: React.FC = () => {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-violet-500" size={32} />
+          <RefreshCw className="animate-spin text-primary-500" size={32} />
         </div>
       ) : loadError ? (
-        <Card className="p-6 border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10">
-          <div className="flex items-center gap-2 text-red-700 dark:text-red-300 font-medium">
+        <Card className="p-6 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10">
+          <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300 font-medium">
             <AlertTriangle size={18} />
             Failed to load custom roles
           </div>
-          <p className="mt-2 text-sm text-red-700 dark:text-red-300">{loadError}</p>
+          <p className="mt-2 text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-red-800 dark:text-red-200 rounded-lg text-sm font-medium"
+            className="mt-4 px-4 py-2 bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-rose-800 dark:text-rose-200 rounded-lg text-sm font-medium"
           >
             Retry
           </button>
@@ -760,7 +760,7 @@ const CustomRolesBuilder: React.FC = () => {
                       onClick={() => setNewRole({ ...newRole, color })}
                       className={`w-8 h-8 rounded-lg transition-all ${
                         newRole.color === color
-                          ? 'ring-2 ring-violet-600 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-gray-800'
+                          ? 'ring-2 ring-primary-600 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-gray-800'
                           : ''
                       }`}
                       style={{ backgroundColor: color }}
@@ -773,7 +773,7 @@ const CustomRolesBuilder: React.FC = () => {
                   type="checkbox"
                   checked={newRole.isDefault}
                   onChange={(e) => setNewRole({ ...newRole, isDefault: e.target.checked })}
-                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
+                  className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                 />
                 <span className="text-sm text-slate-700 dark:text-gray-200">
                   Set as default role for new users
@@ -790,7 +790,7 @@ const CustomRolesBuilder: React.FC = () => {
               <button
                 onClick={handleCreateRole}
                 disabled={!newRole.displayName}
-                className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 Create Role
               </button>

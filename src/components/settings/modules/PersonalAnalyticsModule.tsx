@@ -104,7 +104,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
           <Icon size={24} className="text-white" />
         </div>
         <div
-          className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}
+          className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-600' : 'text-rose-600'}`}
         >
           {change >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
           {Math.abs(change)}%
@@ -226,7 +226,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             value={`${stats.productivityScore}%`}
             change={stats.productivityChange}
             icon={TrendingUp}
-            color="bg-purple-500"
+            color="bg-primary-500"
           />
           <StatCard
             label="Focus Time"

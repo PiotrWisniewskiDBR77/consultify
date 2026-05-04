@@ -235,32 +235,32 @@ export type CardIntent =
   | 'thank_you';
 
 export const INTENT_COLORS: Record<CardIntent, string> = {
-  cover: 'bg-purple-500',
+  cover: 'bg-primary-500',
   executive_summary: 'bg-blue-500',
   section_intro: 'bg-slate-500',
   key_messages: 'bg-emerald-500',
-  performance_overview: 'bg-violet-500',
+  performance_overview: 'bg-primary-500',
   single_insight: 'bg-amber-500',
-  comparison: 'bg-orange-500',
-  assessment: 'bg-teal-500',
+  comparison: 'bg-amber-500',
+  assessment: 'bg-blue-500',
   recommendation_portfolio: 'bg-green-500',
-  initiative_portfolio: 'bg-cyan-500',
+  initiative_portfolio: 'bg-blue-500',
   prioritization_matrix: 'bg-pink-500',
   roadmap: 'bg-sky-500',
-  risk_management: 'bg-red-500',
+  risk_management: 'bg-rose-500',
   next_steps: 'bg-indigo-500',
   appendix: 'bg-slate-400',
   // Legacy mappings
   content: 'bg-emerald-500',
   summary: 'bg-blue-500',
-  kpi_dashboard: 'bg-violet-500',
+  kpi_dashboard: 'bg-primary-500',
   data: 'bg-amber-500',
   recommendation: 'bg-green-500',
   section_divider: 'bg-slate-500',
   timeline: 'bg-sky-500',
   process: 'bg-sky-500',
   quote: 'bg-emerald-500',
-  risk_overview: 'bg-red-500',
+  risk_overview: 'bg-rose-500',
   thank_you: 'bg-indigo-500',
 };
 
@@ -344,7 +344,7 @@ export const CURATED_COLOR_SETS: CuratedColorSet[] = [
       textSecondary: '#78716C',
       heading: '#292524',
     },
-    chartPalette: ['#292524', '#EA580C', '#F97316', '#FB923C', '#FDBA74', '#FED7AA'],
+    chartPalette: ['#292524', '#EA580C', '#F59E0B', '#FB923C', '#FDBA74', '#FED7AA'],
     styleTags: ['bold', 'energetic', 'dark'],
   },
   {
@@ -353,14 +353,14 @@ export const CURATED_COLOR_SETS: CuratedColorSet[] = [
     colors: {
       primary: '#0F0F23',
       secondary: '#312E81',
-      accent: '#8B5CF6',
+      accent: '#6366F1',
       background: '#0F0F23',
       surface: '#1E1B4B',
       textPrimary: '#F8FAFC',
       textSecondary: '#A5B4FC',
       heading: '#E0E7FF',
     },
-    chartPalette: ['#8B5CF6', '#A78BFA', '#C4B5FD', '#6D28D9', '#4C1D95', '#DDD6FE'],
+    chartPalette: ['#6366F1', '#A78BFA', '#C4B5FD', '#6D28D9', '#4C1D95', '#DDD6FE'],
     styleTags: ['dark', 'premium', 'modern'],
   },
   {
@@ -472,7 +472,7 @@ export const CURATED_COLOR_SETS: CuratedColorSet[] = [
       textSecondary: '#5EEAD4',
       heading: '#134E4A',
     },
-    chartPalette: ['#115E59', '#0F766E', '#14B8A6', '#2DD4BF', '#475569', '#94A3B8'],
+    chartPalette: ['#115E59', '#0F766E', '#3B82F6', '#2DD4BF', '#475569', '#94A3B8'],
     styleTags: ['fresh', 'professional', 'balanced'],
   },
 ];
@@ -567,9 +567,9 @@ export interface SourceTypeInfo {
 export const SOURCE_TYPES: SourceTypeInfo[] = [
   { type: 'initiative', icon: 'Target', color: 'text-blue-500' },
   { type: 'note', icon: 'BookOpen', color: 'text-emerald-500' },
-  { type: 'report', icon: 'FileText', color: 'text-purple-500' },
+  { type: 'report', icon: 'FileText', color: 'text-primary-500' },
   { type: 'financial_analysis', icon: 'TrendingUp', color: 'text-amber-500' },
-  { type: 'tool_session', icon: 'Zap', color: 'text-cyan-500' },
+  { type: 'tool_session', icon: 'Zap', color: 'text-blue-500' },
   { type: 'workspace', icon: 'Layout', color: 'text-indigo-500' },
   { type: 'insight', icon: 'Lightbulb', color: 'text-pink-500' },
 ];

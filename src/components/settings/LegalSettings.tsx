@@ -22,9 +22,9 @@ const DOC_TYPE_INFO: Record<string, { icon: React.ReactNode; color: string }> = 
   TOS: { icon: <FileText size={18} />, color: 'text-blue-500' },
   PRIVACY: { icon: <Shield size={18} />, color: 'text-green-500' },
   COOKIES: { icon: <FileText size={18} />, color: 'text-amber-500' },
-  AUP: { icon: <FileText size={18} />, color: 'text-purple-500' },
+  AUP: { icon: <FileText size={18} />, color: 'text-primary-500' },
   AI_POLICY: { icon: <FileText size={18} />, color: 'text-indigo-500' },
-  DPA: { icon: <Shield size={18} />, color: 'text-red-500' },
+  DPA: { icon: <Shield size={18} />, color: 'text-rose-500' },
   SUBSCRIPTION: { icon: <FileText size={18} />, color: 'text-emerald-500' },
   SLA: { icon: <FileText size={18} />, color: 'text-yellow-500' },
   REFUNDS: { icon: <FileText size={18} />, color: 'text-lime-500' },
@@ -211,7 +211,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
           </div>
           <Link
             to="/legal"
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
           >
             {t('legal.viewAll', 'View All')}
             <ExternalLink className="w-4 h-4" />

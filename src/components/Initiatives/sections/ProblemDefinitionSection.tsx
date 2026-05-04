@@ -49,7 +49,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
       id="problemDefinition"
       title={isPolish ? 'Definicja problemu' : 'Problem Definition'}
       icon={<AlertTriangle size={18} className="text-rose-500 dark:text-rose-400" />}
-      iconBg="bg-gradient-to-br from-rose-500/10 to-red-500/10 dark:from-rose-500/20 dark:to-red-500/20"
+      iconBg="bg-gradient-to-br from-rose-500/10 to-rose-500/10 dark:from-rose-500/20 dark:to-rose-500/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={
@@ -74,7 +74,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             }
           }}
           disabled={isGeneratingAI === 'problemDefinition'}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-xs font-medium transition-all disabled:opacity-50"
         >
           {isGeneratingAI === 'problemDefinition' ? (
             <Loader2 size={14} className="animate-spin" />
@@ -112,7 +112,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               }
             }}
             disabled={isGeneratingAI === 'problemDefinition'}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-sm font-medium transition-all disabled:opacity-50"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-sm font-medium transition-all disabled:opacity-50"
           >
             {isGeneratingAI === 'problemDefinition' ? (
               <Loader2 size={16} className="animate-spin" />
@@ -168,7 +168,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
         {/* Root Cause */}
         <div>
           <label className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-bold text-orange-500">
+            <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-500">
               2
             </div>
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -199,7 +199,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             value={rootCause}
             onChange={(e) => setRootCause(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/10 resize-none transition-all text-sm"
+            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 resize-none transition-all text-sm"
             placeholder={
               isPolish
                 ? 'Np. Baza danych nie jest zoptymalizowana pod kątem rosnącego wolumenu transakcji...'
@@ -211,7 +211,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
         {/* Cost of Inaction */}
         <div>
           <label className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-xs font-bold text-red-500">
+            <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-xs font-bold text-rose-500">
               3
             </div>
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -242,7 +242,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             value={costOfInaction}
             onChange={(e) => setCostOfInaction(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/10 resize-none transition-all text-sm"
+            className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/10 resize-none transition-all text-sm"
             placeholder={
               isPolish
                 ? 'Np. Ryzyko utraty 15% klientów enterprise w ciągu 6 miesięcy...'
@@ -265,7 +265,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(filledCount / 3) * 100}%` }}
-              className="h-full bg-gradient-to-r from-rose-500 to-red-500 rounded-full"
+              className="h-full bg-gradient-to-r from-rose-500 to-rose-500 rounded-full"
             />
           </div>
         </div>

@@ -62,7 +62,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
   };
 
   const getProgressColor = (percentage: number): string => {
-    if (percentage >= 90) return 'bg-red-500';
+    if (percentage >= 90) return 'bg-rose-500';
     if (percentage >= 70) return 'bg-yellow-500';
     return 'bg-green-500';
   };
@@ -111,7 +111,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
     <div className="bg-navy-800/50 rounded-lg p-3 border border-white/5">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Zap size={14} className="text-purple-400" />
+          <Zap size={14} className="text-primary-400" />
           <span className="text-xs font-medium text-slate-300">AI Usage Today</span>
         </div>
         {showTrend && usage.recentUsage && usage.recentUsage.length > 1 && (

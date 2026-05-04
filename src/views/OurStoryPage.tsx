@@ -8,7 +8,7 @@ import { MarketingLayout } from '../components/Landing/MarketingLayout';
 const TIMELINE_VISUALS = [
   { year: '2018', icon: Rocket, color: '#7c3aed' },
   { year: '2020', icon: Brain, color: '#a855f7' },
-  { year: '2022', icon: Globe, color: '#06b6d4' },
+  { year: '2022', icon: Globe, color: '#3b82f6' },
   { year: '2023', icon: Star, color: '#f59e0b' },
   { year: '2024', icon: Users, color: '#10b981' },
   { year: '2025', icon: ArrowRight, color: '#c026d3' },

@@ -232,7 +232,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                   {currentUser.email}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize border border-purple-200 dark:border-purple-500/20">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 capitalize border border-primary-200 dark:border-primary-500/20">
                     {roleLabel}
                   </span>
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 max-w-full">
@@ -254,7 +254,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                 }}
                 className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
                   showOrgList
-                    ? 'bg-purple-50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-300'
+                    ? 'bg-primary-50 dark:bg-primary-900/10 text-primary-700 dark:text-primary-300'
                     : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200'
                 }`}
               >
@@ -303,16 +303,16 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                             className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors
                               ${
                                 isCurrent
-                                  ? 'bg-purple-100/60 dark:bg-purple-900/20'
+                                  ? 'bg-primary-100/60 dark:bg-primary-900/20'
                                   : 'hover:bg-white dark:hover:bg-white/5'
                               }
                               disabled:opacity-50`}
                           >
                             <div className="w-4 shrink-0 flex items-center justify-center">
                               {isSwitching ? (
-                                <Loader2 size={13} className="animate-spin text-purple-500" />
+                                <Loader2 size={13} className="animate-spin text-primary-500" />
                               ) : isCurrent ? (
-                                <Check size={14} className="text-purple-500" />
+                                <Check size={14} className="text-primary-500" />
                               ) : null}
                             </div>
 
@@ -320,7 +320,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                               <div
                                 className={`text-sm truncate ${
                                   isCurrent
-                                    ? 'font-semibold text-purple-700 dark:text-purple-300'
+                                    ? 'font-semibold text-primary-700 dark:text-primary-300'
                                     : 'text-slate-700 dark:text-slate-300'
                                 }`}
                               >
@@ -331,7 +331,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                             <span
                               className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 ${
                                 org.role === 'OWNER'
-                                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
+                                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-500/20'
                                   : org.role === 'ADMIN'
                                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
                                     : org.role === 'CONSULTANT'
@@ -374,7 +374,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     }}
                     className={`p-1.5 rounded-md transition-all ${
                       theme === tMode
-                        ? 'bg-white dark:bg-navy-800 shadow-sm text-purple-600 dark:text-purple-400'
+                        ? 'bg-white dark:bg-navy-800 shadow-sm text-primary-600 dark:text-primary-400'
                         : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
                     }`}
                     title={tMode.charAt(0).toUpperCase() + tMode.slice(1)}
@@ -411,7 +411,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${
                       (normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en') ===
                       lang
-                        ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-500/30 dark:text-purple-300'
+                        ? 'bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/20 dark:border-primary-500/30 dark:text-primary-300'
                         : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-navy-700 dark:hover:bg-white/5 dark:text-slate-400'
                     }`}
                   >
@@ -456,7 +456,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     disabled={isDemoLoading}
                     className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-50 ${
                       isDemoMode
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                        ? 'bg-gradient-to-r from-indigo-500 to-primary-500'
                         : 'bg-slate-300 dark:bg-navy-700'
                     }`}
                     title={
@@ -516,7 +516,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
             <button
               onClick={handleLogout}
-              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2 rounded-lg transition-colors"
+              className="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center gap-2 rounded-lg transition-colors"
             >
               <LogOut size={16} />
               {t('sidebar.logOut', 'Log Out')}

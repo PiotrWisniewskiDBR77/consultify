@@ -55,19 +55,17 @@ function mapCanonicalProjectRoleToInitiativeRoles(
   canonicalRole: CanonicalProjectRoleType
 ): string[] {
   switch (canonicalRole) {
-    case 'SPONSOR':
+    case 'PROJECT_SPONSOR':
       return ['PROJECT_SPONSOR'];
     case 'PROJECT_LEADER':
       // keep legacy role identifiers for gates (SEND_BACK / APPROVE_TO_INITIATIVE)
       return ['PROJECT_MANAGER', 'PROJECT_LEAD'];
     case 'INITIATIVE_OWNER':
       return ['INITIATIVE_OWNER'];
-    case 'TEAM_MEMBER':
+    case 'TASK_ASSIGNEE':
       return ['TEAM_MEMBER'];
     case 'PMO':
       return ['PMO'];
-    case 'PORTFOLIO_OWNER':
-      return ['PORTFOLIO_OWNER'];
     case 'BUSINESS_OWNER':
       return ['BUSINESS_OWNER'];
     case 'STEERING_COMMITTEE':

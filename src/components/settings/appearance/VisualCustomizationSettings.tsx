@@ -52,17 +52,17 @@ interface VisualSettings {
 }
 
 const accentColors = [
-  { id: 'violet', color: '#8B5CF6', name: 'Violet' },
+  { id: 'violet', color: '#6366F1', name: 'Violet' },
   { id: 'purple', color: '#A855F7', name: 'Purple' },
   { id: 'indigo', color: '#6366F1', name: 'Indigo' },
   { id: 'blue', color: '#3B82F6', name: 'Blue' },
-  { id: 'cyan', color: '#06B6D4', name: 'Cyan' },
-  { id: 'teal', color: '#14B8A6', name: 'Teal' },
+  { id: 'cyan', color: '#3B82F6', name: 'Cyan' },
+  { id: 'teal', color: '#3B82F6', name: 'Teal' },
   { id: 'green', color: '#22C55E', name: 'Green' },
   { id: 'emerald', color: '#10B981', name: 'Emerald' },
   { id: 'amber', color: '#F59E0B', name: 'Amber' },
-  { id: 'orange', color: '#F97316', name: 'Orange' },
-  { id: 'red', color: '#EF4444', name: 'Red' },
+  { id: 'orange', color: '#F59E0B', name: 'Orange' },
+  { id: 'red', color: '#F43F5E', name: 'Red' },
   { id: 'pink', color: '#EC4899', name: 'Pink' },
 ];
 
@@ -79,7 +79,7 @@ const fontFamilies = [
 
 const defaultSettings: VisualSettings = {
   theme: 'system',
-  accentColor: '#8B5CF6',
+  accentColor: '#6366F1',
   fontSize: 'medium',
   fontFamily: 'system-ui, -apple-system, sans-serif',
   density: 'comfortable',
@@ -161,7 +161,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-violet-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -174,7 +174,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Palette size={28} className="text-violet-500" />
+            <Palette size={28} className="text-primary-500" />
             {t('settings.appearance.visual.title', 'Visual Customization')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -192,7 +192,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {t('common.saveChanges', 'Save Changes')}
@@ -219,15 +219,15 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                 onClick={() => setSettings({ ...settings, theme: theme.id as any })}
                 className={`p-4 rounded-xl border-2 text-center transition-all ${
                   settings.theme === theme.id
-                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-violet-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                 }`}
               >
                 <Icon
                   size={24}
                   className={
                     settings.theme === theme.id
-                      ? 'text-violet-600 mx-auto'
+                      ? 'text-primary-600 mx-auto'
                       : 'text-slate-400 dark:text-slate-500 mx-auto'
                   }
                 />
@@ -411,7 +411,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.appearance.visual.sidebarWidth', 'Sidebar Width')}
               </label>
-              <span className="text-sm text-violet-600">{settings.sidebarWidth}px</span>
+              <span className="text-sm text-primary-600">{settings.sidebarWidth}px</span>
             </div>
             <input
               type="range"
@@ -419,7 +419,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
               max="400"
               value={settings.sidebarWidth}
               onChange={(e) => setSettings({ ...settings, sidebarWidth: parseInt(e.target.value) })}
-              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-violet-600"
+              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-primary-600"
             />
           </div>
 
@@ -435,7 +435,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   onClick={() => setSettings({ ...settings, borderRadius: radius })}
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium capitalize transition-all ${
                     settings.borderRadius === radius
-                      ? 'bg-violet-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -461,7 +461,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             <button
               onClick={() => setSettings({ ...settings, animations: !settings.animations })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.animations ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'
+                settings.animations ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <span
@@ -483,7 +483,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           </h3>
           <button
             onClick={() => setShowCustomCSS(!showCustomCSS)}
-            className="text-sm text-violet-600 hover:underline"
+            className="text-sm text-primary-600 hover:underline"
           >
             {showCustomCSS
               ? t('settings.appearance.visual.hideCss', 'Hide')

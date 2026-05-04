@@ -38,16 +38,16 @@ const MAX_VISIBLE_TABS = 6;
 // Status dot colors - uses canonical 11-status initiative lifecycle
 const STATUS_COLORS: Record<ItemStatus, string> = {
   DRAFT: 'bg-slate-400',
-  PENDING_REVIEW: 'bg-orange-400',
+  PENDING_REVIEW: 'bg-amber-400',
   REVIEW: 'bg-amber-400',
   PROMOTED: 'bg-blue-400',
   PLANNING: 'bg-indigo-400',
   APPROVED: 'bg-emerald-400',
-  SCHEDULED: 'bg-purple-400',
-  EXECUTING: 'bg-cyan-400',
-  BLOCKED: 'bg-red-400',
+  SCHEDULED: 'bg-primary-400',
+  EXECUTING: 'bg-blue-400',
+  BLOCKED: 'bg-rose-400',
   DONE: 'bg-green-400',
-  TRACKING: 'bg-teal-400',
+  TRACKING: 'bg-blue-400',
   CANCELLED: 'bg-gray-400',
   ARCHIVED: 'bg-slate-500',
 };
@@ -55,10 +55,10 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
 // Type colors for left border accent
 const TYPE_BORDER_COLORS: Record<string, string> = {
   // Assessment frameworks
-  DRD: 'border-l-purple-500',
+  DRD: 'border-l-primary-500',
   SIRI: 'border-l-blue-500',
-  ADMA: 'border-l-teal-500',
-  CMMI: 'border-l-orange-500',
+  ADMA: 'border-l-blue-500',
+  CMMI: 'border-l-amber-500',
   LEAN: 'border-l-green-500',
   // Discovery Tools - Strategic
   SWT: 'border-l-emerald-500',
@@ -83,21 +83,21 @@ const TYPE_BORDER_COLORS: Record<string, string> = {
   CTW: 'border-l-blue-500',
   INV: 'border-l-blue-500',
   // Discovery Tools - Digital
-  ROB: 'border-l-purple-500',
-  LOG: 'border-l-purple-500',
-  RPA: 'border-l-purple-500',
-  AID: 'border-l-purple-500',
-  INT: 'border-l-purple-500',
-  DVP: 'border-l-purple-500',
-  LEG: 'border-l-purple-500',
-  DAT: 'border-l-purple-500',
-  P2S: 'border-l-purple-500',
-  SPE: 'border-l-purple-500',
+  ROB: 'border-l-primary-500',
+  LOG: 'border-l-primary-500',
+  RPA: 'border-l-primary-500',
+  AID: 'border-l-primary-500',
+  INT: 'border-l-primary-500',
+  DVP: 'border-l-primary-500',
+  LEG: 'border-l-primary-500',
+  DAT: 'border-l-primary-500',
+  P2S: 'border-l-primary-500',
+  SPE: 'border-l-primary-500',
   // Discovery Tools - Automation
   PAI: 'border-l-amber-500',
   // V3-J02 — Presentations Hub (source types)
   tool: 'border-l-emerald-500',
-  assessment: 'border-l-purple-500',
+  assessment: 'border-l-primary-500',
   finance: 'border-l-blue-500',
   upload: 'border-l-slate-500',
 };

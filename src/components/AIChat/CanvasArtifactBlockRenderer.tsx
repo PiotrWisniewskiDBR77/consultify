@@ -142,7 +142,8 @@ export function CanvasArtifactBlockRenderer({
 }: CanvasArtifactBlockRendererProps) {
   const [filter, setFilter] = React.useState('');
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
-  const [selectedRows, setSelectedRows] = React.useState<Set<number>>(() => new Set());
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
+  const [selectedRows, setSelectedRows] = React.useState<Set<string>>(() => new Set());
 
   const copyProjection = async () => {
     await navigator.clipboard?.writeText(block.markdownProjection);
@@ -185,8 +186,11 @@ export function CanvasArtifactBlockRenderer({
 
   if (block.kind === 'table') {
     const { columns, rows } = tableShape(block);
+    const rowKey = (row: Record<string, unknown>, index: number) =>
+      `${index}:${columns.map((column) => String(row[column] ?? '')).join('::')}`;
     const filteredRows = rows
-      .filter((row) =>
+      .map((row, index) => ({ row, index, key: rowKey(row, index) }))
+      .filter(({ row }) =>
         filter
           ? columns.some((column) =>
               String(row[column] ?? '')
@@ -195,9 +199,23 @@ export function CanvasArtifactBlockRenderer({
             )
           : true
       )
-      .sort((a, b) =>
-        sortColumn ? String(a[sortColumn] ?? '').localeCompare(String(b[sortColumn] ?? '')) : 0
-      );
+      .sort((a, b) => {
+        if (!sortColumn) return 0;
+        const left = String(a.row[sortColumn] ?? '');
+        const right = String(b.row[sortColumn] ?? '');
+        const result = left.localeCompare(right);
+        return sortDirection === 'asc' ? result : -result;
+      });
+    const exportRows = (rowEntries: Array<{ row: Record<string, unknown> }>, suffix: string) => {
+      const csv = [
+        columns.join(','),
+        ...rowEntries.map((entry) =>
+          columns.map((column) => escapeCsvCell(entry.row[column])).join(',')
+        ),
+      ].join('\n');
+      downloadTextFile(safeFilename(`${block.title}-${suffix}`, 'csv'), csv, 'text/csv;charset=utf-8');
+      onFeedback?.(`${block.title} ${suffix === 'selected' ? 'selected rows' : 'rows'} exported as CSV.`);
+    };
 
     return (
       <section
@@ -219,6 +237,30 @@ export function CanvasArtifactBlockRenderer({
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {filteredRows.length} rows · {selectedRows.size} selected
           </span>
+          <button
+            type="button"
+            onClick={() => exportRows(filteredRows, 'filtered')}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+          >
+            Export filtered
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const selected = filteredRows.filter((entry) => selectedRows.has(entry.key));
+              exportRows(selected.length > 0 ? selected : filteredRows, 'selected');
+            }}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+          >
+            Export selected
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedRows(new Set())}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+          >
+            Clear selection
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-white/10">
@@ -233,28 +275,37 @@ export function CanvasArtifactBlockRenderer({
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 hover:text-primary-600"
-                      onClick={() => setSortColumn(column)}
+                      onClick={() => {
+                        setSortColumn((current) => {
+                          if (current === column) {
+                            setSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+                            return current;
+                          }
+                          setSortDirection('asc');
+                          return column;
+                        });
+                      }}
                     >
                       {column}
-                      {sortColumn === column ? ' ↑' : ''}
+                      {sortColumn === column ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
                     </button>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white dark:divide-white/10 dark:bg-navy-900">
-              {filteredRows.map((row, index) => (
-                <tr key={`${block.id}-${index}`}>
+              {filteredRows.map((entry) => (
+                <tr key={`${block.id}-${entry.key}`}>
                   <td className="px-3 py-3">
                     <input
                       type="checkbox"
-                      aria-label={`Select row ${index + 1}`}
-                      checked={selectedRows.has(index)}
+                      aria-label={`Select row ${entry.index + 1}`}
+                      checked={selectedRows.has(entry.key)}
                       onChange={(event) => {
                         setSelectedRows((current) => {
                           const next = new Set(current);
-                          if (event.target.checked) next.add(index);
-                          else next.delete(index);
+                          if (event.target.checked) next.add(entry.key);
+                          else next.delete(entry.key);
                           return next;
                         });
                       }}
@@ -265,7 +316,7 @@ export function CanvasArtifactBlockRenderer({
                       key={column}
                       className="px-4 py-3 align-top text-slate-700 dark:text-slate-300"
                     >
-                      {String(row[column] ?? '')}
+                      {String(entry.row[column] ?? '')}
                     </td>
                   ))}
                 </tr>
@@ -310,6 +361,11 @@ export function CanvasArtifactBlockRenderer({
           <div className="mt-3 text-xs text-slate-600 dark:text-slate-300">
             Confidence: <strong>{confidence}</strong>
           </div>
+          {sources.length === 0 ? (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-100">
+              Evidence degraded: no sources are attached to this research block yet.
+            </div>
+          ) : null}
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <EvidenceList title="Findings" items={[...facts, ...findings]} />
@@ -639,8 +695,8 @@ function DiagramBlockView({
         </button>
       </div>
       {source ? (
-        <div className="mt-4 rounded-2xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-400/20 dark:bg-purple-400/10">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-purple-700 dark:text-purple-200">
+        <div className="mt-4 rounded-2xl border border-primary-200 bg-primary-50 p-4 dark:border-primary-400/20 dark:bg-primary-400/10">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
             Mermaid diagram source
           </div>
           {renderedSvg ? (
@@ -650,7 +706,7 @@ function DiagramBlockView({
               dangerouslySetInnerHTML={{ __html: renderedSvg }}
             />
           ) : (
-            <div className="mt-2 text-sm text-purple-900 dark:text-purple-100">
+            <div className="mt-2 text-sm text-primary-900 dark:text-primary-100">
               {renderError
                 ? `Mermaid render failed: ${renderError}. Fallback view is shown below.`
                 : 'Rendering Mermaid diagram...'}

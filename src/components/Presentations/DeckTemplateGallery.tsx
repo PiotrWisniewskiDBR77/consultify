@@ -50,10 +50,10 @@ interface DeckTemplateGalleryProps {
 
 const DECK_TYPE_COLORS: Record<string, string> = {
   steering_committee: 'from-blue-500 to-indigo-500',
-  program_update: 'from-emerald-500 to-cyan-500',
-  valuation_pack: 'from-purple-500 to-pink-500',
-  tool_workshop: 'from-amber-500 to-orange-500',
-  assessment_summary: 'from-cyan-500 to-blue-500',
+  program_update: 'from-emerald-500 to-blue-500',
+  valuation_pack: 'from-primary-500 to-pink-500',
+  tool_workshop: 'from-amber-500 to-amber-500',
+  assessment_summary: 'from-blue-500 to-blue-500',
 };
 
 const AUDIENCE_LABELS: Record<string, { en: string; pl: string }> = {
@@ -112,7 +112,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -148,7 +148,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
       {orgTemplates.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-            <Layout className="w-5 h-5 text-purple-500" />
+            <Layout className="w-5 h-5 text-primary-500" />
             {t('presentations.templates.orgTemplates', 'Organization Templates')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -217,7 +217,7 @@ const TemplateCard: React.FC<{
         {/* Outline preview */}
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 mt-3 text-sm text-purple-500 hover:text-purple-400"
+          className="flex items-center gap-1.5 mt-3 text-sm text-primary-500 hover:text-primary-400"
         >
           {isExpanded ? (
             <ChevronRight size={14} className="rotate-90" />
@@ -229,7 +229,7 @@ const TemplateCard: React.FC<{
         </button>
 
         {isExpanded && (
-          <div className="mt-2 space-y-1 pl-2 border-l-2 border-purple-500/20">
+          <div className="mt-2 space-y-1 pl-2 border-l-2 border-primary-500/20">
             {template.outline_json.map((slide, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
                 <span className="text-xs text-slate-400 w-4">{i + 1}</span>
@@ -246,7 +246,7 @@ const TemplateCard: React.FC<{
           {onSelect && (
             <button
               onClick={onSelect}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500"
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500"
             >
               <Sparkles size={14} /> {t('presentations.templates.use', 'Use')}
             </button>

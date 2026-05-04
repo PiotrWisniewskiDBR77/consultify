@@ -56,7 +56,7 @@ type Period = 'week' | 'month' | 'quarter';
  */
 const Sparkline: React.FC<{ data: number[]; color?: string }> = ({
   data,
-  color = 'text-purple-500',
+  color = 'text-primary-500',
 }) => {
   if (!data || data.length === 0) return null;
 
@@ -104,7 +104,7 @@ const Sparkline: React.FC<{ data: number[]; color?: string }> = ({
 const ProgressBar: React.FC<{ value: number; max?: number; color?: string }> = ({
   value,
   max = 100,
-  color = 'bg-purple-500',
+  color = 'bg-primary-500',
 }) => {
   const percentage = Math.min((value / max) * 100, 100);
 
@@ -139,7 +139,7 @@ const StatCard: React.FC<{
     trend === 'up'
       ? 'text-green-500'
       : trend === 'down'
-        ? 'text-red-500'
+        ? 'text-rose-500'
         : 'text-slate-400 dark:text-slate-500';
 
   return (
@@ -193,7 +193,7 @@ const PeriodSelector: React.FC<{
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Period)}
-        className="appearance-none bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-1.5 pr-8 text-sm font-medium text-navy-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="appearance-none bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-1.5 pr-8 text-sm font-medium text-navy-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500"
       >
         {periods.map((period) => (
           <option key={period.id} value={period.id}>
@@ -272,7 +272,7 @@ export const ProgressView: React.FC = () => {
   if (loading) {
     return (
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -360,7 +360,7 @@ export const ProgressView: React.FC = () => {
               </span>
               <div className="flex-1 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-red-500 rounded-full"
+                  className="h-full bg-rose-500 rounded-full"
                   style={{
                     width: `${stats.total > 0 ? (stats.byPriority.high / stats.total) * 100 : 0}%`,
                   }}
@@ -376,7 +376,7 @@ export const ProgressView: React.FC = () => {
               </span>
               <div className="flex-1 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-orange-500 rounded-full"
+                  className="h-full bg-amber-500 rounded-full"
                   style={{
                     width: `${stats.total > 0 ? (stats.byPriority.medium / stats.total) * 100 : 0}%`,
                   }}
@@ -431,11 +431,11 @@ export const ProgressView: React.FC = () => {
               {t('progress.status.todo', 'To Do')}
             </p>
           </div>
-          <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <p className="text-lg font-bold text-red-600 dark:text-red-400">
+          <div className="text-center p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+            <p className="text-lg font-bold text-rose-600 dark:text-rose-400">
               {stats.byStatus.overdue}
             </p>
-            <p className="text-xs text-red-600 dark:text-red-400">
+            <p className="text-xs text-rose-600 dark:text-rose-400">
               {t('progress.status.overdue', 'Overdue')}
             </p>
           </div>

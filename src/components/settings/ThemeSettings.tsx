@@ -27,22 +27,22 @@ type Theme = 'light' | 'dark' | 'system';
 type Density = 'compact' | 'comfortable' | 'spacious';
 
 const ACCENT_COLORS = [
-  { key: 'violet', name: 'Violet', value: '#8b5cf6', class: 'bg-violet-500' },
+  { key: 'violet', name: 'Violet', value: '#6366f1', class: 'bg-primary-500' },
   { key: 'blue', name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
   { key: 'emerald', name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
   { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-rose-500' },
   { key: 'amber', name: 'Amber', value: '#f59e0b', class: 'bg-amber-500' },
-  { key: 'cyan', name: 'Cyan', value: '#06b6d4', class: 'bg-cyan-500' },
+  { key: 'cyan', name: 'Cyan', value: '#3b82f6', class: 'bg-blue-500' },
 ];
 
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const theme = useAppStore((s) => s.theme) as Theme;
   const toggleTheme = useAppStore((s) => s.toggleTheme);
-  const [accentColor, setAccentColor] = useState('#8b5cf6');
+  const [accentColor, setAccentColor] = useState('#6366f1');
   const [density, setDensity] = useState<Density>('comfortable');
   const [originalTheme, setOriginalTheme] = useState<Theme>('system');
-  const [originalAccent, setOriginalAccent] = useState('#8b5cf6');
+  const [originalAccent, setOriginalAccent] = useState('#6366f1');
   const [originalDensity, setOriginalDensity] = useState<Density>('comfortable');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -171,7 +171,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -207,7 +207,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20 bg-navy-800/50'
                     )}
                   >
@@ -219,13 +219,13 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                         size={18}
                         className={cn(
                           'transition-colors',
-                          isSelected ? 'text-violet-400' : 'text-slate-400'
+                          isSelected ? 'text-primary-400' : 'text-slate-400'
                         )}
                       />
                       <span
                         className={cn(
                           'font-medium transition-colors',
-                          isSelected ? 'text-violet-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-300'
                         )}
                       >
                         {label}
@@ -233,7 +233,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                     </div>
                     <p className="text-xs text-slate-500 mt-1 text-center">{description}</p>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-violet-500 rounded-full">
+                      <div className="absolute top-2 right-2 p-1 bg-primary-500 rounded-full">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -278,7 +278,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
               })}
 
               <label
-                className="relative w-12 h-12 rounded-xl bg-navy-700 border border-dashed border-white/20 
+                className="relative w-12 h-12 rounded-xl bg-navy-700 border border-dashed border-white/20
                            cursor-pointer hover:border-white/40 transition-all duration-200
                            flex items-center justify-center"
                 title={t('settings.appearance.customColor', 'Custom color')}
@@ -347,7 +347,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20 bg-navy-800/50'
                     )}
                   >
@@ -375,7 +375,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       <span
                         className={cn(
                           'text-sm font-medium',
-                          isSelected ? 'text-violet-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-300'
                         )}
                       >
                         {opt.label}
@@ -383,7 +383,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
                     </div>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-violet-500 rounded-full">
+                      <div className="absolute top-2 right-2 p-1 bg-primary-500 rounded-full">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -396,7 +396,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           {/* Preview Note */}
           <div className="p-4 bg-navy-700/30 rounded-lg text-center">
             <p className="text-sm text-slate-500">
-              <Sparkles size={14} className="inline mr-2 text-violet-400" />
+              <Sparkles size={14} className="inline mr-2 text-primary-400" />
               {t(
                 'settings.appearance.previewNote',
                 'Changes are previewed instantly and saved to your account'

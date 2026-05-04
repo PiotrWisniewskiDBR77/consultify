@@ -187,7 +187,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
   const getEventIcon = (type: string, severity: string) => {
     const iconClass =
       severity === 'critical'
-        ? 'text-red-500'
+        ? 'text-rose-500'
         : severity === 'warning'
           ? 'text-amber-500'
           : 'text-slate-500 dark:text-slate-400';
@@ -214,7 +214,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
     switch (severity) {
       case 'critical':
         return (
-          <span className="px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded-full">
+          <span className="px-2 py-0.5 text-xs font-medium bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-full">
             {t('security.events.severityCritical', 'Critical')}
           </span>
         );
@@ -258,7 +258,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
             <Activity className="w-6 h-6 text-slate-900 dark:text-white" />
           </div>
           <div>
@@ -300,7 +300,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 animate-in slide-in-from-top-2 duration-300">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Bell className="w-5 h-5 text-purple-500" />
+              <Bell className="w-5 h-5 text-primary-500" />
               {t('security.events.alertSettings', 'Security Alert Settings')}
             </h4>
             <button
@@ -364,7 +364,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             <button
               onClick={handleSaveAlertSettings}
               disabled={savingAlerts}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {savingAlerts ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -386,13 +386,13 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('security.events.search', 'Search events...')}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
         <div className="relative">
           <button
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
           >
             <Filter className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -411,7 +411,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                   }}
                   className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors first:rounded-t-lg last:rounded-b-lg ${
                     filter === type.value
-                      ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10'
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
                       : 'text-slate-700 dark:text-slate-300'
                   }`}
                 >
@@ -433,7 +433,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Events List */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
         </div>
       ) : filteredEvents.length === 0 ? (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
@@ -459,7 +459,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                 key={event.id}
                 className={`p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
                   event.severity === 'critical'
-                    ? 'bg-red-50/50 dark:bg-red-500/5'
+                    ? 'bg-rose-50/50 dark:bg-rose-500/5'
                     : event.severity === 'warning'
                       ? 'bg-amber-50/50 dark:bg-amber-500/5'
                       : ''
@@ -469,7 +469,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                   <div
                     className={`p-2 rounded-lg ${
                       event.severity === 'critical'
-                        ? 'bg-red-100 dark:bg-red-500/20'
+                        ? 'bg-rose-100 dark:bg-rose-500/20'
                         : event.severity === 'warning'
                           ? 'bg-amber-100 dark:bg-amber-500/20'
                           : 'bg-slate-100 dark:bg-white/10'
@@ -514,7 +514,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Load More */}
       {filteredEvents.length >= 50 && (
         <div className="text-center">
-          <button className="px-6 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors">
+          <button className="px-6 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors">
             {t('common.loadMore', 'Load More')}
           </button>
         </div>
@@ -551,7 +551,7 @@ const AlertToggle: React.FC<AlertToggleProps> = ({
       <button
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+          checked ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
         }`}
       >
         <span

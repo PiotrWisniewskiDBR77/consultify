@@ -172,7 +172,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
       },
       {
         id: 'workload' as ManagerModuleId,
-        icon: <Users size={20} className="text-violet-500" />,
+        icon: <Users size={20} className="text-primary-500" />,
         title: t('execution.manager.tile.workload', 'Resource & Workload'),
         description: t(
           'execution.manager.tile.workloadDesc',

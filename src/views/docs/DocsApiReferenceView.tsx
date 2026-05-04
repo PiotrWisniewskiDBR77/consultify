@@ -11,7 +11,7 @@ export function DocsApiReferenceView() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-        <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
+        <Link to="/docs" className="hover:text-primary-600 dark:hover:text-primary-400">
           {t('docs.common.docs', 'Docs')}
         </Link>
         <span>/</span>
@@ -22,8 +22,8 @@ export function DocsApiReferenceView() {
 
       <div className="rounded-2xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 p-6 lg:p-8">
         <div className="mb-6 flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-            <Code2 size={24} className="text-violet-600 dark:text-violet-400" />
+          <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+            <Code2 size={24} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -62,7 +62,7 @@ export function DocsApiReferenceView() {
           </Link>
           <a
             href="mailto:support@consultify.ai?subject=API%20Reference%20Access"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition-colors"
           >
             <ExternalLink size={16} />
             {t('docs.api.contactSupport', 'Contact support')}

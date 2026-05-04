@@ -321,7 +321,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'HIGH':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
       case 'MEDIUM':
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
       default:
@@ -347,8 +347,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
         <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Sparkles className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
@@ -384,7 +384,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                   <div
                     className={`
                                         flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
-                                        ${isActive ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : ''}
+                                        ${isActive ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : ''}
                                         ${isPast ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : ''}
                                         ${!isActive && !isPast ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400' : ''}
                                     `}
@@ -423,7 +423,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             <>
               {loadingReports ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
                 </div>
               ) : reports.length === 0 ? (
                 <div className="text-center py-12">
@@ -466,7 +466,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                         w-full text-left p-4 rounded-lg border-2 transition-all
                                                         ${
                                                           isSelected
-                                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                                                             : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
                                                         }
                                                     `}
@@ -478,7 +478,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                                 w-5 h-5 rounded-full flex items-center justify-center border-2
                                                                 ${
                                                                   isSelected
-                                                                    ? 'bg-purple-600 border-purple-600'
+                                                                    ? 'bg-primary-600 border-primary-600'
                                                                     : 'border-slate-300 dark:border-slate-600'
                                                                 }
                                                             `}
@@ -518,9 +518,9 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             <div className="space-y-6">
               {/* Selected Report Summary */}
               {selectedReport && (
-                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-500/30">
+                <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-500/30">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     <div>
                       <p className="font-medium text-navy-900 dark:text-white">
                         {selectedReport.name}
@@ -571,7 +571,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                 px-4 py-2 rounded-lg text-sm font-medium transition-all border-2
                                                 ${
                                                   priorityFilter === opt.value
-                                                    ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-500'
+                                                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-500'
                                                     : 'bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-navy-700 hover:border-slate-300'
                                                 }
                                             `}
@@ -606,7 +606,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
               <div className="flex items-center justify-between">
                 <button
                   onClick={toggleAll}
-                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                 >
                   {selectedInitiatives.size === generatedInitiatives.length
                     ? 'Odznacz wszystkie'
@@ -628,7 +628,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                 p-4 rounded-lg border-2 transition-all
                                                 ${
                                                   isSelected
-                                                    ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10'
+                                                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10'
                                                     : 'border-slate-200 dark:border-navy-700'
                                                 }
                                             `}
@@ -641,8 +641,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                         w-5 h-5 rounded shrink-0 mt-0.5 flex items-center justify-center border-2 transition-colors
                                                         ${
                                                           isSelected
-                                                            ? 'bg-purple-600 border-purple-600'
-                                                            : 'border-slate-300 dark:border-slate-600 hover:border-purple-400'
+                                                            ? 'bg-primary-600 border-primary-600'
+                                                            : 'border-slate-300 dark:border-slate-600 hover:border-primary-400'
                                                         }
                                                     `}
                         >
@@ -663,7 +663,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                             </div>
                             <button
                               onClick={() => removeInitiative(initiative.id)}
-                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -715,7 +715,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                   </p>
                   <button
                     onClick={() => setStep('configure')}
-                    className="mt-4 text-purple-600 dark:text-purple-400 hover:underline text-sm"
+                    className="mt-4 text-primary-600 dark:text-primary-400 hover:underline text-sm"
                   >
                     Zmień konfigurację i spróbuj ponownie
                   </button>
@@ -727,7 +727,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
           {/* Saving State */}
           {step === 'saving' && !success && (
             <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
+              <Loader2 className="w-12 h-12 text-primary-500 animate-spin mb-4" />
               <p className="text-lg font-medium text-navy-900 dark:text-white">
                 Zapisuję inicjatywy...
               </p>
@@ -739,7 +739,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
           {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 mt-4 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
+            <div className="flex items-center gap-2 p-3 mt-4 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
               <AlertCircle size={16} />
               {error}
             </div>
@@ -783,7 +783,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                         flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                         ${
                                           selectedReportId
-                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                            ? 'bg-primary-600 hover:bg-primary-500 text-white'
                                             : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                         }
                                     `}
@@ -797,7 +797,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-all"
                 >
                   {generating ? (
                     <>

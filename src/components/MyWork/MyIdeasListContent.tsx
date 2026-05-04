@@ -1395,7 +1395,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       {confirmDialog}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-violet-400/20 dark:from-amber-500/15 dark:to-violet-500/15">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-primary-400/20 dark:from-amber-500/15 dark:to-primary-500/15">
             <Tag size={20} className="text-amber-500" />
           </div>
           <div>

@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
     agentAuditSuggest: vi.fn(),
     aiFeedback: vi.fn(),
     chatConfirm: vi.fn(),
+    createResearchSession: vi.fn(),
     createMyIdea: vi.fn(),
     deepThinkingEvent: vi.fn(),
     getConversationProposals: vi.fn(),
@@ -359,6 +360,7 @@ vi.mock('../../../src/components/AIChat/V8ContextIndicator', () => ({
 
 let UnifiedChatPanel: any;
 let buildCanvasContextPacket: any;
+let unifiedChatPrivate: any;
 
 describe('UnifiedChatPanel (L2)', () => {
   beforeEach(async () => {
@@ -385,7 +387,7 @@ describe('UnifiedChatPanel (L2)', () => {
       consumeAIInteraction: vi.fn(),
     };
 
-    ({ UnifiedChatPanel, buildCanvasContextPacket } =
+    ({ UnifiedChatPanel, buildCanvasContextPacket, __private__: unifiedChatPrivate } =
       await import('../../../src/components/AIChat/UnifiedChatPanel'));
 
     appStoreState = {
@@ -452,6 +454,10 @@ describe('UnifiedChatPanel (L2)', () => {
     h.apiMock.deepThinkingEvent.mockResolvedValue({ ok: true });
     h.apiMock.getConversationProposals.mockResolvedValue({ proposals: [] });
     h.apiMock.saveDeepThinkingDecision.mockResolvedValue({ ok: true });
+    h.apiMock.createResearchSession.mockResolvedValue({
+      success: true,
+      session: { sessionId: 'rs-chat-canvas-1', status: 'planned' },
+    });
     h.apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
     h.apiMock.aiFeedback.mockResolvedValue({ ok: true });
   });
@@ -633,6 +639,77 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.queryByText('Selected from Canvas')).not.toBeInTheDocument();
   });
 
+  it('routes explicit chat commands into the Research Canvas without starting Teresa stream', async () => {
+    conversationStoreState.activeConversationId = 'conv-1';
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts') {
+        const body = JSON.parse(String(init?.body));
+        expect(body).toMatchObject({
+          conversationId: 'conv-1',
+          kind: 'research',
+          researchSessionId: 'rs-chat-canvas-1',
+        });
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-chat-canvas-1',
+              title: 'Market Research Brief',
+              kind: 'research',
+              contentMd: body.contentMd,
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+              researchSessionId: 'rs-chat-canvas-1',
+            },
+          }),
+        } as Response;
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithRouter(
+      <UnifiedChatPanel
+        mode="full"
+        kickoffMessage="zrób research canvas dla segmentu robotyki"
+        onKickoffConsumed={vi.fn()}
+      />
+    );
+
+    expect(await screen.findByTestId('chat-work-panel')).toBeInTheDocument();
+    await waitFor(() => expect(h.apiMock.createResearchSession).toHaveBeenCalled());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object)));
+    expect(addMessageToConversationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conv-1',
+        role: 'user',
+        metadata: expect.objectContaining({
+          canvasCommand: expect.objectContaining({ starterId: 'research' }),
+        }),
+      })
+    );
+    expect(addChatMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: 'ai',
+        content: expect.stringContaining('Research Canvas'),
+      })
+    );
+    expect(startStreamMock).not.toHaveBeenCalled();
+  });
+
+  it('parses Canvas routing commands into the expected starter', () => {
+    expect(unifiedChatPrivate.parseChatCanvasIntent('/canvas decision memo')?.starterId).toBe(
+      'decision'
+    );
+    expect(unifiedChatPrivate.parseChatCanvasIntent('wrzuć to do Canvas jako plan')?.starterId).toBe(
+      'plan'
+    );
+    expect(
+      unifiedChatPrivate.parseChatCanvasIntent('normalna wiadomość bez routingu')
+    ).toBeNull();
+  });
+
   it('summarizes recent workflow timeline events in the Canvas context packet', () => {
     const packet = buildCanvasContextPacket(
       {
@@ -745,6 +822,177 @@ describe('UnifiedChatPanel (L2)', () => {
       }),
     ]);
     expect(packet?.memorySnapshot.anchors.workflowRunIds).toEqual(['workflow-1']);
+  });
+
+  it('keeps the full Canvas rollout context safe and anchored for Teresa', () => {
+    const packet = buildCanvasContextPacket(
+      {
+        draftId: 'draft-rollout-1',
+        researchSessionId: 'rs-rollout-1',
+        title: 'Rollout Gate Memo',
+        saveState: 'saved',
+        lifecycleState: 'draft',
+        activeStarterId: 'decision',
+        kind: 'decision',
+        contentMd: '# Rollout Gate Memo\n\nApprove the Canvas rollout after evidence review.',
+        markdownProjectionStatus: 'synced',
+        linkedOutputs: [
+          {
+            stepId: 'step-output',
+            type: 'report',
+            id: 'report-rollout-1',
+            title: 'Report: Rollout Gate Memo',
+            url: '/work-canvas?draftId=report-rollout-1',
+          },
+        ],
+        blocks: [
+          {
+            id: 'block-risk-table',
+            kind: 'table',
+            schemaVersion: 'canvas-block/v1',
+            title: 'Rollout Risks',
+            status: 'ready',
+            capabilities: ['view', 'export'],
+            data: {
+              secretInternalRows: [{ risk: 'raw JSON must not enter Teresa context' }],
+            },
+            provenance: { source: 'assistant' },
+            markdownProjection: '| Risk | Mitigation |\n| --- | --- |\n| Context loss | E2E gate |',
+            markdownProjectionStatus: 'synced',
+          },
+        ],
+        workflowRuns: [
+          {
+            id: 'workflow-rollout-1',
+            draftId: 'draft-rollout-1',
+            conversationId: 'conv-rollout-1',
+            template: 'decision_memo_to_execution_plan',
+            title: 'Decision memo to execution plan',
+            status: 'completed',
+            steps: [
+              {
+                id: 'step-approval',
+                kind: 'user_approval',
+                title: 'Approve execution plan',
+                summary: 'Approval before durable rollout output.',
+                status: 'completed',
+                approvalRequired: true,
+                outputType: 'report',
+                outputId: 'report-rollout-1',
+                createdAt: '2026-05-03T00:00:00.000Z',
+              },
+            ],
+            approvals: [
+              {
+                stepId: 'step-approval',
+                status: 'approved',
+                requiredCapability: 'work_canvas.workflow.approve',
+              },
+            ],
+            outputs: [
+              {
+                stepId: 'step-output',
+                type: 'report',
+                id: 'report-rollout-1',
+                title: 'Report: Rollout Gate Memo',
+                url: '/work-canvas?draftId=report-rollout-1',
+              },
+            ],
+            collaboration: {
+              ownerId: 'user-1',
+              reviewerId: 'reviewer-1',
+              lifecycle: 'approved',
+              comments: [
+                {
+                  id: 'comment-sensitive',
+                  authorId: 'reviewer-1',
+                  body: 'Do not leak this raw reviewer note into Teresa context.',
+                  createdAt: '2026-05-03T00:01:00.000Z',
+                },
+              ],
+            },
+            events: [
+              {
+                id: 'event-output',
+                type: 'output_created',
+                actorId: 'user-1',
+                summary: 'Created report output: Report: Rollout Gate Memo.',
+                createdAt: '2026-05-03T00:02:00.000Z',
+                metadata: { internalAuditPayload: 'raw metadata should stay out' },
+              },
+            ],
+            createdBy: 'user-1',
+            createdAt: '2026-05-03T00:00:00.000Z',
+            updatedAt: '2026-05-03T00:02:00.000Z',
+          },
+        ],
+      },
+      {
+        mode: 'document',
+        draftId: 'draft-rollout-1',
+        selectedText: 'Approve the Canvas rollout',
+        start: 22,
+        end: 48,
+      }
+    );
+
+    expect(packet).toMatchObject({
+      schemaVersion: 'canvas-context/v1',
+      activeDraft: {
+        draftId: 'draft-rollout-1',
+        researchSessionId: 'rs-rollout-1',
+        title: 'Rollout Gate Memo',
+        kind: 'decision',
+        saveState: 'saved',
+      },
+      selection: {
+        draftId: 'draft-rollout-1',
+        selectedText: 'Approve the Canvas rollout',
+      },
+      memorySnapshot: {
+        anchors: {
+          draftId: 'draft-rollout-1',
+          researchSessionId: 'rs-rollout-1',
+          title: 'Rollout Gate Memo',
+          kind: 'decision',
+          workflowRunIds: ['workflow-rollout-1'],
+          blockIds: ['block-risk-table'],
+        },
+      },
+    });
+    expect(packet?.blockSummaries).toEqual([
+      expect.objectContaining({
+        blockId: 'block-risk-table',
+        kind: 'table',
+        markdownProjection: expect.stringContaining('| Risk | Mitigation |'),
+      }),
+    ]);
+    expect(packet?.workflowRuns).toEqual([
+      expect.objectContaining({
+        id: 'workflow-rollout-1',
+        lifecycle: 'approved',
+        outputCount: 1,
+        stepSummaries: [expect.objectContaining({ id: 'step-approval', outputId: 'report-rollout-1' })],
+        approvalStatuses: [expect.objectContaining({ stepId: 'step-approval', status: 'approved' })],
+      }),
+    ]);
+    expect(packet?.workflowEventSummaries).toEqual([
+      expect.objectContaining({
+        workflowRunId: 'workflow-rollout-1',
+        eventType: 'output_created',
+      }),
+    ]);
+    expect(packet?.workflowOutputSummaries).toEqual([
+      expect.objectContaining({
+        workflowRunId: 'workflow-rollout-1',
+        id: 'report-rollout-1',
+        url: '/work-canvas?draftId=report-rollout-1',
+      }),
+    ]);
+    const serializedPacket = JSON.stringify(packet);
+    expect(serializedPacket).not.toContain('secretInternalRows');
+    expect(serializedPacket).not.toContain('Do not leak this raw reviewer note');
+    expect(serializedPacket).not.toContain('internalAuditPayload');
   });
 
   it('lets users resize the chat and Canvas split from the Canvas edge', () => {

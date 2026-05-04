@@ -15,7 +15,8 @@ export type Wave9EvidenceType =
   | 'regression_pack'
   | 'ciso_pack'
   | 'business_persona_pack'
-  | 'compliance_audit';
+  | 'compliance_audit'
+  | 'ai_ops_eval_pack';
 export type Wave9EvidenceStatus = 'pass' | 'fail' | 'pending';
 export type Wave9ProviderStatus = 'healthy' | 'degraded' | 'unavailable';
 export type Wave9EvalStatus = 'pass' | 'fail';

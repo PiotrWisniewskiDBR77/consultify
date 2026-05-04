@@ -3,7 +3,10 @@ import {
   normalizePlatformRole as normalizePlatformRoleCanonical,
 } from './roleNormalization.js';
 
-export { defaultProjectRoleForApplicationRole, normalizeApplicationRole } from './roleNormalization.js';
+export {
+  defaultProjectRoleForApplicationRole,
+  normalizeApplicationRole,
+} from './roleNormalization.js';
 
 export function normalizePlatformRole(role: string | null | undefined): string {
   return normalizePlatformRoleCanonical(role) || normalizeApplicationRole(role);
@@ -39,7 +42,7 @@ export function resolveAuthEffectiveRole(params: {
 
   if (
     userRole === 'SUPERADMIN' ||
-    isForcedSuperAdminEmail(params.email, params.forcedSuperAdminEmails)
+    isForcedSuperAdminEmail(params.email, params.forcedSuperAdminEmails || undefined)
   ) {
     return 'SUPERADMIN';
   }

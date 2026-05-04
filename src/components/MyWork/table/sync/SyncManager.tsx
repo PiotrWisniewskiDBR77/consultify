@@ -191,7 +191,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           >
             <ChevronLeft size={16} className="text-slate-400" />
           </button>
-          <RefreshCw size={16} className="text-cyan-500" />
+          <RefreshCw size={16} className="text-blue-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Nowa synchronizacja' : 'New Sync'}
           </h3>
@@ -206,9 +206,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 onClick={() => idx <= stepIndex && setWizardStep(step.key)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
                   idx === stepIndex
-                    ? 'bg-cyan-500 text-white'
+                    ? 'bg-blue-500 text-white'
                     : idx < stepIndex
-                      ? 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-400'
+                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
                       : 'text-slate-400'
                 }`}
               >
@@ -232,7 +232,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     onClick={() => setSourceType(type)}
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       sourceType === type
-                        ? 'border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/20 dark:text-cyan-400'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/20 dark:text-blue-400'
                         : 'border-slate-200 text-slate-600 hover:border-slate-300 dark:border-navy-700 dark:text-slate-300'
                     }`}
                   >
@@ -378,7 +378,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   onClick={() => setSyncMode('one_way')}
                   className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-medium transition-colors ${
                     syncMode === 'one_way'
-                      ? 'border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/20'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/20'
                       : 'border-slate-200 text-slate-600 hover:border-slate-300 dark:border-navy-700'
                   }`}
                 >
@@ -389,7 +389,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   onClick={() => setSyncMode('two_way')}
                   className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-medium transition-colors ${
                     syncMode === 'two_way'
-                      ? 'border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/20'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/20'
                       : 'border-slate-200 text-slate-600 hover:border-slate-300 dark:border-navy-700'
                   }`}
                 >
@@ -450,7 +450,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             <button
               onClick={handleCreateSync}
               disabled={creating}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
             >
               {creating && <Loader2 size={12} className="animate-spin" />}
               {isPl ? 'Utwórz synchronizację' : 'Create Sync'}
@@ -459,7 +459,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             <button
               onClick={() => setWizardStep(WIZARD_STEPS[stepIndex + 1].key)}
               disabled={wizardStep === 'source' && !sourceTableId}
-              className="inline-flex items-center gap-1 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
             >
               {isPl ? 'Dalej' : 'Next'}
               <ArrowRight size={12} />
@@ -482,7 +482,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
           >
             <ChevronLeft size={16} className="text-slate-400" />
           </button>
-          <RefreshCw size={18} className="text-cyan-500" />
+          <RefreshCw size={18} className="text-blue-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Synchronizacja' : 'Data Sync'}
             {syncs.length > 0 && (
@@ -492,7 +492,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
         </div>
         <button
           onClick={() => setShowWizard(true)}
-          className="inline-flex items-center gap-1 rounded-lg bg-cyan-50 px-2.5 py-1.5 text-xs font-medium text-cyan-600 transition-colors hover:bg-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-400 dark:hover:bg-cyan-500/20"
+          className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
         >
           <Plus size={12} />
           {isPl ? 'Nowa' : 'New'}
@@ -520,7 +520,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             </p>
             <button
               onClick={() => setShowWizard(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-600"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600"
             >
               <Plus size={14} />
               {isPl ? 'Utwórz synchronizację' : 'Create sync'}
@@ -537,9 +537,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                 >
                   <div className="flex-shrink-0">
                     {sync.sync_mode === 'two_way' ? (
-                      <ArrowLeftRight size={16} className="text-cyan-500" />
+                      <ArrowLeftRight size={16} className="text-blue-500" />
                     ) : (
-                      <ArrowRight size={16} className="text-cyan-500" />
+                      <ArrowRight size={16} className="text-blue-500" />
                     )}
                   </div>
 
@@ -569,7 +569,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     <button
                       onClick={() => handleSyncNow(sync.id)}
                       disabled={isSyncing}
-                      className="rounded-lg p-1.5 text-cyan-600 transition-colors hover:bg-cyan-50 disabled:opacity-50 dark:text-cyan-400 dark:hover:bg-cyan-900/20"
+                      className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
                       title={isPl ? 'Synchronizuj teraz' : 'Sync now'}
                     >
                       {isSyncing ? (
@@ -580,7 +580,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     </button>
                     <button
                       onClick={() => handleDelete(sync.id)}
-                      className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                      className="rounded-lg p-1.5 text-rose-500 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/20"
                       title={isPl ? 'Usuń' : 'Delete'}
                     >
                       <Trash2 size={14} />

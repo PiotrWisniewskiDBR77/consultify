@@ -443,12 +443,12 @@ export function PromptManagementUI() {
         <div className="p-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Wand2 size={20} className="text-purple-500" />
+              <Wand2 size={20} className="text-primary-500" />
               <h2 className="font-semibold text-slate-900 dark:text-white">Prompts</h2>
             </div>
             <button
               onClick={handleCreateNew}
-              className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+              className="p-2 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title="New Prompt"
             >
               <Plus size={20} />
@@ -491,7 +491,7 @@ export function PromptManagementUI() {
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2 size={24} className="animate-spin text-purple-500" />
+              <Loader2 size={24} className="animate-spin text-primary-500" />
             </div>
           ) : error ? (
             <div className="p-4">
@@ -531,7 +531,7 @@ export function PromptManagementUI() {
                           onClick={() => handleSelectPrompt(prompt)}
                           className={`w-full px-4 py-2 text-left transition-colors ${
                             selectedPrompt?.id === prompt.id
-                              ? 'bg-purple-50 dark:bg-purple-900/20 border-l-2 border-purple-500'
+                              ? 'bg-primary-50 dark:bg-primary-900/20 border-l-2 border-primary-500'
                               : 'hover:bg-slate-50 dark:hover:bg-white/5'
                           }`}
                         >
@@ -564,7 +564,7 @@ export function PromptManagementUI() {
           {actionError ? (
             <div
               role="alert"
-              className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-200"
+              className="mx-6 mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
             >
               {actionError}
             </div>
@@ -576,7 +576,7 @@ export function PromptManagementUI() {
                 <p>Select a prompt to view or edit</p>
                 <button
                   onClick={handleCreateNew}
-                  className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 mx-auto"
+                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 mx-auto"
                 >
                   <Plus size={16} />
                   Create New Prompt
@@ -608,7 +608,7 @@ export function PromptManagementUI() {
                       onClick={() => setShowAssistant(!showAssistant)}
                       className={`p-2 rounded-lg transition-colors ${
                         showAssistant
-                          ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'
+                          ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
                       }`}
                       title={showAssistant ? 'Hide AI Assistant' : 'Show AI Assistant'}
@@ -629,7 +629,7 @@ export function PromptManagementUI() {
                         <button
                           onClick={handleSave}
                           disabled={isSaving}
-                          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
                         >
                           {isSaving ? (
                             <Loader2 size={16} className="animate-spin" />
@@ -652,7 +652,7 @@ export function PromptManagementUI() {
                           onClick={() => setShowVersions(!showVersions)}
                           className={`p-2 rounded-lg transition-colors ${
                             showVersions
-                              ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'
+                              ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30'
                               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
                           }`}
                           title="Version history"
@@ -675,7 +675,7 @@ export function PromptManagementUI() {
                         </button>
                         <button
                           onClick={handleDelete}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          className="p-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 size={18} />
@@ -691,7 +691,7 @@ export function PromptManagementUI() {
                     onClick={() => setActiveTab('editor')}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                       activeTab === 'editor'
-                        ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                        ? 'bg-slate-50 dark:bg-navy-900 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -702,7 +702,7 @@ export function PromptManagementUI() {
                     onClick={() => setActiveTab('blocks')}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                       activeTab === 'blocks'
-                        ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                        ? 'bg-slate-50 dark:bg-navy-900 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -713,7 +713,7 @@ export function PromptManagementUI() {
                     onClick={() => setActiveTab('test')}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                       activeTab === 'test'
-                        ? 'bg-slate-50 dark:bg-navy-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                        ? 'bg-slate-50 dark:bg-navy-900 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -836,7 +836,7 @@ export function PromptManagementUI() {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                       </label>
                       <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
                     </div>
@@ -930,7 +930,7 @@ export function PromptManagementUI() {
                             {selectedPrompt.variables.map((v) => (
                               <span
                                 key={v}
-                                className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-mono"
+                                className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-mono"
                               >
                                 {'{{'}
                                 {v}
@@ -995,7 +995,7 @@ export function PromptManagementUI() {
                     <div className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg">
                       {previewLoading ? (
                         <div className="flex items-center justify-center py-8">
-                          <Loader2 size={24} className="animate-spin text-purple-500" />
+                          <Loader2 size={24} className="animate-spin text-primary-500" />
                         </div>
                       ) : (
                         <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">

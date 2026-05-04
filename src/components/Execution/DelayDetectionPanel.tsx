@@ -55,9 +55,9 @@ interface DelayDetectionPanelProps {
 
 const SEVERITY_CONFIG = {
   CRITICAL: {
-    bg: 'bg-red-500/15',
-    border: 'border-red-500/30',
-    text: 'text-red-400',
+    bg: 'bg-rose-500/15',
+    border: 'border-rose-500/30',
+    text: 'text-rose-400',
     icon: AlertTriangle,
   },
   WARNING: {
@@ -76,11 +76,11 @@ const DEVIATION_ICONS: Record<string, React.FC<{ size?: number; className?: stri
 };
 
 const REASON_COLORS: Record<string, string> = {
-  BLOCKED: 'bg-red-500/20 text-red-400',
-  DEPENDENCY_NOT_DONE: 'bg-orange-500/20 text-orange-400',
+  BLOCKED: 'bg-rose-500/20 text-rose-400',
+  DEPENDENCY_NOT_DONE: 'bg-amber-500/20 text-amber-400',
   NO_OWNER: 'bg-slate-500/20 text-slate-400',
-  RAID_HIGH_RISK: 'bg-purple-500/20 text-purple-400',
-  CAPACITY_OVERLOAD: 'bg-cyan-500/20 text-cyan-400',
+  RAID_HIGH_RISK: 'bg-primary-500/20 text-primary-400',
+  CAPACITY_OVERLOAD: 'bg-blue-500/20 text-blue-400',
   NO_TASKS_PLANNED: 'bg-gray-500/20 text-gray-400',
 };
 
@@ -255,7 +255,7 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
             {t('execution.delay.title')}
           </h3>
           {criticalCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-500/20 text-red-400">
+            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-500/20 text-rose-400">
               {criticalCount} {t('execution.delay.critical')}
             </span>
           )}
@@ -386,7 +386,7 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => onInitiativeClick(signal.entityId)}
-                          className="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
                         >
                           <ExternalLink size={12} />
                           {t('execution.delay.viewInitiative')}

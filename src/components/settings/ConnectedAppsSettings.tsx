@@ -986,7 +986,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {actionError}
         </div>
@@ -1035,7 +1035,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
 
       {/* Error */}
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {error}
         </div>
@@ -1127,7 +1127,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </span>
                               ))}
                               <span
-                                className={`text-[10px] px-1.5 py-0.5 rounded ${app.authType === 'oauth2' ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : app.authType === 'basic' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400'}`}
+                                className={`text-[10px] px-1.5 py-0.5 rounded ${app.authType === 'oauth2' ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : app.authType === 'basic' ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' : 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400'}`}
                               >
                                 {app.authType === 'oauth2'
                                   ? 'OAuth 2.0'
@@ -1165,7 +1165,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </button>
                                 <button
                                   onClick={() => handleDisconnect(app.id)}
-                                  className="px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                  className="px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                                 >
                                   {t('common.disconnect', 'Disconnect')}
                                 </button>
@@ -1193,7 +1193,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
 
                         {/* Error detail */}
                         {connection?.lastError && (
-                          <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-600 dark:text-red-400">
+                          <div className="mt-2 p-2 bg-rose-50 dark:bg-rose-900/20 rounded text-xs text-rose-600 dark:text-rose-400">
                             {connection.lastError}
                           </div>
                         )}

@@ -115,7 +115,7 @@ export const RevenueForecastView: React.FC = () => {
   const getMethodBadge = (method: string) => {
     const badges: Record<string, { bg: string; text: string; label: string }> = {
       linear: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Linear' },
-      exponential: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: 'Exponential' },
+      exponential: { bg: 'bg-primary-500/20', text: 'text-primary-400', label: 'Exponential' },
       moving_average: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Moving Average' },
       ml_based: { bg: 'bg-indigo-500/20', text: 'text-indigo-400', label: 'Statistical Estimate' },
     };
@@ -148,7 +148,7 @@ export const RevenueForecastView: React.FC = () => {
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return 'text-green-400';
     if (confidence >= 0.6) return 'text-yellow-400';
-    return 'text-red-400';
+    return 'text-rose-400';
   };
 
   if (loading) {
@@ -178,11 +178,11 @@ export const RevenueForecastView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg">
+        <div className="bg-rose-500/20 border border-rose-500 text-rose-300 px-4 py-3 rounded-lg">
           {error}
           <button
             onClick={() => setError(null)}
-            className="float-right text-red-300 hover:text-red-100"
+            className="float-right text-rose-300 hover:text-rose-100"
           >
             ×
           </button>
@@ -321,7 +321,7 @@ export const RevenueForecastView: React.FC = () => {
                                 ? 'bg-green-500'
                                 : forecast.confidence_level >= 0.6
                                   ? 'bg-yellow-500'
-                                  : 'bg-red-500'
+                                  : 'bg-rose-500'
                             }`}
                             style={{ width: `${forecast.confidence_level * 100}%` }}
                           />
@@ -339,7 +339,7 @@ export const RevenueForecastView: React.FC = () => {
                     <td className="py-3 px-4 text-center">
                       <button
                         onClick={() => handleDeleteForecast(forecast.id)}
-                        className="px-2 py-1 text-xs bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition-colors"
+                        className="px-2 py-1 text-xs bg-rose-600/20 text-rose-400 rounded hover:bg-rose-600/30 transition-colors"
                       >
                         Delete
                       </button>

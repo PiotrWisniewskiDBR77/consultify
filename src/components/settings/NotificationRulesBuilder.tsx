@@ -168,7 +168,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -178,7 +178,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       {/* Header */}
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Filter className="w-5 h-5 text-purple-500" />
+          <Filter className="w-5 h-5 text-primary-500" />
           {t('settings.notifications.rules.title', 'Notification Rules')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -207,7 +207,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           <button
             onClick={() => setShowAddRule(true)}
             disabled={isReadOnly}
-            className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:underline"
+            className="flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:underline"
           >
             <Plus className="w-4 h-4" />
             {t('settings.notifications.rules.addRule', 'Add Project Rule')}
@@ -224,7 +224,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                     rule.project_id === null
-                      ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
+                      ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
                       : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
                   }`}
                 >
@@ -235,7 +235,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 <button
                   onClick={() => handleDeleteRule(rule.id)}
                   disabled={isReadOnly}
-                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -255,7 +255,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     disabled={isReadOnly}
                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                       rule.rule_type === type
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
                     }`}
                   >
@@ -282,7 +282,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       onChange={(e) =>
                         handleUpdateRule(rule.id, { [option.key]: e.target.checked })
                       }
-                      className="rounded border-slate-300 dark:border-white/20 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500"
                     />
                     <option.icon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -305,7 +305,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   onChange={(e) =>
                     handleUpdateRule(rule.id, { priority_filter: e.target.value as any })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="all">
                     {t('settings.notifications.rules.allPriorities', 'All priorities')}
@@ -324,7 +324,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
         {/* Add Rule Modal */}
         {showAddRule && (
-          <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-xl border border-purple-200 dark:border-purple-500/20">
+          <div className="p-4 bg-primary-50 dark:bg-primary-500/10 rounded-xl border border-primary-200 dark:border-primary-500/20">
             <div className="flex items-center gap-3">
               <select
                 value={newRuleProjectId}
@@ -345,7 +345,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               <button
                 onClick={handleAddRule}
                 disabled={!newRuleProjectId}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
               >
                 {t('common.add', 'Add')}
               </button>
@@ -383,7 +383,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             onClick={() => setDigestSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
             disabled={isReadOnly}
             className={`w-12 h-6 rounded-full transition-colors ${
-              digestSettings.enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              digestSettings.enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -481,7 +481,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <button
               onClick={handleAddKeyword}
               disabled={isReadOnly || !newKeyword.trim()}
-              className="p-1 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-full disabled:opacity-50"
+              className="p-1 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-full disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -521,7 +521,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         <button
           onClick={handleSave}
           disabled={saving || isReadOnly}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
         >
           {saving ? (
             <>

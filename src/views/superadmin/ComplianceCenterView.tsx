@@ -102,7 +102,7 @@ const STATUS_COLORS = {
   compliant: 'bg-emerald-500',
   in_progress: 'bg-blue-500',
   pending: 'bg-slate-400',
-  non_compliant: 'bg-red-500',
+  non_compliant: 'bg-rose-500',
   not_applicable: 'bg-slate-300',
 };
 
@@ -631,7 +631,7 @@ export const ComplianceCenterView: React.FC = () => {
                   ? 'bg-emerald-500/10'
                   : overallScore >= 50
                     ? 'bg-amber-500/10'
-                    : 'bg-red-500/10'
+                    : 'bg-rose-500/10'
               }`}
             >
               <Target
@@ -640,7 +640,7 @@ export const ComplianceCenterView: React.FC = () => {
                     ? 'text-emerald-500'
                     : overallScore >= 50
                       ? 'text-amber-500'
-                      : 'text-red-500'
+                      : 'text-rose-500'
                 }
                 size={20}
               />
@@ -659,7 +659,7 @@ export const ComplianceCenterView: React.FC = () => {
                     ? 'bg-emerald-500'
                     : overallScore >= 50
                       ? 'bg-amber-500'
-                      : 'bg-red-500'
+                      : 'bg-rose-500'
                 }`}
                 style={{ width: `${overallScore}%` }}
               />
@@ -680,7 +680,7 @@ export const ComplianceCenterView: React.FC = () => {
           {dsarLoadError ? (
             <div className="mt-1 text-sm text-amber-600">DSAR source unavailable</div>
           ) : overdueDoars > 0 ? (
-            <div className="mt-1 text-sm text-red-500 flex items-center gap-1">
+            <div className="mt-1 text-sm text-rose-500 flex items-center gap-1">
               <AlertCircle size={14} />
               {overdueDoars} overdue
             </div>
@@ -690,8 +690,8 @@ export const ComplianceCenterView: React.FC = () => {
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-500 dark:text-slate-400">Active Audits</span>
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <FileCheck className="text-violet-500" size={20} />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
+              <FileCheck className="text-primary-500" size={20} />
             </div>
           </div>
           <div className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -734,7 +734,7 @@ export const ComplianceCenterView: React.FC = () => {
               <div key={status.frameworkId} className="p-4 bg-slate-50 dark:bg-navy-900 rounded-xl">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
                       {String(status?.frameworkName || 'U')
                         .trim()
                         .charAt(0)
@@ -756,7 +756,7 @@ export const ComplianceCenterView: React.FC = () => {
                           ? 'text-emerald-600'
                           : status.score >= 50
                             ? 'text-amber-600'
-                            : 'text-red-600'
+                            : 'text-rose-600'
                       }`}
                     >
                       {Number(status.score) || 0}%
@@ -766,7 +766,7 @@ export const ComplianceCenterView: React.FC = () => {
                         setSelectedFramework(status.frameworkId);
                         setActiveTab('frameworks');
                       }}
-                      className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1"
+                      className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
                     >
                       View Details <ChevronRight size={14} />
                     </button>
@@ -786,7 +786,7 @@ export const ComplianceCenterView: React.FC = () => {
                     style={{ width: `${pct(status.pending, status.total)}%` }}
                   />
                   <div
-                    className="bg-red-500 rounded-r"
+                    className="bg-rose-500 rounded-r"
                     style={{ width: `${pct(status.nonCompliant, status.total)}%` }}
                   />
                 </div>
@@ -804,7 +804,7 @@ export const ComplianceCenterView: React.FC = () => {
                     {Number(status.pending) || 0} Pending
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-red-500" />{' '}
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />{' '}
                     {Number(status.nonCompliant) || 0} Non-Compliant
                   </span>
                 </div>
@@ -822,7 +822,7 @@ export const ComplianceCenterView: React.FC = () => {
           </h3>
           <button
             onClick={() => setActiveTab('dsar')}
-            className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1"
+            className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
           >
             View All <ChevronRight size={14} />
           </button>
@@ -859,7 +859,7 @@ export const ComplianceCenterView: React.FC = () => {
                           ? 'bg-blue-500/10 text-blue-600'
                           : dsar.status === 'pending'
                             ? 'bg-amber-500/10 text-amber-600'
-                            : 'bg-red-500/10 text-red-600'
+                            : 'bg-rose-500/10 text-rose-600'
                     }`}
                   >
                     {dsar.status.replace('_', ' ')}
@@ -1027,11 +1027,11 @@ export const ComplianceCenterView: React.FC = () => {
             <button
               key={fw.id}
               onClick={() => setSelectedFramework(fw.id)}
-              className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 text-left hover:border-violet-300 dark:hover:border-violet-500/30 transition-all"
+              className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 text-left hover:border-primary-300 dark:hover:border-primary-500/30 transition-all"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-xl">
                     {(fw.displayName || fw.name || 'F').charAt(0)}
                   </div>
                   <div>
@@ -1057,7 +1057,7 @@ export const ComplianceCenterView: React.FC = () => {
                         ? 'text-emerald-600'
                         : status.score >= 50
                           ? 'text-amber-600'
-                          : 'text-red-600'
+                          : 'text-rose-600'
                     }`}
                   >
                     {status.score}%
@@ -1089,7 +1089,7 @@ export const ComplianceCenterView: React.FC = () => {
         <button
           onClick={() => setDsarCreateModal(true)}
           disabled={!!dsarLoadError}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           New Request
@@ -1148,7 +1148,7 @@ export const ComplianceCenterView: React.FC = () => {
                             ? 'bg-blue-500/10 text-blue-600'
                             : dsar.status === 'pending'
                               ? 'bg-amber-500/10 text-amber-600'
-                              : 'bg-red-500/10 text-red-600'
+                              : 'bg-rose-500/10 text-rose-600'
                       }`}
                     >
                       {dsar.status.replace('_', ' ')}
@@ -1161,7 +1161,7 @@ export const ComplianceCenterView: React.FC = () => {
                     <span
                       className={`text-sm ${
                         isOverdue(dsar.dueDate, dsar.status)
-                          ? 'text-red-600 font-medium'
+                          ? 'text-rose-600 font-medium'
                           : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -1201,7 +1201,7 @@ export const ComplianceCenterView: React.FC = () => {
         <button
           onClick={() => setAuditCreateModal(true)}
           disabled={!!auditsLoadError}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           Schedule Audit
@@ -1245,9 +1245,9 @@ export const ComplianceCenterView: React.FC = () => {
                 </span>
               </div>
               {audit.findingsCount > 0 && (
-                <div className="p-3 bg-red-50 dark:bg-red-500/10 rounded-lg flex items-center gap-2">
-                  <AlertTriangle size={16} className="text-red-500" />
-                  <span className="text-sm text-red-700 dark:text-red-400">
+                <div className="p-3 bg-rose-50 dark:bg-rose-500/10 rounded-lg flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-rose-500" />
+                  <span className="text-sm text-rose-700 dark:text-rose-400">
                     {audit.findingsCount} findings
                   </span>
                 </div>
@@ -1288,7 +1288,7 @@ export const ComplianceCenterView: React.FC = () => {
         <button
           onClick={() => setRecordCreateModal(true)}
           disabled={!!processingRecordsLoadError}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           Add Processing Record
@@ -1441,7 +1441,7 @@ export const ComplianceCenterView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -1454,7 +1454,7 @@ export const ComplianceCenterView: React.FC = () => {
       {/* Tab Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : (
         <>
@@ -1565,7 +1565,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleSaveControl}
                 disabled={editControlSaving}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {editControlSaving && <Loader2 size={16} className="animate-spin" />}
                 Save
@@ -1661,7 +1661,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateDsar}
                 disabled={dsarCreateSaving}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {dsarCreateSaving && <Loader2 size={16} className="animate-spin" />}
                 Create Request
@@ -1688,7 +1688,7 @@ export const ComplianceCenterView: React.FC = () => {
             </div>
             {dsarViewLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2 size={24} className="animate-spin text-violet-500" />
+                <Loader2 size={24} className="animate-spin text-primary-500" />
               </div>
             ) : (
               <div className="space-y-4">
@@ -1714,7 +1714,7 @@ export const ComplianceCenterView: React.FC = () => {
                               ? 'bg-blue-500/10 text-blue-600'
                               : dsarViewModal.dsar.status === 'pending'
                                 ? 'bg-amber-500/10 text-amber-600'
-                                : 'bg-red-500/10 text-red-600'
+                                : 'bg-rose-500/10 text-rose-600'
                         }`}
                       >
                         {(dsarViewModal.dsar.status || 'pending').replace('_', ' ')}
@@ -1779,10 +1779,10 @@ export const ComplianceCenterView: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-2 h-2 rounded-full ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'bg-red-500' : 'bg-amber-500'}`}
+                        className={`w-2 h-2 rounded-full ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'bg-rose-500' : 'bg-amber-500'}`}
                       />
                       <span
-                        className={`text-sm ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'text-red-600 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
+                        className={`text-sm ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'text-rose-600 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
                       >
                         Due: {formatDateTime(dsarViewModal.dsar.dueDate, '—')}
                       </span>
@@ -1927,7 +1927,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateAudit}
                 disabled={auditCreateSaving}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {auditCreateSaving && <Loader2 size={16} className="animate-spin" />}
                 Schedule
@@ -2044,7 +2044,7 @@ export const ComplianceCenterView: React.FC = () => {
               <button
                 onClick={handleCreateRecord}
                 disabled={recordCreateSaving}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
               >
                 {recordCreateSaving && <Loader2 size={16} className="animate-spin" />}
                 Add Record

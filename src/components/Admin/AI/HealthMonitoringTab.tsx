@@ -243,7 +243,7 @@ export const HealthMonitoringTab: React.FC = () => {
           onClick={() => setActiveSubTab('mission')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'mission'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -254,7 +254,7 @@ export const HealthMonitoringTab: React.FC = () => {
           onClick={() => setActiveSubTab('analytics')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'analytics'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -265,7 +265,7 @@ export const HealthMonitoringTab: React.FC = () => {
           onClick={() => setActiveSubTab('logs')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'logs'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -407,7 +407,7 @@ export const HealthMonitoringTab: React.FC = () => {
                               ? results[cap.id].details?.skipped
                                 ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 dark:border-transparent'
                                 : 'bg-success-500/10 text-success-700 dark:text-green-400 border-success-500/30 dark:border-transparent'
-                              : 'bg-danger-500/10 text-danger-700 dark:text-red-400 border-danger-500/30 dark:border-transparent'
+                              : 'bg-danger-500/10 text-danger-700 dark:text-rose-400 border-danger-500/30 dark:border-transparent'
                           }`}
                         >
                           {results[cap.id].details?.skipped ? 'SKIPPED' : results[cap.id].status} (
@@ -468,7 +468,7 @@ export const HealthMonitoringTab: React.FC = () => {
                             ? res.details?.skipped
                               ? 'text-amber-400'
                               : 'text-green-400'
-                            : 'text-red-400'
+                            : 'text-rose-400'
                         }
                       >
                         {res.details?.skipped ? 'SKIPPED' : res.status} ({res.latency}ms)
@@ -479,7 +479,7 @@ export const HealthMonitoringTab: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {res.error && <div className="text-red-400 ml-4 mt-1">Error: {res.error}</div>}
+                    {res.error && <div className="text-rose-400 ml-4 mt-1">Error: {res.error}</div>}
                     {res.details?.warning && (
                       <div className="text-amber-400 ml-4 mt-1">⚠️ {res.details.warning}</div>
                     )}
@@ -556,8 +556,8 @@ export const HealthMonitoringTab: React.FC = () => {
                     size={20}
                     className={
                       (analytics?.errorRate || 0) > 0.05
-                        ? 'text-danger-600 dark:text-red-400'
-                        : 'text-primary-600 dark:text-purple-400'
+                        ? 'text-danger-600 dark:text-rose-400'
+                        : 'text-primary-600 dark:text-primary-400'
                     }
                   />
                 </div>
@@ -596,7 +596,7 @@ export const HealthMonitoringTab: React.FC = () => {
             </h3>
             <button
               onClick={loadAnalytics}
-              className="text-sm text-primary-600 dark:text-violet-400 hover:text-primary-700 dark:hover:text-violet-300"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
             >
               <RefreshCw size={14} className="inline mr-1" />
               Refresh
@@ -625,7 +625,7 @@ export const HealthMonitoringTab: React.FC = () => {
                         className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
                           !log.error
                             ? 'bg-success-500/10 text-success-700 dark:text-emerald-400 border-success-500/30 dark:border-emerald-500/20'
-                            : 'bg-danger-500/10 text-danger-700 dark:text-red-400 border-danger-500/30 dark:border-red-500/20'
+                            : 'bg-danger-500/10 text-danger-700 dark:text-rose-400 border-danger-500/30 dark:border-rose-500/20'
                         }`}
                       >
                         {log.error ? 'error' : 'success'}
@@ -653,7 +653,7 @@ export const HealthMonitoringTab: React.FC = () => {
                     <td className="px-4 py-3">
                       {log.error ? (
                         <span
-                          className="text-danger-600 dark:text-red-400 text-xs truncate max-w-[200px] block"
+                          className="text-danger-600 dark:text-rose-400 text-xs truncate max-w-[200px] block"
                           title={log.error}
                         >
                           {log.error}

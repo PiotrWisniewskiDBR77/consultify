@@ -53,8 +53,8 @@ const insightConfig: Record<string, { icon: React.ReactNode; color: string; bgCo
   },
   RISK: {
     icon: <AlertTriangle size={16} />,
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-50 dark:bg-red-900/20',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
   },
   OPPORTUNITY: {
     icon: <Lightbulb size={16} />,
@@ -63,8 +63,8 @@ const insightConfig: Record<string, { icon: React.ReactNode; color: string; bgCo
   },
   SUMMARY: {
     icon: <BarChart3 size={16} />,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-900/20',
   },
 };
 
@@ -161,8 +161,8 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <Brain size={18} className="text-purple-600 dark:text-purple-400" />
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+            <Brain size={18} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h3 className="font-bold text-navy-900 dark:text-white text-sm">AI Assistant</h3>
@@ -189,7 +189,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
             className={`flex-1 py-2.5 px-3 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
               activeTab === tab.id
-                ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/10'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -206,7 +206,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
           <div className="p-4 space-y-3">
             {isLoadingInsights ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 size={24} className="text-purple-500 animate-spin" />
+                <Loader2 size={24} className="text-primary-500 animate-spin" />
               </div>
             ) : insights.length === 0 ? (
               <div className="text-center py-8">
@@ -219,7 +219,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                 </p>
                 <button
                   onClick={loadInsights}
-                  className="mt-3 text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 mx-auto"
+                  className="mt-3 text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 mx-auto"
                 >
                   <RefreshCw size={12} />
                   Odśwież
@@ -271,7 +271,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                         {insight.axis && onNavigateToAxis && (
                           <button
                             onClick={() => onNavigateToAxis(insight.axis!)}
-                            className="mt-2 text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                            className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
                           >
                             Przejdź do osi
                             <ArrowUpRight size={12} />
@@ -288,7 +288,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
               <button
                 onClick={loadInsights}
                 disabled={isLoadingInsights}
-                className="w-full py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 flex items-center justify-center gap-1"
+                className="w-full py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 flex items-center justify-center gap-1"
               >
                 {isLoadingInsights ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -313,19 +313,19 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                 <button
                   onClick={handleSuggestJustification}
                   disabled={!currentAxis || !currentScore || isLoadingSuggestion}
-                  className="w-full p-3 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 border border-purple-200 dark:border-purple-500/30 rounded-xl text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-3 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 border border-primary-200 dark:border-primary-500/30 rounded-xl text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center gap-3">
                     {isLoadingSuggestion ? (
-                      <Loader2 size={18} className="text-purple-500 animate-spin" />
+                      <Loader2 size={18} className="text-primary-500 animate-spin" />
                     ) : (
-                      <Sparkles size={18} className="text-purple-500" />
+                      <Sparkles size={18} className="text-primary-500" />
                     )}
                     <div>
-                      <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                      <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
                         Zasugeruj uzasadnienie
                       </p>
-                      <p className="text-xs text-purple-600/70 dark:text-purple-400/70">
+                      <p className="text-xs text-primary-600/70 dark:text-primary-400/70">
                         AI wygeneruje treść dla obecnej oceny
                       </p>
                     </div>
@@ -380,20 +380,20 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                 <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
                   Sugestia AI
                 </h4>
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-xl p-4">
-                  <p className="text-sm text-purple-800 dark:text-purple-200 leading-relaxed">
+                <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-500/30 rounded-xl p-4">
+                  <p className="text-sm text-primary-800 dark:text-primary-200 leading-relaxed">
                     {suggestion}
                   </p>
                   <div className="flex gap-2 mt-4">
                     <button
                       onClick={handleApplySuggestion}
-                      className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-colors"
+                      className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-medium rounded-lg transition-colors"
                     >
                       Zastosuj
                     </button>
                     <button
                       onClick={() => setSuggestion(null)}
-                      className="px-4 py-2 bg-purple-100 dark:bg-purple-800/50 hover:bg-purple-200 dark:hover:bg-purple-700/50 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-lg transition-colors"
+                      className="px-4 py-2 bg-primary-100 dark:bg-primary-800/50 hover:bg-primary-200 dark:hover:bg-primary-700/50 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-lg transition-colors"
                     >
                       Odrzuć
                     </button>
@@ -450,12 +450,12 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
               </div>
             ) : isLoadingGap ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 size={24} className="text-purple-500 animate-spin" />
+                <Loader2 size={24} className="text-primary-500 animate-spin" />
               </div>
             ) : gapAnalysis ? (
               <>
                 {/* Gap Overview */}
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-500/30">
+                <div className="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-primary-200 dark:border-primary-500/30">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Gap Summary
@@ -466,7 +466,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           : gapAnalysis.gapSeverity === 'MEDIUM'
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                       }`}
                     >
                       {gapAnalysis.gapSeverity}
@@ -482,7 +482,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                     <div className="flex-1 flex items-center">
                       <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
+                          className="h-full bg-gradient-to-r from-primary-500 to-blue-500"
                           style={{ width: `${(gapAnalysis.currentScore / 7) * 100}%` }}
                         />
                       </div>
@@ -525,7 +525,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                           className="bg-slate-50 dark:bg-navy-950/50 rounded-xl p-3 border border-slate-200 dark:border-navy-700"
                         >
                           <div className="flex items-center gap-3 mb-2">
-                            <span className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold flex items-center justify-center">
+                            <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-bold flex items-center justify-center">
                               {step.level}
                             </span>
                             <p className="text-sm font-medium text-navy-900 dark:text-white flex-1">
@@ -542,7 +542,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                   key={aIdx}
                                   className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-1.5"
                                 >
-                                  <span className="text-purple-400">•</span>
+                                  <span className="text-primary-400">•</span>
                                   {activity}
                                 </li>
                               ))}
@@ -579,7 +579,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                                 <span
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                     rec.priority === 'HIGH'
-                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                                       : rec.priority === 'MEDIUM'
                                         ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                         : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -602,7 +602,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                 <button
                   onClick={loadGapAnalysis}
                   disabled={isLoadingGap}
-                  className="w-full py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 flex items-center justify-center gap-1"
+                  className="w-full py-2 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 flex items-center justify-center gap-1"
                 >
                   {isLoadingGap ? (
                     <Loader2 size={12} className="animate-spin" />
@@ -623,7 +623,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                 </p>
                 <button
                   onClick={loadGapAnalysis}
-                  className="mt-3 text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                  className="mt-3 text-xs text-primary-600 dark:text-primary-400 hover:underline"
                 >
                   Spróbuj ponownie
                 </button>
@@ -640,7 +640,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
             // Open full chat with assessment context
             // This would trigger opening ChatPanel with assessment mode
           }}
-          className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
         >
           <MessageSquare size={16} />
           Otwórz pełny chat AI

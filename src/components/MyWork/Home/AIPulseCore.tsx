@@ -14,8 +14,8 @@ interface AIPulseCoreProps {
 
 const PRIORITY_RING: Record<AIPulseCorePayload['focusItems'][number]['priority'], string> = {
   high: 'from-rose-400 to-amber-400',
-  medium: 'from-cyan-400 to-primary-400',
-  low: 'from-emerald-400 to-teal-400',
+  medium: 'from-blue-400 to-primary-400',
+  low: 'from-emerald-400 to-blue-400',
 };
 
 export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => {
@@ -62,7 +62,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
                 },
               })
             }
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-500 to-violet-500 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:brightness-110"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-500 to-primary-500 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:brightness-110"
           >
             {t('myWork.radar.talkToAI')}
             <ArrowRight size={12} />

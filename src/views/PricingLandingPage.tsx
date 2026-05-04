@@ -180,7 +180,7 @@ export const PricingLandingPage: React.FC = () => {
           style={{ fontSize: 'clamp(36px, 5vw, 68px)', lineHeight: 1.05 }}
         >
           {t('pricing.heading', 'Commercial model for real rollout.')}
-          <span className="block bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-transparent">
+          <span className="block bg-gradient-to-r from-primary-300 to-blue-300 bg-clip-text text-transparent">
             {t(
               'pricing.headingAccent',
               'Seats, shared AI budget, licensed tools, and enterprise control.'
@@ -208,13 +208,13 @@ export const PricingLandingPage: React.FC = () => {
               key={pack.key}
               className={`flex h-full flex-col rounded-3xl border p-7 ${
                 (pack as { featured?: boolean }).featured
-                  ? 'border-violet-500/35 bg-violet-50 dark:bg-violet-500/10 shadow-[0_0_60px_-24px_rgba(124,58,237,0.45)]'
+                  ? 'border-primary-500/35 bg-primary-50 dark:bg-primary-500/10 shadow-[0_0_60px_-24px_rgba(124,58,237,0.45)]'
                   : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm dark:shadow-none'
               }`}
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-primary-600 dark:text-primary-300">
                     {pack.name}
                   </p>
                   <p className="mt-3 text-4xl font-black text-slate-900 dark:text-white">
@@ -223,11 +223,11 @@ export const PricingLandingPage: React.FC = () => {
                   <p className="mt-1 text-sm text-slate-500 dark:text-white/45">{pack.subtitle}</p>
                 </div>
                 {(pack as { featured?: boolean }).featured ? (
-                  <span className="rounded-full bg-violet-500 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white">
+                  <span className="rounded-full bg-primary-500 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white">
                     {t('pricing.mostPopular', 'Most popular')}
                   </span>
                 ) : pack.key === 'trial' ? (
-                  <span className="rounded-full border border-cyan-500/30 dark:border-cyan-400/30 bg-cyan-50 dark:bg-cyan-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-200">
+                  <span className="rounded-full border border-blue-500/30 dark:border-blue-400/30 bg-blue-50 dark:bg-blue-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-blue-700 dark:text-blue-200">
                     {t('pricing.trialPill', 'Start here')}
                   </span>
                 ) : null}
@@ -242,7 +242,7 @@ export const PricingLandingPage: React.FC = () => {
                   <div key={bullet} className="flex items-start gap-3">
                     <CheckCircle2
                       size={16}
-                      className="mt-0.5 shrink-0 text-violet-500 dark:text-violet-300"
+                      className="mt-0.5 shrink-0 text-primary-500 dark:text-primary-300"
                     />
                     <span className="text-sm text-slate-600 dark:text-white/68">{bullet}</span>
                   </div>
@@ -256,7 +256,7 @@ export const PricingLandingPage: React.FC = () => {
                   }
                   className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black transition ${
                     (pack as { featured?: boolean }).featured
-                      ? 'bg-violet-600 text-white hover:bg-violet-700 dark:bg-white dark:text-violet-700 dark:hover:bg-violet-50'
+                      ? 'bg-primary-600 text-white hover:bg-primary-700 dark:bg-white dark:text-primary-700 dark:hover:bg-primary-50'
                       : 'border border-slate-300 dark:border-white/15 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >
@@ -273,11 +273,11 @@ export const PricingLandingPage: React.FC = () => {
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                 <Coins size={22} />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-primary-500">
                   {t('pricing.budget.badge', 'Shared AI budget')}
                 </p>
                 <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
@@ -352,11 +352,11 @@ export const PricingLandingPage: React.FC = () => {
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
                 <Layers3 size={22} />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-500">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-500">
                   {t('pricing.licensedTools.badge', 'Licensed tools and frameworks')}
                 </p>
                 <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
@@ -371,7 +371,7 @@ export const PricingLandingPage: React.FC = () => {
             <div className="mt-8 space-y-4">
               {LICENSED_TOOL_KEYS.map((item) => (
                 <div key={item.key} className="flex items-start gap-3">
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-cyan-500" />
+                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-blue-500" />
                   <span className="text-sm leading-6 text-slate-600 dark:text-slate-400">
                     {t(item.key, item.fallback)}
                   </span>
@@ -380,7 +380,7 @@ export const PricingLandingPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-600 to-purple-700 dark:from-violet-500/10 dark:to-cyan-500/10 p-8 shadow-[0_0_80px_-32px_rgba(124,58,237,0.35)]">
+          <div className="rounded-3xl border border-primary-500/20 bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500/10 dark:to-blue-500/10 p-8 shadow-[0_0_80px_-32px_rgba(124,58,237,0.35)]">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white">
                 <Building2 size={22} />
@@ -408,7 +408,7 @@ export const PricingLandingPage: React.FC = () => {
             <div className="mt-8 flex flex-wrap gap-3">
               <button
                 onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-black text-primary-700 transition hover:bg-primary-50"
               >
                 {t('pricing.enterpriseNote.ctaEnterprise', 'Talk enterprise setup')}
                 <ArrowRight size={16} />
@@ -428,7 +428,7 @@ export const PricingLandingPage: React.FC = () => {
         <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-primary-500">
                 {t('pricing.legalDocs.badge', 'Commercial documentation')}
               </p>
               <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
@@ -491,10 +491,10 @@ export const PricingLandingPage: React.FC = () => {
                   key={item.href}
                   type="button"
                   onClick={() => navigate(item.href)}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-violet-300 hover:bg-violet-50 dark:border-navy-700 dark:bg-navy-950/50 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-primary-300 hover:bg-primary-50 dark:border-navy-700 dark:bg-navy-950/50 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-violet-600 shadow-sm dark:bg-white/5 dark:text-violet-300">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-sm dark:bg-white/5 dark:text-primary-300">
                       <Icon size={18} />
                     </div>
                     <div>

@@ -850,12 +850,12 @@ export const ResultsHub: React.FC = () => {
         <ResultsRuntimeChip
           label={t('results.runtime.realizedRoi', 'Realized ROI')}
           value={runtimeSnapshot.roiDashboard.totalRealized.toLocaleString()}
-          dotClassName="bg-violet-400"
+          dotClassName="bg-primary-400"
         />
         <ResultsRuntimeChip
           label={t('results.runtime.reconciliation', 'Reconciliation')}
           value={String(runtimeSnapshot.reconciliationHealth.unresolvedCount || 0)}
-          dotClassName="bg-cyan-400"
+          dotClassName="bg-blue-400"
         />
       </>
     );

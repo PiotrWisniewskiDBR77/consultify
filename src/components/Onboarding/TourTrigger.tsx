@@ -12,7 +12,7 @@ import { Tour, useTour } from './TourProvider';
 const tourAnimationStyle = `
 @keyframes tourColorPulse {
     0%, 100% {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
         box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
     }
     50% {
@@ -22,10 +22,10 @@ const tourAnimationStyle = `
 }
 
 @keyframes tourIconGlow {
-    0%, 100% { 
+    0%, 100% {
         filter: drop-shadow(0 0 1px rgba(255,255,255,0.2));
     }
-    50% { 
+    50% {
         filter: drop-shadow(0 0 4px rgba(255,255,255,0.5));
     }
 }
@@ -73,7 +73,7 @@ export const TourTrigger: React.FC<TourTriggerProps> = ({
     return (
       <button
         onClick={handleClick}
-        className={`flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors ${className}`}
+        className={`flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors ${className}`}
       >
         <Play size={14} />
         <span>{label}</span>

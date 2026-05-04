@@ -102,12 +102,12 @@ const DEFAULT_PRIORITIES: TaskPriority[] = [
 // Color options
 const COLOR_OPTIONS = [
   { id: 'slate', bg: 'bg-slate-500', light: 'bg-slate-100' },
-  { id: 'red', bg: 'bg-red-500', light: 'bg-red-100' },
-  { id: 'orange', bg: 'bg-orange-500', light: 'bg-orange-100' },
+  { id: 'red', bg: 'bg-rose-500', light: 'bg-rose-100' },
+  { id: 'orange', bg: 'bg-amber-500', light: 'bg-amber-100' },
   { id: 'amber', bg: 'bg-amber-500', light: 'bg-amber-100' },
   { id: 'green', bg: 'bg-green-500', light: 'bg-green-100' },
   { id: 'blue', bg: 'bg-blue-500', light: 'bg-blue-100' },
-  { id: 'violet', bg: 'bg-violet-500', light: 'bg-violet-100' },
+  { id: 'violet', bg: 'bg-primary-500', light: 'bg-primary-100' },
   { id: 'pink', bg: 'bg-pink-500', light: 'bg-pink-100' },
 ];
 
@@ -322,7 +322,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
           <button
             onClick={loadSettings}
             disabled={loading}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors disabled:opacity-50"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
@@ -330,7 +330,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
           <button
             onClick={saveSettings}
             disabled={!hasChanges || saving}
-            className="px-4 py-2 bg-violet-500 hover:bg-violet-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg flex items-center gap-2 transition-colors"
           >
             <Save size={18} className={saving ? 'animate-spin' : ''} />
             {t('common.save', 'Save Changes')}
@@ -356,8 +356,8 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
         {/* Project Defaults */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-              <FolderOpen className="text-violet-500" size={20} />
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <FolderOpen className="text-primary-500" size={20} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-white">
@@ -439,7 +439,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onChange={(e) =>
                     updateSettings('projectDefaults.autoAssignCreator', e.target.checked)
                   }
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-500 focus:ring-violet-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
                 />
               </label>
               <label className="flex items-center justify-between cursor-pointer">
@@ -452,7 +452,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onChange={(e) =>
                     updateSettings('projectDefaults.enableTimeTracking', e.target.checked)
                   }
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-500 focus:ring-violet-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
                 />
               </label>
               <label className="flex items-center justify-between cursor-pointer">
@@ -465,7 +465,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onChange={(e) =>
                     updateSettings('projectDefaults.enableDependencies', e.target.checked)
                   }
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-500 focus:ring-violet-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
                 />
               </label>
             </div>
@@ -554,7 +554,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                 type="checkbox"
                 checked={settings.taskDefaults.autoAddToMyWork}
                 onChange={(e) => updateSettings('taskDefaults.autoAddToMyWork', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-500 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-500 focus:ring-primary-500"
               />
             </label>
           </div>
@@ -578,7 +578,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
             </div>
             <button
               onClick={addWorkflowState}
-              className="p-2 text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg"
+              className="p-2 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg"
             >
               <Plus size={18} />
             </button>
@@ -633,7 +633,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
 
                 <button
                   onClick={() => removeWorkflowState(state.id)}
-                  className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X size={14} />
                 </button>
@@ -703,7 +703,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onClick={() => updateSettings('timeFormat', '24h')}
                   className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
                     settings.timeFormat === '24h'
-                      ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-500 text-violet-700 dark:text-violet-300'
+                      ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-300'
                       : 'border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400'
                   }`}
                 >
@@ -713,7 +713,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onClick={() => updateSettings('timeFormat', '12h')}
                   className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
                     settings.timeFormat === '12h'
-                      ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-500 text-violet-700 dark:text-violet-300'
+                      ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-300'
                       : 'border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400'
                   }`}
                 >
@@ -732,7 +732,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onClick={() => updateSettings('weekStart', 'monday')}
                   className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
                     settings.weekStart === 'monday'
-                      ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-500 text-violet-700 dark:text-violet-300'
+                      ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-300'
                       : 'border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400'
                   }`}
                 >
@@ -742,7 +742,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                   onClick={() => updateSettings('weekStart', 'sunday')}
                   className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
                     settings.weekStart === 'sunday'
-                      ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-500 text-violet-700 dark:text-violet-300'
+                      ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-300'
                       : 'border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400'
                   }`}
                 >
@@ -763,7 +763,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                     onClick={() => toggleWorkingDay(day.value)}
                     className={`w-10 h-10 text-xs font-medium rounded-lg transition-colors ${
                       settings.workingDays.includes(day.value)
-                        ? 'bg-violet-500 text-white'
+                        ? 'bg-primary-500 text-white'
                         : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
                     }`}
                   >

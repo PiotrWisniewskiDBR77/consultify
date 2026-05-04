@@ -389,23 +389,23 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
 
   const autoFillPanel =
     autoFillSuggestions !== null ? (
-      <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+      <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
               AI Auto-Fill suggestions
             </h3>
-            <span className="text-xs text-purple-500">({autoFillSuggestions.length})</span>
+            <span className="text-xs text-primary-500">({autoFillSuggestions.length})</span>
           </div>
           <button
             onClick={closeWorkspacePanels}
-            className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+            className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
           >
             <X size={14} />
           </button>
         </div>
-        <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+        <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
           {autoFillSuggestions.length === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
               All fillable fields are already populated
@@ -421,7 +421,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                     <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
                       {s.initiativeName}
                     </span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-purple-200/50 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-primary-200/50 dark:bg-primary-800/50 text-primary-600 dark:text-primary-400">
                       {s.field}
                     </span>
                     <span className="text-xs text-slate-500">→ {s.suggestedValue}</span>
@@ -530,7 +530,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                     ? 'bg-blue-500'
                     : item.effort === 'medium'
                       ? 'bg-amber-500'
-                      : 'bg-red-500'
+                      : 'bg-rose-500'
               }`}
             />
             <button
@@ -700,18 +700,18 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
 
       {/* AI Auto-Fill panel */}
       {!onRegisterWorkspacePanel && autoFillSuggestions !== null && (
-        <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+        <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
                 AI Auto-Fill suggestions
               </h3>
-              <span className="text-xs text-purple-500">({autoFillSuggestions.length})</span>
+              <span className="text-xs text-primary-500">({autoFillSuggestions.length})</span>
             </div>
             <button
               onClick={() => setAutoFillSuggestions(null)}
-              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+              className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
             >
               <X size={14} />
             </button>
@@ -724,7 +724,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
               {autoFillSuggestions.map((s, idx) => (
                 <div
                   key={`${s.initiativeId}-${s.field}-${idx}`}
@@ -735,7 +735,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
                         {s.initiativeName}
                       </span>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-purple-200/50 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400">
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-primary-200/50 dark:bg-primary-800/50 text-primary-600 dark:text-primary-400">
                         {s.field}
                       </span>
                       <span className="text-xs text-slate-500">→ {s.suggestedValue}</span>
@@ -854,7 +854,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                         ? 'bg-blue-500'
                         : item.effort === 'medium'
                           ? 'bg-amber-500'
-                          : 'bg-red-500'
+                          : 'bg-rose-500'
                   }`}
                 />
                 <button
@@ -869,7 +869,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : item.completeness >= 50
                         ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-red-600 dark:text-red-400'
+                        : 'text-rose-600 dark:text-rose-400'
                   }`}
                 >
                   {item.completeness}%
@@ -880,7 +880,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                       : item.effort === 'medium'
                         ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                        : 'bg-red-500/15 text-red-600 dark:text-red-400'
+                        : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
                   }`}
                 >
                   {item.effort} effort
@@ -981,7 +981,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                         <span
                           className={
                             row.completeness < 50
-                              ? 'font-semibold text-red-600 dark:text-red-400'
+                              ? 'font-semibold text-rose-600 dark:text-rose-400'
                               : row.completeness < 100
                                 ? 'text-amber-600 dark:text-amber-400'
                                 : 'text-emerald-600 dark:text-emerald-400'
@@ -992,7 +992,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {row.missingCritical > 0 ? (
-                          <span className="font-medium text-red-600 dark:text-red-400">
+                          <span className="font-medium text-rose-600 dark:text-rose-400">
                             {row.missingCritical}
                           </span>
                         ) : (
@@ -1032,7 +1032,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                                   READY
                                 </span>
                               ) : (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 font-medium">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 font-medium">
                                   NOT READY
                                 </span>
                               )}
@@ -1044,7 +1044,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                                     {h.status === 'ok' ? (
                                       <Check size={12} className="text-emerald-500 shrink-0" />
                                     ) : (
-                                      <X size={12} className="text-red-500 shrink-0" />
+                                      <X size={12} className="text-rose-500 shrink-0" />
                                     )}
                                     <span
                                       className={

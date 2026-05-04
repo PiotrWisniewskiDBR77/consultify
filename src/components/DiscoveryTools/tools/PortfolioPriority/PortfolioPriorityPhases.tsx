@@ -430,7 +430,7 @@ export function PortfolioInsightsPhase({
           >
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-violet-500">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-primary-500">
                   {proposalBadge(tradeOff.proposalStatus, isPolish)}
                 </div>
                 <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">

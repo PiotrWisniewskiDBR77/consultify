@@ -642,12 +642,12 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                 </div>
               </div>
 
-              <div className="rounded-xl border border-violet-200/60 dark:border-violet-500/20 bg-violet-50/40 dark:bg-violet-500/5 px-4 py-3 text-xs text-slate-700 dark:text-slate-200">
+              <div className="rounded-xl border border-primary-200/60 dark:border-primary-500/20 bg-primary-50/40 dark:bg-primary-500/5 px-4 py-3 text-xs text-slate-700 dark:text-slate-200">
                 <div className="flex items-center gap-2">
                   {isAIProposing ? (
-                    <Loader2 size={14} className="animate-spin text-violet-500" />
+                    <Loader2 size={14} className="animate-spin text-primary-500" />
                   ) : (
-                    <Sparkles size={14} className="text-violet-500" />
+                    <Sparkles size={14} className="text-primary-500" />
                   )}
                   <span>
                     {isPolish
@@ -669,7 +669,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
               <button
                 onClick={() => void applyAIProposal()}
                 disabled={isApplying}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {isApplying ? <Loader2 size={13} className="animate-spin" /> : null}
                 <span>{isPolish ? 'Zastosuj' : 'Apply'}</span>

@@ -41,7 +41,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 transition-all hover:border-purple-200 dark:hover:border-purple-500/30">
+    <div className="bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 transition-all hover:border-primary-200 dark:hover:border-primary-500/30">
       <input
         type="file"
         ref={fileInputRef}
@@ -55,8 +55,8 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
           uploadStatus === 'success'
             ? 'bg-green-100 border-green-200 text-green-600'
             : uploadStatus === 'error'
-              ? 'bg-red-100 border-red-200 text-red-600'
-              : 'bg-white dark:bg-navy-800 border-slate-100 dark:border-navy-700 text-purple-600'
+              ? 'bg-rose-100 border-rose-200 text-rose-600'
+              : 'bg-white dark:bg-navy-800 border-slate-100 dark:border-navy-700 text-primary-600'
         }`}
       >
         {isUploading ? (
@@ -83,13 +83,13 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
               Successfully processed: {statusMessage}
             </span>
           ) : uploadStatus === 'error' ? (
-            <span className="text-red-600 font-medium">Error: {statusMessage}</span>
+            <span className="text-rose-600 font-medium">Error: {statusMessage}</span>
           ) : (
             <>
               Upload relevant files to help AI understand your context better.
               <button
                 onClick={() => setShowHints(!showHints)}
-                className="ml-2 text-purple-600 hover:text-purple-700 font-medium inline-flex items-center gap-1 transition-colors group"
+                className="ml-2 text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1 transition-colors group"
               >
                 What should I upload?
                 <Info size={12} className="group-hover:scale-110 transition-transform" />
@@ -103,15 +103,15 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
           className={`grid transition-all duration-300 ease-in-out ${showHints && uploadStatus === 'idle' ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'}`}
         >
           <div className="overflow-hidden">
-            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-500/10 rounded-lg p-3">
-              <p className="text-[10px] font-bold text-purple-700 dark:text-purple-300 uppercase mb-2">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-500/10 rounded-lg p-3">
+              <p className="text-[10px] font-bold text-primary-700 dark:text-primary-300 uppercase mb-2">
                 Recommended for {tabName}:
               </p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((s) => (
                   <span
                     key={s}
-                    className="px-2 py-1 bg-white dark:bg-navy-900 border border-purple-100 dark:border-purple-500/20 rounded text-xs text-purple-600 dark:text-purple-300"
+                    className="px-2 py-1 bg-white dark:bg-navy-900 border border-primary-100 dark:border-primary-500/20 rounded text-xs text-primary-600 dark:text-primary-300"
                   >
                     {s}
                   </span>
@@ -131,7 +131,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
           'Processing...'
         ) : (
           <>
-            <UploadCloud size={14} className="text-purple-500" />
+            <UploadCloud size={14} className="text-primary-500" />
             Upload Document
           </>
         )}

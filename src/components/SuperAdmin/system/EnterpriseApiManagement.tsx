@@ -223,7 +223,7 @@ const AVAILABLE_SCOPES: Scope[] = [
 ];
 
 const KEY_TYPE_CONFIG = {
-  org: { label: 'Organization', color: 'bg-purple-500/20 text-purple-400' },
+  org: { label: 'Organization', color: 'bg-primary-500/20 text-primary-400' },
   user: { label: 'User', color: 'bg-blue-500/20 text-blue-400' },
   service: { label: 'Service', color: 'bg-emerald-500/20 text-emerald-400' },
 };
@@ -469,7 +469,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           onClick={() => setShowCreateModal(true)}
           disabled={!!loadError || !!organizationsLoadError || organizations.length === 0}
           title={loadError || organizationsLoadError || undefined}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           Create API Key
@@ -479,7 +479,7 @@ export const EnterpriseApiManagement: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+          className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-600 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -535,7 +535,7 @@ export const EnterpriseApiManagement: React.FC = () => {
             onClick={() => setActiveTab(id as 'keys' | 'usage' | 'docs')}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-purple-500'
+                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
                 : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
@@ -560,7 +560,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
@@ -586,19 +586,19 @@ export const EnterpriseApiManagement: React.FC = () => {
                   key={key.id}
                   className={`p-4 rounded-xl border transition-colors ${
                     key.revoked_at
-                      ? 'bg-red-500/5 border-red-500/20 opacity-60'
+                      ? 'bg-rose-500/5 border-rose-500/20 opacity-60'
                       : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div
-                        className={`p-2 rounded-lg ${key.revoked_at ? 'bg-red-500/20' : 'bg-purple-500/20'}`}
+                        className={`p-2 rounded-lg ${key.revoked_at ? 'bg-rose-500/20' : 'bg-primary-500/20'}`}
                       >
                         {key.revoked_at ? (
-                          <Lock className="w-5 h-5 text-red-400" />
+                          <Lock className="w-5 h-5 text-rose-400" />
                         ) : (
-                          <Key className="w-5 h-5 text-purple-400" />
+                          <Key className="w-5 h-5 text-primary-400" />
                         )}
                       </div>
                       <div>
@@ -615,7 +615,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                             {KEY_TYPE_CONFIG[key.key_type].label}
                           </span>
                           {key.revoked_at && (
-                            <span className="px-2 py-0.5 text-xs bg-red-500/20 text-red-400 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-rose-500/20 text-rose-400 rounded">
                               Revoked
                             </span>
                           )}
@@ -661,10 +661,10 @@ export const EnterpriseApiManagement: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleRevokeKey(key.id)}
-                            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-rose-500/20 rounded-lg transition-colors"
                             title="Revoke"
                           >
-                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <Trash2 className="w-4 h-4 text-rose-400" />
                           </button>
                         </>
                       )}
@@ -760,7 +760,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 </div>
                 <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
                   <div className="text-sm text-slate-400 dark:text-slate-500">Total Errors</div>
-                  <div className="text-2xl font-bold text-red-400">
+                  <div className="text-2xl font-bold text-rose-400">
                     {selectedKeyUsage.usage.totals?.total_errors || 0}
                   </div>
                 </div>
@@ -774,7 +774,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                     selectedKeyUsage.usage.usage.map((day, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center">
                         <div
-                          className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t-sm"
+                          className="w-full bg-gradient-to-t from-primary-500 to-primary-400 rounded-t-sm"
                           style={{
                             height: `${Math.max(5, (day.requests / Math.max(1, ...selectedKeyUsage.usage.usage.map((d) => d.requests))) * 100)}%`,
                           }}
@@ -811,7 +811,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                                   ? 'bg-emerald-500/20 text-emerald-400'
                                   : endpoint.method === 'PUT'
                                     ? 'bg-amber-500/20 text-amber-400'
-                                    : 'bg-red-500/20 text-red-400'
+                                    : 'bg-rose-500/20 text-rose-400'
                             }`}
                           >
                             {endpoint.method}
@@ -845,7 +845,7 @@ export const EnterpriseApiManagement: React.FC = () => {
       {/* Documentation Tab */}
       {activeTab === 'docs' && (
         <div className="space-y-6">
-          <div className="p-6 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 rounded-xl border border-purple-500/20">
+          <div className="p-6 bg-gradient-to-br from-primary-500/10 to-blue-500/10 rounded-xl border border-primary-500/20">
             <h3 className="text-xl font-bold text-white mb-2">Consultify API</h3>
             <p className="text-slate-400 dark:text-slate-500 mb-4">
               Build powerful integrations with the Consultify REST API. Access projects,
@@ -856,7 +856,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 href="/api/docs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
               >
                 <FileText className="w-4 h-4" />
                 View API Docs
@@ -877,7 +877,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
               <h4 className="font-medium text-white mb-3 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-purple-400" />
+                <Shield className="w-4 h-4 text-primary-400" />
                 Authentication
               </h4>
               <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
@@ -885,7 +885,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 header.
               </p>
               <div className="p-3 bg-slate-900 rounded-lg">
-                <code className="text-sm text-cyan-400">Authorization: Bearer ck_live_xxx...</code>
+                <code className="text-sm text-blue-400">Authorization: Bearer ck_live_xxx...</code>
               </div>
             </div>
 
@@ -946,7 +946,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               {AVAILABLE_SCOPES.map((scope) => (
                 <div key={scope.id} className="p-3 bg-slate-800/50 rounded-lg">
                   <div className="flex items-center justify-between mb-1">
-                    <code className="text-sm text-cyan-400">{scope.id}</code>
+                    <code className="text-sm text-blue-400">{scope.id}</code>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
                       {scope.category}
                     </span>
@@ -1170,7 +1170,7 @@ const ApiKeyModal: React.FC<{
                         onClick={() => toggleScope(scope.id)}
                         className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           formData.scopes.includes(scope.id)
-                            ? 'bg-purple-600 text-white'
+                            ? 'bg-primary-600 text-white'
                             : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                         }`}
                       >
@@ -1194,7 +1194,7 @@ const ApiKeyModal: React.FC<{
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editKey ? 'Update' : 'Create'}

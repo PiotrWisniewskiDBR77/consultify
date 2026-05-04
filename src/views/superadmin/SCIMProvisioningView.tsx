@@ -411,7 +411,7 @@ const SCIMProvisioningView: React.FC = () => {
           {!serviceProvider?.isActive && (
             <button
               onClick={handleEnableSCIM}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
             >
               Enable SCIM
             </button>
@@ -454,7 +454,7 @@ const SCIMProvisioningView: React.FC = () => {
               <button
                 onClick={handleTriggerSync}
                 disabled={syncing}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
                 {syncing ? 'Syncing...' : 'Trigger Full Sync'}
@@ -473,7 +473,7 @@ const SCIMProvisioningView: React.FC = () => {
           <div>
             <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Base URL</label>
             <div className="flex items-center gap-2">
-              <code className="flex-1 px-3 py-2 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-violet-300 font-mono border border-slate-200 dark:border-gray-700">
+              <code className="flex-1 px-3 py-2 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-primary-300 font-mono border border-slate-200 dark:border-gray-700">
                 {window.location.origin}/api/scim/v2
               </code>
               <button
@@ -487,15 +487,15 @@ const SCIMProvisioningView: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-slate-600 dark:text-gray-400">Users Endpoint:</span>
-              <code className="ml-2 text-violet-700 dark:text-violet-300">/Users</code>
+              <code className="ml-2 text-primary-700 dark:text-primary-300">/Users</code>
             </div>
             <div>
               <span className="text-slate-600 dark:text-gray-400">Groups Endpoint:</span>
-              <code className="ml-2 text-violet-700 dark:text-violet-300">/Groups</code>
+              <code className="ml-2 text-primary-700 dark:text-primary-300">/Groups</code>
             </div>
             <div>
               <span className="text-slate-600 dark:text-gray-400">Authentication:</span>
-              <code className="ml-2 text-violet-700 dark:text-violet-300">Bearer Token</code>
+              <code className="ml-2 text-primary-700 dark:text-primary-300">Bearer Token</code>
             </div>
             <div>
               <span className="text-slate-600 dark:text-gray-400">PATCH Support:</span>
@@ -566,7 +566,7 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowTokenModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={18} />
           Generate Token
@@ -592,10 +592,10 @@ const SCIMProvisioningView: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      token.isActive ? 'bg-green-500/20' : 'bg-red-500/20'
+                      token.isActive ? 'bg-green-500/20' : 'bg-rose-500/20'
                     }`}
                   >
-                    <Key className={token.isActive ? 'text-green-400' : 'text-red-400'} size={20} />
+                    <Key className={token.isActive ? 'text-green-400' : 'text-rose-400'} size={20} />
                   </div>
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-white">{token.name}</h4>
@@ -613,7 +613,7 @@ const SCIMProvisioningView: React.FC = () => {
                   <button
                     onClick={() => handleRevokeToken(token.id)}
                     title={`Revoke token ${token.name}`}
-                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -657,7 +657,7 @@ const SCIMProvisioningView: React.FC = () => {
                   </div>
                 </div>
                 <div className="relative mb-4">
-                  <code className="block w-full p-3 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-violet-300 font-mono break-all border border-slate-200 dark:border-gray-700">
+                  <code className="block w-full p-3 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-primary-300 font-mono break-all border border-slate-200 dark:border-gray-700">
                     {generatedToken}
                   </code>
                   <button
@@ -738,7 +738,7 @@ const SCIMProvisioningView: React.FC = () => {
                                 });
                               }
                             }}
-                            className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
+                            className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                           />
                           {scope}
                         </label>
@@ -756,7 +756,7 @@ const SCIMProvisioningView: React.FC = () => {
                   <button
                     onClick={handleGenerateToken}
                     disabled={!newToken.name}
-                    className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                    className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
                   >
                     Generate
                   </button>
@@ -780,7 +780,7 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowMappingModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={18} />
           Add Mapping
@@ -829,7 +829,7 @@ const SCIMProvisioningView: React.FC = () => {
                     <ChevronRight className="text-slate-400 dark:text-gray-400" size={18} />
                   </td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-violet-500/15 text-violet-700 dark:text-violet-200 rounded text-sm">
+                    <span className="px-2 py-1 bg-primary-500/15 text-primary-700 dark:text-primary-200 rounded text-sm">
                       {mapping.internalRole}
                     </span>
                   </td>
@@ -837,7 +837,7 @@ const SCIMProvisioningView: React.FC = () => {
                     <button
                       onClick={() => handleDeleteMapping(mapping.id)}
                       title={`Delete mapping ${mapping.externalGroupName}`}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -911,7 +911,7 @@ const SCIMProvisioningView: React.FC = () => {
               <button
                 onClick={handleCreateMapping}
                 disabled={!newMapping.externalGroupId || !newMapping.externalGroupName}
-                className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 Add Mapping
               </button>
@@ -962,7 +962,7 @@ const SCIMProvisioningView: React.FC = () => {
                       log.status === 'success'
                         ? 'bg-green-400'
                         : log.status === 'error'
-                          ? 'bg-red-400'
+                          ? 'bg-rose-400'
                           : 'bg-yellow-400'
                     }`}
                   />
@@ -981,7 +981,7 @@ const SCIMProvisioningView: React.FC = () => {
                 </span>
               </div>
               {log.errorMessage && (
-                <div className="mt-2 text-sm text-red-700 dark:text-red-300 bg-red-500/10 rounded px-3 py-1">
+                <div className="mt-2 text-sm text-rose-700 dark:text-rose-300 bg-rose-500/10 rounded px-3 py-1">
                   {log.errorMessage}
                 </div>
               )}
@@ -1077,7 +1077,7 @@ const SCIMProvisioningView: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleResolveConflict(conflict.id, 'overwrite')}
-                            className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-700 dark:text-violet-300 hover:bg-violet-500/25 rounded-lg transition-colors"
+                            className="px-3 py-1.5 text-xs bg-primary-500/15 text-primary-700 dark:text-primary-300 hover:bg-primary-500/25 rounded-lg transition-colors"
                           >
                             Overwrite
                           </button>
@@ -1156,7 +1156,7 @@ const SCIMProvisioningView: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-violet-600 text-slate-900 dark:text-white'
+                    ? 'border-primary-600 text-slate-900 dark:text-white'
                     : 'border-transparent text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -1187,10 +1187,10 @@ const SCIMProvisioningView: React.FC = () => {
       )}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-violet-500" size={32} />
+          <RefreshCw className="animate-spin text-primary-500" size={32} />
         </div>
       ) : loadError ? (
-        <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-6 text-red-700 dark:text-red-300">
+        <div className="rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-6 text-rose-700 dark:text-rose-300">
           <div className="flex items-center gap-2 font-medium">
             <AlertTriangle size={18} />
             Failed to load SCIM data
@@ -1198,7 +1198,7 @@ const SCIMProvisioningView: React.FC = () => {
           <p className="mt-2 text-sm">{loadError}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-sm font-medium"
+            className="mt-4 px-4 py-2 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-sm font-medium"
           >
             Retry
           </button>

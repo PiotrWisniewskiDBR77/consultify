@@ -179,9 +179,9 @@ const ROLE_CONFIG: Record<
   manager: {
     label: 'Manager',
     icon: ShieldCheck,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
-    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     description: 'Can manage team and approve',
     permissions: ['Edit', 'Approve', 'Manage Team', 'Change Status'],
   },
@@ -225,9 +225,9 @@ const ROLE_CONFIG: Record<
   INITIATIVE_OWNER: {
     label: 'Initiative Owner',
     icon: Users,
-    color: 'text-teal-600 dark:text-teal-400',
-    bgColor: 'bg-teal-50 dark:bg-teal-500/10',
-    borderColor: 'border-teal-200 dark:border-teal-500/30',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
     description: 'Owns delivery for an initiative',
     permissions: ['Edit', 'Status'],
   },
@@ -243,18 +243,18 @@ const ROLE_CONFIG: Record<
   PMO: {
     label: 'PMO',
     icon: Shield,
-    color: 'text-violet-600 dark:text-violet-400',
-    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
-    borderColor: 'border-violet-200 dark:border-violet-500/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     description: 'Governance and standards control',
     permissions: ['Manage', 'Approve'],
   },
   PORTFOLIO_OWNER: {
     label: 'Portfolio Owner',
     icon: ShieldCheck,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
-    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     description: 'Investment-level decisions across projects',
     permissions: ['Approve', 'Manage'],
   },
@@ -289,18 +289,18 @@ const ROLE_CONFIG: Record<
   PMO_LEAD: {
     label: 'PMO Lead',
     icon: Shield,
-    color: 'text-violet-600 dark:text-violet-400',
-    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
-    borderColor: 'border-violet-200 dark:border-violet-500/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     description: 'Coordinates execution and governance',
     permissions: ['Manage', 'Edit'],
   },
   WORKSTREAM_OWNER: {
     label: 'Workstream Owner',
     icon: ShieldCheck,
-    color: 'text-cyan-600 dark:text-cyan-400',
-    bgColor: 'bg-cyan-50 dark:bg-cyan-500/10',
-    borderColor: 'border-cyan-200 dark:border-cyan-500/30',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
     description: 'Owns a workstream delivery',
     permissions: ['Edit', 'Status'],
   },
@@ -461,10 +461,10 @@ const AddMemberModal: FC<{
         className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-purple-500/10 to-blue-500/10">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-500/10 to-blue-500/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500 text-white rounded-lg">
+              <div className="p-2 bg-primary-500 text-white rounded-lg">
                 <UserPlus size={18} />
               </div>
               <div>
@@ -512,7 +512,7 @@ const AddMemberModal: FC<{
                 spellCheck={false}
                 data-lpignore="true"
                 data-form-type="other"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
               />
               {searching && (
                 <Loader2
@@ -530,10 +530,10 @@ const AddMemberModal: FC<{
                     key={user.id}
                     onClick={() => setSelectedUser(user)}
                     className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                      selectedUser?.id === user.id ? 'bg-purple-50 dark:bg-purple-500/10' : ''
+                      selectedUser?.id === user.id ? 'bg-primary-50 dark:bg-primary-500/10' : ''
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-sm font-semibold text-white">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-sm font-semibold text-white">
                       {(user.name || user.email).charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left">
@@ -543,7 +543,7 @@ const AddMemberModal: FC<{
                       <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>
                     </div>
                     {selectedUser?.id === user.id && (
-                      <CheckCircle2 size={18} className="text-purple-500" />
+                      <CheckCircle2 size={18} className="text-primary-500" />
                     )}
                   </button>
                 ))}
@@ -572,10 +572,10 @@ const AddMemberModal: FC<{
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl border-2 border-purple-200 dark:border-purple-500/30 bg-purple-50/50 dark:bg-purple-500/5"
+              className="p-4 rounded-xl border-2 border-primary-200 dark:border-primary-500/30 bg-primary-50/50 dark:bg-primary-500/5"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-lg font-semibold text-white">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-lg font-semibold text-white">
                   {(selectedUser.name || selectedUser.email).charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
@@ -588,9 +588,9 @@ const AddMemberModal: FC<{
                 </div>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="p-1.5 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
                 >
-                  <X size={16} className="text-purple-600 dark:text-purple-400" />
+                  <X size={16} className="text-primary-600 dark:text-primary-400" />
                 </button>
               </div>
             </motion.div>
@@ -648,7 +648,7 @@ const AddMemberModal: FC<{
           <button
             onClick={handleAdd}
             disabled={!selectedUser || adding}
-            className="px-5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
           >
             {adding ? (
               <>
@@ -751,7 +751,7 @@ const TeamMemberRow: FC<{
       {/* User Info */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-sm font-semibold text-white flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-sm font-semibold text-white flex-shrink-0">
             {(member.userName || member.userEmail || '?').charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -901,7 +901,7 @@ const TeamMemberRow: FC<{
             <button
               onClick={handleRemove}
               disabled={busy}
-              className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
               title="Remove member"
             >
               <Trash2 size={14} />
@@ -979,7 +979,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-primary-500 to-blue-600 text-white rounded-lg">
                 <Users size={18} />
               </div>
               <div>
@@ -1008,7 +1008,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               {canManageTeam && (
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
                 >
                   <Plus size={16} />
                   Add Member
@@ -1048,7 +1048,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               onClick={() => setActiveTab('members')}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                 activeTab === 'members'
-                  ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
+                  ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -1062,7 +1062,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                 onClick={() => setActiveTab('assignments')}
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                   activeTab === 'assignments'
-                    ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
+                    ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -1121,7 +1121,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                           {canManageTeam && (
                             <button
                               onClick={() => setShowAddModal(true)}
-                              className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors"
+                              className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
                             >
                               <Plus size={16} />
                               Add First Member
@@ -1211,7 +1211,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                       {canManageTeam && (
                         <button
                           onClick={() => onRemoveAssignment(assignment.id)}
-                          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -1232,7 +1232,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               <span>Admin - Full access</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <ShieldCheck size={12} className="text-purple-500" />
+              <ShieldCheck size={12} className="text-primary-500" />
               <span>Manager - Team & approvals</span>
             </div>
             <div className="flex items-center gap-1.5">

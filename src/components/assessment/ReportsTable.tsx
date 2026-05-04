@@ -134,7 +134,7 @@ const STATUS_CONFIG: Record<
   },
   IN_REVIEW: {
     label: 'In Review',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
     icon: <Eye size={14} />,
   },
   APPROVED: {
@@ -144,12 +144,12 @@ const STATUS_CONFIG: Record<
   },
   SENT_INTERNAL: {
     label: 'Sent Internal',
-    color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     icon: <Send size={14} />,
   },
   SENT_EXTERNAL: {
     label: 'Sent External',
-    color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     icon: <ArrowRight size={14} />,
   },
   UTILIZED: {
@@ -456,7 +456,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             {showAllStatuses && onCreateTemplate && (
               <button
                 onClick={onCreateTemplate}
-                className="flex items-center gap-2 px-4 py-2.5 border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 border border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                 title={isPolish ? 'Utwórz nowy szablon raportu' : 'Create new report template'}
               >
                 <FileText size={18} />
@@ -465,7 +465,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             )}
             <button
               onClick={() => navigate('/reports/builder?new=true')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
               title={isPolish ? 'Utwórz raport z pomocą AI' : 'Create AI-powered report'}
             >
               <Sparkles size={18} />
@@ -478,7 +478,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <div className="flex items-center gap-6 mt-4">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`text-sm ${filterStatus === 'all' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'all' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
           >
             {isPolish ? 'Wszystkie' : 'All'} ({stats.total})
           </button>
@@ -486,13 +486,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             <>
               <button
                 onClick={() => setFilterStatus('draft')}
-                className={`text-sm ${filterStatus === 'draft' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+                className={`text-sm ${filterStatus === 'draft' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
               >
                 {isPolish ? 'Szkice' : 'Drafts'} ({stats.draft})
               </button>
               <button
                 onClick={() => setFilterStatus('generated')}
-                className={`text-sm ${filterStatus === 'generated' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+                className={`text-sm ${filterStatus === 'generated' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
               >
                 {isPolish ? 'Wygenerowane' : 'Generated'} ({stats.generated})
               </button>
@@ -500,19 +500,19 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           )}
           <button
             onClick={() => setFilterStatus('in_review')}
-            className={`text-sm ${filterStatus === 'in_review' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'in_review' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
           >
             {isPolish ? 'W przeglądzie' : 'In Review'} ({stats.inReview})
           </button>
           <button
             onClick={() => setFilterStatus('approved')}
-            className={`text-sm ${filterStatus === 'approved' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'approved' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
           >
             {isPolish ? 'Zatwierdzone' : 'Approved'} ({stats.approved})
           </button>
           <button
             onClick={() => setFilterStatus('sent')}
-            className={`text-sm ${filterStatus === 'sent' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+            className={`text-sm ${filterStatus === 'sent' ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500'}`}
           >
             {isPolish ? 'Wysłane' : 'Sent'} ({stats.sent})
           </button>
@@ -546,7 +546,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
           </div>
         ) : filteredReports.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -610,12 +610,12 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                            <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                            <FileText className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                           </div>
                           <button
                             onClick={() => handleOpenReport(report.id, report.name, report.status)}
-                            className="font-medium text-navy-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left"
+                            className="font-medium text-navy-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left"
                           >
                             {report.name}
                           </button>
@@ -626,7 +626,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                           className="flex items-center gap-2 cursor-default"
                           title={report.createdBy}
                         >
-                          <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300">
+                          <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-700 dark:text-primary-300">
                             {(report.createdByName || report.createdBy || '?')
                               .split(' ')
                               .map((n) => n[0])

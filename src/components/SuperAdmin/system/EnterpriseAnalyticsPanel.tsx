@@ -184,8 +184,8 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         setApiChartData({
           labels: analyticsData.charts.api.labels,
           datasets: [
-            { label: 'Requests', data: analyticsData.charts.api.requests, color: '#06b6d4' },
-            { label: 'Errors', data: analyticsData.charts.api.errors, color: '#ef4444' },
+            { label: 'Requests', data: analyticsData.charts.api.requests, color: '#3b82f6' },
+            { label: 'Errors', data: analyticsData.charts.api.errors, color: '#f43f5e' },
           ],
         });
       } else {
@@ -196,7 +196,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         setAiChartData({
           labels: analyticsData.charts.ai.labels,
           datasets: [
-            { label: 'Tokens (K)', data: analyticsData.charts.ai.tokens, color: '#8b5cf6' },
+            { label: 'Tokens (K)', data: analyticsData.charts.ai.tokens, color: '#6366f1' },
             { label: 'Requests', data: analyticsData.charts.ai.requests, color: '#10b981' },
           ],
         });
@@ -389,7 +389,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                           <div className="flex items-center justify-between mb-2">
                             <Icon className={`w-5 h-5 text-${metric.color}-400`} />
                             <div
-                              className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}
+                              className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}
                             >
                               {isPositive ? (
                                 <ArrowUpRight className="w-3 h-3" />
@@ -441,7 +441,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-purple-400" />
+                          <Zap className="w-5 h-5 text-primary-400" />
                           AI Usage
                         </h3>
                         <button

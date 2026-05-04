@@ -107,13 +107,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
-          <div className="max-w-md w-full bg-slate-800 p-8 rounded-xl border border-red-500/30 shadow-2xl">
-            <h1 className="text-2xl font-bold text-red-500 mb-4">Something went wrong</h1>
+          <div className="max-w-md w-full bg-slate-800 p-8 rounded-xl border border-rose-500/30 shadow-2xl">
+            <h1 className="text-2xl font-bold text-rose-500 mb-4">Something went wrong</h1>
             <p className="text-slate-300 mb-6">
               The application encountered an unexpected error. This usually happens due to corrupted
               local data or a temporary glitch.
             </p>
-            <div className="bg-slate-950 p-4 rounded-lg mb-6 overflow-auto max-h-40 text-xs font-mono text-red-400">
+            <div className="bg-slate-950 p-4 rounded-lg mb-6 overflow-auto max-h-40 text-xs font-mono text-rose-400">
               {this.state.error?.message}
             </div>
             <div className="space-y-2">
@@ -125,7 +125,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
               <button
                 onClick={this.handleReset}
-                className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition-colors"
+                className="w-full py-3 bg-rose-600 hover:bg-rose-700 rounded-lg font-bold transition-colors"
               >
                 Reset Application Data (Fix)
               </button>

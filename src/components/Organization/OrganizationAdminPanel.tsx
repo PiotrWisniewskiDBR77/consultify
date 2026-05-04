@@ -312,7 +312,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
         </div>
         <div className="mt-3 h-2 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-red-500' : usagePercent > 80 ? 'bg-amber-500' : 'bg-slate-400'}`}
+            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-rose-500' : usagePercent > 80 ? 'bg-amber-500' : 'bg-slate-400'}`}
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
@@ -377,7 +377,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 </div>
                 <div className="h-1.5 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${isCrit ? 'bg-red-500' : isWarn ? 'bg-amber-500' : 'bg-slate-400'}`}
+                    className={`h-full rounded-full ${isCrit ? 'bg-rose-500' : isWarn ? 'bg-amber-500' : 'bg-slate-400'}`}
                     style={{ width: `${Math.min(pct, 100)}%` }}
                   />
                 </div>
@@ -557,7 +557,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       {domainActionError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {domainActionError}
         </div>
@@ -645,7 +645,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             type="button"
             onClick={() => void handleAddApprovedDomain()}
             disabled={savingDomain}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
             {savingDomain ? t('common.saving', 'Saving...') : t('common.add', 'Add')}
           </button>
@@ -665,7 +665,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   }}
                   disabled={!d.id}
                   title={!d.id ? 'Cannot remove a domain without a server id' : undefined}
-                  className="text-slate-400 hover:text-red-500"
+                  className="text-slate-400 hover:text-rose-500"
                 >
                   <Trash2 size={12} />
                 </button>

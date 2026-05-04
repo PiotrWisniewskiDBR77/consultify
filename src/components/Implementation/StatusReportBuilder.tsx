@@ -99,7 +99,7 @@ interface StatusReportBuilderProps {
 const STATUS_CONFIG: Record<ReportStatus, { color: string; bgColor: string; label: string }> = {
   GREEN: { color: 'text-green-600', bgColor: 'bg-green-500', label: 'On Track' },
   AMBER: { color: 'text-amber-600', bgColor: 'bg-amber-500', label: 'At Risk' },
-  RED: { color: 'text-red-600', bgColor: 'bg-red-500', label: 'Off Track' },
+  RED: { color: 'text-rose-600', bgColor: 'bg-rose-500', label: 'Off Track' },
 };
 
 export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
@@ -320,11 +320,11 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
       case 'SCOPE':
         return <FileText size={16} className="text-blue-500" />;
       case 'QUALITY':
-        return <CheckCircle2 size={16} className="text-purple-500" />;
+        return <CheckCircle2 size={16} className="text-primary-500" />;
       case 'RISKS':
-        return <AlertTriangle size={16} className="text-red-500" />;
+        return <AlertTriangle size={16} className="text-rose-500" />;
       case 'RESOURCES':
-        return <Clock size={16} className="text-cyan-500" />;
+        return <Clock size={16} className="text-blue-500" />;
       default:
         return <FileText size={16} className="text-slate-500 dark:text-slate-400" />;
     }
@@ -345,7 +345,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -370,7 +370,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
           <button
             onClick={handleGenerateReport}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-400 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-400 text-white rounded-lg text-sm font-medium transition-colors"
           >
             {isGenerating ? (
               <>
@@ -439,7 +439,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
           <button
             onClick={handleGenerateReport}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-400 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-400 text-white rounded-lg text-sm font-medium transition-colors"
           >
             {isGenerating ? (
               <>
@@ -474,7 +474,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                   ? 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
                   : currentReport.status === 'APPROVED'
                     ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300'
-                    : 'bg-purple-200 text-purple-700'
+                    : 'bg-primary-200 text-primary-700'
               }`}
             >
               {currentReport.status}
@@ -497,7 +497,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             {currentReport.status === 'APPROVED' && (
               <button
                 onClick={handlePublish}
-                className="px-3 py-1.5 bg-purple-600 text-white rounded text-sm font-medium hover:bg-purple-500"
+                className="px-3 py-1.5 bg-primary-600 text-white rounded text-sm font-medium hover:bg-primary-500"
               >
                 Publish
               </button>
@@ -513,7 +513,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20'
             : overallStatus === 'AMBER'
               ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20'
-              : 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20'
+              : 'bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20'
         }`}
       >
         <div className="flex items-center justify-between">
@@ -651,12 +651,12 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
 
       {/* Recommendations */}
       {currentReport.recommendations && (
-        <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-500/20 rounded-xl p-4">
-          <h4 className="font-bold text-purple-700 dark:text-purple-300 mb-2 flex items-center gap-2">
+        <div className="bg-primary-50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-500/20 rounded-xl p-4">
+          <h4 className="font-bold text-primary-700 dark:text-primary-300 mb-2 flex items-center gap-2">
             <TrendingUp size={18} />
             Recommendations
           </h4>
-          <p className="text-sm text-purple-600 dark:text-purple-400">
+          <p className="text-sm text-primary-600 dark:text-primary-400">
             {currentReport.recommendations}
           </p>
         </div>
@@ -664,14 +664,14 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
 
       {/* Escalations */}
       {currentReport.escalations && currentReport.escalations.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4">
-          <h4 className="font-bold text-red-700 dark:text-red-300 mb-3 flex items-center gap-2">
+        <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4">
+          <h4 className="font-bold text-rose-700 dark:text-rose-300 mb-3 flex items-center gap-2">
             <AlertTriangle size={18} />
             Escalations Requiring Decision
           </h4>
           <ul className="space-y-2">
             {currentReport.escalations.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+              <li key={i} className="flex items-start gap-2 text-sm text-rose-600 dark:text-rose-400">
                 <ChevronRight size={14} className="mt-1 shrink-0" />
                 {typeof item === 'string' ? item : item.message}
               </li>
@@ -772,7 +772,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
               </button>
               <button
                 onClick={handleDistribute}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500"
               >
                 <Send size={16} />
                 Send

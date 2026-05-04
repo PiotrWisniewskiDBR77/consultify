@@ -76,10 +76,10 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
         2. Business Goals (Quantifiable targets)
         3. Key Challenges (Pain points)
         4. Financial/Risk Context (Budget, constraints)
-        
+
         Conversation:
         ${history.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}
-        
+
         Output ONLY a valid JSON object (no markdown, no explanation):
         {"score": number (0-100), "gaps": ["list of missing areas"], "reasoning": "brief explanation"}
         `;
@@ -168,7 +168,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
         <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-sm flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="text-purple-600" />
+              <ShieldCheck className="text-primary-600" />
               Module 1: Strategic Context
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -181,7 +181,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
                 Context Quality
               </div>
               <div
-                className={`text-xl font-bold ${sufficiency.score >= 80 ? 'text-green-500' : sufficiency.score >= 50 ? 'text-yellow-500' : 'text-red-500'}`}
+                className={`text-xl font-bold ${sufficiency.score >= 80 ? 'text-green-500' : sufficiency.score >= 50 ? 'text-yellow-500' : 'text-rose-500'}`}
               >
                 {sufficiency.score}%
               </div>
@@ -189,7 +189,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
             {/* Visual Progress Bar */}
             <div className="w-24 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-500 ${sufficiency.score >= 80 ? 'bg-green-500' : sufficiency.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                className={`h-full transition-all duration-500 ${sufficiency.score >= 80 ? 'bg-green-500' : sufficiency.score >= 50 ? 'bg-yellow-500' : 'bg-rose-500'}`}
                 style={{ width: `${sufficiency.score}%` }}
               ></div>
             </div>
@@ -229,7 +229,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
                 {sufficiency.gaps.map((gap) => (
                   <li
                     key={gap}
-                    className="flex items-center gap-2 text-xs text-red-500 font-medium"
+                    className="flex items-center gap-2 text-xs text-rose-500 font-medium"
                   >
                     <AlertTriangle size={12} />
                     {gap}

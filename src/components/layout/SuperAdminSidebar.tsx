@@ -102,13 +102,13 @@ const MenuButton: React.FC<{
     onClick={() => onSectionChange(item.id)}
     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
       activeSection === item.id
-        ? 'bg-gradient-to-r from-red-600/20 to-transparent text-red-600 dark:text-white border-l-2 border-red-500'
+        ? 'bg-gradient-to-r from-rose-600/20 to-transparent text-rose-600 dark:text-white border-l-2 border-rose-500'
         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
     }`}
     title={!showFull ? item.label : undefined}
   >
     <span
-      className={`shrink-0 relative ${activeSection === item.id ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+      className={`shrink-0 relative ${activeSection === item.id ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
     >
       {item.icon}
       {/* Badge for collapsed state */}
@@ -135,7 +135,7 @@ const MenuButton: React.FC<{
     )}
 
     {showFull && activeSection === item.id && (
-      <ChevronRight size={14} className="text-red-500 dark:text-red-400 ml-auto" />
+      <ChevronRight size={14} className="text-rose-500 dark:text-rose-400 ml-auto" />
     )}
   </button>
 );
@@ -181,7 +181,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
     >
       {/* Header / Brand */}
       <div className="h-16 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 gap-3 relative shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow-lg shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-600 to-rose-700 flex items-center justify-center shadow-lg shrink-0">
           <Shield size={18} className="text-white" />
         </div>
 
@@ -242,19 +242,19 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
         <div
           className={`flex items-center gap-3 px-2 py-2 mb-1 overflow-hidden transition-all duration-300 ${showFull ? 'opacity-100' : 'opacity-0 h-0 hidden'}`}
         >
-          <div className="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center shrink-0">
-            <Shield size={16} className="text-red-500 dark:text-red-400" />
+          <div className="w-8 h-8 rounded-full bg-rose-600/20 flex items-center justify-center shrink-0">
+            <Shield size={16} className="text-rose-500 dark:text-rose-400" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium text-slate-900 dark:text-white truncate">
               {currentUserEmail}
             </div>
-            <div className="text-[10px] text-red-500 dark:text-red-400 uppercase">Super Admin</div>
+            <div className="text-[10px] text-rose-500 dark:text-rose-400 uppercase">Super Admin</div>
           </div>
         </div>
         <button
           onClick={onLogout}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all group ${!showFull ? 'justify-center' : ''}`}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-all group ${!showFull ? 'justify-center' : ''}`}
           title="Sign Out"
         >
           <LogOut size={18} className="shrink-0" />

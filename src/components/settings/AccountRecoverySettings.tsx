@@ -109,7 +109,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
             onClick={showUnavailableNotice}
             disabled
             title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}
@@ -145,7 +145,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
             onClick={showUnavailableNotice}
             disabled
             title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}
@@ -197,8 +197,8 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       {/* Trusted Devices */}
       <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
-            <Smartphone className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center">
+            <Smartphone className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h4 className="font-medium text-slate-900 dark:text-white">

@@ -59,11 +59,11 @@ export const BecomePartnerView: React.FC = () => {
 
   return (
     <MarketingLayout>
-      <div className="min-h-[calc(100vh-3.5rem)] bg-navy-950 text-white selection:bg-violet-500/30 overflow-x-hidden relative">
+      <div className="min-h-[calc(100vh-3.5rem)] bg-navy-950 text-white selection:bg-primary-500/30 overflow-x-hidden relative">
         {/* Background Atmosphere */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-5%] right-[-10%] w-[50%] h-[50%] bg-violet-600/15 rounded-full blur-[150px]" />
-          <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px]" />
+          <div className="absolute top-[-5%] right-[-10%] w-[50%] h-[50%] bg-primary-600/15 rounded-full blur-[150px]" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-primary-600/10 rounded-full blur-[120px]" />
           <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] bg-blue-600/8 rounded-full blur-[100px]" />
         </div>
 
@@ -71,9 +71,9 @@ export const BecomePartnerView: React.FC = () => {
           {/* HERO SECTION */}
           <section className="max-w-5xl mx-auto text-center mb-24 animate-fade-in">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-600/10 border border-violet-500/20 mb-8">
-              <Sparkles size={16} className="text-violet-400" />
-              <span className="text-sm font-medium text-violet-300">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-600/10 border border-primary-500/20 mb-8">
+              <Sparkles size={16} className="text-primary-400" />
+              <span className="text-sm font-medium text-primary-300">
                 {t('pages.partner.hero.badge', 'Consultify Partner Program')}
               </span>
             </div>
@@ -81,7 +81,7 @@ export const BecomePartnerView: React.FC = () => {
             {/* Main Headline */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
               {t('pages.partner.hero.titleLine1', 'Join the')} <br className="hidden md:block" />
-              <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-400 to-primary-400 bg-clip-text text-transparent">
                 {t('pages.partner.hero.titleLine2', 'Consultify Partner Program')}
               </span>
             </h1>
@@ -97,7 +97,7 @@ export const BecomePartnerView: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={handleApplyClick}
-                className="group relative inline-flex items-center gap-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-lg px-8 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)] hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
+                className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-lg px-8 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)] hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <span>{t('pages.partner.hero.applyBtn', 'Apply for Partnership')}</span>
@@ -119,7 +119,7 @@ export const BecomePartnerView: React.FC = () => {
                 onClick={() => navigate('/login')}
                 className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-white/10 transition-all duration-300"
               >
-                <Shield size={18} className="text-violet-400" />
+                <Shield size={18} className="text-primary-400" />
                 {t('pages.partner.hero.existingPartner', 'Zaloguj się jako partner')}
               </button>
             </div>
@@ -191,8 +191,8 @@ export const BecomePartnerView: React.FC = () => {
                     key={key}
                     className={`bg-navy-900/30 backdrop-blur-sm p-8 rounded-xl border transition-all duration-500 group ${
                       key === 'certified'
-                        ? 'border-violet-500/30 shadow-lg shadow-violet-500/10'
-                        : 'border-white/10 hover:border-violet-500/20'
+                        ? 'border-primary-500/30 shadow-lg shadow-primary-500/10'
+                        : 'border-white/10 hover:border-primary-500/20'
                     }`}
                   >
                     <div
@@ -263,8 +263,8 @@ export const BecomePartnerView: React.FC = () => {
                 const prefix = `pages.partner.process.steps.${key}`;
                 return (
                   <div key={key} className="relative">
-                    <div className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl text-center border border-white/5 hover:border-violet-500/20 transition-all duration-300">
-                      <div className="w-12 h-12 rounded-full bg-violet-600 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                    <div className="bg-navy-900/30 backdrop-blur-sm p-6 rounded-xl text-center border border-white/5 hover:border-primary-500/20 transition-all duration-300">
+                      <div className="w-12 h-12 rounded-full bg-primary-600 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                         {index + 1}
                       </div>
                       <h4 className="font-semibold mb-2">{t(`${prefix}.title`)}</h4>
@@ -283,7 +283,7 @@ export const BecomePartnerView: React.FC = () => {
 
           {/* FINAL CTA SECTION */}
           <section className="max-w-3xl mx-auto text-center py-16 px-8 bg-navy-900/30 backdrop-blur-sm rounded-xl border border-white/10">
-            <BadgeCheck size={48} className="text-violet-400 mx-auto mb-6" />
+            <BadgeCheck size={48} className="text-primary-400 mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               {t('pages.partner.cta.heading', 'Ready to Partner?')}
             </h2>
@@ -295,7 +295,7 @@ export const BecomePartnerView: React.FC = () => {
             </p>
             <button
               onClick={handleApplyClick}
-              className="group relative inline-flex items-center gap-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xl px-10 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)] hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
+              className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-xl px-10 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)] hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
               <span>{t('pages.partner.cta.applyBtn', 'Start Application')}</span>

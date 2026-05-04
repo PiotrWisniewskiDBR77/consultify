@@ -21,16 +21,16 @@ const playbookAnimationStyle = `
         box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
     }
     50% {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
         box-shadow: 0 0 16px rgba(139, 92, 246, 0.5);
     }
 }
 
 @keyframes playbookIconGlow {
-    0%, 100% { 
+    0%, 100% {
         filter: drop-shadow(0 0 1px rgba(255,255,255,0.3));
     }
-    50% { 
+    50% {
         filter: drop-shadow(0 0 5px rgba(255,255,255,0.6));
     }
 }
@@ -51,7 +51,7 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
       <style>{playbookAnimationStyle}</style>
       <button
         onClick={onClick}
-        className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-14 h-14 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800"
+        className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-14 h-14 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800"
         style={{
           animation: 'playbookColorPulse 4.5s ease-in-out infinite',
         }}
@@ -65,7 +65,7 @@ const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
 
         {/* Badge */}
         {availableCount > 0 && !loading && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-white bg-red-500 rounded-full border-2 border-white dark:border-slate-900">
+          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-white bg-rose-500 rounded-full border-2 border-white dark:border-slate-900">
             {availableCount > 9 ? '9+' : availableCount}
           </span>
         )}

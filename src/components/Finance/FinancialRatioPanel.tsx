@@ -109,8 +109,8 @@ const CATEGORY_CONFIG: Record<
     label: 'Efficiency',
     labelPl: 'Efektywność',
     icon: <RefreshCw size={16} />,
-    iconBg: 'bg-purple-100 dark:bg-purple-900/30',
-    iconText: 'text-purple-600',
+    iconBg: 'bg-primary-100 dark:bg-primary-900/30',
+    iconText: 'text-primary-600',
   },
   growth: {
     label: 'Growth',
@@ -195,14 +195,14 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
   const statusIcon = (status: string) => {
     if (status === 'ok') return <CheckCircle2 size={14} className="text-emerald-500" />;
     if (status === 'warn') return <AlertTriangle size={14} className="text-amber-500" />;
-    if (status === 'critical') return <XCircle size={14} className="text-red-500" />;
+    if (status === 'critical') return <XCircle size={14} className="text-rose-500" />;
     return <Minus size={14} className="text-slate-300" />;
   };
 
   const statusBg = (status: string) => {
     if (status === 'ok') return 'bg-emerald-50 dark:bg-emerald-900/20';
     if (status === 'warn') return 'bg-amber-50 dark:bg-amber-900/20';
-    if (status === 'critical') return 'bg-red-50 dark:bg-red-900/20';
+    if (status === 'critical') return 'bg-rose-50 dark:bg-rose-900/20';
     return 'bg-slate-50 dark:bg-navy-800';
   };
 
@@ -380,7 +380,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
           <SummaryCard
             label={t('finance.ratios.coverage', 'Data Coverage')}
             value={`${result.coverageSummary.coveragePct}%`}
-            icon={<Target size={16} className="text-purple-500" />}
+            icon={<Target size={16} className="text-primary-500" />}
           />
         </div>
       )}

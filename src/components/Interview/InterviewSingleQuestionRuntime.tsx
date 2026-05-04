@@ -1717,8 +1717,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       disabled={aiExplaining}
                       className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
                         aiExplainResult
-                          ? 'text-violet-600 dark:text-violet-400'
-                          : 'text-slate-600 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
+                          ? 'text-primary-600 dark:text-primary-400'
+                          : 'text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400'
                       }`}
                     >
                       {aiExplaining ? (
@@ -1742,21 +1742,21 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
                   {/* AI Explain result */}
                   {aiExplainResult && (
-                    <div className="rounded-xl border border-violet-200/50 dark:border-violet-500/15 bg-violet-50/50 dark:bg-violet-500/5 p-4 space-y-3">
-                      <p className="text-sm text-violet-800 dark:text-violet-200 leading-relaxed">
+                    <div className="rounded-xl border border-primary-200/50 dark:border-primary-500/15 bg-primary-50/50 dark:bg-primary-500/5 p-4 space-y-3">
+                      <p className="text-sm text-primary-800 dark:text-primary-200 leading-relaxed">
                         {aiExplainResult.explanation}
                       </p>
                       {aiExplainResult.exampleAnswers.length > 0 && (
                         <div className="space-y-1.5">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-400">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-400">
                             {isPolish ? 'Przykładowe odpowiedzi' : 'Example answers'}
                           </p>
                           {aiExplainResult.exampleAnswers.map((ex, i) => (
                             <div
                               key={i}
-                              className="flex items-start gap-2 text-xs text-violet-700 dark:text-violet-300"
+                              className="flex items-start gap-2 text-xs text-primary-700 dark:text-primary-300"
                             >
-                              <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-violet-500/10 flex items-center justify-center text-[9px] font-semibold text-violet-500">
+                              <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-primary-500/10 flex items-center justify-center text-[9px] font-semibold text-primary-500">
                                 {i + 1}
                               </span>
                               <span className="leading-relaxed italic">&ldquo;{ex}&rdquo;</span>
@@ -1764,7 +1764,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           ))}
                         </div>
                       )}
-                      <p className="text-[11px] text-violet-600/70 dark:text-violet-400/70 leading-relaxed">
+                      <p className="text-[11px] text-primary-600/70 dark:text-primary-400/70 leading-relaxed">
                         <Sparkles size={10} className="inline mr-1 -mt-0.5" />
                         {aiExplainResult.whyItMatters}
                       </p>
@@ -1998,7 +1998,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   )}
 
                   {(inputMode === 'voice_answer' || isTranscribing) && !voiceNeedsApproval && (
-                    <div className="rounded-xl border border-violet-200/70 dark:border-violet-500/20 bg-violet-50/70 dark:bg-violet-500/10 px-4 py-3 text-sm text-violet-700 dark:text-violet-300">
+                    <div className="rounded-xl border border-primary-200/70 dark:border-primary-500/20 bg-primary-50/70 dark:bg-primary-500/10 px-4 py-3 text-sm text-primary-700 dark:text-primary-300">
                       {isTranscribing ? (
                         <span className="inline-flex items-center gap-2">
                           <Loader2 size={14} className="animate-spin" />
@@ -2088,7 +2088,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         onClick={() => setArtifactPopoverOpen(true)}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-violet-300'
+                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-primary-300'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2148,7 +2148,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             key={item.id}
                             className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] ${
                               isArtifact
-                                ? 'border-violet-200/70 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/5 text-violet-600 dark:text-violet-300'
+                                ? 'border-primary-200/70 dark:border-primary-500/20 bg-primary-50/50 dark:bg-primary-500/5 text-primary-600 dark:text-primary-300'
                                 : 'border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 text-slate-600 dark:text-slate-300'
                             }`}
                           >

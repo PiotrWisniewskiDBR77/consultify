@@ -178,15 +178,15 @@ const RAID_TYPE_META: Record<
   },
   issue: {
     icon: XCircle,
-    color: 'text-red-500',
-    bgLight: 'bg-red-500/10',
-    borderActive: 'border-red-400/60 ring-red-400/30',
+    color: 'text-rose-500',
+    bgLight: 'bg-rose-500/10',
+    borderActive: 'border-rose-400/60 ring-rose-400/30',
   },
   dependency: {
     icon: GitBranch,
-    color: 'text-purple-500',
-    bgLight: 'bg-purple-500/10',
-    borderActive: 'border-purple-400/60 ring-purple-400/30',
+    color: 'text-primary-500',
+    bgLight: 'bg-primary-500/10',
+    borderActive: 'border-primary-400/60 ring-primary-400/30',
   },
 };
 
@@ -207,7 +207,7 @@ export const getRaidScore = (item: RaidItem): number =>
 
 const getScoreClass = (score: number, isRisk: boolean): string => {
   if (isRisk) {
-    if (score >= 12) return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30';
+    if (score >= 12) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
     if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
     if (score >= 4)
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -220,9 +220,9 @@ const getScoreClass = (score: number, isRisk: boolean): string => {
 
 const getLevelClass = (level?: string): string => {
   const n = String(level || '').toLowerCase();
-  if (n === 'critical') return 'border-red-500/60 bg-red-500/10 text-red-700 dark:text-red-300';
+  if (n === 'critical') return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
   if (n === 'high')
-    return 'border-orange-500/55 bg-orange-500/10 text-orange-700 dark:text-orange-300';
+    return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (n === 'medium')
     return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
@@ -235,12 +235,12 @@ const getStatusClass = (status: string): string => {
   if (s === 'mitigated' || s === 'on_track')
     return 'bg-green-500/15 text-green-500 border-green-400/30';
   if (s === 'accepted') return 'bg-amber-500/15 text-amber-500 border-amber-400/30';
-  if (s === 'transferred') return 'bg-purple-500/15 text-purple-500 border-purple-400/30';
+  if (s === 'transferred') return 'bg-primary-500/15 text-primary-500 border-primary-400/30';
   if (s === 'materialized' || s === 'invalidated' || s === 'not_met')
-    return 'bg-red-500/20 text-red-500 border-red-400/40';
+    return 'bg-rose-500/20 text-rose-500 border-rose-400/40';
   if (s === 'escalated' || s === 'at_risk')
-    return 'bg-orange-500/15 text-orange-500 border-orange-400/30';
-  if (s === 'in_progress') return 'bg-cyan-500/15 text-cyan-500 border-cyan-400/30';
+    return 'bg-amber-500/15 text-amber-500 border-amber-400/30';
+  if (s === 'in_progress') return 'bg-blue-500/15 text-blue-500 border-blue-400/30';
   return 'bg-blue-500/15 text-blue-500 border-blue-400/30'; // open
 };
 
@@ -493,13 +493,13 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   }, [items, criticalItems, overdueItems, unownedItems]);
 
   const healthColor =
-    healthScore >= 70 ? 'text-emerald-500' : healthScore >= 40 ? 'text-amber-500' : 'text-red-500';
+    healthScore >= 70 ? 'text-emerald-500' : healthScore >= 40 ? 'text-amber-500' : 'text-rose-500';
   const healthBg =
     healthScore >= 70
       ? 'bg-emerald-500/10 border-emerald-500/30'
       : healthScore >= 40
         ? 'bg-amber-500/10 border-amber-500/30'
-        : 'bg-red-500/10 border-red-500/30';
+        : 'bg-rose-500/10 border-rose-500/30';
 
   const filteredItems = useMemo(() => {
     const filtered = typeFilter === 'all' ? items : items.filter((i) => i.type === typeFilter);
@@ -579,7 +579,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
           <button
             onClick={onAIGenerate}
             disabled={locked || isGeneratingAI}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-purple-500/15 to-violet-500/15 border border-purple-400/40 dark:border-purple-500/30 text-purple-600 dark:text-purple-400 hover:from-purple-500/25 hover:to-violet-500/25 hover:border-purple-400/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-primary-500/15 to-primary-500/15 border border-primary-400/40 dark:border-primary-500/30 text-primary-600 dark:text-primary-400 hover:from-primary-500/25 hover:to-primary-500/25 hover:border-primary-400/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isGeneratingAI ? (
               <Loader2 size={13} className="animate-spin" />
@@ -611,10 +611,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         </div>
         {/* Critical/High */}
         <div
-          className={`p-2.5 rounded-xl text-center border ${criticalItems.length > 0 ? 'border-red-400/40 bg-red-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+          className={`p-2.5 rounded-xl text-center border ${criticalItems.length > 0 ? 'border-rose-400/40 bg-rose-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
         >
           <div
-            className={`text-xl font-bold ${criticalItems.length > 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`text-xl font-bold ${criticalItems.length > 0 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-200'}`}
           >
             {criticalItems.length}
           </div>
@@ -624,10 +624,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         </div>
         {/* Overdue */}
         <div
-          className={`p-2.5 rounded-xl text-center border ${overdueItems.length > 0 ? 'border-orange-400/40 bg-orange-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+          className={`p-2.5 rounded-xl text-center border ${overdueItems.length > 0 ? 'border-amber-400/40 bg-amber-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
         >
           <div
-            className={`text-xl font-bold ${overdueItems.length > 0 ? 'text-orange-500' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`text-xl font-bold ${overdueItems.length > 0 ? 'text-amber-500' : 'text-slate-700 dark:text-slate-200'}`}
           >
             {overdueItems.length}
           </div>
@@ -676,7 +676,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
               </div>
               {/* Overdue badge */}
               {typeOverdue > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-500 text-white text-[8px] font-bold flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[8px] font-bold flex items-center justify-center">
                   {typeOverdue}
                 </span>
               )}
@@ -727,9 +727,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       const score = raidLevelToScore(p) * raidLevelToScore(i);
                       const bgClass =
                         score >= 12
-                          ? 'bg-red-500/25'
+                          ? 'bg-rose-500/25'
                           : score >= 8
-                            ? 'bg-orange-500/20'
+                            ? 'bg-amber-500/20'
                             : score >= 4
                               ? 'bg-amber-500/15'
                               : 'bg-emerald-500/10';
@@ -848,9 +848,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                 <div
                   className={`p-5 rounded-xl space-y-5 ${
                     itemOverdue
-                      ? 'bg-orange-500/5 dark:bg-orange-500/5 ring-1 ring-orange-400/30'
+                      ? 'bg-amber-500/5 dark:bg-amber-500/5 ring-1 ring-amber-400/30'
                       : showConvert
-                        ? 'bg-red-500/5 dark:bg-red-500/5 ring-1 ring-red-400/20'
+                        ? 'bg-rose-500/5 dark:bg-rose-500/5 ring-1 ring-rose-400/20'
                         : 'bg-slate-50/20 dark:bg-navy-900/25'
                   }`}
                 >
@@ -859,8 +859,8 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                     <div
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium ${
                         showConvert
-                          ? 'bg-red-500/15 text-red-500 dark:text-red-400'
-                          : 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
+                          ? 'bg-rose-500/15 text-rose-500 dark:text-rose-400'
+                          : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                       }`}
                     >
                       {showConvert ? (
@@ -876,7 +876,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           <button
                             onClick={() => handleConvertToIssue(item)}
                             disabled={locked}
-                            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 text-[10px] font-semibold transition-colors disabled:opacity-40"
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 dark:text-rose-400 text-[10px] font-semibold transition-colors disabled:opacity-40"
                           >
                             <ArrowRight size={10} />
                             {isPolish ? 'Konwertuj na Issue' : 'Convert to Issue'}
@@ -929,13 +929,13 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           {getStatusLabel(item.status)}
                         </span>
                         {/* Overdue indicator */}
-                        {itemOverdue && <Clock size={12} className="text-orange-500" />}
+                        {itemOverdue && <Clock size={12} className="text-amber-500" />}
                         {/* Unowned indicator */}
                         {itemUnowned && <User size={12} className="text-amber-400 opacity-60" />}
                         <button
                           onClick={() => onRemoveItem(item.id)}
                           disabled={locked}
-                          className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                          className="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                         >
                           <X size={12} />
                         </button>
@@ -1123,7 +1123,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Due Date */}
                       <div className="space-y-1">
                         <span
-                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'}`}
+                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}
                         >
                           <Calendar size={9} />
                           {isPolish ? 'Termin' : 'Due Date'}
@@ -1140,7 +1140,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           readOnly={locked}
                           className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 ${
                             itemOverdue
-                              ? 'border-orange-400/60 text-orange-500 dark:text-orange-400'
+                              ? 'border-amber-400/60 text-amber-500 dark:text-amber-400'
                               : 'border-slate-200/60 dark:border-navy-600/60'
                           }`}
                         />
@@ -1209,7 +1209,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                                 })
                               }
                               disabled={locked}
-                              className="px-1.5 py-0.5 rounded border border-red-400/30 text-red-500 dark:text-red-400 text-[10px] hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                              className="px-1.5 py-0.5 rounded border border-rose-400/30 text-rose-500 dark:text-rose-400 text-[10px] hover:bg-rose-500/10 transition-colors disabled:opacity-40"
                             >
                               +{arg}
                             </button>
@@ -1307,8 +1307,8 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                               : item.type === 'assumption'
                                 ? 'border-blue-400/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10'
                                 : item.type === 'issue'
-                                  ? 'border-red-400/30 text-red-600 dark:text-red-400 hover:bg-red-500/10'
-                                  : 'border-purple-400/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10'
+                                  ? 'border-rose-400/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10'
+                                  : 'border-primary-400/30 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'
                           }`}
                         >
                           +{arg}

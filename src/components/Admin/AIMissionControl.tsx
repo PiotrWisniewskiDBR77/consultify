@@ -258,7 +258,7 @@ export const AIMissionControl: React.FC = () => {
                     className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
                       results[cap.id].status === 'SUCCESS'
                         ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40'
-                        : 'bg-red-500/20 text-red-200 border border-red-500/40'
+                        : 'bg-rose-500/20 text-rose-200 border border-rose-500/40'
                     }`}
                   >
                     {results[cap.id].status} ({results[cap.id].latency}ms)

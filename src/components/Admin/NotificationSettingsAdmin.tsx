@@ -128,7 +128,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -137,7 +137,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
     <button
       onClick={onToggle}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+        enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
       }`}
     >
       <span
@@ -204,7 +204,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
       {/* Decision Notifications */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-          <Target size={16} className="text-purple-500" />
+          <Target size={16} className="text-primary-500" />
           Decision Notifications
         </h3>
         <SettingRow
@@ -250,7 +250,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
       {/* Escalation Settings */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-          <Clock size={16} className="text-orange-500" />
+          <Clock size={16} className="text-amber-500" />
           Escalation Settings
         </h3>
         <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700">
@@ -309,7 +309,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
           disabled={!hasChanges || isSaving}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
             hasChanges
-              ? 'bg-purple-600 hover:bg-purple-500 text-white'
+              ? 'bg-primary-600 hover:bg-primary-500 text-white'
               : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
           }`}
         >

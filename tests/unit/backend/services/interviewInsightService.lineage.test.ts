@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildInsightGenerationPreferences,
+  buildInsightGenerationContract,
+  buildInsightMaterialQuality,
   buildInsightScopeSessionWhereClause,
   buildInsightSourceMaterialSummary,
   buildInsightContextLineagePayload,
+  INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION,
   validateInsightEvidenceRefs,
   type ContextDocumentPack,
   type InsightAnalysisScope,
@@ -74,6 +77,25 @@ describe('InterviewInsightService scope material helpers', () => {
     context_mode: 'selected_interview_material_only',
   };
 
+  it('exposes a versioned structured generation contract for report-pack worksheets', () => {
+    const contract = buildInsightGenerationContract();
+
+    expect(contract).toEqual({
+      contract: 'interview_insight_scope_builder_v1',
+      schemaVersion: INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION,
+      requiredSections: [
+        'executive_summary',
+        'themes',
+        'issues',
+        'opportunities',
+        'signals',
+        'evidence_map',
+        'missing_data',
+        'material_quality',
+      ],
+    });
+  });
+
   it('builds a server-side SQL scope filter for the exact source material used in generation', () => {
     const where = buildInsightScopeSessionWhereClause(analysisScope);
 
@@ -124,13 +146,143 @@ describe('InterviewInsightService scope material helpers', () => {
       promptType: 'summary',
       analysisScope,
       filters: {
-        outputTypes: ['summary', 'recommendations'],
-        analysisModes: ['contradiction_scan', 'between_the_lines', 'unknown_mode'],
+        outputTypes: [
+          'summary',
+          'recommendations',
+          'between_the_lines',
+          'unknown_output',
+          'summary',
+        ],
+        analysisModes: [
+          'contradiction_scan',
+          'between_the_lines',
+          'unknown_mode',
+          'contradiction_scan',
+        ],
       },
     });
 
-    expect(preferences.outputTypes).toEqual(['summary', 'recommendations']);
+    expect(preferences.outputTypes).toEqual(['summary', 'recommendations', 'between_the_lines']);
     expect(preferences.analysisModes).toEqual(['contradiction_scan', 'between_the_lines']);
+  });
+
+  it('falls back to a known output type when filters contain no valid output contract', () => {
+    const preferences = buildInsightGenerationPreferences({
+      promptType: 'between_the_lines',
+      analysisScope,
+      filters: {
+        outputTypes: ['unknown_output'],
+      },
+    });
+
+    expect(preferences.outputTypes).toEqual(['between_the_lines']);
+  });
+
+  it('downgrades recommendation posture when material is thin or single-perspective', () => {
+    const quality = buildInsightMaterialQuality(
+      [
+        {
+          id: 'session-1',
+          owner_id: 'user-1',
+          answered_questions: 1,
+          total_questions: 5,
+          job_title: 'Operations Lead',
+          department: 'Operations',
+          answers: [{ id: 'answer-1', answer_text: 'Too slow.', confidence_score: 2 }],
+        },
+      ],
+      {
+        executive_summary: 'Summary',
+        themes: [{ title: 'Theme', description: 'Theme', strength: 'weak', evidence_refs: [] }],
+        issues: [],
+        opportunities: [
+          {
+            title: 'Opportunity',
+            description: 'Opportunity',
+            impact: 'high',
+            evidence_refs: [],
+          },
+        ],
+        signals: [{ title: 'Tension', description: 'Teams disagree', type: 'contradiction' }],
+        evidence_map: [],
+        missing_data: ['Need more roles'],
+      }
+    );
+
+    expect(quality.confidence_downgrade_required).toBe(true);
+    expect(quality.recommendation_posture).toBe('hypothesis_only');
+    expect(quality.coverage_posture).toBe('single_perspective');
+    expect(quality.missing_voices.join('\n')).toContain('Additional roles');
+    expect(quality.limitations.join('\n')).toContain('Recommendations must remain');
+  });
+
+  it('keeps strong cross-functional material decision-ready', () => {
+    const quality = buildInsightMaterialQuality(
+      [
+        {
+          id: 'session-1',
+          owner_id: 'user-1',
+          answered_questions: 5,
+          total_questions: 5,
+          job_title: 'Operations Lead',
+          department: 'Operations',
+          answers: [{ id: 'answer-1', answer_text: 'A'.repeat(180), confidence_score: 5 }],
+        },
+        {
+          id: 'session-2',
+          owner_id: 'user-2',
+          answered_questions: 5,
+          total_questions: 5,
+          job_title: 'Finance Lead',
+          department: 'Finance',
+          answers: [{ id: 'answer-2', answer_text: 'B'.repeat(180), confidence_score: 5 }],
+        },
+        {
+          id: 'session-3',
+          owner_id: 'user-3',
+          answered_questions: 5,
+          total_questions: 5,
+          job_title: 'IT Lead',
+          department: 'IT',
+          answers: [{ id: 'answer-3', answer_text: 'C'.repeat(180), confidence_score: 5 }],
+        },
+      ],
+      {
+        executive_summary: 'Summary',
+        themes: [
+          {
+            title: 'Theme',
+            description: 'Theme',
+            strength: 'strong',
+            evidence_refs: ['answer-1', 'answer-2'],
+          },
+        ],
+        issues: [],
+        opportunities: [
+          {
+            title: 'Opportunity',
+            description: 'Opportunity',
+            impact: 'medium',
+            evidence_refs: ['answer-3'],
+          },
+        ],
+        signals: [],
+        evidence_map: [
+          {
+            answer_id: 'answer-1',
+            question_text: 'Q',
+            answer_snippet: 'A',
+            linked_themes: ['Theme'],
+            linked_issues: [],
+          },
+        ],
+        missing_data: [],
+      }
+    );
+
+    expect(quality.confidence_downgrade_required).toBe(false);
+    expect(quality.recommendation_posture).toBe('decision_ready');
+    expect(quality.coverage_posture).toBe('strong_cross_function_coverage');
   });
 
   it('removes invalid evidence refs so generated claims cannot cite out-of-scope answers', () => {

@@ -487,18 +487,18 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
     switch (type) {
       case 'cover':
       case 'summary':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
+        return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300';
       case 'methodology':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       case 'matrix':
         return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
       case 'axis_analysis':
-        return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300';
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
       case 'list':
       case 'recommendations':
         return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
       case 'action_plan':
-        return 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300';
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       default:
         return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
     }
@@ -610,7 +610,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               {!section.required && section.sectionKey.startsWith('custom_') && (
                 <button
                   onClick={() => handleRemoveSection(section.sectionKey)}
-                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

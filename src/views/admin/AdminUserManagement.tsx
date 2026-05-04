@@ -339,7 +339,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
     if (isOwner || role === 'OWNER')
       return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30';
     if (isSuperAdminRole(role))
-      return 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30';
+      return 'bg-primary-500/10 text-primary-700 dark:text-primary-400 border-primary-500/30';
     if (role === UserRole.ADMIN)
       return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30';
     if (role === 'PROJECT_MANAGER')
@@ -367,7 +367,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none w-64"
+              className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none w-64"
             />
           </div>
 
@@ -376,7 +376,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             disabled={!!loadError}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
           >
             <option value="all">All Account Types</option>
             <option value="OWNER">Owner</option>
@@ -389,7 +389,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             disabled={!!loadError}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -411,7 +411,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <button
             onClick={openAddModal}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-primary-900/20"
           >
             <Plus size={16} /> Add User
           </button>
@@ -423,7 +423,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
         {actionError && (
           <div
             role="alert"
-            className="m-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"
+            className="m-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
           >
             {actionError}
           </div>
@@ -442,7 +442,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             {loading ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center">
-                  <RefreshCw className="w-6 h-6 animate-spin text-purple-500 mx-auto" />
+                  <RefreshCw className="w-6 h-6 animate-spin text-primary-500 mx-auto" />
                 </td>
               </tr>
             ) : loadError ? (
@@ -568,7 +568,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           className={`p-2 rounded-lg ${
                             user.isOwner || user.role === 'OWNER'
                               ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                              : 'hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400'
+                              : 'hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400'
                           }`}
                           title={
                             user.isOwner || user.role === 'OWNER'
@@ -625,7 +625,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               {formError && (
                 <div
                   role="alert"
-                  className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"
+                  className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
                 >
                   {formError}
                 </div>
@@ -685,7 +685,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </select>
               <button
                 type="submit"
-                className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4"
+                className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-semibold mt-4"
               >
                 Save
               </button>

@@ -468,7 +468,7 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
       )}
     />
     <motion.div
-      className="pointer-events-none absolute -left-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-violet-400/15 to-cyan-300/12 blur-[160px]"
+      className="pointer-events-none absolute -left-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-primary-400/15 to-blue-300/12 blur-[160px]"
       animate={
         ambientMotion === 'soft'
           ? { x: [0, 12, 0], y: [0, 10, 0], scale: [1, 1.03, 1] }

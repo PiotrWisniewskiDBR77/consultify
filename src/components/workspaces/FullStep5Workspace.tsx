@@ -28,7 +28,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
   const columns: { id: string; label: string; color: string }[] = [
     { id: 'To Do', label: t.columns.todo, color: 'border-slate-500/50' },
     { id: 'In Progress', label: t.columns.inProgress, color: 'border-blue-500/50' },
-    { id: 'Blocked', label: t.columns.blocked, color: 'border-red-500/50' },
+    { id: 'Blocked', label: t.columns.blocked, color: 'border-rose-500/50' },
     { id: 'Done', label: t.columns.done, color: 'border-green-500/50' },
   ];
 
@@ -103,7 +103,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
             {t.columns.blocked}
           </span>
           <span
-            className={`text-lg font-bold ${blockedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-400'}`}
+            className={`text-lg font-bold ${blockedCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}
           >
             {blockedCount}
           </span>
@@ -121,7 +121,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
           </button>
           <button
             onClick={() => setShowBlockedOnly(!showBlockedOnly)}
-            className={`px-3 py-1.5 rounded text-xs font-bold border transition-colors ${showBlockedOnly ? 'bg-red-100 dark:bg-red-900/50 border-red-500 text-red-600 dark:text-red-200' : 'bg-slate-50 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700'}`}
+            className={`px-3 py-1.5 rounded text-xs font-bold border transition-colors ${showBlockedOnly ? 'bg-rose-100 dark:bg-rose-900/50 border-rose-500 text-rose-600 dark:text-rose-200' : 'bg-slate-50 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700'}`}
           >
             Show Blocked
           </button>
@@ -138,7 +138,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
             >
               {/* Column Header */}
               <div
-                className={`p-3 border-b border-slate-200 dark:border-navy-700 flex justify-between items-center ${col.id === 'Blocked' ? 'bg-red-50 dark:bg-red-500/5' : ''}`}
+                className={`p-3 border-b border-slate-200 dark:border-navy-700 flex justify-between items-center ${col.id === 'Blocked' ? 'bg-rose-50 dark:bg-rose-500/5' : ''}`}
               >
                 <h4 className="font-semibold text-navy-900 dark:text-white text-xs">{col.label}</h4>
                 <span className="text-[10px] bg-white dark:bg-navy-900 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700">
@@ -154,7 +154,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                     onClick={() => handleCardClick(init)}
                     className={`
                              bg-white dark:bg-navy-900 p-3 rounded-lg border hover:border-blue-500/50 cursor-pointer shadow-sm hover:shadow-md dark:shadow-lg transition-all group relative
-                             ${col.id === 'Blocked' ? 'border-red-200 dark:border-red-500/20' : 'border-slate-200 dark:border-navy-700'}
+                             ${col.id === 'Blocked' ? 'border-rose-200 dark:border-rose-500/20' : 'border-slate-200 dark:border-navy-700'}
                            `}
                   >
                     {/* Axis Label */}
@@ -163,7 +163,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                         {init.axis}
                       </span>
                       {init.priority === 'High' && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
                       )}
                     </div>
 

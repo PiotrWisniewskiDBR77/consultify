@@ -241,7 +241,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <Loader2 className="animate-spin text-purple-600" />
+        <Loader2 className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -279,7 +279,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
               <button
                 key={type}
                 onClick={() => handleAddBlock(type)}
-                className="text-xs flex items-center gap-1 p-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded hover:border-purple-500 transition-colors"
+                className="text-xs flex items-center gap-1 p-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded hover:border-primary-500 transition-colors"
                 disabled={isSaving}
               >
                 <Plus size={12} /> {type}
@@ -330,7 +330,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
               </p>
               <button
                 onClick={() => handleAddBlock('text')}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+                className="bg-primary-600 text-white px-4 py-2 rounded-lg"
               >
                 Add Text Block
               </button>

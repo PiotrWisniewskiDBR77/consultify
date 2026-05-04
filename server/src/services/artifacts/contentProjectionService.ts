@@ -98,7 +98,7 @@ function projectTable(value: unknown): string {
   ];
 
   rows.slice(0, 50).forEach((row) => {
-    const record = isRecord(row) ? row : { Item: row };
+    const record: Record<string, unknown> = isRecord(row) ? row : { Item: row };
     lines.push(`| ${columnNames.map((column) => String(record[column] ?? '')).join(' | ')} |`);
   });
 
@@ -238,7 +238,7 @@ function projectTableBlock(block: CanvasArtifactBlock): string {
     `| ${columnNames.map(() => '---').join(' | ')} |`,
   ];
   rows.slice(0, 50).forEach((row) => {
-    const record = isRecord(row) ? row : { Item: row };
+    const record: Record<string, unknown> = isRecord(row) ? row : { Item: row };
     lines.push(`| ${columnNames.map((column) => escapeTableCell(record[column])).join(' | ')} |`);
   });
   if (rows.length > 50) lines.push('', '_Projection truncated to first 50 rows._');

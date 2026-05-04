@@ -3463,6 +3463,57 @@ router.post(
           label: `Analyzing ${attachmentDocIds.length} attachment(s) — searching for relevant fragments…`,
         });
         let attachmentChunksInjected = false;
+        // Stage 3 (Source Of Truth): use shared ContextRetrievalService for ACL-enforced
+        // retrieval and lineage. Falls back to legacy ragService path on unexpected errors.
+        try {
+          const sharedRetrievalModule = await import(
+            '../services/organizationContext/ContextRetrievalService.js'
+          );
+          const sharedRetrieval = (sharedRetrievalModule as any).default || sharedRetrievalModule;
+          const requestedWorkflowMode = (() => {
+            const raw = String((context as any)?.contextWorkflowMode || '').trim();
+            return sharedRetrieval.isValidContextWorkflowMode(raw)
+              ? raw
+              : 'selected_material_plus_selected_context';
+          })();
+          const sharedResult = await sharedRetrieval.retrieveContext({
+            organizationId: req.organizationId || '',
+            userId: (req as any).user?.id || (req as any).userId || 'system',
+            workflow: 'ai_chat',
+            workflowMode: requestedWorkflowMode,
+            retrievalQuery: message,
+            retrievalReason: 'ai_chat_attachment_grounding',
+            selectedDocumentIds: attachmentDocIds,
+            perDocumentChunkLimit: 5,
+            totalChunkLimit: 12,
+          });
+
+          if (
+            sharedResult &&
+            Array.isArray(sharedResult.chunks) &&
+            sharedResult.chunks.length > 0
+          ) {
+            await sharedRetrieval.recordContextRetrievalLineage({
+              organizationId: req.organizationId || '',
+              userId: (req as any).user?.id || (req as any).userId || 'system',
+              workflow: 'ai_chat',
+              targetType: 'ai_chat_message',
+              targetId: chatRunId || `chat_${Date.now()}`,
+              eventType: 'ai_chat_context_retrieved',
+              result: sharedResult,
+              metadata: {
+                attachmentSource: 'conversation_attachments',
+                conversationId: (context as any)?.conversationId || null,
+              },
+            });
+          }
+        } catch (sharedErr: any) {
+          logger.warn(
+            '[AI Stream] Shared ContextRetrievalService failed, falling back to legacy ragService:',
+            sharedErr?.message || String(sharedErr)
+          );
+        }
+
         try {
           const ragModule = await import('../services/ragService.js');
           const ragService = (ragModule.default || ragModule) as any;
@@ -5095,8 +5146,8 @@ router.get(
     try {
       const row = (await dbGet(
         `
-            SELECT content, updated_at 
-            FROM ai_partial_responses 
+            SELECT content, updated_at
+            FROM ai_partial_responses
             WHERE session_id = ? AND user_id = ?
         `,
         [req.params.sessionId, req.userId]

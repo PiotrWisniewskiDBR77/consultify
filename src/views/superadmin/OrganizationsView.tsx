@@ -467,7 +467,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case 'enterprise':
-        return 'bg-purple-500/10 text-purple-700 border-purple-500/20 dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-500/30';
+        return 'bg-primary-500/10 text-primary-700 border-primary-500/20 dark:bg-primary-500/20 dark:text-primary-400 dark:border-primary-500/30';
       case 'pro':
         return 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30';
       case 'trial':
@@ -482,7 +482,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       case 'active':
         return 'text-emerald-700 dark:text-emerald-400';
       case 'blocked':
-        return 'text-red-700 dark:text-red-400';
+        return 'text-rose-700 dark:text-rose-400';
       case 'pending':
         return 'text-amber-700 dark:text-yellow-400';
       default:
@@ -496,7 +496,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
               <Building2 size={20} className="text-white" />
             </div>
             Organizations
@@ -533,7 +533,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       {actionError && (
         <div
           role="alert"
-          className="mb-6 rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+          className="mb-6 rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -750,7 +750,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               <button
                                 onClick={cancelInlineEdit}
                                 disabled={processingId === org.id}
-                                className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded transition-colors disabled:opacity-60"
+                                className="p-1.5 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded transition-colors disabled:opacity-60"
                                 title="Cancel"
                               >
                                 <X size={16} />
@@ -784,7 +784,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               <button
                                 onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
                                 disabled={processingId === org.id}
-                                className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors disabled:opacity-60"
+                                className="p-1.5 hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
                                 title="Delete"
                               >
                                 <Trash2 size={16} />
@@ -866,7 +866,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                           req.status === 'approved'
                             ? 'bg-emerald-500/20 text-emerald-400'
                             : req.status === 'rejected'
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-500/20 text-rose-400'
                               : 'bg-yellow-500/20 text-yellow-400'
                         }`}
                       >
@@ -887,7 +887,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                           <button
                             onClick={() => handleReject(req.id)}
                             disabled={processingId === req.id}
-                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors disabled:opacity-50"
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition-colors disabled:opacity-50"
                             title="Reject"
                           >
                             <XCircle size={18} />
@@ -895,7 +895,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                         </div>
                       )}
                       {req.status === 'rejected' && req.rejection_reason && (
-                        <span className="text-xs text-red-400 italic">
+                        <span className="text-xs text-rose-400 italic">
                           Reason: {req.rejection_reason}
                         </span>
                       )}
@@ -915,7 +915,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
             <button
               onClick={() => setShowCodeModal(true)}
               disabled={!!loadErrors.codes}
-              className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <Plus size={16} /> Generate New Code
             </button>
@@ -1002,7 +1002,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                         <button
                           onClick={() => handleDeactivateCode(code.id)}
                           disabled={processingId === code.id}
-                          className="text-slate-500 dark:text-slate-400 hover:text-red-400 transition-colors disabled:opacity-50"
+                          className="text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-50"
                           title="Deactivate code"
                         >
                           <XCircle size={16} />
@@ -1035,7 +1035,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Key size={20} className="text-purple-500" /> Generate Access Code
+                <Key size={20} className="text-primary-500" /> Generate Access Code
               </h3>
               <button
                 onClick={() => setShowCodeModal(false)}
@@ -1057,7 +1057,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })
                   }
                   placeholder="Leave empty for random"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -1073,7 +1073,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     onChange={(e) =>
                       setNewCodeData({ ...newCodeData, maxUses: Number(e.target.value) || 1 })
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -1083,7 +1083,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   <select
                     value={newCodeData.role}
                     onChange={(e) => setNewCodeData({ ...newCodeData, role: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
                   >
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
@@ -1100,7 +1100,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   type="date"
                   value={newCodeData.expiresAt}
                   onChange={(e) => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
                 />
               </div>
 
@@ -1115,7 +1115,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 <button
                   type="submit"
                   disabled={processingId === 'new-access-code'}
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded text-white text-sm font-medium transition-colors disabled:opacity-60"
+                  className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 rounded text-white text-sm font-medium transition-colors disabled:opacity-60"
                 >
                   {processingId === 'new-access-code' ? 'Generating...' : 'Generate Code'}
                 </button>

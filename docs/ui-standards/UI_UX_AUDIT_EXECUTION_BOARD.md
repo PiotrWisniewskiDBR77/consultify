@@ -58,22 +58,22 @@ If it is not in this board, it is not considered in active migration execution.
 
 | Order | Card | Wave | Current state | Decision | Priority | Why now |
 |---|---|---|---|---|---|---|
-| 1 | `My Work > Inbox` | `A` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | Highest trust-risk gaps (status access + AI trigger behavior) |
-| 2 | `My Work > Tasks` | `A` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | Shares same shell and command-row contracts as Inbox |
-| 3 | `Interview > all tabs` | `A` | `VERIFY_IN_PROGRESS` | `REFINE_REFERENCE` | `P1_HIGH` | Keep recent migration stable and regression-free |
-| 4 | `Discovery Tools` | `A` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | Known local color/status map drift |
-| 5 | `Assessment` | `A` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | Dynamic local color classes must be normalized |
-| 6 | `Execution` | `B` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | Manager surface has parallel command-row and local semantic color drift |
-| 7 | `Results` | `B` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | CTA labeling and KPI semantic colors still contain local drift |
-| 8 | `Economics` | `B` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | Finance actions still needed migration to canonical Menu 3 right slot |
-| 9 | `Meeting` | `B` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | App-table actions and topbar CTA count/style drifted from canonical ModuleHub |
-| 10 | `Reports & Presentations` | `B` | `VERIFY_IN_PROGRESS` | `REFACTOR` | `P1_HIGH` | Trust/status semantic color map includes off-contract palettes (`purple/cyan`) |
+| 1 | `My Work > Inbox` | `A` | `DONE` | `REFACTOR` | `P1_HIGH` | Highest trust-risk gaps (status access + AI trigger behavior) |
+| 2 | `My Work > Tasks` | `A` | `DONE` | `REFACTOR` | `P1_HIGH` | Shares same shell and command-row contracts as Inbox |
+| 3 | `Interview > all tabs` | `A` | `DONE` | `REFINE_REFERENCE` | `P1_HIGH` | Keep recent migration stable and regression-free |
+| 4 | `Discovery Tools` | `A` | `DONE` | `REFACTOR` | `P1_HIGH` | Known local color/status map drift |
+| 5 | `Assessment` | `A` | `DONE` | `REFACTOR` | `P1_HIGH` | Dynamic local color classes must be normalized |
+| 6 | `Execution` | `B` | `DONE` | `REFACTOR` | `P1_HIGH` | Manager surface has parallel command-row and local semantic color drift |
+| 7 | `Results` | `B` | `DONE` | `REFACTOR` | `P1_HIGH` | CTA labeling and KPI semantic colors still contain local drift |
+| 8 | `Economics` | `B` | `DONE` | `REFACTOR` | `P1_HIGH` | Finance actions still needed migration to canonical Menu 3 right slot |
+| 9 | `Meeting` | `B` | `DONE` | `REFACTOR` | `P1_HIGH` | App-table actions and topbar CTA count/style drifted from canonical ModuleHub |
+| 10 | `Reports & Presentations` | `B` | `DONE` | `REFACTOR` | `P1_HIGH` | Trust/status semantic color map includes off-contract palettes (`purple/cyan`) |
 
 ## 6. Card audit logs (current run)
 
 ### 6.1 My Work > Inbox
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -98,7 +98,7 @@ Acceptance checks:
 
 ### 6.2 My Work > Tasks
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -125,7 +125,7 @@ Acceptance checks:
 
 ### 6.3 Discovery Tools
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -147,7 +147,7 @@ Acceptance checks:
 
 ### 6.4 Assessment
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -169,7 +169,7 @@ Acceptance checks:
 
 ### 6.5 Execution
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -193,7 +193,7 @@ Acceptance checks:
 
 ### 6.6 Results
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -216,7 +216,7 @@ Acceptance checks:
 
 ### 6.7 Economics
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -236,7 +236,7 @@ Acceptance checks:
 
 ### 6.8 Meeting
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -256,7 +256,7 @@ Acceptance checks:
 
 ### 6.9 Reports & Presentations
 
-Status: `VERIFY_IN_PROGRESS`
+Status: `DONE`
 Decision: `REFACTOR`
 Priority: `P1_HIGH`
 Primary files:
@@ -344,3 +344,73 @@ Acceptance checks:
 - Ran another large Wave A cleanup batch in `processflow/nodes/ActivityNode`, `processflow/FlowNodeComponent`, `IdeaProcessFlowTool`, `table/RowDetailPanel`, `IdeaMapWorkspace`, and `IdeaWorkspaceTools`: removed residual `red/violet/purple/cyan/teal/orange` tokens in favor of `rose/primary/blue/amber` without changing conversion, relation, or process-node interaction logic.
 - Ran large Home/Executive/notebook cleanup batch in `Home/IndustryLensBlock`, `Home/CommandDock`, `Executive/KPIGrid`, `Executive/ExecutiveDashboard`, `Executive/AIOperatorOverviewCard`, `Executive/DecisionQueuePreview`, and `notebook/ActionItemsPanel`: normalized remaining accent drift (`cyan/violet/purple/red/orange` -> `blue/primary/rose/amber`) with no behavior changes in dashboard KPIs, operator actions, or action-item creation.
 - Ran another Wave A batch in `whiteboard/WhiteboardToolbarPrimitives`, `whiteboard/WhiteboardEmptyState`, `whiteboard/nodes/GroupNode`, `whiteboard/nodes/LinkNode`, `whiteboard/nodes/whiteboardNodeHelpers`, `table/EmptyStateView`, `table/ActivityFeed`, and `mindmap/NodeContextMenu`: remapped residual `red/violet/purple/cyan/orange/teal` accents to `rose/primary/blue/amber` while preserving whiteboard/table/mindmap interactions and menu handlers.
+- Ran follow-up Home/Executive batch in `Home/HomeBlockShell`, `Home/ExecutionCurrentBlock`, `Executive/TeamPerformancePreview`, and `Executive/PortfolioHealthScore`: aligned remaining `cyan/violet` status/live/health accents to canonical `blue/primary` without changing scoring logic, output flow behavior, or action routing.
+- Ran larger Decisions + Focus batch in `DecisionsPanelContent`, `DecisionPreviewPanel`, `DecisionsKanbanBoard`, `DecisionsTimelineView`, `FocusCockpit`, `Focus/NudgeStrip`, `Focus/AICoachPanel`, and `Focus/FocusView`: normalized remaining `red/orange/purple` semantics to `rose/amber/blue/primary` for overdue/risk/badges/AI chrome while keeping decision workflows, drag-drop focus lanes, and panel actions behaviorally unchanged.
+- Ran deep `DecisionDetailView` cleanup pass: normalized residual status/priority/risk/action/governance accents (`red/orange/purple/violet/cyan` -> `rose/amber/primary/blue`) across activity meta, risk badges, AI field actions, governance modals, destructive controls, and chip toggles with no behavioral changes in decision editing, approvals, or workflow state transitions.
+- Ran Tasks surface follow-up pass in `MyTasksList`, `TaskRow`, `shared/DueDateIndicator`, and `shared/PMOPriorityBadge`: aligned overdue/pinned/initiative/priority accents (`red/purple` -> `rose/primary`) to the Color Contract while preserving grouping logic, row actions, and PMO category behavior.
+- Ran deeper Tasks batch in `TaskDetailView` plus `MyTasksList`, `TaskRow`, `shared/DueDateIndicator`, and `shared/PMOPriorityBadge`: normalized residual `red/orange/purple/violet/cyan` accents to `rose/amber/primary/blue` across status/priority configs, risk scoring chips, governance channel toggles, AI section buttons, pinned/overdue headers, and destructive controls with no functional changes to task workflows or modal actions.
+- Ran Notifications + Team workload batch in `NotificationsHub`, `NotificationsContent`, `NotificationsKanbanBoard`, `WorkloadView`, `Team/CapacityForecast`, and `Team/BottleneckMap`: remapped remaining `red/orange/purple/violet/cyan` accents to `rose/amber/primary/blue` across severity chips, project/source badges, destructive action hovers, overloaded-capacity indicators, forecast markers, and bottleneck type colors while preserving notification flows, filters, and team analytics behavior.
+- Ran table-shell follow-up batch in `table/ViewSwitcher`, `table/WorkflowDashboard`, `table/SnapshotManager`, `table/ShareViewDialog`, `table/ColorPalette`, and `table/FilterPanel`: normalized residual `red/purple/violet/cyan` UI accents to `rose/primary/blue` for active tabs/chips, destructive controls, share/snapshot actions, and dashboard icon surfaces while keeping table switching/filtering/snapshot behavior unchanged.
+- Ran `table/views/*` semantic cleanup batch in `table/views/CalendarView`, `table/views/KanbanView`, `table/views/TimelineView`, `table/views/GalleryView`, `table/views/GanttView`, `table/views/ViewConfigPanel`, and `table/views/FormView`: remapped residual `red/violet/purple` accents to `rose/primary` across today markers, active-mode toggles, drag/drop highlights, form focus controls, config chips, and primary save/create CTAs while preserving view navigation, drag/drop, and record-edit behavior.
+- Ran legacy table-view parity batch in `table/CalendarView`, `table/KanbanView`, and `table/TimelineView`: mirrored `violet` accent cleanup to canonical `primary` across today/day chips, add-record affordances, drag/drop lane highlights, zoom toggles, and active drag rings while preserving calendar/kanban/timeline rendering and interactions.
+- Ran table core follow-up batch in `table/RowDetailPanel`, `table/GridView`, `table/ViewRouter`, and `table/PublicViewPage`: normalized residual `violet/red` focus and error-state accents to canonical `primary/rose` (editable cell focus rings, comment textarea focus, shared-view unavailable state) with no behavior changes in editing, routing, or public-view loading flow.
+- Ran table productivity batch in `table/TableSummaryDashboard`, `table/SmartSuggestionsBar`, `table/KeyboardShortcutsPanel`, and `table/ExecutionProgress`: normalized residual `violet/purple/red` accents to canonical `primary/rose` (summary AI panel and CTA states, suggestion-strip gradients/icons/actions, shortcuts header icon, execution progress statuses/error summaries) and remapped remaining off-contract hex tokens to `primary/blue/rose` equivalents without affecting execution or suggestion behavior.
+- Ran table builder/config batch in `table/FormBuilder`, `table/FilterBuilder`, `table/AddColumnDialog`, and `table/FormulaEditor`: normalized residual `purple/violet/red/orange` accents to canonical `primary/rose/amber` across builder pills, remove actions, required markers, filter controls, add-column focus rings/selected chips, and formula syntax/error highlighting while preserving form/filter/formula behavior and column-creation workflows.
+- Ran table connectors/automation/integration batch in `table/connectors/WebhookRelayPanel`, `table/connectors/RunHistoryPanel`, `table/connectors/ConnectorWizard`, `table/connectors/ConnectorList`, `table/automations/CronBuilder`, `table/automations/AutomationsManager`, `table/automations/AutomationBuilder`, and `table/integration/ConsultifyLinkPanel`: remapped residual `red/purple/violet` accents to canonical `rose/primary` for failed-status surfaces, destructive menu actions, active preset/step states, toggle/CTA chrome, and execution module mapping badges without changing connector runs, automation execution, or sync flows.
+- Ran table forms/sharing/offline batch in `table/forms/PublicFormPage`, `table/forms/FormsIndex`, `table/sharing/SharingManager`, and `table/offline/OfflineIndicator`: normalized residual `red/purple/violet` accents to canonical `rose/primary` across public-form validation/error states, forms-list CTAs and active states, sharing actions/inputs/avatars, and offline status badges while preserving submission, sharing permissions, and online/offline behavior.
+- Ran table extensions/distribution/interfaces batch in `table/extensions/ExtensionMarketplace`, `table/extensions/ExtensionHost`, `table/distribution/DistributionManager`, and `table/interfaces/InterfacesIndex`: remapped residual `red/violet/purple` accents to canonical `rose/primary` for uninstall/delete actions, extension host error banners, distribution delete controls, interface creation/template chrome, and interface-card destructive controls without changing extension loading, distribution execution, or interface CRUD behavior.
+- Ran table governed/sync batch in `table/governed/GovernedModelsDashboard` and `table/sync/SyncManager`: remapped residual `red/cyan` accents to canonical `rose/blue` across deprecated trust badges, remove/delete links, sync wizard step states, source/mode chips, sync CTAs/icons, and destructive row actions while preserving model-governance and sync workflow logic.
+- Ran table AI workflow batch in `table/AITableProposal`, `table/AITableAssistant`, `table/AICopilotMode`, and `table/AICategorizeTool`: normalized residual `violet/red/teal` accents to canonical `primary/rose/blue` across proposal selection states, AI container chrome, copilot mode tabs/input focus, categorize tabs/chips, and destructive/critical suggestion states while preserving proposal acceptance/refine and copilot/categorization behavior.
+- Ran table schema/rules batch in `table/SchemaProposalCard`, `table/SchemaDiffPreview`, `table/RefineDialog`, and `table/RowColoringConfig`: remapped residual `red/violet/teal` accents to canonical `rose/primary/blue` for operation badges, required/low-confidence markers, diff deleted-state highlights, refine dialog focus/CTA chrome, and row-coloring rule actions with no changes to proposal execution, diff logic, or rule evaluation behavior.
+- Ran table record/layout surfaces batch in `table/RecordTemplateManager`, `table/RecordExpandModal`, `table/PublicFormView`, `table/PlatformCellRenderer`, `table/MatrixView`, `table/LinkedRecordPicker`, `table/LinkedRecordDisplay`, and `table/InterfaceDesigner`: normalized residual `red/violet/teal` accents to canonical `rose/primary/blue` across template chips/actions, modal field badges and focus rings, public-form validation states, matrix drag/drop highlights, linked-record add/remove chrome, and interface delete hover states while preserving record-editing and relation-linking behavior.
+- Ran table ideation/analytics batch in `table/IdeaStartupTemplates`, `table/IdeaScoringModel`, `table/IdeaPipeline`, `table/IdeaCompletenessWidget`, `table/FrameworkGenerator`, `table/ExportToPresentation`, and `table/EmbeddedAnalytics`: normalized residual `red/violet` accents to canonical `rose/primary` across startup template cards and prompt focus, scoring sliders/progress states, stage-selection rings, low-completeness trend markers, framework generator active chips, export selection controls, and analytics palette toggles while preserving ideation scoring, export flow, and analytics rendering behavior.
+- Ran table editing/rules batch in `table/CellRenderer`, `table/CellEditor`, `table/CellExpandPopover`, `table/FieldManager`, `table/ConditionalFormatting`, `table/DateDependencyConfig`, and `table/AuditTrailPanel`: remapped residual `red/violet` accents to canonical `rose/primary` across inline editors, checkbox/select active states, cell expand AI panels, field configuration dialogs, formatting/dependency controls, and audit delete markers while preserving edit semantics, validation handling, dependency logic, and audit rendering behavior.
+- Ran table utility interaction batch in `table/ViewSwitcher`, `table/DistributionBuilder`, `table/VoiceImageInput`, `table/StickyNoteView`, `table/NewColumnRenderers`, `table/MiniCanvas`, `table/InlineAIFill`, and `table/CrossTableRelations`: normalized residual `red/violet` accents to canonical `rose/primary` across focus rings, destructive buttons, mode tabs, drag/drop highlight rings, inline AI triggers, and relation map controls without changing distribution, media-input, canvas drawing, or relation-linking behavior.
+- Ran My Work idea/workflow batch in `IdeaTableTool`, `NotebookContent`, `CommandPalette`, `IdeaAISuggestionsPanel`, `ConvertToDialog`, `IdeaVotingMode`, `IdeaTemplateGallery`, and `IdeaRecommendationMap`: remapped residual `red/orange/purple/violet/cyan/teal` accents to canonical `rose/amber/primary/blue` across destructive controls, selection chips, suggestion confidence bars, focus rings, command-palette highlights, and map legends/AI badges without changing table logic, recommendation rendering, or command execution behavior.
+- Ran My Work notebook AI batch in `notebook/AIChatInlinePanel`, `notebook/AITopicsPanel`, `notebook/AIInlineResponse`, `notebook/AICommandPrompt`, `notebook/SlashMenu`, and `notebook/InsertMenu`: remapped residual `red/purple/violet` accents to canonical `rose/primary` across inline AI errors/recording states, topics prompts/actions, streaming response containers, slash command icons, and insert-menu AI labels while preserving prompt execution, streaming behavior, and insert command routing.
+- Ran focused Team follow-up in `Team/CapacityForecast`: normalized remaining today-highlight ring (`ring-violet-500` -> `ring-primary-500`) to keep calendar marker chrome aligned with the canonical primary selection/focus contract.
+- Ran large My Work graph + shared surfaces batch in `mindmap/*` and `shared/*` (including toolbar popovers, node/detail drawers, snapshots, governance/AI overlays, plus shared decision/risk/dependency/comment/action sections): normalized remaining `red/orange/purple/violet/cyan/teal` utility classes to canonical `rose/amber/primary/blue` across chips, badges, focus rings, hover states, and semantic legends without changing node editing, map analytics, relation wiring, or shared panel behaviors.
+- Ran full My Work runtime sweep across `src/components/MyWork` (excluding `__tests__`): canonicalized remaining non-contract utility color tokens (`red/orange/purple/violet/cyan/teal`) to `rose/amber/primary/blue` in residual idea/workflow/dashboard/sidebar/task/focus/notification surfaces; post-sweep check shows runtime matches cleared and only test fixture tokens remain in `table/__tests__/TablePlatformFrontend.test.tsx`.
+- Ran cross-module Wave A cleanup sweep across `src/components/Discovery`, `src/components/assessment`, and `src/components/Interview` (runtime `.ts/.tsx`, excluding tests): normalized remaining non-canonical utility tokens (`red/orange/purple/violet/cyan/teal`) to `rose/amber/primary/blue`; follow-up scans report no residual matches in these three module trees and lint checks remain clean.
+- Ran broad Wave B cleanup sweep across `src/components/Execution`, `src/components/Results`, `src/components/Economics`, `src/components/Meeting`, and `src/components/Reports` (runtime `.ts/.tsx`, excluding tests): normalized residual non-contract utility tokens (`red/orange/purple/violet/cyan/teal`) to canonical `rose/amber/primary/blue`; verification scans show no remaining matches in these module trees and lint checks remain clean.
+- Ran repo-level components sweep across `src/components` runtime files (excluding tests): applied canonical utility-token remap (`red/orange/purple/violet/cyan/teal` -> `rose/amber/primary/blue`) to close residual drift outside Wave A/B card clusters; verification scan now reports only expected test-fixture residue in `MyWork/table/__tests__/TablePlatformFrontend.test.tsx` and lints remain clean.
+- Cleared final test-fixture residue in `MyWork/table/__tests__/TablePlatformFrontend.test.tsx` with the same canonical remap so the `src/components`-scope drift scan is now fully clean (no remaining `red/orange/purple/violet/cyan/teal` utility-token matches).
+- Ran additional shell-surface sweep across `src/views` runtime files: canonicalized residual utility-class color tokens (`red/orange/purple/violet/cyan/teal` -> `rose/amber/primary/blue`) across admin/superadmin/partner/public/auth/settings/report views; follow-up scan for `src/views` is clean and lints remain green.
+- Ran top-level `src` follow-up sweep outside views/components (`layouts`, `contexts`, `hooks`, `services`, `constants`, `config`, `types`, plus `index.css`): normalized residual utility-class tokens to canonical `rose/amber/primary/blue`; full `src` token scan is now clean and lint checks on edited files pass.
+- Marked queue cards `My Work > Inbox`, `My Work > Tasks`, `Interview`, `Discovery Tools`, `Assessment`, `Execution`, `Results`, `Economics`, `Meeting`, and `Reports & Presentations` as `DONE` after full-source canonicalization sweep and clean token/lint verification across `src`.
+- Ran follow-up semantic-token sanity pass on non-view runtime sources (`mindmap-effects.css`, `frameworkRegistry`, tool/audit/digitization data maps): remapped remaining scale tokens and hex accents to canonical contract equivalents (`primary/blue/amber/rose`) and re-verified clean token scans + lint status.
+- Ran Wave C/Wave D outlier pass #1 across `src` runtime TS/TSX/CSS surfaces: remapped legacy hardcoded hex accents (`#ef4444`, `#f97316`, `#8b5cf6`, `#14b8a6`, `#06b6d4` and uppercase variants) to canonical equivalents (`#f43f5e`, `#f59e0b`, `#6366f1`, `#3b82f6`), then verified zero remaining matches and clean lints.
+- Created evidence-pack scaffolding under `docs/ui-standards/evidence/` with per-card `STATUS.md` trackers for all DONE cards (`mywork-inbox`, `mywork-tasks`, `interview-all-tabs`, `discovery-tools`, `assessment`, `execution`, `results`, `economics`, `meeting`, `reports-presentations`) to support parallel screenshot collection with owner/date assignment.
+- Added evidence manifest template `docs/ui-standards/evidence/EXPECTED_FILES_TEMPLATE.csv` to standardize expected screenshot filenames/status tracking for all DONE cards.
+- Added capture assignment template `docs/ui-standards/evidence/ASSIGNMENT_TEMPLATE.csv` so owner/date/progress can be tracked per DONE card during evidence collection.
+- Populated evidence assignments and target dates across `docs/ui-standards/evidence/ASSIGNMENT_TEMPLATE.csv` and all per-card `STATUS.md` files using a two-lane QA schedule (`UX_QA_A`, `UX_QA_B`) for 2026-05-04 through 2026-05-08.
+- Added date-based execution plan `docs/ui-standards/evidence/CAPTURE_PLAN_2026-05-04_to_2026-05-08.md` to operationalize daily evidence collection and closeout updates (`STATUS.md` + assignment CSV).
+- Initialized day-level execution artifacts for the full capture window (`DAY_2026-05-04.md` through `DAY_2026-05-08.md`) and synchronized baseline tracking metadata in `ASSIGNMENT_TEMPLATE.csv` + all evidence `STATUS.md` files (`QUEUED`, schedule confirmed notes).
+- Executed final gate sanity-check snapshot against the evidence manifest and current folders; result is `FAIL` with `0/6` captures across all 10 cards (full LISTA BRAKÓW recorded in `docs/ui-standards/evidence/FINAL_GATE_CHECK_2026-05-03.md`).
+- Added closure snapshot summary in `docs/ui-standards/evidence/EVIDENCE_CLOSURE_SUMMARY_2026-05-03.md` (what is fully closed operationally, what still blocks formal evidence closure, and recommendation for execution window).
+- Added evidence automation CLI (`scripts/evidence/evidence-ops.mjs`) with npm shortcuts (`evidence:sync`, `evidence:check`, `evidence:daily`, `evidence:final`, `evidence:refresh`) and executed a refresh run to auto-sync statuses plus regenerate final gate and closure snapshot artifacts.
+
+## 9. Evidence capture tracker (DONE cards)
+
+Legend: `PENDING` = screenshot still required, `N/A` = not applicable for the card.
+
+Capture runbook:
+- `docs/ui-standards/UI_UX_DONE_CARDS_EVIDENCE_RUNBOOK.md`
+
+| Card | Light | Dark | Menu 3 active | Selected row | Settings popover | Empty/error/degraded |
+|---|---|---|---|---|---|---|
+| `My Work > Inbox` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `My Work > Tasks` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Interview > all tabs` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Discovery Tools` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Assessment` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Execution` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Results` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Economics` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Meeting` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+| `Reports & Presentations` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` | `PENDING` |
+
+## 10. Residual risk notes
+
+- Utility-token scan in `src` is clean for non-canonical palette classes.
+- Legacy priority hex set (`#ef4444`, `#f97316`, `#8b5cf6`, `#14b8a6`, `#06b6d4`) has been normalized in runtime sources; any further color-audit work should focus on broader visualization palette governance and contrast validation rather than these known drift anchors.

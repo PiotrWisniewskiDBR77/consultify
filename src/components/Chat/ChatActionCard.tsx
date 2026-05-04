@@ -95,7 +95,7 @@ export const ChatActionCard: React.FC<ChatActionCardProps> = ({
   const secondaryClasses =
     'bg-white/5 border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white/10 dark:hover:bg-white/10';
   const disabledClasses = 'opacity-50 cursor-not-allowed';
-  const errorClasses = 'border-red-500/50 bg-red-500/5';
+  const errorClasses = 'border-rose-500/50 bg-rose-500/5';
 
   const cardClasses = [
     baseClasses,
@@ -124,7 +124,7 @@ export const ChatActionCard: React.FC<ChatActionCardProps> = ({
         <span className="truncate">{label}</span>
       </button>
       {error && (
-        <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+        <span className="text-xs text-rose-600 dark:text-rose-400" role="alert">
           {error}
         </span>
       )}

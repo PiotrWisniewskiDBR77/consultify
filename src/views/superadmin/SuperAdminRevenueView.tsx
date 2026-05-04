@@ -200,27 +200,27 @@ export const SuperAdminRevenueView: React.FC = () => {
             </div>
 
             {/* Active Subscriptions */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <Users className="w-8 h-8 opacity-80" />
-                <span className="text-sm text-purple-100">Active</span>
+                <span className="text-sm text-primary-100">Active</span>
               </div>
               <p className="text-3xl font-bold mt-4">
                 {formatNumber(revenueStats?.activeSubscriptions)}
               </p>
-              <p className="text-purple-100 text-sm mt-1">Active Subscriptions</p>
+              <p className="text-primary-100 text-sm mt-1">Active Subscriptions</p>
             </div>
 
             {/* Token Usage */}
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
                 <Activity className="w-8 h-8 opacity-80" />
-                <span className="text-sm text-orange-100">This Month</span>
+                <span className="text-sm text-amber-100">This Month</span>
               </div>
               <p className="text-3xl font-bold mt-4">
                 {formatNumber(usageStats?.totalTokensThisMonth)}
               </p>
-              <p className="text-orange-100 text-sm mt-1">Tokens Consumed</p>
+              <p className="text-amber-100 text-sm mt-1">Tokens Consumed</p>
             </div>
           </div>
 
@@ -242,9 +242,9 @@ export const SuperAdminRevenueView: React.FC = () => {
                   const colors = [
                     'bg-indigo-500',
                     'bg-emerald-500',
-                    'bg-orange-500',
+                    'bg-amber-500',
                     'bg-pink-500',
-                    'bg-cyan-500',
+                    'bg-blue-500',
                   ];
 
                   return (
@@ -414,7 +414,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                       <td className="py-3 text-right">
                         {formatNumber(item.totalTokens || item.requests)}
                       </td>
-                      <td className="py-3 text-right font-semibold text-red-500">
+                      <td className="py-3 text-right font-semibold text-rose-500">
                         {safeMoney(item.cost, 'USD')}
                       </td>
                     </tr>
@@ -442,7 +442,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                         <td colSpan={3} className="py-3 font-bold text-gray-900 dark:text-white">
                           Total Operational Cost
                         </td>
-                        <td className="py-3 text-right font-bold text-xl text-red-500">
+                        <td className="py-3 text-right font-bold text-xl text-rose-500">
                           {safeMoney(operationalCosts.totalCost, 'USD')}
                         </td>
                       </tr>

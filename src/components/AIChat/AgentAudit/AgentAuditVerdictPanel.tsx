@@ -204,8 +204,8 @@ function getConfidenceLevel(score: number): { label: string; labelPl: string; co
       color: 'text-amber-600 dark:text-amber-400',
     };
   if (score >= 40)
-    return { label: 'Low', labelPl: 'Niska', color: 'text-orange-600 dark:text-orange-400' };
-  return { label: 'Very Low', labelPl: 'Bardzo niska', color: 'text-red-600 dark:text-red-400' };
+    return { label: 'Low', labelPl: 'Niska', color: 'text-amber-600 dark:text-amber-400' };
+  return { label: 'Very Low', labelPl: 'Bardzo niska', color: 'text-rose-600 dark:text-rose-400' };
 }
 
 /** Confidence score ring visualization */
@@ -260,7 +260,7 @@ const StakeholderSummary: React.FC<{
   const verdictIcon = (v: string) => {
     if (v === 'ok') return <CheckCircle2 size={12} className="text-green-500" />;
     if (v === 'risk') return <AlertTriangle size={12} className="text-amber-500" />;
-    return <XCircle size={12} className="text-red-500" />;
+    return <XCircle size={12} className="text-rose-500" />;
   };
 
   return (
@@ -277,12 +277,12 @@ const StakeholderSummary: React.FC<{
               flex items-center gap-2 px-2.5 py-2 rounded-lg border text-xs
               ${
                 review.overreach === 'hard'
-                  ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50 opacity-60 line-through'
+                  ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50 opacity-60 line-through'
                   : review.verdict === 'ok'
                     ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800/50'
                     : review.verdict === 'risk'
                       ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50'
-                      : 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50'
+                      : 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50'
               }
             `}
           >
@@ -326,7 +326,7 @@ const StatusBadge: React.FC<{ status: QualityStatus }> = ({ status }) => {
       icon: XCircle,
       label: 'FAIL',
       className:
-        'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
+        'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700',
     },
   };
 
@@ -346,11 +346,11 @@ const GateBadge: React.FC<{ gate: GateId }> = ({ gate }) => {
   const config: Record<GateId, { label: string; className: string }> = {
     A: {
       label: 'Gate A: Critical Finance',
-      className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+      className: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300',
     },
     B: {
       label: 'Gate B: Consensus Risk',
-      className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+      className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
     },
     C: {
       label: 'Gate C: Missing Data',
@@ -358,7 +358,7 @@ const GateBadge: React.FC<{ gate: GateId }> = ({ gate }) => {
     },
     D: {
       label: 'Gate D: Overreach',
-      className: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+      className: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
     },
   };
 
@@ -377,7 +377,7 @@ const SeverityBadge: React.FC<{ severity: 'low' | 'medium' | 'high' }> = ({ seve
   const config = {
     low: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
     medium: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
-    high: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    high: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300',
   };
 
   return (
@@ -608,8 +608,8 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
 
           {/* Critical Risks */}
           {verdict.criticalRisks.length > 0 && (
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-red-50/50 dark:bg-red-900/10">
-              <h5 className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-rose-50/50 dark:bg-rose-900/10">
+              <h5 className="text-xs font-medium text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <AlertTriangle size={12} />
                 {t('agentAudit.criticalRisks', 'Critical Risks')} ({verdict.criticalRisks.length})
               </h5>
@@ -650,7 +650,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                         isActive
                           ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
                           : isRejected
-                            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 line-through'
+                            ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 line-through'
                             : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                       }`}
                     >
@@ -675,13 +675,13 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                             ? 'bg-green-100 text-green-700'
                             : activeReview.verdict === 'risk'
                               ? 'bg-amber-100 text-amber-700'
-                              : 'bg-red-100 text-red-700'
+                              : 'bg-rose-100 text-rose-700'
                         }`}
                       >
                         {activeReview.verdict.toUpperCase()}
                       </span>
                       {activeReview.overreach !== 'none' && (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-primary-100 text-primary-700">
                           Overreach: {activeReview.overreach}
                         </span>
                       )}

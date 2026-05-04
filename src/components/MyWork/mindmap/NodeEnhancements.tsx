@@ -18,7 +18,7 @@ interface EvidenceBadgeProps {
 }
 
 const EVIDENCE_CONFIG: Record<EvidenceType, { color: string; letter: string }> = {
-  assessment: { color: 'bg-red-500', letter: 'A' },
+  assessment: { color: 'bg-rose-500', letter: 'A' },
   interview: { color: 'bg-blue-500', letter: 'I' },
   kpi: { color: 'bg-emerald-500', letter: 'K' },
 };
@@ -100,7 +100,7 @@ const STATUS_COLORS: Record<NodeStatusType, string> = {
   exploring: 'bg-blue-500',
   validated: 'bg-emerald-500',
   ready_to_convert: 'bg-amber-500',
-  converted: 'bg-purple-500',
+  converted: 'bg-primary-500',
 };
 
 export const StatusDot: React.FC<StatusDotProps> = ({ status, size = 6 }) => (

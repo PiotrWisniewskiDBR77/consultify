@@ -257,7 +257,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
             <Mic className="text-white" size={20} />
           </div>
           <div>
@@ -287,12 +287,12 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
         <div className="flex gap-4 p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
           <div className="flex items-center gap-2">
             {testResults.stt === true && <CheckCircle size={16} className="text-green-500" />}
-            {testResults.stt === false && <XCircle size={16} className="text-red-500" />}
+            {testResults.stt === false && <XCircle size={16} className="text-rose-500" />}
             <span className="text-sm text-slate-600 dark:text-slate-400">STT</span>
           </div>
           <div className="flex items-center gap-2">
             {testResults.tts === true && <CheckCircle size={16} className="text-green-500" />}
-            {testResults.tts === false && <XCircle size={16} className="text-red-500" />}
+            {testResults.tts === false && <XCircle size={16} className="text-rose-500" />}
             <span className="text-sm text-slate-600 dark:text-slate-400">TTS</span>
           </div>
         </div>
@@ -301,7 +301,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
       {!loadError && testError && (
         <div
           role="alert"
-          className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg text-sm text-red-700 dark:text-red-300"
+          className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg text-sm text-rose-700 dark:text-rose-300"
         >
           {testError}
         </div>
@@ -464,7 +464,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
             {saveError && (
               <div
                 role="alert"
-                className="mb-3 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg text-sm text-red-700 dark:text-red-300"
+                className="mb-3 p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg text-sm text-rose-700 dark:text-rose-300"
               >
                 {saveError}
               </div>

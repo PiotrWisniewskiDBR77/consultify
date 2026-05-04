@@ -427,7 +427,7 @@ const DataGrid: React.FC<DataGridProps> = ({
         <div
           role="gridcell"
           tabIndex={0}
-          className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-violet-500/40 cursor-text"
+          className="min-w-0 min-h-[36px] flex items-center outline-none focus-visible:ring-1 focus-visible:ring-primary-500/40 cursor-text"
           onDoubleClick={(e) => {
             e.stopPropagation();
             if (locked || pf?.isComputed) return;

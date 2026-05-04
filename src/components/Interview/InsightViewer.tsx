@@ -400,10 +400,10 @@ const STATUS_CONFIG: Record<
   },
   published: {
     label: { en: 'Published', pl: 'Opublikowane' },
-    color: 'bg-violet-500',
-    textColor: 'text-violet-500',
+    color: 'bg-primary-500',
+    textColor: 'text-primary-500',
   },
-  failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-red-500', textColor: 'text-red-500' },
+  failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-rose-500', textColor: 'text-rose-500' },
 };
 
 // ── N-mode section definitions (without component — assigned later) ──────────
@@ -556,6 +556,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [reportReviewSubmitting, setReportReviewSubmitting] = useState(false);
   const [reportPublishing, setReportPublishing] = useState(false);
   const [reportExporting, setReportExporting] = useState(false);
+  const [reportMarkdownExporting, setReportMarkdownExporting] = useState(false);
   const [reportRevisionCreating, setReportRevisionCreating] = useState(false);
 
   // NMode shared section state — Comments
@@ -763,6 +764,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   }, [insight?.id, isPolish]);
 
+  const handleExportReportMarkdown = useCallback(async () => {
+    if (!insight?.id) return;
+    setReportMarkdownExporting(true);
+    try {
+      const response = await V8InterviewApi.getInsightReportMarkdownExport(insight.id);
+      const blob = new Blob([response.markdownExport.markdown], { type: 'text/markdown' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = response.markdownExport.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(isPolish ? 'Raport Markdown pobrany.' : 'Markdown report downloaded.');
+    } catch (error) {
+      console.error('[InsightViewer] Failed to export report markdown:', error);
+      toast.error(
+        isPolish
+          ? 'Nie udało się pobrać raportu Markdown. Raport musi być opublikowany.'
+          : 'Failed to download Markdown report. The report must be published.'
+      );
+    } finally {
+      setReportMarkdownExporting(false);
+    }
+  }, [insight?.id, isPolish]);
+
   const handleCreateReportRevision = useCallback(async () => {
     if (!insight?.id) return;
     setReportRevisionCreating(true);
@@ -912,8 +940,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     loadInsight();
 
     let lastStatus: InsightStatus | null = null;
+    let consecutiveFailures = 0;
+    let degradedNotified = false;
+    const MAX_TICKS = 25; // ~75s at 3s interval
+    let ticks = 0;
     const interval = setInterval(async () => {
       try {
+        // Avoid background polling bursts (helps with 429 + browser instability).
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
         if (isInterviewDemoId(insightId)) {
           clearInterval(interval);
           return;
@@ -922,14 +956,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           .then((r) => r.insight)
           .catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(data);
-        await loadPersistedFindings(insightId);
-        await loadCandidates(insightId);
-        await loadInsightAnalysis(insightId);
-        await loadSourcePack(insightId);
-        await loadReportPack(insightId);
-        await loadReportReadiness(insightId);
         const nextStatus = data?.status as InsightStatus | undefined;
         if (lastStatus === null) lastStatus = nextStatus ?? null;
+
+        const isGenerating = nextStatus === 'generating';
+        const generationJustFinished =
+          lastStatus === 'generating' && nextStatus && nextStatus !== 'generating';
+
+        // Heavy refresh only while generating (or once immediately after generation finishes).
+        if (isGenerating || generationJustFinished) {
+          await loadPersistedFindings(insightId);
+          await loadCandidates(insightId);
+          await loadInsightAnalysis(insightId);
+          await loadSourcePack(insightId);
+          await loadReportPack(insightId);
+          await loadReportReadiness(insightId);
+        }
 
         if (lastStatus === 'generating' && nextStatus && nextStatus !== 'generating') {
           clearInterval(interval);
@@ -940,8 +982,42 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
 
         lastStatus = nextStatus ?? null;
-      } catch (err) {
-        // keep polling best-effort
+        consecutiveFailures = 0;
+        ticks += 1;
+
+        // Stop polling once stable or after a safety budget.
+        if (!isGenerating || ticks >= MAX_TICKS) {
+          clearInterval(interval);
+        }
+      } catch (err: any) {
+        consecutiveFailures += 1;
+        const directStatus = Number(err?.status);
+        const nestedStatus = Number(err?.response?.status);
+        const status =
+          Number.isFinite(directStatus) && directStatus > 0 ? directStatus : nestedStatus;
+
+        // If auth is missing/invalid or we're being rate-limited, stop polling loop.
+        if (status === 401 || status === 403 || status === 429) {
+          clearInterval(interval);
+          if (!degradedNotified) {
+            degradedNotified = true;
+            toast.error(
+              status === 429
+                ? isPolish
+                  ? 'Tymczasowo ograniczono liczbę zapytań (429). Wstrzymano odświeżanie.'
+                  : 'Temporarily rate limited (429). Auto-refresh paused.'
+                : isPolish
+                  ? 'Sesja wygasła lub brak autoryzacji. Wstrzymano odświeżanie.'
+                  : 'Session expired or unauthorized. Auto-refresh paused.'
+            );
+          }
+          return;
+        }
+
+        // Give up after repeated transient failures to avoid amplifying infra issues.
+        if (consecutiveFailures >= 5) {
+          clearInterval(interval);
+        }
       }
     }, 3000);
 
@@ -1974,7 +2050,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   );
 
   const getPriorityDotClass = useCallback((p: CommentPriority) => {
-    if (p === 'high') return 'bg-red-500';
+    if (p === 'high') return 'bg-rose-500';
     if (p === 'low') return 'bg-slate-400';
     return 'bg-blue-500';
   }, []);
@@ -2213,7 +2289,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           return {
             icon: <MessageSquare size={12} />,
             label: isPolish ? 'Komentarz' : 'Comment',
-            style: 'bg-purple-500 text-white',
+            style: 'bg-primary-500 text-white',
           };
         case 'edit':
           return {
@@ -2257,6 +2333,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 sourceSessionCount:
                   sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
                 sourcePack: sourcePack ? (sourcePack as unknown as Record<string, unknown>) : null,
+                reportPack: reportPack
+                  ? {
+                      id: reportPack.id,
+                      status: reportPack.status,
+                      readinessStatus: reportReadiness?.status || undefined,
+                      completenessScore:
+                        reportReadiness?.completenessScore ?? reportPack.completenessScore,
+                      degraded: reportPack.degraded,
+                      degradedReasons: reportPack.degradedReasons,
+                    }
+                  : null,
               }}
             />
           );
@@ -2277,7 +2364,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             },
             weak: {
               label: isPolish ? 'Słaby materiał decyzyjny' : 'Weak decision material',
-              className: 'border-red-500/20 bg-red-500/[0.08] text-red-700 dark:text-red-200',
+              className: 'border-rose-500/20 bg-rose-500/[0.08] text-rose-700 dark:text-rose-200',
             },
           }[truthReviewSummary.posture];
 
@@ -2394,7 +2481,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       truthReviewSummary.contradictionSignals.slice(0, 4).map((signal) => (
                         <div
                           key={`${signal.title}-${signal.description}`}
-                          className="rounded-xl bg-red-500/[0.07] px-3 py-2 text-sm text-red-800 dark:text-red-200"
+                          className="rounded-xl bg-rose-500/[0.07] px-3 py-2 text-sm text-rose-800 dark:text-rose-200"
                         >
                           <div className="font-medium">{signal.title}</div>
                           {signal.description && (
@@ -2535,7 +2622,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     issuesReadout.map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl bg-red-500/[0.04] dark:bg-red-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                        className="rounded-2xl bg-rose-500/[0.04] dark:bg-rose-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
                       >
                         {item}
                       </div>
@@ -2592,7 +2679,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ? 'text-blue-400'
                 : score >= 40
                   ? 'text-amber-400'
-                  : 'text-red-400';
+                  : 'text-rose-400';
           component = (
             <div className="space-y-5">
               <Callout
@@ -2921,6 +3008,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </button>
                         <button
                           type="button"
+                          onClick={handleExportReportMarkdown}
+                          disabled={reportMarkdownExporting || reportPack.status !== 'published'}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.12] dark:bg-navy-900 dark:text-slate-200"
+                        >
+                          {reportMarkdownExporting
+                            ? isPolish
+                              ? 'Pobieranie...'
+                              : 'Downloading...'
+                            : isPolish
+                              ? 'Pobierz raport MD'
+                              : 'Download report MD'}
+                        </button>
+                        <button
+                          type="button"
                           onClick={handleCreateReportRevision}
                           disabled={reportRevisionCreating || reportPack.status !== 'published'}
                           className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300"
@@ -3191,7 +3292,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Zakwestionowane' : 'Challenged'}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-red-600 dark:text-red-300">
+                  <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
                     {readbackSummary.challenged}
                   </div>
                 </div>
@@ -3276,7 +3377,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ].map((label) => (
                           <span
                             key={label}
-                            className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium"
+                            className="px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium"
                           >
                             {label}
                           </span>
@@ -3313,7 +3414,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'contradicted':
                 return {
                   label: isPolish ? 'Sprzeczne' : 'Contradicted',
-                  className: 'bg-red-500/10 text-red-700 dark:text-red-300',
+                  className: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
                 };
               case 'local_only':
                 return {
@@ -3749,12 +3850,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Hipoteza',
                       },
                       insufficient: {
-                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
                         label: 'Insufficient data',
                         labelPl: 'Niewystarczające dane',
                       },
                       contradicted: {
-                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                       },
@@ -3804,7 +3905,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         </div>
                         {findingConfidence === 'contradicted' && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish
                               ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
@@ -3889,7 +3990,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -3990,13 +4091,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         .length || 0;
                     const severityStyles =
                       issue.severity === 'high'
-                        ? 'border-l-red-500 bg-red-500/[0.04] dark:bg-red-500/10'
+                        ? 'border-l-rose-500 bg-rose-500/[0.04] dark:bg-rose-500/10'
                         : issue.severity === 'medium'
                           ? 'border-l-amber-500 bg-amber-500/[0.04] dark:bg-amber-500/10'
                           : 'border-l-slate-400 bg-slate-50 dark:bg-navy-900/50';
                     const severityBadge =
                       issue.severity === 'high'
-                        ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                        ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
                         : issue.severity === 'medium'
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
@@ -4020,12 +4121,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Hipoteza',
                       },
                       insufficient: {
-                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
                         label: 'Insufficient data',
                         labelPl: 'Niewystarczające dane',
                       },
                       contradicted: {
-                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                       },
@@ -4069,7 +4170,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         </div>
                         {findingConfidence === 'contradicted' && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish
                               ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
@@ -4154,7 +4255,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -4267,12 +4368,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         labelPl: 'Hipoteza',
                       },
                       insufficient: {
-                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
                         label: 'Insufficient data',
                         labelPl: 'Niewystarczające dane',
                       },
                       contradicted: {
-                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                       },
@@ -4316,7 +4417,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         </div>
                         {findingConfidence === 'contradicted' && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish
                               ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
@@ -4401,7 +4502,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -4478,7 +4579,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       { bg: string; label: string; labelPl: string; icon: React.ReactNode }
                     > = {
                       tension: {
-                        bg: 'bg-red-500/10 text-red-600 dark:text-red-400',
+                        bg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
                         label: 'Tension',
                         labelPl: 'Napięcie',
                         icon: <Flame size={10} />,
@@ -4490,13 +4591,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         icon: <Target size={10} />,
                       },
                       contradiction: {
-                        bg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+                        bg: 'bg-primary-500/10 text-primary-600 dark:text-primary-400',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                         icon: <AlertCircle size={10} />,
                       },
                       emerging_pattern: {
-                        bg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+                        bg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
                         label: 'Emerging Pattern',
                         labelPl: 'Wzorzec',
                         icon: <Sparkles size={10} />,
@@ -4625,7 +4726,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 {row.linked_issues?.map((i: string) => (
                                   <span
                                     key={`i-${i}`}
-                                    className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px]"
+                                    className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px]"
                                   >
                                     {i}
                                   </span>
@@ -4674,7 +4775,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'needs_split':
                 return {
                   label: isPolish ? 'Do rozbicia' : 'Needs split',
-                  className: 'bg-red-500/10 text-red-700 dark:text-red-300',
+                  className: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
                 };
               case 'rejected':
                 return {
@@ -4684,7 +4785,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'promoted':
                 return {
                   label: isPolish ? 'Promowany' : 'Promoted',
-                  className: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+                  className: 'bg-primary-500/10 text-primary-700 dark:text-primary-300',
                 };
               default:
                 return {
@@ -4738,7 +4839,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Do rozbicia' : 'Needs split'}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-red-600 dark:text-red-300">
+                  <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
                     {candidateSummary.needsSplit}
                   </div>
                 </div>
@@ -4785,7 +4886,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             </div>
                           </div>
                           {linkedFinding && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-500/10 text-violet-700 dark:text-violet-300 text-[10px] font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-500/10 text-primary-700 dark:text-primary-300 text-[10px] font-medium">
                               <Target size={10} />
                               {isPolish ? 'Powiązany finding' : 'Linked finding'}
                             </span>
@@ -4878,7 +4979,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   handleReadbackStatus(linkedFinding, 'challenged_by_client')
                                 }
                                 disabled={readbackLoadingId === linkedFinding.id}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-500/20 text-xs font-medium disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-medium disabled:opacity-50"
                               >
                                 <AlertCircle size={12} />
                                 {isPolish ? 'Zakwestionowane' : 'Challenged'}
@@ -4913,7 +5014,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <button
                             onClick={() => handleCandidateAction(candidate, 'mark_needs_split')}
                             disabled={isBusy}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-500/20 text-xs font-medium disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-medium disabled:opacity-50"
                           >
                             {isBusy ? (
                               <Loader2 size={12} className="animate-spin" />
@@ -4955,7 +5056,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   handleCandidateAction(candidate, 'promote_to_finding')
                                 }
                                 disabled={isBusy || candidate.triage_status !== 'ready_for_review'}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20 text-xs font-medium disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 text-xs font-medium disabled:opacity-50"
                               >
                                 {isBusy ? (
                                   <Loader2 size={12} className="animate-spin" />
@@ -5145,7 +5246,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     <span
                                       className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                                         topic.isContradicted
-                                          ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                          ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
                                           : topic.supportingSessionIds.length <= 1
                                             ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                                             : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
@@ -5562,6 +5663,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     reportPack,
     reportReadiness,
     reportExporting,
+    reportMarkdownExporting,
     reportPublishing,
     reportRevisionCreating,
     reportReviewSubmitting,
@@ -5602,6 +5704,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     handleOpenHandoff,
     handleCreateReportRevision,
     handleExportReportManifest,
+    handleExportReportMarkdown,
     handlePublishReportPack,
     handleSubmitReportForReview,
     handleWorksheetStatusUpdate,
@@ -5620,8 +5723,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-white dark:bg-navy-950 gap-4">
-        <AlertCircle size={48} className="text-red-400" />
-        <p className="text-red-500">{error}</p>
+        <AlertCircle size={48} className="text-rose-400" />
+        <p className="text-rose-500">{error}</p>
         <button onClick={onClose} className="text-sm text-slate-500 hover:text-slate-700 underline">
           {isPolish ? 'Wróć' : 'Go back'}
         </button>
@@ -5678,7 +5781,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           <button
             onClick={handleExportToAssessment}
             disabled={isExportingAssessment || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-xs font-medium transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-xs font-medium transition-all disabled:opacity-50"
           >
             {isExportingAssessment ? (
               <Loader2 size={14} className="animate-spin" />
@@ -5754,7 +5857,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               <button
                 onClick={() => handleLifecycleTransition('reject')}
                 disabled={lifecycleTransitioning}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-all disabled:opacity-50"
               >
                 <X size={14} />
                 {isPolish ? 'Odrzuć' : 'Reject'}

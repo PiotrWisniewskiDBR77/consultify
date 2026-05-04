@@ -57,7 +57,7 @@ const FRAMEWORK_BADGES: Record<string, { color: string; label: string }> = {
     label: 'PMBOK 7',
   },
   PRINCE2: {
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
     label: 'PRINCE2',
   },
 };
@@ -83,7 +83,7 @@ const RACIMatrixRenderer: React.FC<{ data: any }> = ({ data }) => {
   const getRACIColor = (value: string) => {
     switch (value?.toUpperCase()) {
       case 'R':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
       case 'A':
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
       case 'C':
@@ -197,9 +197,9 @@ const RiskRegisterRenderer: React.FC<{ data: any }> = ({ data }) => {
     switch (level?.toLowerCase()) {
       case 'critical':
       case 'very high':
-        return 'bg-red-500 text-white';
+        return 'bg-rose-500 text-white';
       case 'high':
-        return 'bg-orange-500 text-white';
+        return 'bg-amber-500 text-white';
       case 'medium':
         return 'bg-amber-500 text-white';
       case 'low':
@@ -318,7 +318,7 @@ const StatusReportRenderer: React.FC<{ data: any }> = ({ data }) => {
         return 'bg-amber-500';
       case 'red':
       case 'off track':
-        return 'bg-red-500';
+        return 'bg-rose-500';
       default:
         return 'bg-slate-400';
     }

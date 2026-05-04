@@ -20,11 +20,11 @@ interface HomeBlockShellProps {
 }
 
 const ACCENT_STYLES: Record<HomeBlock['accent'], string> = {
-  ai: 'from-primary-500/15 via-violet-500/8 to-cyan-500/12 border-primary-400/20',
-  warm: 'from-amber-500/15 via-orange-500/8 to-rose-500/12 border-amber-400/20',
-  cool: 'from-indigo-500/15 via-cyan-500/8 to-blue-500/12 border-indigo-400/20',
-  alert: 'from-rose-500/16 via-amber-500/10 to-orange-500/10 border-rose-400/20',
-  success: 'from-emerald-500/15 via-teal-500/8 to-cyan-500/10 border-emerald-400/20',
+  ai: 'from-primary-500/15 via-primary-500/8 to-blue-500/12 border-primary-400/20',
+  warm: 'from-amber-500/15 via-amber-500/8 to-rose-500/12 border-amber-400/20',
+  cool: 'from-indigo-500/15 via-blue-500/8 to-blue-500/12 border-indigo-400/20',
+  alert: 'from-rose-500/16 via-amber-500/10 to-amber-500/10 border-rose-400/20',
+  success: 'from-emerald-500/15 via-blue-500/8 to-blue-500/10 border-emerald-400/20',
   neutral: 'from-white/[0.06] via-white/[0.03] to-white/[0.02] border-white/[0.08]',
 };
 
@@ -44,9 +44,9 @@ const COMPACT_SIZE: Record<HomeBlock['size'], string> = {
 
 /** Delicate left rim — signals block “personality” without loud chrome. */
 const ACCENT_LEFT_BORDER: Record<HomeBlock['accent'], string> = {
-  ai: 'border-l-violet-400/35',
+  ai: 'border-l-primary-400/35',
   warm: 'border-l-amber-400/35',
-  cool: 'border-l-cyan-400/35',
+  cool: 'border-l-blue-400/35',
   alert: 'border-l-rose-400/35',
   success: 'border-l-emerald-400/30',
   neutral: 'border-l-slate-400/22',

@@ -199,7 +199,7 @@ export const InterviewAssignmentsPanel: React.FC = () => {
           <button
             onClick={() => void handleCreate()}
             disabled={saving || !assigneeUserId || !templateId}
-            className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving
               ? isPolish

@@ -24,7 +24,7 @@ const PRIORITY_OPTIONS = [
     value: 'critical',
     label: 'Critical',
     labelPl: 'Krytyczny',
-    dot: 'bg-red-500',
+    dot: 'bg-rose-500',
     icon: AlertTriangle,
   },
   { value: 'high', label: 'High', labelPl: 'Wysoki', dot: 'bg-amber-500', icon: ArrowUp },
@@ -268,7 +268,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
                   onSelect('');
                   onClose();
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
               >
                 <X size={14} />
                 {isPolish ? 'Usuń termin' : 'Remove due date'}

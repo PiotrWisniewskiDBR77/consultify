@@ -156,7 +156,7 @@ const formatRelativeTime = (dateString: string): string => {
 const getNotificationIcon = (type: string, severity: string) => {
   const iconClass =
     severity === 'CRITICAL'
-      ? 'text-red-500'
+      ? 'text-rose-500'
       : severity === 'WARNING'
         ? 'text-amber-500'
         : 'text-blue-500';
@@ -187,7 +187,7 @@ const getRelatedObjectIcon = (type: string | undefined) => {
     case 'DECISION':
       return <AlertCircle size={12} className="text-amber-500" />;
     case 'INITIATIVE':
-      return <Target size={12} className="text-purple-500" />;
+      return <Target size={12} className="text-blue-500" />;
     case 'PROJECT':
       return <FolderOpen size={12} className="text-emerald-500" />;
     default:
@@ -317,7 +317,7 @@ const NotificationItem: React.FC<{
                 e.stopPropagation();
                 onDelete(notification.id);
               }}
-              className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+              className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -358,9 +358,9 @@ const NotificationItem: React.FC<{
 
                 {/* Project name */}
                 {notification.projectName && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded text-[11px]">
-                    <Briefcase size={12} className="text-purple-500" />
-                    <span className="text-purple-700 dark:text-purple-400">
+                  <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 dark:bg-primary-900/20 rounded text-[11px]">
+                    <Briefcase size={12} className="text-primary-500" />
+                    <span className="text-primary-700 dark:text-primary-400">
                       {notification.projectName}
                     </span>
                   </div>
@@ -397,7 +397,7 @@ const NotificationItem: React.FC<{
                   <div
                     className={`px-2 py-1 rounded text-[11px] font-medium ${
                       notification.severity === 'CRITICAL'
-                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
                         : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
                     }`}
                   >
@@ -690,7 +690,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
 
     return [
       ...(critical.length > 0
-        ? [{ id: 'critical', label: 'Critical', items: critical, accentColor: 'text-red-500' }]
+        ? [{ id: 'critical', label: 'Critical', items: critical, accentColor: 'text-rose-500' }]
         : []),
       ...(warning.length > 0
         ? [{ id: 'warning', label: 'Warning', items: warning, accentColor: 'text-amber-500' }]
@@ -738,7 +738,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
       label: t('myWork.projectNotifications', 'Project'),
       icon: Building2,
       count: counts.project,
-      activeColor: 'bg-purple-500 text-white',
+      activeColor: 'bg-primary-500 text-white',
     },
     {
       key: 'personal',
@@ -819,7 +819,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           {counts.unread > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-lg shadow-sm hover:shadow transition-all duration-150"
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 rounded-lg shadow-sm hover:shadow transition-all duration-150"
             >
               <CheckCheck size={14} />
               <span>{t('myWork.markAllRead', 'Mark all read')}</span>
@@ -949,7 +949,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredNotifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
@@ -1059,7 +1059,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                       <span
                         className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded ${
                           notification.scope === 'PROJECT'
-                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
+                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
                             : notification.scope === 'PERSONAL'
                               ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
                               : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
@@ -1099,7 +1099,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                             e.stopPropagation();
                             handleDelete(notification.id);
                           }}
-                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
                           title={t('notifications.delete', 'Delete')}
                         >
                           <Trash2 size={13} />
@@ -1158,7 +1158,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                         newNotifSeverity === sev
                           ? sev === 'CRITICAL'
-                            ? 'bg-red-100 border-red-300 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-300'
+                            ? 'bg-rose-100 border-rose-300 text-rose-700 dark:bg-rose-900/30 dark:border-rose-700 dark:text-rose-300'
                             : sev === 'WARNING'
                               ? 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300'
                               : 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'

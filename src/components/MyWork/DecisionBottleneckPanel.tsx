@@ -72,16 +72,16 @@ const AlertSection: React.FC<{
       icon: 'text-amber-500',
     },
     red: {
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      border: 'border-red-200 dark:border-red-800/50',
-      badge: 'bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-300',
-      icon: 'text-red-500',
+      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      border: 'border-rose-200 dark:border-rose-800/50',
+      badge: 'bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300',
+      icon: 'text-rose-500',
     },
     purple: {
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      border: 'border-purple-200 dark:border-purple-800/50',
-      badge: 'bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300',
-      icon: 'text-purple-500',
+      bg: 'bg-primary-50 dark:bg-primary-900/20',
+      border: 'border-primary-200 dark:border-primary-800/50',
+      badge: 'bg-primary-100 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300',
+      icon: 'text-primary-500',
     },
   };
 
@@ -239,13 +239,13 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
           <button
             key={d.id}
             onClick={() => onDecisionClick?.(d.id)}
-            className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-red-100 dark:border-red-800/30 hover:border-red-300 transition-colors"
+            className="w-full text-left p-2 bg-white dark:bg-navy-900 rounded border border-rose-100 dark:border-rose-800/30 hover:border-rose-300 transition-colors"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
                 {d.title}
               </span>
-              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-300 font-medium">
+              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 font-medium">
                 {d.blockedCount} blocked
               </span>
             </div>
@@ -269,13 +269,13 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
         {data?.ownerOverload?.map((owner) => (
           <div
             key={owner.userId}
-            className="p-2 bg-white dark:bg-navy-900 rounded border border-purple-100 dark:border-purple-800/30"
+            className="p-2 bg-white dark:bg-navy-900 rounded border border-primary-100 dark:border-primary-800/30"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
                 {owner.name}
               </span>
-              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300 font-medium">
+              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300 font-medium">
                 {owner.pendingCount} pending
               </span>
             </div>

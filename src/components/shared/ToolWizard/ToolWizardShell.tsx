@@ -212,7 +212,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
           <div key={field.id}>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               {field.label[lang]}
-              {field.required && <span className="text-red-400 ml-0.5">*</span>}
+              {field.required && <span className="text-rose-400 ml-0.5">*</span>}
             </label>
             {field.type === 'textarea' ? (
               <textarea
@@ -722,7 +722,7 @@ const AISuggestionCard: React.FC<AISuggestionCardProps> = ({
   const statusColors = {
     pending: 'border-slate-200 dark:border-navy-700',
     accepted: 'border-emerald-500/30 bg-emerald-500/5',
-    rejected: 'border-red-500/30 bg-red-500/5 opacity-60',
+    rejected: 'border-rose-500/30 bg-rose-500/5 opacity-60',
   };
 
   return (
@@ -747,7 +747,7 @@ const AISuggestionCard: React.FC<AISuggestionCardProps> = ({
       {suggestion.status !== 'pending' && (
         <span
           className={`text-[10px] uppercase font-medium ${
-            suggestion.status === 'accepted' ? 'text-emerald-500' : 'text-red-400'
+            suggestion.status === 'accepted' ? 'text-emerald-500' : 'text-rose-400'
           }`}
         >
           {suggestion.status}

@@ -298,7 +298,7 @@ export const DocumentsRAGTab: React.FC = () => {
       {actionError ? (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -440,7 +440,7 @@ export const DocumentsRAGTab: React.FC = () => {
                         {new Date(doc.created_at).toLocaleDateString()}
                       </p>
                       {doc.category && (
-                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300 rounded">
+                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300 rounded">
                           {doc.category}
                         </span>
                       )}
@@ -482,7 +482,7 @@ export const DocumentsRAGTab: React.FC = () => {
                       <Edit2 size={16} />
                     </button>
                     <button
-                      className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={16} />

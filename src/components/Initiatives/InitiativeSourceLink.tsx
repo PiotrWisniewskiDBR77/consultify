@@ -59,7 +59,7 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
         return <ClipboardList size={16} className="text-green-400" />;
       case 'conclusion':
       case 'conclusion_readout':
-        return <FileText size={16} className="text-purple-400" />;
+        return <FileText size={16} className="text-primary-400" />;
       default:
         return <ExternalLink size={16} className="text-slate-400" />;
     }

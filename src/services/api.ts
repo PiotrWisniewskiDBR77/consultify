@@ -15,6 +15,7 @@ import i18n from '@/i18n';
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import { normalizeApiErrorMessage } from '../utils/apiError';
+import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
@@ -58,6 +59,102 @@ if (!correlationId) {
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+type TransportCircuitEntry = {
+  failures: number;
+  blockedUntil: number;
+  status: number;
+};
+
+const TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:transportCircuit:v1';
+const TRANSPORT_CIRCUIT_BASE_MS = 5000;
+const TRANSPORT_CIRCUIT_MAX_MS = 120000;
+
+let transportCircuitState: Record<string, TransportCircuitEntry> = (() => {
+  try {
+    const raw = sessionStorage.getItem(TRANSPORT_CIRCUIT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+})();
+
+const persistTransportCircuit = () => {
+  try {
+    sessionStorage.setItem(TRANSPORT_CIRCUIT_STORAGE_KEY, JSON.stringify(transportCircuitState));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const getTransportPath = (url: string): string => {
+  try {
+    return new URL(url, window.location.origin).pathname;
+  } catch {
+    return String(url || '');
+  }
+};
+
+const getTransportCircuitKey = (path: string): string | null => {
+  const conversationMatch = path.match(/\/api\/conversations\/([^/?#]+)/);
+  if (conversationMatch?.[1]) {
+    return `/api/conversations/${decodeURIComponent(conversationMatch[1])}`;
+  }
+  if (path === '/api/demo/status') return path;
+  if (path === '/api/notifications/unread-count') return path;
+  if (path === '/api/v10/teresa/voice-config') return path;
+  if (path === '/api/v10/teresa/voice-event') return path;
+  return null;
+};
+
+const buildBlockedResponse = (status: number, path: string): Response =>
+  new Response(
+    JSON.stringify({
+      error: 'Request blocked by local transport circuit breaker',
+      code: 'CLIENT_TRANSPORT_CIRCUIT_OPEN',
+      path,
+    }),
+    { status, headers: { 'Content-Type': 'application/json' } }
+  );
+
+const maybeGetBlockedTransportResponse = (path: string): Response | null => {
+  const key = getTransportCircuitKey(path);
+  if (!key) return null;
+  const entry = transportCircuitState[key];
+  if (entry && Date.now() < entry.blockedUntil) {
+    return buildBlockedResponse(entry.status || 429, path);
+  }
+  return null;
+};
+
+const recordTransportFailure = (path: string, status: number) => {
+  const key = getTransportCircuitKey(path);
+  if (!key || ![401, 403, 404, 429].includes(status)) return;
+  const failures = (transportCircuitState[key]?.failures || 0) + 1;
+  const blockedFor = Math.min(
+    TRANSPORT_CIRCUIT_BASE_MS * 2 ** Math.max(0, failures - 1),
+    TRANSPORT_CIRCUIT_MAX_MS
+  );
+  transportCircuitState = {
+    ...transportCircuitState,
+    [key]: { failures, blockedUntil: Date.now() + blockedFor, status },
+  };
+  persistTransportCircuit();
+};
+
+const clearTransportFailure = (path: string) => {
+  const key = getTransportCircuitKey(path);
+  if (!key || !transportCircuitState[key]) return;
+  const next = { ...transportCircuitState };
+  delete next[key];
+  transportCircuitState = next;
+  persistTransportCircuit();
+};
+
+const shouldSuppressAuthRetry = (path: string): boolean =>
+  path === '/api/notifications/unread-count' ||
+  path === '/api/v10/teresa/voice-config' ||
+  path === '/api/v10/teresa/voice-event';
 
 async function isServerStartingResponse(res: Response): Promise<boolean> {
   if (res.status !== 503) return false;
@@ -258,6 +355,10 @@ const fetchWithRetry = async (
   url: string,
   options: FetchWithRetryOptions = {}
 ): Promise<Response> => {
+  const transportPath = getTransportPath(url);
+  const blockedResponse = maybeGetBlockedTransportResponse(transportPath);
+  if (blockedResponse) return blockedResponse;
+
   const { skipDefaultHeaders, ...fetchOptions } = options;
   const baseHeaders = skipDefaultHeaders ? {} : getHeaders();
   const headers = {
@@ -288,6 +389,11 @@ const fetchWithRetry = async (
       credentials: fetchOptions.credentials ?? 'include',
       signal: fetchOptions.signal || controller?.signal,
     });
+    if (res.ok) {
+      clearTransportFailure(transportPath);
+    } else {
+      recordTransportFailure(transportPath, res.status);
+    }
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
       const e: any = new Error('AI request timed out');
@@ -302,7 +408,7 @@ const fetchWithRetry = async (
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
   // If 401, try to refresh token and retry once
-  if (res.status === 401 && hasStoredAuth) {
+  if (res.status === 401 && hasStoredAuth && !shouldSuppressAuthRetry(transportPath)) {
     console.log('[Api] Got 401, attempting token refresh...');
     const newToken = await tokenService.refreshToken();
     if (newToken) {
@@ -314,6 +420,11 @@ const fetchWithRetry = async (
         credentials: fetchOptions.credentials ?? 'include',
         signal: fetchOptions.signal || controller?.signal,
       });
+      if (res.ok) {
+        clearTransportFailure(transportPath);
+      } else {
+        recordTransportFailure(transportPath, res.status);
+      }
     } else {
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
@@ -464,6 +575,124 @@ type CachedApiEntry = {
 };
 
 const cachedApiGets = new Map<string, CachedApiEntry>();
+const endpointBackoffState = new Map<string, { backoffMs: number; blockedUntil: number }>();
+const ENDPOINT_BACKOFF_STORAGE_KEY = 'consultify-endpoint-backoff';
+const MISSING_CONVERSATIONS_STORAGE_KEY = 'consultify-missing-conversations';
+
+const BACKOFF_BASE_MS = 1000;
+const BACKOFF_MAX_MS = 60_000;
+
+const readBackoffStorage = (): Record<string, { backoffMs: number; blockedUntil: number }> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = sessionStorage.getItem(ENDPOINT_BACKOFF_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeBackoffStorage = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload: Record<string, { backoffMs: number; blockedUntil: number }> = {};
+    for (const [key, value] of endpointBackoffState.entries()) {
+      payload[key] = value;
+    }
+    sessionStorage.setItem(ENDPOINT_BACKOFF_STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // no-op
+  }
+};
+
+const hydrateBackoffState = (): void => {
+  if (endpointBackoffState.size > 0) return;
+  const stored = readBackoffStorage();
+  const now = Date.now();
+  for (const [key, value] of Object.entries(stored)) {
+    if (!value || typeof value.blockedUntil !== 'number' || value.blockedUntil <= now) continue;
+    endpointBackoffState.set(key, {
+      backoffMs: Number(value.backoffMs || BACKOFF_BASE_MS),
+      blockedUntil: value.blockedUntil,
+    });
+  }
+};
+
+const readMissingConversationIds = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(MISSING_CONVERSATIONS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.map((value) => String(value || '').trim()).filter(Boolean));
+  } catch {
+    return new Set();
+  }
+};
+
+const writeMissingConversationIds = (ids: Set<string>): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(MISSING_CONVERSATIONS_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // no-op
+  }
+};
+
+const markConversationMissing = (conversationId: string): void => {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  ids.add(normalized);
+  writeMissingConversationIds(ids);
+};
+
+const clearConversationMissingMark = (conversationId: string): void => {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  if (!ids.delete(normalized)) return;
+  writeMissingConversationIds(ids);
+};
+
+const isConversationMarkedMissing = (conversationId: string): boolean => {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return false;
+  return readMissingConversationIds().has(normalized);
+};
+
+const isEndpointBackedOff = (key: string): boolean => {
+  hydrateBackoffState();
+  const state = endpointBackoffState.get(key);
+  if (!state) return false;
+  if (state.blockedUntil <= Date.now()) {
+    endpointBackoffState.delete(key);
+    writeBackoffStorage();
+    return false;
+  }
+  return true;
+};
+
+const bumpEndpointBackoff = (key: string): void => {
+  const current = endpointBackoffState.get(key);
+  const nextBackoff =
+    current && current.backoffMs > 0
+      ? Math.min(current.backoffMs * 2, BACKOFF_MAX_MS)
+      : BACKOFF_BASE_MS;
+  endpointBackoffState.set(key, {
+    backoffMs: nextBackoff,
+    blockedUntil: Date.now() + nextBackoff,
+  });
+  writeBackoffStorage();
+};
+
+const resetEndpointBackoff = (key: string): void => {
+  endpointBackoffState.delete(key);
+  writeBackoffStorage();
+};
 
 const invalidateCachedApiByPrefix = (prefix: string): void => {
   for (const key of cachedApiGets.keys()) {
@@ -4257,6 +4486,33 @@ export const Api = {
     return handleResponse(res, 'Failed to create Canvas output');
   },
 
+  workCanvasFinalizeResearchReport: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      draft: any;
+      reportResource: {
+        type: 'report';
+        id: string;
+        title: string;
+        url?: string;
+        metadata?: Record<string, unknown>;
+      };
+      readBack: Record<string, unknown>;
+      version?: any;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/research/finalize-report`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to finalize Canvas research report');
+  },
+
   workCanvasExportDraft: async (
     draftId: string,
     format: 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx'
@@ -4461,7 +4717,7 @@ export const Api = {
     draftId: string
   ): Promise<{
     success: boolean;
-    data: { draft: any; share: { token: string; url: string; title: string } };
+    data: { draft: any; share: { token: string; url: string; title: string; expiresAt?: string } };
   }> => {
     const res = await fetch(`${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/share`, {
       method: 'POST',
@@ -4590,12 +4846,24 @@ export const Api = {
   },
 
   getUnreadNotificationCount: async (): Promise<number> => {
-    const data = await getCachedJson<{ count: number }>(
-      `${API_URL}/notifications/unread-count`,
-      10_000,
-      'Failed to fetch unread notification count'
-    ).catch(() => ({ count: 0 }));
-    return data.count;
+    const endpointKey = 'notifications-unread-count';
+    if (isEndpointBackedOff(endpointKey)) return 0;
+
+    try {
+      const data = await getCachedJson<{ count: number }>(
+        `${API_URL}/notifications/unread-count`,
+        10_000,
+        'Failed to fetch unread notification count'
+      );
+      resetEndpointBackoff(endpointKey);
+      return Number(data?.count || 0);
+    } catch (error: any) {
+      const status = Number(error?.status || error?.response?.status);
+      if (status === 401 || status === 403 || status === 429) {
+        bumpEndpointBackoff(endpointKey);
+      }
+      return 0;
+    }
   },
 
   // Note: markNotificationRead, markAllNotificationsRead, deleteNotification
@@ -7375,7 +7643,9 @@ export const Api = {
 
   getOrganizationContextLineageAudit: async (filters?: any): Promise<any> => {
     const params = new URLSearchParams();
+    if (filters?.targetType) params.set('targetType', String(filters.targetType));
     if (filters?.targetId) params.set('targetId', String(filters.targetId));
+    if (filters?.workflow) params.set('workflow', String(filters.workflow));
     if (filters?.eventType) params.set('eventType', String(filters.eventType));
     if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
     const res = await fetch(
@@ -7402,55 +7672,23 @@ export const Api = {
   },
 
   getOrganizationContextProcessingJobsAudit: async (filters?: any): Promise<any> => {
-    const params = new URLSearchParams();
-    if (filters?.documentId) params.set('documentId', String(filters.documentId));
-    if (filters?.status) params.set('status', String(filters.status));
-    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
-    const res = await fetch(
-      `${API_URL}/audit-logs/organization-context/processing-jobs?${params.toString()}`,
-      {
-        headers: getHeaders(),
-      }
-    );
-    return handleResponse(res, 'Failed to fetch organization context processing jobs');
+    return OrganizationContextWorkerApi.getProcessingJobs(filters);
   },
 
   getOrganizationContextProcessingQueueSummary: async (): Promise<any> => {
-    const res = await fetch(`${API_URL}/audit-logs/organization-context/processing-jobs/summary`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to fetch organization context processing summary');
+    return OrganizationContextWorkerApi.getProcessingQueueSummary();
   },
 
   requeueOrganizationContextProcessingJob: async (jobId: string): Promise<any> => {
-    const res = await fetch(
-      `${API_URL}/audit-logs/organization-context/processing-jobs/${encodeURIComponent(
-        jobId
-      )}/requeue`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({
-          confirmation: 'requeue_context_processing_job',
-        }),
-      }
-    );
-    return handleResponse(res, 'Failed to requeue organization context processing job');
+    return OrganizationContextWorkerApi.requeueProcessingJob(jobId);
+  },
+
+  recoverOrganizationContextStaleLocks: async (payload?: any): Promise<any> => {
+    return OrganizationContextWorkerApi.recoverStaleLocks(payload);
   },
 
   runOrganizationContextWorkerOnce: async (payload?: any): Promise<any> => {
-    const res = await fetch(
-      `${API_URL}/audit-logs/organization-context/processing-jobs/run-worker`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({
-          confirmation: 'run_context_worker_once',
-          limit: payload?.limit ?? 5,
-        }),
-      }
-    );
-    return handleResponse(res, 'Failed to run organization context worker');
+    return OrganizationContextWorkerApi.runWorkerOnce(payload);
   },
 
   getAdminOverview: async (): Promise<any> => {
@@ -8550,6 +8788,14 @@ export const Api = {
     await handleResponse(res, 'Failed to delete document');
   },
 
+  acknowledgeDocumentProcessingAttention: async (docId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/documents/${docId}/processing-attention/ack`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to acknowledge processing attention');
+  },
+
   downloadDocument: async (docId: string): Promise<Blob> => {
     const res = await fetchWithRetry(`${API_URL}/documents/${docId}/download`, {
       headers: getHeaders(),
@@ -8833,10 +9079,25 @@ export const Api = {
    * Get a conversation with all its messages
    */
   getConversation: async (id: string): Promise<any> => {
+    if (isConversationMarkedMissing(id)) {
+      const error: any = new Error('Conversation not found');
+      error.status = 404;
+      throw error;
+    }
+
     const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
       headers: getHeaders(),
     });
-    return handleResponse(res, 'Failed to fetch conversation');
+    if (res.status === 404) {
+      markConversationMissing(id);
+      const error: any = new Error('Conversation not found');
+      error.status = 404;
+      throw error;
+    }
+
+    const payload = await handleResponse(res, 'Failed to fetch conversation');
+    clearConversationMissingMark(id);
+    return payload;
   },
 
   /**
@@ -12184,9 +12445,19 @@ export const Api = {
       cta: string;
     }>;
   }> => {
+    const endpointKey = 'demo-status';
+    if (isEndpointBackedOff(endpointKey)) {
+      return { success: false, isDemoMode: false };
+    }
+
     const res = await fetch(`${API_URL}/demo/status`, {
       headers: getHeaders(),
     });
+    if (res.status === 401 || res.status === 403 || res.status === 429) {
+      bumpEndpointBackoff(endpointKey);
+    } else if (res.ok) {
+      resetEndpointBackoff(endpointKey);
+    }
     if (!res.ok) {
       return { success: false, isDemoMode: false };
     }

@@ -1361,7 +1361,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
     // Show visual feedback - "krzyk" (scream)
     const alertDiv = document.createElement('div');
     alertDiv.className =
-      'fixed top-4 right-4 z-50 p-4 bg-red-600 text-white rounded-lg shadow-xl animate-pulse';
+      'fixed top-4 right-4 z-50 p-4 bg-rose-600 text-white rounded-lg shadow-xl animate-pulse';
     alertDiv.innerHTML = `
             <div class="flex items-center gap-2">
                 <span class="text-2xl">⚠️</span>
@@ -1610,7 +1610,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
       <div
         className={`h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative ${
           isPrivateMode
-            ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
+            ? 'ring-1 ring-primary-200/70 dark:ring-primary-800/45'
             : 'ring-1 ring-transparent'
         }`}
       >
@@ -1637,7 +1637,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
               />
               {isPrivateMode && (
                 <div
-                  className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
+                  className="mr-1 inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:border-primary-800/70 dark:bg-primary-900/25 dark:text-primary-300"
                   title={t(
                     'aiChat.menu.modes.privateMode.desc',
                     'Disable memory injection and personalization for this chat'
@@ -1858,7 +1858,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                         !isStreamingThis &&
                         (msg as any).metadata?.deepThinking?.kind === 'confirm' &&
                         dtPendingConfirm?.messageId === msg.id && (
-                          <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+                          <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
                             <div className="flex flex-col gap-3">
                               <div className="text-sm font-medium text-primary-700 dark:text-primary-300">
                                 {t(
@@ -1954,7 +1954,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
             <div className="shrink-0 p-2 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-primary-800">
               <div className="max-w-5xl mx-auto flex items-center justify-center gap-3 text-sm">
                 <span
-                  className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`}
+                  className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'}`}
                 />
                 <span className="text-primary-700 dark:text-primary-300">
                   {voiceState.isListening
@@ -1970,7 +1970,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 )}
                 <button
                   onClick={handleContinuousVoiceToggle}
-                  className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                  className="px-3 py-1 bg-rose-500 text-white rounded-md text-xs hover:bg-rose-600"
                 >
                   Zatrzymaj
                 </button>
@@ -2176,8 +2176,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
                   'aiChat.homeCards.market.desc',
                   'Research a market, competitors, and positioning'
                 ),
-                color: 'text-violet-500',
-                bg: 'bg-violet-50 dark:bg-violet-900/20',
+                color: 'text-primary-500',
+                bg: 'bg-primary-50 dark:bg-primary-900/20',
                 onClick: () => {
                   const kickoff = t(
                     'aiChat.homeCards.market.kickoff',

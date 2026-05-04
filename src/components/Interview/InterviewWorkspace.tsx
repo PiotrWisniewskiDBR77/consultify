@@ -360,8 +360,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
     sent_back: {
       label: { en: 'Sent back', pl: 'Do poprawy' },
-      color: 'bg-red-500',
-      textColor: 'text-red-600 dark:text-red-400',
+      color: 'bg-rose-500',
+      textColor: 'text-rose-600 dark:text-rose-400',
     },
     approved: {
       label: { en: 'Approved', pl: 'Zatwierdzony' },
@@ -2086,8 +2086,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               key={s.id}
               className="flex items-center gap-3 p-2 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60"
             >
-              <div className="w-8 h-8 rounded-full bg-cyan-500/15 flex items-center justify-center">
-                <Users size={14} className="text-cyan-500" />
+              <div className="w-8 h-8 rounded-full bg-blue-500/15 flex items-center justify-center">
+                <Users size={14} className="text-blue-500" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
@@ -2116,7 +2116,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               key={gap.id}
               className={`p-3 rounded-xl border ${
                 gap.priority === 'high'
-                  ? 'border-red-500/20 bg-red-500/5 dark:bg-red-500/10'
+                  ? 'border-rose-500/20 bg-rose-500/5 dark:bg-rose-500/10'
                   : gap.priority === 'medium'
                     ? 'border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/10'
                     : 'border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40'

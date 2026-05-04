@@ -102,7 +102,7 @@ function getStatusColor(status?: string): string {
     case 'warning':
       return 'border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-slate-800/50';
     case 'critical':
-      return 'border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50 to-white dark:from-red-900/20 dark:to-slate-800/50';
+      return 'border-rose-200 dark:border-rose-800 bg-gradient-to-br from-rose-50 to-white dark:from-rose-900/20 dark:to-slate-800/50';
     default:
       return 'border-slate-200 dark:border-slate-700 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900/50';
   }
@@ -113,7 +113,7 @@ function getTrendIcon(trend?: string) {
     case 'up':
       return <ArrowUp className="w-3.5 h-3.5 text-emerald-500" />;
     case 'down':
-      return <ArrowDown className="w-3.5 h-3.5 text-red-500" />;
+      return <ArrowDown className="w-3.5 h-3.5 text-rose-500" />;
     case 'stable':
       return <ArrowRight className="w-3.5 h-3.5 text-slate-400" />;
     default:
@@ -126,7 +126,7 @@ function getTrendColor(trend?: string): string {
     case 'up':
       return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30';
     case 'down':
-      return 'text-red-600 bg-red-50 dark:bg-red-900/30';
+      return 'text-rose-600 bg-rose-50 dark:bg-rose-900/30';
     default:
       return 'text-slate-500 bg-slate-50 dark:bg-slate-800';
   }

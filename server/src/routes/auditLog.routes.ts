@@ -49,7 +49,8 @@ async function recordAdminAuditEvent(params: {
   resourceId: string;
   details: Record<string, unknown>;
   req: Request;
-}): Promise<void> {
+}): Promise<string | null> {
+  const auditEventId = `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   try {
     await dbRun(
       `INSERT INTO audit_log
@@ -57,7 +58,7 @@ async function recordAdminAuditEvent(params: {
         ip_address, user_agent, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        auditEventId,
         params.organizationId,
         params.userId,
         params.actionType,
@@ -70,8 +71,10 @@ async function recordAdminAuditEvent(params: {
       ],
       { fallback: true } as any
     );
+    return auditEventId;
   } catch {
     // Best-effort only. The operation response remains honest through its own result payload.
+    return null;
   }
 }
 
@@ -85,12 +88,22 @@ router.get(
 
     const limit = Math.min(Math.max(parseInt(String(req.query.limit || '50'), 10) || 50, 1), 200);
     const targetId = typeof req.query.targetId === 'string' ? req.query.targetId.trim() : '';
+    const targetType = typeof req.query.targetType === 'string' ? req.query.targetType.trim() : '';
+    const workflow = typeof req.query.workflow === 'string' ? req.query.workflow.trim() : '';
     const eventType = typeof req.query.eventType === 'string' ? req.query.eventType.trim() : '';
     const where = ['organization_id = ?'];
     const params: unknown[] = [orgId];
+    if (targetType) {
+      where.push('target_type = ?');
+      params.push(targetType);
+    }
     if (targetId) {
       where.push('target_id = ?');
       params.push(targetId);
+    }
+    if (workflow) {
+      where.push('workflow = ?');
+      params.push(workflow);
     }
     if (eventType) {
       where.push('event_type = ?');
@@ -129,6 +142,12 @@ router.get(
       meta: {
         contract: 'organization_context_lineage_audit_read_v1',
         limit,
+        filters: {
+          targetType: targetType || null,
+          targetId: targetId || null,
+          workflow: workflow || null,
+          eventType: eventType || null,
+        },
       },
     });
   })
@@ -276,6 +295,48 @@ router.get(
 );
 
 router.post(
+  '/organization-context/processing-jobs/recover-stale-locks',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const confirmation = String((req.body as any)?.confirmation || '').trim();
+    if (confirmation !== 'recover_context_stale_locks') {
+      return res.status(400).json({
+        code: 'CONFIRMATION_REQUIRED',
+        message:
+          'Recovering stale context locks is an explicit admin action. Send confirmation=recover_context_stale_locks.',
+      });
+    }
+
+    const result = await contextDocumentService.recoverStaleContextProcessingLocksForAdmin({
+      organizationId: orgId,
+      staleLockMs: Number((req.body as any)?.staleLockMs || 15 * 60 * 1000),
+    });
+    await recordAdminAuditEvent({
+      organizationId: orgId,
+      userId: req.user?.id || null,
+      actionType: 'organization_context.stale_locks_recovered',
+      resourceType: 'organization_context_processing_jobs',
+      resourceId: 'stale-locks',
+      details: { confirmation, result },
+      req,
+    });
+
+    return res.json({
+      data: result,
+      meta: {
+        contract: 'organization_context_stale_locks_recovery_v1',
+        explicitAction: true,
+        confirmation,
+      },
+    });
+  })
+);
+
+router.post(
   '/organization-context/processing-jobs/:jobId/requeue',
   verifyToken,
   verifyAdmin,
@@ -345,26 +406,34 @@ router.post(
     }
 
     const limit = Math.min(Math.max(Number((req.body as any)?.limit || 5), 1), 25);
+    const runId = `context-worker-run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const result = await contextDocumentService.processQueuedContextDocumentJobs({
       limit,
       recoverStaleLocks: true,
     });
-    await recordAdminAuditEvent({
+    const auditEventId = await recordAdminAuditEvent({
       organizationId: orgId,
       userId: req.user?.id || null,
       actionType: 'organization_context.worker_run_requested',
       resourceType: 'organization_context_processing_jobs',
-      resourceId: 'manual-run',
-      details: { confirmation, limit, result },
+      resourceId: runId,
+      details: { confirmation, limit, runId, result },
       req,
     });
 
     return res.json({
-      data: result,
+      data: {
+        ...result,
+        runId,
+        auditEventId,
+        auditRecorded: Boolean(auditEventId),
+      },
       meta: {
         contract: 'organization_context_worker_run_v1',
         explicitAction: true,
         confirmation,
+        runId,
+        auditEventId,
       },
     });
   })
@@ -445,7 +514,7 @@ router.get(
     const orgId = req.user?.organizationId;
     const actions = await dbAll(
       `
-    SELECT DISTINCT action_type, COUNT(*) as count 
+    SELECT DISTINCT action_type, COUNT(*) as count
     FROM audit_log WHERE organization_id = ?
     GROUP BY action_type ORDER BY count DESC
   `,

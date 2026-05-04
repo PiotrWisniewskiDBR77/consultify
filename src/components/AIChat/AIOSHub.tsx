@@ -93,7 +93,7 @@ export const AIOSHub: React.FC = () => {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-navy-900">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-sm font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-200">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-200">
                 <Brain size={16} />
                 Consultify AI OS
               </div>
@@ -128,14 +128,14 @@ export const AIOSHub: React.FC = () => {
               <Link
                 key={module.title}
                 to={module.href}
-                className="group flex min-h-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 hover:shadow-md dark:border-white/10 dark:bg-navy-900 dark:hover:border-purple-400/40"
+                className="group flex min-h-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md dark:border-white/10 dark:bg-navy-900 dark:hover:border-primary-400/40"
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="rounded-2xl bg-purple-50 p-3 text-purple-700 dark:bg-purple-500/10 dark:text-purple-200">
+                    <div className="rounded-2xl bg-primary-50 p-3 text-primary-700 dark:bg-primary-500/10 dark:text-primary-200">
                       <Icon size={22} />
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 group-hover:text-purple-500">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 group-hover:text-primary-500">
                       Open
                     </span>
                   </div>

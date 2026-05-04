@@ -342,8 +342,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-900/30 flex items-center justify-center">
-                  <Sparkles size={16} className="text-purple-400" />
+                <div className="w-8 h-8 rounded-lg bg-primary-900/30 flex items-center justify-center">
+                  <Sparkles size={16} className="text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -432,7 +432,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
           <button
             onClick={() => setIsMobileChatOpen(true)}
             className={`
-                            lg:hidden fixed z-40 rounded-full bg-purple-600 text-white shadow-lg shadow-purple-600/30 
+                            lg:hidden fixed z-40 rounded-full bg-primary-600 text-white shadow-lg shadow-primary-600/30
                             flex items-center justify-center transition-all touch-ripple touch-target
                             ${
                               isMobile
@@ -447,7 +447,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {/* Notification dot if there are unread messages */}
             {activeChatMessages.length > 0 &&
               activeChatMessages[activeChatMessages.length - 1]?.role === 'ai' && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full flex items-center justify-center">
                   <span className="w-2 h-2 bg-slate-900 dark:bg-navy-900 rounded-full animate-ping" />
                 </span>
               )}

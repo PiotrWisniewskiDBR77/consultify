@@ -195,14 +195,14 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
 
   // Styles
   const inputClass =
-    'px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all appearance-none cursor-pointer';
+    'px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer';
   const cardClass =
     'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6';
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -212,8 +212,8 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center">
+            <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -230,7 +230,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={saving || !!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -242,7 +242,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
       {saveError && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {saveError}
         </div>
@@ -320,15 +320,15 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(true)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   sameEveryDay
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-4 h-4 rounded-full border-2 ${
                       sameEveryDay
-                        ? 'border-purple-500 bg-purple-500'
+                        ? 'border-primary-500 bg-primary-500'
                         : 'border-slate-300 dark:border-slate-600'
                     }`}
                   >
@@ -349,15 +349,15 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 onClick={() => setSameEveryDay(false)}
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   !sameEveryDay
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-4 h-4 rounded-full border-2 ${
                       !sameEveryDay
-                        ? 'border-purple-500 bg-purple-500'
+                        ? 'border-primary-500 bg-primary-500'
                         : 'border-slate-300 dark:border-slate-600'
                     }`}
                   >
@@ -402,7 +402,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     <button
                       onClick={() => handleDayToggle(day.key)}
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        daySchedule.enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+                        daySchedule.enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'
                       }`}
                     >
                       <span

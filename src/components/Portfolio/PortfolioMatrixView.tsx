@@ -82,7 +82,7 @@ const Bubble: React.FC<BubbleProps> = ({ initiative, x, y, size, onClick }) => {
       {/* Main bubble */}
       <circle
         r={radius}
-        className={`${isHovered ? 'fill-purple-400' : 'fill-purple-500'} stroke-white stroke-2 transition-all`}
+        className={`${isHovered ? 'fill-primary-400' : 'fill-primary-500'} stroke-white stroke-2 transition-all`}
         style={{ opacity: 0.8 }}
       />
 
@@ -205,7 +205,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
           onClick={() => setSelectedQuadrant(null)}
           className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
             !selectedQuadrant
-              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
           }`}
         >
@@ -334,15 +334,15 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
       {/* Legend */}
       <div className="shrink-0 flex items-center justify-center gap-6 pt-4 text-xs text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-full bg-purple-500" />
+          <div className="w-4 h-4 rounded-full bg-primary-500" />
           <span>Initiative (size = budget)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <div className="w-3 h-3 rounded-full bg-rose-500" />
           <span>Critical</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-orange-500" />
+          <div className="w-3 h-3 rounded-full bg-amber-500" />
           <span>High</span>
         </div>
         <div className="flex items-center gap-1.5">

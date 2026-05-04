@@ -194,7 +194,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -205,7 +205,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
         <InfoButton cardId="settings-work" position="top-right" />
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Target size={28} className="text-purple-500" />
+            <Target size={28} className="text-primary-500" />
             {t('settings.work.title', 'Work Preferences')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -261,9 +261,9 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       case 'medium':
         return 'bg-yellow-500';
       case 'high':
-        return 'bg-orange-500';
+        return 'bg-amber-500';
       case 'urgent':
-        return 'bg-red-500';
+        return 'bg-rose-500';
       default:
         return 'bg-slate-400';
     }
@@ -277,7 +277,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Target size={28} className="text-purple-500" />
+            <Target size={28} className="text-primary-500" />
             {t('settings.work.title', 'Work Preferences')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -290,7 +290,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
@@ -300,7 +300,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       {/* Default Project View */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <LayoutGrid size={20} className="text-purple-500" />
+          <LayoutGrid size={20} className="text-primary-500" />
           {t('settings.work.defaultView', 'Default Project View')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -325,16 +325,16 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 }
                 className={`p-4 rounded-xl border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
                 }`}
               >
                 <Icon
                   size={24}
-                  className={isSelected ? 'text-purple-600' : 'text-slate-400 dark:text-slate-500'}
+                  className={isSelected ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}
                 />
                 <div
-                  className={`mt-2 font-medium ${isSelected ? 'text-purple-700 dark:text-purple-400' : 'text-slate-700 dark:text-slate-300'}`}
+                  className={`mt-2 font-medium ${isSelected ? 'text-primary-700 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'}`}
                 >
                   {option.label}
                 </div>
@@ -350,7 +350,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       {/* Task Defaults - NEW SECTION */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Flag size={20} className="text-orange-500" />
+          <Flag size={20} className="text-amber-500" />
           {t('settings.work.taskDefaults', 'Task Defaults')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -377,13 +377,13 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                     }
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                       isSelected
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                     }`}
                   >
                     <div className={`w-3 h-3 rounded-full ${getPriorityColor(option.value)}`} />
                     <span
-                      className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
+                      className={`text-sm font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
                     >
                       {t(`settings.work.priority.${option.value}`, option.label)}
                     </span>
@@ -680,7 +680,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 updatePreference('showCompletedTasks', !preferences.showCompletedTasks)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showCompletedTasks ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showCompletedTasks ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -705,7 +705,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('showSubtasks', !preferences.showSubtasks)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showSubtasks ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showSubtasks ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span

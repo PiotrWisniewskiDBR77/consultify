@@ -37,7 +37,7 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
     if (data?.onLabelChange && editValue !== data?.label) data.onLabelChange(editValue);
   };
 
-  const edgeColor = data?.color || (selected ? '#8b5cf6' : '#94a3b8');
+  const edgeColor = data?.color || (selected ? '#6366f1' : '#94a3b8');
   const edgeColorEnd = data?.colorEnd || (selected ? '#6366f1' : '#cbd5e1');
   const gradientId = `edge-gradient-${id}`;
 

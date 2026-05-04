@@ -250,7 +250,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-teal-600" />
+        <Loader2 size={32} className="animate-spin text-blue-600" />
       </div>
     );
   }
@@ -266,7 +266,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
     <div
       className={`p-6 rounded-xl border-2 transition-all ${
         config.enabled && config.connected
-          ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
+          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
           : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
       }`}
     >
@@ -303,7 +303,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  config.enabled ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-600'
+                  config.enabled ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
                 <span
@@ -315,7 +315,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             </div>
             <button
               onClick={() => disconnectChannel(id)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
             >
               <Unlink size={16} />
               {t('common.disconnect', 'Disconnect')}
@@ -325,7 +325,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           <button
             onClick={() => connectChannel(id)}
             disabled={connecting === id}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
           >
             {connecting === id ? (
               <Loader2 size={16} className="animate-spin" />
@@ -347,7 +347,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <MessageSquare size={28} className="text-teal-500" />
+            <MessageSquare size={28} className="text-blue-500" />
             {t('settings.notifications.channels.title', 'Notification Channels')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -360,7 +360,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {t('common.saveChanges', 'Save Changes')}
@@ -397,7 +397,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       <div
         className={`p-6 rounded-xl border-2 transition-all ${
           channels.sms.enabled && channels.sms.connected
-            ? 'border-teal-500 bg-teal-50 dark:bg-teal-500/10'
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
             : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
         }`}
       >
@@ -656,7 +656,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-red-500">
+            <div className="p-3 rounded-xl bg-rose-500">
               <Mail size={24} className="text-white" />
             </div>
             <div>
@@ -674,7 +674,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               })
             }
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              channels.email.enabled ? 'bg-red-600' : 'bg-slate-300 dark:bg-slate-600'
+              channels.email.enabled ? 'bg-rose-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <span

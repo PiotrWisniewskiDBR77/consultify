@@ -78,9 +78,9 @@ const TIER_CONFIG = {
     icon: Crown,
     color: 'violet',
     description: 'High-quality output for complex tasks',
-    bgClass: 'bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/30',
-    textClass: 'text-violet-800 dark:text-violet-300',
-    badgeClass: 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200',
+    bgClass: 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30',
+    textClass: 'text-primary-800 dark:text-primary-300',
+    badgeClass: 'bg-primary-100 text-primary-800 dark:bg-primary-500/20 dark:text-primary-200',
   },
   REASONING: {
     icon: Brain,
@@ -414,7 +414,7 @@ export const ModelTierAssignments: React.FC = () => {
       case 'degraded':
         return <AlertTriangle size={14} className="text-amber-400" />;
       case 'unhealthy':
-        return <XCircle size={14} className="text-red-400" />;
+        return <XCircle size={14} className="text-rose-400" />;
       default:
         return <Server size={14} className="text-slate-500 dark:text-slate-400" />;
     }
@@ -423,7 +423,7 @@ export const ModelTierAssignments: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <RefreshCw size={32} className="animate-spin text-violet-400" />
+        <RefreshCw size={32} className="animate-spin text-primary-400" />
       </div>
     );
   }
@@ -446,8 +446,8 @@ export const ModelTierAssignments: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-600/10">
-              <Layers size={24} className="text-violet-400" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/10">
+              <Layers size={24} className="text-primary-400" />
             </div>
             Model Tier Assignments
           </h2>
@@ -468,7 +468,7 @@ export const ModelTierAssignments: React.FC = () => {
       {actionError ? (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
         >
           {actionError}
         </div>
@@ -575,7 +575,7 @@ export const ModelTierAssignments: React.FC = () => {
                                   e.stopPropagation();
                                   handleRemoveFromTier(assignment.provider_id, tier);
                                 }}
-                                className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.03] rounded-lg transition-colors hover:text-red-600 dark:hover:text-red-400"
+                                className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.03] rounded-lg transition-colors hover:text-rose-600 dark:hover:text-rose-400"
                                 title="Remove model from tier"
                               >
                                 <Trash2 size={16} />

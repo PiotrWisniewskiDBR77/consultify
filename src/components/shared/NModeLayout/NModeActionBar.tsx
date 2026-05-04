@@ -26,7 +26,7 @@ const VARIANT_CLASSES: Record<ActionVariant, string> = {
   success:
     'border-emerald-400/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10',
   danger:
-    'border-red-400/30 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10',
+    'border-rose-400/30 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10',
   neutral:
     'border-slate-300/40 dark:border-navy-600/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60',
   ai: 'border-primary-400/30 dark:border-primary-500/20 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15',
@@ -35,7 +35,7 @@ const VARIANT_CLASSES: Record<ActionVariant, string> = {
 const VARIANT_LOADING_CLASS: Record<ActionVariant, string> = {
   success:
     'border-emerald-400/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
-  danger: 'border-red-400/30 dark:border-red-500/20 text-red-600 dark:text-red-400 bg-red-500/10',
+  danger: 'border-rose-400/30 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 bg-rose-500/10',
   neutral:
     'border-slate-300/40 dark:border-navy-600/30 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-navy-800/60',
   ai: 'border-primary-400/30 dark:border-primary-500/20 text-primary-600 dark:text-primary-300 bg-primary-500/10',

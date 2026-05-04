@@ -150,7 +150,7 @@ export const NavItem: React.FC<NavItemProps> = ({
                     ? 'bg-amber-500/10 text-amber-400'
                     : item.badge === 'new'
                       ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-purple-500/10 text-purple-400',
+                      : 'bg-primary-500/10 text-primary-400',
                 ].join(' ')}
               >
                 {badgeLabel}

@@ -137,7 +137,7 @@ export const INITIATIVE_LEVELS: {
     id: 'strategic',
     label: 'Strategic Program',
     description: 'Cross-functional program. 3-12 months, multiple teams, executive sponsor.',
-    color: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
+    color: 'text-primary-500 bg-primary-500/10 border-primary-500/30',
     icon: '🎯',
   },
   {
@@ -1094,15 +1094,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (loadError) {
       return (
         <div className="flex items-center justify-center h-full px-6">
-          <div className="max-w-xl w-full p-5 rounded-2xl border border-red-500/20 bg-red-900/10">
-            <div className="text-sm font-semibold text-red-300">
+          <div className="max-w-xl w-full p-5 rounded-2xl border border-rose-500/20 bg-rose-900/10">
+            <div className="text-sm font-semibold text-rose-300">
               {t('initiatives.hub.failedToLoad')}
             </div>
-            <div className="text-sm text-red-200/80 mt-1">{loadError}</div>
+            <div className="text-sm text-rose-200/80 mt-1">{loadError}</div>
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => fetchData(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 transition-colors"
               >
                 {t('initiatives.hub.retry')}
               </button>
@@ -1130,7 +1130,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       return (
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
-            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-purple-400/50" />
+            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-primary-400/50" />
             <p className="text-lg text-slate-900 dark:text-white">{t('initiatives.empty.title')}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
               {t('initiatives.empty.description')}
@@ -1432,7 +1432,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'resources',
       labelKey: 'initiatives.analysis.resources.title',
-      icon: <Users size={14} className="text-violet-400" />,
+      icon: <Users size={14} className="text-primary-400" />,
     },
     {
       id: 'feasibility',
@@ -1442,7 +1442,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'logic',
       labelKey: 'initiatives.analysis.logic.title',
-      icon: <GitBranch size={14} className="text-cyan-400" />,
+      icon: <GitBranch size={14} className="text-blue-400" />,
     },
     {
       id: 'timeline',
@@ -1512,7 +1512,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <>
             <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
             <div className={MENU_3_CHIP_INACTIVE}>
-              <span className="w-2 h-2 rounded-full bg-violet-400" />
+              <span className="w-2 h-2 rounded-full bg-primary-400" />
               <span>{t('initiatives.v8.pendingChains', 'V8 pending chains')}</span>
               <span className={MENU_3_BADGE_INACTIVE}>{v8PendingDecisionChains.length}</span>
             </div>
@@ -1526,10 +1526,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         {v8SnapshotTargetId && (isV8InitiativeSnapshotLoading || hasActiveV8Snapshot) && (
           <>
             <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-            <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-violet-200/80 dark:border-violet-400/20 text-violet-700 dark:text-violet-200 bg-violet-50/80 dark:bg-violet-500/10">
+            <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-primary-200/80 dark:border-primary-400/20 text-primary-700 dark:text-primary-200 bg-primary-50/80 dark:bg-primary-500/10">
               <Shield className="w-3 h-3" />
               <span>{t('initiatives.v8.snapshot', 'V8 snapshot')}</span>
-              <span className="rounded-full bg-white/80 dark:bg-violet-950/50 px-2 py-0.5 text-[10px] text-violet-700 dark:text-violet-100">
+              <span className="rounded-full bg-white/80 dark:bg-primary-950/50 px-2 py-0.5 text-[10px] text-primary-700 dark:text-primary-100">
                 {isV8InitiativeSnapshotLoading
                   ? t('initiatives.v8.loading', 'loading')
                   : t('initiatives.v8.ready', 'ready')}
@@ -1584,7 +1584,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <button
             type="button"
             onClick={() => setShowInitiativeWizard(true)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-cyan-300/70 bg-cyan-500/10 px-3 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-500/15 dark:border-cyan-400/25 dark:text-cyan-200"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-blue-300/70 bg-blue-500/10 px-3 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:border-blue-400/25 dark:text-blue-200"
           >
             <Sparkles className="h-3.5 w-3.5" />
             AI Initiative Wizard

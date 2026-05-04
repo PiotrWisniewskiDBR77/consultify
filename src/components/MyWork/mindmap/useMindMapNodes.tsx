@@ -66,7 +66,7 @@ export const BRANCH_COLORS: Record<
   { bg: string; text: string; edge: string; glow: string }
 > = {
   strengths: { bg: '#dcfce7', text: '#166534', edge: '#22c55e', glow: '#bbf7d0' },
-  weaknesses: { bg: '#fee2e2', text: '#991b1b', edge: '#ef4444', glow: '#fecaca' },
+  weaknesses: { bg: '#fee2e2', text: '#991b1b', edge: '#f43f5e', glow: '#fecaca' },
   opportunities: { bg: '#dbeafe', text: '#1e40af', edge: '#3b82f6', glow: '#bfdbfe' },
   threats: { bg: '#fef9c3', text: '#854d0e', edge: '#eab308', glow: '#fef08a' },
   options: { bg: '#f3e8ff', text: '#6b21a8', edge: '#a855f7', glow: '#e9d5ff' },
@@ -444,7 +444,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
                 'button',
                 {
                   className:
-                    'ml-2 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700',
+                    'ml-2 px-2 py-0.5 rounded bg-rose-600 text-white text-xs font-medium hover:bg-rose-700',
                   onClick: () => {
                     toast.dismiss(t.id);
                     deleteSelected({ confirmed: true });

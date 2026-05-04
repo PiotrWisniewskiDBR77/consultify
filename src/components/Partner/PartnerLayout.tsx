@@ -159,7 +159,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
                         {index < breadcrumbs.length - 1 ? (
                           <button
                             onClick={() => crumb.section && onSectionChange(crumb.section)}
-                            className="text-slate-500 hover:text-violet-400 transition-colors"
+                            className="text-slate-500 hover:text-primary-400 transition-colors"
                           >
                             {crumb.label}
                           </button>

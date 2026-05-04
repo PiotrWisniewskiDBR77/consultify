@@ -173,7 +173,7 @@ export const GlobalSecurityPostureView: React.FC = () => {
                       : 'Review policy coverage',
                   },
                   {
-                    icon: <KeyRound className="h-4 w-4 text-violet-500" />,
+                    icon: <KeyRound className="h-4 w-4 text-primary-500" />,
                     label: 'SSO posture',
                     value: posture.ssoRequired
                       ? 'Platform policy enforced'

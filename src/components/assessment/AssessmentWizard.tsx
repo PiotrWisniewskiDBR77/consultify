@@ -42,7 +42,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
         <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-4">
           No detailed areas defined for this axis yet.
         </p>
-        <button onClick={onCancel} className="text-purple-400 hover:text-purple-300">
+        <button onClick={onCancel} className="text-primary-400 hover:text-primary-300">
           {wizT.cancel || 'Return'}
         </button>
       </div>
@@ -102,7 +102,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 text-navy-900 dark:text-white relative overflow-hidden transition-colors">
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none translate-y-1/3 -translate-x-1/3"></div>
 
       <div className="relative z-10 flex-1 flex flex-col max-w-4xl mx-auto w-full p-8 justify-center min-h-[500px]">
@@ -118,7 +118,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
         {/* STEP 1: INTRO */}
         {step === 'intro' && (
           <div className="text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="w-20 h-20 bg-purple-500/10 rounded-xl flex items-center justify-center mx-auto border border-purple-500/20 mb-6 font-bold text-purple-600 dark:text-purple-400">
+            <div className="w-20 h-20 bg-primary-500/10 rounded-xl flex items-center justify-center mx-auto border border-primary-500/20 mb-6 font-bold text-primary-600 dark:text-primary-400">
               <RefreshCcw size={40} />
             </div>
 
@@ -136,7 +136,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
 
             <button
               onClick={() => setStep('questions')}
-              className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-lg shadow-purple-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
+              className="bg-primary-600 hover:bg-primary-500 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
             >
               {wizT.startBtn}
               <ArrowRight size={20} />
@@ -157,7 +157,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
               </div>
               <div className="h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-purple-500 transition-all duration-500 ease-out"
+                  className="h-full bg-primary-500 transition-all duration-500 ease-out"
                   style={{ width: `${(currentAreaIdx / areaKeys.length) * 100}%` }}
                 ></div>
               </div>
@@ -181,9 +181,9 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
                   <button
                     key={idx}
                     onClick={() => handleLevelSelect(levelNum)}
-                    className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-white/5 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:border-purple-500/50 transition-all text-left shadow-sm dark:shadow-none"
+                    className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-white/5 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:border-primary-500/50 transition-all text-left shadow-sm dark:shadow-none"
                   >
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/20 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-purple-500 group-hover:text-purple-600 dark:group-hover:text-purple-400 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/20 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-primary-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 shrink-0">
                       {levelNum}
                     </div>
                     <span className="text-sm md:text-base text-slate-700 dark:text-slate-300 group-hover:text-navy-900 dark:group-hover:text-white transition-colors">
@@ -200,15 +200,15 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
         {step === 'result' && (
           <div className="text-center max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="mb-6 relative inline-block">
-              <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-20 rounded-full"></div>
-              <Award size={80} className="text-purple-500 dark:text-purple-400 relative z-10" />
+              <div className="absolute inset-0 bg-primary-500 blur-2xl opacity-20 rounded-full"></div>
+              <Award size={80} className="text-primary-500 dark:text-primary-400 relative z-10" />
             </div>
 
             <div className="mb-8">
               <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                 {wizT.recommendedLevel}
               </h2>
-              <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-4">
+              <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-primary-600 dark:from-blue-400 dark:to-primary-400 mb-4">
                 Level {recommendedLevel}
               </div>
               <p className="text-slate-600 dark:text-slate-300 text-lg">

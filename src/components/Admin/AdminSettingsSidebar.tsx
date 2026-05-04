@@ -79,7 +79,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
               className={cn(
                 'w-full rounded-xl border px-3 py-3 text-left transition',
                 isActive
-                  ? 'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100'
+                  ? 'border-primary-200 bg-primary-50 text-primary-900 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-100'
                   : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:hover:border-white/10 dark:hover:bg-white/5'
               )}
             >
@@ -88,7 +88,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
                   className={cn(
                     'rounded-lg p-2',
                     isActive
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300'
                       : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'
                   )}
                 >

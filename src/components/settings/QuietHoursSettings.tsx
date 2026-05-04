@@ -99,11 +99,11 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
   const sectionTitleClass =
     'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
   const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+      enabled ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
     `absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
@@ -170,7 +170,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -232,7 +232,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
           {/* Schedule */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <Clock size={16} className="text-purple-500" />
+              <Clock size={16} className="text-primary-500" />
               {t('settings.quietHours.schedule', 'Schedule')}
             </h4>
 
@@ -290,7 +290,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
           {/* Exceptions */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <AlertTriangle size={16} className="text-purple-500" />
+              <AlertTriangle size={16} className="text-primary-500" />
               {t('settings.quietHours.exceptions', 'Exceptions')}
             </h4>
 
@@ -337,7 +337,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
           {/* Auto Reply */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <MessageCircle size={16} className="text-purple-500" />
+              <MessageCircle size={16} className="text-primary-500" />
               {t('settings.quietHours.autoReply', 'Auto Reply')}
             </h4>
 

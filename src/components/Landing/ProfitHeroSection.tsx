@@ -34,7 +34,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
               <br />
               {t('landing.profitHero.h1.line2', 'All the world’s business knowledge.')}
               <br />
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
                 {t('landing.profitHero.h1.line3', 'Turned into your profits.')}
               </span>
             </motion.h1>
@@ -71,7 +71,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
                 });
                 onLaunchTrial();
               }}
-              className="px-7 py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-lg shadow-purple-500/20 transition-colors flex items-center justify-center gap-2"
+              className="px-7 py-4 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold shadow-lg shadow-primary-500/20 transition-colors flex items-center justify-center gap-2"
             >
               {t('landing.profitHero.ctaPrimary', 'Launch Free Trial')}
               <ArrowRight size={18} />
@@ -84,7 +84,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
               }}
               className="px-7 py-4 rounded-xl bg-white dark:bg-navy-900 hover:bg-slate-50 dark:hover:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200 font-semibold transition-colors flex items-center justify-center gap-2"
             >
-              <Play size={18} className="text-purple-600 dark:text-purple-400" />
+              <Play size={18} className="text-primary-600 dark:text-primary-400" />
               {t('landing.profitHero.ctaSecondary', 'OPEN DEMO NOW')}
             </button>
           </div>

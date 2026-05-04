@@ -37,7 +37,7 @@ const config: Record<
     title: ADMIN_UI_COPY.degraded.title,
     description: ADMIN_UI_COPY.degraded.description,
     classes:
-      'border-orange-200 bg-orange-50 text-orange-900 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-100',
+      'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100',
   },
   hidden: {
     icon: EyeOff,

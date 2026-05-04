@@ -109,7 +109,7 @@ const IMPORT_STATUS_CONFIG: Record<
   },
   initiatives_created: {
     label: 'Initiatives created',
-    color: 'text-cyan-400 bg-cyan-500/15 border-cyan-500/20',
+    color: 'text-blue-400 bg-blue-500/15 border-blue-500/20',
     icon: 'check',
   },
   completed: {
@@ -117,7 +117,7 @@ const IMPORT_STATUS_CONFIG: Record<
     color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/20',
     icon: 'check',
   },
-  failed: { label: 'Failed', color: 'text-red-400 bg-red-500/15 border-red-500/20', icon: 'alert' },
+  failed: { label: 'Failed', color: 'text-rose-400 bg-rose-500/15 border-rose-500/20', icon: 'alert' },
 };
 
 // ============================================
@@ -232,8 +232,8 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
-          <p className="text-sm text-red-400 mb-4">{error || 'Report not found'}</p>
+          <AlertCircle className="w-8 h-8 text-rose-400 mx-auto mb-3" />
+          <p className="text-sm text-rose-400 mb-4">{error || 'Report not found'}</p>
           <button
             onClick={onBack}
             className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
@@ -346,7 +346,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             {/* Framework */}
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Framework</p>
-              <span className="text-lg font-bold text-purple-400">{data.detectedFramework}</span>
+              <span className="text-lg font-bold text-primary-400">{data.detectedFramework}</span>
               <p className="text-xs text-slate-500 mt-1">
                 Confidence: {Math.round(data.detectionConfidence || 0)}%
               </p>
@@ -369,7 +369,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             {/* Initiatives */}
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Initiatives Found</p>
-              <span className="text-lg font-bold text-cyan-400">{initiatives.length}</span>
+              <span className="text-lg font-bold text-blue-400">{initiatives.length}</span>
               {hasInitiatives && (
                 <p className="text-xs text-emerald-400 mt-1">{data.initiativesCreated} created</p>
               )}
@@ -386,7 +386,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   onClick={handleCreateAssessment}
                   disabled={isCreatingAssessment}
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                    bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-colors
+                    bg-primary-600 hover:bg-primary-500 text-white rounded-xl transition-colors
                     disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isCreatingAssessment ? (
@@ -400,8 +400,8 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                 <button
                   onClick={handleOpenAssessment}
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                    bg-purple-500/15 text-purple-400 border border-purple-500/20
-                    hover:bg-purple-500/25 rounded-xl transition-colors"
+                    bg-primary-500/15 text-primary-400 border border-primary-500/20
+                    hover:bg-primary-500/25 rounded-xl transition-colors"
                 >
                   <ExternalLink size={16} />
                   Open Assessment
@@ -414,7 +414,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   onClick={handleCreateInitiatives}
                   disabled={isCreatingInitiatives}
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                    bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl transition-colors
+                    bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors
                     disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isCreatingInitiatives ? (
@@ -441,8 +441,8 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
 
             {/* Processing error */}
             {data.processingError && (
-              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <p className="text-xs text-red-400">{data.processingError}</p>
+              <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg">
+                <p className="text-xs text-rose-400">{data.processingError}</p>
               </div>
             )}
           </div>
@@ -515,7 +515,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                     key={idx}
                     className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200 dark:border-navy-700"
                   >
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/15 text-cyan-400 flex items-center justify-center text-xs font-bold">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/15 text-blue-400 flex items-center justify-center text-xs font-bold">
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -532,9 +532,9 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                           <span
                             className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                               init.priority === 'critical'
-                                ? 'bg-red-500/15 text-red-400'
+                                ? 'bg-rose-500/15 text-rose-400'
                                 : init.priority === 'high'
-                                  ? 'bg-orange-500/15 text-orange-400'
+                                  ? 'bg-amber-500/15 text-amber-400'
                                   : init.priority === 'medium'
                                     ? 'bg-blue-500/15 text-blue-400'
                                     : 'bg-slate-500/15 text-slate-400'

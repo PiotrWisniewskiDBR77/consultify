@@ -70,7 +70,7 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   approved: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   archived: 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400',
-  in_progress: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  in_progress: 'bg-primary-500/10 text-primary-600 dark:text-primary-400',
   completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   planned: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
 };
@@ -394,7 +394,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   if (loading)
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
       </div>
     );
 
@@ -460,7 +460,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     step={1000}
                     disabled={line.isLocked}
                     aria-label={`${line.lineName} baseline value`}
-                    className="w-32 text-right px-2 py-1 rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-shadow"
+                    className="w-32 text-right px-2 py-1 rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-shadow"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -499,7 +499,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               )}
               <button
                 onClick={() => setShowCreate(true)}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-purple-500"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-primary-500"
               >
                 <Plus size={16} />
               </button>
@@ -515,7 +515,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 <button
                   key={b.id}
                   onClick={() => selectBudget(b)}
-                  className={`w-full text-left p-2 rounded-lg text-sm transition ${selected?.id === b.id ? 'bg-purple-500/20 text-purple-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                  className={`w-full text-left p-2 rounded-lg text-sm transition ${selected?.id === b.id ? 'bg-primary-500/20 text-primary-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                 >
                   <div className="font-medium truncate">{b.title}</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
@@ -553,7 +553,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-500 disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-500 disabled:opacity-50"
                 >
                   {generating ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                   {t('finance.budget.project', 'Generate Projections')}
@@ -604,7 +604,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   role="tab"
                   aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-purple-500 text-purple-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-primary-500 text-primary-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
                   {tab.label}
                 </button>
@@ -699,7 +699,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 </span>
                                 {!isBase && revenueDelta !== 0 && (
                                   <span
-                                    className={`ml-2 text-xs font-medium ${revenueDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                                    className={`ml-2 text-xs font-medium ${revenueDelta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
                                   >
                                     {revenueDelta > 0 ? '+' : ''}
                                     {fmtNumber.format(revenueDelta)}
@@ -717,7 +717,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 </span>
                                 {!isBase && netIncomeDelta !== 0 && (
                                   <span
-                                    className={`ml-2 text-xs font-medium ${netIncomeDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                                    className={`ml-2 text-xs font-medium ${netIncomeDelta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
                                   >
                                     {netIncomeDelta > 0 ? '+' : ''}
                                     {fmtNumber.format(netIncomeDelta)}
@@ -778,7 +778,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                       {fmtNumber.format(val)}
                                       {!isBase && delta !== 0 && (
                                         <span
-                                          className={`ml-1.5 text-xs ${delta > 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                                          className={`ml-1.5 text-xs ${delta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
                                         >
                                           ({delta > 0 ? '+' : ''}
                                           {fmtNumber.format(delta)})
@@ -805,7 +805,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     </h3>
                     <button
                       onClick={handleOpenLinkPicker}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-500"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-500"
                     >
                       <Plus size={14} />
                       {t('finance.budget.linkInitiative', 'Link Initiative')}
@@ -886,7 +886,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                               <td className="px-4 py-2">
                                 <button
                                   onClick={() => navigate(`/initiatives?id=${ini.id}`)}
-                                  className="text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                                  className="text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
                                 >
                                   {ini.title} <ExternalLink size={12} />
                                 </button>
@@ -912,7 +912,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                               <td className="px-4 py-2">
                                 <button
                                   onClick={() => handleUnlinkInitiative(ini.id)}
-                                  className="text-red-400 hover:text-red-600"
+                                  className="text-rose-400 hover:text-rose-600"
                                   title={t('finance.budget.unlinkInitiative', 'Unlink') as string}
                                 >
                                   <X size={14} />
@@ -1029,7 +1029,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               </button>
               <button
                 onClick={handleCreate}
-                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500"
+                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500"
               >
                 {t('common.create', 'Create')}
               </button>
@@ -1062,7 +1062,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
             </p>
             <div
               onClick={() => document.getElementById('doc-import-input')?.click()}
-              className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-6 text-center cursor-pointer hover:border-purple-400 transition-colors"
+              className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 transition-colors"
             >
               <Upload size={32} className="mx-auto text-slate-400 mb-2" />
               <p className="text-sm text-slate-600 dark:text-slate-300">

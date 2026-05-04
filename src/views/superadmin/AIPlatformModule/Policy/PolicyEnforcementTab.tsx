@@ -184,7 +184,7 @@ export const PolicyEnforcementTab: React.FC = () => {
       )}
 
       {!loadError && !initialLoading && criticalDriftCount > 0 && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
           High-risk rollout blocked: {criticalDriftCount} enabled provider
           {criticalDriftCount === 1 ? ' has' : 's have'} unresolved runtime drift.
         </div>
@@ -306,9 +306,9 @@ export const PolicyEnforcementTab: React.FC = () => {
                         <span
                           className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${
                             severity === 'critical'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300'
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
                               : severity === 'high'
-                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300'
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
                                 : severity === 'medium'
                                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
                                   : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300'

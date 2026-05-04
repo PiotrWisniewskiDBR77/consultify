@@ -219,8 +219,8 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
             <div className="flex items-start justify-between">
               <div className="flex gap-4">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <Users className="text-purple-600 dark:text-purple-400" size={24} />
+                <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                  <Users className="text-primary-600 dark:text-primary-400" size={24} />
                 </div>
                 <div>
                   <h3 className="font-medium text-slate-900 dark:text-white">
@@ -314,8 +314,8 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           {/* Login Protection */}
           <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
             <div className="flex gap-4">
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                <Shield className="text-red-600 dark:text-red-400" size={24} />
+              <div className="p-3 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+                <Shield className="text-rose-600 dark:text-rose-400" size={24} />
               </div>
               <div className="flex-1">
                 <h3 className="font-medium text-slate-900 dark:text-white">
@@ -363,8 +363,8 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           {oauthStatus ? (
             <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
               <div className="flex gap-4">
-                <div className="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-                  <Zap className="text-violet-600 dark:text-violet-400" size={24} />
+                <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                  <Zap className="text-primary-600 dark:text-primary-400" size={24} />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-slate-900 dark:text-white">
@@ -455,7 +455,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           {saveError && (
             <div
               role="alert"
-              className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+              className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
             >
               {saveError}
             </div>
@@ -477,7 +477,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
             <button
               onClick={handleSave}
               disabled={saving || !!loadError}
-              className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-500 disabled:opacity-50 transition-colors font-medium"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-500 disabled:opacity-50 transition-colors font-medium"
             >
               {saving && <RefreshCw size={16} className="animate-spin" />}
               {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}

@@ -180,14 +180,14 @@ const STATUS_CONFIG: Record<FeedbackStatus, { color: string; bg: string; border:
     border: 'border-yellow-600/20',
   },
   IN_PROGRESS: {
-    color: 'text-orange-700 dark:text-orange-400',
-    bg: 'bg-orange-600/10',
-    border: 'border-orange-600/20',
+    color: 'text-amber-700 dark:text-amber-400',
+    bg: 'bg-amber-600/10',
+    border: 'border-amber-600/20',
   },
   REVIEWED: {
-    color: 'text-purple-700 dark:text-purple-400',
-    bg: 'bg-purple-600/10',
-    border: 'border-purple-600/20',
+    color: 'text-primary-700 dark:text-primary-400',
+    bg: 'bg-primary-600/10',
+    border: 'border-primary-600/20',
   },
   RESOLVED: {
     color: 'text-green-700 dark:text-green-400',
@@ -202,8 +202,8 @@ const STATUS_CONFIG: Record<FeedbackStatus, { color: string; bg: string; border:
 };
 
 const SEVERITY_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
-  CRITICAL: { color: 'text-red-700 dark:text-red-400', icon: <AlertTriangle size={12} /> },
-  HIGH: { color: 'text-orange-700 dark:text-orange-400', icon: <AlertTriangle size={12} /> },
+  CRITICAL: { color: 'text-rose-700 dark:text-rose-400', icon: <AlertTriangle size={12} /> },
+  HIGH: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   MEDIUM: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   LOW: { color: 'text-slate-600 dark:text-slate-500', icon: null },
 };
@@ -220,8 +220,8 @@ const ALERT_STATUS_CONFIG: Record<
   },
   failed: {
     badge:
-      'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
-    text: 'text-red-700 dark:text-red-300',
+      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800',
+    text: 'text-rose-700 dark:text-rose-300',
   },
   skipped: {
     badge:
@@ -679,9 +679,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
               <span
                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
                   item.type === 'BUG'
-                    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:border-rose-900'
                     : item.type === 'FEATURE'
-                      ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
+                      ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/40 dark:text-primary-400 dark:border-primary-900'
                       : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
                 }`}
               >
@@ -712,7 +712,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
               )}
               {typeof item.duplicate_count === 'number' && item.duplicate_count > 0 && (
                 <span
-                  className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-900 inline-flex items-center gap-1"
+                  className="px-2 py-0.5 rounded text-[11px] font-semibold bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/40 dark:text-primary-300 dark:border-primary-900 inline-flex items-center gap-1"
                   title={t(
                     'feedback.duplicateBadge.title',
                     'Triage wykrył podobne zgłoszenia — otwórz szczegóły żeby je zobaczyć'
@@ -912,9 +912,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <span
                   className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
                     selectedItem.type === 'BUG'
-                      ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:border-rose-900'
                       : selectedItem.type === 'FEATURE'
-                        ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
+                        ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/40 dark:text-primary-400 dark:border-primary-900'
                         : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
                   }`}
                 >
@@ -1406,7 +1406,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       key={d.id}
                       type="button"
                       onClick={() => loadDetail({ id: d.id } as FeedbackItem)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
                       title={`${d.id} — ${d.title || ''}`}
                     >
                       <ChevronRight size={10} />
@@ -1444,7 +1444,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                     />
                   </a>
                 ) : screenshotError ? (
-                  <div className="rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10 p-3 text-xs text-red-700 dark:text-red-300">
+                  <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-900/10 p-3 text-xs text-rose-700 dark:text-rose-300">
                     {screenshotError}
                   </div>
                 ) : (
@@ -1456,15 +1456,15 @@ export const SuperAdminFeedbackView: React.FC = () => {
             )}
 
             {lastUncaught?.message && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/40 p-3 text-xs">
-                <div className="font-semibold text-red-700 dark:text-red-300">
+              <div className="rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/40 p-3 text-xs">
+                <div className="font-semibold text-rose-700 dark:text-rose-300">
                   {t('feedback.lastError', 'Last uncaught error')}
                 </div>
-                <div className="text-red-800 dark:text-red-200 mt-1 font-mono break-all">
+                <div className="text-rose-800 dark:text-rose-200 mt-1 font-mono break-all">
                   {lastUncaught.message}
                 </div>
                 {lastUncaught.stack && (
-                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-red-700/80 dark:text-red-300/80 whitespace-pre-wrap">
+                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-rose-700/80 dark:text-rose-300/80 whitespace-pre-wrap">
                     {lastUncaught.stack}
                   </pre>
                 )}
@@ -1503,7 +1503,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       <span className="text-slate-400">
                         {n.at ? format(new Date(n.at), 'HH:mm:ss') : ''}
                       </span>{' '}
-                      <span className="text-red-600 dark:text-red-400">{n.status ?? 'ERR'}</span>{' '}
+                      <span className="text-rose-600 dark:text-rose-400">{n.status ?? 'ERR'}</span>{' '}
                       {n.method} {n.url} ({n.durationMs ?? '?'}ms)
                       {n.error ? ` — ${n.error}` : ''}
                     </li>
@@ -1724,7 +1724,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
           {
             label: 'Critical prod',
             value: pipelineStats.criticalProd,
-            tone: 'text-red-600 dark:text-red-400',
+            tone: 'text-rose-600 dark:text-rose-400',
           },
           {
             label: 'Unassigned',
@@ -1734,12 +1734,12 @@ export const SuperAdminFeedbackView: React.FC = () => {
           {
             label: 'Awaiting verification',
             value: pipelineStats.reviewPending,
-            tone: 'text-purple-600 dark:text-purple-400',
+            tone: 'text-primary-600 dark:text-primary-400',
           },
           {
             label: 'NEW > 24h',
             value: pipelineStats.staleNew,
-            tone: 'text-orange-600 dark:text-orange-400',
+            tone: 'text-amber-600 dark:text-amber-400',
           },
         ].map((card) => (
           <div

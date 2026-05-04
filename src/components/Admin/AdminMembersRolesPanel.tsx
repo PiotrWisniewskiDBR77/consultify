@@ -200,7 +200,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
               {item.role === 'OWNER' ? (
                 <Crown className="h-4 w-4 text-amber-500" />
               ) : item.role === 'ADMIN' ? (
-                <Shield className="h-4 w-4 text-violet-500" />
+                <Shield className="h-4 w-4 text-primary-500" />
               ) : (
                 <Users className="h-4 w-4 text-slate-500" />
               )}
@@ -242,7 +242,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
             <button
               onClick={handleInvite}
               disabled={inviting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {inviting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

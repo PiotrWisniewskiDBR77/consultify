@@ -197,7 +197,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                         {new Date(c.createdAt).toLocaleDateString()}
                       </span>
                       {c.isAIGenerated && (
-                        <span className="text-[9px] text-purple-500 font-medium">AI</span>
+                        <span className="text-[9px] text-primary-500 font-medium">AI</span>
                       )}
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -207,7 +207,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                   <button
                     onClick={() => onDeleteComment(c.id)}
                     disabled={locked}
-                    className="p-0.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    className="p-0.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <X size={12} />
                   </button>
