@@ -201,6 +201,14 @@ const CRITICAL_TABLES = [
   'imported_reports',
 ];
 
+// Periodic health checks should only page/alarm on truly foundational schema
+// loss. Many entries in CRITICAL_TABLES are module-specific and should remain
+// audit warnings, not "system critical" incidents.
+const TRULY_CRITICAL_TABLES = ['organizations', 'users', 'sessions', 'projects', 'tasks'];
+
+const getMissingTrulyCriticalTables = (missing: string[]): string[] =>
+  missing.filter((table) => TRULY_CRITICAL_TABLES.includes(table));
+
 /**
  * Critical columns that must exist in specific tables
  */
@@ -3658,9 +3666,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       const parts = [missingTables, missingCols, errors].filter(Boolean);
 
       // Missing critical tables = hard fail; missing columns/non-critical tables = warn only
-      const hasCriticalMissing = finalVerification.missing.some((t) =>
-        ['organizations', 'users', 'sessions', 'projects', 'tasks'].includes(t)
-      );
+      const hasCriticalMissing =
+        getMissingTrulyCriticalTables(finalVerification.missing).length > 0;
       if (hasCriticalMissing) {
         return {
           success: false,
@@ -3702,12 +3709,25 @@ export async function verifyDatabaseHealth(): Promise<boolean> {
     // Verify critical tables exist
     const verification = await verifySchema();
     if (!verification.valid) {
+      const criticalMissing = getMissingTrulyCriticalTables(verification.missing);
+      const hasOnlyNonCriticalGaps =
+        criticalMissing.length === 0 &&
+        verification.errors.length === 0 &&
+        Object.keys(verification.missingColumns).length === 0;
+
+      if (hasOnlyNonCriticalGaps) {
+        logger.warn(
+          `[DatabaseInitializer] Schema has non-critical gaps (health remains healthy): ${verification.missing.join(', ')}`
+        );
+        return true;
+      }
+
       logger.warn(
-        `[DatabaseInitializer] Schema integrity check failed. Missing: ${verification.missing.join(', ')}`
+        `[DatabaseInitializer] Schema integrity check failed. Critical missing: ${criticalMissing.join(', ') || 'none'}. Missing: ${verification.missing.join(', ')}`
       );
 
-      // Attempt to reinitialize if tables are missing
-      if (verification.missing.length > 0) {
+      // Attempt to reinitialize only if truly foundational tables are missing.
+      if (criticalMissing.length > 0) {
         logger.info('[DatabaseInitializer] Attempting to reinitialize missing tables...');
         const reinitResult = await initializeDatabase();
         if (!reinitResult.success) {
@@ -3716,9 +3736,10 @@ export async function verifyDatabaseHealth(): Promise<boolean> {
         }
         // Verify again after reinit
         const recheck = await verifySchema();
-        if (!recheck.valid) {
+        const recheckCriticalMissing = getMissingTrulyCriticalTables(recheck.missing);
+        if (recheckCriticalMissing.length > 0 || recheck.errors.length > 0) {
           logger.error(
-            `[DatabaseInitializer] Schema still invalid after reinit. Missing: ${recheck.missing.join(', ')}`
+            `[DatabaseInitializer] Schema still invalid after reinit. Critical missing: ${recheckCriticalMissing.join(', ') || 'none'}. Missing: ${recheck.missing.join(', ')}`
           );
           return false;
         }
