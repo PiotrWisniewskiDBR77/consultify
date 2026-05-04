@@ -34,17 +34,10 @@
 
   <script>
     (function () {
-      // Prevent stale shells after deploy across all release-verified hosts.
-      // (If a service worker was ever registered, it can keep serving an older shell.)
-      var host = location.hostname;
-      var isReleaseVerifiedHost =
-        host === 'consultify.ai' ||
-        host === 'www.consultify.ai' ||
-        host === 'demo.consultify.ai' ||
-        host === 'stage.consultinity.ai' ||
-        host === 'stage.consultify.ai' ||
-        host === 'staging.consultify.ai';
-      if (!isReleaseVerifiedHost) return;
+      var isProductionHost =
+        location.hostname === 'consultify.ai' ||
+        location.hostname === 'www.consultify.ai';
+      if (!isProductionHost) return;
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (registrations) {
