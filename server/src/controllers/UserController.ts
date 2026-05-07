@@ -168,9 +168,16 @@ export class UserController {
       } = req.body;
       const userColumns = await getTableColumns('users');
       const userProfileColumns = await getTableColumns('user_profiles');
+      const userProfileExtendedColumns = await getTableColumns('user_profile_extended');
       const canPersistToUserProfiles =
         userProfileColumns.size > 0 && userProfileColumns.has('user_id');
+      const canPersistToUserProfileExtended =
+        userProfileExtendedColumns.size > 0 && userProfileExtendedColumns.has('user_id');
       const persistToUserProfiles: {
+        jobTitle?: string | null;
+        department?: string | null;
+      } = {};
+      const persistToUserProfileExtended: {
         jobTitle?: string | null;
         department?: string | null;
       } = {};
@@ -227,8 +234,14 @@ export class UserController {
             : null;
         if (usersJobTitleColumn) {
           addColumnUpdate(usersJobTitleColumn, title);
-        } else if (canPersistToUserProfiles) {
+        } else if (canPersistToUserProfiles && userProfileColumns.has('job_title')) {
           persistToUserProfiles.jobTitle = title === null ? null : String(title || '').trim() || null;
+        } else if (
+          canPersistToUserProfileExtended &&
+          (userProfileExtendedColumns.has('job_title') || userProfileExtendedColumns.has('title'))
+        ) {
+          persistToUserProfileExtended.jobTitle =
+            title === null ? null : String(title || '').trim() || null;
         }
       }
       if (jobTitle !== undefined) {
@@ -239,8 +252,14 @@ export class UserController {
             : null;
         if (usersJobTitleColumn) {
           addColumnUpdate(usersJobTitleColumn, jobTitle);
-        } else if (canPersistToUserProfiles) {
+        } else if (canPersistToUserProfiles && userProfileColumns.has('job_title')) {
           persistToUserProfiles.jobTitle =
+            jobTitle === null ? null : String(jobTitle || '').trim() || null;
+        } else if (
+          canPersistToUserProfileExtended &&
+          (userProfileExtendedColumns.has('job_title') || userProfileExtendedColumns.has('title'))
+        ) {
+          persistToUserProfileExtended.jobTitle =
             jobTitle === null ? null : String(jobTitle || '').trim() || null;
         }
       }
@@ -258,8 +277,19 @@ export class UserController {
       addColumnUpdate('pronouns', pronouns);
       if (userColumns.has('department')) {
         addColumnUpdate('department', department);
-      } else if (department !== undefined && canPersistToUserProfiles) {
+      } else if (
+        department !== undefined &&
+        canPersistToUserProfiles &&
+        userProfileColumns.has('department')
+      ) {
         persistToUserProfiles.department =
+          department === null ? null : String(department || '').trim() || null;
+      } else if (
+        department !== undefined &&
+        canPersistToUserProfileExtended &&
+        userProfileExtendedColumns.has('department')
+      ) {
+        persistToUserProfileExtended.department =
           department === null ? null : String(department || '').trim() || null;
       }
       addColumnUpdate('status_message', statusMessage);
@@ -291,8 +321,12 @@ export class UserController {
       addColumnUpdate('profile_survey_last_dismissed_at', profileSurveyLastDismissedAt);
 
       const shouldPersistProfileFallback =
-        canPersistToUserProfiles &&
-        (persistToUserProfiles.jobTitle !== undefined || persistToUserProfiles.department !== undefined);
+        (canPersistToUserProfiles &&
+          (persistToUserProfiles.jobTitle !== undefined ||
+            persistToUserProfiles.department !== undefined)) ||
+        (canPersistToUserProfileExtended &&
+          (persistToUserProfileExtended.jobTitle !== undefined ||
+            persistToUserProfileExtended.department !== undefined));
 
       if (updates.length === 0 && !shouldPersistProfileFallback) {
         res.status(400).json({ error: 'No fields to update' });
@@ -303,39 +337,146 @@ export class UserController {
         updates.push('updated_at = ?');
         params.push(new Date().toISOString());
 
-        // Add WHERE clause params
+        // Users may update their own profile even when their primary
+        // users.organization_id differs from the active org membership.
+        const isSelfUpdate = id === currentUserId;
         params.push(id);
-        params.push(orgId);
+        if (!isSelfUpdate) params.push(orgId);
 
-        const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
+        const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ?${
+          isSelfUpdate ? '' : ' AND organization_id = ?'
+        }`;
         await queryHelpers.queryRun(sql, params);
       }
 
       if (shouldPersistProfileFallback) {
         const upsertColumns = ['id', 'user_id', 'updated_at'];
         const upsertValues: (string | null)[] = [randomUUID(), id, new Date().toISOString()];
-        const updateClauses = ['updated_at = excluded.updated_at'];
 
         if (userProfileColumns.has('job_title') && persistToUserProfiles.jobTitle !== undefined) {
           upsertColumns.push('job_title');
           upsertValues.push(persistToUserProfiles.jobTitle);
-          updateClauses.push('job_title = excluded.job_title');
         }
 
         if (userProfileColumns.has('department') && persistToUserProfiles.department !== undefined) {
           upsertColumns.push('department');
           upsertValues.push(persistToUserProfiles.department);
-          updateClauses.push('department = excluded.department');
         }
 
         if (upsertColumns.length > 3) {
-          const placeholders = upsertColumns.map(() => '?').join(', ');
-          await queryHelpers.queryRun(
-            `INSERT INTO user_profiles (${upsertColumns.join(', ')})
-             VALUES (${placeholders})
-             ON CONFLICT(user_id) DO UPDATE SET ${updateClauses.join(', ')}`,
-            upsertValues
+          const profileUpdates: string[] = [];
+          const profileParams: (string | null)[] = [];
+
+          if (userProfileColumns.has('job_title') && persistToUserProfiles.jobTitle !== undefined) {
+            profileUpdates.push('job_title = ?');
+            profileParams.push(persistToUserProfiles.jobTitle);
+          }
+
+          if (
+            userProfileColumns.has('department') &&
+            persistToUserProfiles.department !== undefined
+          ) {
+            profileUpdates.push('department = ?');
+            profileParams.push(persistToUserProfiles.department);
+          }
+
+          if (profileUpdates.length > 0) {
+            profileUpdates.push('updated_at = ?');
+            profileParams.push(new Date().toISOString());
+            profileParams.push(id);
+
+            const profileUpdateResult = await queryHelpers.queryRun(
+              `UPDATE user_profiles SET ${profileUpdates.join(', ')} WHERE user_id = ?`,
+              profileParams
+            );
+
+            if (!profileUpdateResult.changes) {
+              const placeholders = upsertColumns.map(() => '?').join(', ');
+              await queryHelpers.queryRun(
+                `INSERT INTO user_profiles (${upsertColumns.join(', ')}) VALUES (${placeholders})`,
+                upsertValues
+              );
+            }
+          }
+        }
+      }
+
+      if (
+        canPersistToUserProfileExtended &&
+        (persistToUserProfileExtended.jobTitle !== undefined ||
+          persistToUserProfileExtended.department !== undefined)
+      ) {
+        const extendedUpdates: string[] = [];
+        const extendedParams: (string | null)[] = [];
+        const extendedJobTitleColumn = userProfileExtendedColumns.has('job_title')
+          ? 'job_title'
+          : userProfileExtendedColumns.has('title')
+            ? 'title'
+            : null;
+
+        if (
+          extendedJobTitleColumn &&
+          persistToUserProfileExtended.jobTitle !== undefined
+        ) {
+          extendedUpdates.push(`${extendedJobTitleColumn} = ?`);
+          extendedParams.push(persistToUserProfileExtended.jobTitle);
+        }
+
+        if (
+          userProfileExtendedColumns.has('department') &&
+          persistToUserProfileExtended.department !== undefined
+        ) {
+          extendedUpdates.push('department = ?');
+          extendedParams.push(persistToUserProfileExtended.department);
+        }
+
+        if (extendedUpdates.length > 0) {
+          if (userProfileExtendedColumns.has('updated_at')) {
+            extendedUpdates.push('updated_at = ?');
+            extendedParams.push(new Date().toISOString());
+          }
+          extendedParams.push(id);
+
+          const profileExtendedUpdateResult = await queryHelpers.queryRun(
+            `UPDATE user_profile_extended SET ${extendedUpdates.join(', ')} WHERE user_id = ?`,
+            extendedParams
           );
+
+          if (!profileExtendedUpdateResult.changes) {
+            const insertColumns: string[] = ['user_id'];
+            const insertValues: (string | null)[] = [id];
+
+            if (
+              extendedJobTitleColumn &&
+              persistToUserProfileExtended.jobTitle !== undefined
+            ) {
+              insertColumns.push(extendedJobTitleColumn);
+              insertValues.push(persistToUserProfileExtended.jobTitle);
+            }
+
+            if (
+              userProfileExtendedColumns.has('department') &&
+              persistToUserProfileExtended.department !== undefined
+            ) {
+              insertColumns.push('department');
+              insertValues.push(persistToUserProfileExtended.department);
+            }
+
+            if (userProfileExtendedColumns.has('created_at')) {
+              insertColumns.push('created_at');
+              insertValues.push(new Date().toISOString());
+            }
+            if (userProfileExtendedColumns.has('updated_at')) {
+              insertColumns.push('updated_at');
+              insertValues.push(new Date().toISOString());
+            }
+
+            const placeholders = insertColumns.map(() => '?').join(', ');
+            await queryHelpers.queryRun(
+              `INSERT INTO user_profile_extended (${insertColumns.join(', ')}) VALUES (${placeholders})`,
+              insertValues
+            );
+          }
         }
       }
 

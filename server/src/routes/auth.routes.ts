@@ -332,13 +332,19 @@ router.get(
         profile_survey_last_dismissed_at: string | null;
         profile_department: string | null;
         profile_job_title: string | null;
+        profile_extended_department: string | null;
+        profile_extended_job_title: string | null;
+        profile_extended_title: string | null;
       } | null = null;
 
       // Build a schema-aware select to avoid noisy "column does not exist" errors
       // on legacy databases (e.g., staging snapshots used for local dev).
       const userCols = await getTableColumns('users');
       const userProfileCols = await getTableColumns('user_profiles');
+      const userProfileExtendedCols = await getTableColumns('user_profile_extended');
       const hasUserProfiles = userProfileCols.size > 0 && userProfileCols.has('user_id');
+      const hasUserProfileExtended =
+        userProfileExtendedCols.size > 0 && userProfileExtendedCols.has('user_id');
       const ucol = (col: string, fallbackSql: string) =>
         userCols.has(col) ? `u.${col}` : `${fallbackSql} as ${col}`;
 
@@ -382,6 +388,15 @@ router.get(
         hasUserProfiles && userProfileCols.has('job_title')
           ? 'up.job_title as profile_job_title'
           : 'NULL as profile_job_title',
+        hasUserProfileExtended && userProfileExtendedCols.has('department')
+          ? 'upe.department as profile_extended_department'
+          : 'NULL as profile_extended_department',
+        hasUserProfileExtended && userProfileExtendedCols.has('job_title')
+          ? 'upe.job_title as profile_extended_job_title'
+          : 'NULL as profile_extended_job_title',
+        hasUserProfileExtended && userProfileExtendedCols.has('title')
+          ? 'upe.title as profile_extended_title'
+          : 'NULL as profile_extended_title',
         'o.name as organization_name',
         'o.plan as organization_plan',
         'o.status as organization_status',
@@ -392,6 +407,7 @@ router.get(
           `SELECT ${ME_SELECT_COLS}
                    FROM users u
                    ${hasUserProfiles ? 'LEFT JOIN user_profiles up ON up.user_id = u.id' : ''}
+                   ${hasUserProfileExtended ? 'LEFT JOIN user_profile_extended upe ON upe.user_id = u.id' : ''}
                    LEFT JOIN organizations o ON u.organization_id = o.id
                    WHERE u.id = ?`,
           [req.user!.id]
@@ -568,8 +584,14 @@ router.get(
           // Extended profile fields
           displayName: user.display_name || null,
           pronouns: user.pronouns || null,
-          department: user.department || user.profile_department || null,
-          jobTitle: user.job_title || user.profile_job_title || null,
+          department:
+            user.department || user.profile_department || user.profile_extended_department || null,
+          jobTitle:
+            user.job_title ||
+            user.profile_job_title ||
+            user.profile_extended_job_title ||
+            user.profile_extended_title ||
+            null,
           statusMessage: user.status_message || null,
           isOutOfOffice: user.out_of_office === 1,
           outOfOfficeUntil: user.vacation_end || null,

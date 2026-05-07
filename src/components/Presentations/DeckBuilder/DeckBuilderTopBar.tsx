@@ -3,6 +3,7 @@ import {
   BarChart3,
   ChevronRight,
   Clock,
+  History,
   MessageSquare,
   Monitor,
   Palette,
@@ -11,6 +12,7 @@ import {
   Redo2,
   Share2,
   Shield,
+  ShieldCheck,
   Undo2,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -48,9 +50,26 @@ interface DeckBuilderTopBarProps {
   connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'error';
   onQualityGates?: () => void;
   onAnalytics?: () => void;
+  onAuditLog?: () => void;
+  onGovernance?: () => void;
+  governanceVerdict?:
+    | 'PASS'
+    | 'PASS_WITH_P2'
+    | 'BLOCKED_P1'
+    | 'BLOCKED_P0'
+    | 'INCONCLUSIVE'
+    | null;
   confidentiality?: 'public' | 'internal' | 'confidential';
   lastAgentActivityAt?: string | null;
 }
+
+const GOVERNANCE_DOT_CLASS: Record<string, string> = {
+  PASS: 'bg-emerald-500',
+  PASS_WITH_P2: 'bg-amber-500',
+  BLOCKED_P1: 'bg-orange-500',
+  BLOCKED_P0: 'bg-rose-500',
+  INCONCLUSIVE: 'bg-slate-400',
+};
 
 type ConfidentialityLevel = 'public' | 'internal' | 'confidential';
 
@@ -118,6 +137,9 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   connectionStatus = 'disconnected',
   onQualityGates,
   onAnalytics,
+  onAuditLog,
+  onGovernance,
+  governanceVerdict,
   confidentiality,
   lastAgentActivityAt,
 }) => {
@@ -250,6 +272,24 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         </button>
       )}
 
+      {onGovernance && (
+        <button
+          onClick={onGovernance}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+          title={t('presentations.builder.topBar.governance', 'Governance')}
+          aria-label={t('presentations.builder.topBar.governance', 'Governance')}
+        >
+          <ShieldCheck size={14} />
+          <span className="hidden lg:inline">Governance</span>
+          {governanceVerdict && (
+            <span
+              aria-hidden="true"
+              className={`ml-0.5 w-1.5 h-1.5 rounded-full ${GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'}`}
+            />
+          )}
+        </button>
+      )}
+
       {onAnalytics && (
         <button
           onClick={onAnalytics}
@@ -258,6 +298,18 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         >
           <BarChart3 size={14} />
           <span className="hidden lg:inline">Analytics</span>
+        </button>
+      )}
+
+      {onAuditLog && (
+        <button
+          onClick={onAuditLog}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+          title={t('presentations.builder.topBar.auditLog', 'Audit log')}
+          aria-label={t('presentations.builder.topBar.auditLog', 'Audit log')}
+        >
+          <History size={14} />
+          <span className="hidden lg:inline">Audit</span>
         </button>
       )}
 

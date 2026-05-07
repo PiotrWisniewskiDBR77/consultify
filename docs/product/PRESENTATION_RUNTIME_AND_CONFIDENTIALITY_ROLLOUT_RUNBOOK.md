@@ -121,6 +121,21 @@ Verification after frontend deploy:
 - After running an agent edit, the violet pulse appears on the badge for 60 seconds.
 - Export from the toolbar surfaces the existing `QUALITY_GATE_BLOCKED` UX (no regression).
 
+## 5.4) Operational Surfaces (Sprint 4 + 5)
+
+The following operational surfaces are part of the runtime + confidentiality stack and require their own retention / sign-off:
+
+- **Telemetry retention** — `server/scripts/retention-presentation-runtime-events.ts` (default 90 days). Documentation: `docs/testing/RETENTION_JOB_PRESENTATION_TELEMETRY.md`.
+- **CI governance gate** — `server/scripts/check-presentation-governance.ts` blocks promotion on `BLOCKED_P0` / `BLOCKED_P1`. Documentation: `docs/testing/CI_GATE_PRESENTATION_GOVERNANCE.md`.
+- **Audit log endpoint** — `GET /api/presentations/decks/:deckId/audit-log` merges deck-level + agent-edit audit events filtered by `metadata.deckId`. UI: `Audit` button in Deck Builder Menu 3.
+- **Governance card endpoint** — `GET /api/presentations/decks/:deckId/governance-card` aggregates Quality + Confidentiality + Telemetry. UI: `Governance` button in Deck Builder Menu 3 with a verdict-colored dot prefetched on deck load.
+- **Structured slide diff** — AgentPanel proposal card now renders slide-by-slide added/removed/modified instead of raw JSON. Backend `buildDeckDiffSummary` extended with `slides[]`; legacy summary fields preserved.
+- **Demo seed** — `server/scripts/seed-presentation-artifact-demo.ts` produces 5 deterministic demo decks with mixed confidentiality + telemetry. Documentation: `docs/testing/PRESENTATION_DEMO_SEED.md`.
+- **Governance JSON export** — Deck Builder governance modal and SuperAdmin Telemetry view both expose `Export JSON` to snapshot the current `PresentationGovernanceCard` for compliance archives. Filename pattern: `governance-<deckId>-<ISO_TS>.json`.
+- **Audit log filters + CSV** — `DeckAuditLogModal` exposes actor type / action / date range filters (client-side over fetched events) and a `Export CSV` button that exports the currently filtered list as UTF-8 (BOM-prefixed, CRLF) CSV.
+- **AgentPanel slide diff detail** — Each `SlideDiffRow` is keyboard-activatable; clicking opens a `SlideDiffDetailModal` with a 2-column Before/After layout (title + layout + bullets) for the chosen slide.
+- **Drive sync resilience** — `server/scripts/drive-sync-snapshot.ts` (one-shot or `--watch`) and `server/scripts/drive-sync-restore.ts` (`--missing-only`, `--diff-only`, `--force`) protect against Google Drive Sync reverts. Cursor rule: `.cursor/rules/drive-sync-resilience.mdc`. Documentation: `docs/operations/DRIVE_SYNC_RESILIENCE.md`.
+
 ## 6) Rollback
 
 If P0/P1 incident is detected:

@@ -124,4 +124,36 @@ describe('ProfileSettings honest UI', () => {
     expect(Api.updateUser).not.toHaveBeenCalled();
     expect(Api.getMe).not.toHaveBeenCalled();
   });
+
+  it('keeps local edits when parent rerenders with same user snapshot', async () => {
+    const onUpdateUser = vi.fn();
+    const { rerender } = render(
+      <ProfileSettings currentUser={{ ...baseUser } as any} onUpdateUser={onUpdateUser} />
+    );
+
+    const firstNameInput = screen.getByDisplayValue('Jane');
+    fireEvent.change(firstNameInput, { target: { value: 'Janet' } });
+    expect(screen.getByDisplayValue('Janet')).toBeInTheDocument();
+
+    // Simulate parent re-render with a new object identity but unchanged persisted data
+    rerender(<ProfileSettings currentUser={{ ...baseUser } as any} onUpdateUser={onUpdateUser} />);
+
+    expect(screen.getByDisplayValue('Janet')).toBeInTheDocument();
+  });
+
+  it('marks first name field invalid on empty save attempt', async () => {
+    const onUpdateUser = vi.fn();
+    render(<ProfileSettings currentUser={baseUser as any} onUpdateUser={onUpdateUser} />);
+
+    const firstNameInput = screen.getByDisplayValue('Jane');
+    fireEvent.change(firstNameInput, {
+      target: { value: '' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(firstNameInput).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByText('First name is required before saving')).toBeInTheDocument();
+    });
+  });
 });

@@ -1,6 +1,259 @@
-import { Check, FileDiff, MessageSquare, Send, Sparkles, X, XCircle } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  FileDiff,
+  History as HistoryIcon,
+  MessageSquare,
+  RefreshCw,
+  Send,
+  Sparkles,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  fetchPresentationAgentHistory,
+  type AgentHistoryFetchStatus,
+  type PresentationAgentHistoryEntry,
+} from '@/services/presentationAgentHistory';
+
+const ACTION_CHIP_STYLE = {
+  added: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+  removed: 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300',
+  modified: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300',
+  unchanged: 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-300',
+} as const;
+
+const SlideDiffRow: React.FC<{ slide: ProposalSlideDiff; onOpen?: (slide: ProposalSlideDiff) => void }> = ({ slide, onOpen }) => {
+  const layoutChanged =
+    !!slide.layoutAfter && slide.layoutAfter !== slide.layoutBefore;
+  const addedBullets = slide.bulletsAdded || [];
+  const removedBullets = slide.bulletsRemoved || [];
+  const visibleAdded = addedBullets.slice(0, 4);
+  const visibleRemoved = removedBullets.slice(0, 4);
+
+  const interactive = typeof onOpen === 'function';
+  const handleActivate = () => {
+    if (onOpen) onOpen(slide);
+  };
+  return (
+    <li
+      role="listitem"
+      className={`rounded-md border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 px-2 py-1.5 ${
+        interactive
+          ? 'cursor-pointer hover:border-primary-300 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 focus-within:ring-2 focus-within:ring-primary-400'
+          : ''
+      }`}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={interactive ? handleActivate : undefined}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleActivate();
+              }
+            }
+          : undefined
+      }
+      aria-label={
+        interactive
+          ? `Open before/after detail for slide ${slide.index + 1}`
+          : undefined
+      }
+    >
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="inline-flex items-center justify-center min-w-[28px] h-[18px] rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+          #{slide.index + 1}
+        </span>
+        <span
+          className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${ACTION_CHIP_STYLE[slide.action]}`}
+        >
+          {slide.action}
+        </span>
+        {layoutChanged && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300">
+            {slide.layoutBefore || '—'} → {slide.layoutAfter}
+          </span>
+        )}
+      </div>
+      <div className="text-[11px] text-slate-700 dark:text-slate-200">
+        {slide.action === 'added' && (
+          <span className="text-emerald-700 dark:text-emerald-300">
+            + {slide.titleAfter || '(untitled)'}
+          </span>
+        )}
+        {slide.action === 'removed' && (
+          <span className="text-rose-700 dark:text-rose-300 line-through">
+            {slide.titleBefore || '(untitled)'}
+          </span>
+        )}
+        {slide.action === 'modified' && (
+          <span>
+            {slide.titleBefore && slide.titleAfter && slide.titleBefore !== slide.titleAfter ? (
+              <>
+                <span className="text-slate-500 dark:text-slate-400 line-through">
+                  {slide.titleBefore}
+                </span>{' '}
+                <span className="text-slate-400">→</span>{' '}
+                <span className="text-amber-700 dark:text-amber-300">{slide.titleAfter}</span>
+              </>
+            ) : (
+              slide.titleAfter || slide.titleBefore || '(untitled)'
+            )}
+          </span>
+        )}
+      </div>
+      {(visibleAdded.length > 0 || visibleRemoved.length > 0) && (
+        <div className="mt-1 grid grid-cols-1 gap-0.5">
+          {visibleAdded.map((b, idx) => (
+            <div
+              key={`a-${idx}`}
+              className="text-[10px] text-emerald-700 dark:text-emerald-300 truncate"
+              title={b}
+            >
+              + {b}
+            </div>
+          ))}
+          {addedBullets.length > visibleAdded.length && (
+            <div className="text-[10px] text-emerald-700/70 dark:text-emerald-300/70 italic">
+              +{addedBullets.length - visibleAdded.length} more
+            </div>
+          )}
+          {visibleRemoved.map((b, idx) => (
+            <div
+              key={`r-${idx}`}
+              className="text-[10px] text-rose-700 dark:text-rose-300 line-through truncate"
+              title={b}
+            >
+              − {b}
+            </div>
+          ))}
+          {removedBullets.length > visibleRemoved.length && (
+            <div className="text-[10px] text-rose-700/70 dark:text-rose-300/70 italic">
+              −{removedBullets.length - visibleRemoved.length} more
+            </div>
+          )}
+        </div>
+      )}
+    </li>
+  );
+};
+
+const SlideDiffDetailModal: React.FC<{
+  slide: ProposalSlideDiff;
+  onClose: () => void;
+}> = ({ slide, onClose }) => {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const before = {
+    title: slide.titleBefore ?? null,
+    layout: slide.layoutBefore ?? null,
+    bullets: slide.bulletsRemoved || [],
+  };
+  const after = {
+    title: slide.titleAfter ?? null,
+    layout: slide.layoutAfter ?? null,
+    bullets: slide.bulletsAdded || [],
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="slide-diff-detail-title"
+    >
+      <div className="max-w-2xl w-full mx-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-800">
+          <div className="flex items-center gap-2">
+            <FileDiff size={16} className="text-amber-500" />
+            <h2
+              id="slide-diff-detail-title"
+              className="text-sm font-semibold text-slate-700 dark:text-white"
+            >
+              Slide #{slide.index + 1} ·{' '}
+              <span className={`uppercase text-[11px] ${ACTION_CHIP_STYLE[slide.action]} px-1.5 py-0.5 rounded-full`}>
+                {slide.action}
+              </span>
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
+          <SlideDiffSide label="Before" tone="rose" snapshot={before} emptyMessage={slide.action === 'added' ? '(new slide)' : '(no content)'} />
+          <SlideDiffSide label="After" tone="emerald" snapshot={after} emptyMessage={slide.action === 'removed' ? '(removed slide)' : '(no content)'} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SlideDiffSide: React.FC<{
+  label: string;
+  tone: 'rose' | 'emerald';
+  snapshot: { title: string | null; layout: string | null; bullets: string[] };
+  emptyMessage: string;
+}> = ({ label, tone, snapshot, emptyMessage }) => {
+  const headerStyle =
+    tone === 'rose'
+      ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300'
+      : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
+  const isEmpty = !snapshot.title && !snapshot.layout && snapshot.bullets.length === 0;
+  return (
+    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/40 overflow-hidden">
+      <div className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${headerStyle}`}>
+        {label}
+      </div>
+      <div className="px-3 py-2 space-y-2">
+        {isEmpty ? (
+          <div className="text-[12px] italic text-slate-500 dark:text-slate-400">{emptyMessage}</div>
+        ) : (
+          <>
+            {snapshot.title !== null && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Title</div>
+                <div className="text-sm text-slate-800 dark:text-slate-100">{snapshot.title || '(untitled)'}</div>
+              </div>
+            )}
+            {snapshot.layout !== null && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Layout</div>
+                <div className="text-sm text-slate-800 dark:text-slate-100">{snapshot.layout}</div>
+              </div>
+            )}
+            {snapshot.bullets.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Bullets</div>
+                <ul className="list-disc list-inside text-[12px] text-slate-700 dark:text-slate-200 space-y-0.5">
+                  {snapshot.bullets.map((b, idx) => (
+                    <li key={`${label}-${idx}`}>{b}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 import { useConversationStore } from '@/store/useConversationStore';
 
@@ -9,6 +262,28 @@ interface AgentMessage {
   role: 'user' | 'agent';
   text: string;
   timestamp: string;
+}
+
+interface ProposalSlideDiff {
+  index: number;
+  action: 'added' | 'removed' | 'modified' | 'unchanged';
+  titleBefore?: string | null;
+  titleAfter?: string | null;
+  bulletsAdded?: string[];
+  bulletsRemoved?: string[];
+  layoutBefore?: string | null;
+  layoutAfter?: string | null;
+}
+
+interface ProposalDiff {
+  cardsBefore?: number;
+  cardsAfter?: number;
+  cardsAdded?: number;
+  cardsRemoved?: number;
+  changedCards?: number;
+  slides?: ProposalSlideDiff[];
+  editPlan?: unknown;
+  [key: string]: unknown;
 }
 
 interface PendingProposal {
@@ -20,10 +295,7 @@ interface PendingProposal {
     sectionHint?: string;
     [key: string]: unknown;
   };
-  diff?: {
-    editPlan?: unknown;
-    [key: string]: unknown;
-  };
+  diff?: ProposalDiff;
   reply?: string;
   appliedActions?: string[];
 }
@@ -74,6 +346,123 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
   const [pendingProposal, setPendingProposal] = useState<PendingProposal | null>(null);
   const [proposalBusy, setProposalBusy] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
+  const [showEditPlan, setShowEditPlan] = useState(false);
+  const [activeSlideDiff, setActiveSlideDiff] = useState<ProposalSlideDiff | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
+  const [historyCacheKey, setHistoryCacheKey] = useState(0);
+  const [historyEntries, setHistoryEntries] = useState<PresentationAgentHistoryEntry[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyStatus, setHistoryStatus] = useState<AgentHistoryFetchStatus | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyWarnings, setHistoryWarnings] = useState<string[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+  const [loadedHistoryKey, setLoadedHistoryKey] = useState<{
+    deckId: string;
+    key: number;
+  } | null>(null);
+
+  useEffect(() => {
+    setShowEditPlan(false);
+    setActiveSlideDiff(null);
+  }, [pendingProposal?.operationId]);
+
+  const slideEntries = useMemo(() => {
+    const list = Array.isArray(pendingProposal?.diff?.slides)
+      ? (pendingProposal!.diff!.slides as ProposalSlideDiff[])
+      : [];
+    return list;
+  }, [pendingProposal]);
+
+  const slideStats = useMemo(() => {
+    const stats = { changed: 0, added: 0, removed: 0, hasAny: false };
+    for (const s of slideEntries) {
+      if (s.action === 'modified') stats.changed += 1;
+      else if (s.action === 'added') stats.added += 1;
+      else if (s.action === 'removed') stats.removed += 1;
+      if (s.action !== 'unchanged') stats.hasAny = true;
+    }
+    return stats;
+  }, [slideEntries]);
+
+  const loadHistory = useCallback(
+    async (mode: 'reset' | 'append', currentOffset: number) => {
+      if (!deckId) return;
+      setHistoryLoading(true);
+      try {
+        const result = await fetchPresentationAgentHistory(deckId, {
+          limit: 50,
+          offset: currentOffset,
+        });
+        setHistoryStatus(result.status);
+        if (result.status === 'ok') {
+          const fresh = result.entries || [];
+          setHistoryWarnings(result.warnings || []);
+          setHistoryError(null);
+          if (mode === 'reset') {
+            setHistoryEntries(fresh);
+            setHistoryTotal(result.total ?? fresh.length);
+          } else {
+            setHistoryEntries((prev) => {
+              const seen = new Set(prev.map((e) => e.id));
+              const merged = [...prev];
+              for (const entry of fresh) {
+                if (!seen.has(entry.id)) merged.push(entry);
+              }
+              return merged;
+            });
+            setHistoryTotal((prevTotal) =>
+              typeof result.total === 'number' ? result.total : prevTotal
+            );
+          }
+        } else {
+          setHistoryError(result.error || null);
+          if (mode === 'reset') {
+            setHistoryEntries([]);
+            setHistoryTotal(0);
+            setHistoryWarnings([]);
+          }
+        }
+      } finally {
+        setHistoryLoading(false);
+      }
+    },
+    [deckId]
+  );
+
+  useEffect(() => {
+    setHistoryEntries([]);
+    setHistoryTotal(0);
+    setHistoryStatus(null);
+    setHistoryError(null);
+    setHistoryWarnings([]);
+    setExpandedHistoryId(null);
+    setLoadedHistoryKey(null);
+  }, [deckId]);
+
+  useEffect(() => {
+    if (activeTab !== 'history') return;
+    if (!deckId) return;
+    const needsLoad =
+      !loadedHistoryKey ||
+      loadedHistoryKey.deckId !== deckId ||
+      loadedHistoryKey.key !== historyCacheKey;
+    if (!needsLoad) return;
+    setExpandedHistoryId(null);
+    setLoadedHistoryKey({ deckId, key: historyCacheKey });
+    void loadHistory('reset', 0);
+  }, [activeTab, deckId, historyCacheKey, loadedHistoryKey, loadHistory]);
+
+  const handleHistoryRefresh = useCallback(() => {
+    setHistoryCacheKey((k) => k + 1);
+  }, []);
+
+  const handleHistoryLoadMore = useCallback(() => {
+    if (historyLoading) return;
+    if (historyEntries.length >= historyTotal) return;
+    void loadHistory('append', historyEntries.length);
+  }, [historyLoading, historyEntries.length, historyTotal, loadHistory]);
 
   useEffect(() => {
     if (!conversationId || !activeMessages?.length) return;
@@ -276,6 +665,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
           : data?.reply || t('presentations.agent.proposal.applied', 'Applied changes.')
       );
       setPendingProposal(null);
+      setHistoryCacheKey((k) => k + 1);
     } catch {
       setProposalError(
         t(
@@ -316,6 +706,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
       onProposalRejected?.({ operationId: pendingProposal.operationId });
       pushAgentMessage(t('presentations.agent.proposal.rejected', 'Proposal rejected.'));
       setPendingProposal(null);
+      setHistoryCacheKey((k) => k + 1);
     } catch {
       setProposalError(
         t(
@@ -346,6 +737,38 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-100 dark:border-navy-800">
+        <button
+          type="button"
+          onClick={() => setActiveTab('chat')}
+          aria-pressed={activeTab === 'chat'}
+          className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-medium transition-colors ${
+            activeTab === 'chat'
+              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30'
+              : 'text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-100 dark:hover:bg-navy-800'
+          }`}
+        >
+          <MessageSquare size={11} />
+          {t('presentations.agent.tabs.chat', 'Chat')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('history')}
+          aria-pressed={activeTab === 'history'}
+          className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-medium transition-colors ${
+            activeTab === 'history'
+              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30'
+              : 'text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-100 dark:hover:bg-navy-800'
+          }`}
+        >
+          <HistoryIcon size={11} />
+          {t('presentations.agent.tabs.history', 'History')}
+        </button>
+      </div>
+
+      {activeTab === 'chat' && (
+      <>
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.map((msg) => (
@@ -432,11 +855,50 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
               </div>
             )}
           </div>
-          <div className="px-3 pb-2">
-            {pendingProposal.diff?.editPlan !== undefined ? (
-              <pre className="max-h-48 overflow-auto rounded-md bg-slate-900/90 dark:bg-navy-950 text-[10px] leading-snug text-slate-100 px-2 py-1.5 whitespace-pre-wrap break-words">
-                {JSON.stringify(pendingProposal.diff.editPlan, null, 2).slice(0, 1000)}
-              </pre>
+          <div className="px-3 pb-2 space-y-2">
+            {slideEntries.length > 0 ? (
+              <>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {slideStats.changed} changed · {slideStats.added} added · {slideStats.removed} removed
+                </div>
+                {slideStats.hasAny ? (
+                  <ul role="list" className="max-h-72 overflow-auto space-y-1.5">
+                    {slideEntries
+                      .filter((s) => s.action !== 'unchanged')
+                      .map((slide) => (
+                        <SlideDiffRow
+                          key={`${slide.index}-${slide.action}`}
+                          slide={slide}
+                          onOpen={(s) => setActiveSlideDiff(s)}
+                        />
+                      ))}
+                  </ul>
+                ) : (
+                  <div className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                    {t(
+                      'presentations.agent.proposal.noStructuralChanges',
+                      'No structural changes — content adjustments only'
+                    )}
+                  </div>
+                )}
+                {pendingProposal.diff?.editPlan !== undefined && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditPlan((v) => !v)}
+                      className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    >
+                      {showEditPlan ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                      {t('presentations.agent.proposal.showEditPlan', 'Show edit plan')}
+                    </button>
+                    {showEditPlan && (
+                      <pre className="mt-1 max-h-40 overflow-auto rounded-md bg-slate-900/90 dark:bg-navy-950 text-[10px] leading-snug text-slate-100 px-2 py-1.5 whitespace-pre-wrap break-words">
+                        {JSON.stringify(pendingProposal.diff.editPlan, null, 2).slice(0, 1000)}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </>
             ) : pendingProposal.appliedActions && pendingProposal.appliedActions.length > 0 ? (
               <ul className="list-disc list-inside text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
                 {pendingProposal.appliedActions.map((action, idx) => (
@@ -481,8 +943,251 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
           </div>
         </div>
       )}
+      </>
+      )}
 
-      {/* Input */}
+      {activeTab === 'history' && (
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {t('presentations.agent.history.title', 'Proposal history')}
+              {historyEntries.length > 0 && (
+                <span className="ml-1 normal-case text-slate-400 dark:text-slate-500">
+                  ({historyEntries.length}/{historyTotal})
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {historyWarnings.includes('schema_missing_ai_operations') && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700">
+                  {t('presentations.agent.history.schemaMissing', 'Schema not available')}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleHistoryRefresh}
+                disabled={historyLoading || !deckId}
+                aria-label={t('presentations.agent.history.refresh', 'Refresh history')}
+                title={t('presentations.agent.history.refresh', 'Refresh history')}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-50"
+              >
+                <RefreshCw size={12} className={historyLoading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          </div>
+
+          {historyStatus === 'forbidden' && (
+            <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+              {t(
+                'presentations.agent.history.forbidden',
+                "You don't have permission to view this deck's proposal history."
+              )}
+            </div>
+          )}
+
+          {historyStatus &&
+            historyStatus !== 'ok' &&
+            historyStatus !== 'forbidden' && (
+              <div className="rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-700 dark:text-amber-300 flex items-center justify-between gap-2">
+                <span>
+                  {historyStatus === 'not_found'
+                    ? t(
+                        'presentations.agent.history.notFound',
+                        'No proposal history available for this deck.'
+                      )
+                    : t(
+                        'presentations.agent.history.loadFailed',
+                        "Couldn't load proposal history."
+                      )}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleHistoryRefresh}
+                  disabled={historyLoading}
+                  className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-[10px] font-medium disabled:opacity-50"
+                >
+                  {t('presentations.agent.history.retry', 'Retry')}
+                </button>
+              </div>
+            )}
+
+          {historyStatus === 'ok' && historyEntries.length === 0 && !historyLoading && (
+            <div className="text-[11px] italic text-slate-500 dark:text-slate-400 px-1 py-2">
+              {t('presentations.agent.history.empty', 'No prior proposals yet')}
+            </div>
+          )}
+
+          {historyLoading && historyEntries.length === 0 && (
+            <div className="text-[11px] italic text-slate-500 dark:text-slate-400 px-1 py-2">
+              {t('presentations.agent.history.loading', 'Loading proposal history...')}
+            </div>
+          )}
+
+          {historyEntries.length > 0 && (
+            <ul role="list" className="space-y-1.5">
+              {historyEntries.map((entry) => {
+                const isExpanded = expandedHistoryId === entry.id;
+                const statusKey = entry.status as
+                  | 'applied'
+                  | 'rejected'
+                  | 'draft'
+                  | 'accepted'
+                  | 'failed'
+                  | string;
+                const statusStyle =
+                  statusKey === 'applied'
+                    ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                    : statusKey === 'rejected'
+                      ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                      : statusKey === 'draft'
+                        ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                        : statusKey === 'accepted'
+                          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                          : 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-300';
+                const ts = entry.createdAt
+                  ? (() => {
+                      const d = new Date(entry.createdAt);
+                      return Number.isNaN(d.getTime())
+                        ? entry.createdAt
+                        : d.toLocaleString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
+                    })()
+                  : '';
+                const diffStrip =
+                  entry.diff.cardsAdded || entry.diff.cardsRemoved || entry.diff.changedCards
+                    ? `+${entry.diff.cardsAdded} -${entry.diff.cardsRemoved} ~${entry.diff.changedCards}`
+                    : '';
+                const slides = Array.isArray(entry.diff.slides) ? entry.diff.slides : [];
+                return (
+                  <li
+                    key={entry.id}
+                    className="rounded-md border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedHistoryId((prev) => (prev === entry.id ? null : entry.id))
+                      }
+                      aria-expanded={isExpanded}
+                      className="w-full text-left px-2 py-1.5 hover:bg-primary-50/40 dark:hover:bg-primary-500/5 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                    >
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${statusStyle}`}
+                        >
+                          {entry.status}
+                        </span>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                          {entry.operationType}
+                        </span>
+                        {ts && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                            {ts}
+                          </span>
+                        )}
+                        {diffStrip && (
+                          <span className="ml-auto text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                            {diffStrip}
+                          </span>
+                        )}
+                      </div>
+                      {entry.prompt && (
+                        <div
+                          className="mt-1 text-[11px] text-slate-700 dark:text-slate-200 line-clamp-1"
+                          title={entry.prompt}
+                        >
+                          {entry.prompt}
+                        </div>
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-2 pb-2 pt-1 space-y-2 border-t border-slate-100 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/30">
+                        {entry.reply && (
+                          <div className="text-[11px] text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+                            {entry.reply}
+                          </div>
+                        )}
+                        {entry.actions.length > 0 && (
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
+                              {t('presentations.agent.history.actions', 'Actions')}
+                            </div>
+                            <ul className="list-disc list-inside text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
+                              {entry.actions.map((action, idx) => (
+                                <li key={`${entry.id}-act-${idx}`}>{action}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {slides.length > 0 ? (
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
+                              {t('presentations.agent.history.slides', 'Slide changes')}
+                            </div>
+                            <ul role="list" className="space-y-1.5 max-h-60 overflow-auto">
+                              {slides
+                                .filter((s) => s.action !== 'unchanged')
+                                .map((slide) => (
+                                  <SlideDiffRow
+                                    key={`${entry.id}-${slide.index}-${slide.action}`}
+                                    slide={slide as unknown as ProposalSlideDiff}
+                                    onOpen={(s) => setActiveSlideDiff(s)}
+                                  />
+                                ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="text-[11px] italic text-slate-500 dark:text-slate-400">
+                            {t(
+                              'presentations.agent.history.noSlideDiff',
+                              'No slide-level diff recorded.'
+                            )}
+                          </div>
+                        )}
+                        {(entry.versionBefore != null || entry.versionAfter != null) && (
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                            v{entry.versionBefore ?? '—'} → v{entry.versionAfter ?? '—'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {historyEntries.length > 0 && historyEntries.length < historyTotal && (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={handleHistoryLoadMore}
+                disabled={historyLoading}
+                className="w-full px-2 py-1.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
+              >
+                {historyLoading
+                  ? t('presentations.agent.history.loadingMore', 'Loading...')
+                  : t('presentations.agent.history.loadMore', 'Load more')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeSlideDiff && (
+        <SlideDiffDetailModal
+          slide={activeSlideDiff}
+          onClose={() => setActiveSlideDiff(null)}
+        />
+      )}
+
+      {activeTab === 'chat' && (
+      /* Input */
       <div className="px-3 py-3 border-t border-slate-100 dark:border-navy-800">
         <div className="flex gap-2">
           <input
@@ -504,6 +1209,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 };

@@ -30,6 +30,12 @@ import {
   fetchPresentationTelemetryRollup,
   type PresentationTelemetryRollup,
 } from '../../services/presentationTelemetry';
+import {
+  fetchPresentationGovernanceCard,
+  type GovernanceFetchStatus,
+  type GovernanceVerdict,
+  type PresentationGovernanceCard,
+} from '../../services/presentationGovernance';
 
 const WINDOW_OPTIONS: number[] = [1, 7, 14, 30, 90];
 const DEFAULT_WINDOW_DAYS = 7;
@@ -101,6 +107,8 @@ const PresentationTelemetryView: React.FC = () => {
   const [hasAttempted, setHasAttempted] = useState<boolean>(false);
   const [sortKey, setSortKey] = useState<SortKey>('count');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [governanceCard, setGovernanceCard] = useState<PresentationGovernanceCard | null>(null);
+  const [governanceStatus, setGovernanceStatus] = useState<GovernanceFetchStatus | null>(null);
 
   const trimmedDeckId = deckIdInput.trim();
 
@@ -113,13 +121,35 @@ const PresentationTelemetryView: React.FC = () => {
     }
     setLoading(true);
     setHasAttempted(true);
+    setGovernanceCard(null);
+    setGovernanceStatus(null);
     try {
       const result = await fetchPresentationTelemetryRollup(trimmedDeckId, windowDays);
       setRollup(result);
+      const govRes = await fetchPresentationGovernanceCard(trimmedDeckId);
+      setGovernanceStatus(govRes.status);
+      if (govRes.status === 'ok' && govRes.card) {
+        setGovernanceCard(govRes.card);
+      }
     } finally {
       setLoading(false);
     }
   }, [trimmedDeckId, windowDays]);
+
+  const handleExportGovernance = useCallback(() => {
+    if (!governanceCard) return;
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const payload = JSON.stringify(governanceCard, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `governance-${governanceCard.deckId}-${stamp}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, [governanceCard]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -267,6 +297,15 @@ const PresentationTelemetryView: React.FC = () => {
         </form>
       </div>
 
+      {/* Governance card snapshot */}
+      {hasAttempted && trimmedDeckId && (
+        <GovernanceSnapshotCard
+          status={governanceStatus}
+          card={governanceCard}
+          onExport={handleExportGovernance}
+        />
+      )}
+
       {/* Body */}
       {renderBody({
         loading,
@@ -279,6 +318,77 @@ const PresentationTelemetryView: React.FC = () => {
         sortDir,
         onSort: handleSort,
       })}
+    </div>
+  );
+};
+
+const VERDICT_TONE: Record<GovernanceVerdict, string> = {
+  PASS: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  PASS_WITH_P2: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  BLOCKED_P1: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+  BLOCKED_P0: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  INCONCLUSIVE: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
+};
+
+interface GovernanceSnapshotCardProps {
+  status: GovernanceFetchStatus | null;
+  card: PresentationGovernanceCard | null;
+  onExport: () => void;
+}
+
+const GovernanceSnapshotCard: React.FC<GovernanceSnapshotCardProps> = ({
+  status,
+  card,
+  onExport,
+}) => {
+  if (!card && (status === null || status === 'ok')) {
+    return null;
+  }
+  if (!card) {
+    const reason =
+      status === 'forbidden'
+        ? 'Insufficient permission to load governance card.'
+        : status === 'not_found'
+          ? 'No governance data for this deck yet.'
+          : 'Governance card unavailable.';
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
+        <div className="flex items-center gap-2 font-semibold">
+          <AlertTriangle size={14} /> Governance snapshot
+        </div>
+        <p className="mt-1 text-[12px] opacity-80">{reason}</p>
+      </div>
+    );
+  }
+  const tone = VERDICT_TONE[card.overallVerdict] || VERDICT_TONE.INCONCLUSIVE;
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            Governance snapshot
+          </span>
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${tone}`}
+          >
+            {card.overallVerdict}
+          </span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+            P0 {card.quality.p0} · P1 {card.quality.p1} · P2 {card.quality.p2} · gates {card.quality.gateCount}
+          </span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+            · {String(card.confidentiality.level)}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onExport}
+          className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
+          aria-label="Export governance card JSON"
+        >
+          Export JSON
+        </button>
+      </div>
     </div>
   );
 };

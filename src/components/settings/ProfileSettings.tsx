@@ -15,7 +15,7 @@ import {
   UserCircle,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { changeLanguage, SUPPORTED_LANGUAGES } from '../../i18n';
@@ -169,6 +169,32 @@ interface ExtendedFormState {
   outOfOfficeMessage: string;
 }
 
+const toFormStateFromUser = (user: User): ExtendedFormState => ({
+  firstName: user.firstName || '',
+  lastName: user.lastName || '',
+  phone: user.phone || '',
+  companyName: user.companyName || '',
+  jobTitle: user.jobTitle || '',
+  timezone: user.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+  dateFormat: user.dateFormat || 'DD/MM/YYYY',
+  timeFormat: user.timeFormat || '24h',
+  linkedinId: user.linkedinId || '',
+  displayName: user.displayName || '',
+  pronouns: user.pronouns || '',
+  department: user.department || '',
+  statusMessage: user.statusMessage || '',
+  isOutOfOffice: user.isOutOfOffice || false,
+  outOfOfficeUntil: user.outOfOfficeUntil || '',
+  outOfOfficeMessage: user.outOfOfficeMessage || '',
+});
+
+const areProfileValuesEqual = (left: unknown, right: unknown): boolean => {
+  if (typeof left === 'boolean' || typeof right === 'boolean') {
+    return Boolean(left) === Boolean(right);
+  }
+  return String(left ?? '') === String(right ?? '');
+};
+
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   currentUser,
   onUpdateUser,
@@ -228,26 +254,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [firstNameValidationError, setFirstNameValidationError] = useState<string | null>(null);
   const [showJobTitleSuggestions, setShowJobTitleSuggestions] = useState(false);
-
-  const [formState, setFormState] = useState<ExtendedFormState>({
-    firstName: currentUser.firstName || '',
-    lastName: currentUser.lastName || '',
-    phone: currentUser.phone || '',
-    companyName: currentUser.companyName || '',
-    jobTitle: currentUser.jobTitle || '',
-    timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-    dateFormat: currentUser.dateFormat || 'DD/MM/YYYY',
-    timeFormat: currentUser.timeFormat || '24h',
-    linkedinId: currentUser.linkedinId || '',
-    // New fields
-    displayName: currentUser.displayName || '',
-    pronouns: currentUser.pronouns || '',
-    department: currentUser.department || '',
-    statusMessage: currentUser.statusMessage || '',
-    isOutOfOffice: currentUser.isOutOfOffice || false,
-    outOfOfficeUntil: currentUser.outOfOfficeUntil || '',
-    outOfOfficeMessage: currentUser.outOfOfficeMessage || '',
-  });
+  const initialFormState = useMemo(() => toFormStateFromUser(currentUser), [currentUser.id]);
+  const [formState, setFormState] = useState<ExtendedFormState>(initialFormState);
+  const lastSyncedFormRef = useRef<ExtendedFormState>(initialFormState);
+  const previousUserIdRef = useRef<string>(currentUser.id);
 
   const getJobTitleLabel = useCallback(
     (title: string) =>
@@ -267,35 +277,34 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     );
   }, [formState.jobTitle, getJobTitleLabel]);
 
-  // Initial state sync
+  // Initial state sync.
+  // Keep local edits stable while typing and only resync when:
+  // - user identity changes, or
+  // - local form is clean and a fresh server snapshot arrived.
   useEffect(() => {
-    setFormState({
-      firstName: currentUser.firstName || '',
-      lastName: currentUser.lastName || '',
-      phone: currentUser.phone || '',
-      companyName: currentUser.companyName || '',
-      jobTitle: currentUser.jobTitle || '',
-      timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-      dateFormat: currentUser.dateFormat || 'DD/MM/YYYY',
-      timeFormat: currentUser.timeFormat || '24h',
-      linkedinId: currentUser.linkedinId || '',
-      displayName: currentUser.displayName || '',
-      pronouns: currentUser.pronouns || '',
-      department: currentUser.department || '',
-      statusMessage: currentUser.statusMessage || '',
-      isOutOfOffice: currentUser.isOutOfOffice || false,
-      outOfOfficeUntil: currentUser.outOfOfficeUntil || '',
-      outOfOfficeMessage: currentUser.outOfOfficeMessage || '',
-    });
-  }, [currentUser]);
+    const incomingFormState = toFormStateFromUser(currentUser);
+    const localFormIsDirty = PROFILE_CONFIRMATION_FIELDS.some(
+      (field) => !areProfileValuesEqual(formState[field], lastSyncedFormRef.current[field])
+    );
+    const incomingDiffersFromLastSynced = PROFILE_CONFIRMATION_FIELDS.some(
+      (field) => !areProfileValuesEqual(incomingFormState[field], lastSyncedFormRef.current[field])
+    );
+    const userIdentityChanged = previousUserIdRef.current !== currentUser.id;
+    previousUserIdRef.current = currentUser.id;
+
+    if (userIdentityChanged || (!localFormIsDirty && incomingDiffersFromLastSynced)) {
+      lastSyncedFormRef.current = incomingFormState;
+      setFormState(incomingFormState);
+    }
+  }, [currentUser, formState]);
 
   const buildProfileUpdatePayload = (): Partial<User> => {
     const updates: Partial<User> = {};
 
     for (const field of PROFILE_CONFIRMATION_FIELDS) {
       const nextValue = formState[field];
-      const currentValue = (currentUser as Partial<ExtendedFormState>)[field];
-      if (String(nextValue ?? '') !== String(currentValue ?? '')) {
+      const currentValue = lastSyncedFormRef.current[field];
+      if (!areProfileValuesEqual(nextValue, currentValue)) {
         (updates as Partial<ExtendedFormState>)[field] = nextValue;
       }
     }
@@ -350,6 +359,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         throw new Error('Profile changes were not confirmed by the server');
       }
 
+      const persistedFormState = toFormStateFromUser(persistedUser);
+      lastSyncedFormRef.current = persistedFormState;
+      setFormState(persistedFormState);
       onUpdateUser(persistedUser);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -364,6 +376,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   // Input class for consistent styling
   const inputClass =
     'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+  const firstNameInputClass = firstNameValidationError
+    ? 'w-full px-3 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-500 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-rose-500/50 outline-none transition-all'
+    : inputClass;
   const inputWithIconClass =
     'w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
   const selectClass =
@@ -591,16 +606,21 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 </label>
                 <input
                   value={formState.firstName}
+                  aria-invalid={firstNameValidationError ? 'true' : undefined}
+                  aria-describedby={firstNameValidationError ? 'first-name-validation-error' : undefined}
                   onChange={(e) => {
                     setFormState({ ...formState, firstName: e.target.value });
                     if (firstNameValidationError && e.target.value.trim()) {
                       setFirstNameValidationError(null);
                     }
                   }}
-                  className={inputClass}
+                  className={firstNameInputClass}
                 />
                 {firstNameValidationError && (
-                  <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                  <p
+                    id="first-name-validation-error"
+                    className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400"
+                  >
                     {firstNameValidationError}
                   </p>
                 )}

@@ -39,6 +39,9 @@ describe('UserController', () => {
       if (table === 'user_profiles') {
         return new Set(['id', 'user_id', 'job_title', 'department', 'updated_at']);
       }
+      if (table === 'user_profile_extended') {
+        return new Set(['user_id', 'department', 'title', 'updated_at']);
+      }
       return new Set();
     });
 
@@ -156,10 +159,16 @@ describe('UserController', () => {
         }
         return new Set();
       });
-      (queryHelpers.queryRun as any).mockResolvedValue({ changes: 1 });
+      (queryHelpers.queryRun as any)
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 1 });
 
       await UserController.updateUser(mockReq, mockRes, vi.fn());
 
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE user_profiles SET'),
+        expect.arrayContaining(['Plant Lead', 'Engineering', expect.any(String), 'user-1'])
+      );
       expect(queryHelpers.queryRun).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO user_profiles'),
         expect.arrayContaining([expect.any(String), 'user-1'])
@@ -168,6 +177,58 @@ describe('UserController', () => {
         id: 'user-1',
         message: 'User updated successfully',
       });
+    });
+
+    it('persists to user_profile_extended when users and user_profiles lack profile columns', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.body = { jobTitle: 'Engineering Manager', department: 'Engineering' };
+      vi.mocked(getTableColumns).mockImplementation(async (table: string) => {
+        if (table === 'users') {
+          return new Set(['id', 'organization_id', 'updated_at']);
+        }
+        if (table === 'user_profiles') {
+          return new Set(['id', 'user_id', 'updated_at']);
+        }
+        if (table === 'user_profile_extended') {
+          return new Set(['user_id', 'department', 'title', 'updated_at']);
+        }
+        return new Set();
+      });
+      (queryHelpers.queryRun as any)
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 1 });
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE user_profile_extended SET'),
+        expect.arrayContaining(['Engineering Manager', 'Engineering', expect.any(String), 'user-1'])
+      );
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO user_profile_extended'),
+        expect.arrayContaining(['user-1', 'Engineering Manager', 'Engineering', expect.any(String)])
+      );
+      expect(jsonFn).toHaveBeenCalledWith({
+        id: 'user-1',
+        message: 'User updated successfully',
+      });
+    });
+
+    it('does not scope self profile updates by active organization id', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.user.organizationId = 'active-org-not-primary-org';
+      mockReq.body = { firstName: 'Jane' };
+      (queryHelpers.queryRun as any).mockResolvedValue({ changes: 1 });
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE id = ?'),
+        ['Jane', expect.any(String), 'user-1']
+      );
+      expect(String((queryHelpers.queryRun as any).mock.calls[0][0])).not.toContain(
+        'organization_id = ?'
+      );
     });
   });
 });

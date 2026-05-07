@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import { send as sendNotification } from '../services/notificationService.js';
 import {
   applyPresentationEditPlan,
@@ -23,7 +24,12 @@ import {
   normalizePresentationRole,
   resolvePresentationDeckConfidentiality,
 } from '../services/presentationConfidentialityPolicyService.js';
+import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import { buildPresentationGovernanceCard } from '../services/presentationGovernanceCardService.js';
+import {
+  buildPresentationGovernanceWatchlist,
+  type WatchlistEntryInput,
+} from '../services/presentationGovernanceWatchlistService.js';
 import {
   buildPresentationRuntimeRollup,
   type PresentationRuntimeEventRow,
@@ -349,19 +355,31 @@ async function syncArtifactRegistryForDeck(params: {
   });
 }
 
-function buildDeckDiffSummary(originalDeck: any, proposedDeck: any) {
-  const beforeCards = Array.isArray(originalDeck?.cards) ? originalDeck.cards : [];
-  const afterCards = Array.isArray(proposedDeck?.cards) ? proposedDeck.cards : [];
-  return {
-    cardsBefore: beforeCards.length,
-    cardsAfter: afterCards.length,
-    cardsAdded: Math.max(0, afterCards.length - beforeCards.length),
-    cardsRemoved: Math.max(0, beforeCards.length - afterCards.length),
-    changedCards: afterCards.filter((card: any, index: number) => {
-      const before = beforeCards[index];
-      return before && JSON.stringify(before) !== JSON.stringify(card);
-    }).length,
-  };
+function buildAuditEventSummary(row: any): string {
+  const action = String(row?.action || '').toLowerCase();
+  const resourceType = String(row?.resourceType || '');
+  const meta = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+
+  if (resourceType === 'presentation_deck') {
+    if (action === 'create') return 'Deck created';
+    if (action === 'update') return 'Deck updated';
+    if (action === 'delete') return 'Deck deleted';
+    if (action === 'share') return 'Share link issued';
+    if (action === 'refresh') return 'Deck refreshed';
+  }
+
+  if (resourceType === 'presentation_deck_agent_edit') {
+    if (action === 'propose') return 'AI proposal created';
+    if (action === 'approve') {
+      const versionAfter = (meta as any)?.versionAfter ?? (meta as any)?.version_after;
+      return versionAfter != null
+        ? `AI proposal approved → v${versionAfter}`
+        : 'AI proposal approved';
+    }
+    if (action === 'reject') return 'AI proposal rejected';
+  }
+
+  return `${row?.action || 'unknown'} ${resourceType || ''}`.trim();
 }
 
 async function saveAiOperation(op: PendingDeckAiOperation, prompt: string, versionBefore?: number) {
@@ -1816,6 +1834,397 @@ router.get(
     });
 
     res.json({ success: true, data: card });
+  })
+);
+
+router.get(
+  '/governance/watchlist',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+    const orgId = getOrgId(req);
+    const callerRole = (req as any).user?.role || (req as any).userRole || null;
+
+    const onlyBlockedRaw = String(req.query.onlyBlocked ?? 'true').toLowerCase();
+    const onlyBlocked = onlyBlockedRaw !== 'false';
+    const limitRaw = Number(req.query.limit);
+    const limit = Math.min(
+      Math.max(Number.isFinite(limitRaw) && limitRaw > 0 ? Math.round(limitRaw) : 50, 1),
+      200
+    );
+
+    const WINDOW_DAYS = 7;
+    const cutoffIso = new Date(Date.now() - WINDOW_DAYS * 86_400_000).toISOString();
+
+    let deckRows: any[] = [];
+    try {
+      deckRows = (await dbAll(
+        `SELECT id, title, deck_json, confidentiality, updated_at
+         FROM presentation_decks
+         WHERE organization_id = ?
+         ORDER BY updated_at DESC
+         LIMIT 200`,
+        [orgId]
+      )) as any[];
+    } catch (error) {
+      if (isSchemaMissingError(error)) {
+        try {
+          deckRows = (await dbAll(
+            `SELECT id, title, deck_json, updated_at
+             FROM presentation_decks
+             WHERE organization_id = ?
+             ORDER BY updated_at DESC
+             LIMIT 200`,
+            [orgId]
+          )) as any[];
+        } catch (innerError) {
+          logger.warn(
+            '[Presentations] Could not load decks for governance watchlist',
+            innerError
+          );
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to load decks for governance watchlist',
+          });
+        }
+      } else {
+        logger.warn('[Presentations] Could not load decks for governance watchlist', error);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to load decks for governance watchlist',
+        });
+      }
+    }
+
+    const { checkDeckQualityGates } = await import(
+      '../services/presentationQualityGatesService.js'
+    );
+
+    const warnings: string[] = [];
+    const inputs: WatchlistEntryInput[] = [];
+
+    for (const deckRow of deckRows || []) {
+      const deckId = String(deckRow?.id || '');
+      if (!deckId) continue;
+      const title = typeof deckRow?.title === 'string' ? deckRow.title : 'Untitled deck';
+      const updatedAt =
+        typeof deckRow?.updated_at === 'string' ? deckRow.updated_at : null;
+      const confidentialityLevel = resolvePresentationDeckConfidentiality(deckRow);
+
+      try {
+        let qualityReport: any = null;
+        try {
+          qualityReport = await checkDeckQualityGates(orgId, deckId);
+        } catch (error) {
+          logger.warn(
+            `[Presentations] Quality gates failed for deck ${deckId} during watchlist build`,
+            error
+          );
+        }
+
+        let telemetryRollup: ReturnType<typeof buildPresentationRuntimeRollup> | null = null;
+        try {
+          const rows = (await dbAll(
+            `SELECT id, organization_id, deck_id, user_id, event_type, status, scope, metadata_json, created_at
+             FROM presentation_runtime_events
+             WHERE organization_id = ? AND deck_id = ? AND created_at >= ?
+             ORDER BY created_at DESC
+             LIMIT 1000`,
+            [orgId, deckId, cutoffIso]
+          )) as PresentationRuntimeEventRow[];
+          telemetryRollup = buildPresentationRuntimeRollup({
+            rows: rows || [],
+            windowDays: WINDOW_DAYS,
+          });
+        } catch (error) {
+          if (!isSchemaMissingError(error)) {
+            logger.warn(
+              `[Presentations] Telemetry load failed for deck ${deckId} during watchlist build`,
+              error
+            );
+          }
+        }
+
+        const card = buildPresentationGovernanceCard({
+          deckId,
+          qualityReport,
+          confidentialityLevel,
+          callerRole: callerRole ? String(callerRole) : null,
+          telemetryRollup: telemetryRollup
+            ? {
+                windowDays: telemetryRollup.windowDays,
+                totals: telemetryRollup.totals,
+                lastActivityAt: telemetryRollup.lastActivityAt,
+              }
+            : null,
+        });
+
+        inputs.push({
+          deckId,
+          title,
+          confidentialityLevel,
+          updatedAt,
+          card: {
+            overallVerdict: card.overallVerdict,
+            quality: {
+              p0: card.quality.p0,
+              p1: card.quality.p1,
+              p2: card.quality.p2,
+              gateCount: card.quality.gateCount,
+            },
+            telemetry: {
+              exportsBlocked: card.telemetry.exportsBlocked,
+              lastActivityAt: card.telemetry.lastActivityAt,
+            },
+          },
+        });
+      } catch (error) {
+        const reason =
+          (error as any)?.message
+            ? String((error as any).message)
+            : 'governance_card_build_failed';
+        warnings.push(`deck ${deckId}: ${reason}`);
+        inputs.push({
+          deckId,
+          title,
+          confidentialityLevel,
+          updatedAt,
+          card: {
+            overallVerdict: 'INCONCLUSIVE',
+            quality: { p0: 0, p1: 0, p2: 0, gateCount: 0 },
+            telemetry: { exportsBlocked: 0, lastActivityAt: null },
+          },
+        });
+      }
+    }
+
+    const watchlist = buildPresentationGovernanceWatchlist(inputs, { onlyBlocked, limit });
+
+    const entries = watchlist.entries.map((entry) => ({
+      deckId: entry.deckId,
+      title: entry.title,
+      confidentialityLevel: entry.confidentialityLevel,
+      updatedAt: entry.updatedAt,
+      overallVerdict: entry.card.overallVerdict,
+      p0: entry.card.quality.p0,
+      p1: entry.card.quality.p1,
+      p2: entry.card.quality.p2,
+      gateCount: entry.card.quality.gateCount,
+      exportsBlocked: entry.card.telemetry.exportsBlocked,
+      lastActivityAt: entry.card.telemetry.lastActivityAt,
+      severityScore: entry.severityScore,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        generatedAt: new Date().toISOString(),
+        totals: watchlist.totals,
+        entries,
+        ...(warnings.length > 0 ? { warnings } : {}),
+        appliedFilters: { onlyBlocked, limit },
+      },
+    });
+  })
+);
+
+router.get(
+  '/decks/:deckId/audit-log',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    const limit = Math.min(
+      Math.max(parseInt(String(req.query.limit ?? '100'), 10) || 100, 1),
+      500
+    );
+    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+
+    const [deckLevel, agentLevel] = await Promise.all([
+      auditEventsService.query({
+        resourceType: 'presentation_deck',
+        resourceId: deckId,
+        organizationId: orgId,
+        limit: 500,
+        offset: 0,
+      }),
+      auditEventsService.query({
+        resourceType: 'presentation_deck_agent_edit',
+        organizationId: orgId,
+        limit: 500,
+        offset: 0,
+      }),
+    ]);
+
+    const agentForDeck = (agentLevel.data || []).filter((row: any) => {
+      const meta = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+      return meta.deckId === deckId;
+    });
+
+    const merged = [...(deckLevel.data || []), ...agentForDeck]
+      .map((row: any) => ({
+        id: row.id,
+        timestamp: row.timestamp,
+        actorId: row.actorId ?? null,
+        actorType: row.actorType ?? 'SYSTEM',
+        action: row.action,
+        resourceType: row.resourceType,
+        resourceId: row.resourceId,
+        scope:
+          (row.metadata && typeof row.metadata === 'object' && (row.metadata.scope as string)) ||
+          null,
+        operationId:
+          row.resourceType === 'presentation_deck_agent_edit' ? row.resourceId : null,
+        summary: buildAuditEventSummary(row),
+        metadata: row.metadata && typeof row.metadata === 'object' ? row.metadata : {},
+      }))
+      .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))
+      .slice(offset, offset + limit);
+
+    res.json({
+      success: true,
+      data: {
+        deckId,
+        total: (deckLevel.total || 0) + agentForDeck.length,
+        limit,
+        offset,
+        events: merged,
+      },
+    });
+  })
+);
+
+router.get(
+  '/decks/:deckId/agent-history',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    const limit = Math.min(
+      Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1),
+      200
+    );
+    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+
+    try {
+      const rows = (await dbAll(
+        `SELECT id, deck_id, organization_id, user_id, operation_type, status, prompt, reply,
+                actions_json, diff_json, version_before, version_after, created_at, resolved_at
+         FROM presentation_ai_operations
+         WHERE deck_id = ? AND organization_id = ?
+         ORDER BY created_at DESC
+         LIMIT ? OFFSET ?`,
+        [deckId, orgId, limit, offset]
+      )) as Array<Record<string, any>>;
+
+      let total = 0;
+      try {
+        const totalRow = (await dbGet(
+          `SELECT COUNT(*) AS c FROM presentation_ai_operations WHERE deck_id = ? AND organization_id = ?`,
+          [deckId, orgId]
+        )) as Record<string, any> | null;
+        if (totalRow) {
+          const raw = (totalRow as any).c ?? (totalRow as any).count ?? (totalRow as any)['COUNT(*)'];
+          const parsed = Number(raw);
+          total = Number.isFinite(parsed) ? parsed : 0;
+        }
+      } catch (countError) {
+        if (!isSchemaMissingError(countError)) {
+          logger.warn('[Presentations] Could not count agent history rows', countError);
+        }
+      }
+
+      const operations = (rows || []).map((row) => {
+        let actions: string[] = [];
+        try {
+          const parsedActions = row.actions_json ? JSON.parse(row.actions_json) : [];
+          if (Array.isArray(parsedActions)) {
+            actions = parsedActions.map((entry) =>
+              typeof entry === 'string' ? entry : String(entry)
+            );
+          }
+        } catch {
+          actions = [];
+        }
+
+        let diffRaw: Record<string, any> = {};
+        try {
+          const parsedDiff = row.diff_json ? JSON.parse(row.diff_json) : {};
+          if (parsedDiff && typeof parsedDiff === 'object' && !Array.isArray(parsedDiff)) {
+            diffRaw = parsedDiff as Record<string, any>;
+          }
+        } catch {
+          diffRaw = {};
+        }
+
+        const slides = Array.isArray(diffRaw.slides) ? diffRaw.slides : undefined;
+        const editPlan = diffRaw.editPlan;
+
+        const numericOrNull = (value: unknown): number | null =>
+          typeof value === 'number' && Number.isFinite(value) ? value : null;
+        const numericOrZero = (value: unknown): number =>
+          typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
+        return {
+          id: String(row.id),
+          deckId: String(row.deck_id),
+          status: String(row.status || 'draft'),
+          operationType: String(row.operation_type || 'agent_edit'),
+          prompt: row.prompt ?? null,
+          reply: row.reply ?? null,
+          actions,
+          versionBefore: numericOrNull(row.version_before),
+          versionAfter: numericOrNull(row.version_after),
+          createdAt: row.created_at ?? null,
+          resolvedAt: row.resolved_at ?? null,
+          diff: {
+            cardsBefore: numericOrNull(diffRaw.cardsBefore),
+            cardsAfter: numericOrNull(diffRaw.cardsAfter),
+            cardsAdded: numericOrZero(diffRaw.cardsAdded),
+            cardsRemoved: numericOrZero(diffRaw.cardsRemoved),
+            changedCards: numericOrZero(diffRaw.changedCards),
+            slides,
+            editPlan,
+          },
+        };
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          deckId,
+          total,
+          limit,
+          offset,
+          operations,
+        },
+      });
+    } catch (error) {
+      if (isSchemaMissingError(error)) {
+        return res.json({
+          success: true,
+          data: {
+            deckId,
+            total: 0,
+            limit,
+            offset,
+            operations: [],
+            warnings: ['schema_missing_ai_operations'],
+          },
+        });
+      }
+      logger.warn('[Presentations] Could not load agent history', error);
+      return res.json({
+        success: true,
+        data: {
+          deckId,
+          total: 0,
+          limit,
+          offset,
+          operations: [],
+          warnings: ['agent_history_load_failed'],
+        },
+      });
+    }
   })
 );
 

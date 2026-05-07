@@ -13,7 +13,7 @@
  * - API Key Management
  */
 
-import { Activity, BarChart3, Flag, HardDrive, Key, Settings, Shield, Webhook } from 'lucide-react';
+import { Activity, BarChart3, Flag, HardDrive, Key, Settings, Shield, ShieldAlert, Webhook } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
@@ -30,6 +30,7 @@ import {
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { APIManagementView } from './APIManagementView';
+import PresentationGovernanceWatchlistView from './PresentationGovernanceWatchlistView';
 
 interface SystemModuleProps {
   initialTab?: string;
@@ -84,6 +85,7 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
     { id: 'backup', label: 'Backup', icon: <HardDrive size={16} /> },
     { id: 'api-keys', label: 'API Keys', icon: <Key size={16} /> },
+    { id: 'presentation-watchlist', label: 'Governance Watchlist', icon: <ShieldAlert size={16} /> },
   ];
 
   const renderContent = () => {
@@ -116,6 +118,12 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
         return (
           <div className="p-6 overflow-y-auto h-full">
             <APIManagementView />
+          </div>
+        );
+      case 'presentation-watchlist':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <PresentationGovernanceWatchlistView />
           </div>
         );
       default:

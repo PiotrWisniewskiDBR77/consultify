@@ -28,6 +28,12 @@ import { AgentPanel } from './AgentPanel';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
+import { DeckAuditLogModal } from './DeckAuditLogModal';
+import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
+import {
+  fetchPresentationGovernanceCard,
+  type GovernanceVerdict,
+} from '@/services/presentationGovernance';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
@@ -298,6 +304,9 @@ export const DeckBuilder: React.FC = () => {
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [auditLogOpen, setAuditLogOpen] = useState(false);
+  const [governanceModalOpen, setGovernanceModalOpen] = useState(false);
+  const [governanceVerdict, setGovernanceVerdict] = useState<GovernanceVerdict | null>(null);
   const [runtimeEvents, setRuntimeEvents] = useState<{
     events: PresentationRuntimeEvent[];
     degraded: boolean;
@@ -375,6 +384,26 @@ export const DeckBuilder: React.FC = () => {
       clearInterval(intervalId);
     };
   }, [deck?.deck_id, refetchRuntimeEvents]);
+
+  useEffect(() => {
+    const targetDeckId = deck?.deck_id;
+    if (!targetDeckId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetchPresentationGovernanceCard(targetDeckId);
+        if (cancelled) return;
+        if (res.status === 'ok' && res.card) {
+          setGovernanceVerdict(res.card.overallVerdict);
+        }
+      } catch {
+        // never block deck builder on prefetch errors
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [deck?.deck_id]);
 
   useCommandPaletteShortcut(() => setCommandPaletteOpen(true));
 
@@ -666,9 +695,11 @@ export const DeckBuilder: React.FC = () => {
       } catch (err: any) {
         if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
           setQualityGatesOpen(true);
-          const firstBlocker = Array.isArray(err.gates)
-            ? err.gates.find((gate: any) => typeof gate?.cardIndex === 'number')
-            : null;
+          const firstBlocker = (Array.isArray(err.gates)
+            ? err.gates.find(
+                (gate: { cardIndex?: unknown }) => typeof gate?.cardIndex === 'number'
+              )
+            : null) as { cardIndex?: number } | null;
           if (firstBlocker && typeof firstBlocker.cardIndex === 'number') {
             setActiveCardIndex(firstBlocker.cardIndex);
           }
@@ -818,6 +849,9 @@ export const DeckBuilder: React.FC = () => {
             connectionStatus={collab.connectionStatus}
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
+            onAuditLog={() => setAuditLogOpen(true)}
+            onGovernance={() => setGovernanceModalOpen(true)}
+            governanceVerdict={governanceVerdict}
             confidentiality={
               ((deck as any)?.confidentiality ||
                 (deck as any)?.meta?.confidentiality ||
@@ -999,6 +1033,23 @@ export const DeckBuilder: React.FC = () => {
             onClose={() => setAnalyticsOpen(false)}
             totalCards={deck?.cards.length || 0}
           />
+
+          {/* Audit Log Modal */}
+          {auditLogOpen && (
+            <DeckAuditLogModal
+              deckId={deckId || deck?.deck_id || ''}
+              onClose={() => setAuditLogOpen(false)}
+            />
+          )}
+
+          {/* Governance Card Modal */}
+          {governanceModalOpen && (
+            <DeckGovernanceCardModal
+              deckId={deckId || deck?.deck_id || ''}
+              onClose={() => setGovernanceModalOpen(false)}
+              onCardLoaded={(card) => setGovernanceVerdict(card.overallVerdict)}
+            />
+          )}
         </div>
 
         {/* Bottom Bar */}
