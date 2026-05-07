@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { dbRun } from '../database/db.js';
+import { run as dbRun } from '../utils/DbPromise.js';
 
 export interface PresentationRuntimeEventInput {
   organizationId: string;
