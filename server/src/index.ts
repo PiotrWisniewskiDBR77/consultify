@@ -1228,10 +1228,6 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   res.setHeader('X-Consultify-Cache-Guard', 'staging-cache-kill-v3');
-  if (isStagingOrDemoHost(req)) {
-    // Emergency guard for stubborn stale-client incidents on staging/demo.
-    res.setHeader('Clear-Site-Data', '"cache"');
-  }
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
       logger.error(`[Server] Error sending index.html: ${err.message}`);
@@ -1304,9 +1300,6 @@ app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextF
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
-  if (isStagingOrDemoHost(req)) {
-    res.setHeader('Clear-Site-Data', '"cache"');
-  }
 
   if (req.path !== currentBundle.publicPath) {
     logger.warn(
@@ -1319,18 +1312,40 @@ app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextF
 
 // Serve static files from the React app
 // fallthrough: true means continue to next middleware if file not found
-const staticFrontendNoStore = express.static(frontendDistPath, {
+const isHashedAssetFilename = (filename: string): boolean =>
+  /-[a-z0-9]{8,}\.(js|css|map|png|jpg|jpeg|svg|webp|gif|ico|woff2?)$/i.test(filename);
+
+const staticFrontendSmartCache = express.static(frontendDistPath, {
   maxAge: 0,
-  etag: false,
-  setHeaders: (res) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+  setHeaders: (res, filePath) => {
+    const normalized = String(filePath || '');
+    const filename = path.basename(normalized);
+    const isAssetsDir = normalized.includes(`${path.sep}assets${path.sep}`);
+
+    // Prefer performance for content-hashed Vite assets: safe to cache forever.
+    if (isAssetsDir && isHashedAssetFilename(filename)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Surrogate-Control', 'public, max-age=31536000, immutable');
+      return;
+    }
+
+    // Never cache HTML (entry point is controlled by serveIndexHtml anyway).
+    if (filename.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+      return;
+    }
+
+    // Small non-hashed assets (manifest/locales/icons) can be cached briefly.
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Surrogate-Control', 'public, max-age=3600');
   },
   fallthrough: true,
 });
 
-app.use(staticFrontendNoStore);
+app.use(staticFrontendSmartCache);
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 // Use app.use to catch all HTTP methods and routes
@@ -1389,9 +1404,6 @@ app.use((req: Request, res: Response) => {
           res.setHeader('Expires', '0');
           res.setHeader('Surrogate-Control', 'no-store');
           res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
-          if (isStagingOrDemoHost(req)) {
-            res.setHeader('Clear-Site-Data', '"cache"');
-          }
           return res.sendFile(currentBundle.fsPath);
         }
       }
