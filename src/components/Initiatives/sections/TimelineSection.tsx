@@ -462,7 +462,8 @@ const HealthIndicators: React.FC<{
     {
       label: isPolish ? 'Otwarte ryzyka' : 'Open risks',
       value: String(openRisks),
-      color: openRisks > 2 ? 'text-rose-500' : openRisks > 0 ? 'text-amber-500' : 'text-emerald-500',
+      color:
+        openRisks > 2 ? 'text-rose-500' : openRisks > 0 ? 'text-amber-500' : 'text-emerald-500',
     },
   ];
 

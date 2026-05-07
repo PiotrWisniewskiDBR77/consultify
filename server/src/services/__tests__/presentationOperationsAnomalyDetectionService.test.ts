@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  detectAnomaliesForReport,
-  detectAnomaly,
   type AnomalySample,
   type AnomalySloId,
   type AnomalyVerdict,
+  detectAnomaliesForReport,
+  detectAnomaly,
 } from '../presentationOperationsAnomalyDetectionService.js';
 
 const NOW_ISO = '2026-05-10T12:00:00.000Z';
@@ -19,11 +19,7 @@ const NOW_MS = Date.parse(NOW_ISO);
  *   sum((xi - mean)^2) / n = stdev^2
  * for any even `n`. The constructor accepts `n` as the number of samples.
  */
-function controlledBaseline(
-  mean: number,
-  stdev: number,
-  n: number = 6
-): AnomalySample[] {
+function controlledBaseline(mean: number, stdev: number, n: number = 6): AnomalySample[] {
   if (n % 2 !== 0) throw new Error('controlledBaseline requires an even n');
   const samples: AnomalySample[] = [];
   for (let i = 0; i < n; i += 1) {
@@ -241,9 +237,7 @@ describe('presentationOperationsAnomalyDetectionService.detectAnomaly', () => {
     expect(bySlo.get('generation_success_rate')?.status).toBe('detected');
     expect(bySlo.get('generation_success_rate')?.severity).toBe('major');
     expect(bySlo.get('export_success_rate')?.status).toBe('no_anomaly');
-    expect(bySlo.get('p95_generation_latency_ms')?.status).toBe(
-      'insufficient_data'
-    );
+    expect(bySlo.get('p95_generation_latency_ms')?.status).toBe('insufficient_data');
   });
 
   it('detectAnomaliesForReport never throws on empty / malformed input', () => {

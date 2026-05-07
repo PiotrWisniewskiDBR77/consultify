@@ -730,7 +730,9 @@ const SLAMetricCard: React.FC<{
     <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
       {label}
     </div>
-    <div className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-rose-400'}`}>
+    <div
+      className={`text-xs mt-2 ${status === 'compliant' ? 'text-emerald-400' : 'text-rose-400'}`}
+    >
       {target}
     </div>
   </div>

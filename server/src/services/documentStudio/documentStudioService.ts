@@ -31,6 +31,13 @@ import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import { planDocumentOutline } from './documentNarrativePlanner.js';
 import { refineOutlineWithLlm } from './documentNarrativeRefiner.js';
 import { renderDocumentSchemaToPdfBuffer } from './documentPdfRenderer.js';
+import {
+  canOverrideQa,
+  QaBlockingError,
+  QaOverrideUnauthorizedError,
+  requiresApprovalForExport,
+  runDocumentQa,
+} from './documentQaService.js';
 import { renderSchemaToMarkdown } from './documentSchemaRenderer.js';
 import type {
   DocumentAuditEntry,
@@ -301,10 +308,30 @@ export async function getDocumentArtifact(
   return null;
 }
 
+export interface ExportDocumentOptions {
+  /** Actor performing the export; required to audit QA-block / override events. */
+  userId?: string;
+  /**
+   * Effective role of the actor as resolved by the auth middleware
+   * (`SUPERADMIN`, `OWNER`, `ADMIN`, `PROJECT_MANAGER`, `MEMBER`, …).
+   * The service uses it to enforce `canOverrideQa(role)` when
+   * `qaOverride: true` is passed.
+   */
+  userRole?: string;
+  /**
+   * When `true`, bypass the QA blocking gate and emit a `qa_override_export`
+   * audit entry. The service enforces `canOverrideQa(userRole)` and
+   * throws `QaOverrideUnauthorizedError` when the role is not allowed
+   * (auditing the denied attempt as `qa_override_denied`).
+   */
+  qaOverride?: boolean;
+}
+
 export async function exportDocumentArtifact(
   artifactId: string,
   organizationId: string,
-  format: 'markdown' | 'docx' | 'pdf'
+  format: 'markdown' | 'docx' | 'pdf',
+  options: ExportDocumentOptions = {}
 ): Promise<DocumentExportResult> {
   const artifact = await getWave5Artifact(artifactId, organizationId);
   if (!artifact) throw new Error('Document artifact not found');
@@ -314,6 +341,117 @@ export async function exportDocumentArtifact(
     .toString()
     .replace(/[^a-z0-9_-]+/gi, '_')
     .toLowerCase()}.${format}`;
+
+  // QA gate: load the schema (also needed for binary renderers below) and
+  // run QA when the document type is approval-gated. The gate runs for
+  // every export format — including markdown — so callers can't sidestep
+  // by switching format. Markdown export of an artifact missing a schema
+  // (legacy path) preserves the original behavior and skips the gate.
+  const schema = await getDocumentArtifact(artifactId, organizationId);
+  if (!schema) {
+    if (format === 'markdown') {
+      return {
+        format,
+        filename,
+        contentText: String(artifact.content ?? ''),
+        manifest,
+      };
+    }
+    throw new Error('Document schema not found on artifact');
+  }
+
+  if (requiresApprovalForExport(schema.documentType)) {
+    // Role-gated override: enforce BEFORE running QA so that an
+    // unauthorized override attempt is logged independently of whether
+    // QA itself would have passed.
+    if (options.qaOverride && !canOverrideQa(options.userRole)) {
+      pushAuditEntry({
+        auditId: makeId('doc-audit'),
+        artifactId,
+        organizationId,
+        action: 'qa_override_denied',
+        actorId: options.userId ?? 'system',
+        occurredAt: nowIso(),
+        details: {
+          format,
+          documentType: schema.documentType,
+          attemptedRole: options.userRole ?? null,
+        },
+      });
+      throw new QaOverrideUnauthorizedError(options.userRole ?? '');
+    }
+
+    const report = runDocumentQa(schema);
+    report.organizationId = organizationId;
+
+    // Compact, audit-friendly snapshot of the report. Used both in the
+    // export manifest and in the audit `details` so the audit panel can
+    // replay the QA state at export time without re-running QA.
+    const reportSnapshot = {
+      anyBlocking: report.anyBlocking,
+      categories: report.categories.map((c) => ({
+        category: c.category,
+        score: c.score,
+        blocking: c.blocking,
+        findingsCount: c.findings.length,
+      })),
+      blockingFindings: report.categories
+        .filter((c) => c.blocking)
+        .flatMap((c) =>
+          c.findings.map((f) => ({
+            category: c.category,
+            severity: f.severity,
+            code: f.code,
+            sectionId: f.sectionId,
+            blockId: f.blockId,
+          }))
+        ),
+    };
+
+    if (report.anyBlocking && !options.qaOverride) {
+      pushAuditEntry({
+        auditId: makeId('doc-audit'),
+        artifactId,
+        organizationId,
+        action: 'qa_blocked_export',
+        actorId: options.userId ?? 'system',
+        occurredAt: nowIso(),
+        details: {
+          format,
+          documentType: schema.documentType,
+          blockingCategories: report.categories.filter((c) => c.blocking).map((c) => c.category),
+          qaReport: reportSnapshot,
+        },
+      });
+      throw new QaBlockingError(report);
+    }
+    if (report.anyBlocking && options.qaOverride) {
+      pushAuditEntry({
+        auditId: makeId('doc-audit'),
+        artifactId,
+        organizationId,
+        action: 'qa_override_export',
+        actorId: options.userId ?? 'system',
+        occurredAt: nowIso(),
+        details: {
+          format,
+          documentType: schema.documentType,
+          actorRole: options.userRole ?? null,
+          blockingCategories: report.categories.filter((c) => c.blocking).map((c) => c.category),
+          qaReport: reportSnapshot,
+        },
+      });
+      (manifest as Record<string, unknown>).qaOverride = true;
+    }
+    (manifest as Record<string, unknown>).qaReportSummary = {
+      anyBlocking: report.anyBlocking,
+      categories: report.categories.map((c) => ({
+        category: c.category,
+        score: c.score,
+        blocking: c.blocking,
+      })),
+    };
+  }
 
   if (format === 'markdown') {
     return {
@@ -330,10 +468,6 @@ export async function exportDocumentArtifact(
   // Persist the export through the wave5 pipeline by marking the artifact
   // as `exported` once a binary payload has been produced (audit-friendly:
   // matches `markWave5ArtifactExported` semantics used by the V8 runtime).
-  const schema = await getDocumentArtifact(artifactId, organizationId);
-  if (!schema) {
-    throw new Error('Document schema not found on artifact');
-  }
   let binary: Buffer;
   if (format === 'docx') {
     binary = await renderDocumentSchemaToDocxBuffer(schema);
@@ -361,6 +495,15 @@ export async function exportDocumentArtifact(
     },
   };
 }
+
+// Re-export QA-related errors and policy so the route layer can catch
+// them and consult the policy without reaching into the QA service
+// module directly.
+export {
+  canOverrideQa,
+  QaBlockingError,
+  QaOverrideUnauthorizedError,
+} from './documentQaService.js';
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -844,6 +987,8 @@ export async function approveEditProposal(params: {
       affectedSectionIds: proposal.affectedSectionIds,
       sectionId: proposal.sectionId,
       blockId: proposal.blockId,
+      llmRefined: proposal.llmRefined === true,
+      blockRewritesCount: proposal.blockRewrites ? Object.keys(proposal.blockRewrites).length : 0,
     },
   });
   return { proposal: nextProposal, schema: nextSchema };

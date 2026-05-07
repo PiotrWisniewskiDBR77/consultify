@@ -86,12 +86,7 @@ export interface RevokeTokenInput {
 }
 
 export interface RevokeTokenOutput {
-  status:
-    | 'ok'
-    | 'not_found'
-    | 'already_revoked'
-    | 'invalid_reason'
-    | 'storage_error';
+  status: 'ok' | 'not_found' | 'already_revoked' | 'invalid_reason' | 'storage_error';
   token?: SubscriberTokenSummary;
   reason?: string;
 }
@@ -234,8 +229,7 @@ export function normalizeRevocationReason(raw: unknown): NormalizedReason {
     errors.push('reason_too_short');
     return { ok: false, reason: '', errors };
   }
-  const reason =
-    trimmed.length > MAX_REASON_LENGTH ? trimmed.slice(0, MAX_REASON_LENGTH) : trimmed;
+  const reason = trimmed.length > MAX_REASON_LENGTH ? trimmed.slice(0, MAX_REASON_LENGTH) : trimmed;
   return { ok: true, reason, errors: [] };
 }
 
@@ -300,10 +294,7 @@ async function ensureSubscriptionOwnership(
     if (isSchemaMissingError(error)) {
       return { exists: false, schemaMissing: true };
     }
-    logger.warn(
-      '[SubscriberTokenManagement] ensureSubscriptionOwnership failed',
-      error
-    );
+    logger.warn('[SubscriberTokenManagement] ensureSubscriptionOwnership failed', error);
     return { exists: false, schemaMissing: false };
   }
 }
@@ -390,9 +381,7 @@ export async function listSubscriberTokens(
       const bRevoked = b.status === 'revoked';
       if (aRevoked !== bRevoked) return aRevoked ? -1 : 1;
       if (aRevoked && bRevoked) {
-        return (
-          (Date.parse(b.revokedAt || '') || 0) - (Date.parse(a.revokedAt || '') || 0)
-        );
+        return (Date.parse(b.revokedAt || '') || 0) - (Date.parse(a.revokedAt || '') || 0);
       }
       return (Date.parse(b.issuedAt || '') || 0) - (Date.parse(a.issuedAt || '') || 0);
     })

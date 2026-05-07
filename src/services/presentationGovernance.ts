@@ -36,12 +36,7 @@ export interface PresentationGovernanceCard {
   [key: string]: unknown;
 }
 
-export type GovernanceFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'not_found'
-  | 'unavailable';
+export type GovernanceFetchStatus = 'ok' | 'error' | 'forbidden' | 'not_found' | 'unavailable';
 
 export interface GovernanceFetchResult {
   status: GovernanceFetchStatus;
@@ -163,8 +158,7 @@ export async function fetchPresentationGovernanceCard(
       return { status: 'error', error: `http_${res.status}` };
     }
     const json: unknown = await res.json().catch(() => null);
-    const innerData =
-      isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
+    const innerData = isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
     const card = normalizeCard(innerData);
     if (!card) return { status: 'error', error: 'invalid_payload' };
     return { status: 'ok', card };

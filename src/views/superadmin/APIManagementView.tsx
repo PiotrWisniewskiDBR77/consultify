@@ -1062,7 +1062,9 @@ export const APIManagementView: React.FC = () => {
       {keyPendingRevoke && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-navy-700 dark:bg-navy-900">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Revoke API key?</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Revoke API key?
+            </h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               This will revoke <span className="font-medium">{keyPendingRevoke.name}</span>. The
               secret cannot be used after revocation.

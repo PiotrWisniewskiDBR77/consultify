@@ -155,10 +155,14 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
       if (res.ok) {
         setReport(json?.data || null);
       } else {
-        setError(json?.error || t('presentations.qualityGates.failed', 'Quality gates failed to run.'));
+        setError(
+          json?.error || t('presentations.qualityGates.failed', 'Quality gates failed to run.')
+        );
       }
     } catch (err: any) {
-      setError(err?.message || t('presentations.qualityGates.failed', 'Quality gates failed to run.'));
+      setError(
+        err?.message || t('presentations.qualityGates.failed', 'Quality gates failed to run.')
+      );
     } finally {
       setLoading(false);
     }
@@ -224,8 +228,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
   }
   for (const key of priorityOrder) {
     groupedByPriority[key].sort(
-      (a, b) =>
-        a.category.localeCompare(b.category) || a.message.localeCompare(b.message)
+      (a, b) => a.category.localeCompare(b.category) || a.message.localeCompare(b.message)
     );
   }
 
@@ -351,8 +354,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
             </div>
             {resultValue && (
               <div className="text-xs text-slate-600 dark:text-slate-300">
-                Result:{' '}
-                <span className={`font-semibold ${resultColorClass}`}>{resultValue}</span>
+                Result: <span className={`font-semibold ${resultColorClass}`}>{resultValue}</span>
               </div>
             )}
           </div>

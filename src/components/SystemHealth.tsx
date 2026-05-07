@@ -206,7 +206,9 @@ export const SystemHealth = () => {
                 <span className="text-slate-500 dark:text-slate-400">
                   {t('system.status', 'Status')}
                 </span>
-                <span className={metrics.dbStatus === 'online' ? 'text-green-500' : 'text-rose-500'}>
+                <span
+                  className={metrics.dbStatus === 'online' ? 'text-green-500' : 'text-rose-500'}
+                >
                   {metrics.dbStatus === 'online'
                     ? t('system.connected', 'Connected')
                     : t('system.disconnected', 'Disconnected')}

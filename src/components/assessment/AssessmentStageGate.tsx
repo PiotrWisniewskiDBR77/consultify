@@ -230,7 +230,9 @@ export const AssessmentStageGate: React.FC<Props> = ({
           </div>
           <div className="text-sm text-slate-600 dark:text-slate-400">
             Current:{' '}
-            <span className="font-medium text-primary-600 dark:text-primary-400">{currentPhase}</span>
+            <span className="font-medium text-primary-600 dark:text-primary-400">
+              {currentPhase}
+            </span>
           </div>
         </div>
       </div>

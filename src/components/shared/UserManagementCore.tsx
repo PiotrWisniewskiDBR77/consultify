@@ -115,7 +115,9 @@ export const UserTableRow: React.FC<{
       </td>
       <td className="px-6 py-4">
         <span className="text-xs text-slate-700 dark:text-slate-300">
-          {user.projectRole || <span className="text-slate-500 dark:text-slate-500 italic">Not set</span>}
+          {user.projectRole || (
+            <span className="text-slate-500 dark:text-slate-500 italic">Not set</span>
+          )}
         </span>
       </td>
       <td className="px-6 py-4">
@@ -633,21 +635,19 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     loadData();
   }, [loadUsers]);
 
-  const filteredUsers = users.filter(
-    (u) => {
-      const normalizedSearch = searchTerm.toLowerCase();
-      const matchesSearch =
-        (u.email || '').toLowerCase().includes(normalizedSearch) ||
-        (u.firstName || '').toLowerCase().includes(normalizedSearch) ||
-        (u.lastName || '').toLowerCase().includes(normalizedSearch) ||
-        (u.department || '').toLowerCase().includes(normalizedSearch) ||
-        (u.jobTitle || '').toLowerCase().includes(normalizedSearch) ||
-        (u.projectRole || '').toLowerCase().includes(normalizedSearch);
+  const filteredUsers = users.filter((u) => {
+    const normalizedSearch = searchTerm.toLowerCase();
+    const matchesSearch =
+      (u.email || '').toLowerCase().includes(normalizedSearch) ||
+      (u.firstName || '').toLowerCase().includes(normalizedSearch) ||
+      (u.lastName || '').toLowerCase().includes(normalizedSearch) ||
+      (u.department || '').toLowerCase().includes(normalizedSearch) ||
+      (u.jobTitle || '').toLowerCase().includes(normalizedSearch) ||
+      (u.projectRole || '').toLowerCase().includes(normalizedSearch);
 
-      const matchesProjectRole = !selectedProjectRole || u.projectRole === selectedProjectRole;
-      return matchesSearch && matchesProjectRole;
-    }
-  );
+    const matchesProjectRole = !selectedProjectRole || u.projectRole === selectedProjectRole;
+    return matchesSearch && matchesProjectRole;
+  });
   const selectedOrganizationName =
     mode === 'platform'
       ? organizations.find((org) => org.id === selectedOrganizationId)?.name || ''

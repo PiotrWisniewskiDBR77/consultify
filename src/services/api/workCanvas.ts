@@ -9,7 +9,9 @@ import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClien
 
 const BASE_PATH = `${API_URL}/work-canvas`;
 
-type Envelope<T> = T | { data?: T; auditEventId?: string | null; readBack?: Record<string, unknown> | null };
+type Envelope<T> =
+  | T
+  | { data?: T; auditEventId?: string | null; readBack?: Record<string, unknown> | null };
 
 function unwrap<T>(payload: Envelope<T>): T {
   if (payload && typeof payload === 'object' && 'data' in payload) {
@@ -18,9 +20,14 @@ function unwrap<T>(payload: Envelope<T>): T {
   return payload as T;
 }
 
-function meta(payload: unknown): Pick<WorkCanvasActionResult<unknown>, 'auditEventId' | 'readBack'> {
+function meta(
+  payload: unknown
+): Pick<WorkCanvasActionResult<unknown>, 'auditEventId' | 'readBack'> {
   if (!payload || typeof payload !== 'object') return {};
-  const value = payload as { auditEventId?: string | null; readBack?: Record<string, unknown> | null };
+  const value = payload as {
+    auditEventId?: string | null;
+    readBack?: Record<string, unknown> | null;
+  };
   return {
     auditEventId: value.auditEventId,
     readBack: value.readBack,
@@ -57,15 +64,15 @@ export const WorkCanvasApi = {
     draft: WorkCanvasDraft;
     proposals: WorkCanvasConversionProposal[];
   }> {
-    const payload = await request<Envelope<{ draft: WorkCanvasDraft; proposals: WorkCanvasConversionProposal[] }>>(
-      `/drafts/${encodeURIComponent(draftId)}`,
-      undefined,
-      'Failed to load Work Canvas draft'
-    );
+    const payload = await request<
+      Envelope<{ draft: WorkCanvasDraft; proposals: WorkCanvasConversionProposal[] }>
+    >(`/drafts/${encodeURIComponent(draftId)}`, undefined, 'Failed to load Work Canvas draft');
     return unwrap(payload);
   },
 
-  async createDraft(input: Partial<WorkCanvasDraft>): Promise<WorkCanvasActionResult<WorkCanvasDraft>> {
+  async createDraft(
+    input: Partial<WorkCanvasDraft>
+  ): Promise<WorkCanvasActionResult<WorkCanvasDraft>> {
     const payload = await request<Envelope<WorkCanvasDraft>>(
       '/drafts',
       {

@@ -15,6 +15,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
+import { canUseInternalTools } from '../../../utils/internalToolsAccess';
 import {
   dispatchPilotAccessBlocked,
   getPilotLockedAreaDetail,
@@ -24,7 +25,6 @@ import {
   lockMainMenuForPublicProduction,
   shouldLockNonCoreModulesInPublicProduction,
 } from '../../../utils/publicProduction';
-import { canUseInternalTools } from '../../../utils/internalToolsAccess';
 import {
   isAdminOwnerOrSuperAdminRole,
   isPilotRestrictedRole,

@@ -589,7 +589,9 @@ describe('TrustBadge', () => {
   });
 
   it('T-TR2: does not render for degraded input without citations', () => {
-    render(<TrustBadge isEnabled={() => true} isReasoningEnabled={() => true} citations={undefined} />);
+    render(
+      <TrustBadge isEnabled={() => true} isReasoningEnabled={() => true} citations={undefined} />
+    );
     expect(screen.queryByTestId('trust-badge-trigger')).not.toBeInTheDocument();
   });
 

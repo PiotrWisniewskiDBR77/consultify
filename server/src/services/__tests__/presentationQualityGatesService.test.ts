@@ -21,7 +21,8 @@ describe('presentationQualityGatesService', () => {
 
   it('blocks export when P0/P1 governance gates fail', async () => {
     dbGet.mockImplementation(async (query: string) => {
-      if (query.includes('presentation_decks')) return { id: 'deck-1', presentation_mode: 'briefing' };
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-1', presentation_mode: 'briefing' };
       if (query.includes('brand_kits')) return { id: 'brand-1' };
       return null;
     });
@@ -46,9 +47,7 @@ describe('presentationQualityGatesService', () => {
     expect(report.result).toBe('BLOCKED_P1');
     expect(report.scorecard.p0).toBeGreaterThan(0);
     expect(
-      report.gates.some(
-        (gate) => gate.gateType === 'PLACEHOLDER_CONTENT' && gate.priority === 'P0'
-      )
+      report.gates.some((gate) => gate.gateType === 'PLACEHOLDER_CONTENT' && gate.priority === 'P0')
     ).toBe(true);
     expect(
       report.gates.some(
@@ -71,7 +70,14 @@ describe('presentationQualityGatesService', () => {
           intent: 'executive_summary',
           title: 'Executive Summary',
           key_message: 'Decision: approve phase-one release',
-          source_refs: [{ artifact_id: 'a1', artifact_type: 'report', artifact_name: 'Report', confidence: 0.92 }],
+          source_refs: [
+            {
+              artifact_id: 'a1',
+              artifact_type: 'report',
+              artifact_name: 'Report',
+              confidence: 0.92,
+            },
+          ],
           blocks: [{ content: { text: 'High confidence summary' } }],
           speaker_notes: 'Presenter narrative for executive context.',
         },
@@ -79,7 +85,14 @@ describe('presentationQualityGatesService', () => {
           intent: 'next_steps',
           title: 'Next Steps',
           key_message: 'Decision owners and timeline for approval',
-          source_refs: [{ artifact_id: 'a2', artifact_type: 'report', artifact_name: 'Roadmap', confidence: 0.88 }],
+          source_refs: [
+            {
+              artifact_id: 'a2',
+              artifact_type: 'report',
+              artifact_name: 'Roadmap',
+              confidence: 0.88,
+            },
+          ],
           blocks: [
             {
               content: {

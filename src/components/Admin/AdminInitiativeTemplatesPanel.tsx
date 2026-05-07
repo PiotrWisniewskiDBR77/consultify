@@ -695,7 +695,9 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                   >
                     <div className="flex items-center gap-1">
                       <span
-                        className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}
+                        className={
+                          (tableFilters.type as string[])?.length ? 'text-primary-500' : ''
+                        }
                       >
                         Type
                       </span>

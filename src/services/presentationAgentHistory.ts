@@ -1,12 +1,6 @@
 import { Api } from '@/services/api';
 
-export type AgentHistoryStatus =
-  | 'draft'
-  | 'accepted'
-  | 'rejected'
-  | 'applied'
-  | 'failed'
-  | string;
+export type AgentHistoryStatus = 'draft' | 'accepted' | 'rejected' | 'applied' | 'failed' | string;
 
 export interface AgentHistorySlideDiff {
   index: number;
@@ -44,12 +38,7 @@ export interface PresentationAgentHistoryEntry {
   diff: AgentHistoryDiff;
 }
 
-export type AgentHistoryFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'not_found'
-  | 'unavailable';
+export type AgentHistoryFetchStatus = 'ok' | 'error' | 'forbidden' | 'not_found' | 'unavailable';
 
 export interface AgentHistoryFetchResult {
   status: AgentHistoryFetchStatus;
@@ -466,8 +455,7 @@ function readBulkErrorPayload(payload: unknown): {
     out.rejected = safe.rejected
       .map((entry) => {
         if (!isRecord(entry)) return null;
-        const operationId =
-          typeof entry.operationId === 'string' ? entry.operationId : '';
+        const operationId = typeof entry.operationId === 'string' ? entry.operationId : '';
         const reason = typeof entry.reason === 'string' ? entry.reason : '';
         if (!operationId || !reason) return null;
         return { operationId, reason };
@@ -491,8 +479,7 @@ function normalizeBulkSuccess(
   const deckId = typeof data.deckId === 'string' && data.deckId ? data.deckId : fallbackDeckId;
   const revertOperationId =
     typeof data.revertOperationId === 'string' ? data.revertOperationId : '';
-  const baseSnapshotId =
-    typeof data.baseSnapshotId === 'string' ? data.baseSnapshotId : '';
+  const baseSnapshotId = typeof data.baseSnapshotId === 'string' ? data.baseSnapshotId : '';
   if (!revertOperationId || !baseSnapshotId) return null;
   return {
     deckId,

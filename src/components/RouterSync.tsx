@@ -5,6 +5,7 @@ import { getAppViewFromPath } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AuthStep, SessionMode } from '../types';
 import { parseArtifactRef } from '../utils/artifactLinks';
+import { canUseInternalTools, isInternalToolsPath } from '../utils/internalToolsAccess';
 import {
   dispatchPilotAccessBlocked,
   getPilotBlockedFallbackPath,
@@ -18,7 +19,6 @@ import {
   isPilotRestrictedRole,
   isSuperAdminRole,
 } from '../utils/roleGuards';
-import { canUseInternalTools, isInternalToolsPath } from '../utils/internalToolsAccess';
 
 /**
  * RouterSync

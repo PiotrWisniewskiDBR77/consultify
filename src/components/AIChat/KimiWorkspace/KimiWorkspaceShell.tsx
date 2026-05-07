@@ -664,7 +664,7 @@ function ArtifactPreviewPane({
                       className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
                     >
                       <LayoutGrid size={14} />
-                      {t('kimi.openInBuilder', 'Open in Deck Builder')}
+                      {t('kimi.openInBuilder', 'Open in Builder')}
                     </button>
                   )}
                 </div>
@@ -677,7 +677,7 @@ function ArtifactPreviewPane({
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
                 >
                   <LayoutGrid size={14} />
-                  {t('kimi.openInBuilder', 'Open in Deck Builder')}
+                  {t('kimi.openInBuilder', 'Open in Builder')}
                 </button>
               </div>
             )}

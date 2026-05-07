@@ -25,12 +25,30 @@ describe('presentationRuntimeRollupService', () => {
     const now = new Date('2026-05-10T12:00:00.000Z');
     const dayMs = 86_400_000;
     const rows: PresentationRuntimeEventRow[] = [
-      row({ event_type: 'agent_edit_proposal_created', created_at: new Date(now.getTime() - 1 * dayMs).toISOString() }),
-      row({ event_type: 'agent_edit_applied', created_at: new Date(now.getTime() - 2 * dayMs).toISOString() }),
-      row({ event_type: 'agent_edit_rejected', created_at: new Date(now.getTime() - 3 * dayMs).toISOString() }),
-      row({ event_type: 'agent_edit_noop', created_at: new Date(now.getTime() - 4 * dayMs).toISOString() }),
-      row({ event_type: 'export_blocked', created_at: new Date(now.getTime() - 5 * dayMs).toISOString() }),
-      row({ event_type: 'agent_edit_proposal_created', created_at: new Date(now.getTime() - 6 * dayMs).toISOString() }),
+      row({
+        event_type: 'agent_edit_proposal_created',
+        created_at: new Date(now.getTime() - 1 * dayMs).toISOString(),
+      }),
+      row({
+        event_type: 'agent_edit_applied',
+        created_at: new Date(now.getTime() - 2 * dayMs).toISOString(),
+      }),
+      row({
+        event_type: 'agent_edit_rejected',
+        created_at: new Date(now.getTime() - 3 * dayMs).toISOString(),
+      }),
+      row({
+        event_type: 'agent_edit_noop',
+        created_at: new Date(now.getTime() - 4 * dayMs).toISOString(),
+      }),
+      row({
+        event_type: 'export_blocked',
+        created_at: new Date(now.getTime() - 5 * dayMs).toISOString(),
+      }),
+      row({
+        event_type: 'agent_edit_proposal_created',
+        created_at: new Date(now.getTime() - 6 * dayMs).toISOString(),
+      }),
     ];
 
     const rollup = buildPresentationRuntimeRollup({ rows, windowDays: 7, now });
@@ -51,9 +69,15 @@ describe('presentationRuntimeRollupService', () => {
     const now = new Date('2026-05-10T12:00:00.000Z');
     const dayMs = 86_400_000;
     const rows: PresentationRuntimeEventRow[] = [
-      row({ event_type: 'agent_edit_applied', created_at: new Date(now.getTime() - 30 * dayMs).toISOString() }),
+      row({
+        event_type: 'agent_edit_applied',
+        created_at: new Date(now.getTime() - 30 * dayMs).toISOString(),
+      }),
       row({ event_type: 'agent_edit_proposal_created', created_at: 'not-a-date' as any }),
-      row({ event_type: 'agent_edit_applied', created_at: new Date(now.getTime() - 1 * dayMs).toISOString() }),
+      row({
+        event_type: 'agent_edit_applied',
+        created_at: new Date(now.getTime() - 1 * dayMs).toISOString(),
+      }),
     ];
 
     const rollup = buildPresentationRuntimeRollup({ rows, windowDays: 7, now });

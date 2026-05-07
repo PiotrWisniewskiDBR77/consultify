@@ -26,17 +26,17 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { DashboardDeepLink } from '../../services/presentationGovernanceDeepLinks';
-import {
-  fetchPresentationTelemetryRollup,
-  type PresentationTelemetryRollup,
-} from '../../services/presentationTelemetry';
 import {
   fetchPresentationGovernanceCard,
   type GovernanceFetchStatus,
   type GovernanceVerdict,
   type PresentationGovernanceCard,
 } from '../../services/presentationGovernance';
+import type { DashboardDeepLink } from '../../services/presentationGovernanceDeepLinks';
+import {
+  fetchPresentationTelemetryRollup,
+  type PresentationTelemetryRollup,
+} from '../../services/presentationTelemetry';
 
 const WINDOW_OPTIONS: number[] = [1, 7, 14, 30, 90];
 const DEFAULT_WINDOW_DAYS = 7;
@@ -104,9 +104,7 @@ interface PresentationTelemetryViewProps {
   deepLink?: DashboardDeepLink;
 }
 
-const PresentationTelemetryView: React.FC<PresentationTelemetryViewProps> = ({
-  deepLink,
-}) => {
+const PresentationTelemetryView: React.FC<PresentationTelemetryViewProps> = ({ deepLink }) => {
   // Snapshot the deep-link inputs once on mount. From then on the user's
   // edits take precedence and deep-link prop changes are ignored, which
   // matches the cross-tab contract documented in
@@ -405,7 +403,8 @@ const GovernanceSnapshotCard: React.FC<GovernanceSnapshotCardProps> = ({
             {card.overallVerdict}
           </span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
-            P0 {card.quality.p0} · P1 {card.quality.p1} · P2 {card.quality.p2} · gates {card.quality.gateCount}
+            P0 {card.quality.p0} · P1 {card.quality.p1} · P2 {card.quality.p2} · gates{' '}
+            {card.quality.gateCount}
           </span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
             · {String(card.confidentiality.level)}
@@ -509,10 +508,7 @@ function renderBody(props: BodyProps): React.ReactElement {
           {/* KPI grid (5 cards) */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {kpiCards.map((card) => (
-              <div
-                key={card.label}
-                className={`rounded-lg border p-4 ${TONE_MAP[card.tone]}`}
-              >
+              <div key={card.label} className={`rounded-lg border p-4 ${TONE_MAP[card.tone]}`}>
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-80">
                   {card.icon}
                   {card.label}

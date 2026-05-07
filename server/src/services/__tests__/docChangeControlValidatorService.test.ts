@@ -16,9 +16,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  type ChangelogValidationReport,
   parseOwnerRegistry,
   validateChangelogContent,
-  type ChangelogValidationReport,
   type ValidationIssue,
 } from '../docChangeControlValidatorService.js';
 
@@ -27,17 +27,19 @@ const FILE_PATH = 'docs/governance/CHANGELOG_TEST.md';
 const FULL_RATIONALE =
   'Closing Epic L3 by introducing change control for all controlled docs to prevent silent drift.';
 
-function buildEntry(overrides: Partial<{
-  date: string;
-  author: string;
-  doc: string;
-  riskTier: string;
-  rationale: string;
-  impactNote: string;
-  reviewer: string;
-  linkedPr: string;
-  diffSummary: string[];
-}> = {}): string {
+function buildEntry(
+  overrides: Partial<{
+    date: string;
+    author: string;
+    doc: string;
+    riskTier: string;
+    rationale: string;
+    impactNote: string;
+    reviewer: string;
+    linkedPr: string;
+    diffSummary: string[];
+  }> = {}
+): string {
   const date = overrides.date ?? '2026-05-07';
   const author = overrides.author ?? 'Sprint 14 (L3)';
   const doc = overrides.doc ?? 'docs/product/PRESENTATION_RBAC_MATRIX.md';
@@ -81,14 +83,13 @@ function buildEntry(overrides: Partial<{
 }
 
 function buildChangelog(entryBlocks: string[]): string {
-  const header =
-    `# Changelog — TEST.md\n\nThis file tracks all changes to \`docs/test.md\`.\n\n---\n\n`;
+  const header = `# Changelog — TEST.md\n\nThis file tracks all changes to \`docs/test.md\`.\n\n---\n\n`;
   return header + entryBlocks.join('\n\n---\n\n') + '\n';
 }
 
 function findIssues(
   report: ChangelogValidationReport,
-  field: ValidationIssue['field'],
+  field: ValidationIssue['field']
 ): ValidationIssue[] {
   return report.issues.filter((i) => i.field === field);
 }

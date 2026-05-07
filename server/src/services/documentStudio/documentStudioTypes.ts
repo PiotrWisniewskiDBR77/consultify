@@ -157,6 +157,54 @@ export interface DocumentRunRequest {
   outline?: DocumentOutline;
 }
 
+// =============================================================================
+// QA Engine — MVP-3 hardening (deterministic Brand QA + Language QA).
+// =============================================================================
+
+export type DocumentQaCategory =
+  | 'brand'
+  | 'language'
+  | 'completeness'
+  | 'sources'
+  | 'methodology'
+  | 'executive'
+  | 'risk'
+  | 'data'
+  | 'format'
+  | 'export';
+
+export type DocumentQaSeverity = 'low' | 'medium' | 'high';
+
+export interface DocumentQaFinding {
+  findingId: string;
+  severity: DocumentQaSeverity;
+  message: string;
+  sectionId?: string;
+  blockId?: string;
+  /** Optional code for telemetry / i18n keys ("language_mismatch", "banned_phrase", etc.). */
+  code?: string;
+}
+
+export interface DocumentQaCategoryReport {
+  category: DocumentQaCategory;
+  /** 0..100 score where 100 = no findings. Severity-weighted deduction. */
+  score: number;
+  findings: DocumentQaFinding[];
+  /** Whether the score crosses the policy threshold for soft-blocking exports. */
+  blocking: boolean;
+  /** Human-readable summary the UI can show without iterating findings. */
+  summary: string;
+}
+
+export interface DocumentQaReport {
+  artifactId: string;
+  organizationId: string;
+  generatedAt: string;
+  /** True when ANY category report has `blocking === true`. */
+  anyBlocking: boolean;
+  categories: DocumentQaCategoryReport[];
+}
+
 export interface DocumentRunResult {
   artifactId: string;
   schema: DocumentSchema;
@@ -236,7 +284,10 @@ export type DocumentAuditAction =
   | 'proposal_created'
   | 'proposal_approved'
   | 'proposal_rejected'
-  | 'proposal_executed';
+  | 'proposal_executed'
+  | 'qa_blocked_export'
+  | 'qa_override_export'
+  | 'qa_override_denied';
 
 export interface DocumentAuditEntry {
   auditId: string;

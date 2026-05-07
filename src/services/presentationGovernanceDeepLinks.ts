@@ -168,10 +168,7 @@ export function parseDashboardDeepLink(searchString: string): DashboardDeepLink 
  * URL"; for that, use `applyDashboardDeepLinkToLocation` which preserves
  * unrelated params.
  */
-export function buildDashboardDeepLink(
-  state: DashboardDeepLink,
-  baseUrl?: string
-): string {
+export function buildDashboardDeepLink(state: DashboardDeepLink, baseUrl?: string): string {
   const path = baseUrl ?? '/';
   const params = new URLSearchParams();
 

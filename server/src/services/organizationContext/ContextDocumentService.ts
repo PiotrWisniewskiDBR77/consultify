@@ -1810,10 +1810,7 @@ export async function extractPptxWithSlideLocators(
     const titleMatch = slideText.match(/^([^\n.!?]{1,120})/);
     const slideTitle = titleMatch ? titleMatch[1].trim() : null;
 
-    const slideContent = [
-      slideText,
-      notesText ? `\n\n[Speaker notes]\n${notesText}` : '',
-    ]
+    const slideContent = [slideText, notesText ? `\n\n[Speaker notes]\n${notesText}` : '']
       .filter(Boolean)
       .join('');
 
@@ -1947,8 +1944,8 @@ export async function extractImageWithOcr(
     try {
       const tesseractMod = (await import('tesseract.js')) as any;
       const tesseract = tesseractMod.default || tesseractMod;
-      const languages = String(process.env.ORG_CONTEXT_IMAGE_OCR_LANGUAGES || 'eng').trim() ||
-        'eng';
+      const languages =
+        String(process.env.ORG_CONTEXT_IMAGE_OCR_LANGUAGES || 'eng').trim() || 'eng';
       const result = await tesseract.recognize(buffer, languages);
       const text = String(result?.data?.text || '').trim();
       const confidence = Number(result?.data?.confidence || 0) / 100;
@@ -2355,17 +2352,11 @@ async function extractTextFromBuffer(file: Express.Multer.File): Promise<Extract
       };
     }
 
-    if (
-      mimeType.startsWith('image/') ||
-      /\.(png|jpe?g|gif|webp)$/i.test(filename)
-    ) {
+    if (mimeType.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/i.test(filename)) {
       return await extractImageWithOcr(file.buffer, originalName);
     }
 
-    if (
-      mimeType.startsWith('audio/') ||
-      /\.(mp3|wav|m4a|webm|ogg)$/i.test(filename)
-    ) {
+    if (mimeType.startsWith('audio/') || /\.(mp3|wav|m4a|webm|ogg)$/i.test(filename)) {
       return await extractAudioWithTranscription(file.buffer, originalName, mimeType);
     }
 
@@ -2796,8 +2787,7 @@ async function processAcceptedContextDocument(params: {
         sourceLocator?: ContextSourceLocator;
       }>
     );
-    const documentModality =
-      (normalizedPackage.normalizedJson as any)?.modality || 'document';
+    const documentModality = (normalizedPackage.normalizedJson as any)?.modality || 'document';
     const metadata = {
       schemaVersion: 'organization_context_chunk_v1',
       documentId: params.documentId,
@@ -2956,8 +2946,9 @@ export const contextDocumentService = {
     }
 
     const isAudioUpload =
-      String(input.file.mimetype || '').toLowerCase().startsWith('audio/') ||
-      /\.(mp3|wav|m4a|webm|ogg)$/i.test(input.file.originalname || '');
+      String(input.file.mimetype || '')
+        .toLowerCase()
+        .startsWith('audio/') || /\.(mp3|wav|m4a|webm|ogg)$/i.test(input.file.originalname || '');
     if (isAudioUpload) {
       const audioQuota = await checkAudioMinutesQuota({
         organizationId: input.organizationId,
@@ -4028,21 +4019,19 @@ export const contextDocumentService = {
    *   we annotate metadata_json with "source_deleted":true so traceability survives.
    * - Returns counts and reasons for admin observability.
    */
-  async purgeExpiredContextDocuments(input: {
-    batchLimit?: number;
-    overrideTtlDays?: number;
-  } = {}): Promise<{
+  async purgeExpiredContextDocuments(
+    input: {
+      batchLimit?: number;
+      overrideTtlDays?: number;
+    } = {}
+  ): Promise<{
     softDeleted: number;
     hardDeleted: number;
     skippedReason?: string;
   }> {
     const ttlDays = Math.max(
       0,
-      Number(
-        input.overrideTtlDays ??
-          process.env.ORG_CONTEXT_RETENTION_TTL_DAYS ??
-          0
-      )
+      Number(input.overrideTtlDays ?? process.env.ORG_CONTEXT_RETENTION_TTL_DAYS ?? 0)
     );
     if (ttlDays <= 0) {
       return { softDeleted: 0, hardDeleted: 0, skippedReason: 'retention_ttl_disabled' };

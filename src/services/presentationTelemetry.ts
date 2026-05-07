@@ -223,7 +223,11 @@ export async function fetchPresentationTelemetryRollup(
           : res;
       return normalizeRollup(payload, deckId, window);
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && typeof (err as { status?: unknown }).status === 'number') {
+      if (
+        err &&
+        typeof err === 'object' &&
+        typeof (err as { status?: unknown }).status === 'number'
+      ) {
         return degradedRollup(deckId, window, 'http_error');
       }
       return degradedRollup(deckId, window, 'network_error');

@@ -35,9 +35,7 @@ describe('evaluateRevertEligibility', () => {
   });
 
   it('rejects when operation status is draft (not applied)', () => {
-    const result = evaluateRevertEligibility(
-      buildInput({ operation: { status: 'draft' } as any })
-    );
+    const result = evaluateRevertEligibility(buildInput({ operation: { status: 'draft' } as any }));
     expect(result.eligible).toBe(false);
     expect(result.reason).toBe('operation_not_applied');
   });

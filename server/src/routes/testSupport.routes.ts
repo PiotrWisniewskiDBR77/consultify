@@ -622,10 +622,13 @@ router.post(
           userRole,
           'active',
           'E2E',
-          userRole === 'SUPERADMIN' ? 'SuperAdmin'
-            : userRole === 'ADMIN' ? 'Admin'
-            : userRole === 'GUEST' ? 'Guest'
-            : 'User',
+          userRole === 'SUPERADMIN'
+            ? 'SuperAdmin'
+            : userRole === 'ADMIN'
+              ? 'Admin'
+              : userRole === 'GUEST'
+                ? 'Guest'
+                : 'User',
         ],
         { fallback: false }
       );
@@ -659,10 +662,13 @@ router.post(
     await ensureP25bKbSeedMinimum();
 
     const displayName =
-      userRole === 'SUPERADMIN' ? 'E2E SuperAdmin'
-      : userRole === 'ADMIN' ? 'E2E Admin'
-      : userRole === 'GUEST' ? 'E2E Guest'
-      : 'E2E User';
+      userRole === 'SUPERADMIN'
+        ? 'E2E SuperAdmin'
+        : userRole === 'ADMIN'
+          ? 'E2E Admin'
+          : userRole === 'GUEST'
+            ? 'E2E Guest'
+            : 'E2E User';
 
     const token = makeSignedToken({
       id: userId,

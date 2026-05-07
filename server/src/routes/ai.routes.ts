@@ -3471,9 +3471,8 @@ router.post(
         // Stage 3 (Source Of Truth): use shared ContextRetrievalService for ACL-enforced
         // retrieval and lineage. Falls back to legacy ragService path on unexpected errors.
         try {
-          const sharedRetrievalModule = await import(
-            '../services/organizationContext/ContextRetrievalService.js'
-          );
+          const sharedRetrievalModule =
+            await import('../services/organizationContext/ContextRetrievalService.js');
           const sharedRetrieval = (sharedRetrievalModule as any).default || sharedRetrievalModule;
           const requestedWorkflowMode = (() => {
             const raw = String((context as any)?.contextWorkflowMode || '').trim();

@@ -458,7 +458,9 @@ export const EnterpriseAuditLog: React.FC = () => {
             </div>
             <div className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/30">
               <div className="text-sm text-slate-400 dark:text-slate-500">Critical</div>
-              <div className="text-2xl font-bold text-rose-400 mt-1">{stats.critical_risk || 0}</div>
+              <div className="text-2xl font-bold text-rose-400 mt-1">
+                {stats.critical_risk || 0}
+              </div>
             </div>
           </div>
         )

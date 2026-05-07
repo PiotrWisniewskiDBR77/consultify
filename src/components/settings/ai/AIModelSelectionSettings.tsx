@@ -262,7 +262,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary-600">${costEstimate.monthly.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-primary-600">
+              ${costEstimate.monthly.toFixed(2)}
+            </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               ${costEstimate.daily.toFixed(2)}/day
             </p>

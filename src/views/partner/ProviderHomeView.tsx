@@ -777,8 +777,8 @@ const CommissionCalculatorSection: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 text-center">
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
           Your tier:{' '}
-          <span className="font-semibold text-primary-600 dark:text-primary-400">{tier.name}</span> (
-          {Math.round(tier.rate * 100)}% commission)
+          <span className="font-semibold text-primary-600 dark:text-primary-400">{tier.name}</span>{' '}
+          ({Math.round(tier.rate * 100)}% commission)
         </p>
 
         <div className="my-4">

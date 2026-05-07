@@ -35,7 +35,11 @@ export function isPresentationActionAllowedByConfidentiality(params: {
   if (params.confidentiality === 'confidential') {
     return ['SUPERADMIN', 'OWNER', 'ADMIN', 'PROJECT_MANAGER'].includes(role);
   }
-  if (params.action === 'share' && params.confidentiality !== 'public' && role === 'PROJECT_MANAGER') {
+  if (
+    params.action === 'share' &&
+    params.confidentiality !== 'public' &&
+    role === 'PROJECT_MANAGER'
+  ) {
     return false;
   }
   return true;

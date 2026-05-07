@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import {
   BENCHMARK_DIMENSIONS,
-  GAMMA_TARGET,
-  WARNING_THRESHOLD,
-  computeBenchmarkScorecard,
-  computeVerdict,
-  renderBenchmarkScorecardMarkdown,
   type BenchmarkDimension,
   type BenchmarkRunInput,
   type BenchmarkRunRecord,
+  computeBenchmarkScorecard,
+  computeVerdict,
   type DeckScoreInput,
+  GAMMA_TARGET,
+  renderBenchmarkScorecardMarkdown,
+  WARNING_THRESHOLD,
 } from '../presentationBenchmarkScorecardService.js';
 
 const ORG = 'org_test';

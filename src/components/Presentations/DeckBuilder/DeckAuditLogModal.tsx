@@ -13,11 +13,13 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  fetchPresentationAuditLog,
   type AuditLogFetchStatus,
+  fetchPresentationAuditLog,
   type PresentationAuditLogEvent,
 } from '@/services/presentationAuditLog';
 import {
+  type AuditLogSavedView,
+  type AuditLogSavedViewFilters,
   deleteSavedView,
   exportSavedViews,
   findMatchingSavedView,
@@ -25,8 +27,6 @@ import {
   isSavedViewsStorageAvailable,
   listSavedViews,
   saveSavedView,
-  type AuditLogSavedView,
-  type AuditLogSavedViewFilters,
 } from '@/services/presentationAuditLogSavedViews';
 
 interface DeckAuditLogModalProps {
@@ -357,10 +357,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
     const url = new URL(window.location.href);
     url.searchParams.set(URL_PARAM_KEYS.enable, 'true');
     if (actorFilters.size !== FILTERABLE_ACTOR_TYPES.length) {
-      url.searchParams.set(
-        URL_PARAM_KEYS.actors,
-        Array.from(actorFilters).sort().join(',')
-      );
+      url.searchParams.set(URL_PARAM_KEYS.actors, Array.from(actorFilters).sort().join(','));
     } else {
       url.searchParams.delete(URL_PARAM_KEYS.actors);
     }
@@ -451,9 +448,8 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
   }, [resolvedUserKey, savedViewsAvailable]);
 
   const applySavedView = useCallback((view: AuditLogSavedView) => {
-    const filterableActors = view.filters.actorTypes.filter(
-      (a): a is FilterableActorType =>
-        (FILTERABLE_ACTOR_TYPES as readonly string[]).includes(a)
+    const filterableActors = view.filters.actorTypes.filter((a): a is FilterableActorType =>
+      (FILTERABLE_ACTOR_TYPES as readonly string[]).includes(a)
     );
     setActorFilters(
       filterableActors.length > 0
@@ -484,9 +480,10 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
     }
     try {
       const saved = saveSavedView(resolvedUserKey, {
-        id: activeView && activeView.name.toLowerCase() === name.toLowerCase()
-          ? activeView.id
-          : undefined,
+        id:
+          activeView && activeView.name.toLowerCase() === name.toLowerCase()
+            ? activeView.id
+            : undefined,
         name,
         filters: currentFiltersPayload,
       });
@@ -507,13 +504,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
         setSaveDraftError('Could not save view');
       }
     }
-  }, [
-    activeView,
-    currentFiltersPayload,
-    refreshSavedViews,
-    resolvedUserKey,
-    saveDraftName,
-  ]);
+  }, [activeView, currentFiltersPayload, refreshSavedViews, resolvedUserKey, saveDraftName]);
 
   const handleDeleteView = useCallback(
     (viewId: string) => {

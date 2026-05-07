@@ -249,7 +249,9 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
             <div className="text-xs font-medium text-slate-900 dark:text-white truncate">
               {currentUserEmail}
             </div>
-            <div className="text-[10px] text-rose-500 dark:text-rose-400 uppercase">Super Admin</div>
+            <div className="text-[10px] text-rose-500 dark:text-rose-400 uppercase">
+              Super Admin
+            </div>
           </div>
         </div>
         <button

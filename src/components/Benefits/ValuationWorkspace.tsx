@@ -56,8 +56,7 @@ function sensitivityHeatmapColor(value: number, min: number, max: number): strin
     return 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300';
   if (ratio >= 0.4)
     return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
-  if (ratio >= 0.2)
-    return 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300';
+  if (ratio >= 0.2) return 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300';
   return 'bg-rose-100 dark:bg-rose-900/20 text-rose-800 dark:text-rose-300';
 }
 

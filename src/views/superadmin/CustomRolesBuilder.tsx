@@ -316,7 +316,9 @@ const CustomRolesBuilder: React.FC = () => {
                       {role.isSystem || role.roleType === 'system' ? (
                         <span className="text-xs text-slate-500 dark:text-gray-400">System</span>
                       ) : (
-                        <span className="text-xs text-primary-700 dark:text-primary-300">Custom</span>
+                        <span className="text-xs text-primary-700 dark:text-primary-300">
+                          Custom
+                        </span>
                       )}
                       {role.userCount > 0 && (
                         <span className="text-xs text-slate-500 dark:text-gray-400">

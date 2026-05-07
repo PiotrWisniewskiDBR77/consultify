@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  BENCHMARK_DIMENSIONS,
-  DEFAULT_RUBRICS,
   aggregateScores,
+  BENCHMARK_DIMENSIONS,
   buildJudgeSystemPrompt,
   buildJudgeUserPrompt,
+  DEFAULT_RUBRICS,
+  type DimensionScoreResult,
   judgeDeckBenchmark,
+  type JudgeDeckInput,
+  type JudgeResult,
   judgeResultToDeckScoreInput,
+  type LlmJudgeAdapter,
   mockLlmAdapter,
   noopLlmAdapter,
   parseJudgeResponse,
-  type DimensionScoreResult,
-  type JudgeDeckInput,
-  type JudgeResult,
-  type LlmJudgeAdapter,
 } from '../presentationBenchmarkJudgeService.js';
 
 function fullScores(score = 4): DimensionScoreResult[] {

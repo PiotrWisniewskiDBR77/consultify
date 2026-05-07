@@ -37,9 +37,7 @@ const PanelShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   >
     <div className="m-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-sm flex flex-col overflow-hidden">
       <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-800">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-white">
-          Agent Activity
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Agent Activity</h3>
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-2">{children}</div>
     </div>
@@ -72,9 +70,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
   if (!events || events.length === 0) {
     return (
       <PanelShell>
-        <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-          No agent activity yet.
-        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 italic">No agent activity yet.</p>
       </PanelShell>
     );
   }
@@ -85,10 +81,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
     <PanelShell>
       <ul className="divide-y divide-slate-100 dark:divide-navy-800">
         {recent.map((evt) => (
-          <li
-            key={evt.id}
-            className="py-2 first:pt-0 last:pb-0 flex items-start gap-2"
-          >
+          <li key={evt.id} className="py-2 first:pt-0 last:pb-0 flex items-start gap-2">
             <span
               aria-hidden="true"
               className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${statusDotClass(evt.status)}`}

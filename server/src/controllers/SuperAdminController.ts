@@ -551,7 +551,8 @@ const updateUser = catchAsync(async (req, res, next) => {
 
   const persistProfileFields = (done: (error?: Error) => void) => {
     const shouldPersistProfile =
-      hasUserProfiles && (jobTitle !== undefined || department !== undefined || projectRole !== undefined);
+      hasUserProfiles &&
+      (jobTitle !== undefined || department !== undefined || projectRole !== undefined);
     if (!shouldPersistProfile) {
       done();
       return;
@@ -584,7 +585,8 @@ const updateUser = catchAsync(async (req, res, next) => {
           }
         }
 
-        const nextJobTitle = jobTitle !== undefined ? jobTitle || null : existingProfile?.job_title || null;
+        const nextJobTitle =
+          jobTitle !== undefined ? jobTitle || null : existingProfile?.job_title || null;
         const nextDepartment =
           department !== undefined ? department || null : existingProfile?.department || null;
 
@@ -726,7 +728,8 @@ const createUser = catchAsync(async (req, res, next) => {
     }
 
     const shouldPersistProfile =
-      hasUserProfiles && (jobTitle !== undefined || department !== undefined || projectRole !== undefined);
+      hasUserProfiles &&
+      (jobTitle !== undefined || department !== undefined || projectRole !== undefined);
 
     const finalizeCreateResponse = () => {
       deps.ActivityService.log({

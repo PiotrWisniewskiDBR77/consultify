@@ -35,7 +35,12 @@ router.use(verifyToken);
 // ==========================================
 
 router.get('/playbooks', DecisionPlaybookController.listPlaybooks);
-router.post('/playbooks', verifyAdmin, validateBody(PlaybookSchema), DecisionPlaybookController.createPlaybook);
+router.post(
+  '/playbooks',
+  verifyAdmin,
+  validateBody(PlaybookSchema),
+  DecisionPlaybookController.createPlaybook
+);
 router.get('/playbooks/:playbookId', DecisionPlaybookController.getPlaybook);
 router.put(
   '/playbooks/:playbookId',

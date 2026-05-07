@@ -103,8 +103,8 @@ export const PRESENTATION_MIGRATION_CATALOG: MigrationCatalogEntry[] = [
       'SELECT COUNT(*) FROM presentation_decks WHERE lineage_root_id IS NULL;',
     ],
     postCheck: [
-      "SELECT COUNT(*) FROM presentation_decks WHERE lineage_root_id IS NULL; -- must equal 0 after backfill",
-      'SELECT COUNT(*) FROM presentation_migration_reports WHERE run_mode = \'apply\';',
+      'SELECT COUNT(*) FROM presentation_decks WHERE lineage_root_id IS NULL; -- must equal 0 after backfill',
+      "SELECT COUNT(*) FROM presentation_migration_reports WHERE run_mode = 'apply';",
     ],
     description:
       'Normalizes legacy deck JSON (deck_json/unified_json) into the canonical schema and seeds the presentation_migration_reports ledger. Data-touching migration; rollback requires a pre-migration snapshot.',
@@ -227,7 +227,7 @@ export const PRESENTATION_MIGRATION_CATALOG: MigrationCatalogEntry[] = [
     reversible: true,
     rollbackStrategy: 'drop_columns',
     preflightChecks: [
-      "SELECT COUNT(*) FROM presentation_templates;",
+      'SELECT COUNT(*) FROM presentation_templates;',
       "SELECT 1 FROM information_schema.columns WHERE table_name = 'presentation_templates' AND column_name = 'lifecycle_state' LIMIT 1;",
     ],
     postCheck: [

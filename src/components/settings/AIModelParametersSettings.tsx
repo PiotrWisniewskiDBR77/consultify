@@ -225,7 +225,10 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={cn('text-sm font-medium', isPlatform ? 'text-primary-200' : 'text-white')}
+                className={cn(
+                  'text-sm font-medium',
+                  isPlatform ? 'text-primary-200' : 'text-white'
+                )}
               >
                 {model.name}
               </span>

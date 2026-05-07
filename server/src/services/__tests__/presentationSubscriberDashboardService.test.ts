@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  type BuildSnapshotDispatchInput,
+  type BuildSnapshotInput,
   buildSubscriberDashboardSnapshot,
   generateRawToken,
   hashToken,
   maskDeckId,
   maskTarget,
-  type BuildSnapshotDispatchInput,
-  type BuildSnapshotInput,
 } from '../presentationSubscriberDashboardService.js';
 
 const FIXED_NOW = '2026-05-07T12:00:00.000Z';
@@ -252,9 +252,7 @@ describe('buildSubscriberDashboardSnapshot — rotation pressure', () => {
     );
     expect(snap.signature.daysSinceRotation).toBeGreaterThan(90);
     expect(snap.health.overall).toBe('degraded');
-    expect(snap.health.reasons).toContain(
-      'Signing secret overdue (>90 days since rotation)'
-    );
+    expect(snap.health.reasons).toContain('Signing secret overdue (>90 days since rotation)');
   });
 });
 
@@ -296,13 +294,7 @@ describe('buildSubscriberDashboardSnapshot — empty + recent + serializability'
     const snap = buildSubscriberDashboardSnapshot(makeInput({ dispatches }));
     expect(snap.recentDispatches).toHaveLength(5);
     // Most-recent first = d_7, d_6, d_5, d_4, d_3
-    expect(snap.recentDispatches.map((d) => d.id)).toEqual([
-      'd_7',
-      'd_6',
-      'd_5',
-      'd_4',
-      'd_3',
-    ]);
+    expect(snap.recentDispatches.map((d) => d.id)).toEqual(['d_7', 'd_6', 'd_5', 'd_4', 'd_3']);
     // deck id is masked
     expect(snap.recentDispatches[0].deckIdMasked).toBe('deck****');
   });

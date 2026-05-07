@@ -7,8 +7,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
 
-import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
 import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
+import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
 
 // ==================== TYPES ====================
 

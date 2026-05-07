@@ -98,7 +98,9 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   return (
     <div
       className={`rounded-xl ${STATUS_STYLES[status]} ${compact ? 'p-3' : 'p-4'} transition-all duration-200 ${className}`}
-      data-ai-proposal-card={status === 'ai-proposed' || status === 'rethinking' ? 'true' : undefined}
+      data-ai-proposal-card={
+        status === 'ai-proposed' || status === 'rethinking' ? 'true' : undefined
+      }
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">{children}</div>

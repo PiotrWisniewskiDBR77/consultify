@@ -351,10 +351,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       setFormState((current) => {
         const sanitizedValue =
           typeof value === 'string' && (field === 'firstName' || field === 'jobTitle')
-            ? sanitizeProfileTextInput(value, [
-                String(current[field] || ''),
-                String(lastSyncedFormRef.current[field] || ''),
-              ], { removeLeadingKnownValue: field === 'jobTitle' })
+            ? sanitizeProfileTextInput(
+                value,
+                [String(current[field] || ''), String(lastSyncedFormRef.current[field] || '')],
+                { removeLeadingKnownValue: field === 'jobTitle' }
+              )
             : value;
         nextValidationValue = sanitizedValue as ExtendedFormState[K];
         return { ...current, [field]: sanitizedValue as ExtendedFormState[K] };
@@ -362,10 +363,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       setSaveStatus('idle');
       setSaveError(null);
       if (field === 'firstName') {
-        const nextFirstName = typeof nextValidationValue === 'string' ? nextValidationValue.trim() : '';
+        const nextFirstName =
+          typeof nextValidationValue === 'string' ? nextValidationValue.trim() : '';
         if (!nextFirstName) {
           setFirstNameValidationError(
-            t('settings.profile.validation.firstNameRequired', 'First name is required before saving')
+            t(
+              'settings.profile.validation.firstNameRequired',
+              'First name is required before saving'
+            )
           );
         } else {
           setFirstNameValidationError(null);
@@ -426,9 +431,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         });
       }
       if (!areProfileValuesEqual(nextValue, currentValue)) {
-        (updates as Partial<Record<ProfileConfirmationField, ExtendedFormState[ProfileConfirmationField]>>)[
-          field
-        ] = nextValue;
+        (
+          updates as Partial<
+            Record<ProfileConfirmationField, ExtendedFormState[ProfileConfirmationField]>
+          >
+        )[field] = nextValue;
       }
     }
 
@@ -738,7 +745,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <input
                   value={formState.firstName}
                   aria-invalid={firstNameValidationError ? 'true' : undefined}
-                  aria-describedby={firstNameValidationError ? 'first-name-validation-error' : undefined}
+                  aria-describedby={
+                    firstNameValidationError ? 'first-name-validation-error' : undefined
+                  }
                   onChange={(e) => updateFormField('firstName', e.target.value)}
                   className={firstNameInputClass}
                 />

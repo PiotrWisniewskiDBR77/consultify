@@ -45,11 +45,7 @@ const emitAlert = (req: AuthRequest, res: Response, body?: unknown): void => {
   });
 };
 
-export function superadminAuditMonitor(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): void {
+export function superadminAuditMonitor(req: AuthRequest, res: Response, next: NextFunction): void {
   if (!isAuditPath(req)) {
     next();
     return;

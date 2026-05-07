@@ -145,6 +145,56 @@ export interface DocumentAuditEntry {
 }
 
 // =============================================================================
+// QA Engine — MVP-3 hardening (frontend mirror).
+// =============================================================================
+
+export type DocumentQaCategory =
+  | 'brand'
+  | 'language'
+  | 'completeness'
+  | 'sources'
+  | 'methodology'
+  | 'executive'
+  | 'risk'
+  | 'data'
+  | 'format'
+  | 'export';
+
+export type DocumentQaSeverity = 'low' | 'medium' | 'high';
+
+export interface DocumentQaFinding {
+  findingId: string;
+  severity: DocumentQaSeverity;
+  message: string;
+  sectionId?: string;
+  blockId?: string;
+  code?: string;
+}
+
+export interface DocumentQaCategoryReport {
+  category: DocumentQaCategory;
+  score: number;
+  findings: DocumentQaFinding[];
+  blocking: boolean;
+  summary: string;
+}
+
+export interface DocumentQaReport {
+  artifactId: string;
+  organizationId: string;
+  generatedAt: string;
+  anyBlocking: boolean;
+  categories: DocumentQaCategoryReport[];
+}
+
+export interface DocumentStudioPolicy {
+  /** True when the current user can bypass the export QA gate (audited). */
+  canOverrideQa: boolean;
+  /** Effective role the policy was resolved for (informational). */
+  role: string | null;
+}
+
+// =============================================================================
 // MVP-2 — Document Template Architect (frontend mirror)
 // =============================================================================
 

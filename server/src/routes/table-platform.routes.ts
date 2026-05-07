@@ -1553,76 +1553,80 @@ router.post(
 // CHAT-TO-SCHEMA API
 // ==========================================
 
-router.post('/schema/propose', requireWorkspaceTenantAccess, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { workspaceId, message, existingSchema, language, baseId, tableId } = req.body ?? {};
-    if (!workspaceId || !message) {
-      return res.status(400).json({ error: 'workspaceId and message required' });
-    }
+router.post(
+  '/schema/propose',
+  requireWorkspaceTenantAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { workspaceId, message, existingSchema, language, baseId, tableId } = req.body ?? {};
+      if (!workspaceId || !message) {
+        return res.status(400).json({ error: 'workspaceId and message required' });
+      }
 
-    const { checkRateLimit, validateProposalLimits } =
-      await import('../services/chatToSchema/safetyGuardrails.js');
+      const { checkRateLimit, validateProposalLimits } =
+        await import('../services/chatToSchema/safetyGuardrails.js');
 
-    const userId = authReq.userId ?? 'anonymous';
-    const orgId = authReq.organizationId ?? workspaceId;
-    const rateCheck = checkRateLimit(userId, orgId);
-    if (!rateCheck.allowed) {
-      return res.status(429).json({
-        error: 'Rate limit exceeded',
-        retryAfterMs: rateCheck.retryAfterMs,
-      });
-    }
-
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposal = await ChatToSchemaService.generateProposal(
-      workspaceId,
-      message,
-      existingSchema,
-      language ?? 'en',
-      authReq.userId,
-      { baseId, tableId }
-    );
-
-    if (
-      proposal.operations &&
-      Array.isArray(proposal.operations) &&
-      proposal.operations.length > 0
-    ) {
-      const pipelineOps = proposal.operations.map((op: any) => ({
-        id: op.id,
-        operation_type: op.operationType ?? op.operation_type ?? '',
-        target: op.target ?? {},
-        payload: op.payload ?? {},
-        dependencies: op.dependsOn ?? op.dependencies,
-        reversible: true,
-      }));
-      const limitsCheck = validateProposalLimits({
-        proposal_id: proposal.id,
-        intent: proposal.intent,
-        confidence: proposal.confidence,
-        summary: proposal.summary,
-        operations: pipelineOps,
-        warnings: [],
-        estimated_impact: {},
-      });
-      if (!limitsCheck.valid) {
-        return res.status(400).json({
-          error: 'Proposal exceeds safety limits',
-          details: limitsCheck.errors,
+      const userId = authReq.userId ?? 'anonymous';
+      const orgId = authReq.organizationId ?? workspaceId;
+      const rateCheck = checkRateLimit(userId, orgId);
+      if (!rateCheck.allowed) {
+        return res.status(429).json({
+          error: 'Rate limit exceeded',
+          retryAfterMs: rateCheck.retryAfterMs,
         });
       }
-    }
 
-    return res.status(201).json(proposal);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/propose failed', { error: (e as Error).message });
-    return res
-      .status(500)
-      .json({ error: 'Proposal generation failed', details: (e as Error).message });
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposal = await ChatToSchemaService.generateProposal(
+        workspaceId,
+        message,
+        existingSchema,
+        language ?? 'en',
+        authReq.userId,
+        { baseId, tableId }
+      );
+
+      if (
+        proposal.operations &&
+        Array.isArray(proposal.operations) &&
+        proposal.operations.length > 0
+      ) {
+        const pipelineOps = proposal.operations.map((op: any) => ({
+          id: op.id,
+          operation_type: op.operationType ?? op.operation_type ?? '',
+          target: op.target ?? {},
+          payload: op.payload ?? {},
+          dependencies: op.dependsOn ?? op.dependencies,
+          reversible: true,
+        }));
+        const limitsCheck = validateProposalLimits({
+          proposal_id: proposal.id,
+          intent: proposal.intent,
+          confidence: proposal.confidence,
+          summary: proposal.summary,
+          operations: pipelineOps,
+          warnings: [],
+          estimated_impact: {},
+        });
+        if (!limitsCheck.valid) {
+          return res.status(400).json({
+            error: 'Proposal exceeds safety limits',
+            details: limitsCheck.errors,
+          });
+        }
+      }
+
+      return res.status(201).json(proposal);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/propose failed', { error: (e as Error).message });
+      return res
+        .status(500)
+        .json({ error: 'Proposal generation failed', details: (e as Error).message });
+    }
   }
-});
+);
 
 router.post(
   '/schema/proposals/:proposalId/execute',
@@ -1652,18 +1656,18 @@ router.post(
   '/schema/proposals/:proposalId/reject',
   requireSchemaProposalAccess,
   async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { proposalId } = req.params;
-    const { reason } = req.body ?? {};
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    await ChatToSchemaService.rejectProposal(proposalId, authReq.userId, reason);
-    return res.status(204).send();
-  } catch (e) {
-    logger.error('[TablePlatform] schema/reject failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Rejection failed', details: (e as Error).message });
-  }
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const { reason } = req.body ?? {};
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      await ChatToSchemaService.rejectProposal(proposalId, authReq.userId, reason);
+      return res.status(204).send();
+    } catch (e) {
+      logger.error('[TablePlatform] schema/reject failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Rejection failed', details: (e as Error).message });
+    }
   }
 );
 
@@ -1671,22 +1675,22 @@ router.post(
   '/schema/proposals/:proposalId/refine',
   requireSchemaProposalAccess,
   async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { proposalId } = req.params;
-    const { message, refinementMessage } = req.body ?? {};
-    const msg = message ?? refinementMessage;
-    if (!msg) {
-      return res.status(400).json({ error: 'message is required' });
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const { message, refinementMessage } = req.body ?? {};
+      const msg = message ?? refinementMessage;
+      if (!msg) {
+        return res.status(400).json({ error: 'message is required' });
+      }
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposal = await ChatToSchemaService.refineProposal(proposalId, msg, authReq.userId);
+      return res.status(201).json(proposal);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/refine failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Refinement failed', details: (e as Error).message });
     }
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposal = await ChatToSchemaService.refineProposal(proposalId, msg, authReq.userId);
-    return res.status(201).json(proposal);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/refine failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Refinement failed', details: (e as Error).message });
-  }
   }
 );
 
@@ -1694,24 +1698,24 @@ router.post(
   '/schema/proposals/:proposalId/undo',
   requireSchemaProposalAccess,
   async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { proposalId } = req.params;
-    const baseId = (authReq as any).resolvedBaseId as string | undefined;
-    if (!baseId) {
-      return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const baseId = (authReq as any).resolvedBaseId as string | undefined;
+      if (!baseId) {
+        return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
+      }
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const result = await ChatToSchemaService.undoProposal(proposalId, baseId);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      return res.status(200).json({ success: true, message: `Proposal ${proposalId} undone` });
+    } catch (e) {
+      logger.error('[TablePlatform] schema/undo failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Undo failed', details: (e as Error).message });
     }
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const result = await ChatToSchemaService.undoProposal(proposalId, baseId);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-    return res.status(200).json({ success: true, message: `Proposal ${proposalId} undone` });
-  } catch (e) {
-    logger.error('[TablePlatform] schema/undo failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Undo failed', details: (e as Error).message });
-  }
   }
 );
 
@@ -1719,24 +1723,24 @@ router.post(
   '/schema/proposals/:proposalId/redo',
   requireSchemaProposalAccess,
   async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { proposalId } = req.params;
-    const baseId = (authReq as any).resolvedBaseId as string | undefined;
-    if (!baseId) {
-      return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const baseId = (authReq as any).resolvedBaseId as string | undefined;
+      if (!baseId) {
+        return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
+      }
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const result = await ChatToSchemaService.redoProposal(proposalId, baseId);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      return res.status(200).json({ success: true, message: `Proposal ${proposalId} redone` });
+    } catch (e) {
+      logger.error('[TablePlatform] schema/redo failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Redo failed', details: (e as Error).message });
     }
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const result = await ChatToSchemaService.redoProposal(proposalId, baseId);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-    return res.status(200).json({ success: true, message: `Proposal ${proposalId} redone` });
-  } catch (e) {
-    logger.error('[TablePlatform] schema/redo failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Redo failed', details: (e as Error).message });
-  }
   }
 );
 
@@ -1761,17 +1765,17 @@ router.get(
   '/schema/proposals/:proposalId',
   requireSchemaProposalAccess,
   async (req: Request, res: Response) => {
-  try {
-    const { proposalId } = req.params;
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposal = await ChatToSchemaService.getProposal(proposalId);
-    if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
-    return res.status(200).json(proposal);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/get failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Fetch failed', details: (e as Error).message });
-  }
+    try {
+      const { proposalId } = req.params;
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposal = await ChatToSchemaService.getProposal(proposalId);
+      if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+      return res.status(200).json(proposal);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/get failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Fetch failed', details: (e as Error).message });
+    }
   }
 );
 
@@ -1779,17 +1783,17 @@ router.get(
   '/workspaces/:workspaceId/schema/proposals',
   requireWorkspaceTenantAccess,
   async (req: Request, res: Response) => {
-  try {
-    const { workspaceId } = req.params;
-    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const proposals = await ChatToSchemaService.listProposals(workspaceId, status);
-    return res.status(200).json(proposals);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/proposals list failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'List failed', details: (e as Error).message });
-  }
+    try {
+      const { workspaceId } = req.params;
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const proposals = await ChatToSchemaService.listProposals(workspaceId, status);
+      return res.status(200).json(proposals);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/proposals list failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'List failed', details: (e as Error).message });
+    }
   }
 );
 

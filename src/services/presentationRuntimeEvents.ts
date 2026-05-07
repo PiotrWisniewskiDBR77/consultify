@@ -30,11 +30,7 @@ const AGENT_EDIT_STATUSES = new Set<string>(['proposal', 'applied']);
 function normalizeEvent(raw: any): PresentationRuntimeEvent | null {
   if (!raw || typeof raw !== 'object') return null;
   const id =
-    typeof raw.id === 'string'
-      ? raw.id
-      : typeof raw.event_id === 'string'
-        ? raw.event_id
-        : '';
+    typeof raw.id === 'string' ? raw.id : typeof raw.event_id === 'string' ? raw.event_id : '';
   const eventType =
     typeof raw.eventType === 'string'
       ? raw.eventType

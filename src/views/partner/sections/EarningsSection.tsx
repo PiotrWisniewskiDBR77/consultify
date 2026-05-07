@@ -1191,7 +1191,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               aria-label="Toggle auto-request payout"
               className={cn(
                 'relative inline-flex h-6 w-11 items-center rounded-full',
-                payoutSettings.autoPayoutEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-navy-600'
+                payoutSettings.autoPayoutEnabled
+                  ? 'bg-primary-600'
+                  : 'bg-slate-300 dark:bg-navy-600'
               )}
             >
               <span

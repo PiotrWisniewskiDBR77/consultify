@@ -8,6 +8,7 @@
 import { ChevronDown, ChevronRight, Copy, Send, Sparkles } from 'lucide-react';
 import React from 'react';
 
+import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import {
   type ActionRow,
   type MetaPill,
@@ -16,7 +17,6 @@ import {
   PreviewDetailsSection,
   PreviewMetaCard,
 } from '@/components/shared/PreviewPane';
-import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 
 // ── Body ───────────────────────────────────────────────────────────────────
 

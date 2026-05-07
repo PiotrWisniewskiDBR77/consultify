@@ -65,11 +65,7 @@ export interface RenderHtmlPdfOk {
   durationMs: number;
 }
 
-export type RenderHtmlPdfErrStatus =
-  | 'unavailable'
-  | 'launch_failed'
-  | 'render_failed'
-  | 'timeout';
+export type RenderHtmlPdfErrStatus = 'unavailable' | 'launch_failed' | 'render_failed' | 'timeout';
 
 export interface RenderHtmlPdfErr {
   status: RenderHtmlPdfErrStatus;
@@ -323,9 +319,7 @@ export async function isPlaywrightPdfRendererAvailable(): Promise<AvailabilityRe
  * timeout) the caller receives a `RenderHtmlPdfErr` describing the
  * failure mode so it can fall back deterministically.
  */
-export async function renderHtmlToPdf(
-  input: RenderHtmlPdfInput
-): Promise<RenderHtmlPdfResult> {
+export async function renderHtmlToPdf(input: RenderHtmlPdfInput): Promise<RenderHtmlPdfResult> {
   const startedAt = Date.now();
   const navigationTimeoutMs =
     typeof input.navigationTimeoutMs === 'number' && input.navigationTimeoutMs > 0
@@ -471,9 +465,7 @@ export async function renderHtmlToPdf(
   }
 }
 
-function buildPdfOptions(
-  overrides: RenderHtmlPdfInput['pdfOptions']
-): Record<string, unknown> {
+function buildPdfOptions(overrides: RenderHtmlPdfInput['pdfOptions']): Record<string, unknown> {
   const margin: PdfMargin = {
     ...DEFAULT_PDF_MARGIN,
     ...(overrides?.margin || {}),

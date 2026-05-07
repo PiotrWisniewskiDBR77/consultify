@@ -4,14 +4,12 @@ import {
   classifyIncident,
   EXPORT_BLOCKED_RATE_BREACH,
   EXPORT_SUCCESS_RATE_BREACH,
+  type IncidentSignals,
   LATENCY_BREACH_MS,
   MIN_TEMPLATE_CLUSTER_SIZE,
-  type IncidentSignals,
 } from '../presentationIncidentClassificationService.js';
 
-function healthySignals(
-  overrides: Partial<IncidentSignals> = {}
-): IncidentSignals {
+function healthySignals(overrides: Partial<IncidentSignals> = {}): IncidentSignals {
   return {
     exportBlockedRate: 0.02,
     exportSuccessRate: 0.99,
@@ -57,9 +55,7 @@ describe('classifyIncident', () => {
   });
 
   it('classifies low export success rate as P1/RB-02', () => {
-    const result = classifyIncident(
-      healthySignals({ exportSuccessRate: 0.85 })
-    );
+    const result = classifyIncident(healthySignals({ exportSuccessRate: 0.85 }));
     expect(result.runbook).toBe('RB-02');
     expect(result.severity).toBe('P1');
     expect(result.reason).toContain('export_success_rate');
@@ -146,9 +142,7 @@ describe('classifyIncident', () => {
   it('returns runbook=null with manual reason when there is a major anomaly on a non-mapped SLO', () => {
     const result = classifyIncident(
       healthySignals({
-        anomalies: [
-          { sloId: 'agent_edit_success_rate', severity: 'major' },
-        ],
+        anomalies: [{ sloId: 'agent_edit_success_rate', severity: 'major' }],
       })
     );
     expect(result.runbook).toBeNull();

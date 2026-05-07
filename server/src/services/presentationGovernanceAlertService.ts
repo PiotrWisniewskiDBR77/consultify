@@ -26,6 +26,7 @@
  */
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -412,9 +413,7 @@ function normalizeSubscriptionRow(row: any): AlertSubscription | null {
   };
 }
 
-export async function recordDispatch(
-  input: RecordDispatchInput
-): Promise<{ id: string }> {
+export async function recordDispatch(input: RecordDispatchInput): Promise<{ id: string }> {
   const id =
     typeof input.dispatchId === 'string' && input.dispatchId.length > 0
       ? input.dispatchId

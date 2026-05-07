@@ -15,7 +15,9 @@ import type {
   DocumentEditorProposal,
   DocumentIntake,
   DocumentOutline,
+  DocumentQaReport,
   DocumentSchema,
+  DocumentStudioPolicy,
   DocumentTemplate,
   DocumentTypeKey,
   TemplateAuditEntry,
@@ -37,6 +39,37 @@ export class MissingRequiredSourceError extends Error {
     super(`Missing required sources: ${missing.join(', ')}`);
     this.name = 'MissingRequiredSourceError';
     this.missing = missing;
+  }
+}
+
+/**
+ * Structured error for the export QA gate. Surfaces the full QA report so
+ * the document panel can render findings without a second round-trip and
+ * offer the audited override action when policy allows.
+ */
+export class QaBlockingError extends Error {
+  readonly code = 'qa_blocking';
+  readonly report: DocumentQaReport;
+  constructor(report: DocumentQaReport, message?: string) {
+    super(message ?? 'QA blocking findings prevent export');
+    this.name = 'QaBlockingError';
+    this.report = report;
+  }
+}
+
+/**
+ * Thrown when the user attempts a `qaOverride` export but their role is
+ * not in the privileged set. The frontend hides the override button when
+ * `policy.canOverrideQa === false`, but the error path remains for users
+ * who arrive at the override via deep-link or stale UI state.
+ */
+export class QaOverrideUnauthorizedError extends Error {
+  readonly code = 'qa_override_unauthorized';
+  readonly role: string | null;
+  constructor(message: string, role: string | null = null) {
+    super(message);
+    this.name = 'QaOverrideUnauthorizedError';
+    this.role = role;
   }
 }
 
@@ -122,15 +155,62 @@ export async function getDocumentStudioArtifact(artifactId: string): Promise<Doc
   return json.schema;
 }
 
+export interface ExportArtifactOptions {
+  /**
+   * Bypass the export QA gate. Audited server-side as `qa_override_export`.
+   * Use only when the user has explicitly chosen to ship a document with
+   * known blocking findings.
+   */
+  qaOverride?: boolean;
+}
+
 export async function exportDocumentStudioArtifact(
   artifactId: string,
-  format: 'markdown' | 'docx' | 'pdf'
+  format: 'markdown' | 'docx' | 'pdf',
+  options: ExportArtifactOptions = {}
 ): Promise<DocumentExportPayload> {
-  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/export/${format}`, {
+  const params = new URLSearchParams();
+  if (options.qaOverride) params.set('qaOverride', 'true');
+  const query = params.toString().length > 0 ? `?${params.toString()}` : '';
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/export/${format}${query}`,
+    {
+      method: 'GET',
+      headers: getHeaders(),
+    }
+  );
+  if (res.status === 403) {
+    let body: {
+      error?: string;
+      message?: string;
+      report?: DocumentQaReport;
+      role?: string | null;
+    } = {};
+    try {
+      body = (await res.clone().json()) as typeof body;
+    } catch {
+      // Fall through to handleResponse for the generic error mapping.
+    }
+    if (body.error === 'qa_blocking' && body.report) {
+      throw new QaBlockingError(body.report);
+    }
+    if (body.error === 'qa_override_unauthorized') {
+      throw new QaOverrideUnauthorizedError(
+        body.message ?? 'You are not authorized to override the export QA gate.',
+        body.role ?? null
+      );
+    }
+  }
+  return handleResponse<DocumentExportPayload>(res, 'DocumentStudio export');
+}
+
+export async function getDocumentStudioPolicy(): Promise<DocumentStudioPolicy> {
+  const res = await fetchWithRetry(`${BASE}/policy`, {
     method: 'GET',
     headers: getHeaders(),
   });
-  return handleResponse<DocumentExportPayload>(res, 'DocumentStudio export');
+  const json = await handleResponse<{ policy: DocumentStudioPolicy }>(res, 'DocumentStudio policy');
+  return json.policy;
 }
 
 export interface CreateLocalProposalPayload {
@@ -253,6 +333,16 @@ export async function getDocumentStudioAuditTrail(
     'DocumentStudio audit trail'
   );
   return json.auditEntries;
+}
+
+// MVP-3 hardening — QA Engine (Brand QA + Language QA, deterministic).
+export async function getDocumentStudioQaReport(artifactId: string): Promise<DocumentQaReport> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/qa`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ report: DocumentQaReport }>(res, 'DocumentStudio QA report');
+  return json.report;
 }
 
 // =============================================================================

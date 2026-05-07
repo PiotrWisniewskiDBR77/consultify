@@ -31,11 +31,7 @@ export type SavedSearchVerdict =
   | 'BLOCKED_P0'
   | 'INCONCLUSIVE';
 
-export type SavedSearchConfidentiality =
-  | 'PUBLIC'
-  | 'INTERNAL'
-  | 'CONFIDENTIAL'
-  | 'RESTRICTED';
+export type SavedSearchConfidentiality = 'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
 
 export interface SavedSearchFilters {
   verdicts?: SavedSearchVerdict[];
@@ -117,9 +113,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * trim is considered invalid by the validation layer; here we just emit a
  * warning when truncation happens so the caller can surface it.
  */
-export function normalizeSavedSearchName(
-  raw: unknown
-): { name: string; warnings: string[] } {
+export function normalizeSavedSearchName(raw: unknown): { name: string; warnings: string[] } {
   const warnings: string[] = [];
   if (typeof raw !== 'string') return { name: '', warnings };
   const collapsed = raw.replace(/\s+/g, ' ').trim();
@@ -135,9 +129,10 @@ export function normalizeSavedSearchName(
  * (filter-only saved search). Internal whitespace is preserved verbatim
  * because users typing multi-word queries expect their spacing to round-trip.
  */
-export function normalizeSavedSearchQueryText(
-  raw: unknown
-): { queryText: string; warnings: string[] } {
+export function normalizeSavedSearchQueryText(raw: unknown): {
+  queryText: string;
+  warnings: string[];
+} {
   const warnings: string[] = [];
   if (typeof raw !== 'string') return { queryText: '', warnings };
   const trimmed = raw.trim();
@@ -214,9 +209,10 @@ function dedupeAllowList<T extends string>(
  * unknown enum values are dropped with a `dropped_*` warning so the caller
  * can surface a hint to the user. Never throws.
  */
-export function normalizeSavedSearchFilters(
-  raw: unknown
-): { filters: SavedSearchFilters; warnings: string[] } {
+export function normalizeSavedSearchFilters(raw: unknown): {
+  filters: SavedSearchFilters;
+  warnings: string[];
+} {
   const warnings: string[] = [];
   const r = isRecord(raw) ? raw : {};
 
@@ -268,9 +264,7 @@ export function validateSavedSearchCreateInput(raw: unknown): ValidateInputResul
   const { name, warnings: nameWarnings } = normalizeSavedSearchName(nameInput);
   warnings.push(...nameWarnings);
 
-  const { queryText, warnings: queryWarnings } = normalizeSavedSearchQueryText(
-    raw.queryText
-  );
+  const { queryText, warnings: queryWarnings } = normalizeSavedSearchQueryText(raw.queryText);
   warnings.push(...queryWarnings);
 
   // Filters are optional — an empty object is valid (defaults applied).
@@ -316,7 +310,9 @@ export function matchesSavedSearch(
   input: { queryText: string; filters: SavedSearchFilters }
 ): boolean {
   const haystack = String(entry?.deckTitle ?? '').toLocaleLowerCase();
-  const needle = String(input?.queryText ?? '').trim().toLocaleLowerCase();
+  const needle = String(input?.queryText ?? '')
+    .trim()
+    .toLocaleLowerCase();
   if (needle.length > 0 && !haystack.includes(needle)) return false;
 
   const filters = input?.filters ?? {};
@@ -383,7 +379,7 @@ function rowToRecord(row: Record<string, any>): SavedSearchRecord {
   let filters: SavedSearchFilters;
   try {
     const raw = row.filters;
-    const parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : raw ?? {};
+    const parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw ?? {});
     filters = normalizeSavedSearchFilters(parsed).filters;
   } catch {
     filters = normalizeSavedSearchFilters({}).filters;
@@ -466,14 +462,7 @@ export async function createSavedSearch(
       `INSERT INTO ${TABLE} (
          organization_id, name, query_text, filters, created_by, is_default
        ) VALUES (?, ?, ?, ?::jsonb, ?, ?)`,
-      [
-        orgId,
-        norm.name,
-        norm.queryText,
-        filtersJson,
-        userId ?? null,
-        norm.isDefault,
-      ]
+      [orgId, norm.name, norm.queryText, filtersJson, userId ?? null, norm.isDefault]
     );
 
     const created = (await dbGet(
@@ -511,16 +500,13 @@ export async function deleteSavedSearch(
     return { status: 'not_found' };
   }
   try {
-    const existing = (await dbGet(
-      `SELECT id FROM ${TABLE} WHERE id = ? AND organization_id = ?`,
-      [safeId, orgId]
-    )) as { id: string } | null;
+    const existing = (await dbGet(`SELECT id FROM ${TABLE} WHERE id = ? AND organization_id = ?`, [
+      safeId,
+      orgId,
+    ])) as { id: string } | null;
     if (!existing) return { status: 'not_found' };
 
-    await dbRun(
-      `DELETE FROM ${TABLE} WHERE id = ? AND organization_id = ?`,
-      [safeId, orgId]
-    );
+    await dbRun(`DELETE FROM ${TABLE} WHERE id = ? AND organization_id = ?`, [safeId, orgId]);
     return { status: 'ok' };
   } catch (error) {
     if (isSchemaMissingError(error)) {

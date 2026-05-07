@@ -126,7 +126,9 @@ const FieldRenderer: React.FC<{
                   onChange(next);
                 }}
                 className={`px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all ${
-                  isSelected ? 'ring-2 ring-primary-400/50 shadow-sm' : 'opacity-50 hover:opacity-80'
+                  isSelected
+                    ? 'ring-2 ring-primary-400/50 shadow-sm'
+                    : 'opacity-50 hover:opacity-80'
                 }`}
                 style={{ backgroundColor: bgColor, color: '#334155' }}
               >

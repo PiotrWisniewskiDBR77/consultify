@@ -48,17 +48,9 @@ export const BENCHMARK_DIMENSIONS: readonly BenchmarkDimension[] = [
   'conversational_editing',
 ] as const;
 
-export type DimensionTrendStatus =
-  | 'improving'
-  | 'stable'
-  | 'regressing'
-  | 'inconclusive';
+export type DimensionTrendStatus = 'improving' | 'stable' | 'regressing' | 'inconclusive';
 
-export type OverallTrendVerdict =
-  | 'TRACKING'
-  | 'AT_RISK'
-  | 'AHEAD_OF_TARGET'
-  | 'INCONCLUSIVE';
+export type OverallTrendVerdict = 'TRACKING' | 'AT_RISK' | 'AHEAD_OF_TARGET' | 'INCONCLUSIVE';
 
 export const DEFAULT_GAMMA_TARGET = 4.0;
 export const DEFAULT_WARNING_THRESHOLD = 3.5;
@@ -221,7 +213,7 @@ function buildDimensionTrend(
     .filter((v): v is number => v !== null && Number.isFinite(v));
 
   const latestValue =
-    finiteValues.length > 0 ? finiteValues[finiteValues.length - 1] ?? null : null;
+    finiteValues.length > 0 ? (finiteValues[finiteValues.length - 1] ?? null) : null;
 
   const last3 = finiteValues.slice(-3);
   const last6 = finiteValues.slice(-6);
@@ -294,10 +286,7 @@ function computeOverallVerdict(
   }
 
   const atRisk = dimensions.some(
-    (d) =>
-      d.status === 'regressing' &&
-      d.latestValue !== null &&
-      d.latestValue < warningThreshold
+    (d) => d.status === 'regressing' && d.latestValue !== null && d.latestValue < warningThreshold
   );
   if (atRisk) return 'AT_RISK';
 
@@ -366,9 +355,7 @@ function formatFromTo(trend: DimensionTrend): string | null {
 // Public API: pure builder
 // ---------------------------------------------------------------------------
 
-export function buildBenchmarkTrendReport(
-  input: BuildBenchmarkTrendInput
-): BenchmarkTrendReport {
+export function buildBenchmarkTrendReport(input: BuildBenchmarkTrendInput): BenchmarkTrendReport {
   const fallbackNowIso = '1970-01-01T00:00:00.000Z';
   const generatedAt = safeIsoOrFallback(input?.nowIso, fallbackNowIso);
   const gammaTarget = isFiniteNumber(input?.gammaTarget)
@@ -378,16 +365,12 @@ export function buildBenchmarkTrendReport(
     ? (input!.warningThreshold as number)
     : DEFAULT_WARNING_THRESHOLD;
 
-  const organizationId =
-    typeof input?.organizationId === 'string' ? input.organizationId : '';
-  const referenceSet =
-    typeof input?.referenceSet === 'string' ? input.referenceSet : '';
+  const organizationId = typeof input?.organizationId === 'string' ? input.organizationId : '';
+  const referenceSet = typeof input?.referenceSet === 'string' ? input.referenceSet : '';
 
   const rawRuns = Array.isArray(input?.runs) ? input.runs : [];
   // Filter obviously malformed entries so the rest of the math is safe.
-  const safeRuns = rawRuns.filter(
-    (r): r is BenchmarkRunRecord => !!r && typeof r === 'object'
-  );
+  const safeRuns = rawRuns.filter((r): r is BenchmarkRunRecord => !!r && typeof r === 'object');
   const runs = sortRunsChronologically(safeRuns);
   const windowMonths = computeWindowMonths(runs);
 
@@ -395,11 +378,7 @@ export function buildBenchmarkTrendReport(
     buildDimensionTrend(dim, runs, gammaTarget, DEFAULT_TREND_DELTA_THRESHOLD)
   );
 
-  const overallVerdict = computeOverallVerdict(
-    dimensions,
-    gammaTarget,
-    warningThreshold
-  );
+  const overallVerdict = computeOverallVerdict(dimensions, gammaTarget, warningThreshold);
   const summary = buildSummary(dimensions, overallVerdict, gammaTarget);
 
   return {
@@ -533,8 +512,7 @@ export async function loadRecentBenchmarkRuns(
       .filter((r) => !!r)
       .map((r) => ({
         runId: typeof r.run_id === 'string' ? r.run_id : '',
-        organizationId:
-          typeof r.organization_id === 'string' ? r.organization_id : orgId,
+        organizationId: typeof r.organization_id === 'string' ? r.organization_id : orgId,
         referenceSet: typeof r.reference_set === 'string' ? r.reference_set : '',
         recordedAt: typeof r.recorded_at === 'string' ? r.recorded_at : '',
         scores: parseScoresJson(r.scores_json),
@@ -547,10 +525,7 @@ export async function loadRecentBenchmarkRuns(
       // Best-effort: keep the dashboard up. We still log so ops can notice
       // a non-schema-missing failure mode in production logs.
       // eslint-disable-next-line no-console
-      console.warn(
-        '[presentationBenchmarkTrendService] loadRecentBenchmarkRuns failed',
-        error
-      );
+      console.warn('[presentationBenchmarkTrendService] loadRecentBenchmarkRuns failed', error);
     }
     return [];
   }

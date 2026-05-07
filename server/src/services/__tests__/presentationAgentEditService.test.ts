@@ -25,7 +25,13 @@ describe('presentationAgentEditService', () => {
     const deck = {
       deck_id: 'deck-1',
       title: 'Deck',
-      cards: [{ title: 'A', intent: 'key_messages', blocks: [{ content: { text: 'Long text for copy trimming.' } }] }],
+      cards: [
+        {
+          title: 'A',
+          intent: 'key_messages',
+          blocks: [{ content: { text: 'Long text for copy trimming.' } }],
+        },
+      ],
     };
     const plan = parsePresentationEditIntent('Make this concise and add summary');
     const result = applyPresentationEditPlan({
@@ -68,7 +74,12 @@ describe('presentationAgentEditService', () => {
       title: 'Deck',
       cards: [
         { card_id: 'c1', intent: 'title', title: 'Title' },
-        { card_id: 'c2', intent: 'overview', title: 'Overview', blocks: [{ content: { text: 'overview' } }] },
+        {
+          card_id: 'c2',
+          intent: 'overview',
+          title: 'Overview',
+          blocks: [{ content: { text: 'overview' } }],
+        },
       ],
     };
     const prompt = 'Sprawdź zgodność z template KS';

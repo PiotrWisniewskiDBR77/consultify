@@ -100,7 +100,12 @@ const FLAG_TYPE_CONFIG = {
     label: 'Boolean',
   },
   percentage: { icon: Percent, color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Percentage' },
-  targeting: { icon: Target, color: 'text-primary-400', bg: 'bg-primary-500/20', label: 'Targeting' },
+  targeting: {
+    icon: Target,
+    color: 'text-primary-400',
+    bg: 'bg-primary-500/20',
+    label: 'Targeting',
+  },
   ab_test: { icon: Beaker, color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'A/B Test' },
 };
 

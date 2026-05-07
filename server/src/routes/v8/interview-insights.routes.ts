@@ -285,7 +285,9 @@ router.get(
 
     const sourcePack = await buildSourcePack(insightId);
     if (!sourcePack) {
-      return res.status(404).json({ error: 'Source pack not found', code: 'P10_SOURCE_PACK_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Source pack not found', code: 'P10_SOURCE_PACK_NOT_FOUND' });
     }
 
     return res.json({

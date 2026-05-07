@@ -30,10 +30,7 @@ function getRequestUserRole(req: AuthRequest): string | null {
 
 const MAX_UPLOAD_BYTES = Math.max(
   1024 * 1024,
-  Math.min(
-    Number(process.env.ORG_CONTEXT_MAX_UPLOAD_BYTES || 100 * 1024 * 1024),
-    500 * 1024 * 1024
-  )
+  Math.min(Number(process.env.ORG_CONTEXT_MAX_UPLOAD_BYTES || 100 * 1024 * 1024), 500 * 1024 * 1024)
 );
 
 const upload = multer({

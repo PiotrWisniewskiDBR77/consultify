@@ -671,7 +671,10 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
           </h4>
           <ul className="space-y-2">
             {currentReport.escalations.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-rose-600 dark:text-rose-400">
+              <li
+                key={i}
+                className="flex items-start gap-2 text-sm text-rose-600 dark:text-rose-400"
+              >
                 <ChevronRight size={14} className="mt-1 shrink-0" />
                 {typeof item === 'string' ? item : item.message}
               </li>

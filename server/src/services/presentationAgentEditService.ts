@@ -44,7 +44,9 @@ function detectSectionHint(prompt: string): string | undefined {
 }
 
 export function parsePresentationEditIntent(prompt: string): PresentationEditPlan {
-  const normalized = String(prompt || '').trim().toLowerCase();
+  const normalized = String(prompt || '')
+    .trim()
+    .toLowerCase();
   if (!normalized) {
     return {
       scope: 'none',
@@ -86,7 +88,11 @@ export function parsePresentationEditIntent(prompt: string): PresentationEditPla
   ) {
     mutationKinds.push('structure');
   }
-  if (normalized.includes('readability') || normalized.includes('table') || normalized.includes('layout')) {
+  if (
+    normalized.includes('readability') ||
+    normalized.includes('table') ||
+    normalized.includes('layout')
+  ) {
     mutationKinds.push('layout');
   }
   if (
@@ -220,8 +226,15 @@ function detectReorderTargets(prompt: string): {
   if (!relation || parts.length < 2) return {};
 
   const stripVerbs = /\b(move|please|proszę|prosze|przenie[sśćż]+|przesu[ńn]+)\b/g;
-  const leftTokens = parts[0].replace(stripVerbs, '').trim().split(/[\s,.;:]+/).filter(Boolean);
-  const rightTokens = parts[1].trim().split(/[\s,.;:]+/).filter(Boolean);
+  const leftTokens = parts[0]
+    .replace(stripVerbs, '')
+    .trim()
+    .split(/[\s,.;:]+/)
+    .filter(Boolean);
+  const rightTokens = parts[1]
+    .trim()
+    .split(/[\s,.;:]+/)
+    .filter(Boolean);
   return {
     source: leftTokens[leftTokens.length - 1],
     target: rightTokens[0],
@@ -371,7 +384,8 @@ export function applyPresentationEditPlan(params: {
   ) {
     for (const card of cards) {
       for (const block of card.blocks || []) {
-        if (typeof block?.content?.text === 'string') block.content.text = block.content.text.slice(0, 180);
+        if (typeof block?.content?.text === 'string')
+          block.content.text = block.content.text.slice(0, 180);
         if (Array.isArray(block?.content?.items)) {
           block.content.items = block.content.items
             .slice(0, 4)
@@ -407,7 +421,8 @@ export function applyPresentationEditPlan(params: {
   ) {
     for (const card of cards) {
       for (const block of card.blocks || []) {
-        if (block?.is_refreshable) block.content = { ...(block.content || {}), _agent_refreshed_at: nowIso };
+        if (block?.is_refreshable)
+          block.content = { ...(block.content || {}), _agent_refreshed_at: nowIso };
       }
     }
     appliedActions.push(isPolish ? 'odświeżono bloki danych' : 'refreshed data blocks');
@@ -492,9 +507,7 @@ export function applyPresentationEditPlan(params: {
       name: brandName,
       applied_at: nowIso,
     };
-    appliedActions.push(
-      isPolish ? `zastosowano brand ${brandName}` : `applied brand ${brandName}`
-    );
+    appliedActions.push(isPolish ? `zastosowano brand ${brandName}` : `applied brand ${brandName}`);
   }
 
   const ksTriggered =
@@ -523,7 +536,11 @@ export function applyPresentationEditPlan(params: {
         intent: 'risk_register',
         titlePl: 'Rejestr ryzyk',
         titleEn: 'Risk Register',
-        bulletsPl: ['Ryzyko: do uzupełnienia', 'Wpływ: do uzupełnienia', 'Mitigacja: do uzupełnienia'],
+        bulletsPl: [
+          'Ryzyko: do uzupełnienia',
+          'Wpływ: do uzupełnienia',
+          'Mitigacja: do uzupełnienia',
+        ],
         bulletsEn: ['Risk: to be defined', 'Impact: to be defined', 'Mitigation: to be defined'],
       },
       {

@@ -37,12 +37,7 @@ export interface ClientWatchlistPreset {
   updatedAt: string;
 }
 
-export type WatchlistPresetFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'not_found'
-  | 'unavailable';
+export type WatchlistPresetFetchStatus = 'ok' | 'error' | 'forbidden' | 'not_found' | 'unavailable';
 
 export interface FetchPresetsResult {
   status: WatchlistPresetFetchStatus;
@@ -245,9 +240,7 @@ export async function fetchWatchlistPresets(): Promise<FetchPresetsResult> {
   }
 }
 
-export async function createWatchlistPreset(
-  input: CreatePresetInput
-): Promise<CreatePresetResult> {
+export async function createWatchlistPreset(input: CreatePresetInput): Promise<CreatePresetResult> {
   const path = '/presentations/governance/watchlist-presets';
   const body = {
     name: input.name,

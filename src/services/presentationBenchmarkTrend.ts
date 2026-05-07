@@ -17,12 +17,7 @@
 
 import { Api } from '@/services/api';
 
-export type BenchmarkTrendFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'not_found'
-  | 'unavailable';
+export type BenchmarkTrendFetchStatus = 'ok' | 'error' | 'forbidden' | 'not_found' | 'unavailable';
 
 export type ClientBenchmarkDimension =
   | 'content_quality'
@@ -39,17 +34,9 @@ export const CLIENT_BENCHMARK_DIMENSIONS: readonly ClientBenchmarkDimension[] = 
   'conversational_editing',
 ] as const;
 
-export type ClientDimensionTrendStatus =
-  | 'improving'
-  | 'stable'
-  | 'regressing'
-  | 'inconclusive';
+export type ClientDimensionTrendStatus = 'improving' | 'stable' | 'regressing' | 'inconclusive';
 
-export type ClientOverallTrendVerdict =
-  | 'TRACKING'
-  | 'AT_RISK'
-  | 'AHEAD_OF_TARGET'
-  | 'INCONCLUSIVE';
+export type ClientOverallTrendVerdict = 'TRACKING' | 'AT_RISK' | 'AHEAD_OF_TARGET' | 'INCONCLUSIVE';
 
 export interface ClientDimensionTrendPoint {
   runLabel: string;
@@ -91,9 +78,7 @@ export interface FetchBenchmarkTrendOptions {
   referenceSet?: string;
 }
 
-const ALLOWED_DIMENSIONS = new Set<ClientBenchmarkDimension>(
-  CLIENT_BENCHMARK_DIMENSIONS
-);
+const ALLOWED_DIMENSIONS = new Set<ClientBenchmarkDimension>(CLIENT_BENCHMARK_DIMENSIONS);
 const ALLOWED_STATUSES = new Set<ClientDimensionTrendStatus>([
   'improving',
   'stable',
@@ -124,30 +109,21 @@ function asNumberOrNull(value: unknown): number | null {
 }
 
 function asDimension(value: unknown): ClientBenchmarkDimension | null {
-  if (
-    typeof value === 'string' &&
-    ALLOWED_DIMENSIONS.has(value as ClientBenchmarkDimension)
-  ) {
+  if (typeof value === 'string' && ALLOWED_DIMENSIONS.has(value as ClientBenchmarkDimension)) {
     return value as ClientBenchmarkDimension;
   }
   return null;
 }
 
 function asStatus(value: unknown): ClientDimensionTrendStatus {
-  if (
-    typeof value === 'string' &&
-    ALLOWED_STATUSES.has(value as ClientDimensionTrendStatus)
-  ) {
+  if (typeof value === 'string' && ALLOWED_STATUSES.has(value as ClientDimensionTrendStatus)) {
     return value as ClientDimensionTrendStatus;
   }
   return 'inconclusive';
 }
 
 function asVerdict(value: unknown): ClientOverallTrendVerdict {
-  if (
-    typeof value === 'string' &&
-    ALLOWED_VERDICTS.has(value as ClientOverallTrendVerdict)
-  ) {
+  if (typeof value === 'string' && ALLOWED_VERDICTS.has(value as ClientOverallTrendVerdict)) {
     return value as ClientOverallTrendVerdict;
   }
   return 'INCONCLUSIVE';
@@ -166,9 +142,7 @@ function normalizeDimension(raw: unknown): ClientDimensionTrend | null {
   if (!isRecord(raw)) return null;
   const dimension = asDimension(raw.dimension);
   if (!dimension) return null;
-  const points = Array.isArray(raw.points)
-    ? raw.points.map((p) => normalizePoint(p))
-    : [];
+  const points = Array.isArray(raw.points) ? raw.points.map((p) => normalizePoint(p)) : [];
   return {
     dimension,
     points,
@@ -242,12 +216,9 @@ export async function fetchBenchmarkTrend(
   if (typeof apiAny.get === 'function') {
     try {
       const res = await apiAny.get(path);
-      const payload =
-        isRecord(res) && 'data' in res ? (res as { data: unknown }).data : res;
+      const payload = isRecord(res) && 'data' in res ? (res as { data: unknown }).data : res;
       const innerData =
-        isRecord(payload) && 'data' in payload
-          ? (payload as { data: unknown }).data
-          : payload;
+        isRecord(payload) && 'data' in payload ? (payload as { data: unknown }).data : payload;
       const data = normalizeReport(innerData);
       if (!data) return { status: 'error', error: 'invalid_payload' };
       return { status: 'ok', data };
@@ -261,13 +232,11 @@ export async function fetchBenchmarkTrend(
     if (!res.ok) {
       if (res.status === 401) return { status: 'error', error: 'unauthorized' };
       if (res.status === 403) return { status: 'forbidden', error: 'forbidden' };
-      if (res.status === 404)
-        return { status: 'not_found', error: 'not_found' };
+      if (res.status === 404) return { status: 'not_found', error: 'not_found' };
       return { status: 'error', error: `http_${res.status}` };
     }
     const json: unknown = await res.json().catch(() => null);
-    const innerData =
-      isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
+    const innerData = isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
     const data = normalizeReport(innerData);
     if (!data) return { status: 'error', error: 'invalid_payload' };
     return { status: 'ok', data };

@@ -24,7 +24,9 @@ export function normalizeTemplatePayload(row: any) {
   });
   template.source_requirements_json = safeJsonParse(template.source_requirements_json, []);
   template.layout_policy_json = safeJsonParse(template.layout_policy_json, {});
-  template.template_family = String(template.template_family || template.deck_type || 'Custom Deck');
+  template.template_family = String(
+    template.template_family || template.deck_type || 'Custom Deck'
+  );
   template.language_default = String(template.language_default || 'en');
   template.confidentiality_default = String(template.confidentiality_default || 'internal');
   template.max_slides = Number(template.max_slides || 25);

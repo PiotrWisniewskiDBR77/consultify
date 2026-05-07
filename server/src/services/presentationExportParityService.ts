@@ -22,7 +22,7 @@
  */
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
-import { normalizeDeckDocument, type DeckDocument } from './presentationDeckDocumentService.js';
+import { type DeckDocument, normalizeDeckDocument } from './presentationDeckDocumentService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -141,7 +141,9 @@ function safeArrayOfStrings(value: unknown): string[] {
   return out;
 }
 
-function pickLatestPerFormat(records: ExportRecordSummary[]): Map<ExportFormat, ExportRecordSummary> {
+function pickLatestPerFormat(
+  records: ExportRecordSummary[]
+): Map<ExportFormat, ExportRecordSummary> {
   const latest = new Map<ExportFormat, ExportRecordSummary>();
   for (const record of records) {
     if (!isExportFormat(record.format)) continue;
@@ -344,11 +346,22 @@ function readDeckBag(deck: DeckDocument): Record<string, any> {
  * shapes a deck may carry: explicit `metadata.*Text`, `brand.*Text`, the
  * first card's `header_footer.footerText`, and finally the meta fallback.
  */
-function readDeckHeaderFooter(deck: DeckDocument): { headerText: string | null; footerText: string | null } {
+function readDeckHeaderFooter(deck: DeckDocument): {
+  headerText: string | null;
+  footerText: string | null;
+} {
   const bag = readDeckBag(deck);
-  const metadataLike = (bag.metadata && typeof bag.metadata === 'object' ? bag.metadata : {}) as Record<string, any>;
-  const metaLike = (deck.meta && typeof deck.meta === 'object' ? deck.meta : {}) as Record<string, any>;
-  const brandLike = (bag.brand && typeof bag.brand === 'object' ? bag.brand : {}) as Record<string, any>;
+  const metadataLike = (
+    bag.metadata && typeof bag.metadata === 'object' ? bag.metadata : {}
+  ) as Record<string, any>;
+  const metaLike = (deck.meta && typeof deck.meta === 'object' ? deck.meta : {}) as Record<
+    string,
+    any
+  >;
+  const brandLike = (bag.brand && typeof bag.brand === 'object' ? bag.brand : {}) as Record<
+    string,
+    any
+  >;
 
   const headerCandidates = [
     metadataLike.headerText,
@@ -390,7 +403,9 @@ function readDeckHeaderFooter(deck: DeckDocument): { headerText: string | null; 
  * `public` decks are not watermarked so expected = null.
  */
 export function expectedWatermarkFromConfidentiality(value: unknown): string | null {
-  const raw = String(value || '').trim().toLowerCase();
+  const raw = String(value || '')
+    .trim()
+    .toLowerCase();
   if (!raw) return null;
   if (raw === 'confidential') return 'CONFIDENTIAL';
   if (raw === 'restricted') return 'RESTRICTED';
@@ -532,7 +547,9 @@ function parseQualityReport(raw: string | null | undefined): {
     };
   }
   const parityBag =
-    parsed.parity && typeof parsed.parity === 'object' ? (parsed.parity as Record<string, any>) : parsed;
+    parsed.parity && typeof parsed.parity === 'object'
+      ? (parsed.parity as Record<string, any>)
+      : parsed;
   const pageCount =
     typeof parityBag.pageCount === 'number'
       ? parityBag.pageCount
@@ -621,7 +638,11 @@ export async function loadExportRecordsForParity(
 export async function buildExpectedParityFromDeck(
   deckId: string,
   organizationId: string
-): Promise<{ status: 'ok' | 'not_found' | 'storage_error'; expected?: ParityExpected; reason?: string }> {
+): Promise<{
+  status: 'ok' | 'not_found' | 'storage_error';
+  expected?: ParityExpected;
+  reason?: string;
+}> {
   let row: any;
   try {
     row = (await dbGet(
@@ -642,7 +663,10 @@ export async function buildExpectedParityFromDeck(
   if (!deck) return { status: 'not_found' };
   // Carry the row-level confidentiality column when the deck JSON omits it.
   if (!deck.meta?.confidentiality && row.confidentiality) {
-    deck.meta = { ...(deck.meta || { title: deck.title, deckType: 'custom' }), confidentiality: String(row.confidentiality) };
+    deck.meta = {
+      ...(deck.meta || { title: deck.title, deckType: 'custom' }),
+      confidentiality: String(row.confidentiality),
+    };
   }
   return { status: 'ok', expected: buildExpectedParityFromDeckDocument(deck) };
 }
@@ -654,7 +678,11 @@ export async function buildExpectedParityFromDeck(
 export async function buildParityReportForDeck(
   deckId: string,
   organizationId: string
-): Promise<{ status: 'ok' | 'not_found' | 'storage_error'; report?: ParityCheckReport; reason?: string }> {
+): Promise<{
+  status: 'ok' | 'not_found' | 'storage_error';
+  report?: ParityCheckReport;
+  reason?: string;
+}> {
   const expectedResult = await buildExpectedParityFromDeck(deckId, organizationId);
   if (expectedResult.status === 'not_found') return { status: 'not_found' };
   if (expectedResult.status === 'storage_error') {

@@ -95,9 +95,7 @@ let _semanticReasonProvider: SemanticReasonProvider | null = null;
  * reasoning and emits only deterministic (field-match / temporal) reasons.
  * Prevents network egress in unit tests by default.
  */
-export function setSemanticReasonProvider(
-  provider: SemanticReasonProvider | null
-): void {
+export function setSemanticReasonProvider(provider: SemanticReasonProvider | null): void {
   _semanticReasonProvider = provider;
 }
 
@@ -328,9 +326,10 @@ const relationExplainabilityService = {
     }
 
     const tableMeta = await metadataService.getTable(tableId);
-    const fieldsById = new Map<string, { id: string; name: string; field_type: string; options?: Record<string, unknown> }>(
-      ((tableMeta?.fields ?? []) as Array<any>).map((f) => [f.id, f])
-    );
+    const fieldsById = new Map<
+      string,
+      { id: string; name: string; field_type: string; options?: Record<string, unknown> }
+    >(((tableMeta?.fields ?? []) as Array<any>).map((f) => [f.id, f]));
 
     // 4) Iterate fields with linked records and collect candidate explanations.
     const candidates: RelationExplanation[] = [];

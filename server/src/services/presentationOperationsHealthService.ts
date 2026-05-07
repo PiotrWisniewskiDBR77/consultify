@@ -44,11 +44,7 @@ export interface SloIndicator {
   status: SloStatus;
 }
 
-export type JobId =
-  | 'retention_telemetry'
-  | 'weekly_digest'
-  | 'governance_ci_gate'
-  | 'alert_worker';
+export type JobId = 'retention_telemetry' | 'weekly_digest' | 'governance_ci_gate' | 'alert_worker';
 
 export interface JobRunSnapshot {
   jobId: JobId;
@@ -345,7 +341,10 @@ function buildP95GenerationLatency(
       id: 'p95_generation_latency_ms',
       label: 'P95 generation latency',
       target: '<= 8000 ms',
-      observed: samples.length === 0 ? '—' : `${samples.length} sample(s) (need ${MIN_LATENCY_SAMPLES_FOR_VERDICT})`,
+      observed:
+        samples.length === 0
+          ? '—'
+          : `${samples.length} sample(s) (need ${MIN_LATENCY_SAMPLES_FOR_VERDICT})`,
       observedNumeric: samples.length === 0 ? null : (p95(samples) ?? null),
       status: 'inconclusive',
     };

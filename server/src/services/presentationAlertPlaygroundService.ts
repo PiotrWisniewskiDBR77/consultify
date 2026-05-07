@@ -27,13 +27,13 @@
  */
 
 import {
+  type AlertSeverity,
   buildAlertPayload,
   buildCanonicalSigningString,
   buildSignedRequestHeaders,
   generateSigningSecret,
   signWebhookBody,
   verifyWebhookSignature,
-  type AlertSeverity,
 } from './presentationGovernanceAlertService.js';
 
 // ============================================================================
@@ -249,8 +249,7 @@ export function verifyInboxRequest(input: PlaygroundInboxRequest): PlaygroundInb
   const signature = typeof input.signature === 'string' ? input.signature : '';
   const timestamp = typeof input.timestamp === 'string' ? input.timestamp : '';
   const eventId = typeof input.eventId === 'string' ? input.eventId : '';
-  const algorithm =
-    typeof input.signatureAlgorithm === 'string' ? input.signatureAlgorithm : '';
+  const algorithm = typeof input.signatureAlgorithm === 'string' ? input.signatureAlgorithm : '';
 
   if (!signature || !timestamp || !eventId) {
     return {

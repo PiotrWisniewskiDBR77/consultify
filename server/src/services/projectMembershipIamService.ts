@@ -11,10 +11,10 @@
  *  - Emit audit events for all successful writes.
  */
 
-import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
-import { normalizeProjectRole } from '../utils/roleNormalization.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { normalizeProjectRole } from '../utils/roleNormalization.js';
+import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -52,7 +52,9 @@ function deny(code: ProjectIamDenialCode, message: string): ProjectIamDenial {
   return { denied: true, code, message };
 }
 
-async function getProjectMembers(projectId: string): Promise<Array<{ user_id: string; role: string; normalized_project_role?: string }>> {
+async function getProjectMembers(
+  projectId: string
+): Promise<Array<{ user_id: string; role: string; normalized_project_role?: string }>> {
   const rows = await dbAll<{ user_id: string; role: string; normalized_project_role?: string }>(
     `SELECT user_id, role, normalized_project_role FROM project_members WHERE project_id = ?`,
     [projectId],
@@ -132,7 +134,10 @@ export async function addProjectMemberViaIam(params: {
     hasEffectiveCapability(access, 'admin.people.manage');
 
   if (!canManageTeam) {
-    return deny('CAPABILITY_REQUIRED', 'Capability project.team.manage required to add project members');
+    return deny(
+      'CAPABILITY_REQUIRED',
+      'Capability project.team.manage required to add project members'
+    );
   }
 
   // Normalize to canonical project role
@@ -171,8 +176,10 @@ export async function removeProjectMemberViaIam(params: {
     projectId: params.projectId,
   });
 
-  if (!hasEffectiveCapability(access, 'project.team.manage') &&
-      !hasEffectiveCapability(access, 'admin.people.manage')) {
+  if (
+    !hasEffectiveCapability(access, 'project.team.manage') &&
+    !hasEffectiveCapability(access, 'admin.people.manage')
+  ) {
     return deny('CAPABILITY_REQUIRED', 'Capability project.team.manage required');
   }
 
@@ -183,14 +190,19 @@ export async function removeProjectMemberViaIam(params: {
     return deny('MEMBER_NOT_FOUND', 'Project member not found');
   }
 
-  const targetRole = normalizeProjectRole(targetMember.normalized_project_role || targetMember.role);
+  const targetRole = normalizeProjectRole(
+    targetMember.normalized_project_role || targetMember.role
+  );
 
   if (targetRole === 'PROJECT_SPONSOR') {
     const sponsors = members.filter(
       (m) => normalizeProjectRole(m.normalized_project_role || m.role) === 'PROJECT_SPONSOR'
     );
     if (sponsors.length <= 1) {
-      return deny('LAST_SPONSOR_PROTECTED', 'Cannot remove the last PROJECT_SPONSOR from this project');
+      return deny(
+        'LAST_SPONSOR_PROTECTED',
+        'Cannot remove the last PROJECT_SPONSOR from this project'
+      );
     }
   }
 
@@ -199,7 +211,10 @@ export async function removeProjectMemberViaIam(params: {
       (m) => normalizeProjectRole(m.normalized_project_role || m.role) === 'PROJECT_LEADER'
     );
     if (leaders.length <= 1) {
-      return deny('LAST_LEADER_PROTECTED', 'Cannot remove the last PROJECT_LEADER from this project');
+      return deny(
+        'LAST_LEADER_PROTECTED',
+        'Cannot remove the last PROJECT_LEADER from this project'
+      );
     }
   }
 

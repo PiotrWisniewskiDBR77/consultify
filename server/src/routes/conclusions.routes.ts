@@ -3,8 +3,8 @@ import { Router } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import verifyToken from '../middleware/auth.middleware.js';
 import { artifactConversionService } from '../services/artifacts/ArtifactConversionService.js';
-import { conclusionService } from '../services/conclusions/ConclusionService.js';
 import { conclusionReadoutService } from '../services/conclusions/ConclusionReadoutService.js';
+import { conclusionService } from '../services/conclusions/ConclusionService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -71,10 +71,7 @@ router.get(
   '/readouts/:readoutId',
   asyncHandler(async (req: AuthRequest, res) => {
     const { organizationId } = getAuthContext(req);
-    const readout = await conclusionReadoutService.getReadout(
-      organizationId,
-      req.params.readoutId
-    );
+    const readout = await conclusionReadoutService.getReadout(organizationId, req.params.readoutId);
     if (!readout) return res.status(404).json({ error: 'Readout not found' });
     res.json({ readout });
   })
@@ -97,10 +94,7 @@ router.post(
   '/readouts/:readoutId/chat-context',
   asyncHandler(async (req: AuthRequest, res) => {
     const { organizationId } = getAuthContext(req);
-    const readout = await conclusionReadoutService.getReadout(
-      organizationId,
-      req.params.readoutId
-    );
+    const readout = await conclusionReadoutService.getReadout(organizationId, req.params.readoutId);
     if (!readout) return res.status(404).json({ error: 'Readout not found' });
     res.json({ context: conclusionReadoutService.buildChatContext(readout) });
   })

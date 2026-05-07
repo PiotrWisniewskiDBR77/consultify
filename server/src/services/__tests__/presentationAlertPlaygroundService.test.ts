@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildPlaygroundDispatchPlan,
+  type PlaygroundDispatchPlan,
+  verifyInboxRequest,
+} from '../presentationAlertPlaygroundService.js';
+import {
   buildCanonicalSigningString,
   signWebhookBody,
 } from '../presentationGovernanceAlertService.js';
-import {
-  buildPlaygroundDispatchPlan,
-  verifyInboxRequest,
-  type PlaygroundDispatchPlan,
-} from '../presentationAlertPlaygroundService.js';
 
 function makePlan(overrides: { signingSecret?: string | null } = {}): PlaygroundDispatchPlan {
   return buildPlaygroundDispatchPlan({
@@ -71,9 +71,7 @@ describe('presentationAlertPlaygroundService - buildPlaygroundDispatchPlan', () 
     expect(plan.headers['x-consultify-signature-algorithm']).toBe('HMAC-SHA256');
     expect(plan.headers['x-consultify-event-id']).toBe(plan.eventId);
     expect(plan.headers['x-consultify-timestamp']).toBe(plan.generatedAt);
-    expect(plan.canonicalString).toBe(
-      `${plan.generatedAt}\n${plan.eventId}\n${plan.bodyJson}`
-    );
+    expect(plan.canonicalString).toBe(`${plan.generatedAt}\n${plan.eventId}\n${plan.bodyJson}`);
     // bodyJson must round-trip parse and contain the synthetic verdict.
     const payload = JSON.parse(plan.bodyJson);
     expect(payload.toVerdict).toBe('BLOCKED_P0');
@@ -152,8 +150,7 @@ describe('presentationAlertPlaygroundService - verifyInboxRequest', () => {
 
   it('returns invalid_signature when a single hex char of the signature is tampered', () => {
     const plan = makePlan();
-    const tampered =
-      plan.signature.slice(0, -1) + (plan.signature.endsWith('0') ? '1' : '0');
+    const tampered = plan.signature.slice(0, -1) + (plan.signature.endsWith('0') ? '1' : '0');
 
     const result = verifyInboxRequest(inboxFromPlan(plan, { signature: tampered }));
 
@@ -199,9 +196,7 @@ describe('presentationAlertPlaygroundService - verifyInboxRequest', () => {
   it('returns missing_headers when signatureAlgorithm is HMAC-SHA1 (rejected)', () => {
     const plan = makePlan();
 
-    const result = verifyInboxRequest(
-      inboxFromPlan(plan, { signatureAlgorithm: 'HMAC-SHA1' })
-    );
+    const result = verifyInboxRequest(inboxFromPlan(plan, { signatureAlgorithm: 'HMAC-SHA1' }));
 
     expect(result.status).toBe('missing_headers');
     expect(result.reason).toMatch(/algorithm/i);

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  type BulkRevertOpRow,
   evaluateBulkRevertEligibility,
   planBulkRevert,
-  type BulkRevertOpRow,
 } from '../presentationDeckBulkRevertService.js';
 
 function buildRow(overrides: Partial<BulkRevertOpRow> = {}): BulkRevertOpRow {

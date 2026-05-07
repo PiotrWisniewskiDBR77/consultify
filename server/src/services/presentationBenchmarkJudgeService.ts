@@ -164,9 +164,7 @@ export const DEFAULT_RUBRICS: JudgeRubric[] = [
   },
 ];
 
-const VALID_SCORES = new Set<number>([
-  1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5,
-]);
+const VALID_SCORES = new Set<number>([1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]);
 
 const CONFIDENCE_VALUES = new Set<DimensionScoreResult['confidence']>(['low', 'medium', 'high']);
 
@@ -200,12 +198,14 @@ export const noopLlmAdapter: LlmJudgeAdapter = {
  * JSON payload the real LLM is expected to produce. This keeps tests offline
  * and decoupled from any provider keys.
  */
-export function mockLlmAdapter(predefined: Partial<JudgeResult> & {
-  rawText?: string;
-  status?: LlmJudgeAdapterCallOutput['status'];
-  modelId?: string;
-  reason?: string;
-}): LlmJudgeAdapter {
+export function mockLlmAdapter(
+  predefined: Partial<JudgeResult> & {
+    rawText?: string;
+    status?: LlmJudgeAdapterCallOutput['status'];
+    modelId?: string;
+    reason?: string;
+  }
+): LlmJudgeAdapter {
   return {
     async judge(): Promise<LlmJudgeAdapterCallOutput> {
       const status = predefined.status ?? 'ok';
@@ -297,7 +297,9 @@ function safeDeck(deck: JudgeDeckInput | undefined | null): JudgeDeckInput {
       deck.brandKit && typeof deck.brandKit === 'object'
         ? {
             primaryColor:
-              typeof deck.brandKit.primaryColor === 'string' ? deck.brandKit.primaryColor : undefined,
+              typeof deck.brandKit.primaryColor === 'string'
+                ? deck.brandKit.primaryColor
+                : undefined,
             theme: typeof deck.brandKit.theme === 'string' ? deck.brandKit.theme : undefined,
           }
         : undefined,
@@ -336,8 +338,7 @@ function safeRubrics(rubrics: JudgeRubric[] | undefined | null): JudgeRubric[] {
     if (!seen.has(fallback.dimension)) out.push(fallback);
   }
   out.sort(
-    (a, b) =>
-      BENCHMARK_DIMENSIONS.indexOf(a.dimension) - BENCHMARK_DIMENSIONS.indexOf(b.dimension)
+    (a, b) => BENCHMARK_DIMENSIONS.indexOf(a.dimension) - BENCHMARK_DIMENSIONS.indexOf(b.dimension)
   );
   return out;
 }
@@ -617,9 +618,7 @@ export interface JudgeDeckBenchmarkInput {
   timeoutMs?: number;
 }
 
-type GuardSentinel =
-  | { __sentinel: 'timeout' }
-  | { __sentinel: 'error'; message: string };
+type GuardSentinel = { __sentinel: 'timeout' } | { __sentinel: 'error'; message: string };
 
 function timeoutGuard<T>(promise: Promise<T>, ms: number): Promise<T | GuardSentinel> {
   return new Promise((resolve) => {
@@ -656,7 +655,12 @@ function isGuardSentinel(value: unknown): value is GuardSentinel {
 
 export async function judgeDeckBenchmark(input: JudgeDeckBenchmarkInput): Promise<JudgeResult> {
   const startedAt = Date.now();
-  if (!input || typeof input !== 'object' || !input.adapter || typeof input.adapter.judge !== 'function') {
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    !input.adapter ||
+    typeof input.adapter.judge !== 'function'
+  ) {
     return {
       status: 'unavailable',
       reason: 'No LLM adapter provided',

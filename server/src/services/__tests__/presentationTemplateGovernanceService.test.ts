@@ -243,14 +243,22 @@ describe('computeLineageForClone', () => {
     expect(v2.lineageRootId).toBe('tpl-root');
 
     const v3 = computeLineageForClone({
-      parentTemplate: { id: 'tpl-v2', lineageRootId: v2.lineageRootId, lineageVersion: v2.lineageVersion },
+      parentTemplate: {
+        id: 'tpl-v2',
+        lineageRootId: v2.lineageRootId,
+        lineageVersion: v2.lineageVersion,
+      },
     });
     expect(v3.lineageRootId).toBe('tpl-root');
     expect(v3.lineageParentId).toBe('tpl-v2');
     expect(v3.lineageVersion).toBe(3);
 
     const v4 = computeLineageForClone({
-      parentTemplate: { id: 'tpl-v3', lineageRootId: v3.lineageRootId, lineageVersion: v3.lineageVersion },
+      parentTemplate: {
+        id: 'tpl-v3',
+        lineageRootId: v3.lineageRootId,
+        lineageVersion: v3.lineageVersion,
+      },
     });
     expect(v4.lineageRootId).toBe('tpl-root');
     expect(v4.lineageVersion).toBe(4);

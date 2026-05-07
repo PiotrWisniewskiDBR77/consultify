@@ -389,9 +389,7 @@ const PresentationTemplateGovernanceView: React.FC = () => {
           <div>
             <p className="font-medium">{listBanner.title}</p>
             <p className="opacity-90">{listBanner.body}</p>
-            {listError ? (
-              <p className="mt-1 text-xs opacity-80">Detail: {listError}</p>
-            ) : null}
+            {listError ? <p className="mt-1 text-xs opacity-80">Detail: {listError}</p> : null}
           </div>
         </div>
       ) : null}
@@ -518,17 +516,18 @@ interface LineagePanelProps {
 }
 
 const LineagePanel: React.FC<LineagePanelProps> = ({ governance }) => {
-  const chain = governance.lineage.chain.length > 0
-    ? governance.lineage.chain
-    : [
-        {
-          id: governance.templateId,
-          name: governance.name,
-          lifecycleState: governance.lifecycleState,
-          lineageVersion: governance.lineage.version,
-          lineageParentId: null,
-        },
-      ];
+  const chain =
+    governance.lineage.chain.length > 0
+      ? governance.lineage.chain
+      : [
+          {
+            id: governance.templateId,
+            name: governance.name,
+            lifecycleState: governance.lifecycleState,
+            lineageVersion: governance.lineage.version,
+            lineageParentId: null,
+          },
+        ];
   return (
     <div className="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
       <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
@@ -541,15 +540,15 @@ const LineagePanel: React.FC<LineagePanelProps> = ({ governance }) => {
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
               {node.lineageVersion}
             </span>
-            <span className="truncate text-slate-800 dark:text-slate-100">{node.name || node.id}</span>
+            <span className="truncate text-slate-800 dark:text-slate-100">
+              {node.name || node.id}
+            </span>
             <span
               className={`ml-auto inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${STATE_PILL[node.lifecycleState]}`}
             >
               {node.lifecycleState}
             </span>
-            {idx < chain.length - 1 ? (
-              <ChevronRight size={12} className="text-slate-400" />
-            ) : null}
+            {idx < chain.length - 1 ? <ChevronRight size={12} className="text-slate-400" /> : null}
           </li>
         ))}
       </ol>
@@ -572,7 +571,9 @@ const ApprovalPanel: React.FC<ApprovalPanelProps> = ({ governance }) => {
       <dl className="mt-2 space-y-1 text-sm">
         <div className="flex justify-between gap-2">
           <dt className="text-slate-500 dark:text-slate-400">Approved at</dt>
-          <dd className="text-slate-800 dark:text-slate-100">{formatTimestamp(approval.approvedAt)}</dd>
+          <dd className="text-slate-800 dark:text-slate-100">
+            {formatTimestamp(approval.approvedAt)}
+          </dd>
         </div>
         <div className="flex justify-between gap-2">
           <dt className="text-slate-500 dark:text-slate-400">Approved by</dt>
@@ -582,7 +583,9 @@ const ApprovalPanel: React.FC<ApprovalPanelProps> = ({ governance }) => {
           <>
             <div className="flex justify-between gap-2">
               <dt className="text-slate-500 dark:text-slate-400">Deprecated at</dt>
-              <dd className="text-slate-800 dark:text-slate-100">{formatTimestamp(approval.deprecatedAt)}</dd>
+              <dd className="text-slate-800 dark:text-slate-100">
+                {formatTimestamp(approval.deprecatedAt)}
+              </dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-slate-500 dark:text-slate-400">Deprecated by</dt>
@@ -677,9 +680,7 @@ const EventsPanel: React.FC<EventsPanelProps> = ({ events }) => {
               </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {formatTimestamp(event.createdAt)} · {event.actorRole || 'unknown role'}
-                {event.fromState && event.toState
-                  ? ` · ${event.fromState} → ${event.toState}`
-                  : ''}
+                {event.fromState && event.toState ? ` · ${event.fromState} → ${event.toState}` : ''}
               </p>
               {event.reason ? (
                 <p className="mt-1 text-slate-700 dark:text-slate-300">{event.reason}</p>
@@ -709,10 +710,8 @@ const ACTION_TITLE: Record<ActionModalState['action'], string> = {
 };
 
 const ACTION_HINT: Record<ActionModalState['action'], string> = {
-  submit:
-    'Document why this draft is ready for review. The reason is stored in the audit ledger.',
-  approve:
-    'Optional: explain why you are approving this template (e.g. peer review reference).',
+  submit: 'Document why this draft is ready for review. The reason is stored in the audit ledger.',
+  approve: 'Optional: explain why you are approving this template (e.g. peer review reference).',
   deprecate:
     'A reason is REQUIRED. State why this template is being retired so consumers know the replacement.',
 };
@@ -757,7 +756,9 @@ const ActionModal: React.FC<ActionModalProps> = ({
             <X size={16} />
           </button>
         </div>
-        <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">{ACTION_HINT[modal.action]}</p>
+        <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">
+          {ACTION_HINT[modal.action]}
+        </p>
         <label className="mt-3 block text-xs font-medium text-slate-700 dark:text-slate-200">
           Reason {reasonRequired ? <span className="text-rose-600">*</span> : null}
         </label>
@@ -770,9 +771,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
           placeholder={reasonRequired ? 'Required — explain replacement / risk' : 'Optional'}
         />
         <div className="mt-1 flex items-center justify-between text-[11px]">
-          <span
-            className={`${overLimit ? 'text-rose-600' : 'text-slate-500 dark:text-slate-400'}`}
-          >
+          <span className={`${overLimit ? 'text-rose-600' : 'text-slate-500 dark:text-slate-400'}`}>
             {reason.length}/{REASON_MAX}
           </span>
         </div>

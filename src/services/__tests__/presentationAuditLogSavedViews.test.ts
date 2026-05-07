@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  SAVED_VIEWS_MAX_PER_USER,
-  SAVED_VIEWS_STORAGE_KEY,
+  type AuditLogSavedViewFilters,
   deleteSavedView,
   exportSavedViews,
   importSavedViews,
   listSavedViews,
+  SAVED_VIEWS_MAX_PER_USER,
+  SAVED_VIEWS_STORAGE_KEY,
   saveSavedView,
-  type AuditLogSavedViewFilters,
 } from '../presentationAuditLogSavedViews';
 
 class MemoryStorage implements Storage {
@@ -93,9 +93,9 @@ describe('presentationAuditLogSavedViews', () => {
 
   it('throws NAME_TAKEN when a different id collides on name (case-insensitive)', () => {
     saveSavedView(USER_KEY, { name: 'Shared Name', filters: FILTERS_A });
-    expect(() =>
-      saveSavedView(USER_KEY, { name: 'shared name', filters: FILTERS_B })
-    ).toThrowError('NAME_TAKEN');
+    expect(() => saveSavedView(USER_KEY, { name: 'shared name', filters: FILTERS_B })).toThrowError(
+      'NAME_TAKEN'
+    );
   });
 
   it('updates an existing view by id without changing list size', () => {
@@ -123,9 +123,9 @@ describe('presentationAuditLogSavedViews', () => {
       });
     }
     expect(listSavedViews(USER_KEY)).toHaveLength(SAVED_VIEWS_MAX_PER_USER);
-    expect(() =>
-      saveSavedView(USER_KEY, { name: 'Overflow', filters: FILTERS_A })
-    ).toThrowError('LIMIT_REACHED');
+    expect(() => saveSavedView(USER_KEY, { name: 'Overflow', filters: FILTERS_A })).toThrowError(
+      'LIMIT_REACHED'
+    );
   });
 
   it('delete is idempotent and tolerates missing ids', () => {
@@ -193,9 +193,7 @@ describe('presentationAuditLogSavedViews', () => {
 
     expect(listSavedViews(USER_KEY)).toEqual([]);
 
-    expect(() =>
-      saveSavedView(USER_KEY, { name: 'Hidden', filters: FILTERS_A })
-    ).not.toThrow();
+    expect(() => saveSavedView(USER_KEY, { name: 'Hidden', filters: FILTERS_A })).not.toThrow();
 
     expect(() => deleteSavedView(USER_KEY, 'view_anything')).not.toThrow();
 
@@ -204,9 +202,7 @@ describe('presentationAuditLogSavedViews', () => {
     const exported = exportSavedViews(USER_KEY);
     expect(JSON.parse(exported).views).toEqual([]);
 
-    expect(() =>
-      importSavedViews(USER_KEY, JSON.stringify({ views: [] }))
-    ).not.toThrow();
+    expect(() => importSavedViews(USER_KEY, JSON.stringify({ views: [] }))).not.toThrow();
   });
 
   it('persists across calls under the same storage key', () => {

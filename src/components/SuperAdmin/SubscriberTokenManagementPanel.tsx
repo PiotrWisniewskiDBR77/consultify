@@ -169,9 +169,7 @@ const SubscriberTokenManagementPanel: React.FC<SubscriberTokenManagementPanelPro
     const trimmed = revokeForm.reason.trim();
     if (trimmed.length < REASON_MIN || !revokeForm.confirmed) return;
 
-    setRevokeForm((prev) =>
-      prev ? { ...prev, loading: true, outcome: { kind: 'idle' } } : prev
-    );
+    setRevokeForm((prev) => (prev ? { ...prev, loading: true, outcome: { kind: 'idle' } } : prev));
 
     const result = await revokeDashboardToken(
       subscriptionId,
@@ -426,8 +424,8 @@ const RevokePanel: React.FC<RevokePanelProps> = ({
             Revoke dashboard token
           </div>
           <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
-            Revocation is irreversible. The subscriber will receive 401 on the next dashboard
-            call. Issue a fresh token via the issuance flow if continued access is needed.
+            Revocation is irreversible. The subscriber will receive 401 on the next dashboard call.
+            Issue a fresh token via the issuance flow if continued access is needed.
           </p>
         </div>
         <button

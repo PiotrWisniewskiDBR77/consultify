@@ -8,7 +8,14 @@ export interface ArtifactConversion {
   sourceArtifactTitle?: string;
   targetArtifactType: string;
   targetArtifactId?: string | null;
-  conversionStatus: 'draft' | 'proposed' | 'approved' | 'converted' | 'rejected' | 'failed' | 'cancelled';
+  conversionStatus:
+    | 'draft'
+    | 'proposed'
+    | 'approved'
+    | 'converted'
+    | 'rejected'
+    | 'failed'
+    | 'cancelled';
   conversionIntent: string;
   errorMessage?: string | null;
   payload: Record<string, unknown>;

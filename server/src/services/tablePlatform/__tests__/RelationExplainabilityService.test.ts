@@ -54,8 +54,7 @@ vi.mock('../../../utils/Logger.js', () => ({
 vi.mock('../RelationService.js', () => ({
   default: {
     expandRecord: (...args: unknown[]) => mockExpandRecord(...args),
-    getLinkedRecordDisplayNames: (...args: unknown[]) =>
-      mockGetLinkedRecordDisplayNames(...args),
+    getLinkedRecordDisplayNames: (...args: unknown[]) => mockGetLinkedRecordDisplayNames(...args),
   },
 }));
 
@@ -97,7 +96,9 @@ function setupTenantOk(orgId = TENANT) {
   });
 }
 
-function setupExpandedRecord(linked: Record<string, Array<{ id: string; tableId: string; data?: Record<string, unknown> }>>) {
+function setupExpandedRecord(
+  linked: Record<string, Array<{ id: string; tableId: string; data?: Record<string, unknown> }>>
+) {
   mockExpandRecord.mockResolvedValue({
     id: RECORD,
     tableId: TABLE,
@@ -137,7 +138,11 @@ describe('RelationExplainabilityService', () => {
     setupTenantOk();
     setupExpandedRecord({
       'fld-1': [
-        { id: 'rec-B', tableId: 'tbl-B', data: { Name: 'Target', updated_at: '2026-05-07T10:30:00Z' } },
+        {
+          id: 'rec-B',
+          tableId: 'tbl-B',
+          data: { Name: 'Target', updated_at: '2026-05-07T10:30:00Z' },
+        },
       ],
     });
     setupTableMeta('fld-1', 'Owner');
@@ -173,8 +178,8 @@ describe('RelationExplainabilityService', () => {
       ],
     });
     setupTableMeta('fld-1', 'Owner');
-    mockCanAccessTable.mockImplementation(async (_actorId: string, _orgId: string, tableId: string) =>
-      tableId === 'tbl-X'
+    mockCanAccessTable.mockImplementation(
+      async (_actorId: string, _orgId: string, tableId: string) => tableId === 'tbl-X'
     );
 
     const result = await relationExplainabilityService.explain({
@@ -406,8 +411,8 @@ describe('RelationExplainabilityService', () => {
       ],
     });
     setupTableMeta('fld-1', 'Owner');
-    mockCanAccessTable.mockImplementation(async (_actorId: string, _orgId: string, tableId: string) =>
-      tableId === 'tbl-X'
+    mockCanAccessTable.mockImplementation(
+      async (_actorId: string, _orgId: string, tableId: string) => tableId === 'tbl-X'
     );
 
     await relationExplainabilityService.explain({

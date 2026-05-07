@@ -14,13 +14,16 @@ import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSource
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
-import { useAppStore } from '@/store/useAppStore';
-
+import {
+  fetchPresentationGovernanceCard,
+  type GovernanceVerdict,
+} from '@/services/presentationGovernance';
 import {
   deriveLastAgentActivity,
   fetchPresentationRuntimeEvents,
   type PresentationRuntimeEvent,
 } from '@/services/presentationRuntimeEvents';
+import { useAppStore } from '@/store/useAppStore';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
@@ -29,13 +32,9 @@ import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { DeckAuditLogModal } from './DeckAuditLogModal';
-import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
-import {
-  fetchPresentationGovernanceCard,
-  type GovernanceVerdict,
-} from '@/services/presentationGovernance';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
+import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
@@ -702,12 +701,14 @@ export const DeckBuilder: React.FC = () => {
       } catch (err: any) {
         if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
           setQualityGatesOpen(true);
-          const firstBlocker = (Array.isArray(err.gates)
-            ? err.gates.find(
-                (gate: unknown): gate is { cardIndex: number } =>
-                  typeof (gate as { cardIndex?: unknown } | null)?.cardIndex === 'number'
-              )
-            : null) as { cardIndex?: number } | null;
+          const firstBlocker = (
+            Array.isArray(err.gates)
+              ? err.gates.find(
+                  (gate: unknown): gate is { cardIndex: number } =>
+                    typeof (gate as { cardIndex?: unknown } | null)?.cardIndex === 'number'
+                )
+              : null
+          ) as { cardIndex?: number } | null;
           if (firstBlocker && typeof firstBlocker.cardIndex === 'number') {
             setActiveCardIndex(firstBlocker.cardIndex);
           }

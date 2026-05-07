@@ -129,8 +129,7 @@ function deriveQuality(
     typeof scorecard.p2 === 'number'
       ? scorecard.p2
       : gates.filter((g) => g?.priority === 'P2' && g?.result === 'WARN').length;
-  const gateCount =
-    typeof scorecard.gateCount === 'number' ? scorecard.gateCount : gates.length;
+  const gateCount = typeof scorecard.gateCount === 'number' ? scorecard.gateCount : gates.length;
 
   let verdict: GovernanceVerdict =
     (qualityReport.result as GovernanceVerdict | undefined) || 'INCONCLUSIVE';

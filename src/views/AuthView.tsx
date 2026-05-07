@@ -802,7 +802,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              {t('auth.firstName')} <span className="text-primary-500 dark:text-primary-400">*</span>
+              {t('auth.firstName')}{' '}
+              <span className="text-primary-500 dark:text-primary-400">*</span>
             </label>
             <input
               required

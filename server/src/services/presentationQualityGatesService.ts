@@ -133,7 +133,8 @@ function inferFreshnessDays(ref: any): number | null {
   }
   if (typeof ref.captured_at === 'string') {
     const capturedAt = new Date(ref.captured_at).getTime();
-    if (!Number.isNaN(capturedAt)) return Math.floor((Date.now() - capturedAt) / (24 * 60 * 60 * 1000));
+    if (!Number.isNaN(capturedAt))
+      return Math.floor((Date.now() - capturedAt) / (24 * 60 * 60 * 1000));
   }
   return null;
 }
@@ -274,7 +275,9 @@ export async function checkDeckQualityGates(
 
   const missingHeaderFooter = cards
     .slice(1)
-    .filter((card: any) => !card.header_footer && canonicalDeck?.meta?.confidentiality !== 'public');
+    .filter(
+      (card: any) => !card.header_footer && canonicalDeck?.meta?.confidentiality !== 'public'
+    );
   if (cards.length > 2 && missingHeaderFooter.length > cards.length * 0.5) {
     pushGate({
       id: 'qg-missing-header-footer',

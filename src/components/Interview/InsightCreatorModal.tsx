@@ -1127,7 +1127,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       return isPolish ? 'Podaj tytuł wniosków.' : 'Enter an insight title.';
     }
     if (stepId === 'goal' && selectedTypes.length === 0) {
-      return isPolish ? 'Wybierz przynajmniej jeden typ wyniku.' : 'Select at least one output type.';
+      return isPolish
+        ? 'Wybierz przynajmniej jeden typ wyniku.'
+        : 'Select at least one output type.';
     }
     if (stepId === 'source' && selectedSessions.length === 0) {
       return isPolish

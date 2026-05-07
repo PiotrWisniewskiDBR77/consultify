@@ -65,9 +65,9 @@ import {
 import {
   buildExportBundle,
   bundleToJson,
+  type ImportPlan,
   parseImportJson,
   planImport,
-  type ImportPlan,
   type WatchlistPresetExportBundle,
 } from '../../services/presentationWatchlistPresetTransfer';
 import {
@@ -107,9 +107,7 @@ const VERDICT_CHOICES: WatchlistVerdict[] = [
 // confidentiality is stored using the canonical UPPERCASE codes from
 // the policy service; we compare normalized forms to avoid surprising
 // mismatches between PUBLIC ↔ public.
-function normalizeConfidentialityCode(
-  raw: string | null | undefined
-): string {
+function normalizeConfidentialityCode(raw: string | null | undefined): string {
   if (typeof raw !== 'string') return '';
   return raw.trim().toUpperCase();
 }
@@ -143,7 +141,10 @@ function entryMatchesActiveSearch(
     const needle = query.toLocaleLowerCase();
     if (!haystack.includes(needle)) return false;
   }
-  if (filters.verdicts.length > 0 && !filters.verdicts.includes(entry.overallVerdict as SavedSearchVerdict)) {
+  if (
+    filters.verdicts.length > 0 &&
+    !filters.verdicts.includes(entry.overallVerdict as SavedSearchVerdict)
+  ) {
     return false;
   }
   if (filters.confidentiality.length > 0) {
@@ -314,9 +315,10 @@ interface PresentationGovernanceWatchlistViewProps {
 
 const DEEP_LINK_HIGHLIGHT_MS = 5000;
 
-const PresentationGovernanceWatchlistView: React.FC<
-  PresentationGovernanceWatchlistViewProps
-> = ({ onJumpToDeck, deepLink }) => {
+const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchlistViewProps> = ({
+  onJumpToDeck,
+  deepLink,
+}) => {
   const [onlyBlocked, setOnlyBlocked] = useState<boolean>(true);
   const [limit, setLimit] = useState<number>(DEFAULT_LIMIT);
   const [data, setData] = useState<WatchlistResponse | null>(null);
@@ -333,9 +335,7 @@ const PresentationGovernanceWatchlistView: React.FC<
   // watchlist load on the preset bootstrap so a default preset can be
   // applied before the first fetch. Subsequent reloads are not gated.
   const [presets, setPresets] = useState<ClientWatchlistPreset[]>([]);
-  const [presetsStatus, setPresetsStatus] = useState<WatchlistPresetFetchStatus | null>(
-    null
-  );
+  const [presetsStatus, setPresetsStatus] = useState<WatchlistPresetFetchStatus | null>(null);
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [presetsBootstrapped, setPresetsBootstrapped] = useState<boolean>(false);
   const [presetMenuOpen, setPresetMenuOpen] = useState<boolean>(false);
@@ -354,13 +354,13 @@ const PresentationGovernanceWatchlistView: React.FC<
   // bundle/plan are kept in component state so the user can review the
   // partition before committing, then we iterate `plan.toCreate` against
   // `createWatchlistPreset` and surface a final result count.
-  const [importBundle, setImportBundle] =
-    useState<WatchlistPresetExportBundle | null>(null);
+  const [importBundle, setImportBundle] = useState<WatchlistPresetExportBundle | null>(null);
   const [importPlan, setImportPlan] = useState<ImportPlan | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importBusy, setImportBusy] = useState<boolean>(false);
-  const [importResult, setImportResult] =
-    useState<{ created: number; failed: number } | null>(null);
+  const [importResult, setImportResult] = useState<{ created: number; failed: number } | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Deep-link consumption is intentionally one-shot. We snapshot the
@@ -385,10 +385,10 @@ const PresentationGovernanceWatchlistView: React.FC<
     EMPTY_SAVED_SEARCH_FILTERS
   );
   const [savedSearches, setSavedSearches] = useState<ClientSavedSearchRecord[]>([]);
-  const [savedSearchesStatus, setSavedSearchesStatus] =
-    useState<SavedSearchFetchStatus | null>(null);
-  const [savedSearchesBootstrapped, setSavedSearchesBootstrapped] =
-    useState<boolean>(false);
+  const [savedSearchesStatus, setSavedSearchesStatus] = useState<SavedSearchFetchStatus | null>(
+    null
+  );
+  const [savedSearchesBootstrapped, setSavedSearchesBootstrapped] = useState<boolean>(false);
   const [activeSavedSearchId, setActiveSavedSearchId] = useState<string | null>(null);
   const [savedSearchMenuOpen, setSavedSearchMenuOpen] = useState<boolean>(false);
   const [savedSearchManageMode, setSavedSearchManageMode] = useState<boolean>(false);
@@ -397,8 +397,7 @@ const PresentationGovernanceWatchlistView: React.FC<
   const [newSavedSearchIsDefault, setNewSavedSearchIsDefault] = useState<boolean>(false);
   const [savedSearchSaveError, setSavedSearchSaveError] = useState<string | null>(null);
   const [savedSearchSaving, setSavedSearchSaving] = useState<boolean>(false);
-  const [savedSearchDeleteConfirmId, setSavedSearchDeleteConfirmId] =
-    useState<string | null>(null);
+  const [savedSearchDeleteConfirmId, setSavedSearchDeleteConfirmId] = useState<string | null>(null);
   const savedSearchAppliedRef = useRef<boolean>(false);
   const savedSearchMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -493,8 +492,7 @@ const PresentationGovernanceWatchlistView: React.FC<
             setDebouncedQuery(def.queryText);
             setActiveSavedFilters({
               verdicts: (def.filters.verdicts as SavedSearchVerdict[]) ?? [],
-              confidentiality:
-                (def.filters.confidentiality as SavedSearchConfidentiality[]) ?? [],
+              confidentiality: (def.filters.confidentiality as SavedSearchConfidentiality[]) ?? [],
               minSeverityScore: def.filters.minSeverityScore ?? 0,
             });
             setActiveSavedSearchId(def.id);
@@ -539,10 +537,7 @@ const PresentationGovernanceWatchlistView: React.FC<
     const onDocClick = (event: MouseEvent) => {
       const target = event.target as Node | null;
       if (!target) return;
-      if (
-        savedSearchMenuRef.current &&
-        savedSearchMenuRef.current.contains(target)
-      ) {
+      if (savedSearchMenuRef.current && savedSearchMenuRef.current.contains(target)) {
         return;
       }
       setSavedSearchMenuOpen(false);
@@ -637,10 +632,7 @@ const PresentationGovernanceWatchlistView: React.FC<
   // actually changed the data shown.
   const isPresetModified = useMemo(() => {
     if (!activePreset) return false;
-    return (
-      activePreset.filters.onlyBlocked !== onlyBlocked ||
-      activePreset.filters.limit !== limit
-    );
+    return activePreset.filters.onlyBlocked !== onlyBlocked || activePreset.filters.limit !== limit;
   }, [activePreset, onlyBlocked, limit]);
 
   // Sprint 12: derived state for the active saved-search chip and the
@@ -654,8 +646,7 @@ const PresentationGovernanceWatchlistView: React.FC<
     if (!activeSavedSearch) return false;
     const savedQuery = (activeSavedSearch.queryText || '').trim();
     if (savedQuery !== searchInput.trim()) return true;
-    const savedVerdicts = (activeSavedSearch.filters.verdicts ??
-      []) as SavedSearchVerdict[];
+    const savedVerdicts = (activeSavedSearch.filters.verdicts ?? []) as SavedSearchVerdict[];
     if (!arraysEqualIgnoreOrder(savedVerdicts, activeSavedFilters.verdicts)) {
       return true;
     }
@@ -687,8 +678,7 @@ const PresentationGovernanceWatchlistView: React.FC<
     );
   }, [data, debouncedQuery, activeSavedFilters]);
 
-  const savedSearchesAvailable =
-    savedSearchesStatus === 'ok' || savedSearchesStatus === null;
+  const savedSearchesAvailable = savedSearchesStatus === 'ok' || savedSearchesStatus === null;
   const savedSearchesUnavailableMessage =
     savedSearchesStatus === 'forbidden'
       ? 'Saved searches unavailable (insufficient permission).'
@@ -698,28 +688,24 @@ const PresentationGovernanceWatchlistView: React.FC<
           ? 'Saved searches unavailable.'
           : null;
 
-  const refreshPresets =
-    useCallback(async (): Promise<ClientWatchlistPreset[] | null> => {
-      const result = await fetchWatchlistPresets();
-      setPresetsStatus(result.status);
-      if (result.status === 'ok') {
-        setPresets(result.presets);
-        return result.presets;
-      }
-      return null;
-    }, []);
+  const refreshPresets = useCallback(async (): Promise<ClientWatchlistPreset[] | null> => {
+    const result = await fetchWatchlistPresets();
+    setPresetsStatus(result.status);
+    if (result.status === 'ok') {
+      setPresets(result.presets);
+      return result.presets;
+    }
+    return null;
+  }, []);
 
-  const handleSelectPreset = useCallback(
-    (preset: ClientWatchlistPreset) => {
-      setOnlyBlocked(preset.filters.onlyBlocked);
-      setLimit(preset.filters.limit);
-      setActivePresetId(preset.id);
-      setPresetMenuOpen(false);
-      setSaveFormOpen(false);
-      setManageMode(false);
-    },
-    []
-  );
+  const handleSelectPreset = useCallback((preset: ClientWatchlistPreset) => {
+    setOnlyBlocked(preset.filters.onlyBlocked);
+    setLimit(preset.filters.limit);
+    setActivePresetId(preset.id);
+    setPresetMenuOpen(false);
+    setSaveFormOpen(false);
+    setManageMode(false);
+  }, []);
 
   // Sprint 10 deep-link entry point: select a preset by id (the contract
   // documented in the cross-tab deep-link service). Lookup-by-id keeps
@@ -781,23 +767,14 @@ const PresentationGovernanceWatchlistView: React.FC<
       const refreshed = await refreshPresets();
       const created =
         result.preset ??
-        (refreshed
-          ? refreshed.find((p) => p.name === trimmedName) ?? null
-          : null);
+        (refreshed ? (refreshed.find((p) => p.name === trimmedName) ?? null) : null);
       if (created) setActivePresetId(created.id);
       setSaveFormOpen(false);
       setPresetMenuOpen(false);
     } finally {
       setSaving(false);
     }
-  }, [
-    newPresetName,
-    newPresetDescription,
-    newPresetIsDefault,
-    onlyBlocked,
-    limit,
-    refreshPresets,
-  ]);
+  }, [newPresetName, newPresetDescription, newPresetIsDefault, onlyBlocked, limit, refreshPresets]);
 
   const handleRequestDelete = useCallback((id: string) => {
     setDeleteConfirmId(id);
@@ -822,36 +799,31 @@ const PresentationGovernanceWatchlistView: React.FC<
   // ---------------------------------------------------------------------
   // Sprint 12: saved-searches handlers
   // ---------------------------------------------------------------------
-  const refreshSavedSearches =
-    useCallback(async (): Promise<ClientSavedSearchRecord[] | null> => {
-      const result = await fetchSavedSearches();
-      setSavedSearchesStatus(result.status);
-      if (result.status === 'ok' && Array.isArray(result.records)) {
-        setSavedSearches(result.records);
-        return result.records;
-      }
-      return null;
-    }, []);
+  const refreshSavedSearches = useCallback(async (): Promise<ClientSavedSearchRecord[] | null> => {
+    const result = await fetchSavedSearches();
+    setSavedSearchesStatus(result.status);
+    if (result.status === 'ok' && Array.isArray(result.records)) {
+      setSavedSearches(result.records);
+      return result.records;
+    }
+    return null;
+  }, []);
 
-  const applySavedSearch = useCallback(
-    (record: ClientSavedSearchRecord) => {
-      setSearchInput(record.queryText);
-      setDebouncedQuery(record.queryText);
-      setActiveSavedFilters({
-        verdicts: (record.filters.verdicts as SavedSearchVerdict[]) ?? [],
-        confidentiality:
-          (record.filters.confidentiality as SavedSearchConfidentiality[]) ?? [],
-        minSeverityScore: record.filters.minSeverityScore ?? 0,
-      });
-      setActiveSavedSearchId(record.id);
-      setSavedSearchMenuOpen(false);
-      setSavedSearchSaveFormOpen(false);
-      setSavedSearchManageMode(false);
-      // Fire-and-forget — bookkeeping only, never gates UI.
-      void markSavedSearchUsed(record.id);
-    },
-    []
-  );
+  const applySavedSearch = useCallback((record: ClientSavedSearchRecord) => {
+    setSearchInput(record.queryText);
+    setDebouncedQuery(record.queryText);
+    setActiveSavedFilters({
+      verdicts: (record.filters.verdicts as SavedSearchVerdict[]) ?? [],
+      confidentiality: (record.filters.confidentiality as SavedSearchConfidentiality[]) ?? [],
+      minSeverityScore: record.filters.minSeverityScore ?? 0,
+    });
+    setActiveSavedSearchId(record.id);
+    setSavedSearchMenuOpen(false);
+    setSavedSearchSaveFormOpen(false);
+    setSavedSearchManageMode(false);
+    // Fire-and-forget — bookkeeping only, never gates UI.
+    void markSavedSearchUsed(record.id);
+  }, []);
 
   const handleClearActiveSavedSearch = useCallback(() => {
     setActiveSavedSearchId(null);
@@ -901,9 +873,7 @@ const PresentationGovernanceWatchlistView: React.FC<
       }
       if (result.status === 'invalid') {
         const detail =
-          result.errors && result.errors.length > 0
-            ? result.errors.join(', ')
-            : 'invalid';
+          result.errors && result.errors.length > 0 ? result.errors.join(', ') : 'invalid';
         setSavedSearchSaveError(`Could not save (${detail}).`);
         return;
       }
@@ -913,10 +883,7 @@ const PresentationGovernanceWatchlistView: React.FC<
       }
       const refreshed = await refreshSavedSearches();
       const created =
-        result.record ??
-        (refreshed
-          ? refreshed.find((r) => r.name === trimmed) ?? null
-          : null);
+        result.record ?? (refreshed ? (refreshed.find((r) => r.name === trimmed) ?? null) : null);
       if (created) setActiveSavedSearchId(created.id);
       setSavedSearchSaveFormOpen(false);
       setSavedSearchMenuOpen(false);
@@ -1095,11 +1062,9 @@ const PresentationGovernanceWatchlistView: React.FC<
     return () => window.clearTimeout(timeoutId);
   }, [deepLinkHighlightDeckId, data]);
 
-  const autoRefreshPaused =
-    autoRefresh && (status !== 'ok' || !pageVisible);
+  const autoRefreshPaused = autoRefresh && (status !== 'ok' || !pageVisible);
 
-  const presetsAvailable =
-    presetsStatus === 'ok' || presetsStatus === null;
+  const presetsAvailable = presetsStatus === 'ok' || presetsStatus === null;
   const presetsUnavailableMessage =
     presetsStatus === 'forbidden'
       ? 'Presets unavailable (insufficient permission).'
@@ -1129,9 +1094,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                 <Bookmark size={11} className="shrink-0" />
                 <span>
                   Preset: <strong className="font-semibold">{activePreset.name}</strong>
-                  {isPresetModified && (
-                    <span className="ml-1 opacity-70">(modified)</span>
-                  )}
+                  {isPresetModified && <span className="ml-1 opacity-70">(modified)</span>}
                 </span>
                 <button
                   type="button"
@@ -1154,11 +1117,8 @@ const PresentationGovernanceWatchlistView: React.FC<
               >
                 <Search size={11} className="shrink-0" />
                 <span>
-                  Search:{' '}
-                  <strong className="font-semibold">{activeSavedSearch.name}</strong>
-                  {isSavedSearchModified && (
-                    <span className="ml-1 opacity-70">(modified)</span>
-                  )}
+                  Search: <strong className="font-semibold">{activeSavedSearch.name}</strong>
+                  {isSavedSearchModified && <span className="ml-1 opacity-70">(modified)</span>}
                 </span>
                 <button
                   type="button"
@@ -1176,8 +1136,8 @@ const PresentationGovernanceWatchlistView: React.FC<
           </p>
           {data && (
             <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-              Generated {new Date(data.generatedAt).toLocaleString()} ·{' '}
-              {data.entries.length} of {data.totals.decks} deck
+              Generated {new Date(data.generatedAt).toLocaleString()} · {data.entries.length} of{' '}
+              {data.totals.decks} deck
               {data.totals.decks === 1 ? '' : 's'} shown
             </p>
           )}
@@ -1254,15 +1214,11 @@ const PresentationGovernanceWatchlistView: React.FC<
                 aria-labelledby="presentation-watchlist-presets-label"
                 disabled={!presetsAvailable}
                 className="inline-flex w-44 items-center justify-between gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-                title={
-                  presetsUnavailableMessage ?? 'Saved filter presets'
-                }
+                title={presetsUnavailableMessage ?? 'Saved filter presets'}
               >
                 <span className="inline-flex items-center gap-1.5 truncate">
                   <Bookmark size={12} />
-                  <span className="truncate">
-                    {activePreset ? activePreset.name : 'Presets'}
-                  </span>
+                  <span className="truncate">{activePreset ? activePreset.name : 'Presets'}</span>
                 </span>
                 <ChevronDown size={12} className="shrink-0 opacity-70" />
               </button>
@@ -1399,8 +1355,8 @@ const PresentationGovernanceWatchlistView: React.FC<
                                 </span>
                               )}
                             </button>
-                            {manageMode && (
-                              isConfirmingDelete ? (
+                            {manageMode &&
+                              (isConfirmingDelete ? (
                                 <span className="inline-flex items-center gap-1">
                                   <button
                                     type="button"
@@ -1426,8 +1382,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                                 >
                                   <Trash2 size={12} />
                                 </button>
-                              )
-                            )}
+                              ))}
                           </li>
                         );
                       })}
@@ -1553,8 +1508,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                           <ul className="ml-3 list-disc text-[11px] text-slate-700 dark:text-slate-300">
                             {importPlan.invalid.slice(0, 5).map((iv) => (
                               <li key={`iv-${iv.name}`} className="truncate">
-                                {iv.name}{' '}
-                                <span className="opacity-70">({iv.reason})</span>
+                                {iv.name} <span className="opacity-70">({iv.reason})</span>
                               </li>
                             ))}
                             {importPlan.invalid.length > 5 && (
@@ -1568,8 +1522,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                       {importErrors.length > 0 && (
                         <div className="mt-1.5 text-[10px] text-amber-700 dark:text-amber-300">
                           {importErrors.length} parse warning
-                          {importErrors.length === 1 ? '' : 's'} (some entries were
-                          skipped).
+                          {importErrors.length === 1 ? '' : 's'} (some entries were skipped).
                         </div>
                       )}
                       {importPlan.toCreate.length === 0 && (
@@ -1595,9 +1548,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                           disabled={importBusy || importPlan.toCreate.length === 0}
                           className="inline-flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-600 px-2 py-1 text-[11px] font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {importBusy ? (
-                            <Loader2 size={11} className="animate-spin" />
-                          ) : null}
+                          {importBusy ? <Loader2 size={11} className="animate-spin" /> : null}
                           {importBusy ? 'Importing…' : 'Confirm import'}
                         </button>
                       </div>
@@ -1781,8 +1732,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                     <ul className="max-h-64 overflow-y-auto py-1">
                       {savedSearches.map((record) => {
                         const isActive = record.id === activeSavedSearchId;
-                        const isConfirmingDelete =
-                          savedSearchDeleteConfirmId === record.id;
+                        const isConfirmingDelete = savedSearchDeleteConfirmId === record.id;
                         return (
                           <li
                             key={record.id}
@@ -1816,9 +1766,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                                 <span className="inline-flex items-center gap-1">
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      void handleConfirmDeleteSavedSearch(record.id)
-                                    }
+                                    onClick={() => void handleConfirmDeleteSavedSearch(record.id)}
                                     className="rounded-md border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300"
                                   >
                                     Confirm
@@ -1834,9 +1782,7 @@ const PresentationGovernanceWatchlistView: React.FC<
                               ) : (
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    handleRequestDeleteSavedSearch(record.id)
-                                  }
+                                  onClick={() => handleRequestDeleteSavedSearch(record.id)}
                                   aria-label={`Delete saved search ${record.name}`}
                                   className="rounded p-1 text-slate-500 hover:bg-rose-100 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                                 >
@@ -1878,11 +1824,7 @@ const PresentationGovernanceWatchlistView: React.FC<
             disabled={loading}
             className="inline-flex items-center gap-2 rounded-md border border-indigo-600 bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <RefreshCcw size={12} />
-            )}
+            {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCcw size={12} />}
             {loading ? 'Loading…' : 'Reload'}
           </button>
         </div>
@@ -1892,7 +1834,9 @@ const PresentationGovernanceWatchlistView: React.FC<
         {autoRefresh ? (
           <span>
             Auto · refreshing every {Math.round(AUTO_REFRESH_INTERVAL_MS / 1000)}s
-            {autoRefreshPaused && status !== 'ok' && hasAttempted ? ' · paused (backend issue)' : ''}
+            {autoRefreshPaused && status !== 'ok' && hasAttempted
+              ? ' · paused (backend issue)'
+              : ''}
             {autoRefreshPaused && !pageVisible ? ' · paused (tab hidden)' : ''}
           </span>
         ) : (
@@ -2073,27 +2017,45 @@ function renderBody(props: BodyProps): React.ReactElement {
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600 dark:text-slate-300">
           <span>
-            Total decks: <strong className="text-slate-900 dark:text-slate-100">{formatNumber(totals.decks)}</strong>
+            Total decks:{' '}
+            <strong className="text-slate-900 dark:text-slate-100">
+              {formatNumber(totals.decks)}
+            </strong>
           </span>
           <span>·</span>
           <span>
-            BLOCKED_P0: <strong className="text-rose-700 dark:text-rose-300">{formatNumber(totals.blockedP0)}</strong>
+            BLOCKED_P0:{' '}
+            <strong className="text-rose-700 dark:text-rose-300">
+              {formatNumber(totals.blockedP0)}
+            </strong>
           </span>
           <span>·</span>
           <span>
-            BLOCKED_P1: <strong className="text-orange-700 dark:text-orange-300">{formatNumber(totals.blockedP1)}</strong>
+            BLOCKED_P1:{' '}
+            <strong className="text-orange-700 dark:text-orange-300">
+              {formatNumber(totals.blockedP1)}
+            </strong>
           </span>
           <span>·</span>
           <span>
-            PASS_WITH_P2: <strong className="text-amber-700 dark:text-amber-300">{formatNumber(totals.passWithP2)}</strong>
+            PASS_WITH_P2:{' '}
+            <strong className="text-amber-700 dark:text-amber-300">
+              {formatNumber(totals.passWithP2)}
+            </strong>
           </span>
           <span>·</span>
           <span>
-            PASS: <strong className="text-emerald-700 dark:text-emerald-300">{formatNumber(totals.pass)}</strong>
+            PASS:{' '}
+            <strong className="text-emerald-700 dark:text-emerald-300">
+              {formatNumber(totals.pass)}
+            </strong>
           </span>
           <span>·</span>
           <span>
-            INCONCLUSIVE: <strong className="text-slate-700 dark:text-slate-200">{formatNumber(totals.inconclusive)}</strong>
+            INCONCLUSIVE:{' '}
+            <strong className="text-slate-700 dark:text-slate-200">
+              {formatNumber(totals.inconclusive)}
+            </strong>
           </span>
         </div>
       </div>
@@ -2219,9 +2181,7 @@ function renderBody(props: BodyProps): React.ReactElement {
                                     {segment.text}
                                   </mark>
                                 ) : (
-                                  <span key={`${entry.deckId}-text-${idx}`}>
-                                    {segment.text}
-                                  </span>
+                                  <span key={`${entry.deckId}-text-${idx}`}>{segment.text}</span>
                                 )
                               )
                             : entry.title}
@@ -2281,8 +2241,8 @@ function renderBody(props: BodyProps): React.ReactElement {
       )}
 
       <p className="text-[11px] text-slate-500 dark:text-slate-500">
-        Read-only view. Aggregated from per-deck governance cards. Raw deck content
-        and individual quality gates are not exposed here.
+        Read-only view. Aggregated from per-deck governance cards. Raw deck content and individual
+        quality gates are not exposed here.
       </p>
     </div>
   );

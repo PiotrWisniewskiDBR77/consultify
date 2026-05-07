@@ -77,7 +77,10 @@ export function InterviewProgress({
                 {status === 'completed' ? (
                   <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
                 ) : status === 'current' ? (
-                  <Circle size={14} className="text-primary-600 dark:text-primary-400 fill-current" />
+                  <Circle
+                    size={14}
+                    className="text-primary-600 dark:text-primary-400 fill-current"
+                  />
                 ) : (
                   <Circle size={14} className="text-slate-400 dark:text-slate-500" />
                 )}

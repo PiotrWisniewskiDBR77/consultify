@@ -27,12 +27,16 @@ export function SwotMatrixVisual({ data, isPolish }: { data: SWOTData; isPolish:
         {quadrants.map(([id, label, tone]) => (
           <div key={id} className={`rounded-xl p-3 ${tone}`}>
             <div className="text-xs font-semibold">{label}</div>
-            <div className="mt-2 text-2xl font-bold">{(data.items || []).filter((i) => i.quadrant === id).length}</div>
+            <div className="mt-2 text-2xl font-bold">
+              {(data.items || []).filter((i) => i.quadrant === id).length}
+            </div>
           </div>
         ))}
       </div>
       <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-navy-900 dark:text-slate-300">
-        {isPolish ? 'Napięcia powstają z przecięć: S/O, W/O, S/T, W/T.' : 'Tensions emerge from S/O, W/O, S/T, and W/T intersections.'}
+        {isPolish
+          ? 'Napięcia powstają z przecięć: S/O, W/O, S/T, W/T.'
+          : 'Tensions emerge from S/O, W/O, S/T, and W/T intersections.'}
       </div>
     </div>
   );
@@ -59,7 +63,10 @@ export function PorterPentagonVisual({ data, isPolish }: { data: PorterData; isP
       </div>
       <div className="grid gap-4 md:grid-cols-[180px_1fr]">
         <svg viewBox="0 0 100 100" className="h-44 w-full">
-          <polygon points={polygon} className="fill-blue-50 stroke-blue-200 dark:fill-blue-950/20 dark:stroke-blue-800" />
+          <polygon
+            points={polygon}
+            className="fill-blue-50 stroke-blue-200 dark:fill-blue-950/20 dark:stroke-blue-800"
+          />
           {points.map((point, index) => (
             <circle key={index} cx={point.x} cy={point.y} r="3" className="fill-blue-500" />
           ))}
@@ -74,7 +81,10 @@ export function PorterPentagonVisual({ data, isPolish }: { data: PorterData; isP
                   <span>{score}/5</span>
                 </div>
                 <div className="mt-1 h-2 rounded-full bg-slate-100 dark:bg-navy-800">
-                  <div className="h-2 rounded-full bg-blue-500" style={{ width: `${score * 20}%` }} />
+                  <div
+                    className="h-2 rounded-full bg-blue-500"
+                    style={{ width: `${score * 20}%` }}
+                  />
                 </div>
               </div>
             );
@@ -85,7 +95,13 @@ export function PorterPentagonVisual({ data, isPolish }: { data: PorterData; isP
   );
 }
 
-export function AnsoffMatrixVisual({ data, isPolish }: { data: GrowthPathsData; isPolish: boolean }) {
+export function AnsoffMatrixVisual({
+  data,
+  isPolish,
+}: {
+  data: GrowthPathsData;
+  isPolish: boolean;
+}) {
   const cells = [
     ['marketPenetration', 'Market penetration'],
     ['productDevelopment', 'Product development'],
@@ -94,27 +110,42 @@ export function AnsoffMatrixVisual({ data, isPolish }: { data: GrowthPathsData; 
   ] as const;
   return (
     <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Ansoff 2x2</div>
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+        Ansoff 2x2
+      </div>
       <div className="grid grid-cols-2 gap-2">
         {cells.map(([id, label]) => (
-          <div key={id} className="rounded-xl bg-primary-50 p-3 text-primary-700 dark:bg-primary-950/20 dark:text-primary-300">
+          <div
+            key={id}
+            className="rounded-xl bg-primary-50 p-3 text-primary-700 dark:bg-primary-950/20 dark:text-primary-300"
+          >
             <div className="text-xs font-semibold">{label}</div>
             <div className="mt-2 text-2xl font-bold">{(data.quadrants?.[id] || []).length}</div>
           </div>
         ))}
       </div>
       <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Każda opcja dostaje chipy: impact, effort i risk.' : 'Each option carries impact, effort, and risk chips.'}
+        {isPolish
+          ? 'Każda opcja dostaje chipy: impact, effort i risk.'
+          : 'Each option carries impact, effort, and risk chips.'}
       </div>
     </div>
   );
 }
 
-export function PortfolioBcgVisual({ data, isPolish }: { data: PortfolioPriorityData; isPolish: boolean }) {
+export function PortfolioBcgVisual({
+  data,
+  isPolish,
+}: {
+  data: PortfolioPriorityData;
+  isPolish: boolean;
+}) {
   const items = data.initiatives || [];
   return (
     <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">BCG 2x2</div>
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+        BCG 2x2
+      </div>
       <div className="relative h-56 rounded-2xl bg-slate-50 dark:bg-navy-900">
         <div className="absolute inset-x-1/2 top-0 h-full w-px bg-slate-200 dark:bg-navy-700" />
         <div className="absolute inset-y-1/2 left-0 h-px w-full bg-slate-200 dark:bg-navy-700" />
@@ -133,13 +164,21 @@ export function PortfolioBcgVisual({ data, isPolish }: { data: PortfolioPriority
         ))}
       </div>
       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Pozycja = wzrost i udział, wielkość bąbla = inwestycje.' : 'Position = growth and share, bubble size = investment.'}
+        {isPolish
+          ? 'Pozycja = wzrost i udział, wielkość bąbla = inwestycje.'
+          : 'Position = growth and share, bubble size = investment.'}
       </div>
     </div>
   );
 }
 
-export function RiskMatrixVisual({ data, isPolish }: { data: RiskUncertaintyData; isPolish: boolean }) {
+export function RiskMatrixVisual({
+  data,
+  isPolish,
+}: {
+  data: RiskUncertaintyData;
+  isPolish: boolean;
+}) {
   return (
     <div className={cardClass}>
       <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
@@ -161,7 +200,9 @@ export function RiskMatrixVisual({ data, isPolish }: { data: RiskUncertaintyData
         ))}
       </div>
       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Scenariusze tworzą pas reakcji dla ryzyk w prawym górnym rogu.' : 'Scenarios create a response lane for upper-right risks.'}
+        {isPolish
+          ? 'Scenariusze tworzą pas reakcji dla ryzyk w prawym górnym rogu.'
+          : 'Scenarios create a response lane for upper-right risks.'}
       </div>
     </div>
   );

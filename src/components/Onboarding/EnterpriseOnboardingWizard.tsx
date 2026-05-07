@@ -201,7 +201,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-primary-600 dark:text-primary-400 font-medium">Step 1 of 4</span>
+              <span className="text-primary-600 dark:text-primary-400 font-medium">
+                Step 1 of 4
+              </span>
               <span className="text-slate-500 dark:text-slate-400">Partner agreement</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -366,7 +368,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-12 max-w-2xl mx-auto">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-primary-600 dark:text-primary-400 font-medium">Step 2 of 4</span>
+              <span className="text-primary-600 dark:text-primary-400 font-medium">
+                Step 2 of 4
+              </span>
               <span className="text-slate-500 dark:text-slate-400">Partner track</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -464,7 +468,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           {/* Progress */}
           <div className="mb-8">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-primary-600 dark:text-primary-400 font-medium">Step 3 of 4</span>
+              <span className="text-primary-600 dark:text-primary-400 font-medium">
+                Step 3 of 4
+              </span>
               <span className="text-slate-500 dark:text-slate-400">Payout readiness</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">

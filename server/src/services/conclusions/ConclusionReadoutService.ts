@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { artifactConversionService } from '../artifacts/ArtifactConversionService.js';
-import { conclusionService, type Conclusion } from './ConclusionService.js';
+import { type Conclusion, conclusionService } from './ConclusionService.js';
 
 export interface ConclusionReadoutSections {
   researchSummary: string;
@@ -120,9 +120,9 @@ function deriveSections(conclusions: Conclusion[]): ConclusionReadoutSections {
     (item) => item.confidenceLevel === 'low' || item.confidenceLevel === 'insufficient'
   );
   return {
-    researchSummary: `Readout built from ${conclusions.length} governed conclusion(s). Sources: ${[
-      ...new Set(conclusions.map((item) => item.sourceModule)),
-    ].join(', ') || 'n/a'}.`,
+    researchSummary: `Readout built from ${conclusions.length} governed conclusion(s). Sources: ${
+      [...new Set(conclusions.map((item) => item.sourceModule))].join(', ') || 'n/a'
+    }.`,
     strongestConclusions: conclusions
       .filter((item) => ['high', 'medium'].includes(item.confidenceLevel))
       .map((item) => item.statement)

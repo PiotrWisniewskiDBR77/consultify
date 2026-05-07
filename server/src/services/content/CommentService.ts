@@ -336,9 +336,12 @@ export class CommentService {
       ])) as RunResult;
     } catch (error) {
       if (this._isMissingCommentsTableError(error)) {
-        logger.warn('[CommentService] content_comments table missing; delete treated as not found', {
-          id,
-        });
+        logger.warn(
+          '[CommentService] content_comments table missing; delete treated as not found',
+          {
+            id,
+          }
+        );
         return false;
       }
       throw error;

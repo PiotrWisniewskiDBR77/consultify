@@ -52,13 +52,7 @@ interface DeckBuilderTopBarProps {
   onAnalytics?: () => void;
   onAuditLog?: () => void;
   onGovernance?: () => void;
-  governanceVerdict?:
-    | 'PASS'
-    | 'PASS_WITH_P2'
-    | 'BLOCKED_P1'
-    | 'BLOCKED_P0'
-    | 'INCONCLUSIVE'
-    | null;
+  governanceVerdict?: 'PASS' | 'PASS_WITH_P2' | 'BLOCKED_P1' | 'BLOCKED_P0' | 'INCONCLUSIVE' | null;
   confidentiality?: 'public' | 'internal' | 'confidential';
   lastAgentActivityAt?: string | null;
 }
@@ -73,10 +67,7 @@ const GOVERNANCE_DOT_CLASS: Record<string, string> = {
 
 type ConfidentialityLevel = 'public' | 'internal' | 'confidential';
 
-const CONFIDENTIALITY_STYLES: Record<
-  ConfidentialityLevel,
-  { color: string; label: string }
-> = {
+const CONFIDENTIALITY_STYLES: Record<ConfidentialityLevel, { color: string; label: string }> = {
   public: { color: 'text-emerald-500', label: 'Public' },
   internal: { color: 'text-blue-500', label: 'Internal' },
   confidential: { color: 'text-rose-500', label: 'Confidential' },
@@ -108,10 +99,7 @@ const ConfidentialityBadge: React.FC<{
       <Shield size={14} className={color} />
       <span className="hidden md:inline">{label}</span>
       {isRecentAgentActivity && (
-        <span
-          aria-hidden="true"
-          className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse"
-        />
+        <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
       )}
     </div>
   );

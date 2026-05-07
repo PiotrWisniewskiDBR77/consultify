@@ -72,6 +72,43 @@ function parseDeckSlides(deckData: any): {
   return { slides, status };
 }
 
+function unwrapApiData<T = unknown>(response: unknown): T {
+  const data = (response as { data?: unknown } | null)?.data;
+  if (data && typeof data === 'object' && 'data' in data) return data.data as T;
+  return data as T;
+}
+
+async function resolvePresentationDeckId(id: string): Promise<string> {
+  try {
+    await Api.get(`/presentations/decks/${id}`);
+    return id;
+  } catch (error: unknown) {
+    if ((error as { status?: number })?.status !== 404) throw error;
+  }
+
+  const actionTarget = unwrapApiData<{ originRuntime?: string; originRecordId?: string }>(
+    await Api.get(`/artifacts/${id}/action-target`)
+  );
+  const originRuntime = String(actionTarget?.originRuntime || '');
+  const originRecordId = String(actionTarget?.originRecordId || '').trim();
+  if (originRuntime === 'presentation' && originRecordId) return originRecordId;
+  throw new Error('Presentation deck not found');
+}
+
+type PresentationDeckResponse = Record<string, unknown> & {
+  title?: string;
+};
+
+async function loadPresentationDeck(
+  id: string
+): Promise<{ deckId: string; deckData: PresentationDeckResponse }> {
+  const deckId = await resolvePresentationDeckId(id);
+  const deckData = unwrapApiData<PresentationDeckResponse>(
+    await Api.get(`/presentations/decks/${deckId}`)
+  );
+  return { deckId, deckData };
+}
+
 export const PrezentacjeView: React.FC = () => {
   const pipeline = useKimiArtifactPipeline('prezentacje');
   const activeMessages = useConversationStore((s) => s.activeMessages);
@@ -136,14 +173,14 @@ export const PrezentacjeView: React.FC = () => {
     if (!artifactId || reopenLoaded.current) return;
     reopenLoaded.current = true;
 
-    Api.get(`/presentations/decks/${artifactId}`)
-      .then(async (deckData: any) => {
-        const { slides, status } = parseDeckSlides(deckData);
-        const title = deckData?.title || t('prezentacje.defaultTitle', 'Presentation');
+    loadPresentationDeck(artifactId)
+      .then(async ({ deckId, deckData: row }) => {
+        const { slides, status } = parseDeckSlides(row);
+        const title = row.title || t('prezentacje.defaultTitle', 'Presentation');
 
         let statusLabel = deriveDeckLifecycleBadge(null, null);
         try {
-          const originRes = (await Api.get(`/artifacts/orig/presentation/${artifactId}`)) as any;
+          const originRes = (await Api.get(`/artifacts/orig/presentation/${deckId}`)) as any;
           const artId = originRes?.data?.artifactId || originRes?.artifactId;
           if (artId) {
             const trustRes = (await Api.get(`/artifacts/${artId}/trust-state`)) as any;
@@ -157,7 +194,7 @@ export const PrezentacjeView: React.FC = () => {
           );
         }
 
-        setReopenDeckId(artifactId);
+        setReopenDeckId(deckId);
         setReopenPreview({
           type: 'deck',
           title,
@@ -172,7 +209,7 @@ export const PrezentacjeView: React.FC = () => {
             { label: t('prezentacje.kpi.status', 'Status'), value: statusLabel },
             { label: t('prezentacje.kpi.format', 'Format'), value: 'PPTX / PDF' },
           ],
-          deckId: artifactId,
+          deckId,
           deckSlides: slides,
         });
       })
@@ -188,7 +225,7 @@ export const PrezentacjeView: React.FC = () => {
           deckSlides: [],
         });
       });
-  }, [artifactId]);
+  }, [artifactId, t]);
 
   useEffect(() => {
     if (!pipeline.isGenerating || pipeline.isBusy) return undefined;

@@ -28,10 +28,7 @@ const LIMIT_MIN = 1;
 const LIMIT_MAX = 200;
 const MAX_PRESETS_PER_BUNDLE = 50;
 
-const ALLOWED_SEVERITIES = new Set<WatchlistPresetExportSeverity>([
-  'BLOCKED_P0',
-  'BLOCKED_P1',
-]);
+const ALLOWED_SEVERITIES = new Set<WatchlistPresetExportSeverity>(['BLOCKED_P0', 'BLOCKED_P1']);
 const ALLOWED_CONFIDENTIALITY = new Set<WatchlistPresetExportConfidentiality>([
   'public',
   'internal',
@@ -39,10 +36,7 @@ const ALLOWED_CONFIDENTIALITY = new Set<WatchlistPresetExportConfidentiality>([
 ]);
 
 export type WatchlistPresetExportSeverity = 'BLOCKED_P0' | 'BLOCKED_P1';
-export type WatchlistPresetExportConfidentiality =
-  | 'public'
-  | 'internal'
-  | 'confidential';
+export type WatchlistPresetExportConfidentiality = 'public' | 'internal' | 'confidential';
 
 export interface WatchlistPresetExportFilters {
   onlyBlocked: boolean;
@@ -103,9 +97,7 @@ function normalizeName(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
   const collapsed = raw.replace(/\s+/g, ' ').trim();
   if (collapsed.length === 0) return null;
-  return collapsed.length > NAME_MAX_LEN
-    ? collapsed.slice(0, NAME_MAX_LEN)
-    : collapsed;
+  return collapsed.length > NAME_MAX_LEN ? collapsed.slice(0, NAME_MAX_LEN) : collapsed;
 }
 
 function normalizeDescription(raw: unknown): string | null {
@@ -161,10 +153,7 @@ function strictValidateFilters(
 ): { ok: true; value: WatchlistPresetExportFilters } | { ok: false; reason: string } {
   if (!isRecord(raw)) return { ok: false, reason: 'filters_not_object' };
 
-  if (
-    'onlyBlocked' in raw &&
-    typeof (raw as Record<string, unknown>).onlyBlocked !== 'boolean'
-  ) {
+  if ('onlyBlocked' in raw && typeof (raw as Record<string, unknown>).onlyBlocked !== 'boolean') {
     return { ok: false, reason: 'onlyBlocked_not_boolean' };
   }
   const onlyBlocked =
@@ -236,9 +225,7 @@ export interface BuildExportBundleInput {
  * which inputs were skipped should validate before calling this — the
  * bundle output represents the success path only.
  */
-export function buildExportBundle(
-  input: BuildExportBundleInput
-): WatchlistPresetExportBundle {
+export function buildExportBundle(input: BuildExportBundleInput): WatchlistPresetExportBundle {
   const records: WatchlistPresetExportRecord[] = [];
   for (const raw of input.presets) {
     const name = normalizeName(raw.name);
@@ -312,9 +299,7 @@ export function parseImportJson(raw: string): ImportValidationResult {
     const actual = typeof schema === 'string' ? schema : '<missing>';
     return {
       ok: false,
-      errors: [
-        `Expected schema '${BUNDLE_SCHEMA}' but got '${actual}'`,
-      ],
+      errors: [`Expected schema '${BUNDLE_SCHEMA}' but got '${actual}'`],
       presetsCount: 0,
     };
   }
@@ -356,9 +341,7 @@ export function parseImportJson(raw: string): ImportValidationResult {
 
     const filtersResult = strictValidateFilters(candidate.filters);
     if (!filtersResult.ok) {
-      errors.push(
-        `Preset '${name}' has invalid filters (${filtersResult.reason}).`
-      );
+      errors.push(`Preset '${name}' has invalid filters (${filtersResult.reason}).`);
       continue;
     }
 

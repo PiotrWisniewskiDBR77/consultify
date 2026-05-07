@@ -116,16 +116,13 @@ export interface SessionTokenStore {
 
 export const SUBSCRIBER_TOKEN_REGEX = /^[a-f0-9]{64}$/;
 export const SUBSCRIBER_TOKEN_STORAGE_KEY = 'consultify_subscriber_token';
-export const SUBSCRIBER_DASHBOARD_PATH =
-  '/api/presentations/governance/subscriber/dashboard';
+export const SUBSCRIBER_DASHBOARD_PATH = '/api/presentations/governance/subscriber/dashboard';
 
-const ALLOWED_DISPATCH_STATUSES: ReadonlySet<SubscriberDispatchStatus> = new Set<
-  SubscriberDispatchStatus
->(['sent', 'failed', 'suppressed', 'dry_run']);
+const ALLOWED_DISPATCH_STATUSES: ReadonlySet<SubscriberDispatchStatus> =
+  new Set<SubscriberDispatchStatus>(['sent', 'failed', 'suppressed', 'dry_run']);
 
-const ALLOWED_HEALTH_OVERALL: ReadonlySet<SubscriberHealthOverall> = new Set<
-  SubscriberHealthOverall
->(['healthy', 'degraded', 'unhealthy']);
+const ALLOWED_HEALTH_OVERALL: ReadonlySet<SubscriberHealthOverall> =
+  new Set<SubscriberHealthOverall>(['healthy', 'degraded', 'unhealthy']);
 
 // ============================================================================
 // PURE HELPERS
@@ -224,14 +221,10 @@ export function validateSnapshot(raw: unknown): ClientSubscriberSnapshot | null 
     return null;
   }
 
-  const recentDispatchesRaw = Array.isArray(raw.recentDispatches)
-    ? raw.recentDispatches
-    : [];
+  const recentDispatchesRaw = Array.isArray(raw.recentDispatches) ? raw.recentDispatches : [];
   const recentDispatches = recentDispatchesRaw
     .map((d) => normalizeDispatch(d))
-    .filter(
-      (d): d is ClientSubscriberSnapshot['recentDispatches'][number] => d !== null
-    );
+    .filter((d): d is ClientSubscriberSnapshot['recentDispatches'][number] => d !== null);
 
   const reasonsRaw = Array.isArray(health.reasons) ? health.reasons : [];
   const reasons = reasonsRaw
@@ -292,9 +285,7 @@ function statusFromHttp(code: number): SubscriberFetchStatus {
  * or include credentials so a leaked browser session cannot be used
  * to escalate privileges against an arbitrary platform user.
  */
-export async function fetchSubscriberDashboard(
-  opts: FetchOptions
-): Promise<FetchResult> {
+export async function fetchSubscriberDashboard(opts: FetchOptions): Promise<FetchResult> {
   const token = typeof opts.token === 'string' ? opts.token.trim() : '';
   if (!SUBSCRIBER_TOKEN_REGEX.test(token)) {
     return { status: 'unauthorized', reason: 'invalid_token_format' };
@@ -345,9 +336,7 @@ export async function fetchSubscriberDashboard(
   // Backend wraps the snapshot as `{ success: true, data: <snapshot> }`.
   // Be tolerant of the bare shape too in case the route layer changes.
   const inner =
-    isRecord(payload) && 'data' in payload
-      ? (payload as { data: unknown }).data
-      : payload;
+    isRecord(payload) && 'data' in payload ? (payload as { data: unknown }).data : payload;
 
   const data = validateSnapshot(inner);
   if (!data) {

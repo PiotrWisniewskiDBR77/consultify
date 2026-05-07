@@ -81,7 +81,8 @@ const SEVERITY_COLORS: Record<string, { dot: string; bg: string; text: string }>
 const FEASIBILITY_COLORS: Record<string, string> = {
   immediate: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
   manager_decision: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-  leadership_decision: 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400',
+  leadership_decision:
+    'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400',
   not_feasible_now: 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300',
 };
 

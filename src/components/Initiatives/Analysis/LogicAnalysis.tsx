@@ -1299,7 +1299,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             </button>
           </div>
           {cycles.map((c, idx) => (
-            <div key={idx} className="px-4 py-3 border-b border-rose-200/50 dark:border-rose-900/30">
+            <div
+              key={idx}
+              className="px-4 py-3 border-b border-rose-200/50 dark:border-rose-900/30"
+            >
               <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
                 {c.pathNames.map((name, ni) => (
                   <React.Fragment key={ni}>
@@ -1608,12 +1611,18 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                               {relatedIssue && (
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                                    <AlertTriangle size={12} className="inline mr-1 text-rose-500" />
+                                    <AlertTriangle
+                                      size={12}
+                                      className="inline mr-1 text-rose-500"
+                                    />
                                     {relatedIssue.description}
                                   </p>
                                   {relatedIssue.fixSuggestion && (
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                      <Sparkles size={10} className="inline mr-1 text-primary-500" />
+                                      <Sparkles
+                                        size={10}
+                                        className="inline mr-1 text-primary-500"
+                                      />
                                       {relatedIssue.fixSuggestion}
                                     </p>
                                   )}

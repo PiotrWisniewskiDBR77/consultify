@@ -51,7 +51,9 @@ export function getToolPhaseAiActions(
 ): ToolPhaseAiActionDefinition[] {
   if (!stepDefinition) return [];
 
-  const buildCopy: Partial<Record<ToolType, { label: string; labelPl: string; title: string; titlePl: string }>> = {
+  const buildCopy: Partial<
+    Record<ToolType, { label: string; labelPl: string; title: string; titlePl: string }>
+  > = {
     'dynamic-swot': {
       label: 'Build SWOT',
       labelPl: 'Buduj SWOT',

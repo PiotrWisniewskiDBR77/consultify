@@ -583,7 +583,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
               onClick={() => toggleFilter('quick')}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white font-medium text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
             >
-              <span className={quickFilter !== 'all' ? 'text-primary-600 dark:text-primary-400' : ''}>
+              <span
+                className={quickFilter !== 'all' ? 'text-primary-600 dark:text-primary-400' : ''}
+              >
                 {quickFilterLabels[quickFilter]}
               </span>
               <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />

@@ -297,6 +297,16 @@ export interface KimiPipelineState {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const isUuidLike = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v.trim());
 
+export function resolveTabeleMaterializedTableId(
+  lane: KimiLane,
+  origin: ArtifactRunRecord['materializationOrigin']
+): string | null {
+  if (lane !== 'tabele') return null;
+  if (origin?.originRuntime !== 'sheet') return null;
+  const tableId = String(origin.originRecordId || '').trim();
+  return tableId || null;
+}
+
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const conversationId = useConversationStore((s) => s.activeConversationId);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
@@ -617,8 +627,9 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         return;
       }
 
-      if (lane === 'tabele' && origin?.originRecordId) {
-        const tableId = origin.originRecordId;
+      const tabeleTableId = resolveTabeleMaterializedTableId(lane, origin);
+      if (tabeleTableId) {
+        const tableId = tabeleTableId;
         const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
 
         try {
@@ -727,14 +738,12 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           fileName: `${title.replace(/\s+/g, '_')}.pdf`,
         });
       } else if (lane === 'tabele') {
-        // Tail fallback: origin missing — render a minimal Tabele preview shell so
-        // Sprint 3 / Agent C still has a `'tabele'` shape to bind to.
-        setPreview({
-          type: 'tabele',
-          title,
-          tabeleSchemaFields: [],
-          tabeleRelations: [],
-        });
+        const message =
+          'Table Studio materialization did not return a Table Platform tableId. Please retry generation.';
+        setStartupError(message);
+        toast.error(message);
+        setContentGenerated(false);
+        return;
       } else {
         setPreview({
           type: 'deck',

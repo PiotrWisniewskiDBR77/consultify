@@ -21,23 +21,18 @@
  * per-point value + delta via `<title>` tooltips.
  */
 
-import {
-  AlertTriangle,
-  Loader2,
-  RefreshCcw,
-  TrendingUp,
-} from 'lucide-react';
+import { AlertTriangle, Loader2, RefreshCcw, TrendingUp } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-  CLIENT_BENCHMARK_DIMENSIONS,
-  fetchBenchmarkTrend,
   type BenchmarkTrendFetchStatus,
+  CLIENT_BENCHMARK_DIMENSIONS,
   type ClientBenchmarkDimension,
   type ClientBenchmarkTrendReport,
   type ClientDimensionTrend,
   type ClientDimensionTrendStatus,
   type ClientOverallTrendVerdict,
+  fetchBenchmarkTrend,
 } from '../../services/presentationBenchmarkTrend';
 
 const WINDOW_OPTIONS: number[] = [3, 6, 12, 24, 36];
@@ -69,12 +64,10 @@ const STATUS_LABEL: Record<ClientDimensionTrendStatus, string> = {
 };
 
 const STATUS_TONE: Record<ClientDimensionTrendStatus, string> = {
-  improving:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  improving: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   stable: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
   regressing: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  inconclusive:
-    'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
+  inconclusive: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
 // Sparkline stroke colors per status. Picked to match the SLO drill-down
@@ -276,9 +269,7 @@ const DimensionSparkline: React.FC<SparklineProps> = ({ trend, gammaTarget }) =>
             : '';
         return (
           <g key={`pt-${i}`}>
-            <title>
-              {`${p.runLabel || `#${i + 1}`} · ${tooltipValue}${tooltipDelta}`}
-            </title>
+            <title>{`${p.runLabel || `#${i + 1}`} · ${tooltipValue}${tooltipDelta}`}</title>
             <circle
               cx={x}
               cy={y}
@@ -310,11 +301,12 @@ const DimensionCard: React.FC<DimensionCardProps> = ({ dim, gammaTarget }) => {
     dim.distanceToGamma !== null && Number.isFinite(dim.distanceToGamma)
       ? dim.distanceToGamma
       : null;
-  const distanceLabel = distance === null
-    ? '—'
-    : distance <= 0
-      ? `at or past target (${formatSignedDelta(-distance)})`
-      : `${distance.toFixed(2)} below target`;
+  const distanceLabel =
+    distance === null
+      ? '—'
+      : distance <= 0
+        ? `at or past target (${formatSignedDelta(-distance)})`
+        : `${distance.toFixed(2)} below target`;
 
   const estLabel = (() => {
     if (dim.estimatedRunsToGamma === null) return '—';
@@ -350,9 +342,7 @@ const DimensionCard: React.FC<DimensionCardProps> = ({ dim, gammaTarget }) => {
           {distanceLabel}
         </dd>
         <dt className="text-slate-500 dark:text-slate-400">Est. runs to Gamma</dt>
-        <dd className="text-right text-slate-700 dark:text-slate-200 tabular-nums">
-          {estLabel}
-        </dd>
+        <dd className="text-right text-slate-700 dark:text-slate-200 tabular-nums">{estLabel}</dd>
         <dt className="text-slate-500 dark:text-slate-400">Avg last 3 / 6</dt>
         <dd className="text-right text-slate-700 dark:text-slate-200 tabular-nums">
           {formatValue(dim.averageLast3)} / {formatValue(dim.averageLast6)}
@@ -402,8 +392,7 @@ const VerdictBanner: React.FC<VerdictBannerProps> = ({
         <div className="font-semibold">{VERDICT_LABEL[verdict]}</div>
         <div className="mt-0.5 text-xs opacity-80">{summary}</div>
         <div className="mt-1 text-[10px] opacity-70">
-          Gamma target {gammaTarget.toFixed(2)} · warning floor{' '}
-          {warningThreshold.toFixed(2)}
+          Gamma target {gammaTarget.toFixed(2)} · warning floor {warningThreshold.toFixed(2)}
         </div>
       </div>
     </div>
@@ -445,9 +434,7 @@ const PresentationBenchmarkTrendView: React.FC = () => {
 
   // Index dimensions by id so the rendered grid is order-stable
   // (CLIENT_BENCHMARK_DIMENSIONS) regardless of server response order.
-  const dimensionsById = useMemo<
-    Map<ClientBenchmarkDimension, ClientDimensionTrend>
-  >(() => {
+  const dimensionsById = useMemo<Map<ClientBenchmarkDimension, ClientDimensionTrend>>(() => {
     const map = new Map<ClientBenchmarkDimension, ClientDimensionTrend>();
     if (data) for (const d of data.dimensions) map.set(d.dimension, d);
     return map;
@@ -466,22 +453,18 @@ const PresentationBenchmarkTrendView: React.FC = () => {
             Benchmark Trend (vs Gamma target)
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Monthly DBR77/VTS regression trend — visible movement toward
-            Gamma-level by dimension.
+            Monthly DBR77/VTS regression trend — visible movement toward Gamma-level by dimension.
           </p>
           {data && (
             <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-              Generated {new Date(data.generatedAt).toLocaleString()} ·
-              spanning {data.windowMonths} month
+              Generated {new Date(data.generatedAt).toLocaleString()} · spanning {data.windowMonths}{' '}
+              month
               {data.windowMonths === 1 ? '' : 's'} of history
             </p>
           )}
         </div>
 
-        <div
-          className="flex flex-wrap items-end gap-3"
-          aria-label="Benchmark Trend controls"
-        >
+        <div className="flex flex-wrap items-end gap-3" aria-label="Benchmark Trend controls">
           <div className="flex flex-col">
             <label
               htmlFor="presentation-benchmark-trend-window"
@@ -580,25 +563,17 @@ const PresentationBenchmarkTrendView: React.FC = () => {
                     <div className="font-semibold text-slate-700 dark:text-slate-300">
                       {DIMENSION_LABELS[id]}
                     </div>
-                    <div className="mt-1 opacity-80">
-                      Dimension missing from server response.
-                    </div>
+                    <div className="mt-1 opacity-80">Dimension missing from server response.</div>
                   </article>
                 );
               }
-              return (
-                <DimensionCard
-                  key={id}
-                  dim={dim}
-                  gammaTarget={data.gammaTarget}
-                />
-              );
+              return <DimensionCard key={id} dim={dim} gammaTarget={data.gammaTarget} />;
             })}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-500">
             Read-only view. Trend status is computed server-side
-            (`presentationBenchmarkTrendService`); this UI only renders the
-            response. Run a new monthly scorecard with{' '}
+            (`presentationBenchmarkTrendService`); this UI only renders the response. Run a new
+            monthly scorecard with{' '}
             <code className="rounded bg-slate-100 px-1 py-0.5 text-[10px] font-mono dark:bg-slate-800">
               npm run benchmark:monthly
             </code>{' '}
@@ -634,16 +609,13 @@ const SkeletonGrid: React.FC = () => (
 
 const EmptyState: React.FC = () => (
   <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
-    <div className="font-semibold text-slate-700 dark:text-slate-200">
-      No benchmark history yet
-    </div>
+    <div className="font-semibold text-slate-700 dark:text-slate-200">No benchmark history yet</div>
     <p className="mt-1 text-xs opacity-80">
       Run a monthly benchmark first (see{' '}
       <code className="rounded bg-slate-100 px-1 py-0.5 text-[11px] font-mono dark:bg-slate-800">
         npm run benchmark:monthly
       </code>
-      ) — once at least one run lands the dashboard will populate per
-      dimension.
+      ) — once at least one run lands the dashboard will populate per dimension.
     </p>
   </div>
 );

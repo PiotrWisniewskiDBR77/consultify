@@ -16,12 +16,7 @@
  * incident" so the parent Operations Health view keeps rendering.
  */
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ExternalLink,
-  ShieldAlert,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ExternalLink, ShieldAlert } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { OperationsHealthReport } from '../../services/presentationOperationsHealth';
@@ -132,10 +127,7 @@ function safeAnomalies(input: unknown): IncidentAnomalySignal[] {
   return out;
 }
 
-function hasMajorAnomaly(
-  anomalies: IncidentAnomalySignal[],
-  sloId: string
-): boolean {
+function hasMajorAnomaly(anomalies: IncidentAnomalySignal[], sloId: string): boolean {
   for (const a of anomalies) {
     if (a.sloId === sloId && a.severity === 'major') return true;
   }
@@ -185,10 +177,7 @@ export function classifyIncident(
         : null;
     const anomalies = safeAnomalies(input.anomalies);
 
-    if (
-      blockedP0SharedTemplateId !== null &&
-      blockedP0DecksCount >= MIN_TEMPLATE_CLUSTER_SIZE
-    ) {
+    if (blockedP0SharedTemplateId !== null && blockedP0DecksCount >= MIN_TEMPLATE_CLUSTER_SIZE) {
       return {
         runbook: 'RB-04',
         severity: 'P0',
@@ -198,12 +187,8 @@ export function classifyIncident(
     }
 
     const exportSuccessBreach =
-      exportSuccessRate !== null &&
-      exportSuccessRate < EXPORT_SUCCESS_RATE_BREACH;
-    if (
-      exportSuccessBreach ||
-      hasMajorAnomaly(anomalies, 'export_success_rate')
-    ) {
+      exportSuccessRate !== null && exportSuccessRate < EXPORT_SUCCESS_RATE_BREACH;
+    if (exportSuccessBreach || hasMajorAnomaly(anomalies, 'export_success_rate')) {
       const reason = exportSuccessBreach
         ? `export_success_rate=${(exportSuccessRate as number).toFixed(3)} is below the ${EXPORT_SUCCESS_RATE_BREACH} runbook threshold.`
         : 'Major anomaly detected on export_success_rate (current << baseline).';
@@ -216,12 +201,8 @@ export function classifyIncident(
     }
 
     const latencyBreach =
-      p95GenerationLatencyMs !== null &&
-      p95GenerationLatencyMs > LATENCY_BREACH_MS;
-    if (
-      latencyBreach ||
-      hasMajorAnomaly(anomalies, 'p95_generation_latency_ms')
-    ) {
+      p95GenerationLatencyMs !== null && p95GenerationLatencyMs > LATENCY_BREACH_MS;
+    if (latencyBreach || hasMajorAnomaly(anomalies, 'p95_generation_latency_ms')) {
       const reason = latencyBreach
         ? `p95_generation_latency_ms=${Math.round(p95GenerationLatencyMs as number)} ms is above the ${LATENCY_BREACH_MS} ms runbook threshold.`
         : 'Major anomaly detected on p95_generation_latency_ms (current >> baseline).';
@@ -234,12 +215,8 @@ export function classifyIncident(
     }
 
     const blockedBreach =
-      exportBlockedRate !== null &&
-      exportBlockedRate > EXPORT_BLOCKED_RATE_BREACH;
-    if (
-      blockedBreach ||
-      hasMajorAnomaly(anomalies, 'export_blocked_rate')
-    ) {
+      exportBlockedRate !== null && exportBlockedRate > EXPORT_BLOCKED_RATE_BREACH;
+    if (blockedBreach || hasMajorAnomaly(anomalies, 'export_blocked_rate')) {
       const reason = blockedBreach
         ? `export_blocked_rate=${(exportBlockedRate as number).toFixed(3)} is above the ${EXPORT_BLOCKED_RATE_BREACH} runbook threshold.`
         : 'Major anomaly detected on export_blocked_rate (current >> baseline).';
@@ -300,16 +277,13 @@ export function extractIncidentSignalsFromReport(
   }
 
   const exportSuccessRate = numericPctToFraction(
-    report.slos.find((s) => s.id === 'export_success_rate')?.observedNumeric ??
-      null
+    report.slos.find((s) => s.id === 'export_success_rate')?.observedNumeric ?? null
   );
   const exportBlockedRate = numericPctToFraction(
-    report.slos.find((s) => s.id === 'export_blocked_rate')?.observedNumeric ??
-      null
+    report.slos.find((s) => s.id === 'export_blocked_rate')?.observedNumeric ?? null
   );
   const p95GenerationLatencyMs =
-    report.slos.find((s) => s.id === 'p95_generation_latency_ms')
-      ?.observedNumeric ?? null;
+    report.slos.find((s) => s.id === 'p95_generation_latency_ms')?.observedNumeric ?? null;
 
   const anomalies = (report.anomalies || [])
     .filter((a) => a.status === 'detected' && !!a.severity)
@@ -348,9 +322,7 @@ interface IncidentRunbooksCardProps {
   report: OperationsHealthReport | null;
 }
 
-const IncidentRunbooksCard: React.FC<IncidentRunbooksCardProps> = ({
-  report,
-}) => {
+const IncidentRunbooksCard: React.FC<IncidentRunbooksCardProps> = ({ report }) => {
   const classification = useMemo<IncidentClassification>(() => {
     try {
       const signals = extractIncidentSignalsFromReport(report);
@@ -395,9 +367,7 @@ const HealthyState: React.FC<{ reason: string }> = ({ reason }) => (
   <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
     <CheckCircle2 size={16} className="shrink-0" aria-hidden="true" />
     <span className="font-medium">No active incident</span>
-    <span className="text-[11px] text-slate-500 dark:text-slate-400">
-      ({reason})
-    </span>
+    <span className="text-[11px] text-slate-500 dark:text-slate-400">({reason})</span>
   </div>
 );
 
@@ -418,9 +388,7 @@ const ActiveIncident: React.FC<{
             No runbook matched the current signal pattern.
           </span>
         </div>
-        <p className="text-[12px] text-slate-600 dark:text-slate-300">
-          {classification.reason}
-        </p>
+        <p className="text-[12px] text-slate-600 dark:text-slate-300">{classification.reason}</p>
       </div>
     );
   }
@@ -443,9 +411,7 @@ const ActiveIncident: React.FC<{
           {runbookId} · {title}
         </span>
       </div>
-      <p className="text-[12px] text-slate-700 dark:text-slate-300">
-        {classification.reason}
-      </p>
+      <p className="text-[12px] text-slate-700 dark:text-slate-300">{classification.reason}</p>
       {classification.recommendedActions.length > 0 && (
         <ol className="list-decimal space-y-1 pl-5 text-[12px] text-slate-700 dark:text-slate-300">
           {classification.recommendedActions.map((action, i) => (
@@ -462,8 +428,7 @@ const ActiveIncident: React.FC<{
           </code>
           <div className="mt-1 text-slate-500 dark:text-slate-400">
             Copy the path and open it in your editor or via{' '}
-            <span className="font-mono">cursor</span> /{' '}
-            <span className="font-mono">code</span>.
+            <span className="font-mono">cursor</span> / <span className="font-mono">code</span>.
           </div>
         </div>
       </div>

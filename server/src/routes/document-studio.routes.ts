@@ -14,7 +14,16 @@
  *     Returns: { schema }
  *
  *   GET /api/document-studio/:artifactId/export/:format
+ *     Query: qaOverride=true to bypass the QA soft-block (audited; requires
+ *            a privileged role per `canOverrideQa`).
  *     Returns: export payload (markdown / docx / pdf).
+ *     Errors: 403 qa_blocking when an approval-gated document type has any
+ *             blocking QA category and qaOverride was not set.
+ *             403 qa_override_unauthorized when qaOverride was set but the
+ *             actor's role is not authorized.
+ *
+ *   GET /api/document-studio/policy
+ *     Returns: { policy: { canOverrideQa: boolean, role: string|null } }
  *
  * Mode 2 — Document Template Architect (MVP-2):
  *   GET  /api/document-studio/templates
@@ -39,14 +48,20 @@
  *   GET  /api/document-studio/templates/:templateId/audit
  *     Returns: { auditEntries }
  *
+ * QA Engine — MVP-3 hardening:
+ *   GET  /api/document-studio/:artifactId/qa
+ *     Returns: { report: DocumentQaReport } (Brand QA + Language QA)
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
 
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { runDocumentQa } from '../services/documentStudio/documentQaService.js';
 import {
   approveEditProposal,
+  canOverrideQa,
   createGlobalEditProposal,
   createLocalEditProposal,
   createSectionEditProposal,
@@ -57,6 +72,8 @@ import {
   MissingRequiredSourceError,
   planDocument,
   planDocumentAsync,
+  QaBlockingError,
+  QaOverrideUnauthorizedError,
   rejectEditProposal,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
@@ -82,12 +99,17 @@ const router = Router();
 
 router.use(verifyToken);
 
-function getAuthContext(req: AuthRequest): { userId: string; organizationId: string } {
+function getAuthContext(req: AuthRequest): {
+  userId: string;
+  organizationId: string;
+  userRole: string;
+} {
   const userId = String((req as any)?.user?.id || (req as any)?.userId || '');
   const organizationId = String(
     (req as any)?.user?.organizationId || (req as any)?.organizationId || ''
   );
-  return { userId, organizationId };
+  const userRole = String((req as any)?.userRole || (req as any)?.user?.role || '');
+  return { userId, organizationId, userRole };
 }
 
 router.post(
@@ -374,15 +396,59 @@ router.get(
       return;
     }
     const format = formatRaw as 'markdown' | 'docx' | 'pdf';
+    const qaOverride = req.query.qaOverride === 'true' || req.query.qaOverride === '1';
+    const { userRole } = getAuthContext(req as AuthRequest);
 
     try {
-      const result = await exportDocumentArtifact(artifactId, organizationId, format);
+      const result = await exportDocumentArtifact(artifactId, organizationId, format, {
+        userId,
+        userRole,
+        qaOverride,
+      });
       res.json(result);
     } catch (err) {
+      if (err instanceof QaOverrideUnauthorizedError) {
+        res.status(403).json({
+          error: 'qa_override_unauthorized',
+          message: err.message,
+          role: err.role,
+        });
+        return;
+      }
+      if (err instanceof QaBlockingError) {
+        res.status(403).json({
+          error: 'qa_blocking',
+          message:
+            'Document QA produced blocking findings. Resolve the findings or re-run with qaOverride=true (audited).',
+          report: err.report,
+        });
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Failed to export document';
       const status = message.toLowerCase().includes('not found') ? 404 : 500;
       res.status(status).json({ error: 'export_failed', message });
     }
+  })
+);
+
+// Lightweight policy lookup so the frontend can hide / disable
+// privilege-only actions (currently: the QA export-gate override) before
+// the user attempts them. Cheap enough to call on every Document Studio
+// session bootstrap.
+router.get(
+  '/policy',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    res.json({
+      policy: {
+        canOverrideQa: canOverrideQa(userRole),
+        role: userRole || null,
+      },
+    });
   })
 );
 
@@ -594,6 +660,30 @@ router.get(
     }
     const auditEntries = listDocumentAuditEntries(artifactId, organizationId);
     res.json({ auditEntries });
+  })
+);
+
+router.get(
+  '/:artifactId/qa',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'artifact_not_found' });
+      return;
+    }
+    const report = runDocumentQa(schema);
+    report.organizationId = organizationId;
+    res.json({ report });
   })
 );
 

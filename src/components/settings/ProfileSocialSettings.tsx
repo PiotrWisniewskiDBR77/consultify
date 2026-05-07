@@ -200,7 +200,9 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
               >
                 <Icon
                   size={20}
-                  className={isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'}
+                  className={
+                    isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'
+                  }
                 />
                 <div>
                   <div

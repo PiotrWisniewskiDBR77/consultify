@@ -95,7 +95,11 @@ export const UsageMeter: React.FC<{
         <div className="w-full bg-slate-100 dark:bg-navy-950 rounded-full h-2.5 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              percentage >= 95 ? 'bg-rose-500' : percentage >= 80 ? 'bg-amber-500' : 'bg-primary-600'
+              percentage >= 95
+                ? 'bg-rose-500'
+                : percentage >= 80
+                  ? 'bg-amber-500'
+                  : 'bg-primary-600'
             }`}
             style={{ width: `${Math.min(100, percentage)}%` }}
           />

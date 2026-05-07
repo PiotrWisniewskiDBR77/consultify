@@ -16,15 +16,38 @@ interface DeckGovernanceCardModalProps {
 }
 
 const VERDICT_STYLE: Record<GovernanceVerdict, { bg: string; text: string; label: string }> = {
-  PASS: { bg: 'bg-emerald-100 dark:bg-emerald-500/20', text: 'text-emerald-700 dark:text-emerald-300', label: 'PASS' },
-  PASS_WITH_P2: { bg: 'bg-amber-100 dark:bg-amber-500/20', text: 'text-amber-700 dark:text-amber-300', label: 'PASS · P2' },
-  BLOCKED_P1: { bg: 'bg-orange-100 dark:bg-orange-500/20', text: 'text-orange-700 dark:text-orange-300', label: 'BLOCKED P1' },
-  BLOCKED_P0: { bg: 'bg-rose-100 dark:bg-rose-500/20', text: 'text-rose-700 dark:text-rose-300', label: 'BLOCKED P0' },
-  INCONCLUSIVE: { bg: 'bg-slate-100 dark:bg-slate-500/20', text: 'text-slate-700 dark:text-slate-300', label: 'INCONCLUSIVE' },
+  PASS: {
+    bg: 'bg-emerald-100 dark:bg-emerald-500/20',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    label: 'PASS',
+  },
+  PASS_WITH_P2: {
+    bg: 'bg-amber-100 dark:bg-amber-500/20',
+    text: 'text-amber-700 dark:text-amber-300',
+    label: 'PASS · P2',
+  },
+  BLOCKED_P1: {
+    bg: 'bg-orange-100 dark:bg-orange-500/20',
+    text: 'text-orange-700 dark:text-orange-300',
+    label: 'BLOCKED P1',
+  },
+  BLOCKED_P0: {
+    bg: 'bg-rose-100 dark:bg-rose-500/20',
+    text: 'text-rose-700 dark:text-rose-300',
+    label: 'BLOCKED P0',
+  },
+  INCONCLUSIVE: {
+    bg: 'bg-slate-100 dark:bg-slate-500/20',
+    text: 'text-slate-700 dark:text-slate-300',
+    label: 'INCONCLUSIVE',
+  },
 };
 
 const CONFIDENTIALITY_STYLE: Record<string, { bg: string; text: string }> = {
-  public: { bg: 'bg-emerald-100 dark:bg-emerald-500/20', text: 'text-emerald-700 dark:text-emerald-300' },
+  public: {
+    bg: 'bg-emerald-100 dark:bg-emerald-500/20',
+    text: 'text-emerald-700 dark:text-emerald-300',
+  },
   internal: { bg: 'bg-blue-100 dark:bg-blue-500/20', text: 'text-blue-700 dark:text-blue-300' },
   confidential: { bg: 'bg-rose-100 dark:bg-rose-500/20', text: 'text-rose-700 dark:text-rose-300' },
 };
@@ -51,11 +74,11 @@ const VerdictPill: React.FC<{ verdict: GovernanceVerdict | string }> = ({ verdic
   );
 };
 
-const StatTile: React.FC<{ label: string; value: number | string; tone?: 'rose' | 'amber' | 'slate' | 'emerald' | 'blue' }> = ({
-  label,
-  value,
-  tone = 'slate',
-}) => {
+const StatTile: React.FC<{
+  label: string;
+  value: number | string;
+  tone?: 'rose' | 'amber' | 'slate' | 'emerald' | 'blue';
+}> = ({ label, value, tone = 'slate' }) => {
   const toneClass: Record<string, string> = {
     rose: 'text-rose-600 dark:text-rose-300',
     amber: 'text-amber-600 dark:text-amber-300',
@@ -65,7 +88,9 @@ const StatTile: React.FC<{ label: string; value: number | string; tone?: 'rose' 
   };
   return (
     <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/40 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        {label}
+      </div>
       <div className={`text-lg font-semibold ${toneClass[tone]}`}>{value}</div>
     </div>
   );
@@ -131,7 +156,10 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-800">
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-primary-500" />
-            <h2 id="deck-governance-card-title" className="text-sm font-semibold text-slate-700 dark:text-white">
+            <h2
+              id="deck-governance-card-title"
+              className="text-sm font-semibold text-slate-700 dark:text-white"
+            >
               {t('presentations.governance.title', 'Governance Card')}
             </h2>
           </div>
@@ -174,9 +202,15 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
               </div>
               <div className="mt-0.5 text-[12px] opacity-80">
                 {result.status === 'forbidden'
-                  ? t('presentations.governance.forbidden', "You don't have permission to view this deck's governance card.")
+                  ? t(
+                      'presentations.governance.forbidden',
+                      "You don't have permission to view this deck's governance card."
+                    )
                   : result.status === 'not_found'
-                    ? t('presentations.governance.notFound', 'No governance data found for this deck yet.')
+                    ? t(
+                        'presentations.governance.notFound',
+                        'No governance data found for this deck yet.'
+                      )
                     : t('presentations.governance.retry', 'Retry to refresh the data.')}
               </div>
               {result.status !== 'forbidden' && (
@@ -221,7 +255,9 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                   <StatTile label="P2" value={card.quality.p2} tone="slate" />
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {t('presentations.governance.gateCount', 'Total gates: {{n}}', { n: card.quality.gateCount })}
+                  {t('presentations.governance.gateCount', 'Total gates: {{n}}', {
+                    n: card.quality.gateCount,
+                  })}
                 </div>
               </section>
 
@@ -234,8 +270,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                 <div className="flex items-center gap-2">
                   {(() => {
                     const level = String(card.confidentiality.level || 'internal');
-                    const style =
-                      CONFIDENTIALITY_STYLE[level] ?? CONFIDENTIALITY_STYLE.internal;
+                    const style = CONFIDENTIALITY_STYLE[level] ?? CONFIDENTIALITY_STYLE.internal;
                     return (
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${style.bg} ${style.text}`}
@@ -246,9 +281,13 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                   })()}
                   {typeof card.confidentiality.sharingAllowedForRole === 'string' && (
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {t('presentations.governance.sharingAllowedForRole', 'Sharing for role: {{value}}', {
-                        value: card.confidentiality.sharingAllowedForRole,
-                      })}
+                      {t(
+                        'presentations.governance.sharingAllowedForRole',
+                        'Sharing for role: {{value}}',
+                        {
+                          value: card.confidentiality.sharingAllowedForRole,
+                        }
+                      )}
                     </span>
                   )}
                 </div>
@@ -263,13 +302,30 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                   </h3>
                 </header>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <StatTile label={t('presentations.governance.proposals', 'Proposals')} value={card.telemetry.proposalsCreated} tone="amber" />
-                  <StatTile label={t('presentations.governance.applied', 'Applied')} value={card.telemetry.editsApplied} tone="emerald" />
-                  <StatTile label={t('presentations.governance.rejected', 'Rejected')} value={card.telemetry.editsRejected} tone="slate" />
-                  <StatTile label={t('presentations.governance.exportsBlocked', 'Exports blocked')} value={card.telemetry.exportsBlocked} tone="rose" />
+                  <StatTile
+                    label={t('presentations.governance.proposals', 'Proposals')}
+                    value={card.telemetry.proposalsCreated}
+                    tone="amber"
+                  />
+                  <StatTile
+                    label={t('presentations.governance.applied', 'Applied')}
+                    value={card.telemetry.editsApplied}
+                    tone="emerald"
+                  />
+                  <StatTile
+                    label={t('presentations.governance.rejected', 'Rejected')}
+                    value={card.telemetry.editsRejected}
+                    tone="slate"
+                  />
+                  <StatTile
+                    label={t('presentations.governance.exportsBlocked', 'Exports blocked')}
+                    value={card.telemetry.exportsBlocked}
+                    tone="rose"
+                  />
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {t('presentations.governance.lastActivity', 'Last activity:')} {formatTimestamp(card.telemetry.lastActivityAt)}
+                  {t('presentations.governance.lastActivity', 'Last activity:')}{' '}
+                  {formatTimestamp(card.telemetry.lastActivityAt)}
                 </div>
               </section>
             </>

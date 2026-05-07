@@ -35,10 +35,7 @@ export const CONTEXT_WORKFLOW_MODES: ContextWorkflowMode[] = [
 ];
 
 export function isValidContextWorkflowMode(value: unknown): value is ContextWorkflowMode {
-  return (
-    typeof value === 'string' &&
-    (CONTEXT_WORKFLOW_MODES as string[]).includes(value)
-  );
+  return typeof value === 'string' && (CONTEXT_WORKFLOW_MODES as string[]).includes(value);
 }
 
 export function normalizeContextWorkflowMode(
@@ -206,9 +203,7 @@ async function tryRagSearch(input: {
     const ragModule = await import('../ragService.js');
     const ragService = (ragModule as any).default || ragModule;
     const documentIds = input.readyDocs.map((row) => String(row.id));
-    const docsByFilename = new Map(
-      input.readyDocs.map((row) => [String(row.filename || ''), row])
-    );
+    const docsByFilename = new Map(input.readyDocs.map((row) => [String(row.filename || ''), row]));
     const results = (await ragService.hybridSearch(input.query, {
       limit: Math.max(input.totalLimit, 12),
       organizationId: input.organizationId,
@@ -235,7 +230,9 @@ async function tryRagSearch(input: {
           ? (chunk.metadata.qualityFlags as string[])
           : [],
         confidence:
-          typeof chunk?.metadata?.confidence === 'number' ? Number(chunk.metadata.confidence) : null,
+          typeof chunk?.metadata?.confidence === 'number'
+            ? Number(chunk.metadata.confidence)
+            : null,
       };
     });
   } catch (error) {
@@ -287,7 +284,9 @@ async function loadFallbackChunks(input: {
       modality: String(metadata?.modality || 'document'),
       sourceLocator: metadata?.sourceLocator || null,
       nativeSourceLocator: metadata?.nativeSourceLocator || null,
-      qualityFlags: Array.isArray(metadata?.qualityFlags) ? (metadata.qualityFlags as string[]) : [],
+      qualityFlags: Array.isArray(metadata?.qualityFlags)
+        ? (metadata.qualityFlags as string[])
+        : [],
       confidence: typeof metadata?.confidence === 'number' ? Number(metadata.confidence) : null,
     });
     perDocCounts.set(documentId, count + 1);
@@ -351,7 +350,7 @@ export async function retrieveContext(
   const degradedReasons: string[] = [];
   const excludedReasons: Array<{ documentId: string; reason: string }> = [];
 
-  let { accessible: accessibleRows, missingIds } = await fetchAccessibleDocuments(
+  const { accessible: accessibleRows, missingIds } = await fetchAccessibleDocuments(
     requestedDocumentIds,
     input.organizationId,
     input.userId
@@ -430,7 +429,9 @@ export async function retrieveContext(
       const knownDocIds = new Set(readyRows.map((row) => String(row.id)));
       const additionalDocs = orgContext.rows.filter((row) => !knownDocIds.has(String(row.id)));
       readyRows.push(...additionalDocs);
-      const seenChunkIds = new Set(chunks.map((c) => `${c.documentId}:${c.chunkIndex}:${c.chunkId}`));
+      const seenChunkIds = new Set(
+        chunks.map((c) => `${c.documentId}:${c.chunkIndex}:${c.chunkId}`)
+      );
       for (const chunk of orgContext.chunks) {
         const key = `${chunk.documentId}:${chunk.chunkIndex}:${chunk.chunkId}`;
         if (!seenChunkIds.has(key) && chunks.length < totalChunkLimit) {

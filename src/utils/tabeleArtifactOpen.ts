@@ -27,11 +27,14 @@ export async function openTableBuilderInNewTab(tableId: string, t: TFunction): P
 export async function downloadTabeleArtifactCsv(tableId: string): Promise<boolean> {
   try {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-    const res = await fetch(`/api/table-platform/tables/${encodeURIComponent(tableId)}/export.csv`, {
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
+    const res = await fetch(
+      `/api/table-platform/tables/${encodeURIComponent(tableId)}/export.csv`,
+      {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
+    );
     if (!res.ok) return false;
 
     const blob = await res.blob();

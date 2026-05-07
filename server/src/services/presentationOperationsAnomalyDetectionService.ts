@@ -44,11 +44,7 @@
 export type AnomalyDirection = 'above' | 'below';
 export type AnomalySeverity = 'minor' | 'major';
 
-export type AnomalyStatus =
-  | 'detected'
-  | 'no_anomaly'
-  | 'insufficient_data'
-  | 'invalid_input';
+export type AnomalyStatus = 'detected' | 'no_anomaly' | 'insufficient_data' | 'invalid_input';
 
 export type AnomalySloId =
   | 'generation_success_rate'
@@ -250,8 +246,7 @@ export function detectAnomaly(input: DetectAnomalyInput): AnomalyVerdict {
   // is BETTER than baseline), latency / blocked-rate SLOs ignore negative z
   // (= current is BETTER than baseline). An SLO becoming better than its
   // 24h baseline is good news — never an anomaly.
-  const isRegression =
-    polarity === 'higher_is_better' ? z < 0 : z > 0;
+  const isRegression = polarity === 'higher_is_better' ? z < 0 : z > 0;
 
   if (!isRegression) {
     return {

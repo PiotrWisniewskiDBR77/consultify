@@ -73,7 +73,11 @@ function extractSlideBullets(card: unknown): string[] {
     if (items) {
       for (const it of items) {
         if (typeof it === 'string') out.push(it);
-        else if (it && typeof it === 'object' && typeof (it as Record<string, unknown>).text === 'string') {
+        else if (
+          it &&
+          typeof it === 'object' &&
+          typeof (it as Record<string, unknown>).text === 'string'
+        ) {
           out.push((it as Record<string, unknown>).text as string);
         }
       }
@@ -83,7 +87,10 @@ function extractSlideBullets(card: unknown): string[] {
   return out.filter((s): s is string => Boolean(s));
 }
 
-export function buildDeckDiffSummary(originalDeck: unknown, proposedDeck: unknown): DeckDiffSummary {
+export function buildDeckDiffSummary(
+  originalDeck: unknown,
+  proposedDeck: unknown
+): DeckDiffSummary {
   const beforeCards = Array.isArray((originalDeck as Record<string, unknown> | null)?.cards)
     ? ((originalDeck as Record<string, unknown>).cards as unknown[])
     : [];

@@ -2079,7 +2079,8 @@ export class ToolController {
         content,
         priority,
         authorId: user.id,
-        authorName: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'User',
+        authorName:
+          [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'User',
         createdAt: now,
       });
     }

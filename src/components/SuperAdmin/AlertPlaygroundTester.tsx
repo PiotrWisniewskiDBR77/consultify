@@ -31,9 +31,9 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  ExternalLink,
   Eye,
   EyeOff,
-  ExternalLink,
   Loader2,
   RotateCcw,
   Send,
@@ -161,7 +161,8 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
       loading: false,
       plan: result.data ?? null,
       status: result.status,
-      errorMessage: result.status !== 'ok' ? (result.error || fetchStatusReason(result.status)) : null,
+      errorMessage:
+        result.status !== 'ok' ? result.error || fetchStatusReason(result.status) : null,
       acknowledged: false,
     });
     setSecretVisible(false);
@@ -172,9 +173,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
     const plan = dispatchState.plan;
     const signature = inboxState.tamper ? tamperSignature(plan.signature) : plan.signature;
     const algorithm =
-      inboxState.algorithmOverride === 'BLANK'
-        ? undefined
-        : inboxState.algorithmOverride;
+      inboxState.algorithmOverride === 'BLANK' ? undefined : inboxState.algorithmOverride;
     setInboxState((prev) => ({ ...prev, loading: true, errorMessage: null, fetchStatus: null }));
     const result = await verifyPlaygroundInbox({
       bodyJson: plan.bodyJson,
@@ -190,9 +189,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
       result: result.data ?? null,
       fetchStatus: result.status,
       errorMessage:
-        result.status !== 'ok'
-          ? (result.error || fetchStatusReason(result.status))
-          : null,
+        result.status !== 'ok' ? result.error || fetchStatusReason(result.status) : null,
     }));
   }, [dispatchState.plan, inboxState.tamper, inboxState.algorithmOverride]);
 
@@ -363,9 +360,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
             headersOpen={headersOpen}
             onToggleHeaders={() => setHeadersOpen((v) => !v)}
             acknowledged={dispatchState.acknowledged}
-            onAcknowledge={(ack) =>
-              setDispatchState((prev) => ({ ...prev, acknowledged: ack }))
-            }
+            onAcknowledge={(ack) => setDispatchState((prev) => ({ ...prev, acknowledged: ack }))}
           />
         )}
       </section>
@@ -386,9 +381,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
           >
             2
           </span>
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-            Verify inbox
-          </h4>
+          <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100">Verify inbox</h4>
         </div>
 
         {!dispatchState.plan ? (
@@ -420,9 +413,7 @@ const AlertPlaygroundTester: React.FC<AlertPlaygroundTesterProps> = ({ className
                 <input
                   type="checkbox"
                   checked={inboxState.tamper}
-                  onChange={(e) =>
-                    setInboxState((prev) => ({ ...prev, tamper: e.target.checked }))
-                  }
+                  onChange={(e) => setInboxState((prev) => ({ ...prev, tamper: e.target.checked }))}
                   className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 Tamper signature (last hex char)
@@ -494,12 +485,7 @@ const DispatchPlanPanel: React.FC<DispatchPlanPanelProps> = ({
 }) => {
   return (
     <div className="mt-3 space-y-3">
-      <CopyableField
-        label="Body JSON"
-        value={plan.bodyJson}
-        previewLines={6}
-        mono
-      />
+      <CopyableField label="Body JSON" value={plan.bodyJson} previewLines={6} mono />
 
       <div className="rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         <button
@@ -539,17 +525,14 @@ const DispatchPlanPanel: React.FC<DispatchPlanPanelProps> = ({
       {/* One-time secret reveal */}
       <div className="rounded-md border border-amber-300 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20">
         <div className="flex items-start gap-2">
-          <AlertTriangle
-            size={14}
-            className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300"
-          />
+          <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
           <div className="flex-1">
             <div className="text-[11px] font-semibold text-amber-900 dark:text-amber-100">
               Signing secret (one-time reveal)
             </div>
             <p className="mt-0.5 text-[10px] text-amber-800 dark:text-amber-200">
-              This secret is also fed back into step 2 so you can prove the loop closes.
-              The reveal panel auto-clears in 60 seconds.
+              This secret is also fed back into step 2 so you can prove the loop closes. The reveal
+              panel auto-clears in 60 seconds.
             </p>
           </div>
         </div>

@@ -11,7 +11,9 @@ type ForbiddenEventDetail = {
 const ADMIN_LIKE_PATH_PREFIXES = ['/admin', '/settings', '/superadmin', '/decisions'];
 
 const isAdminLikePath = (pathname: string): boolean =>
-  ADMIN_LIKE_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  ADMIN_LIKE_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 
 export const ForbiddenAccessBanner: React.FC = () => {
   const location = useLocation();

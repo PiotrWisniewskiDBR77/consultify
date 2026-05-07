@@ -42,9 +42,7 @@ describe('Playwright PDF renderer', () => {
     const r = await renderHtmlToPdf({
       html: '<!doctype html><html><body>hi</body></html>',
     });
-    expect(['ok', 'unavailable', 'launch_failed', 'render_failed', 'timeout']).toContain(
-      r.status
-    );
+    expect(['ok', 'unavailable', 'launch_failed', 'render_failed', 'timeout']).toContain(r.status);
     if (r.status === 'ok') {
       expect(r.bytes).toBeGreaterThan(0);
       expect(Buffer.isBuffer(r.buffer)).toBe(true);

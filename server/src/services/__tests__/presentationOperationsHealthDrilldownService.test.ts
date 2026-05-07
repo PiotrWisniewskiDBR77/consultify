@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  type BuildSloDrilldownInput,
   buildSloDrilldownReport,
   classifySloStatus,
-  type BuildSloDrilldownInput,
   type DrilldownSloId,
 } from '../presentationOperationsHealthDrilldownService.js';
 
@@ -85,13 +85,43 @@ describe('presentationOperationsHealthDrilldownService', () => {
   it('computes export_success_rate per bucket from mixed completed/failed exports', () => {
     const exports: BuildSloDrilldownInput['exportRecords'] = [
       // Most recent day: 2 completed / 1 failed → 66.7%.
-      { deckId: 'd1', status: 'completed', format: 'pptx', durationMs: 1000, createdAt: isoDaysAgo(0.2) },
-      { deckId: 'd1', status: 'completed', format: 'pptx', durationMs: 1100, createdAt: isoDaysAgo(0.3) },
-      { deckId: 'd1', status: 'failed', format: 'pptx', durationMs: 500, createdAt: isoDaysAgo(0.4) },
+      {
+        deckId: 'd1',
+        status: 'completed',
+        format: 'pptx',
+        durationMs: 1000,
+        createdAt: isoDaysAgo(0.2),
+      },
+      {
+        deckId: 'd1',
+        status: 'completed',
+        format: 'pptx',
+        durationMs: 1100,
+        createdAt: isoDaysAgo(0.3),
+      },
+      {
+        deckId: 'd1',
+        status: 'failed',
+        format: 'pptx',
+        durationMs: 500,
+        createdAt: isoDaysAgo(0.4),
+      },
       // 2 days ago: 1 completed / 0 failed → 100%.
-      { deckId: 'd2', status: 'completed', format: 'pdf', durationMs: 2000, createdAt: isoDaysAgo(2.5) },
+      {
+        deckId: 'd2',
+        status: 'completed',
+        format: 'pdf',
+        durationMs: 2000,
+        createdAt: isoDaysAgo(2.5),
+      },
       // 4 days ago: 0 completed / 1 failed → 0%.
-      { deckId: 'd3', status: 'failed', format: 'pdf', durationMs: 4000, createdAt: isoDaysAgo(4.5) },
+      {
+        deckId: 'd3',
+        status: 'failed',
+        format: 'pdf',
+        durationMs: 4000,
+        createdAt: isoDaysAgo(4.5),
+      },
     ];
 
     const report = buildSloDrilldownReport(
@@ -107,16 +137,13 @@ describe('presentationOperationsHealthDrilldownService', () => {
   });
 
   it('marks p95_generation_latency_ms inconclusive in buckets with < 10 samples', () => {
-    const exports: BuildSloDrilldownInput['exportRecords'] = Array.from(
-      { length: 5 },
-      (_, i) => ({
-        deckId: `d_${i}`,
-        status: 'completed',
-        format: 'pptx',
-        durationMs: 4000,
-        createdAt: isoDaysAgo(0.2),
-      })
-    );
+    const exports: BuildSloDrilldownInput['exportRecords'] = Array.from({ length: 5 }, (_, i) => ({
+      deckId: `d_${i}`,
+      status: 'completed',
+      format: 'pptx',
+      durationMs: 4000,
+      createdAt: isoDaysAgo(0.2),
+    }));
 
     const report = buildSloDrilldownReport(
       baseInput('p95_generation_latency_ms', { exportRecords: exports })
@@ -137,7 +164,13 @@ describe('presentationOperationsHealthDrilldownService', () => {
         durationMs: 1000 + i,
         createdAt: isoDaysAgo(1),
       })),
-      { deckId: 'd_winner', status: 'completed', format: 'pptx', durationMs: 800, createdAt: isoDaysAgo(1) },
+      {
+        deckId: 'd_winner',
+        status: 'completed',
+        format: 'pptx',
+        durationMs: 800,
+        createdAt: isoDaysAgo(1),
+      },
       // d_runner: 3 failures
       ...Array.from({ length: 3 }, () => ({
         deckId: 'd_runner',
@@ -272,7 +305,13 @@ describe('presentationOperationsHealthDrilldownService', () => {
     const exports: BuildSloDrilldownInput['exportRecords'] = [
       { deckId: 'in', status: 'failed', format: 'pptx', durationMs: 100, createdAt: isoDaysAgo(2) },
       // Way outside the 7-day window — must be ignored.
-      { deckId: 'out', status: 'failed', format: 'pptx', durationMs: 100, createdAt: isoDaysAgo(40) },
+      {
+        deckId: 'out',
+        status: 'failed',
+        format: 'pptx',
+        durationMs: 100,
+        createdAt: isoDaysAgo(40),
+      },
     ];
 
     const report = buildSloDrilldownReport(

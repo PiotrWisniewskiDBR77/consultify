@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { conclusionService, type Conclusion } from '../conclusions/ConclusionService.js';
+import { type Conclusion, conclusionService } from '../conclusions/ConclusionService.js';
 
 export type ConversionStatus =
   | 'draft'
@@ -157,18 +157,25 @@ function getPrimarySource(conclusion: Conclusion): { type: string; id: string; t
   };
 }
 
-export function canConvertToInitiative(conclusion: Conclusion): { allowed: boolean; reason?: string } {
+export function canConvertToInitiative(conclusion: Conclusion): {
+  allowed: boolean;
+  reason?: string;
+} {
   if (conclusion.confidenceLevel === 'insufficient') {
     return { allowed: false, reason: 'Conclusion needs evidence before initiative conversion.' };
   }
   if (conclusion.confidenceLevel === 'contradicted') {
     return {
       allowed: false,
-      reason: 'Contradicted conclusion must be resolved or converted to an investigation note first.',
+      reason:
+        'Contradicted conclusion must be resolved or converted to an investigation note first.',
     };
   }
   if (!conclusion.limits || conclusion.evidenceRefs.length === 0) {
-    return { allowed: false, reason: 'Evidence and limits are required before initiative conversion.' };
+    return {
+      allowed: false,
+      reason: 'Evidence and limits are required before initiative conversion.',
+    };
   }
   return { allowed: true };
 }
@@ -262,7 +269,9 @@ export class ArtifactConversionService {
     );
 
     const conversion = await this.getConversion(params.organizationId, id);
-    return conversion ? { conversion, error: validation.reason } : { error: 'Conversion not found' };
+    return conversion
+      ? { conversion, error: validation.reason }
+      : { error: 'Conversion not found' };
   }
 
   async getConversion(

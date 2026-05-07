@@ -193,7 +193,10 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
         </div>
 
         {actionError && (
-          <div role="alert" className="mx-4 mt-4 rounded-lg bg-rose-500/10 p-3 text-sm text-rose-300">
+          <div
+            role="alert"
+            className="mx-4 mt-4 rounded-lg bg-rose-500/10 p-3 text-sm text-rose-300"
+          >
             {actionError}
           </div>
         )}

@@ -49,8 +49,7 @@ const DOMAIN_COLORS: Record<string, string> = {
     'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
   SCOPE_CHANGE_CONTROL: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   SCHEDULE_MILESTONES: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  RESOURCE_RESPONSIBILITY:
-    'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  RESOURCE_RESPONSIBILITY: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   RISK_ISSUE_MANAGEMENT: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
   PERFORMANCE_REPORTING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
 };

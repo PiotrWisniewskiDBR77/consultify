@@ -253,7 +253,7 @@ function pushIssue(
   entryIndex: number,
   field: ValidationIssue['field'],
   severity: ValidationIssue['severity'],
-  reason: string,
+  reason: string
 ): void {
   issues.push({ entryIndex, field, severity, reason });
 }
@@ -262,7 +262,7 @@ function validateEntry(
   entry: ParsedChangelogEntry,
   index: number,
   issues: ValidationIssue[],
-  downgradeErrorsToWarning: boolean,
+  downgradeErrorsToWarning: boolean
 ): void {
   const errSev: ValidationIssue['severity'] = downgradeErrorsToWarning ? 'warning' : 'error';
 
@@ -282,7 +282,7 @@ function validateEntry(
       index,
       'rationale',
       errSev,
-      'Rationale is boilerplate ("updated docs"); provide a substantive rationale.',
+      'Rationale is boilerplate ("updated docs"); provide a substantive rationale.'
     );
   } else if (rationaleTrim.length < MIN_RATIONALE_CHARS) {
     pushIssue(
@@ -290,7 +290,7 @@ function validateEntry(
       index,
       'rationale',
       errSev,
-      `Rationale is too short (< ${MIN_RATIONALE_CHARS} chars).`,
+      `Rationale is too short (< ${MIN_RATIONALE_CHARS} chars).`
     );
   }
 
@@ -312,7 +312,7 @@ function validateEntry(
       index,
       'risk_tier',
       'warning',
-      'Risk tier missing or invalid (expected P0, P1, or P2).',
+      'Risk tier missing or invalid (expected P0, P1, or P2).'
     );
   }
 
@@ -322,7 +322,7 @@ function validateEntry(
       index,
       'diff_summary',
       'warning',
-      'Diff summary has zero bullets; add at least one bullet.',
+      'Diff summary has zero bullets; add at least one bullet.'
     );
   }
 }
@@ -344,7 +344,7 @@ function computeVerdict(issues: ValidationIssue[]): 'PASS' | 'PASS_WITH_WARNINGS
 
 export function validateChangelogContent(
   content: string,
-  filePath: string,
+  filePath: string
 ): ChangelogValidationReport {
   const safeFilePath = typeof filePath === 'string' ? filePath : '';
   const parsedAt = new Date().toISOString();
@@ -364,7 +364,7 @@ export function validateChangelogContent(
       -1,
       'date',
       'error',
-      'Changelog has zero entries; at least one entry is required per Documentation Change Control.',
+      'Changelog has zero entries; at least one entry is required per Documentation Change Control.'
     );
   } else {
     for (let i = 0; i < entries.length; i++) {

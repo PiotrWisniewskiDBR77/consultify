@@ -147,29 +147,28 @@ export const SetupStep: React.FC<SetupStepProps> = ({
               {t('presentations.setup.aiGeneratesDesc', 'AI proposes structure from your sources')}
             </p>
           </button>
-          {templates
-            .map((tmpl) => (
-              <button
-                key={tmpl.id}
-                onClick={() => onChange('selectedTemplate', tmpl.id)}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${
-                  settings.selectedTemplate === tmpl.id
-                    ? 'border-primary-500 bg-primary-500/5'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
-                }`}
-              >
-                <Layout className="w-5 h-5 text-blue-400 mb-2" />
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-medium text-slate-900 dark:text-white text-sm">{tmpl.name}</p>
-                  {!tmpl.is_system && (
-                    <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-300">
-                      ORG
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{tmpl.description}</p>
-              </button>
-            ))}
+          {templates.map((tmpl) => (
+            <button
+              key={tmpl.id}
+              onClick={() => onChange('selectedTemplate', tmpl.id)}
+              className={`p-4 rounded-xl border-2 text-left transition-all ${
+                settings.selectedTemplate === tmpl.id
+                  ? 'border-primary-500 bg-primary-500/5'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+              }`}
+            >
+              <Layout className="w-5 h-5 text-blue-400 mb-2" />
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-medium text-slate-900 dark:text-white text-sm">{tmpl.name}</p>
+                {!tmpl.is_system && (
+                  <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-300">
+                    ORG
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{tmpl.description}</p>
+            </button>
+          ))}
         </div>
       </div>
 

@@ -115,4 +115,3 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
     </div>
   );
 }
-

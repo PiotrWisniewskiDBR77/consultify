@@ -94,7 +94,8 @@ async function runRouter(req: any, res: any): Promise<void> {
       if (reqPath !== expressPath) continue;
       if (!layer.route.methods?.[String(req.method ?? 'GET').toLowerCase()]) continue;
       for (const innerLayer of layer.route.stack) {
-        if (res.statusCode >= 400 && (res.json.mock?.calls?.length || res.send.mock?.calls?.length)) return;
+        if (res.statusCode >= 400 && (res.json.mock?.calls?.length || res.send.mock?.calls?.length))
+          return;
         let innerNext = false;
         const result = innerLayer.handle(req, res, (err?: unknown) => {
           innerNext = true;
@@ -204,9 +205,7 @@ describe('GET /api/table-platform/tables/:tableId/records/:recordId/relations/ex
     const res = createMockRes();
     await runRouter(req, res);
 
-    expect(mockExplain).toHaveBeenCalledWith(
-      expect.objectContaining({ maxRelations: 5 })
-    );
+    expect(mockExplain).toHaveBeenCalledWith(expect.objectContaining({ maxRelations: 5 }));
   });
 
   it('L4.2 — cross-tenant request → 403 (service throws TenantViolationError)', async () => {
@@ -292,9 +291,7 @@ describe('GET /api/table-platform/tables/:tableId/records/:recordId/relations/ex
     expect(res.statusCode).toBe(200);
     expect(res.body.data.relations).toHaveLength(1);
     expect(res.body.data.relations[0].targetTableId).toBe('tbl-X');
-    expect(
-      res.body.data.relations.find((r: any) => r.targetTableId === 'tbl-Y')
-    ).toBeUndefined();
+    expect(res.body.data.relations.find((r: any) => r.targetTableId === 'tbl-Y')).toBeUndefined();
   });
 
   it('US-3.4.5 — additive mount: only the explain endpoint is registered (regression smoke for T6)', async () => {
@@ -303,9 +300,7 @@ describe('GET /api/table-platform/tables/:tableId/records/:recordId/relations/ex
     const routePaths = stack
       .filter((l) => l.route)
       .map((l) => `${Object.keys(l.route.methods || {})[0]?.toUpperCase()} ${l.route.path}`);
-    expect(routePaths).toContain(
-      'GET /tables/:tableId/records/:recordId/relations/explain'
-    );
+    expect(routePaths).toContain('GET /tables/:tableId/records/:recordId/relations/explain');
     expect(routePaths).toHaveLength(1);
   });
 

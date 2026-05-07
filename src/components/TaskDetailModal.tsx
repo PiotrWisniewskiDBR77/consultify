@@ -359,8 +359,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 <div className="space-y-6 max-w-3xl animate-in slide-in-from-right-4 duration-300">
                   <div>
                     <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-1 flex items-center gap-2">
-                      <Target size={16} className="text-primary-600 dark:text-primary-400" /> Expected
-                      Strategic Outcome
+                      <Target size={16} className="text-primary-600 dark:text-primary-400" />{' '}
+                      Expected Strategic Outcome
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                       What specifically will change in the business once this task is done?

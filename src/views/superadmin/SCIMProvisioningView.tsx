@@ -595,7 +595,10 @@ const SCIMProvisioningView: React.FC = () => {
                       token.isActive ? 'bg-green-500/20' : 'bg-rose-500/20'
                     }`}
                   >
-                    <Key className={token.isActive ? 'text-green-400' : 'text-rose-400'} size={20} />
+                    <Key
+                      className={token.isActive ? 'text-green-400' : 'text-rose-400'}
+                      size={20}
+                    />
                   </div>
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-white">{token.name}</h4>

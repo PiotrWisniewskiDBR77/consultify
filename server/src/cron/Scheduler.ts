@@ -512,16 +512,11 @@ export const Scheduler = {
     // Off by default: requires ORG_CONTEXT_WORKER_SCHEDULER_ENABLED=true.
     // Honest degraded UI: when disabled, queue summary surfaces 'scheduler_disabled'.
     const job29 = cron.schedule('*/30 * * * * *', async () => {
-      if (
-        String(process.env.ORG_CONTEXT_WORKER_SCHEDULER_ENABLED || '').toLowerCase() !== 'true'
-      ) {
+      if (String(process.env.ORG_CONTEXT_WORKER_SCHEDULER_ENABLED || '').toLowerCase() !== 'true') {
         return;
       }
       try {
-        const limit = Math.max(
-          1,
-          Math.min(Number(process.env.ORG_CONTEXT_WORKER_LIMIT || 5), 25)
-        );
+        const limit = Math.max(1, Math.min(Number(process.env.ORG_CONTEXT_WORKER_LIMIT || 5), 25));
         const contextDocumentService = (
           await import('../services/organizationContext/ContextDocumentService.js')
         ).default;
@@ -543,10 +538,7 @@ export const Scheduler = {
           });
         }
       } catch (err: any) {
-        logger.error(
-          '[Scheduler] Organization context worker tick failed:',
-          err?.message || err
-        );
+        logger.error('[Scheduler] Organization context worker tick failed:', err?.message || err);
       }
     });
     this.jobs.push(job29);
@@ -554,9 +546,7 @@ export const Scheduler = {
     // 30. Organization Context External Queue Consumer - Run every 30 seconds when external queue configured.
     // Off by default: requires ORG_CONTEXT_QUEUE_BACKEND=external + scheduler enabled + pull URL set.
     const job30 = cron.schedule('*/30 * * * * *', async () => {
-      if (
-        String(process.env.ORG_CONTEXT_WORKER_SCHEDULER_ENABLED || '').toLowerCase() !== 'true'
-      ) {
+      if (String(process.env.ORG_CONTEXT_WORKER_SCHEDULER_ENABLED || '').toLowerCase() !== 'true') {
         return;
       }
       const backend = String(process.env.ORG_CONTEXT_QUEUE_BACKEND || '').toLowerCase();
@@ -567,10 +557,7 @@ export const Scheduler = {
         return;
       }
       try {
-        const limit = Math.max(
-          1,
-          Math.min(Number(process.env.ORG_CONTEXT_WORKER_LIMIT || 5), 25)
-        );
+        const limit = Math.max(1, Math.min(Number(process.env.ORG_CONTEXT_WORKER_LIMIT || 5), 25));
         const contextDocumentService = (
           await import('../services/organizationContext/ContextDocumentService.js')
         ).default;
@@ -579,8 +566,7 @@ export const Scheduler = {
         });
         if (
           !result.skipped &&
-          ((result.pulledMessages || 0) > 0 ||
-            (result.errors && result.errors.length > 0))
+          ((result.pulledMessages || 0) > 0 || (result.errors && result.errors.length > 0))
         ) {
           logger.info('[Scheduler] Organization context external queue consumer tick', {
             pulled: result.pulledMessages || 0,

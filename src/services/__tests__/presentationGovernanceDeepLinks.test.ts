@@ -147,9 +147,7 @@ describe('buildDashboardDeepLink', () => {
 
   it('returns the bare baseUrl when state is fully empty', () => {
     expect(buildDashboardDeepLink(EMPTY)).toBe('/');
-    expect(buildDashboardDeepLink(EMPTY, '/super-admin/system')).toBe(
-      '/super-admin/system'
-    );
+    expect(buildDashboardDeepLink(EMPTY, '/super-admin/system')).toBe('/super-admin/system');
   });
 });
 

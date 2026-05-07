@@ -154,10 +154,7 @@ function safeAnomalies(input: unknown): IncidentAnomalySignal[] {
   return out;
 }
 
-function hasMajorAnomaly(
-  anomalies: IncidentAnomalySignal[],
-  sloId: string
-): boolean {
+function hasMajorAnomaly(anomalies: IncidentAnomalySignal[], sloId: string): boolean {
   for (const a of anomalies) {
     if (a.sloId === sloId && a.severity === 'major') return true;
   }
@@ -211,10 +208,7 @@ export function classifyIncident(
 
     // 1. Template corruption — highest priority. Even if the rates look
     //    OK, a shared-template cluster is a fast-spreading outage.
-    if (
-      blockedP0SharedTemplateId !== null &&
-      blockedP0DecksCount >= MIN_TEMPLATE_CLUSTER_SIZE
-    ) {
+    if (blockedP0SharedTemplateId !== null && blockedP0DecksCount >= MIN_TEMPLATE_CLUSTER_SIZE) {
       return {
         runbook: 'RB-04',
         severity: 'P0',
@@ -240,8 +234,7 @@ export function classifyIncident(
 
     // 3. Latency breach.
     const latencyBreach =
-      p95GenerationLatencyMs !== null &&
-      p95GenerationLatencyMs > LATENCY_BREACH_MS;
+      p95GenerationLatencyMs !== null && p95GenerationLatencyMs > LATENCY_BREACH_MS;
     if (latencyBreach || hasMajorAnomaly(anomalies, 'p95_generation_latency_ms')) {
       const reason = latencyBreach
         ? `p95_generation_latency_ms=${Math.round(p95GenerationLatencyMs as number)} ms is above the ${LATENCY_BREACH_MS} ms runbook threshold.`

@@ -143,7 +143,9 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
           <div className="flex items-center gap-2">
             {!stats.allDone && <Loader2 size={14} className="animate-spin text-primary-500" />}
             {stats.allDone && !stats.hasErrors && <Check size={14} className="text-emerald-500" />}
-            {stats.allDone && stats.hasErrors && <AlertCircle size={14} className="text-rose-500" />}
+            {stats.allDone && stats.hasErrors && (
+              <AlertCircle size={14} className="text-rose-500" />
+            )}
             <span className="text-xs font-semibold text-slate-700 dark:text-zinc-200">
               {statusLabel}
             </span>

@@ -13,6 +13,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  type ClientSubscriberSnapshot,
   extractTokenFromHash,
   fetchSubscriberDashboard,
   scrubTokenFromHash,
@@ -20,12 +21,10 @@ import {
   SUBSCRIBER_DASHBOARD_PATH,
   SUBSCRIBER_TOKEN_STORAGE_KEY,
   validateSnapshot,
-  type ClientSubscriberSnapshot,
 } from '../subscriberDashboardClient';
 
 const VALID_TOKEN = 'a'.repeat(64);
-const ANOTHER_VALID_TOKEN =
-  '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const ANOTHER_VALID_TOKEN = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 function buildSnapshot(
   overrides: Partial<ClientSubscriberSnapshot> = {}
@@ -104,12 +103,8 @@ describe('extractTokenFromHash', () => {
   });
 
   it('handles multi-key hashes (token first or later)', () => {
-    expect(
-      extractTokenFromHash(`#token=${VALID_TOKEN}&debug=1`)
-    ).toBe(VALID_TOKEN);
-    expect(
-      extractTokenFromHash(`#debug=1&token=${ANOTHER_VALID_TOKEN}`)
-    ).toBe(ANOTHER_VALID_TOKEN);
+    expect(extractTokenFromHash(`#token=${VALID_TOKEN}&debug=1`)).toBe(VALID_TOKEN);
+    expect(extractTokenFromHash(`#debug=1&token=${ANOTHER_VALID_TOKEN}`)).toBe(ANOTHER_VALID_TOKEN);
   });
 
   it('returns null for empty / non-string input', () => {
@@ -174,9 +169,9 @@ function makeJsonResponse(body: unknown, init: { status?: number } = {}): Respon
 
 describe('fetchSubscriberDashboard', () => {
   it('returns unauthorized when the response is HTTP 401', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      makeJsonResponse({ reason: 'token_not_found' }, { status: 401 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(makeJsonResponse({ reason: 'token_not_found' }, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await fetchSubscriberDashboard({ token: VALID_TOKEN });
@@ -185,44 +180,30 @@ describe('fetchSubscriberDashboard', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain(SUBSCRIBER_DASHBOARD_PATH);
-    expect((init.headers as Record<string, string>).Authorization).toBe(
-      `Bearer ${VALID_TOKEN}`
-    );
+    expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${VALID_TOKEN}`);
     expect(init.credentials).toBe('omit');
   });
 
   it('returns forbidden on HTTP 403', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(makeJsonResponse({}, { status: 403 }))
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeJsonResponse({}, { status: 403 })));
     const result = await fetchSubscriberDashboard({ token: VALID_TOKEN });
     expect(result.status).toBe('forbidden');
   });
 
   it('returns rate_limited on HTTP 429', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(makeJsonResponse({}, { status: 429 }))
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeJsonResponse({}, { status: 429 })));
     const result = await fetchSubscriberDashboard({ token: VALID_TOKEN });
     expect(result.status).toBe('rate_limited');
   });
 
   it('returns storage_unavailable on HTTP 503', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(makeJsonResponse({}, { status: 503 }))
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeJsonResponse({}, { status: 503 })));
     const result = await fetchSubscriberDashboard({ token: VALID_TOKEN });
     expect(result.status).toBe('storage_unavailable');
   });
 
   it('returns network_error when fetch throws', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new Error('network down'))
-    );
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
     const result = await fetchSubscriberDashboard({ token: VALID_TOKEN });
     expect(result.status).toBe('network_error');
     expect(result.reason).toBe('network down');
@@ -232,9 +213,7 @@ describe('fetchSubscriberDashboard', () => {
     const snap = buildSnapshot();
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        makeJsonResponse({ success: true, data: snap }, { status: 200 })
-      )
+      vi.fn().mockResolvedValue(makeJsonResponse({ success: true, data: snap }, { status: 200 }))
     );
 
     const result = await fetchSubscriberDashboard({ token: VALID_TOKEN });
@@ -248,12 +227,14 @@ describe('fetchSubscriberDashboard', () => {
   it('rejects the response when the payload shape is invalid', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        makeJsonResponse(
-          { success: true, data: { subscription: 'not an object' } },
-          { status: 200 }
+      vi
+        .fn()
+        .mockResolvedValue(
+          makeJsonResponse(
+            { success: true, data: { subscription: 'not an object' } },
+            { status: 200 }
+          )
         )
-      )
     );
 
     const result = await fetchSubscriberDashboard({ token: VALID_TOKEN });
@@ -271,9 +252,9 @@ describe('fetchSubscriberDashboard', () => {
   });
 
   it('honors a custom baseUrl for embeddable hosts', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      makeJsonResponse({ data: buildSnapshot() }, { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(makeJsonResponse({ data: buildSnapshot() }, { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
     await fetchSubscriberDashboard({

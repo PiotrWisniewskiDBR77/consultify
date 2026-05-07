@@ -222,7 +222,9 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                 />
               </div>
             </div>
-            <div className="text-xs font-semibold text-primary-600 dark:text-primary-400">{pct}%</div>
+            <div className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+              {pct}%
+            </div>
           </div>
 
           <div className="space-y-2">

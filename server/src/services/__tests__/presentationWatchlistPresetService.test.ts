@@ -51,12 +51,8 @@ describe('presentationWatchlistPresetService - normalizePresetFilters', () => {
   });
 
   it('strips minSeverity values that are not in the allow-list', () => {
-    expect(normalizePresetFilters({ minSeverity: 'BLOCKED_P0' }).minSeverity).toBe(
-      'BLOCKED_P0'
-    );
-    expect(normalizePresetFilters({ minSeverity: 'BLOCKED_P1' }).minSeverity).toBe(
-      'BLOCKED_P1'
-    );
+    expect(normalizePresetFilters({ minSeverity: 'BLOCKED_P0' }).minSeverity).toBe('BLOCKED_P0');
+    expect(normalizePresetFilters({ minSeverity: 'BLOCKED_P1' }).minSeverity).toBe('BLOCKED_P1');
     expect(normalizePresetFilters({ minSeverity: 'PASS' }).minSeverity).toBeUndefined();
     expect(normalizePresetFilters({ minSeverity: 42 }).minSeverity).toBeUndefined();
   });
@@ -67,9 +63,7 @@ describe('presentationWatchlistPresetService - normalizePresetFilters', () => {
     });
     expect(out.confidentiality).toBeDefined();
     // Order is preserved as-inserted; just assert membership + uniqueness.
-    expect(new Set(out.confidentiality)).toEqual(
-      new Set(['public', 'internal', 'confidential'])
-    );
+    expect(new Set(out.confidentiality)).toEqual(new Set(['public', 'internal', 'confidential']));
     expect(out.confidentiality).toHaveLength(3);
   });
 
@@ -98,9 +92,10 @@ describe('presentationWatchlistPresetService - validatePresetCreateInput', () =>
   });
 
   it('returns NAME_REQUIRED when name is missing or blank', () => {
-    expect(
-      validatePresetCreateInput({ filters: { onlyBlocked: true, limit: 50 } })
-    ).toEqual({ ok: false, error: 'NAME_REQUIRED' });
+    expect(validatePresetCreateInput({ filters: { onlyBlocked: true, limit: 50 } })).toEqual({
+      ok: false,
+      error: 'NAME_REQUIRED',
+    });
     expect(
       validatePresetCreateInput({ name: '   ', filters: { onlyBlocked: true, limit: 50 } })
     ).toEqual({ ok: false, error: 'NAME_REQUIRED' });
@@ -139,11 +134,7 @@ describe('presentationWatchlistPresetService - comparePresetsByName', () => {
   it('sorts alphabetically and treats casing as equal', () => {
     const presets = [{ name: 'banana' }, { name: 'Apple' }, { name: 'cherry' }];
     presets.sort(comparePresetsByName);
-    expect(presets.map((p) => p.name.toLowerCase())).toEqual([
-      'apple',
-      'banana',
-      'cherry',
-    ]);
+    expect(presets.map((p) => p.name.toLowerCase())).toEqual(['apple', 'banana', 'cherry']);
 
     expect(comparePresetsByName({ name: 'foo' }, { name: 'FOO' })).toBe(0);
   });

@@ -257,7 +257,8 @@ function buildTopicEntries(params: {
         finding?.evidence_pointers?.filter((pointer) => !pointer.isTombstone).length ||
         uniqueStrings(item.evidence_refs || []).length;
       const confidenceLevel = finding?.confidence_level || inferFallbackConfidence(kind, item);
-      const topicText = `${item.title || ''} ${item.description || ''} ${item.divergence_note || ''}`.toLowerCase();
+      const topicText =
+        `${item.title || ''} ${item.description || ''} ${item.divergence_note || ''}`.toLowerCase();
       const signalContradictsTopic =
         Boolean(contradictionText) &&
         uniqueStrings([item.title, ...(item.perspective_labels || [])]).some((label) =>

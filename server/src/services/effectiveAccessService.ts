@@ -441,9 +441,7 @@ export async function ensureProjectRoleTemplateSchema(): Promise<void> {
     .queryRun(`ALTER TABLE project_members ADD COLUMN IF NOT EXISTS role_template_id TEXT`)
     .catch(() => undefined);
   await queryHelpers
-    .queryRun(
-      `ALTER TABLE project_members ADD COLUMN IF NOT EXISTS normalized_project_role TEXT`
-    )
+    .queryRun(`ALTER TABLE project_members ADD COLUMN IF NOT EXISTS normalized_project_role TEXT`)
     .catch(() => undefined);
   await queryHelpers
     .queryRun(`ALTER TABLE project_members ADD COLUMN IF NOT EXISTS legacy_project_role TEXT`)

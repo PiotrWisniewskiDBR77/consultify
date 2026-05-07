@@ -29,10 +29,7 @@
  * neutral placeholders. The renderer NEVER throws.
  */
 
-import {
-  isPlaywrightPdfRendererAvailable,
-  renderHtmlToPdf,
-} from './playwrightPdfRenderer.js';
+import { isPlaywrightPdfRendererAvailable, renderHtmlToPdf } from './playwrightPdfRenderer.js';
 import type { OperationsHealthReport } from './presentationOperationsHealthService.js';
 
 // ---------------------------------------------------------------------------
@@ -250,15 +247,11 @@ function renderJobsTable(report: OperationsHealthReport): string {
       const tone =
         JOB_STATUS_TONE[job?.lastRunStatus as keyof typeof JOB_STATUS_TONE] ||
         JOB_STATUS_TONE.unknown;
-      const stalePill = job?.isStale
-        ? `<span class="stale-pill">Stale</span>`
-        : '';
+      const stalePill = job?.isStale ? `<span class="stale-pill">Stale</span>` : '';
       const summary = job?.lastRunSummary
         ? `<div class="job-summary">${escapeHtml(job.lastRunSummary)}</div>`
         : '';
-      const lastRunDisplay = job?.lastRunAt
-        ? safeFormatDate(job.lastRunAt)
-        : 'never';
+      const lastRunDisplay = job?.lastRunAt ? safeFormatDate(job.lastRunAt) : 'never';
       return `
         <tr>
           <td>
@@ -331,9 +324,7 @@ function renderWarnings(report: OperationsHealthReport): string {
     // diagnostics but no visible block.
     return `<!-- no-warnings -->`;
   }
-  const items = warnings
-    .map((w) => `<li>${escapeHtml(String(w))}</li>`)
-    .join('');
+  const items = warnings.map((w) => `<li>${escapeHtml(String(w))}</li>`).join('');
   return `
     <section class="section warnings">
       <h2>Warnings</h2>
@@ -359,10 +350,7 @@ function renderWatermark(watermark: string | null | undefined): string {
   // Repeated diagonal text using flex of pre-rendered tiles. Inline styles
   // keep the document fully self-contained.
   const tiles = Array.from({ length: 24 })
-    .map(
-      () =>
-        `<span class="wm-tile">${text}</span>`
-    )
+    .map(() => `<span class="wm-tile">${text}</span>`)
     .join('');
   return `<div class="watermark" aria-hidden="true">${tiles}</div>`;
 }
@@ -635,23 +623,25 @@ export function renderOperationsHealthHtml(
   input: RenderOpsHealthHtmlInput
 ): RenderOpsHealthHtmlResult {
   const safeInput: RenderOpsHealthHtmlInput = {
-    report: input?.report || ({
-      generatedAt: new Date().toISOString(),
-      windowDays: 7,
-      slos: [],
-      jobs: [],
-      alerts: {
+    report:
+      input?.report ||
+      ({
+        generatedAt: new Date().toISOString(),
         windowDays: 7,
-        attempted: 0,
-        sent: 0,
-        failed: 0,
-        suppressed: 0,
-        dryRun: 0,
-        uniqueDecks: 0,
-        pausedSubscriptions: 0,
-      },
-      warnings: [],
-    } as OperationsHealthReport),
+        slos: [],
+        jobs: [],
+        alerts: {
+          windowDays: 7,
+          attempted: 0,
+          sent: 0,
+          failed: 0,
+          suppressed: 0,
+          dryRun: 0,
+          uniqueDecks: 0,
+          pausedSubscriptions: 0,
+        },
+        warnings: [],
+      } as OperationsHealthReport),
     organizationName: input?.organizationName ?? null,
     generatedBy: input?.generatedBy ?? null,
     watermark: input?.watermark ?? null,
@@ -778,4 +768,3 @@ export async function renderOperationsHealthPdf(
     fallbackReason: rendered.reason || rendered.status,
   };
 }
-

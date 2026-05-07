@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildOperationsHealthReport,
   type BuildOperationsHealthInput,
+  buildOperationsHealthReport,
 } from '../presentationOperationsHealthService.js';
 
 const NOW_ISO = '2026-05-10T12:00:00.000Z';
@@ -107,10 +107,11 @@ describe('presentationOperationsHealthService', () => {
   });
 
   it('marks p95_generation_latency_ms inconclusive when fewer than 10 samples are present', () => {
-    const exports: BuildOperationsHealthInput['exportRecords'] = Array.from(
-      { length: 5 },
-      () => ({ status: 'completed', createdAt: isoDaysAgo(1), durationMs: 4000 })
-    );
+    const exports: BuildOperationsHealthInput['exportRecords'] = Array.from({ length: 5 }, () => ({
+      status: 'completed',
+      createdAt: isoDaysAgo(1),
+      durationMs: 4000,
+    }));
 
     const report = buildOperationsHealthReport(baseInput({ exportRecords: exports }));
     const slo = findSlo(report, 'p95_generation_latency_ms');

@@ -46,7 +46,12 @@ export interface IssueTokenInput {
 }
 
 export interface IssueTokenResult {
-  status: 'ok' | 'subscription_not_found' | 'subscription_inactive' | 'rate_limit' | 'storage_error';
+  status:
+    | 'ok'
+    | 'subscription_not_found'
+    | 'subscription_inactive'
+    | 'rate_limit'
+    | 'storage_error';
   /** 64 hex chars; ONLY returned on success and never echoed back later. */
   oneTimeToken?: string;
   tokenId?: string;
@@ -175,7 +180,9 @@ export function generateRawToken(): string {
  * hashing the input and querying the unique `token_hash` index.
  */
 export function hashToken(rawToken: string): string {
-  return createHash('sha256').update(String(rawToken ?? ''), 'utf8').digest('hex');
+  return createHash('sha256')
+    .update(String(rawToken ?? ''), 'utf8')
+    .digest('hex');
 }
 
 // ============================================================================
@@ -299,8 +306,7 @@ export function buildSubscriberDashboardSnapshot(
     .sort((a, b) => (parseIso(b.dispatchedAt) ?? 0) - (parseIso(a.dispatchedAt) ?? 0));
 
   const lastDispatchAt = sortedDesc[0]?.dispatchedAt ?? null;
-  const lastFailureAt =
-    sortedDesc.find((d) => d.status === 'failed')?.dispatchedAt ?? null;
+  const lastFailureAt = sortedDesc.find((d) => d.status === 'failed')?.dispatchedAt ?? null;
 
   let consecutiveFailures = 0;
   for (let i = dispatches.length - 1; i >= 0; i--) {
@@ -331,8 +337,7 @@ export function buildSubscriberDashboardSnapshot(
   // ----- Signing rotation pressure -----
   const secretRotatedAt = input.subscription.signingSecretRotatedAt ?? null;
   const rotatedMs = parseIso(secretRotatedAt);
-  const daysSinceRotation =
-    rotatedMs !== null ? Math.floor((nowMs - rotatedMs) / DAY_MS) : null;
+  const daysSinceRotation = rotatedMs !== null ? Math.floor((nowMs - rotatedMs) / DAY_MS) : null;
   const rotationDueWithinDays =
     daysSinceRotation !== null && daysSinceRotation > ROTATION_WARNING_DAYS
       ? Math.max(0, ROTATION_OVERDUE_DAYS - daysSinceRotation)
@@ -344,8 +349,7 @@ export function buildSubscriberDashboardSnapshot(
 
   if (consecutiveFailures >= FAILURE_DEGRADED_THRESHOLD) {
     reasons.push('5+ consecutive failures');
-    overall =
-      consecutiveFailures >= FAILURE_UNHEALTHY_THRESHOLD ? 'unhealthy' : 'degraded';
+    overall = consecutiveFailures >= FAILURE_UNHEALTHY_THRESHOLD ? 'unhealthy' : 'degraded';
   }
 
   if (daysSinceRotation !== null && daysSinceRotation > ROTATION_OVERDUE_DAYS) {
@@ -353,11 +357,7 @@ export function buildSubscriberDashboardSnapshot(
     if (overall === 'healthy') overall = 'degraded';
   }
 
-  if (
-    input.subscription.active &&
-    last7Days.sent === 0 &&
-    last7Days.failed === 0
-  ) {
+  if (input.subscription.active && last7Days.sent === 0 && last7Days.failed === 0) {
     reasons.push('No recent dispatches');
   }
 

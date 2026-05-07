@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  __internals,
   buildExportBundle,
   bundleToJson,
   parseImportJson,
   planImport,
-  __internals,
   type WatchlistPresetExportBundle,
   type WatchlistPresetExportRecord,
 } from '../presentationWatchlistPresetTransfer';
@@ -24,9 +24,7 @@ function validRecord(
   };
 }
 
-function validBundle(
-  presets: WatchlistPresetExportRecord[]
-): WatchlistPresetExportBundle {
+function validBundle(presets: WatchlistPresetExportRecord[]): WatchlistPresetExportBundle {
   return {
     schema: 'consultify.watchlist.preset.bundle.v1',
     exportedAt: FIXED_NOW,
@@ -179,10 +177,7 @@ describe('bundleToJson + parseImportJson round-trip', () => {
     expect(result.presetsCount).toBe(2);
     expect(result.bundle?.presets[0].name).toBe('Quarterly review');
     expect(result.bundle?.presets[0].filters.minSeverity).toBe('BLOCKED_P0');
-    expect(result.bundle?.presets[0].filters.confidentiality).toEqual([
-      'public',
-      'internal',
-    ]);
+    expect(result.bundle?.presets[0].filters.confidentiality).toEqual(['public', 'internal']);
     expect(result.bundle?.presets[1].filters.limit).toBe(200);
     expect(result.bundle?.meta?.sourceOrgIdHint).toBe('org-hint-abc');
   });
@@ -197,9 +192,7 @@ describe('parseImportJson failure modes', () => {
   });
 
   it('returns a schema-mismatch error pointing at the actual value', () => {
-    const result = parseImportJson(
-      JSON.stringify({ schema: 'something.else.v2', presets: [] })
-    );
+    const result = parseImportJson(JSON.stringify({ schema: 'something.else.v2', presets: [] }));
     expect(result.ok).toBe(false);
     expect(result.errors.join(' ')).toMatch(/schema/i);
     expect(result.errors.join(' ')).toMatch(/something\.else\.v2/);

@@ -244,7 +244,7 @@ function isSchemaMissingError(error: unknown): boolean {
     msg.includes('no such table') ||
     msg.includes('no such column') ||
     msg.includes('relation') ||
-    msg.includes('column') && msg.includes('lifecycle_state')
+    (msg.includes('column') && msg.includes('lifecycle_state'))
   );
 }
 

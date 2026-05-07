@@ -117,7 +117,11 @@ const IMPORT_STATUS_CONFIG: Record<
     color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/20',
     icon: 'check',
   },
-  failed: { label: 'Failed', color: 'text-rose-400 bg-rose-500/15 border-rose-500/20', icon: 'alert' },
+  failed: {
+    label: 'Failed',
+    color: 'text-rose-400 bg-rose-500/15 border-rose-500/20',
+    icon: 'alert',
+  },
 };
 
 // ============================================

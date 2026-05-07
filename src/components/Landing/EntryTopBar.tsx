@@ -45,7 +45,12 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const currentCode =
     normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || SUPPORTED_LANGUAGES[0];
 
-  const localizedNavLabel = (key: string, fallbackEn: string, fallbackPl: string, fallbackDe: string) => {
+  const localizedNavLabel = (
+    key: string,
+    fallbackEn: string,
+    fallbackPl: string,
+    fallbackDe: string
+  ) => {
     const translated = t(key, fallbackEn);
     if (translated !== fallbackEn) return translated;
     if (currentCode === 'pl') return fallbackPl;
@@ -54,15 +59,35 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   };
 
   const navLinks = [
-    { label: localizedNavLabel('nav.product', 'Product', 'Produkt', 'Produkt'), href: ROUTES.WELCOME },
     {
-      label: localizedNavLabel('nav.knowledgeBase', 'Knowledge Base', 'Baza wiedzy', 'Wissensdatenbank'),
+      label: localizedNavLabel('nav.product', 'Product', 'Produkt', 'Produkt'),
+      href: ROUTES.WELCOME,
+    },
+    {
+      label: localizedNavLabel(
+        'nav.knowledgeBase',
+        'Knowledge Base',
+        'Baza wiedzy',
+        'Wissensdatenbank'
+      ),
       href: ROUTES.KNOWLEDGE_BASE_PUBLIC,
     },
-    { label: localizedNavLabel('nav.pricing', 'Pricing', 'Cennik', 'Preise'), href: ROUTES.PRICING },
-    { label: localizedNavLabel('nav.partners', 'Partners', 'Partnerzy', 'Partner'), href: ROUTES.BECOME_PARTNER },
-    { label: localizedNavLabel('nav.vector', 'Vector AI', 'Vector AI', 'Vector AI'), href: ROUTES.VECTOR },
-    { label: localizedNavLabel('nav.security', 'Security', 'Bezpieczeństwo', 'Sicherheit'), href: ROUTES.LEGAL.SECURITY },
+    {
+      label: localizedNavLabel('nav.pricing', 'Pricing', 'Cennik', 'Preise'),
+      href: ROUTES.PRICING,
+    },
+    {
+      label: localizedNavLabel('nav.partners', 'Partners', 'Partnerzy', 'Partner'),
+      href: ROUTES.BECOME_PARTNER,
+    },
+    {
+      label: localizedNavLabel('nav.vector', 'Vector AI', 'Vector AI', 'Vector AI'),
+      href: ROUTES.VECTOR,
+    },
+    {
+      label: localizedNavLabel('nav.security', 'Security', 'Bezpieczeństwo', 'Sicherheit'),
+      href: ROUTES.LEGAL.SECURITY,
+    },
   ];
   const { theme, toggleTheme } = useAppStore();
   const effectiveTheme = forceDark ? 'dark' : theme;

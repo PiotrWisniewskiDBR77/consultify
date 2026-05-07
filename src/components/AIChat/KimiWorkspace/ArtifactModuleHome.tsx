@@ -70,7 +70,7 @@ interface ArtifactModuleHomeProps {
 }
 
 export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const [activeTab, setActiveTab] = useState<HomeTab>('templates');
@@ -554,7 +554,7 @@ function ArtifactsList({
   return (
     <div className="space-y-2">
       {artifacts.map((item) => {
-        const id = item.artifactId || item.originRecordId;
+        const id = item.originRecordId || item.artifactId;
         const d = new Date(item.updatedAt);
         return (
           <button

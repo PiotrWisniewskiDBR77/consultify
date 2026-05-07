@@ -62,7 +62,9 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
     });
     expect(report.verdict).toBe('FAIL');
     expect(report.formatsMissing).toContain('pdf');
-    const missingPdf = report.issues.find((i) => i.format === 'pdf' && i.field === 'missing_export');
+    const missingPdf = report.issues.find(
+      (i) => i.format === 'pdf' && i.field === 'missing_export'
+    );
     expect(missingPdf?.severity).toBe('critical');
   });
 
@@ -73,7 +75,9 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
       exports: ['pdf', 'png', 'html'].map((f) => makeRecord({ format: f as any })),
     });
     expect(report.verdict).toBe('FAIL');
-    const missingPptx = report.issues.find((i) => i.format === 'pptx' && i.field === 'missing_export');
+    const missingPptx = report.issues.find(
+      (i) => i.format === 'pptx' && i.field === 'missing_export'
+    );
     expect(missingPptx?.severity).toBe('critical');
   });
 
@@ -83,7 +87,9 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
       expected: baseExpected(),
       exports: ['pdf', 'pptx', 'html'].map((f) => makeRecord({ format: f as any })),
     });
-    const missingPng = report.issues.find((i) => i.format === 'png' && i.field === 'missing_export');
+    const missingPng = report.issues.find(
+      (i) => i.format === 'png' && i.field === 'missing_export'
+    );
     expect(missingPng?.severity).toBe('info');
     expect(report.summary.critical).toBe(0);
     expect(report.verdict).toBe('PASS_WITH_WARNINGS');
@@ -95,7 +101,9 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
       expected: baseExpected(),
       exports: ['pdf', 'pptx', 'png'].map((f) => makeRecord({ format: f as any })),
     });
-    const missingHtml = report.issues.find((i) => i.format === 'html' && i.field === 'missing_export');
+    const missingHtml = report.issues.find(
+      (i) => i.format === 'html' && i.field === 'missing_export'
+    );
     expect(missingHtml?.severity).toBe('info');
     expect(report.summary.critical).toBe(0);
     expect(report.verdict).toBe('PASS_WITH_WARNINGS');
@@ -150,9 +158,7 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
     const report = buildParityCheckReport({
       deckId: 'deck-9',
       expected: baseExpected({ confidentialityWatermark: null }),
-      exports: ALL_FORMATS.map((format) =>
-        makeRecord({ format, confidentialityWatermark: null })
-      ),
+      exports: ALL_FORMATS.map((format) => makeRecord({ format, confidentialityWatermark: null })),
     });
     expect(report.issues.filter((i) => i.field === 'confidentiality_watermark')).toHaveLength(0);
     expect(report.verdict).toBe('PASS');
@@ -164,7 +170,10 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
       expected: baseExpected({ requiredSections: REQUIRED_SECTIONS }),
       exports: [
         makeRecord({ format: 'pdf' }),
-        makeRecord({ format: 'pptx', sectionsPresent: ['cover', 'dashboard', 'insight', 'roadmap'] }),
+        makeRecord({
+          format: 'pptx',
+          sectionsPresent: ['cover', 'dashboard', 'insight', 'roadmap'],
+        }),
         makeRecord({ format: 'png' }),
         makeRecord({ format: 'html' }),
       ],
@@ -202,9 +211,7 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
         makeRecord({ format: 'pdf', headerText: 'Different header' }),
         makeRecord({ format: 'pptx' }),
         // png missing — info
-      ].concat([
-        makeRecord({ format: 'html' }),
-      ]),
+      ].concat([makeRecord({ format: 'html' })]),
     });
     expect(report.summary.critical).toBe(0);
     expect(report.summary.warning).toBeGreaterThanOrEqual(1);
@@ -257,9 +264,26 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
     ).not.toThrow();
     const report = buildParityCheckReport({
       deckId: '' as any,
-      expected: { pageCount: 'not-a-number' as any, headerText: 42 as any, footerText: undefined as any, confidentialityWatermark: 'confidential', requiredSections: ['cover', 123 as any, ''] },
+      expected: {
+        pageCount: 'not-a-number' as any,
+        headerText: 42 as any,
+        footerText: undefined as any,
+        confidentialityWatermark: 'confidential',
+        requiredSections: ['cover', 123 as any, ''],
+      },
       exports: [
-        { format: 'banana' as any, generatedAt: 'not-a-date', status: 'weird' as any, pageCount: 'x' as any, headerText: null, footerText: null, confidentialityWatermark: null, sectionsPresent: null as any, bytes: null, errorReason: null },
+        {
+          format: 'banana' as any,
+          generatedAt: 'not-a-date',
+          status: 'weird' as any,
+          pageCount: 'x' as any,
+          headerText: null,
+          footerText: null,
+          confidentialityWatermark: null,
+          sectionsPresent: null as any,
+          bytes: null,
+          errorReason: null,
+        },
       ],
     });
     expect(report.verdict).toBeDefined();
@@ -278,7 +302,9 @@ describe('presentationExportParityService.buildParityCheckReport', () => {
         makeRecord({ format: 'html', pageCount: 10 }),
       ],
     });
-    expect(report.issues.filter((i) => i.format === 'pdf' && i.field === 'page_count')).toHaveLength(0);
+    expect(
+      report.issues.filter((i) => i.format === 'pdf' && i.field === 'page_count')
+    ).toHaveLength(0);
     expect(report.verdict).toBe('PASS');
   });
 
@@ -307,9 +333,9 @@ describe('presentationExportParityService.buildExpectedParityFromDeckDocument', 
     expect(classifyCardSection({ intent: 'roadmap' })).toBe('roadmap');
     expect(classifyCardSection({ intent: 'performance_overview' })).toBe('dashboard');
     expect(classifyCardSection({ intent: 'key_messages' })).toBe('insight');
-    expect(classifyCardSection({ intent: 'something-else', layout_id: 'dashboard-kpi-strip' })).toBe(
-      'dashboard'
-    );
+    expect(
+      classifyCardSection({ intent: 'something-else', layout_id: 'dashboard-kpi-strip' })
+    ).toBe('dashboard');
     expect(classifyCardSection(null)).toBeNull();
   });
 

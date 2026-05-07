@@ -248,7 +248,9 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                         <span>Change:</span> <span>{changeEffort} pts</span>
                       </div>
                       {isHighChange && (
-                        <div className="mt-1 text-rose-400 font-bold">High Change Fatigue Risk!</div>
+                        <div className="mt-1 text-rose-400 font-bold">
+                          High Change Fatigue Risk!
+                        </div>
                       )}
                       {isOverloaded && (
                         <div className="mt-1 text-rose-400 font-bold">Capacity Overload!</div>

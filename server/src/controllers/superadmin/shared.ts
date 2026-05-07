@@ -15,7 +15,6 @@ import { getDatabase } from '../../database/index.js';
 import { activityService } from '../../services/ActivityService.js';
 import adminSessionService from '../../services/adminSessionService.js';
 import complianceService from '../../services/complianceService.js';
-import supportTicketService from '../../services/supportTicketService.js';
 import feedbackService from '../../services/feedbackService.js';
 import integrationService from '../../services/integrationService.js';
 import invitationService from '../../services/invitationService.js';
@@ -24,6 +23,7 @@ import organizationMetadataService from '../../services/organizationMetadataServ
 import permissionsMatrixService from '../../services/permissionsMatrixService.js';
 import refreshTokenService from '../../services/RefreshTokenService.js';
 import securityIncidentService from '../../services/securityIncidentService.js';
+import supportTicketService from '../../services/supportTicketService.js';
 import threatIntelligenceService from '../../services/threatIntelligenceService.js';
 import usageService from '../../services/usageService.js';
 import userActivityService from '../../services/userActivityService.js';

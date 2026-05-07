@@ -216,7 +216,9 @@ export function AuditLogViewer() {
     switch (riskLevel) {
       case 'HIGH':
         return (
-          <span className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400`}>
+          <span
+            className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400`}
+          >
             HIGH
           </span>
         );

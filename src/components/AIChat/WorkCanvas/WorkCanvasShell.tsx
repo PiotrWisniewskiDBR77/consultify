@@ -507,7 +507,11 @@ function SourceCanvas({ draft }: { draft: WorkCanvasDraft }) {
 
 function KimiLaneCanvas({ draft }: { draft: WorkCanvasDraft }) {
   const label =
-    draft.kind === 'sheet' ? 'Sheet canvas' : draft.kind === 'deck' ? 'Deck canvas' : 'Document canvas';
+    draft.kind === 'sheet'
+      ? 'Sheet canvas'
+      : draft.kind === 'deck'
+        ? 'Deck canvas'
+        : 'Document canvas';
   const helper =
     draft.kind === 'sheet'
       ? 'Use the left chat to shape rows, assumptions and formulas. This right side stays the governed canvas preview.'
@@ -993,8 +997,9 @@ export function WorkCanvasShell() {
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-navy-900">
               {isKimiKind ? (
                 <div className="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100">
-                  This lane now uses the shared split screen: chat on the left, canvas preview on the
-                  right. Native KIMI export remains available through the dedicated lane runtime.
+                  This lane now uses the shared split screen: chat on the left, canvas preview on
+                  the right. Native KIMI export remains available through the dedicated lane
+                  runtime.
                 </div>
               ) : null}
               {draft ? (

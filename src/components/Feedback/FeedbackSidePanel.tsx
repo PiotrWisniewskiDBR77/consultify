@@ -1216,7 +1216,11 @@ export const FeedbackSidePanel: React.FC = () => {
         </span>
       ) : null}
       {[
-        { rating: 1, icon: Frown, color: 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20' },
+        {
+          rating: 1,
+          icon: Frown,
+          color: 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20',
+        },
         {
           rating: 2,
           icon: ThumbsDown,

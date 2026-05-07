@@ -16,12 +16,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { ProposalCardType, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
+import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
 import { ToolHeader } from './ToolHeader';
 import { ToolReviewPanel } from './ToolReviewPanel';
-import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 
 // ==================== TYPES ====================
 

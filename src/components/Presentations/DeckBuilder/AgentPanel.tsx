@@ -16,13 +16,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type AgentHistoryFetchStatus,
   bulkRevertPresentationAgentOperations,
   fetchPresentationAgentHistory,
-  revertPresentationAgentOperation,
-  type AgentHistoryFetchStatus,
   type PresentationAgentHistoryEntry,
   type PresentationAgentHistoryRevertResult,
   type PresentationBulkRevertResult,
+  revertPresentationAgentOperation,
 } from '@/services/presentationAgentHistory';
 
 const ACTION_CHIP_STYLE = {
@@ -32,9 +32,11 @@ const ACTION_CHIP_STYLE = {
   unchanged: 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-300',
 } as const;
 
-const SlideDiffRow: React.FC<{ slide: ProposalSlideDiff; onOpen?: (slide: ProposalSlideDiff) => void }> = ({ slide, onOpen }) => {
-  const layoutChanged =
-    !!slide.layoutAfter && slide.layoutAfter !== slide.layoutBefore;
+const SlideDiffRow: React.FC<{
+  slide: ProposalSlideDiff;
+  onOpen?: (slide: ProposalSlideDiff) => void;
+}> = ({ slide, onOpen }) => {
+  const layoutChanged = !!slide.layoutAfter && slide.layoutAfter !== slide.layoutBefore;
   const addedBullets = slide.bulletsAdded || [];
   const removedBullets = slide.bulletsRemoved || [];
   const visibleAdded = addedBullets.slice(0, 4);
@@ -64,11 +66,7 @@ const SlideDiffRow: React.FC<{ slide: ProposalSlideDiff; onOpen?: (slide: Propos
             }
           : undefined
       }
-      aria-label={
-        interactive
-          ? `Open before/after detail for slide ${slide.index + 1}`
-          : undefined
-      }
+      aria-label={interactive ? `Open before/after detail for slide ${slide.index + 1}` : undefined}
     >
       <div className="flex items-center gap-1.5 mb-1">
         <span className="inline-flex items-center justify-center min-w-[28px] h-[18px] rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
@@ -187,7 +185,9 @@ const SlideDiffDetailModal: React.FC<{
               className="text-sm font-semibold text-slate-700 dark:text-white"
             >
               Slide #{slide.index + 1} ·{' '}
-              <span className={`uppercase text-[11px] ${ACTION_CHIP_STYLE[slide.action]} px-1.5 py-0.5 rounded-full`}>
+              <span
+                className={`uppercase text-[11px] ${ACTION_CHIP_STYLE[slide.action]} px-1.5 py-0.5 rounded-full`}
+              >
                 {slide.action}
               </span>
             </h2>
@@ -202,8 +202,18 @@ const SlideDiffDetailModal: React.FC<{
           </button>
         </div>
         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
-          <SlideDiffSide label="Before" tone="rose" snapshot={before} emptyMessage={slide.action === 'added' ? '(new slide)' : '(no content)'} />
-          <SlideDiffSide label="After" tone="emerald" snapshot={after} emptyMessage={slide.action === 'removed' ? '(removed slide)' : '(no content)'} />
+          <SlideDiffSide
+            label="Before"
+            tone="rose"
+            snapshot={before}
+            emptyMessage={slide.action === 'added' ? '(new slide)' : '(no content)'}
+          />
+          <SlideDiffSide
+            label="After"
+            tone="emerald"
+            snapshot={after}
+            emptyMessage={slide.action === 'removed' ? '(removed slide)' : '(no content)'}
+          />
         </div>
       </div>
     </div>
@@ -223,29 +233,41 @@ const SlideDiffSide: React.FC<{
   const isEmpty = !snapshot.title && !snapshot.layout && snapshot.bullets.length === 0;
   return (
     <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/40 overflow-hidden">
-      <div className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${headerStyle}`}>
+      <div
+        className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${headerStyle}`}
+      >
         {label}
       </div>
       <div className="px-3 py-2 space-y-2">
         {isEmpty ? (
-          <div className="text-[12px] italic text-slate-500 dark:text-slate-400">{emptyMessage}</div>
+          <div className="text-[12px] italic text-slate-500 dark:text-slate-400">
+            {emptyMessage}
+          </div>
         ) : (
           <>
             {snapshot.title !== null && (
               <div>
-                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Title</div>
-                <div className="text-sm text-slate-800 dark:text-slate-100">{snapshot.title || '(untitled)'}</div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Title
+                </div>
+                <div className="text-sm text-slate-800 dark:text-slate-100">
+                  {snapshot.title || '(untitled)'}
+                </div>
               </div>
             )}
             {snapshot.layout !== null && (
               <div>
-                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Layout</div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Layout
+                </div>
                 <div className="text-sm text-slate-800 dark:text-slate-100">{snapshot.layout}</div>
               </div>
             )}
             {snapshot.bullets.length > 0 && (
               <div>
-                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Bullets</div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Bullets
+                </div>
                 <ul className="list-disc list-inside text-[12px] text-slate-700 dark:text-slate-200 space-y-0.5">
                   {snapshot.bullets.map((b, idx) => (
                     <li key={`${label}-${idx}`}>{b}</li>
@@ -617,9 +639,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
 
   const selectableEntries = useMemo(
     () =>
-      historyEntries.filter(
-        (entry) => entry.status === 'applied' || entry.status === 'accepted'
-      ),
+      historyEntries.filter((entry) => entry.status === 'applied' || entry.status === 'accepted'),
     [historyEntries]
   );
 
@@ -1038,182 +1058,183 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
       </div>
 
       {activeTab === 'chat' && (
-      <>
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
-                msg.role === 'user'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              {msg.text}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Suggestions */}
-      {messages.length <= 1 && (
-        <div className="px-4 pb-2">
-          <div className="flex flex-wrap gap-1.5">
-            {SUGGESTION_KEYS.map((key) => (
-              <button
-                key={key}
-                onClick={() => handleSuggestion(key)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+        <>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <Sparkles size={10} />
-                {t(key, '')}
-              </button>
+                <div
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                    msg.role === 'user'
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      )}
 
-      {/* Pending Proposal */}
-      {pendingProposal && deckId && (
-        <div className="mx-3 mb-2 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/5">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-amber-200/70 dark:border-amber-500/20">
-            <div className="flex items-center gap-2">
-              <FileDiff size={14} className="text-amber-600 dark:text-amber-400" />
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                {t('presentations.agent.proposal.title', 'Proposed Edit')}
-              </span>
-            </div>
-            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
-              {t('presentations.agent.proposal.awaiting', 'Awaiting your approval')}
-            </span>
-          </div>
-          <div className="px-3 py-2 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-            {pendingProposal.plan?.scope && (
-              <div>
-                <span className="font-medium text-slate-700 dark:text-slate-200">Scope:</span>{' '}
-                {pendingProposal.plan.scope}
-              </div>
-            )}
-            {Array.isArray(pendingProposal.plan?.mutationKinds) &&
-              pendingProposal.plan!.mutationKinds!.length > 0 && (
-                <div>
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
-                    Mutation kinds:
-                  </span>{' '}
-                  {pendingProposal.plan!.mutationKinds!.join(', ')}
-                </div>
-              )}
-            {Array.isArray(pendingProposal.plan?.targetSlides) &&
-              pendingProposal.plan!.targetSlides!.length > 0 && (
-                <div>
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
-                    Target slides:
-                  </span>{' '}
-                  {pendingProposal.plan!.targetSlides!.map((s) => String(s)).join(', ')}
-                </div>
-              )}
-            {pendingProposal.plan?.sectionHint && (
-              <div>
-                <span className="font-medium text-slate-700 dark:text-slate-200">
-                  Section hint:
-                </span>{' '}
-                {pendingProposal.plan.sectionHint}
-              </div>
-            )}
-          </div>
-          <div className="px-3 pb-2 space-y-2">
-            {slideEntries.length > 0 ? (
-              <>
-                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {slideStats.changed} changed · {slideStats.added} added · {slideStats.removed} removed
-                </div>
-                {slideStats.hasAny ? (
-                  <ul role="list" className="max-h-72 overflow-auto space-y-1.5">
-                    {slideEntries
-                      .filter((s) => s.action !== 'unchanged')
-                      .map((slide) => (
-                        <SlideDiffRow
-                          key={`${slide.index}-${slide.action}`}
-                          slide={slide}
-                          onOpen={(s) => setActiveSlideDiff(s)}
-                        />
-                      ))}
-                  </ul>
-                ) : (
-                  <div className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-                    {t(
-                      'presentations.agent.proposal.noStructuralChanges',
-                      'No structural changes — content adjustments only'
-                    )}
-                  </div>
-                )}
-                {pendingProposal.diff?.editPlan !== undefined && (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setShowEditPlan((v) => !v)}
-                      className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                    >
-                      {showEditPlan ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                      {t('presentations.agent.proposal.showEditPlan', 'Show edit plan')}
-                    </button>
-                    {showEditPlan && (
-                      <pre className="mt-1 max-h-40 overflow-auto rounded-md bg-slate-900/90 dark:bg-navy-950 text-[10px] leading-snug text-slate-100 px-2 py-1.5 whitespace-pre-wrap break-words">
-                        {JSON.stringify(pendingProposal.diff.editPlan, null, 2).slice(0, 1000)}
-                      </pre>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : pendingProposal.appliedActions && pendingProposal.appliedActions.length > 0 ? (
-              <ul className="list-disc list-inside text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
-                {pendingProposal.appliedActions.map((action, idx) => (
-                  <li key={`${action}-${idx}`}>{action}</li>
+          {/* Suggestions */}
+          {messages.length <= 1 && (
+            <div className="px-4 pb-2">
+              <div className="flex flex-wrap gap-1.5">
+                {SUGGESTION_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => handleSuggestion(key)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+                  >
+                    <Sparkles size={10} />
+                    {t(key, '')}
+                  </button>
                 ))}
-              </ul>
-            ) : (
-              <div className="text-[11px] italic text-slate-500 dark:text-slate-400">
-                {t('presentations.agent.proposal.noDiff', 'No diff details available.')}
               </div>
-            )}
-          </div>
-          {proposalError && (
-            <div className="mx-3 mb-2 rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
-              {proposalError}
             </div>
           )}
-          <div className="flex items-center gap-2 px-3 pb-3">
-            <button
-              type="button"
-              onClick={handleAcceptProposal}
-              disabled={proposalBusy}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
-              <Check size={12} />
-              {t('presentations.agent.proposal.accept', 'Accept')}
-            </button>
-            <button
-              type="button"
-              onClick={handleRejectProposal}
-              disabled={proposalBusy}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
-            >
-              <XCircle size={12} />
-              {t('presentations.agent.proposal.reject', 'Reject')}
-            </button>
-            {proposalBusy && (
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                {t('presentations.agent.proposal.working', 'Working...')}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-      </>
+
+          {/* Pending Proposal */}
+          {pendingProposal && deckId && (
+            <div className="mx-3 mb-2 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/5">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-amber-200/70 dark:border-amber-500/20">
+                <div className="flex items-center gap-2">
+                  <FileDiff size={14} className="text-amber-600 dark:text-amber-400" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {t('presentations.agent.proposal.title', 'Proposed Edit')}
+                  </span>
+                </div>
+                <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                  {t('presentations.agent.proposal.awaiting', 'Awaiting your approval')}
+                </span>
+              </div>
+              <div className="px-3 py-2 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                {pendingProposal.plan?.scope && (
+                  <div>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">Scope:</span>{' '}
+                    {pendingProposal.plan.scope}
+                  </div>
+                )}
+                {Array.isArray(pendingProposal.plan?.mutationKinds) &&
+                  pendingProposal.plan!.mutationKinds!.length > 0 && (
+                    <div>
+                      <span className="font-medium text-slate-700 dark:text-slate-200">
+                        Mutation kinds:
+                      </span>{' '}
+                      {pendingProposal.plan!.mutationKinds!.join(', ')}
+                    </div>
+                  )}
+                {Array.isArray(pendingProposal.plan?.targetSlides) &&
+                  pendingProposal.plan!.targetSlides!.length > 0 && (
+                    <div>
+                      <span className="font-medium text-slate-700 dark:text-slate-200">
+                        Target slides:
+                      </span>{' '}
+                      {pendingProposal.plan!.targetSlides!.map((s) => String(s)).join(', ')}
+                    </div>
+                  )}
+                {pendingProposal.plan?.sectionHint && (
+                  <div>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">
+                      Section hint:
+                    </span>{' '}
+                    {pendingProposal.plan.sectionHint}
+                  </div>
+                )}
+              </div>
+              <div className="px-3 pb-2 space-y-2">
+                {slideEntries.length > 0 ? (
+                  <>
+                    <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {slideStats.changed} changed · {slideStats.added} added · {slideStats.removed}{' '}
+                      removed
+                    </div>
+                    {slideStats.hasAny ? (
+                      <ul role="list" className="max-h-72 overflow-auto space-y-1.5">
+                        {slideEntries
+                          .filter((s) => s.action !== 'unchanged')
+                          .map((slide) => (
+                            <SlideDiffRow
+                              key={`${slide.index}-${slide.action}`}
+                              slide={slide}
+                              onOpen={(s) => setActiveSlideDiff(s)}
+                            />
+                          ))}
+                      </ul>
+                    ) : (
+                      <div className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                        {t(
+                          'presentations.agent.proposal.noStructuralChanges',
+                          'No structural changes — content adjustments only'
+                        )}
+                      </div>
+                    )}
+                    {pendingProposal.diff?.editPlan !== undefined && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setShowEditPlan((v) => !v)}
+                          className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                        >
+                          {showEditPlan ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                          {t('presentations.agent.proposal.showEditPlan', 'Show edit plan')}
+                        </button>
+                        {showEditPlan && (
+                          <pre className="mt-1 max-h-40 overflow-auto rounded-md bg-slate-900/90 dark:bg-navy-950 text-[10px] leading-snug text-slate-100 px-2 py-1.5 whitespace-pre-wrap break-words">
+                            {JSON.stringify(pendingProposal.diff.editPlan, null, 2).slice(0, 1000)}
+                          </pre>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : pendingProposal.appliedActions && pendingProposal.appliedActions.length > 0 ? (
+                  <ul className="list-disc list-inside text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
+                    {pendingProposal.appliedActions.map((action, idx) => (
+                      <li key={`${action}-${idx}`}>{action}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-[11px] italic text-slate-500 dark:text-slate-400">
+                    {t('presentations.agent.proposal.noDiff', 'No diff details available.')}
+                  </div>
+                )}
+              </div>
+              {proposalError && (
+                <div className="mx-3 mb-2 rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                  {proposalError}
+                </div>
+              )}
+              <div className="flex items-center gap-2 px-3 pb-3">
+                <button
+                  type="button"
+                  onClick={handleAcceptProposal}
+                  disabled={proposalBusy}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  <Check size={12} />
+                  {t('presentations.agent.proposal.accept', 'Accept')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRejectProposal}
+                  disabled={proposalBusy}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
+                >
+                  <XCircle size={12} />
+                  {t('presentations.agent.proposal.reject', 'Reject')}
+                </button>
+                {proposalBusy && (
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {t('presentations.agent.proposal.working', 'Working...')}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {activeTab === 'history' && (
@@ -1255,31 +1276,26 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
             </div>
           )}
 
-          {historyStatus &&
-            historyStatus !== 'ok' &&
-            historyStatus !== 'forbidden' && (
-              <div className="rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-700 dark:text-amber-300 flex items-center justify-between gap-2">
-                <span>
-                  {historyStatus === 'not_found'
-                    ? t(
-                        'presentations.agent.history.notFound',
-                        'No proposal history available for this deck.'
-                      )
-                    : t(
-                        'presentations.agent.history.loadFailed',
-                        "Couldn't load proposal history."
-                      )}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleHistoryRefresh}
-                  disabled={historyLoading}
-                  className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-[10px] font-medium disabled:opacity-50"
-                >
-                  {t('presentations.agent.history.retry', 'Retry')}
-                </button>
-              </div>
-            )}
+          {historyStatus && historyStatus !== 'ok' && historyStatus !== 'forbidden' && (
+            <div className="rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-700 dark:text-amber-300 flex items-center justify-between gap-2">
+              <span>
+                {historyStatus === 'not_found'
+                  ? t(
+                      'presentations.agent.history.notFound',
+                      'No proposal history available for this deck.'
+                    )
+                  : t('presentations.agent.history.loadFailed', "Couldn't load proposal history.")}
+              </span>
+              <button
+                type="button"
+                onClick={handleHistoryRefresh}
+                disabled={historyLoading}
+                className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-[10px] font-medium disabled:opacity-50"
+              >
+                {t('presentations.agent.history.retry', 'Retry')}
+              </button>
+            </div>
+          )}
 
           {selectedHistoryIds.size > 0 && (
             <div className="sticky top-0 z-10 -mx-3 px-3 py-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur border-b border-slate-200 dark:border-navy-700 space-y-1.5">
@@ -1389,10 +1405,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                     >
                       <RotateCcw size={11} />
                       {bulkBusy
-                        ? t(
-                            'presentations.agent.history.bulkRevert.working',
-                            'Reverting...'
-                          )
+                        ? t('presentations.agent.history.bulkRevert.working', 'Reverting...')
                         : t(
                             'presentations.agent.history.bulkRevert.confirm',
                             'Confirm bulk revert'
@@ -1466,8 +1479,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                     ? `+${entry.diff.cardsAdded} -${entry.diff.cardsRemoved} ~${entry.diff.changedCards}`
                     : '';
                 const slides = Array.isArray(entry.diff.slides) ? entry.diff.slides : [];
-                const isSelectable =
-                  entry.status === 'applied' || entry.status === 'accepted';
+                const isSelectable = entry.status === 'applied' || entry.status === 'accepted';
                 const isSelected = selectedHistoryIds.has(entry.id);
                 return (
                   <li
@@ -1496,43 +1508,43 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                           />
                         </label>
                       )}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedHistoryId((prev) => (prev === entry.id ? null : entry.id))
-                      }
-                      aria-expanded={isExpanded}
-                      className="flex-1 w-full text-left px-2 py-1.5 hover:bg-primary-50/40 dark:hover:bg-primary-500/5 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                    >
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${statusStyle}`}
-                        >
-                          {entry.status}
-                        </span>
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
-                          {entry.operationType}
-                        </span>
-                        {ts && (
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                            {ts}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedHistoryId((prev) => (prev === entry.id ? null : entry.id))
+                        }
+                        aria-expanded={isExpanded}
+                        className="flex-1 w-full text-left px-2 py-1.5 hover:bg-primary-50/40 dark:hover:bg-primary-500/5 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                      >
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${statusStyle}`}
+                          >
+                            {entry.status}
                           </span>
-                        )}
-                        {diffStrip && (
-                          <span className="ml-auto text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                            {diffStrip}
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                            {entry.operationType}
                           </span>
-                        )}
-                      </div>
-                      {entry.prompt && (
-                        <div
-                          className="mt-1 text-[11px] text-slate-700 dark:text-slate-200 line-clamp-1"
-                          title={entry.prompt}
-                        >
-                          {entry.prompt}
+                          {ts && (
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                              {ts}
+                            </span>
+                          )}
+                          {diffStrip && (
+                            <span className="ml-auto text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                              {diffStrip}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </button>
+                        {entry.prompt && (
+                          <div
+                            className="mt-1 text-[11px] text-slate-700 dark:text-slate-200 line-clamp-1"
+                            title={entry.prompt}
+                          >
+                            {entry.prompt}
+                          </div>
+                        )}
+                      </button>
                     </div>
 
                     {isExpanded && (
@@ -1584,132 +1596,129 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                             v{entry.versionBefore ?? '—'} → v{entry.versionAfter ?? '—'}
                           </div>
                         )}
-                        {(entry.status === 'applied' || entry.status === 'accepted') && (() => {
-                          const banner = revertBanners[entry.id];
-                          const confirmOpen = revertConfirmId === entry.id;
-                          const isReverting = revertingId === entry.id;
-                          return (
-                            <div className="pt-1.5 mt-1.5 border-t border-slate-200/70 dark:border-navy-800/70 space-y-1.5">
-                              {banner?.kind === 'success' && (
-                                <div className="rounded-md border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
-                                  <div className="font-medium">
-                                    {t(
-                                      'presentations.agent.history.revert.successTitle',
-                                      'Reverted to v{{before}} → v{{after}}.',
-                                      {
-                                        before: banner.versionBefore,
-                                        after: banner.versionAfter,
-                                      }
-                                    )}
-                                  </div>
-                                  <div className="text-[10px] font-mono text-emerald-700/80 dark:text-emerald-300/80">
-                                    +{banner.diffSummary.cardsAdded} -{banner.diffSummary.cardsRemoved} ~{banner.diffSummary.changedCards}
-                                  </div>
-                                </div>
-                              )}
-                              {banner?.kind === 'conflict' && (
-                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
-                                  {banner.message}
-                                </div>
-                              )}
-                              {banner?.kind === 'forbidden' && (
-                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
-                                  {banner.message}
-                                </div>
-                              )}
-                              {banner?.kind === 'error' && (
-                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300 flex items-center justify-between gap-2">
-                                  <span>{banner.message}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRevertEntry(entry.id)}
-                                    disabled={isReverting}
-                                    className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-[10px] font-medium disabled:opacity-50"
-                                  >
-                                    {t('presentations.agent.history.revert.retry', 'Retry')}
-                                  </button>
-                                </div>
-                              )}
-
-                              {!confirmOpen && banner?.kind !== 'success' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setRevertConfirmId(entry.id);
-                                    setRevertChecked(false);
-                                  }}
-                                  disabled={isReverting}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50"
-                                >
-                                  <RotateCcw size={11} />
-                                  {t(
-                                    'presentations.agent.history.revert.button',
-                                    'Revert deck'
-                                  )}
-                                </button>
-                              )}
-
-                              {confirmOpen && (
-                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50/70 dark:bg-rose-500/5 px-2 py-2 space-y-1.5">
-                                  <div className="text-[11px] text-slate-700 dark:text-slate-200">
-                                    {t(
-                                      'presentations.agent.history.revert.warning',
-                                      'This will replace the current deck with the snapshot taken before this proposal. The original proposal will remain in history.'
-                                    )}
-                                  </div>
-                                  <label className="flex items-start gap-1.5 text-[11px] text-slate-700 dark:text-slate-200 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={revertChecked}
-                                      onChange={(e) => setRevertChecked(e.target.checked)}
-                                      className="mt-0.5"
-                                      disabled={isReverting}
-                                    />
-                                    <span>
+                        {(entry.status === 'applied' || entry.status === 'accepted') &&
+                          (() => {
+                            const banner = revertBanners[entry.id];
+                            const confirmOpen = revertConfirmId === entry.id;
+                            const isReverting = revertingId === entry.id;
+                            return (
+                              <div className="pt-1.5 mt-1.5 border-t border-slate-200/70 dark:border-navy-800/70 space-y-1.5">
+                                {banner?.kind === 'success' && (
+                                  <div className="rounded-md border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
+                                    <div className="font-medium">
                                       {t(
-                                        'presentations.agent.history.revert.acknowledge',
-                                        'I understand this rewrites the deck.'
+                                        'presentations.agent.history.revert.successTitle',
+                                        'Reverted to v{{before}} → v{{after}}.',
+                                        {
+                                          before: banner.versionBefore,
+                                          after: banner.versionAfter,
+                                        }
                                       )}
-                                    </span>
-                                  </label>
-                                  <div className="flex items-center gap-2">
+                                    </div>
+                                    <div className="text-[10px] font-mono text-emerald-700/80 dark:text-emerald-300/80">
+                                      +{banner.diffSummary.cardsAdded} -
+                                      {banner.diffSummary.cardsRemoved} ~
+                                      {banner.diffSummary.changedCards}
+                                    </div>
+                                  </div>
+                                )}
+                                {banner?.kind === 'conflict' && (
+                                  <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                                    {banner.message}
+                                  </div>
+                                )}
+                                {banner?.kind === 'forbidden' && (
+                                  <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                                    {banner.message}
+                                  </div>
+                                )}
+                                {banner?.kind === 'error' && (
+                                  <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300 flex items-center justify-between gap-2">
+                                    <span>{banner.message}</span>
                                     <button
                                       type="button"
                                       onClick={() => handleRevertEntry(entry.id)}
-                                      disabled={!revertChecked || isReverting}
-                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50"
-                                    >
-                                      <RotateCcw size={11} />
-                                      {isReverting
-                                        ? t(
-                                            'presentations.agent.history.revert.working',
-                                            'Reverting...'
-                                          )
-                                        : t(
-                                            'presentations.agent.history.revert.confirm',
-                                            'Confirm revert'
-                                          )}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setRevertConfirmId(null);
-                                        setRevertChecked(false);
-                                      }}
                                       disabled={isReverting}
-                                      className="px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
+                                      className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-[10px] font-medium disabled:opacity-50"
                                     >
-                                      {t(
-                                        'presentations.agent.history.revert.cancel',
-                                        'Cancel'
-                                      )}
+                                      {t('presentations.agent.history.revert.retry', 'Retry')}
                                     </button>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
+                                )}
+
+                                {!confirmOpen && banner?.kind !== 'success' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setRevertConfirmId(entry.id);
+                                      setRevertChecked(false);
+                                    }}
+                                    disabled={isReverting}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50"
+                                  >
+                                    <RotateCcw size={11} />
+                                    {t('presentations.agent.history.revert.button', 'Revert deck')}
+                                  </button>
+                                )}
+
+                                {confirmOpen && (
+                                  <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50/70 dark:bg-rose-500/5 px-2 py-2 space-y-1.5">
+                                    <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                                      {t(
+                                        'presentations.agent.history.revert.warning',
+                                        'This will replace the current deck with the snapshot taken before this proposal. The original proposal will remain in history.'
+                                      )}
+                                    </div>
+                                    <label className="flex items-start gap-1.5 text-[11px] text-slate-700 dark:text-slate-200 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={revertChecked}
+                                        onChange={(e) => setRevertChecked(e.target.checked)}
+                                        className="mt-0.5"
+                                        disabled={isReverting}
+                                      />
+                                      <span>
+                                        {t(
+                                          'presentations.agent.history.revert.acknowledge',
+                                          'I understand this rewrites the deck.'
+                                        )}
+                                      </span>
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRevertEntry(entry.id)}
+                                        disabled={!revertChecked || isReverting}
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50"
+                                      >
+                                        <RotateCcw size={11} />
+                                        {isReverting
+                                          ? t(
+                                              'presentations.agent.history.revert.working',
+                                              'Reverting...'
+                                            )
+                                          : t(
+                                              'presentations.agent.history.revert.confirm',
+                                              'Confirm revert'
+                                            )}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setRevertConfirmId(null);
+                                          setRevertChecked(false);
+                                        }}
+                                        disabled={isReverting}
+                                        className="px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
+                                      >
+                                        {t('presentations.agent.history.revert.cancel', 'Cancel')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                       </div>
                     )}
                   </li>
@@ -1736,35 +1745,32 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
       )}
 
       {activeSlideDiff && (
-        <SlideDiffDetailModal
-          slide={activeSlideDiff}
-          onClose={() => setActiveSlideDiff(null)}
-        />
+        <SlideDiffDetailModal slide={activeSlideDiff} onClose={() => setActiveSlideDiff(null)} />
       )}
 
       {activeTab === 'chat' && (
-      /* Input */
-      <div className="px-3 py-3 border-t border-slate-100 dark:border-navy-800">
-        <div className="flex gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={t(
-              'presentations.agent.placeholder',
-              'Ask me to edit, create, or style anything'
-            )}
-            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-700 dark:text-slate-300 outline-none"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="p-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50"
-          >
-            <Send size={16} />
-          </button>
+        /* Input */
+        <div className="px-3 py-3 border-t border-slate-100 dark:border-navy-800">
+          <div className="flex gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder={t(
+                'presentations.agent.placeholder',
+                'Ask me to edit, create, or style anything'
+              )}
+              className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-700 dark:text-slate-300 outline-none"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="p-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50"
+            >
+              <Send size={16} />
+            </button>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );

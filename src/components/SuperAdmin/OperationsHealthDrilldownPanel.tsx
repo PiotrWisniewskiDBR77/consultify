@@ -20,30 +20,19 @@
  * loading state and refetches on user action).
  */
 
-import {
-  AlertTriangle,
-  Loader2,
-  RefreshCcw,
-  X,
-} from 'lucide-react';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { AlertTriangle, Loader2, RefreshCcw, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { SloStatus } from '../../services/presentationOperationsHealth';
 import {
-  fetchSloDrilldown,
   type DrilldownEventSample,
   type DrilldownFetchStatus,
   type DrilldownSloId,
+  fetchSloDrilldown,
   type SloDrilldownReport,
   type TopProblematicDeck,
   type TrendPoint,
 } from '../../services/presentationOperationsHealthDrilldown';
-import type { SloStatus } from '../../services/presentationOperationsHealth';
 
 const SLO_LABEL: Record<DrilldownSloId, string> = {
   generation_success_rate: 'Generation success rate',
@@ -54,13 +43,10 @@ const SLO_LABEL: Record<DrilldownSloId, string> = {
 };
 
 const STATUS_TONE: Record<SloStatus, string> = {
-  pass:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  at_risk:
-    'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  pass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  at_risk: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
   breach: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  inconclusive:
-    'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
+  inconclusive: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
 const STATUS_LABEL: Record<SloStatus, string> = {
@@ -188,10 +174,7 @@ const Sparkline: React.FC<SparklineProps> = ({ trend, sloId }) => {
   const segments: Array<Array<{ i: number; point: TrendPoint }>> = [];
   let current: Array<{ i: number; point: TrendPoint }> = [];
   trend.forEach((point, i) => {
-    if (
-      point.observedNumeric === null ||
-      point.status === 'inconclusive'
-    ) {
+    if (point.observedNumeric === null || point.status === 'inconclusive') {
       if (current.length > 0) {
         segments.push(current);
         current = [];
@@ -216,15 +199,7 @@ const Sparkline: React.FC<SparklineProps> = ({ trend, sloId }) => {
       height={SVG_HEIGHT}
       className="block max-w-full"
     >
-      <rect
-        x={0}
-        y={0}
-        width={SVG_WIDTH}
-        height={SVG_HEIGHT}
-        rx={4}
-        ry={4}
-        fill="transparent"
-      />
+      <rect x={0} y={0} width={SVG_WIDTH} height={SVG_HEIGHT} rx={4} ry={4} fill="transparent" />
       <line
         x1={SVG_PADDING_X}
         y1={SVG_HEIGHT - SVG_PADDING_Y}
@@ -283,11 +258,7 @@ interface TrendTableProps {
 const TrendTable: React.FC<TrendTableProps> = ({ trend, sloId }) => {
   const recent = useMemo(() => trend.slice(-5).reverse(), [trend]);
   if (recent.length === 0) {
-    return (
-      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-        No recent buckets.
-      </p>
-    );
+    return <p className="text-[11px] text-slate-500 dark:text-slate-400">No recent buckets.</p>;
   }
   return (
     <ul className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -301,9 +272,7 @@ const TrendTable: React.FC<TrendTableProps> = ({ trend, sloId }) => {
           </span>
           <span className="text-slate-700 dark:text-slate-200 tabular-nums">
             {formatObserved(sloId, point.observedNumeric)}{' '}
-            <span className="text-slate-400 dark:text-slate-500">
-              (n={point.sampleSize})
-            </span>
+            <span className="text-slate-400 dark:text-slate-500">(n={point.sampleSize})</span>
           </span>
           <span
             className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_TONE[point.status]}`}
@@ -360,11 +329,7 @@ interface RecentSamplesListProps {
 
 const RecentSamplesList: React.FC<RecentSamplesListProps> = ({ samples }) => {
   if (samples.length === 0) {
-    return (
-      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-        No recent samples.
-      </p>
-    );
+    return <p className="text-[11px] text-slate-500 dark:text-slate-400">No recent samples.</p>;
   }
   return (
     <ul className="space-y-1">
@@ -372,7 +337,9 @@ const RecentSamplesList: React.FC<RecentSamplesListProps> = ({ samples }) => {
         const dotStatus: SloStatus =
           sample.status === 'failed' || sample.status === 'blocked'
             ? 'breach'
-            : sample.status === 'completed' || sample.status === 'applied' || sample.status === 'accepted'
+            : sample.status === 'completed' ||
+                sample.status === 'applied' ||
+                sample.status === 'accepted'
               ? 'pass'
               : 'inconclusive';
         let when = sample.occurredAt;
@@ -394,7 +361,10 @@ const RecentSamplesList: React.FC<RecentSamplesListProps> = ({ samples }) => {
               <div className="text-slate-500 dark:text-slate-400 tabular-nums">
                 {when} · <span className="font-mono">{shortDeckId(sample.deckId)}</span>
               </div>
-              <div className="truncate text-slate-700 dark:text-slate-200" title={sample.excerpt ?? undefined}>
+              <div
+                className="truncate text-slate-700 dark:text-slate-200"
+                title={sample.excerpt ?? undefined}
+              >
                 {sample.excerpt ?? '—'}
               </div>
             </div>

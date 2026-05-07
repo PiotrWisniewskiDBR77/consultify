@@ -39,10 +39,7 @@ export function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function buildHighlightSegments(
-  haystack: string,
-  needle: string
-): HighlightSegment[] {
+export function buildHighlightSegments(haystack: string, needle: string): HighlightSegment[] {
   const safeHaystack = typeof haystack === 'string' ? haystack : '';
   const safeNeedle = typeof needle === 'string' ? needle : '';
 

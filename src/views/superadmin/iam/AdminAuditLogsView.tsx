@@ -111,10 +111,7 @@ const reconstructAdminFromFlatFields = (raw: any): AuditLog['admin'] => {
     asText(raw?.firstName, '') ||
     '';
   const lastName =
-    asText(nested?.lastName, '') ||
-    asText(raw?.last_name, '') ||
-    asText(raw?.lastName, '') ||
-    '';
+    asText(nested?.lastName, '') || asText(raw?.last_name, '') || asText(raw?.lastName, '') || '';
   return {
     email: email || '',
     firstName: firstName || '',
@@ -154,8 +151,7 @@ const normalizeIntegrity = (value: unknown): AuditLogsIntegrity => {
     if (isRecord(candidate) && 'degraded' in candidate) {
       return {
         degraded: Boolean((candidate as any).degraded),
-        reason:
-          typeof (candidate as any).reason === 'string' ? (candidate as any).reason : null,
+        reason: typeof (candidate as any).reason === 'string' ? (candidate as any).reason : null,
         malformedMetadataCount: safeNumber((candidate as any).malformedMetadataCount),
       };
     }

@@ -67,7 +67,9 @@ router.post(
       });
     }
     if (!targetArtifactType || !targetArtifactId) {
-      return res.status(400).json({ error: 'targetArtifactType and targetArtifactId are required' });
+      return res
+        .status(400)
+        .json({ error: 'targetArtifactType and targetArtifactId are required' });
     }
 
     const conversion = await artifactConversionService.recordCompletedConversion({
@@ -89,9 +91,10 @@ router.post(
         sourcePack && typeof sourcePack === 'object' && !Array.isArray(sourcePack)
           ? (sourcePack as Record<string, unknown>)
           : {},
-      payload: payload && typeof payload === 'object' && !Array.isArray(payload)
-        ? (payload as Record<string, unknown>)
-        : {},
+      payload:
+        payload && typeof payload === 'object' && !Array.isArray(payload)
+          ? (payload as Record<string, unknown>)
+          : {},
     });
 
     res.status(201).json({ conversion });

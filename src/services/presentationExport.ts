@@ -21,11 +21,29 @@ export class PresentationExportError extends Error {
   }
 }
 
-function endpointFor(deckId: string, format: PresentationExportFormat, overrideQualityGate?: boolean) {
+function endpointFor(
+  deckId: string,
+  format: PresentationExportFormat,
+  overrideQualityGate?: boolean
+) {
   const qs = overrideQualityGate ? '?overrideQualityGate=true' : '';
-  if (format === 'pptx') return { url: `/api/presentations/decks/${deckId}/download${qs}`, method: 'GET', extension: 'pptx' };
-  if (format === 'png') return { url: `/api/presentations/decks/${deckId}/export/png${qs}`, method: 'POST', extension: 'zip' };
-  return { url: `/api/presentations/decks/${deckId}/export/${format}${qs}`, method: format === 'pdf' ? 'GET' : 'POST', extension: format };
+  if (format === 'pptx')
+    return {
+      url: `/api/presentations/decks/${deckId}/download${qs}`,
+      method: 'GET',
+      extension: 'pptx',
+    };
+  if (format === 'png')
+    return {
+      url: `/api/presentations/decks/${deckId}/export/png${qs}`,
+      method: 'POST',
+      extension: 'zip',
+    };
+  return {
+    url: `/api/presentations/decks/${deckId}/export/${format}${qs}`,
+    method: format === 'pdf' ? 'GET' : 'POST',
+    extension: format,
+  };
 }
 
 export async function exportPresentationDeck(options: PresentationExportOptions) {

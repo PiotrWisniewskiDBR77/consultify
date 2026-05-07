@@ -13,7 +13,20 @@
  * - API Key Management
  */
 
-import { Activity, BarChart3, BellRing, FileCheck, Flag, HardDrive, Key, Settings, Shield, ShieldAlert, TrendingUp, Webhook } from 'lucide-react';
+import {
+  Activity,
+  BarChart3,
+  BellRing,
+  FileCheck,
+  Flag,
+  HardDrive,
+  Key,
+  Settings,
+  Shield,
+  ShieldAlert,
+  TrendingUp,
+  Webhook,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
@@ -36,9 +49,9 @@ import {
   readDashboardDeepLinkFromLocation,
 } from '../../services/presentationGovernanceDeepLinks';
 import { APIManagementView } from './APIManagementView';
+import PresentationBenchmarkTrendView from './PresentationBenchmarkTrendView';
 import PresentationGovernanceAlertSubscriptionsView from './PresentationGovernanceAlertSubscriptionsView';
 import PresentationGovernanceWatchlistView from './PresentationGovernanceWatchlistView';
-import PresentationBenchmarkTrendView from './PresentationBenchmarkTrendView';
 import PresentationOperationsHealthView from './PresentationOperationsHealthView';
 import PresentationTemplateGovernanceView from './PresentationTemplateGovernanceView';
 
@@ -102,12 +115,8 @@ function isDeepLinkTab(tab: string): tab is DashboardTab {
 export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
   // Deep-link state on first mount — the spec calls this the source of
   // truth for the very first render, then user actions take over.
-  const initialDeepLinkRef = useRef<DashboardDeepLink>(
-    readDashboardDeepLinkFromLocation()
-  );
-  const [deepLink, setDeepLink] = useState<DashboardDeepLink>(
-    initialDeepLinkRef.current
-  );
+  const initialDeepLinkRef = useRef<DashboardDeepLink>(readDashboardDeepLinkFromLocation());
+  const [deepLink, setDeepLink] = useState<DashboardDeepLink>(initialDeepLinkRef.current);
 
   const [activeTab, setActiveTab] = useState<string>(() => {
     const fromUrl = initialDeepLinkRef.current.tab;
@@ -212,11 +221,31 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
     { id: 'backup', label: 'Backup', icon: <HardDrive size={16} /> },
     { id: 'api-keys', label: 'API Keys', icon: <Key size={16} /> },
-    { id: 'presentation-watchlist', label: 'Governance Watchlist', icon: <ShieldAlert size={16} /> },
-    { id: 'presentation-operations-health', label: 'Operations Health', icon: <Activity size={16} /> },
-    { id: 'presentation-benchmark-trend', label: 'Benchmark Trend', icon: <TrendingUp size={16} /> },
-    { id: 'presentation-alert-subscriptions', label: 'Alert Subscriptions', icon: <BellRing size={16} /> },
-    { id: 'presentation-template-governance', label: 'Template Governance', icon: <FileCheck size={16} /> },
+    {
+      id: 'presentation-watchlist',
+      label: 'Governance Watchlist',
+      icon: <ShieldAlert size={16} />,
+    },
+    {
+      id: 'presentation-operations-health',
+      label: 'Operations Health',
+      icon: <Activity size={16} />,
+    },
+    {
+      id: 'presentation-benchmark-trend',
+      label: 'Benchmark Trend',
+      icon: <TrendingUp size={16} />,
+    },
+    {
+      id: 'presentation-alert-subscriptions',
+      label: 'Alert Subscriptions',
+      icon: <BellRing size={16} />,
+    },
+    {
+      id: 'presentation-template-governance',
+      label: 'Template Governance',
+      icon: <FileCheck size={16} />,
+    },
   ];
 
   const renderContent = () => {

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { WatchlistEntry } from '../presentationGovernanceWatchlistService.js';
 import {
   parseStoredSnapshot,
   runAlertWorkerCycle,
 } from '../presentationGovernanceAlertWorkerService.js';
+import type { WatchlistEntry } from '../presentationGovernanceWatchlistService.js';
 
 function makeEntry(
   deckId: string,
@@ -76,10 +76,7 @@ describe('runAlertWorkerCycle', () => {
         organizationId: 'org_acme',
         lastSnapshot: [makeEntry('deck_existing', 'PASS')],
       },
-      current: [
-        makeEntry('deck_existing', 'PASS'),
-        makeEntry('deck_new', 'BLOCKED_P0'),
-      ],
+      current: [makeEntry('deck_existing', 'PASS'), makeEntry('deck_new', 'BLOCKED_P0')],
       nowIso: NOW,
     });
 

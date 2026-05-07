@@ -166,7 +166,10 @@ function asNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
-function asLifecycleState(value: unknown, fallback: TemplateLifecycleState = 'draft'): TemplateLifecycleState {
+function asLifecycleState(
+  value: unknown,
+  fallback: TemplateLifecycleState = 'draft'
+): TemplateLifecycleState {
   return typeof value === 'string' && VALID_STATES.has(value as TemplateLifecycleState)
     ? (value as TemplateLifecycleState)
     : fallback;
@@ -494,7 +497,8 @@ export async function listTemplatesByLifecycleState(
     try {
       const res = await api.get(path);
       const data = unwrapData(res);
-      if (!isRecord(data)) return { status: 'error', state, templates: [], error: 'invalid_payload' };
+      if (!isRecord(data))
+        return { status: 'error', state, templates: [], error: 'invalid_payload' };
       const templatesRaw = Array.isArray(data.templates) ? data.templates : [];
       const templates = templatesRaw
         .map(normalizeRegistryRow)

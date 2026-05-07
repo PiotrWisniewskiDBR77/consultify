@@ -67,27 +67,29 @@ vi.mock('../../services/tablePlatform/PermissionsService.js', () => ({
     requireFieldAccess: (_req: any, _res: any, next: any) => next(),
     requireRecordAccess: (_req: any, _res: any, next: any) => next(),
     requireViewAccess: (_req: any, _res: any, next: any) => next(),
-    requireRoles: (..._roles: string[]) => async (req: any, res: any, next: any) => {
-      // Production middleware: resolves baseId from proposalId (via tp_schema_proposals
-      // operations[0].target.base_id), then runs `requireRole(baseId, userId, orgId, ...)`
-      // which falls back to `canAccessBase` validating `base.organization_id === orgId`.
-      const proposalId = req.params?.proposalId;
-      if (!proposalId) {
-        res.status(400).json({ error: 'Cannot resolve baseId for permission check' });
-        return;
-      }
-      // Simulate proposal.operations[0].target.base_id = BASE_B → base.org_id = TENANT_B.
-      const baseOrgId = TENANT_B;
-      const userOrgId = req.organizationId;
-      if (userOrgId !== baseOrgId) {
-        res.status(403).json({
-          error: `Access denied. Required roles. Current role: none`,
-        });
-        return;
-      }
-      (req as any).resolvedBaseId = BASE_B;
-      next();
-    },
+    requireRoles:
+      (..._roles: string[]) =>
+      async (req: any, res: any, next: any) => {
+        // Production middleware: resolves baseId from proposalId (via tp_schema_proposals
+        // operations[0].target.base_id), then runs `requireRole(baseId, userId, orgId, ...)`
+        // which falls back to `canAccessBase` validating `base.organization_id === orgId`.
+        const proposalId = req.params?.proposalId;
+        if (!proposalId) {
+          res.status(400).json({ error: 'Cannot resolve baseId for permission check' });
+          return;
+        }
+        // Simulate proposal.operations[0].target.base_id = BASE_B → base.org_id = TENANT_B.
+        const baseOrgId = TENANT_B;
+        const userOrgId = req.organizationId;
+        if (userOrgId !== baseOrgId) {
+          res.status(403).json({
+            error: `Access denied. Required roles. Current role: none`,
+          });
+          return;
+        }
+        (req as any).resolvedBaseId = BASE_B;
+        next();
+      },
     SCHEMA_ROLES: ['base_owner', 'schema_editor'],
     DATA_ROLES: ['base_owner', 'schema_editor', 'data_editor'],
     VIEW_ROLES: ['base_owner', 'schema_editor', 'view_editor'],
@@ -206,9 +208,12 @@ async function runFullChain(layer: any, req: any, res: any): Promise<void> {
         resolve();
       });
       if (result && typeof (result as Promise<unknown>).then === 'function') {
-        (result as Promise<unknown>).then(() => {
-          if (!nextCalled) resolve();
-        }, () => resolve());
+        (result as Promise<unknown>).then(
+          () => {
+            if (!nextCalled) resolve();
+          },
+          () => resolve()
+        );
       } else if (!nextCalled) {
         // Synchronous handler; if it called res.status(..).json(...) without
         // calling next, we resolve immediately.
@@ -477,8 +482,7 @@ describe('ACL Audit on /schema/proposals/* (US-3.5, READ-ONLY)', () => {
       routeMiddleware: 'requireBaseAccess',
       crossTenantStatus: res.statusCode,
       guardPresent: res.statusCode === 403,
-      notes:
-        'Guarded by requireWorkspaceTenantAccess before listProposals is called.',
+      notes: 'Guarded by requireWorkspaceTenantAccess before listProposals is called.',
     });
 
     expect(res.statusCode).toBe(403);

@@ -26,11 +26,13 @@ function normalizeRole(role?: string | null): string {
 }
 
 function emailDomain(email?: string | null): string {
-  return String(email || '')
-    .split('@')
-    .pop()
-    ?.trim()
-    .toLowerCase() || '';
+  return (
+    String(email || '')
+      .split('@')
+      .pop()
+      ?.trim()
+      .toLowerCase() || ''
+  );
 }
 
 function isInternalToolsEnabled(): boolean {
@@ -58,13 +60,14 @@ export function requireInternalToolsAccess(
     process.env.INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS,
     DEFAULT_ALLOWED_EMAIL_DOMAINS
   );
-  const allowedRoles = csv(
-    process.env.INTERNAL_TOOLS_ALLOWED_ROLES,
-    DEFAULT_ALLOWED_ROLES
-  ).map((role) => role.toUpperCase());
+  const allowedRoles = csv(process.env.INTERNAL_TOOLS_ALLOWED_ROLES, DEFAULT_ALLOWED_ROLES).map(
+    (role) => role.toUpperCase()
+  );
   const allowedOrgIds = csv(process.env.INTERNAL_TOOLS_ALLOWED_ORG_IDS, []);
 
-  const orgId = String(user.organizationId || req.organizationId || '').trim().toLowerCase();
+  const orgId = String(user.organizationId || req.organizationId || '')
+    .trim()
+    .toLowerCase();
   const hasAllowedOrg = allowedOrgIds.length === 0 || allowedOrgIds.includes(orgId);
   const hasAllowedDomain = allowedDomains.includes(emailDomain(user.email));
   const hasAllowedRole = allowedRoles.includes(normalizeRole(user.role));

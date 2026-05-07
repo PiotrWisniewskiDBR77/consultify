@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildWeeklyDigest,
-  digestToMarkdown,
   type DigestInput,
+  digestToMarkdown,
 } from '../presentationWeeklyDigestService.js';
 
 const ORG = 'org_test';
@@ -77,9 +77,7 @@ describe('presentationWeeklyDigestService', () => {
     const at = '2026-05-02T10:00:00.000Z';
     const report = buildWeeklyDigest(
       baseInput({
-        runtimeEvents: [
-          { deckId: 'd1', eventType: 'agent_edit_proposal_created', createdAt: at },
-        ],
+        runtimeEvents: [{ deckId: 'd1', eventType: 'agent_edit_proposal_created', createdAt: at }],
         agentOps: [
           { deckId: 'd1', status: 'applied', operationType: 'agent_edit', createdAt: at },
           { deckId: 'd1', status: 'applied', operationType: 'agent_edit', createdAt: at },

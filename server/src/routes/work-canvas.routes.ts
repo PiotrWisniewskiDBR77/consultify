@@ -1431,7 +1431,9 @@ function diffSummary(before: string, after: string) {
   const afterLines = String(after || '').split('\n');
   const beforeSet = new Set(beforeLines);
   const afterSet = new Set(afterLines);
-  const addedLineSamples = afterLines.filter((line) => !beforeSet.has(line) && line.trim()).slice(0, 3);
+  const addedLineSamples = afterLines
+    .filter((line) => !beforeSet.has(line) && line.trim())
+    .slice(0, 3);
   const removedLineSamples = beforeLines
     .filter((line) => !afterSet.has(line) && line.trim())
     .slice(0, 3);
@@ -3095,7 +3097,9 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   ];
   const normalizedKind = allowedKinds.includes(nextKind) ? nextKind : draft.kind;
   const nextSaveState =
-    payload.saveState === 'saved' || payload.saveState === 'failed' || payload.saveState === 'unsaved'
+    payload.saveState === 'saved' ||
+    payload.saveState === 'failed' ||
+    payload.saveState === 'unsaved'
       ? payload.saveState
       : draft.saveState;
   const nextLifecycleState =
@@ -3183,8 +3187,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       (typeof updated.content === 'string' ? updated.content : updated.contentMd),
     contentJson: updated.contentJson,
     blocks: updated.blocks,
-    contentSchemaVersion:
-      updated.contentSchemaVersion || undefined,
+    contentSchemaVersion: updated.contentSchemaVersion || undefined,
   });
   updated.canonicalFormat = updated.contentEnvelope.canonicalFormat;
   updated.contentMd = updated.contentEnvelope.contentMd;
@@ -3599,9 +3602,7 @@ router.get('/shared/:token', async (req: AuthRequest, res) => {
     [organizationId, `%${token}%`],
     { fallback: false }
   );
-  const match = rows
-    .map(toDraft)
-    .find((draft) => sharedDraftPayload(draft)?.token === token);
+  const match = rows.map(toDraft).find((draft) => sharedDraftPayload(draft)?.token === token);
   if (!match) {
     return res.status(404).json({ error: 'Shared Canvas draft not found' });
   }
@@ -3771,11 +3772,20 @@ router.post('/drafts/:draftId/research/finalize-report', async (req: AuthRequest
       'Finalized research report from Canvas draft',
       userId
     );
-    const outputResource = await createOutputResource(draft, 'report', userId, organizationId, version.id);
+    const outputResource = await createOutputResource(
+      draft,
+      'report',
+      userId,
+      organizationId,
+      version.id
+    );
     const evidenceSummary = (draft.blocks || [])
       .filter((block) => block.kind === 'research')
       .map((block) => {
-        const record = block.data && typeof block.data === 'object' ? (block.data as Record<string, unknown>) : {};
+        const record =
+          block.data && typeof block.data === 'object'
+            ? (block.data as Record<string, unknown>)
+            : {};
         const sources = Array.isArray(record.sources) ? record.sources : [];
         return {
           blockId: block.id,

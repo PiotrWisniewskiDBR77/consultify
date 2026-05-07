@@ -86,10 +86,7 @@ describe('diffWatchlistForNewBlockers', () => {
   });
 
   it('returns no transitions when current is empty even if previous has blocked decks', () => {
-    const previous = [
-      makeEntry('deck-1', 'BLOCKED_P0'),
-      makeEntry('deck-2', 'BLOCKED_P1'),
-    ];
+    const previous = [makeEntry('deck-1', 'BLOCKED_P0'), makeEntry('deck-2', 'BLOCKED_P1')];
     const current: WatchlistEntry[] = [];
 
     expect(diffWatchlistForNewBlockers(previous, current)).toEqual([]);

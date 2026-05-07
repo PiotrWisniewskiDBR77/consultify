@@ -6,8 +6,9 @@
  * Handles all user-related business logic
  */
 
-import type { Response } from 'express';
 import { randomUUID } from 'node:crypto';
+
+import type { Response } from 'express';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -256,7 +257,8 @@ export class UserController {
         if (usersJobTitleColumn) {
           addColumnUpdate(usersJobTitleColumn, title);
         } else if (canPersistToUserProfiles && userProfileColumns.has('job_title')) {
-          persistToUserProfiles.jobTitle = title === null ? null : String(title || '').trim() || null;
+          persistToUserProfiles.jobTitle =
+            title === null ? null : String(title || '').trim() || null;
         } else if (
           canPersistToUserProfileExtended &&
           (userProfileExtendedColumns.has('job_title') || userProfileExtendedColumns.has('title'))
@@ -391,7 +393,10 @@ export class UserController {
           upsertValues.push(persistToUserProfiles.jobTitle);
         }
 
-        if (userProfileColumns.has('department') && persistToUserProfiles.department !== undefined) {
+        if (
+          userProfileColumns.has('department') &&
+          persistToUserProfiles.department !== undefined
+        ) {
           upsertColumns.push('department');
           upsertValues.push(persistToUserProfiles.department);
         }
@@ -456,10 +461,7 @@ export class UserController {
             ? 'title'
             : null;
 
-        if (
-          extendedJobTitleColumn &&
-          persistToUserProfileExtended.jobTitle !== undefined
-        ) {
+        if (extendedJobTitleColumn && persistToUserProfileExtended.jobTitle !== undefined) {
           extendedUpdates.push(`${extendedJobTitleColumn} = ?`);
           extendedParams.push(persistToUserProfileExtended.jobTitle);
         }
@@ -489,10 +491,7 @@ export class UserController {
               const insertColumns: string[] = ['user_id'];
               const insertValues: (string | null)[] = [id];
 
-              if (
-                extendedJobTitleColumn &&
-                persistToUserProfileExtended.jobTitle !== undefined
-              ) {
+              if (extendedJobTitleColumn && persistToUserProfileExtended.jobTitle !== undefined) {
                 insertColumns.push(extendedJobTitleColumn);
                 insertValues.push(persistToUserProfileExtended.jobTitle);
               }

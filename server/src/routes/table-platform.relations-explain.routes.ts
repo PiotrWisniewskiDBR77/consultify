@@ -70,7 +70,10 @@ router.get(
       });
       return res.status(200).json({ data: result });
     } catch (e) {
-      if (e instanceof TenantViolationError || (e as { code?: string })?.code === 'TENANT_VIOLATION') {
+      if (
+        e instanceof TenantViolationError ||
+        (e as { code?: string })?.code === 'TENANT_VIOLATION'
+      ) {
         return res.status(403).json({ error: 'Forbidden', code: 'TENANT_VIOLATION' });
       }
       logger.error('[RelationExplainRoute] failed', {

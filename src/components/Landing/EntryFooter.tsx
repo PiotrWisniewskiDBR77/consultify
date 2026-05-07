@@ -388,7 +388,8 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
 
           {/* Copyright */}
           <p className="mt-4 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500">
-            © 2026 {COMPANY.headquarters.name} {t('landing.footer.copyright', 'All rights reserved.')}
+            © 2026 {COMPANY.headquarters.name}{' '}
+            {t('landing.footer.copyright', 'All rights reserved.')}
           </p>
         </div>
       </div>

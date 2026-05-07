@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   BENCHMARK_DIMENSIONS,
-  buildBenchmarkTrendReport,
   type BenchmarkDimension,
   type BenchmarkRunRecord,
   type BuildBenchmarkTrendInput,
+  buildBenchmarkTrendReport,
 } from '../presentationBenchmarkTrendService.js';
 
 const NOW_ISO = '2026-12-15T12:00:00.000Z';
@@ -22,10 +22,10 @@ function makeRun(
 ): BenchmarkRunRecord {
   const scores: Partial<Record<BenchmarkDimension, number>> =
     typeof scoreEachDim === 'number'
-      ? Object.fromEntries(BENCHMARK_DIMENSIONS.map((d) => [d, scoreEachDim])) as Record<
+      ? (Object.fromEntries(BENCHMARK_DIMENSIONS.map((d) => [d, scoreEachDim])) as Record<
           BenchmarkDimension,
           number
-        >
+        >)
       : { ...scoreEachDim };
   return {
     runId: `run-${monthsAgo}`,
@@ -158,9 +158,7 @@ describe('presentationBenchmarkTrendService — buildBenchmarkTrendReport', () =
     }
     const report = buildBenchmarkTrendReport(baseInput(runs));
     expect(report.overallVerdict).toBe('AT_RISK');
-    const regressingDim = report.dimensions.find(
-      (d) => d.dimension === BENCHMARK_DIMENSIONS[3]
-    );
+    const regressingDim = report.dimensions.find((d) => d.dimension === BENCHMARK_DIMENSIONS[3]);
     expect(regressingDim?.status).toBe('regressing');
     expect(regressingDim?.latestValue).toBeLessThan(3.5);
   });
@@ -199,18 +197,14 @@ describe('presentationBenchmarkTrendService — buildBenchmarkTrendReport', () =
       },
     ];
     for (const candidate of malformed) {
-      expect(() =>
-        buildBenchmarkTrendReport(candidate as BuildBenchmarkTrendInput)
-      ).not.toThrow();
+      expect(() => buildBenchmarkTrendReport(candidate as BuildBenchmarkTrendInput)).not.toThrow();
     }
   });
 
   it('14) custom gammaTarget honored (distance + estimated runs respect override)', () => {
     const series = [3.0, 3.1, 3.2, 3.3, 3.4, 3.5];
     const runs = series.map((v, i) => makeRun(series.length - 1 - i, v));
-    const report = buildBenchmarkTrendReport(
-      baseInput(runs, { gammaTarget: 5.0 })
-    );
+    const report = buildBenchmarkTrendReport(baseInput(runs, { gammaTarget: 5.0 }));
     expect(report.gammaTarget).toBe(5.0);
     for (const dim of report.dimensions) {
       expect(dim.status).toBe('improving');

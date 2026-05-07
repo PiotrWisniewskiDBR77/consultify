@@ -221,8 +221,7 @@ const getScoreClass = (score: number, isRisk: boolean): string => {
 const getLevelClass = (level?: string): string => {
   const n = String(level || '').toLowerCase();
   if (n === 'critical') return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
-  if (n === 'high')
-    return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  if (n === 'high') return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (n === 'medium')
     return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';

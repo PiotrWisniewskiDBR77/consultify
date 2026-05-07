@@ -130,9 +130,7 @@ function safeString(input: unknown): string {
  *   - Trim each line and drop empty / whitespace-only lines.
  */
 function normalizeForDiff(content: string): string[] {
-  const stripped = content
-    .replace(HTML_COMMENT_RE, '')
-    .replace(MARKDOWN_LINK_TARGET_RE, '](LINK)');
+  const stripped = content.replace(HTML_COMMENT_RE, '').replace(MARKDOWN_LINK_TARGET_RE, '](LINK)');
 
   return stripped
     .split(/\r?\n/)
@@ -248,7 +246,7 @@ function todayIsoUtc(): string {
 function buildResult(
   docPath: string,
   changelogPath: string,
-  issues: ParityIssue[],
+  issues: ParityIssue[]
 ): ParityCheckResult {
   let hasError = false;
   let hasAny = false;
@@ -321,10 +319,7 @@ export function compareDocVsChangelog(input: ParityCheckInput): ParityCheckResul
       return buildResult(docPath, changelogPath, issues);
     }
 
-    if (
-      changelogLastEntryDate !== null &&
-      !/^\d{4}-\d{2}-\d{2}$/.test(changelogLastEntryDate)
-    ) {
+    if (changelogLastEntryDate !== null && !/^\d{4}-\d{2}-\d{2}$/.test(changelogLastEntryDate)) {
       issues.push({
         field: 'changelog_invalid',
         severity: 'warning',

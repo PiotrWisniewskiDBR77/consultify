@@ -32,7 +32,7 @@ export function isMarkdownProjectionStatus(value: unknown): value is MarkdownPro
 }
 
 export function validateArtifactContentEnvelope(
-  envelope: Partial<ArtifactContentEnvelope> | null | undefined,
+  envelope: Partial<ArtifactContentEnvelope> | null | undefined
 ): ArtifactContentValidationResult {
   const errors: string[] = [];
 
@@ -112,4 +112,3 @@ export function createJsonContentEnvelope(params: {
     projectionError: params.projectionError,
   };
 }
-

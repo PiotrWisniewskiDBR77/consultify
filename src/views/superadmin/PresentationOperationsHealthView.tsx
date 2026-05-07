@@ -58,13 +58,10 @@ const DEFAULT_WINDOW_DAYS = 7;
 const AUTO_REFRESH_INTERVAL_MS = 60_000;
 
 const SLO_TONE: Record<SloStatus, string> = {
-  pass:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  at_risk:
-    'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  pass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  at_risk: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
   breach: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  inconclusive:
-    'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
+  inconclusive: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
 const SLO_LABEL: Record<SloStatus, string> = {
@@ -77,8 +74,7 @@ const SLO_LABEL: Record<SloStatus, string> = {
 const JOB_STATUS_TONE: Record<JobRunSnapshot['lastRunStatus'], string> = {
   pass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   fail: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  unknown:
-    'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
+  unknown: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
 };
 
 const JOB_STATUS_LABEL: Record<JobRunSnapshot['lastRunStatus'], string> = {
@@ -141,9 +137,9 @@ interface PresentationOperationsHealthViewProps {
   deepLink?: DashboardDeepLink;
 }
 
-const PresentationOperationsHealthView: React.FC<
-  PresentationOperationsHealthViewProps
-> = ({ deepLink }) => {
+const PresentationOperationsHealthView: React.FC<PresentationOperationsHealthViewProps> = ({
+  deepLink,
+}) => {
   // The deep-link windowDays (when present and valid) becomes the seed
   // for the window selector. We snapshot it once on mount so a stale
   // re-render with the same prop does not stomp the user's later choice.
@@ -258,8 +254,8 @@ const PresentationOperationsHealthView: React.FC<
           </p>
           {data && (
             <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-              Generated {new Date(data.generatedAt).toLocaleString()} · last{' '}
-              {data.windowDays} day{data.windowDays === 1 ? '' : 's'}
+              Generated {new Date(data.generatedAt).toLocaleString()} · last {data.windowDays} day
+              {data.windowDays === 1 ? '' : 's'}
             </p>
           )}
         </div>
@@ -359,10 +355,7 @@ const PresentationOperationsHealthView: React.FC<
         onSelectSlo: setActiveSloId,
       })}
 
-      <OperationsHealthDrilldownPanel
-        sloId={activeSloId}
-        onClose={() => setActiveSloId(null)}
-      />
+      <OperationsHealthDrilldownPanel sloId={activeSloId} onClose={() => setActiveSloId(null)} />
     </div>
   );
 };
@@ -425,9 +418,8 @@ function renderBody(props: BodyProps): React.ReactElement {
       <IncidentRunbooksCard report={data} />
 
       <p className="text-[11px] text-slate-500 dark:text-slate-500">
-        Read-only view. SLO classification is computed server-side and not
-        recalculated in this UI. Refresh by pressing{' '}
-        <span className="font-semibold">Reload</span>.
+        Read-only view. SLO classification is computed server-side and not recalculated in this UI.
+        Refresh by pressing <span className="font-semibold">Reload</span>.
       </p>
     </div>
   );
@@ -452,9 +444,7 @@ const WarningsPanel: React.FC<WarningsPanelProps> = ({ warnings }) => {
               {w}
             </li>
           ))}
-          {warnings.length > 6 && (
-            <li className="opacity-70">… and {warnings.length - 6} more</li>
-          )}
+          {warnings.length > 6 && <li className="opacity-70">… and {warnings.length - 6} more</li>}
         </ul>
       </div>
     </div>
@@ -482,9 +472,7 @@ const SloGrid: React.FC<SloGridProps> = ({ slos, anomalies, activeSloId, onSelec
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Activity size={14} className="text-slate-500 dark:text-slate-400" />
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-          SLO indicators
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">SLO indicators</h3>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {slos.length === 0 ? (
@@ -495,8 +483,7 @@ const SloGrid: React.FC<SloGridProps> = ({ slos, anomalies, activeSloId, onSelec
           slos.map((slo) => {
             const isActive = activeSloId === (slo.id as DrilldownSloId);
             const anomaly = anomalies.find((a) => a.sloId === slo.id);
-            const showAnomaly =
-              !!anomaly && anomaly.status === 'detected' && !!anomaly.severity;
+            const showAnomaly = !!anomaly && anomaly.status === 'detected' && !!anomaly.severity;
             return (
               <button
                 key={slo.id}
@@ -562,9 +549,7 @@ const JobsStrip: React.FC<JobsStripProps> = ({ jobs }) => {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Shield size={14} className="text-slate-500 dark:text-slate-400" />
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-          Scheduled jobs
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Scheduled jobs</h3>
       </div>
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {jobs.length === 0 ? (
@@ -574,10 +559,7 @@ const JobsStrip: React.FC<JobsStripProps> = ({ jobs }) => {
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {jobs.map((job) => (
-              <li
-                key={job.jobId}
-                className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3"
-              >
+              <li key={job.jobId} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                     {job.label}
@@ -679,9 +661,8 @@ const AlertsPanel: React.FC<AlertsPanelProps> = ({ activity }) => {
         </div>
         <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
           Counters cover the last {activity.windowDays} day
-          {activity.windowDays === 1 ? '' : 's'} of governance alert
-          dispatches. Suppressed and dry-run rows reflect intentional
-          throttling, not failures.
+          {activity.windowDays === 1 ? '' : 's'} of governance alert dispatches. Suppressed and
+          dry-run rows reflect intentional throttling, not failures.
         </p>
       </div>
     </div>

@@ -246,7 +246,8 @@ export function renderBenchmarkScorecardMarkdown(
     return '# Presentation Benchmark Scorecard\n\nVerdict: BLOCK (invalid record)\n';
   }
 
-  const gammaTarget = opts && typeof opts.gammaTarget === 'number' ? opts.gammaTarget : GAMMA_TARGET;
+  const gammaTarget =
+    opts && typeof opts.gammaTarget === 'number' ? opts.gammaTarget : GAMMA_TARGET;
   const lines: string[] = [];
 
   const runLabel = record.runLabel || '(unknown run)';
@@ -257,7 +258,9 @@ export function renderBenchmarkScorecardMarkdown(
   lines.push(`Verdict: ${record.verdict}`);
   lines.push(`Reference set: ${referenceSet}`);
   lines.push(`Decks scored: ${record.totalDecksScored}`);
-  lines.push(`Gamma target: ${gammaTarget.toFixed(2)} (warning floor: ${WARNING_THRESHOLD.toFixed(2)})`);
+  lines.push(
+    `Gamma target: ${gammaTarget.toFixed(2)} (warning floor: ${WARNING_THRESHOLD.toFixed(2)})`
+  );
   lines.push('');
   lines.push('| Dimension | Current | Prior | Delta | Status |');
   lines.push('| --- | ---: | ---: | ---: | --- |');
@@ -287,9 +290,7 @@ export function renderBenchmarkScorecardMarkdown(
   lines.push('');
 
   if (deltaEntries.length > 0) {
-    const movements = [...deltaEntries].sort(
-      (a, b) => Math.abs(b.delta) - Math.abs(a.delta)
-    );
+    const movements = [...deltaEntries].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
     const top = movements.slice(0, Math.min(3, movements.length));
     if (top.some((entry) => Math.abs(entry.delta) > 0)) {
       lines.push('## Largest movements vs prior run');
@@ -320,7 +321,8 @@ export function renderBenchmarkScorecardMarkdown(
   }
 
   lines.push('---');
-  const reportedBy = record.reportedBy && record.reportedBy.length > 0 ? record.reportedBy : 'unknown';
+  const reportedBy =
+    record.reportedBy && record.reportedBy.length > 0 ? record.reportedBy : 'unknown';
   const createdAt = record.createdAt && record.createdAt.length > 0 ? record.createdAt : 'pending';
   lines.push(`Reported by: ${reportedBy} | Created at: ${createdAt}`);
 
@@ -374,7 +376,9 @@ function parseJsonField(value: unknown): Record<string, unknown> | null {
   return null;
 }
 
-function normalizeDimensionMap(raw: Record<string, unknown> | null): Record<BenchmarkDimension, number> {
+function normalizeDimensionMap(
+  raw: Record<string, unknown> | null
+): Record<BenchmarkDimension, number> {
   const out = emptyScores();
   if (!raw) return out;
   for (const dim of BENCHMARK_DIMENSIONS) {

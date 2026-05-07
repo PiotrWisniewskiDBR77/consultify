@@ -5,8 +5,8 @@ import {
   normalizeSavedSearchFilters,
   normalizeSavedSearchName,
   normalizeSavedSearchQueryText,
-  validateSavedSearchCreateInput,
   type SavedSearchFilters,
+  validateSavedSearchCreateInput,
 } from '../presentationWatchlistSavedSearchService.js';
 
 describe('presentationWatchlistSavedSearchService - normalizeSavedSearchName', () => {
@@ -36,9 +36,7 @@ describe('presentationWatchlistSavedSearchService - normalizeSavedSearchQueryTex
     expect(normalizeSavedSearchQueryText('').queryText).toBe('');
     expect(normalizeSavedSearchQueryText(undefined).queryText).toBe('');
     // Internal whitespace is preserved verbatim — only outer trim happens.
-    expect(normalizeSavedSearchQueryText('  hello   world  ').queryText).toBe(
-      'hello   world'
-    );
+    expect(normalizeSavedSearchQueryText('  hello   world  ').queryText).toBe('hello   world');
   });
 
   it('truncates query text past 120 chars with a query_truncated warning', () => {
@@ -89,12 +87,12 @@ describe('presentationWatchlistSavedSearchService - normalizeSavedSearchFilters'
     expect(normalizeSavedSearchFilters({}).filters.limit).toBe(50);
 
     expect(normalizeSavedSearchFilters({ minSeverityScore: -5 }).filters.minSeverityScore).toBe(0);
-    expect(
-      normalizeSavedSearchFilters({ minSeverityScore: 5000 }).filters.minSeverityScore
-    ).toBe(1000);
-    expect(
-      normalizeSavedSearchFilters({ minSeverityScore: 250 }).filters.minSeverityScore
-    ).toBe(250);
+    expect(normalizeSavedSearchFilters({ minSeverityScore: 5000 }).filters.minSeverityScore).toBe(
+      1000
+    );
+    expect(normalizeSavedSearchFilters({ minSeverityScore: 250 }).filters.minSeverityScore).toBe(
+      250
+    );
     expect(normalizeSavedSearchFilters({}).filters.minSeverityScore).toBe(0);
   });
 });
@@ -163,24 +161,22 @@ describe('presentationWatchlistSavedSearchService - matchesSavedSearch', () => {
 
   it('matches everything when queryText is empty', () => {
     expect(matchesSavedSearch(baseEntry, { queryText: '', filters: emptyFilters })).toBe(true);
-    expect(
-      matchesSavedSearch(baseEntry, { queryText: '   ', filters: emptyFilters })
-    ).toBe(true);
+    expect(matchesSavedSearch(baseEntry, { queryText: '   ', filters: emptyFilters })).toBe(true);
   });
 
   it('does case-insensitive substring matching on the deck title', () => {
-    expect(
-      matchesSavedSearch(baseEntry, { queryText: 'phoenix', filters: emptyFilters })
-    ).toBe(true);
-    expect(
-      matchesSavedSearch(baseEntry, { queryText: 'PHOENIX', filters: emptyFilters })
-    ).toBe(true);
-    expect(
-      matchesSavedSearch(baseEntry, { queryText: 'q4 strategy', filters: emptyFilters })
-    ).toBe(true);
-    expect(
-      matchesSavedSearch(baseEntry, { queryText: 'unicorn', filters: emptyFilters })
-    ).toBe(false);
+    expect(matchesSavedSearch(baseEntry, { queryText: 'phoenix', filters: emptyFilters })).toBe(
+      true
+    );
+    expect(matchesSavedSearch(baseEntry, { queryText: 'PHOENIX', filters: emptyFilters })).toBe(
+      true
+    );
+    expect(matchesSavedSearch(baseEntry, { queryText: 'q4 strategy', filters: emptyFilters })).toBe(
+      true
+    );
+    expect(matchesSavedSearch(baseEntry, { queryText: 'unicorn', filters: emptyFilters })).toBe(
+      false
+    );
   });
 
   it('respects the verdict filter when provided', () => {
@@ -197,9 +193,7 @@ describe('presentationWatchlistSavedSearchService - matchesSavedSearch', () => {
       })
     ).toBe(false);
     // Empty array means "no filtering" — anything passes.
-    expect(
-      matchesSavedSearch(baseEntry, { queryText: '', filters: { verdicts: [] } })
-    ).toBe(true);
+    expect(matchesSavedSearch(baseEntry, { queryText: '', filters: { verdicts: [] } })).toBe(true);
   });
 
   it('respects confidentiality filter case-insensitively (server enum vs entry casing)', () => {
@@ -231,10 +225,13 @@ describe('presentationWatchlistSavedSearchService - matchesSavedSearch', () => {
       })
     ).toBe(false);
     expect(
-      matchesSavedSearch({ ...baseEntry, severityScore: 0 }, {
-        queryText: '',
-        filters: { minSeverityScore: 0 },
-      })
+      matchesSavedSearch(
+        { ...baseEntry, severityScore: 0 },
+        {
+          queryText: '',
+          filters: { minSeverityScore: 0 },
+        }
+      )
     ).toBe(true);
   });
 });

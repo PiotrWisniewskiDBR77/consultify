@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildHighlightSegments,
-  escapeRegExp,
-} from '../highlightTextMatch';
+import { buildHighlightSegments, escapeRegExp } from '../highlightTextMatch';
 
 describe('highlightTextMatch - escapeRegExp', () => {
   it('escapes regex metacharacters but leaves alphanumerics alone', () => {

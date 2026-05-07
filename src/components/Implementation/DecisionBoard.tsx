@@ -314,7 +314,9 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ initiativeId, onDe
         <div className="flex items-center gap-2">
           <div
             className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              blockingCount > 0 ? 'bg-rose-100 dark:bg-rose-900/30' : 'bg-slate-100 dark:bg-slate-800'
+              blockingCount > 0
+                ? 'bg-rose-100 dark:bg-rose-900/30'
+                : 'bg-slate-100 dark:bg-slate-800'
             }`}
           >
             <AlertTriangle

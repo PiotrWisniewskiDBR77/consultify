@@ -276,7 +276,9 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     }
                                 `}
               />
-              {errors.estimatedROI && <p className="text-xs text-rose-500">{errors.estimatedROI}</p>}
+              {errors.estimatedROI && (
+                <p className="text-xs text-rose-500">{errors.estimatedROI}</p>
+              )}
             </div>
 
             <div className="space-y-2">

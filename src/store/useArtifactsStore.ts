@@ -6,8 +6,8 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { ArtifactContentEnvelope, CanonicalFormat } from '../types/artifactContent';
 import { Artifact } from '../types';
+import type { ArtifactContentEnvelope, CanonicalFormat } from '../types/artifactContent';
 import { projectToMarkdown } from '../utils/artifacts/projectToMarkdown';
 
 // ==================== TYPES ====================

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import {
   isPresentationActionAllowedByConfidentiality,
   normalizePresentationRole,
@@ -14,9 +15,11 @@ describe('presentationConfidentialityPolicyService', () => {
 
   it('resolves deck confidentiality from column and meta fallback', () => {
     expect(resolvePresentationDeckConfidentiality({ confidentiality: 'public' })).toBe('public');
-    expect(resolvePresentationDeckConfidentiality({ deck_json: '{"meta":{"confidentiality":"confidential"}}' })).toBe(
-      'confidential'
-    );
+    expect(
+      resolvePresentationDeckConfidentiality({
+        deck_json: '{"meta":{"confidentiality":"confidential"}}',
+      })
+    ).toBe('confidential');
     expect(resolvePresentationDeckConfidentiality({})).toBe('internal');
   });
 

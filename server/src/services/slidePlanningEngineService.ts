@@ -56,7 +56,11 @@ function densityForMode(mode: string | undefined): SlideDensity {
 
 function visualPolicyForIntent(intent: SlideIntent, density: SlideDensity): VisualPolicy {
   if (intent === 'cover' || intent === 'section_intro') return 'hero_visual';
-  if (intent === 'performance_overview' || intent === 'assessment' || intent === 'prioritization_matrix') {
+  if (
+    intent === 'performance_overview' ||
+    intent === 'assessment' ||
+    intent === 'prioritization_matrix'
+  ) {
     return 'data_first';
   }
   if (intent === 'roadmap' || intent === 'root_cause') return 'diagram_first';
@@ -96,7 +100,8 @@ function blockMixForIntent(intent: SlideIntent): string[] {
 
 function createModeFor(setup: DeckSetup, hasTemplateOutline: boolean): DeckCreateMode {
   if (setup.templateId || hasTemplateOutline) return 'template-first';
-  if ((setup.sourceArtifacts || []).some((source) => source.artifactId || source.id)) return 'artifact-first';
+  if ((setup.sourceArtifacts || []).some((source) => source.artifactId || source.id))
+    return 'artifact-first';
   return 'blank-brief';
 }
 
@@ -136,7 +141,8 @@ export function planSlides(params: {
     if (confidence < 0.6) slideWarnings.push('Low grounding confidence.');
 
     const itemDensity = (item as any).density || density;
-    const visualPolicy = ((item as any).visualPolicy || visualPolicyForIntent(item.intent, itemDensity)) as VisualPolicy;
+    const visualPolicy = ((item as any).visualPolicy ||
+      visualPolicyForIntent(item.intent, itemDensity)) as VisualPolicy;
     const plannedItem: OutlineItem = {
       ...item,
       keyMessage:
@@ -151,13 +157,16 @@ export function planSlides(params: {
       visualPolicy,
       layoutHint:
         item.layoutHint ||
-        (fallbackPolicy === 'degradation_notice' ? 'degradation-data-gap' : layoutForIntent(item.intent)),
+        (fallbackPolicy === 'degradation_notice'
+          ? 'degradation-data-gap'
+          : layoutForIntent(item.intent)),
       suggestedBlocks:
         item.suggestedBlocks ||
         (fallbackPolicy === 'degradation_notice'
           ? ['data_gap_notice', 'required_source_types', 'data_owner']
           : blockMixForIntent(item.intent)),
-      notesPolicy: (item as any).notesPolicy || (itemDensity === 'visual' ? 'speaker_heavy' : 'standard'),
+      notesPolicy:
+        (item as any).notesPolicy || (itemDensity === 'visual' ? 'speaker_heavy' : 'standard'),
       warnings: [...(item.warnings || []), ...slideWarnings],
     } as OutlineItem;
     (plannedItem as any).fallbackPolicy = fallbackPolicy;
@@ -180,7 +189,9 @@ export function planSlides(params: {
     blockMix: (item as any).suggestedBlocks || blockMixForIntent(item.intent),
     density: ((item as any).density || density) as SlideDensity,
     visualPolicy: (item as any).visualPolicy || visualPolicyForIntent(item.intent, density),
-    notesPolicy: (item as any).notesPolicy || (((item as any).density || density) === 'visual' ? 'speaker_heavy' : 'standard'),
+    notesPolicy:
+      (item as any).notesPolicy ||
+      (((item as any).density || density) === 'visual' ? 'speaker_heavy' : 'standard'),
     fallbackPolicy: (item as any).fallbackPolicy || 'keep_with_warning',
     warnings: (item as any).warnings || [],
   }));

@@ -19,6 +19,12 @@ import {
   buildBrandLayoutSystem,
 } from './presentationBrandLayoutService.js';
 import { deckDocumentFromUnifiedJson } from './presentationDeckDocumentService.js';
+import {
+  applyTemplateRuntime,
+  buildSystemTemplateRuntime,
+  buildTemplateRuntimeFromRow,
+  type PresentationTemplateRuntime,
+} from './presentationTemplateRuntimeService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
 import { planDeckVisuals } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
@@ -29,12 +35,6 @@ import type {
   UnifiedSlide,
 } from './report/pptx/types.js';
 import { planSlides } from './slidePlanningEngineService.js';
-import {
-  applyTemplateRuntime,
-  buildSystemTemplateRuntime,
-  buildTemplateRuntimeFromRow,
-  type PresentationTemplateRuntime,
-} from './presentationTemplateRuntimeService.js';
 import {
   applyTransformationPackToArtifactData,
   buildTransformationReadDeckPack,
@@ -286,11 +286,18 @@ function outlineSourceRefs(item: OutlineItem, setup: DeckSetup) {
   }));
 }
 
-function attachSlideGovernance(slide: UnifiedSlide, item: OutlineItem, setup: DeckSetup): UnifiedSlide {
+function attachSlideGovernance(
+  slide: UnifiedSlide,
+  item: OutlineItem,
+  setup: DeckSetup
+): UnifiedSlide {
   const sourceRefs = outlineSourceRefs(item, setup);
   return {
     ...slide,
-    key_message: String(slide.key_message || item.keyMessage || item.title).split(/\s+/).slice(0, 14).join(' '),
+    key_message: String(slide.key_message || item.keyMessage || item.title)
+      .split(/\s+/)
+      .slice(0, 14)
+      .join(' '),
     ...(sourceRefs.length ? { source_refs: sourceRefs } : {}),
     ...(item.layoutHint ? { layout_hint: item.layoutHint } : {}),
     ...(item.visualPolicy ? { visual_policy: item.visualPolicy } : {}),
@@ -455,7 +462,11 @@ function buildSlideContentBase(
               timeframe: '3-6m',
               items: [],
             },
-            { label: isPl ? 'Faza 3: Skalowanie' : 'Phase 3: Scale', timeframe: '6-12m', items: [] },
+            {
+              label: isPl ? 'Faza 3: Skalowanie' : 'Phase 3: Scale',
+              timeframe: '6-12m',
+              items: [],
+            },
           ],
         },
       };
@@ -532,7 +543,10 @@ function buildSlideContentBase(
             series: [
               {
                 name: isPl ? 'Wynik' : 'Score',
-                values: [Number(artifactData._overallScore || 3), Number(artifactData._maxScore || 5)],
+                values: [
+                  Number(artifactData._overallScore || 3),
+                  Number(artifactData._maxScore || 5),
+                ],
               },
             ],
           },
@@ -551,7 +565,9 @@ function buildSlideContentBase(
         intent: 'recommendation_portfolio',
         key_message:
           item.keyMessage ||
-          (isPl ? 'Rekomendacje wynikające z diagnozy' : 'Recommendations derived from the diagnostic'),
+          (isPl
+            ? 'Rekomendacje wynikające z diagnozy'
+            : 'Recommendations derived from the diagnostic'),
         content: {
           type: 'recommendation_portfolio',
           recommendations:
@@ -576,7 +592,9 @@ function buildSlideContentBase(
           title: item.title,
           description:
             item.keyMessage ||
-            (isPl ? 'Rekomendacja oparta na wybranym materiale.' : 'Recommendation grounded in selected evidence.'),
+            (isPl
+              ? 'Rekomendacja oparta na wybranym materiale.'
+              : 'Recommendation grounded in selected evidence.'),
           impact: artifactData._recommendationImpact || 'High',
           effort: artifactData._recommendationEffort || 'Medium',
           priority: 'high',
@@ -587,7 +605,8 @@ function buildSlideContentBase(
     case 'prioritization_matrix':
       return {
         intent: 'prioritization_matrix',
-        key_message: item.keyMessage || (isPl ? 'Priorytetyzacja inicjatyw' : 'Initiative prioritization'),
+        key_message:
+          item.keyMessage || (isPl ? 'Priorytetyzacja inicjatyw' : 'Initiative prioritization'),
         content: {
           type: 'prioritization_matrix',
           xAxisLabel: isPl ? 'Wysiłek' : 'Effort',
@@ -608,13 +627,15 @@ function buildSlideContentBase(
         content: {
           type: 'root_cause',
           problem: item.title,
-          causes: (artifactData._rootCauses || [
-            {
-              cause: isPl ? 'Niedojrzałość procesu' : 'Process maturity gap',
-              impact: isPl ? 'Wolniejsze decyzje' : 'Slower decisions',
-              severity: 'medium',
-            },
-          ]).slice(0, 5),
+          causes: (
+            artifactData._rootCauses || [
+              {
+                cause: isPl ? 'Niedojrzałość procesu' : 'Process maturity gap',
+                impact: isPl ? 'Wolniejsze decyzje' : 'Slower decisions',
+                severity: 'medium',
+              },
+            ]
+          ).slice(0, 5),
         },
       };
 
@@ -630,12 +651,16 @@ function buildSlideContentBase(
             {
               action: isPl ? 'Zdefiniować priorytety' : 'Define priorities',
               owner: isPl ? 'Do ustalenia przez PMO' : 'To be assigned by PMO',
-              deadline: isPl ? 'Do potwierdzenia w planie programu' : 'To be confirmed in program plan',
+              deadline: isPl
+                ? 'Do potwierdzenia w planie programu'
+                : 'To be confirmed in program plan',
             },
             {
               action: isPl ? 'Zatwierdzić roadmapę' : 'Approve roadmap',
               owner: isPl ? 'Do ustalenia przez Sponsor Board' : 'To be assigned by Sponsor Board',
-              deadline: isPl ? 'Do potwierdzenia w planie programu' : 'To be confirmed in program plan',
+              deadline: isPl
+                ? 'Do potwierdzenia w planie programu'
+                : 'To be confirmed in program plan',
             },
           ],
         },
@@ -691,10 +716,15 @@ function buildSlideContent(
       } as UnifiedSlide)
     : buildSlideContentBase(item, setup, artifactData);
   const governed = attachSlideGovernance(baseSlide, item, setup);
-  const keyMessage = sanitizePrimitiveText(String(governed.key_message || item.title || item.intent));
+  const keyMessage = sanitizePrimitiveText(
+    String(governed.key_message || item.title || item.intent)
+  );
   return {
     ...governed,
-    key_message: keyMessage.length >= 8 ? keyMessage : sanitizePrimitiveText(String(item.title || item.intent)),
+    key_message:
+      keyMessage.length >= 8
+        ? keyMessage
+        : sanitizePrimitiveText(String(item.title || item.intent)),
     content: sanitizeSlideContentValue(governed.content) as any,
   } as UnifiedSlide;
 }
@@ -928,7 +958,11 @@ export async function generateOutline(
       templateRuntime = buildTemplateRuntimeFromRow(template);
       const templateOutline = templateRuntime?.outline || [];
       outline = generateOutlineFromTemplate(templateOutline, sourceArtifacts);
-      const templated = applyTemplateRuntime({ outline, runtime: templateRuntime, sources: sourceArtifacts });
+      const templated = applyTemplateRuntime({
+        outline,
+        runtime: templateRuntime,
+        sources: sourceArtifacts,
+      });
       outline = templated.outline;
       templateWarnings = templated.warnings;
       templateOutlineUsed = true;
@@ -940,7 +974,11 @@ export async function generateOutline(
     if (requestedFamily) {
       templateRuntime = buildSystemTemplateRuntime(requestedFamily);
       outline = templateRuntime.outline;
-      const templated = applyTemplateRuntime({ outline, runtime: templateRuntime, sources: sourceArtifacts });
+      const templated = applyTemplateRuntime({
+        outline,
+        runtime: templateRuntime,
+        sources: sourceArtifacts,
+      });
       outline = templated.outline;
       templateWarnings = templated.warnings;
       templateOutlineUsed = true;
@@ -1030,7 +1068,11 @@ export async function generateOutline(
     throw err;
   }
 
-  const validationWarnings = [...validateOutline(outline, setup), ...planning.warnings, ...templateWarnings];
+  const validationWarnings = [
+    ...validateOutline(outline, setup),
+    ...planning.warnings,
+    ...templateWarnings,
+  ];
   if (validationWarnings.length > 0) {
     await dbRun(
       `UPDATE presentation_decks SET validation_warnings = ? WHERE id = ? AND organization_id = ?`,

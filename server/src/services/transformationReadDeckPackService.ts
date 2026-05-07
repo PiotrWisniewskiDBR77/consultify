@@ -34,10 +34,7 @@ export function buildTransformationReadDeckPack(params: {
   const { contextPack, artifactData, sources, language } = params;
   const isPl = language === 'pl';
   const sourceNames = sources.map((source) => source.label || source.type).filter(Boolean);
-  const insights = [
-    ...stringList(artifactData._keyFindings),
-    ...stringList(contextPack.key_points),
-  ]
+  const insights = [...stringList(artifactData._keyFindings), ...stringList(contextPack.key_points)]
     .slice(0, 12)
     .map((point, index) => ({
       title: isPl ? `Wniosek ${index + 1}` : `Insight ${index + 1}`,
@@ -65,12 +62,18 @@ export function buildTransformationReadDeckPack(params: {
     participants: stringList(artifactData._participants),
     surveyStatus:
       artifactData._surveyStatus ||
-      (isPl ? 'Status badania częściowo zasilony z kontekstu' : 'Survey status partially sourced from context'),
+      (isPl
+        ? 'Status badania częściowo zasilony z kontekstu'
+        : 'Survey status partially sourced from context'),
     responseMetrics: metrics.length
       ? metrics
       : [
           { label: isPl ? 'Źródła' : 'Sources', value: sources.length },
-          { label: isPl ? 'Confidence' : 'Confidence', value: Math.round(contextPack.metadata.confidence_score * 100), unit: '%' },
+          {
+            label: isPl ? 'Confidence' : 'Confidence',
+            value: Math.round(contextPack.metadata.confidence_score * 100),
+            unit: '%',
+          },
         ],
     insightPack: insights.length
       ? insights
@@ -83,16 +86,14 @@ export function buildTransformationReadDeckPack(params: {
           },
         ],
     initiativePack: initiatives,
-    decisionPack:
-      artifactData._actions ||
-      [
-        {
-          action: isPl ? 'Zatwierdzić priorytety transformacji' : 'Approve transformation priorities',
-          owner: 'Sponsor',
-          deadline: '30 days',
-          status: 'pending',
-        },
-      ],
+    decisionPack: artifactData._actions || [
+      {
+        action: isPl ? 'Zatwierdzić priorytety transformacji' : 'Approve transformation priorities',
+        owner: 'Sponsor',
+        deadline: '30 days',
+        status: 'pending',
+      },
+    ],
     appendixPack: [
       {
         title: isPl ? 'Źródła i metodologia' : 'Sources and methodology',

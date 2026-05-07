@@ -318,7 +318,10 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               />
 
               {/* Source references */}
-              {(item.sourceRef || item.layoutHint || item.visualPolicy || item.confidence !== undefined) && (
+              {(item.sourceRef ||
+                item.layoutHint ||
+                item.visualPolicy ||
+                item.confidence !== undefined) && (
                 <div className="flex flex-wrap items-center gap-1 mt-1.5">
                   {item.sourceRef && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">

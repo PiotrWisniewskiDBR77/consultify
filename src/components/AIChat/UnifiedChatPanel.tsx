@@ -2872,7 +2872,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       roleName,
       chatLanguage
     );
-
   }, [
     dtPendingConfirm,
     isDisabled,
@@ -3834,7 +3833,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     if (mode !== 'full') return;
     const params = new URLSearchParams(location.search);
     const shouldOpen =
-      params.get('workPanel') === '1' || params.get('workPanel') === 'true' || params.get('workCanvas') === '1';
+      params.get('workPanel') === '1' ||
+      params.get('workPanel') === 'true' ||
+      params.get('workCanvas') === '1';
     if (!shouldOpen) return;
 
     setIsWorkPanelOpen(true);
@@ -3843,7 +3844,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     if (draftId) setRequestedCanvasDraftId(draftId);
 
     // Consume params to avoid re-triggering on subsequent renders/navigation.
-    const consumedKeys = ['workPanel', 'workCanvas', 'canvasDraftId', 'draftId', 'canvasKind', 'kind'];
+    const consumedKeys = [
+      'workPanel',
+      'workCanvas',
+      'canvasDraftId',
+      'draftId',
+      'canvasKind',
+      'kind',
+    ];
     let changed = false;
     for (const key of consumedKeys) {
       if (params.has(key)) {

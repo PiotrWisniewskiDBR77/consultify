@@ -397,9 +397,7 @@ const PresentationGovernanceAlertSubscriptionsView: React.FC = () => {
           }
           onSendTest={(id, verdict) => void handleSendTest(id, verdict)}
           onDelete={(id) => void handleDelete(id)}
-          onToggleTokens={(id) =>
-            setTokensOpenId((prev) => (prev === id ? null : id))
-          }
+          onToggleTokens={(id) => setTokensOpenId((prev) => (prev === id ? null : id))}
         />
       )}
 
@@ -458,9 +456,7 @@ const WarningsPanel: React.FC<WarningsPanelProps> = ({ warnings }) => (
             {w}
           </li>
         ))}
-        {warnings.length > 6 && (
-          <li className="opacity-70">… and {warnings.length - 6} more</li>
-        )}
+        {warnings.length > 6 && <li className="opacity-70">… and {warnings.length - 6} more</li>}
       </ul>
     </div>
   </div>
@@ -519,8 +515,8 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({
   if (subscriptions.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
-        No alert subscriptions yet. Click <span className="font-semibold">New subscription</span>{' '}
-        to create one.
+        No alert subscriptions yet. Click <span className="font-semibold">New subscription</span> to
+        create one.
       </div>
     );
   }
@@ -727,8 +723,8 @@ const RotatePanel: React.FC<RotatePanelProps> = ({
               New signing secret generated
             </div>
             <p className="mt-1 text-[11px] text-emerald-800 dark:text-emerald-200">
-              This is the only time you will see this secret. Store it in your subscriber app
-              now. The reveal panel auto-closes in 60s.
+              This is the only time you will see this secret. Store it in your subscriber app now.
+              The reveal panel auto-closes in 60s.
             </p>
           </div>
           <button
@@ -844,8 +840,8 @@ const TestDeliveryPanel: React.FC<TestDeliveryPanelProps> = ({
             Send signed test delivery
           </div>
           <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
-            Fires a synthetic transition payload signed with the current subscription secret.
-            Test deliveries are NOT recorded in the dispatch audit log.
+            Fires a synthetic transition payload signed with the current subscription secret. Test
+            deliveries are NOT recorded in the dispatch audit log.
           </p>
         </div>
         <button
@@ -1117,12 +1113,8 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
           {step === 'review' && (
             <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  Channel:
-                </span>{' '}
-                <span className="text-slate-700 dark:text-slate-300">
-                  {CHANNEL_LABEL[channel]}
-                </span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Channel:</span>{' '}
+                <span className="text-slate-700 dark:text-slate-300">{CHANNEL_LABEL[channel]}</span>
               </div>
               <div>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">Target:</span>{' '}
@@ -1134,9 +1126,7 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
                   Min severity:
                 </span>{' '}
-                <span className="font-mono text-slate-700 dark:text-slate-300">
-                  {minSeverity}
-                </span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">{minSeverity}</span>
               </div>
               {errorMessage && (
                 <div className="rounded border border-rose-200 bg-rose-50 px-2 py-1.5 text-[11px] text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
@@ -1189,8 +1179,8 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
               ) : (
                 <>
                   <p className="text-[11px] text-emerald-800 dark:text-emerald-200">
-                    This is the only time you will see this secret. Store it in your subscriber
-                    app now.
+                    This is the only time you will see this secret. Store it in your subscriber app
+                    now.
                   </p>
                   <code className="block select-all break-all rounded border border-emerald-200 bg-white px-2 py-1.5 font-mono text-[11px] text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-100">
                     {oneTimeSecret}

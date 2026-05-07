@@ -14,14 +14,7 @@
  *  - Honest degraded states: load failure, empty 200 OK, save failure.
  */
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Lock,
-  Palette,
-  Save,
-  ShieldCheck,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Lock, Palette, Save, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 type Confidentiality = 'public' | 'internal' | 'confidential';
@@ -179,12 +172,9 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
     void loadBrandKit();
   }, [loadBrandKit]);
 
-  const updateField = useCallback(
-    <K extends keyof BrandKit>(key: K, value: BrandKit[K]) => {
-      setBrandKit((prev) => ({ ...prev, [key]: value }));
-    },
-    []
-  );
+  const updateField = useCallback(<K extends keyof BrandKit>(key: K, value: BrandKit[K]) => {
+    setBrandKit((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (!canEdit) {
@@ -365,7 +355,11 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {(
                   [
-                    { id: 'brandkit-primary', label: 'Primary color', key: 'primaryColor' as const },
+                    {
+                      id: 'brandkit-primary',
+                      label: 'Primary color',
+                      key: 'primaryColor' as const,
+                    },
                     {
                       id: 'brandkit-secondary',
                       label: 'Secondary color',
@@ -464,9 +458,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                   <span className="block text-sm font-medium text-navy-900 dark:text-white">
                     Show page numbers
                   </span>
-                  <span className={helperTextClass}>
-                    Render page numbers in the slide footer.
-                  </span>
+                  <span className={helperTextClass}>Render page numbers in the slide footer.</span>
                 </span>
               </label>
 

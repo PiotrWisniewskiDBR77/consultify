@@ -9,13 +9,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  AUDIT_LATENCY_BUDGET_MS,
-  ISSUE_CAP,
   type AgentEditInput,
+  AUDIT_LATENCY_BUDGET_MS,
   type AuditEventInput,
+  evaluateAuditIntegrity,
   type EvaluateInput,
   type ExportInput,
-  evaluateAuditIntegrity,
+  ISSUE_CAP,
 } from '../presentationAuditIntegrityService.js';
 
 const ORG = 'org_acme';
@@ -93,9 +93,7 @@ describe('evaluateAuditIntegrity', () => {
   it('agent edit with a matching audit event passes', () => {
     const edit = makeEdit();
     const audit = makeAudit({ relatedId: edit.id });
-    const report = evaluateAuditIntegrity(
-      baseInput({ agentEdits: [edit], auditEvents: [audit] })
-    );
+    const report = evaluateAuditIntegrity(baseInput({ agentEdits: [edit], auditEvents: [audit] }));
     expect(report.verdict).toBe('PASS');
     expect(report.issues).toHaveLength(0);
     expect(report.totals.agentEditsScanned).toBe(1);
@@ -134,9 +132,7 @@ describe('evaluateAuditIntegrity', () => {
       relatedId: edit.id,
       occurredAt: isoOffset(-5 * 60_000),
     });
-    const report = evaluateAuditIntegrity(
-      baseInput({ agentEdits: [edit], auditEvents: [audit] })
-    );
+    const report = evaluateAuditIntegrity(baseInput({ agentEdits: [edit], auditEvents: [audit] }));
     expect(report.verdict).toBe('PASS_WITH_P2');
     expect(report.issues).toHaveLength(1);
     expect(report.issues[0]?.type).toBe('late_audit_record');
@@ -228,9 +224,7 @@ describe('evaluateAuditIntegrity', () => {
       relatedId: edit.id,
       occurredAt: isoOffset(-5 * 60_000),
     });
-    const report = evaluateAuditIntegrity(
-      baseInput({ agentEdits: [edit], auditEvents: [audit] })
-    );
+    const report = evaluateAuditIntegrity(baseInput({ agentEdits: [edit], auditEvents: [audit] }));
     expect(report.verdict).toBe('PASS_WITH_P2');
     expect(report.totals.p1).toBe(0);
     expect(report.totals.p2).toBe(1);
@@ -241,9 +235,7 @@ describe('evaluateAuditIntegrity', () => {
     const failed = makeExport({ status: 'failed' });
     const blocked = makeExport({ id: 'exp_b', status: 'blocked' });
     const started = makeExport({ id: 'exp_s', status: 'started' });
-    const report = evaluateAuditIntegrity(
-      baseInput({ exports: [failed, blocked, started] })
-    );
+    const report = evaluateAuditIntegrity(baseInput({ exports: [failed, blocked, started] }));
     expect(report.verdict).toBe('PASS');
     expect(report.issues).toHaveLength(0);
     expect(report.totals.exportsScanned).toBe(3);
@@ -270,9 +262,7 @@ describe('evaluateAuditIntegrity', () => {
   it('produces a JSON-serializable report', () => {
     const edit = makeEdit();
     const audit = makeAudit({ relatedId: edit.id });
-    const report = evaluateAuditIntegrity(
-      baseInput({ agentEdits: [edit], auditEvents: [audit] })
-    );
+    const report = evaluateAuditIntegrity(baseInput({ agentEdits: [edit], auditEvents: [audit] }));
     const roundTripped = JSON.parse(JSON.stringify(report));
     expect(roundTripped).toEqual(report);
   });
@@ -349,9 +339,7 @@ describe('evaluateAuditIntegrity', () => {
       relatedId: edit.id,
       occurredAt: isoOffset(-60_000),
     });
-    const report = evaluateAuditIntegrity(
-      baseInput({ agentEdits: [edit], auditEvents: [audit] })
-    );
+    const report = evaluateAuditIntegrity(baseInput({ agentEdits: [edit], auditEvents: [audit] }));
     expect(report.verdict).toBe('PASS');
   });
 });

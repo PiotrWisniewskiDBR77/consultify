@@ -856,7 +856,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   {t('access.upgrade.subscription.past_due')}
                 </p>
               </div>
-              <p className="text-xs text-rose-600 dark:text-rose-400">{t('access.banner.pastDue')}</p>
+              <p className="text-xs text-rose-600 dark:text-rose-400">
+                {t('access.banner.pastDue')}
+              </p>
             </div>
           )}
 

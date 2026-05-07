@@ -92,8 +92,7 @@ function clampLimit(value: unknown): number {
 export function normalizePresetFilters(raw: unknown): WatchlistPresetFilters {
   const r = isRecord(raw) ? raw : {};
 
-  const onlyBlocked =
-    typeof r.onlyBlocked === 'boolean' ? r.onlyBlocked : true;
+  const onlyBlocked = typeof r.onlyBlocked === 'boolean' ? r.onlyBlocked : true;
 
   const limit = clampLimit(r.limit);
 
@@ -129,9 +128,7 @@ export function normalizePresetFilters(raw: unknown): WatchlistPresetFilters {
  */
 export function validatePresetCreateInput(
   raw: unknown
-):
-  | { ok: true; value: WatchlistPresetCreateInput }
-  | { ok: false; error: string } {
+): { ok: true; value: WatchlistPresetCreateInput } | { ok: false; error: string } {
   if (!isRecord(raw)) return { ok: false, error: 'FILTERS_INVALID' };
 
   // Name is mandatory and length-checked against the raw collapsed value so
@@ -177,10 +174,7 @@ export function validatePresetCreateInput(
  * stable, human-friendly preset list ordering without coupling to whatever
  * locale the DB happens to collate on.
  */
-export function comparePresetsByName(
-  a: { name: string },
-  b: { name: string }
-): number {
+export function comparePresetsByName(a: { name: string }, b: { name: string }): number {
   const an = String(a?.name ?? '');
   const bn = String(b?.name ?? '');
   return an.localeCompare(bn, undefined, { sensitivity: 'base' });

@@ -149,8 +149,10 @@ function asNumber(value: unknown): number | undefined {
 
 function asBool(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
-  if (value === 1 || value === '1' || value === 'true' || value === 'TRUE' || value === 't') return true;
-  if (value === 0 || value === '0' || value === 'false' || value === 'FALSE' || value === 'f') return false;
+  if (value === 1 || value === '1' || value === 'true' || value === 'TRUE' || value === 't')
+    return true;
+  if (value === 0 || value === '0' || value === 'false' || value === 'FALSE' || value === 'f')
+    return false;
   return fallback;
 }
 

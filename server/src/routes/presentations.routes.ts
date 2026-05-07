@@ -14,36 +14,115 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { send as sendNotification } from '../services/notificationService.js';
+import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
+import {
+  hasPresentationCapability,
+  type PresentationCapability,
+} from '../services/presentationAccessPolicyService.js';
 import {
   applyPresentationEditPlan,
   parsePresentationEditIntent,
 } from '../services/presentationAgentEditService.js';
-import { hasPresentationCapability, type PresentationCapability } from '../services/presentationAccessPolicyService.js';
+import {
+  buildPlaygroundDispatchPlan,
+  type PlaygroundSeverity,
+  verifyInboxRequest,
+} from '../services/presentationAlertPlaygroundService.js';
+import { buildAuditIntegrityReport } from '../services/presentationAuditIntegrityService.js';
+import {
+  type BenchmarkRunRecord,
+  listBenchmarkRunHistory,
+} from '../services/presentationBenchmarkScorecardService.js';
+import {
+  buildBenchmarkTrendReport,
+  DEFAULT_WINDOW_MONTHS as TREND_DEFAULT_WINDOW_MONTHS,
+  loadRecentBenchmarkRuns,
+  MAX_WINDOW_MONTHS as TREND_MAX_WINDOW_MONTHS,
+} from '../services/presentationBenchmarkTrendService.js';
 import {
   isPresentationActionAllowedByConfidentiality,
   normalizePresentationRole,
   resolvePresentationDeckConfidentiality,
 } from '../services/presentationConfidentialityPolicyService.js';
 import {
+  type BulkRevertOpRow,
   evaluateBulkRevertEligibility,
   planBulkRevert,
-  type BulkRevertOpRow,
 } from '../services/presentationDeckBulkRevertService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
-import { buildAuditIntegrityReport } from '../services/presentationAuditIntegrityService.js';
+import {
+  deckDocumentToUnifiedJson,
+  normalizeDeckDocument,
+} from '../services/presentationDeckDocumentService.js';
 import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
 } from '../services/presentationDeckRevertService.js';
+import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
+import type { DeckSetup } from '../services/presentationGeneratorService.js';
+import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
 import {
-  listBenchmarkRunHistory,
-  type BenchmarkRunRecord,
-} from '../services/presentationBenchmarkScorecardService.js';
+  type AlertSeverity,
+  dispatchAlertsForTransition,
+  listActiveSubscriptions,
+  maskTarget,
+} from '../services/presentationGovernanceAlertService.js';
+import {
+  issueSubscriberDashboardToken,
+  rotateSubscriptionSecret,
+  sendTestDelivery,
+} from '../services/presentationGovernanceAlertSubscriberService.js';
 import { buildPresentationGovernanceCard } from '../services/presentationGovernanceCardService.js';
 import {
   buildPresentationGovernanceWatchlist,
   type WatchlistEntryInput,
 } from '../services/presentationGovernanceWatchlistService.js';
+import {
+  type AnomalyContext,
+  type AnomalySample,
+  type DetectableSloId,
+  detectAnomaliesForReport,
+} from '../services/presentationOperationsAnomalyDetectionService.js';
+import {
+  type BuildSloDrilldownInput,
+  buildSloDrilldownReport,
+  type DrilldownSloId,
+} from '../services/presentationOperationsHealthDrilldownService.js';
+import {
+  renderOperationsHealthHtml,
+  renderOperationsHealthPdf,
+} from '../services/presentationOperationsHealthPdfService.js';
+import {
+  type BuildOperationsHealthInput,
+  buildOperationsHealthReport,
+  type OperationsHealthAnomaly,
+  type OperationsHealthReport,
+} from '../services/presentationOperationsHealthService.js';
+import {
+  buildPresentationRuntimeRollup,
+  type PresentationRuntimeEventRow,
+} from '../services/presentationRuntimeRollupService.js';
+import { writePresentationRuntimeEvent } from '../services/presentationRuntimeTelemetryService.js';
+import {
+  buildSubscriberDashboardSnapshot,
+  hashToken,
+} from '../services/presentationSubscriberDashboardService.js';
+import {
+  listSubscriberTokens,
+  revokeSubscriberToken,
+} from '../services/presentationSubscriberTokenManagementService.js';
+import { normalizeTemplatePayload } from '../services/presentationTemplateCompatibilityService.js';
+import {
+  applyLifecycleTransition,
+  assertEditableLifecycle,
+  computeLineageForClone,
+  deprecateTemplate as deprecateTemplateGovernance,
+  fetchLineageChain,
+  listGovernanceEvents,
+  listTemplatesByState,
+  recordGovernanceEvent,
+  type TemplateLifecycleState,
+} from '../services/presentationTemplateGovernanceService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -57,82 +136,6 @@ import {
   listSavedSearches as listWatchlistSavedSearches,
   markUsed as markWatchlistSavedSearchUsed,
 } from '../services/presentationWatchlistSavedSearchService.js';
-import {
-  type AlertSeverity,
-  dispatchAlertsForTransition,
-  listActiveSubscriptions,
-  maskTarget,
-} from '../services/presentationGovernanceAlertService.js';
-import {
-  issueSubscriberDashboardToken,
-  rotateSubscriptionSecret,
-  sendTestDelivery,
-} from '../services/presentationGovernanceAlertSubscriberService.js';
-import {
-  buildSubscriberDashboardSnapshot,
-  hashToken,
-} from '../services/presentationSubscriberDashboardService.js';
-import {
-  listSubscriberTokens,
-  revokeSubscriberToken,
-} from '../services/presentationSubscriberTokenManagementService.js';
-import {
-  buildPlaygroundDispatchPlan,
-  verifyInboxRequest,
-  type PlaygroundSeverity,
-} from '../services/presentationAlertPlaygroundService.js';
-import {
-  buildOperationsHealthReport,
-  type BuildOperationsHealthInput,
-  type OperationsHealthAnomaly,
-  type OperationsHealthReport,
-} from '../services/presentationOperationsHealthService.js';
-import {
-  renderOperationsHealthHtml,
-  renderOperationsHealthPdf,
-} from '../services/presentationOperationsHealthPdfService.js';
-import {
-  buildSloDrilldownReport,
-  type BuildSloDrilldownInput,
-  type DrilldownSloId,
-} from '../services/presentationOperationsHealthDrilldownService.js';
-import {
-  buildBenchmarkTrendReport,
-  loadRecentBenchmarkRuns,
-  DEFAULT_WINDOW_MONTHS as TREND_DEFAULT_WINDOW_MONTHS,
-  MAX_WINDOW_MONTHS as TREND_MAX_WINDOW_MONTHS,
-} from '../services/presentationBenchmarkTrendService.js';
-import {
-  detectAnomaliesForReport,
-  type AnomalyContext,
-  type AnomalySample,
-  type DetectableSloId,
-} from '../services/presentationOperationsAnomalyDetectionService.js';
-import {
-  buildPresentationRuntimeRollup,
-  type PresentationRuntimeEventRow,
-} from '../services/presentationRuntimeRollupService.js';
-import { writePresentationRuntimeEvent } from '../services/presentationRuntimeTelemetryService.js';
-import { normalizeTemplatePayload } from '../services/presentationTemplateCompatibilityService.js';
-import {
-  applyLifecycleTransition,
-  assertEditableLifecycle,
-  computeLineageForClone,
-  deprecateTemplate as deprecateTemplateGovernance,
-  fetchLineageChain,
-  listGovernanceEvents,
-  listTemplatesByState,
-  recordGovernanceEvent,
-  type TemplateLifecycleState,
-} from '../services/presentationTemplateGovernanceService.js';
-import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
-import {
-  deckDocumentToUnifiedJson,
-  normalizeDeckDocument,
-} from '../services/presentationDeckDocumentService.js';
-import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
-import type { DeckSetup } from '../services/presentationGeneratorService.js';
-import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -144,6 +147,34 @@ const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
   (req: Request, res: Response, next: NextFunction) =>
     fn(req, res, next).catch(next);
+
+type SubscriberDashboardTokenRow = {
+  id: string;
+  subscription_id: string;
+  organization_id: string;
+  expires_at: string;
+  revoked_at: string | null;
+};
+
+type SubscriberDashboardSubscriptionRow = {
+  id: string;
+  channel: string;
+  target: string;
+  min_severity: string;
+  active: unknown;
+  signing_secret_rotated_at: string | null;
+};
+
+type SubscriberDashboardDispatchRow = {
+  id: string;
+  created_at: string;
+  status: string;
+  http_status: number | null;
+  to_verdict: string;
+  deck_id: string | null;
+  signature_present: unknown;
+  signature_algorithm: string | null;
+};
 
 function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
@@ -296,7 +327,8 @@ async function recordPresentationExportRecord(params: {
       ]
     );
   } catch (error) {
-    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not record export QA', error);
+    if (!isSchemaMissingError(error))
+      logger.warn('[Presentations] Could not record export QA', error);
   }
 }
 
@@ -493,7 +525,8 @@ async function saveAiOperation(op: PendingDeckAiOperation, prompt: string, versi
       ]
     );
   } catch (error) {
-    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not persist AI operation', error);
+    if (!isSchemaMissingError(error))
+      logger.warn('[Presentations] Could not persist AI operation', error);
   }
 }
 
@@ -518,7 +551,8 @@ async function getAiOperation(operationId: string): Promise<PendingDeckAiOperati
       createdAt: row.created_at || new Date().toISOString(),
     };
   } catch (error) {
-    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not read AI operation', error);
+    if (!isSchemaMissingError(error))
+      logger.warn('[Presentations] Could not read AI operation', error);
     return null;
   }
 }
@@ -535,7 +569,8 @@ async function resolveAiOperation(
       [status, versionAfter || null, operationId]
     );
   } catch (error) {
-    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not resolve AI operation', error);
+    if (!isSchemaMissingError(error))
+      logger.warn('[Presentations] Could not resolve AI operation', error);
   }
 }
 
@@ -610,33 +645,23 @@ router.get(
     const authHeader = String(req.get('authorization') || '');
     const match = /^Bearer\s+([0-9a-fA-F]+)\s*$/.exec(authHeader);
     if (!match) {
-      return res
-        .status(401)
-        .json({ status: 'unauthorized', reason: 'missing_or_malformed_token' });
+      return res.status(401).json({ status: 'unauthorized', reason: 'missing_or_malformed_token' });
     }
     const rawToken = match[1].toLowerCase();
     if (rawToken.length !== 64) {
-      return res
-        .status(401)
-        .json({ status: 'unauthorized', reason: 'invalid_token_format' });
+      return res.status(401).json({ status: 'unauthorized', reason: 'invalid_token_format' });
     }
 
     const tokenHash = hashToken(rawToken);
 
-    let tokenRow: {
-      id: string;
-      subscription_id: string;
-      organization_id: string;
-      expires_at: string;
-      revoked_at: string | null;
-    } | null = null;
+    let tokenRow: SubscriberDashboardTokenRow | null = null;
     try {
       tokenRow = (await dbGet(
         `SELECT id, subscription_id, organization_id, expires_at, revoked_at
            FROM presentation_governance_subscriber_tokens
           WHERE token_hash = ?`,
         [tokenHash]
-      )) as typeof tokenRow;
+      )) as SubscriberDashboardTokenRow | null;
     } catch (error) {
       if (isSchemaMissingError(error)) {
         return res.status(503).json({
@@ -647,9 +672,7 @@ router.get(
         });
       }
       logger.warn('[Presentations] subscriber dashboard token lookup failed', error);
-      return res
-        .status(401)
-        .json({ status: 'unauthorized', reason: 'token_lookup_failed' });
+      return res.status(401).json({ status: 'unauthorized', reason: 'token_lookup_failed' });
     }
 
     if (!tokenRow) {
@@ -663,21 +686,14 @@ router.get(
       return res.status(401).json({ status: 'unauthorized', reason: 'token_expired' });
     }
 
-    let subscriptionRow: {
-      id: string;
-      channel: string;
-      target: string;
-      min_severity: string;
-      active: unknown;
-      signing_secret_rotated_at: string | null;
-    } | null = null;
+    let subscriptionRow: SubscriberDashboardSubscriptionRow | null = null;
     try {
       subscriptionRow = (await dbGet(
         `SELECT id, channel, target, min_severity, active, signing_secret_rotated_at
            FROM presentation_governance_alert_subscriptions
           WHERE id = ? AND organization_id = ?`,
         [tokenRow.subscription_id, tokenRow.organization_id]
-      )) as typeof subscriptionRow;
+      )) as SubscriberDashboardSubscriptionRow | null;
     } catch (error) {
       if (isSchemaMissingError(error)) {
         return res.status(503).json({
@@ -687,9 +703,7 @@ router.get(
         });
       }
       logger.warn('[Presentations] subscriber dashboard subscription load failed', error);
-      return res
-        .status(401)
-        .json({ status: 'unauthorized', reason: 'subscription_load_failed' });
+      return res.status(401).json({ status: 'unauthorized', reason: 'subscription_load_failed' });
     }
     if (!subscriptionRow) {
       // The cascading FK in migration 765 means this should not normally
@@ -698,16 +712,7 @@ router.get(
       return res.status(401).json({ status: 'unauthorized', reason: 'subscription_missing' });
     }
 
-    let dispatchRows: Array<{
-      id: string;
-      created_at: string;
-      status: string;
-      http_status: number | null;
-      to_verdict: string;
-      deck_id: string | null;
-      signature_present: unknown;
-      signature_algorithm: string | null;
-    }> = [];
+    let dispatchRows: SubscriberDashboardDispatchRow[] = [];
     try {
       dispatchRows = (await dbAll(
         `SELECT id, created_at, status, http_status, to_verdict, deck_id,
@@ -717,7 +722,7 @@ router.get(
           ORDER BY created_at DESC
           LIMIT 100`,
         [tokenRow.subscription_id, tokenRow.organization_id]
-      )) as typeof dispatchRows;
+      )) as SubscriberDashboardDispatchRow[];
     } catch (error) {
       if (!isSchemaMissingError(error)) {
         logger.warn('[Presentations] subscriber dashboard dispatch load failed', error);
@@ -778,8 +783,7 @@ router.get(
             row.signature_present === 1 ||
             row.signature_present === 't',
           signatureAlgorithm:
-            typeof row.signature_algorithm === 'string' &&
-            row.signature_algorithm.length > 0
+            typeof row.signature_algorithm === 'string' && row.signature_algorithm.length > 0
               ? row.signature_algorithm
               : null,
         }))
@@ -891,7 +895,10 @@ router.post(
         },
       });
     } catch (lineageError) {
-      logger.warn('[Presentations] Could not persist clone lineage (migration 767 may be pending)', lineageError);
+      logger.warn(
+        '[Presentations] Could not persist clone lineage (migration 767 may be pending)',
+        lineageError
+      );
     }
 
     res.json({ success: true, data: { id } });
@@ -1144,7 +1151,9 @@ router.get(
     const lineage = await fetchLineageChain(orgId, templateId);
 
     if (lineage.status === 'not_found') {
-      return res.status(404).json({ success: false, error: lineage.reason || 'Template not found' });
+      return res
+        .status(404)
+        .json({ success: false, error: lineage.reason || 'Template not found' });
     }
     if (lineage.status === 'storage_error') {
       return res.status(503).json({
@@ -1454,7 +1463,7 @@ router.get(
         qualityReport: quality.report,
         errorCategory: 'quality_gate_blocked',
       });
-      return res.status(quality.status).json(quality.payload);
+      return res.status(quality.status ?? 422).json(quality.payload);
     }
 
     if (!fs.existsSync(deck.export_path))
@@ -1596,7 +1605,7 @@ router.get(
         qualityReport: quality.report,
         errorCategory: 'quality_gate_blocked',
       });
-      return res.status(quality.status).json(quality.payload);
+      return res.status(quality.status ?? 422).json(quality.payload);
     }
 
     const cards = getDeckCards(deck);
@@ -1890,7 +1899,7 @@ router.post(
         qualityReport: quality.report,
         errorCategory: 'quality_gate_blocked',
       });
-      return res.status(quality.status).json(quality.payload);
+      return res.status(quality.status ?? 422).json(quality.payload);
     }
 
     const { exportDeckAsHtml } = await import('../services/presentationHtmlExportService.js');
@@ -1900,7 +1909,7 @@ router.post(
     const htmlBuffer = await exportDeckAsHtml({
       title: deck.title || 'Presentation',
       cards: deckData.cards || [],
-      theme: deckData.theme || {
+      theme: {
         primary: '#6366F1',
         secondary: '#8B5CF6',
         accent: '#EC4899',
@@ -2141,7 +2150,7 @@ router.post(
   '/decks/:deckId/agent-edit',
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
-    const { deckId } = req.params;
+    const deckId = String(req.params.deckId || '');
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const prompt = String(req.body?.prompt || '').trim();
@@ -2197,18 +2206,22 @@ router.post(
       ...buildDeckDiffSummary(deck, result.deck),
       editPlan: result.plan,
     };
-    await saveAiOperation({
-      operationId,
-      deckId,
-      organizationId: orgId,
-      userId,
-      originalDeckJson,
-      proposedDeckJson,
-      reply: result.reply,
-      actions: result.appliedActions,
-      diff,
-      createdAt: new Date().toISOString(),
-    }, prompt, row.version || 1);
+    await saveAiOperation(
+      {
+        operationId,
+        deckId,
+        organizationId: orgId,
+        userId,
+        originalDeckJson,
+        proposedDeckJson,
+        reply: result.reply,
+        actions: result.appliedActions,
+        diff,
+        createdAt: new Date().toISOString(),
+      },
+      prompt,
+      row.version || 1
+    );
     await recordPresentationRuntimeEvent({
       organizationId: orgId,
       deckId,
@@ -2256,7 +2269,8 @@ router.post(
   '/decks/:deckId/agent-edit/:operationId/accept',
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_approve')) return;
-    const { deckId, operationId } = req.params;
+    const deckId = String(req.params.deckId || '');
+    const operationId = String(req.params.operationId || '');
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const op = await getAiOperation(operationId);
@@ -2345,7 +2359,8 @@ router.post(
   '/decks/:deckId/agent-edit/:operationId/reject',
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_approve')) return;
-    const { deckId, operationId } = req.params;
+    const deckId = String(req.params.deckId || '');
+    const operationId = String(req.params.operationId || '');
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const op = await getAiOperation(operationId);
@@ -2395,7 +2410,8 @@ router.get(
 
     let qualityReport: any = null;
     try {
-      const { checkDeckQualityGates } = await import('../services/presentationQualityGatesService.js');
+      const { checkDeckQualityGates } =
+        await import('../services/presentationQualityGatesService.js');
       qualityReport = await checkDeckQualityGates(orgId, String(deckId));
     } catch (error) {
       logger.warn('[Presentations] Quality gates failed during governance-card build', error);
@@ -2420,7 +2436,8 @@ router.get(
 
     const confidentialityLevel = (() => {
       const direct = String(deckRow?.confidentiality || '').toLowerCase();
-      if (direct === 'public' || direct === 'internal' || direct === 'confidential') return direct as any;
+      if (direct === 'public' || direct === 'internal' || direct === 'confidential')
+        return direct as any;
       try {
         const parsed = deckRow?.deck_json ? JSON.parse(deckRow.deck_json) : null;
         const meta = String(parsed?.meta?.confidentiality || '').toLowerCase();
@@ -2489,10 +2506,7 @@ router.get(
             [orgId]
           )) as any[];
         } catch (innerError) {
-          logger.warn(
-            '[Presentations] Could not load decks for governance watchlist',
-            innerError
-          );
+          logger.warn('[Presentations] Could not load decks for governance watchlist', innerError);
           return res.status(500).json({
             success: false,
             error: 'Failed to load decks for governance watchlist',
@@ -2507,9 +2521,8 @@ router.get(
       }
     }
 
-    const { checkDeckQualityGates } = await import(
-      '../services/presentationQualityGatesService.js'
-    );
+    const { checkDeckQualityGates } =
+      await import('../services/presentationQualityGatesService.js');
 
     const warnings: string[] = [];
     const inputs: WatchlistEntryInput[] = [];
@@ -2518,8 +2531,7 @@ router.get(
       const deckId = String(deckRow?.id || '');
       if (!deckId) continue;
       const title = typeof deckRow?.title === 'string' ? deckRow.title : 'Untitled deck';
-      const updatedAt =
-        typeof deckRow?.updated_at === 'string' ? deckRow.updated_at : null;
+      const updatedAt = typeof deckRow?.updated_at === 'string' ? deckRow.updated_at : null;
       const confidentialityLevel = resolvePresentationDeckConfidentiality(deckRow);
 
       try {
@@ -2590,10 +2602,9 @@ router.get(
           },
         });
       } catch (error) {
-        const reason =
-          (error as any)?.message
-            ? String((error as any).message)
-            : 'governance_card_build_failed';
+        const reason = (error as any)?.message
+          ? String((error as any).message)
+          : 'governance_card_build_failed';
         warnings.push(`deck ${deckId}: ${reason}`);
         inputs.push({
           deckId,
@@ -2822,10 +2833,7 @@ function buildAnomalyContexts(
  * EMPTY set — i.e. throttling defaults to "allow write" so the operator
  * is never silently denied an alert because of a transient DB hiccup.
  */
-async function loadRecentAnomalySloIds(
-  orgId: string,
-  nowMs: number
-): Promise<Set<string>> {
+async function loadRecentAnomalySloIds(orgId: string, nowMs: number): Promise<Set<string>> {
   const cutoffIso = new Date(nowMs - ANOMALY_THROTTLE_MS).toISOString();
   try {
     const rows = (await dbAll(
@@ -2861,10 +2869,7 @@ async function loadRecentAnomalySloIds(
   }
 }
 
-function findSloCurrent(
-  slos: OperationsHealthReport['slos'],
-  sloId: string
-): number | null {
+function findSloCurrent(slos: OperationsHealthReport['slos'], sloId: string): number | null {
   const slo = slos.find((s) => s.id === sloId);
   return slo ? slo.observedNumeric : null;
 }
@@ -2927,9 +2932,7 @@ function escapeHtmlForAnomaly(value: string): string {
  * upstream PDF service template (which we deliberately do not modify
  * to keep the touch-blast small).
  */
-function renderAnomaliesHtmlFragment(
-  anomalies: OperationsHealthAnomaly[] | undefined
-): string {
+function renderAnomaliesHtmlFragment(anomalies: OperationsHealthAnomaly[] | undefined): string {
   const detected = (anomalies || []).filter((a) => a.status === 'detected');
   if (detected.length === 0) return '';
   const items = detected
@@ -2937,8 +2940,7 @@ function renderAnomaliesHtmlFragment(
       const severity = a.severity === 'major' ? 'Major' : 'Minor';
       const direction = a.direction || '';
       const z = typeof a.zScore === 'number' ? a.zScore.toFixed(2) : '—';
-      const baseline =
-        typeof a.baselineMean === 'number' ? a.baselineMean.toFixed(2) : '—';
+      const baseline = typeof a.baselineMean === 'number' ? a.baselineMean.toFixed(2) : '—';
       return `
         <li style="margin: 6px 0;">
           <span style="display:inline-block;background:#fb923c;color:#fff;border-radius:9999px;padding:1px 8px;font-size:9pt;font-weight:600;margin-right:6px;">${escapeHtmlForAnomaly(severity)} anomaly</span>
@@ -2999,12 +3001,7 @@ async function computeAnomaliesForReport(params: {
       baselineMean: v.verdict.baselineMean,
       zScore: v.verdict.zScore,
     }));
-    await emitAnomalyEventsBestEffort(
-      params.orgId,
-      params.nowMs,
-      anomalies,
-      params.report.slos
-    );
+    await emitAnomalyEventsBestEffort(params.orgId, params.nowMs, anomalies, params.report.slos);
     return anomalies;
   } catch (err) {
     logger.warn('[Presentations] Anomaly detection pipeline failed; degrading to empty', err);
@@ -3248,10 +3245,7 @@ async function loadOperationsHealthReport(params: {
 
 function clampOpsHealthWindowDays(raw: unknown): number {
   const n = Number(raw);
-  return Math.min(
-    Math.max(Number.isFinite(n) && n > 0 ? Math.round(n) : 7, 1),
-    30
-  );
+  return Math.min(Math.max(Number.isFinite(n) && n > 0 ? Math.round(n) : 7, 1), 30);
 }
 
 router.get(
@@ -3313,24 +3307,15 @@ router.get(
 
         if (result.status === 'pdf' && result.buffer) {
           res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader(
-            'Content-Disposition',
-            `attachment; filename="${result.filename}"`
-          );
+          res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
           res.setHeader('Cache-Control', 'no-store');
           res.setHeader('X-Operations-Health-Format', 'pdf');
           return res.status(200).send(result.buffer);
         }
 
-        const fallbackHtml = injectAnomaliesIntoExportHtml(
-          result.html ?? '',
-          report.anomalies
-        );
+        const fallbackHtml = injectAnomaliesIntoExportHtml(result.html ?? '', report.anomalies);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename="${result.filename}"`
-        );
+        res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('X-Operations-Health-Format-Fallback', 'html');
         if (result.fallbackReason) {
@@ -3351,15 +3336,9 @@ router.get(
           organizationName: orgId,
           generatedBy: getUserId(req),
         });
-        const renderedHtml = injectAnomaliesIntoExportHtml(
-          rendered.html,
-          report.anomalies
-        );
+        const renderedHtml = injectAnomaliesIntoExportHtml(rendered.html, report.anomalies);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename="${rendered.filename}"`
-        );
+        res.setHeader('Content-Disposition', `attachment; filename="${rendered.filename}"`);
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('X-Operations-Health-Format-Fallback', 'html');
         res.setHeader('X-Operations-Health-Fallback-Reason', 'pdf_renderer_crashed');
@@ -3373,21 +3352,14 @@ router.get(
       organizationName: orgId,
       generatedBy: getUserId(req),
     });
-    const renderedHtml = injectAnomaliesIntoExportHtml(
-      rendered.html,
-      report.anomalies
-    );
+    const renderedHtml = injectAnomaliesIntoExportHtml(rendered.html, report.anomalies);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${rendered.filename}"`
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${rendered.filename}"`);
     res.setHeader('Cache-Control', 'no-store');
     res.status(200).send(renderedHtml);
   })
 );
-
 
 // ---------------------------------------------------------------------------
 // Sprint 11: Operations Health drill-down per SLO
@@ -3577,9 +3549,7 @@ router.get(
       decks,
     });
 
-    const mergedWarnings = Array.from(
-      new Set([...(report.warnings || []), ...routeWarnings])
-    );
+    const mergedWarnings = Array.from(new Set([...(report.warnings || []), ...routeWarnings]));
 
     return res.json({
       success: true,
@@ -3624,9 +3594,7 @@ router.get(
 
     const referenceSetRaw = req.query.referenceSet;
     const referenceSet =
-      typeof referenceSetRaw === 'string' && referenceSetRaw.length > 0
-        ? referenceSetRaw
-        : 'dbr77';
+      typeof referenceSetRaw === 'string' && referenceSetRaw.length > 0 ? referenceSetRaw : 'dbr77';
 
     // Pull a generous slice (roughly one record per month, +50% headroom for
     // re-runs) and let the pure builder do the windowing math.
@@ -3949,9 +3917,7 @@ router.post(
       success: true,
       data: {
         savedSearch: result.record,
-        ...(result.warnings && result.warnings.length > 0
-          ? { warnings: result.warnings }
-          : {}),
+        ...(result.warnings && result.warnings.length > 0 ? { warnings: result.warnings } : {}),
       },
     });
   })
@@ -3964,9 +3930,7 @@ router.delete(
     const orgId = getOrgId(req);
     const id = String(req.params.id || '');
     if (!id) {
-      return res
-        .status(400)
-        .json({ success: false, error: 'Saved search id required' });
+      return res.status(400).json({ success: false, error: 'Saved search id required' });
     }
 
     const result = await deleteWatchlistSavedSearch(orgId, id);
@@ -4562,10 +4526,7 @@ router.post(
         userAgent: req.get('user-agent') || undefined,
       });
     } catch (error) {
-      logger.warn(
-        '[Presentations] dashboard-token revocation audit log failed',
-        error
-      );
+      logger.warn('[Presentations] dashboard-token revocation audit log failed', error);
     }
 
     return res.json({
@@ -4649,8 +4610,7 @@ router.post(
       typeof req.body?.signatureAlgorithm === 'string' ? req.body.signatureAlgorithm : null;
     const timestamp = typeof req.body?.timestamp === 'string' ? req.body.timestamp : null;
     const eventId = typeof req.body?.eventId === 'string' ? req.body.eventId : null;
-    const signingSecret =
-      typeof req.body?.signingSecret === 'string' ? req.body.signingSecret : '';
+    const signingSecret = typeof req.body?.signingSecret === 'string' ? req.body.signingSecret : '';
 
     const result = verifyInboxRequest({
       bodyJson,
@@ -4674,9 +4634,10 @@ router.post(
     if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
     const orgId = getOrgId(req);
 
-    const deckId = typeof req.body?.deckId === 'string' && req.body.deckId.trim()
-      ? String(req.body.deckId).trim()
-      : 'test-deck';
+    const deckId =
+      typeof req.body?.deckId === 'string' && req.body.deckId.trim()
+        ? String(req.body.deckId).trim()
+        : 'test-deck';
     const toVerdictRaw = String(req.body?.toVerdict || 'BLOCKED_P0');
     const toVerdict: AlertSeverity = ALERT_SEVERITIES.has(toVerdictRaw)
       ? (toVerdictRaw as AlertSeverity)
@@ -4744,9 +4705,8 @@ router.get(
       channel: String(row.channel),
       targetRedacted: row.target_redacted ? String(row.target_redacted) : null,
       status: String(row.status),
-      httpStatus: row.http_status === null || row.http_status === undefined
-        ? null
-        : Number(row.http_status),
+      httpStatus:
+        row.http_status === null || row.http_status === undefined ? null : Number(row.http_status),
       errorCategory: row.error_category ? String(row.error_category) : null,
       createdAt: row.created_at ? String(row.created_at) : null,
       sentAt: row.sent_at ? String(row.sent_at) : null,
@@ -4767,12 +4727,9 @@ router.get(
   '/decks/:deckId/audit-log',
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
-    const { deckId } = req.params;
+    const deckId = String(req.params.deckId || '');
     const orgId = getOrgId(req);
-    const limit = Math.min(
-      Math.max(parseInt(String(req.query.limit ?? '100'), 10) || 100, 1),
-      500
-    );
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '100'), 10) || 100, 1), 500);
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
 
     const [deckLevel, agentLevel] = await Promise.all([
@@ -4808,8 +4765,7 @@ router.get(
         scope:
           (row.metadata && typeof row.metadata === 'object' && (row.metadata.scope as string)) ||
           null,
-        operationId:
-          row.resourceType === 'presentation_deck_agent_edit' ? row.resourceId : null,
+        operationId: row.resourceType === 'presentation_deck_agent_edit' ? row.resourceId : null,
         summary: buildAuditEventSummary(row),
         metadata: row.metadata && typeof row.metadata === 'object' ? row.metadata : {},
       }))
@@ -4851,7 +4807,10 @@ router.get(
 
     const rawWindowDays = Number(req.query.windowDays);
     const windowDays = Math.min(
-      Math.max(Number.isFinite(rawWindowDays) && rawWindowDays > 0 ? Math.round(rawWindowDays) : 7, 1),
+      Math.max(
+        Number.isFinite(rawWindowDays) && rawWindowDays > 0 ? Math.round(rawWindowDays) : 7,
+        1
+      ),
       90
     );
 
@@ -4879,10 +4838,7 @@ router.get(
     if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
     const { deckId } = req.params;
     const orgId = getOrgId(req);
-    const limit = Math.min(
-      Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1),
-      200
-    );
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1), 200);
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
 
     try {
@@ -4903,7 +4859,8 @@ router.get(
           [deckId, orgId]
         )) as Record<string, any> | null;
         if (totalRow) {
-          const raw = (totalRow as any).c ?? (totalRow as any).count ?? (totalRow as any)['COUNT(*)'];
+          const raw =
+            (totalRow as any).c ?? (totalRow as any).count ?? (totalRow as any)['COUNT(*)'];
           const parsed = Number(raw);
           total = Number.isFinite(parsed) ? parsed : 0;
         }
@@ -5017,9 +4974,7 @@ router.post(
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     if (!orgId) {
-      return res
-        .status(400)
-        .json({ success: false, error: 'Missing organization context' });
+      return res.status(400).json({ success: false, error: 'Missing organization context' });
     }
     if (req.body?.confirm !== true) {
       return res.status(400).json({ success: false, error: 'Confirmation required' });
@@ -5110,10 +5065,8 @@ router.post(
     if (!eligibility.eligible) {
       const reasonMessageMap: Record<RevertEligibilityReason, string> = {
         operation_not_found: 'The original proposal could not be found.',
-        operation_not_applied:
-          'Only applied or accepted proposals can be reverted.',
-        operation_org_mismatch:
-          'This proposal does not belong to your organization.',
+        operation_not_applied: 'Only applied or accepted proposals can be reverted.',
+        operation_org_mismatch: 'This proposal does not belong to your organization.',
         no_snapshot: 'Pre-edit snapshot is missing for this operation.',
         deck_not_found: 'The deck this proposal targeted is no longer available.',
         newer_operation_exists:
@@ -5143,17 +5096,13 @@ router.post(
     }
 
     const versionBefore =
-      typeof deckRow.version === 'number' && Number.isFinite(deckRow.version)
-        ? deckRow.version
-        : 1;
+      typeof deckRow.version === 'number' && Number.isFinite(deckRow.version) ? deckRow.version : 1;
     const opVersionBefore =
       typeof versionBeforeRaw === 'number' && Number.isFinite(versionBeforeRaw)
         ? versionBeforeRaw
         : 0;
     const opVersionAfter =
-      typeof versionAfterRaw === 'number' && Number.isFinite(versionAfterRaw)
-        ? versionAfterRaw
-        : 0;
+      typeof versionAfterRaw === 'number' && Number.isFinite(versionAfterRaw) ? versionAfterRaw : 0;
     const newVersion = Math.max(versionBefore + 1, opVersionBefore + 1, opVersionAfter + 1);
 
     const diffSummary = buildDeckDiffSummary(currentDeckJson, snapshotDeckJson);
@@ -5285,9 +5234,7 @@ router.post(
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     if (!orgId) {
-      return res
-        .status(400)
-        .json({ success: false, error: 'Missing organization context' });
+      return res.status(400).json({ success: false, error: 'Missing organization context' });
     }
     if (req.body?.confirm !== true) {
       return res.status(400).json({ success: false, error: 'Confirmation required' });
@@ -5459,9 +5406,7 @@ router.post(
     }
 
     const versionBefore =
-      typeof deckRow.version === 'number' && Number.isFinite(deckRow.version)
-        ? deckRow.version
-        : 1;
+      typeof deckRow.version === 'number' && Number.isFinite(deckRow.version) ? deckRow.version : 1;
     const opVersionBefore =
       typeof baseSnapshot.versionBefore === 'number' && Number.isFinite(baseSnapshot.versionBefore)
         ? baseSnapshot.versionBefore
@@ -5506,10 +5451,7 @@ router.post(
         );
       } catch (touchError) {
         if (!isSchemaMissingError(touchError)) {
-          logger.warn(
-            '[Presentations] Could not touch reverted operation row in bulk',
-            touchError
-          );
+          logger.warn('[Presentations] Could not touch reverted operation row in bulk', touchError);
         }
       }
     }
@@ -5692,7 +5634,12 @@ router.get(
       res.json({ success: true, data: events });
     } catch (error: any) {
       if (isSchemaMissingError(error)) {
-        return res.json({ success: true, data: [], degraded: true, reason: 'telemetry_schema_missing' });
+        return res.json({
+          success: true,
+          data: [],
+          degraded: true,
+          reason: 'telemetry_schema_missing',
+        });
       }
       logger.warn('[Presentations] Could not load runtime events', error);
       res.status(500).json({ success: false, error: 'Failed to load runtime events' });
@@ -5806,7 +5753,7 @@ router.post(
         qualityReport: quality.report,
         errorCategory: 'quality_gate_blocked',
       });
-      return res.status(quality.status).json(quality.payload);
+      return res.status(quality.status ?? 422).json(quality.payload);
     }
 
     const deckData: any = normalizeDeckDocument(deck) || {};
@@ -6093,13 +6040,12 @@ router.get(
     if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
     const orgId = getOrgId(req);
     if (!orgId) {
-      return res
-        .status(400)
-        .json({ success: false, error: 'Missing organization context' });
+      return res.status(400).json({ success: false, error: 'Missing organization context' });
     }
 
     const limitRaw = typeof req.query.limit === 'string' ? Number(req.query.limit) : NaN;
-    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(100, Math.round(limitRaw)) : 12;
+    const limit =
+      Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(100, Math.round(limitRaw)) : 12;
     const referenceSetRaw =
       typeof req.query.referenceSet === 'string' ? req.query.referenceSet.trim() : '';
     const referenceSet = referenceSetRaw.length > 0 ? referenceSetRaw : undefined;

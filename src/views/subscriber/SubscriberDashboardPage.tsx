@@ -48,13 +48,7 @@ import {
   ShieldCheck,
   Wifi,
 } from 'lucide-react';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import SubscriberDashboardLayout from '../../components/Subscriber/SubscriberDashboardLayout';
 import SubscriberDispatchTable from '../../components/Subscriber/SubscriberDispatchTable';
@@ -119,8 +113,7 @@ const COPY = {
       'You have requested the dashboard too many times in a short period. Wait a minute and try again. We recommend polling no faster than once every 5 minutes.',
     storage_unavailable:
       'The dashboard backend is temporarily unable to reach its storage layer. This is usually transient — try again in a moment.',
-    network_error:
-      'We could not reach the dashboard. Check your connection and try again.',
+    network_error: 'We could not reach the dashboard. Check your connection and try again.',
   } as Record<SubscriberFetchStatus, string>,
 } as const;
 
@@ -337,14 +330,7 @@ function renderBody(props: BodyProps): React.ReactElement {
   } = props;
 
   if (errorStatus) {
-    return (
-      <ErrorView
-        status={errorStatus}
-        onSignOut={onSignOut}
-        onRetry={onRetry}
-        embed={embed}
-      />
-    );
+    return <ErrorView status={errorStatus} onSignOut={onSignOut} onRetry={onRetry} embed={embed} />;
   }
 
   if (!hasToken) {
@@ -397,13 +383,9 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
           >
             <KeyRound size={18} />
           </span>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            {COPY.title}
-          </h1>
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{COPY.title}</h1>
         </div>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          {COPY.subtitle}
-        </p>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{COPY.subtitle}</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
           <label
@@ -427,17 +409,11 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
             aria-describedby="subscriber-token-help"
           />
           {showInvalidHint && (
-            <p
-              role="status"
-              className="text-xs text-rose-600 dark:text-rose-300"
-            >
+            <p role="status" className="text-xs text-rose-600 dark:text-rose-300">
               {COPY.invalidTokenInline}
             </p>
           )}
-          <p
-            id="subscriber-token-help"
-            className="text-xs text-slate-500 dark:text-slate-400"
-          >
+          <p id="subscriber-token-help" className="text-xs text-slate-500 dark:text-slate-400">
             {COPY.tokenHelp}
           </p>
           <button
@@ -515,10 +491,7 @@ const HeaderStrip: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
         </p>
       </div>
       <div className="flex flex-col items-start gap-1 sm:items-end">
-        <SubscriberHealthBadge
-          overall={data.health.overall}
-          reasons={data.health.reasons}
-        />
+        <SubscriberHealthBadge overall={data.health.overall} reasons={data.health.reasons} />
         <p className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
           <Clock size={11} aria-hidden />
           Last refreshed: {formatClock(lastRefreshAt)}
@@ -531,8 +504,7 @@ const HeaderStrip: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
 const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) => {
   const [open, setOpen] = useState<boolean>(false);
   const overdue =
-    data.signature.daysSinceRotation !== null &&
-    data.signature.daysSinceRotation > 90;
+    data.signature.daysSinceRotation !== null && data.signature.daysSinceRotation > 90;
   const dueSoon =
     !overdue &&
     data.signature.rotationDueWithinDays !== null &&
@@ -582,16 +554,10 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
         className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
       >
         {COPY.signatureWhyTitle}
-        {open ? (
-          <ChevronUp size={12} aria-hidden />
-        ) : (
-          <ChevronDown size={12} aria-hidden />
-        )}
+        {open ? <ChevronUp size={12} aria-hidden /> : <ChevronDown size={12} aria-hidden />}
       </button>
       {open && (
-        <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
-          {COPY.signatureWhyBody}
-        </p>
+        <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{COPY.signatureWhyBody}</p>
       )}
     </div>
   );
@@ -641,11 +607,7 @@ const DeliveryColumn: React.FC<DeliveryColumnProps> = ({ label, agg }) => {
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300 sm:grid-cols-4">
         <DeliveryStat label={COPY.deliverySent} value={agg.sent} tone="emerald" />
         <DeliveryStat label={COPY.deliveryFailed} value={agg.failed} tone="rose" />
-        <DeliveryStat
-          label={COPY.deliverySuppressed}
-          value={agg.suppressed}
-          tone="slate"
-        />
+        <DeliveryStat label={COPY.deliverySuppressed} value={agg.suppressed} tone="slate" />
         <DeliveryStat label={COPY.deliveryDryRun} value={agg.dryRun} tone="sky" />
       </div>
     </div>
@@ -688,9 +650,7 @@ const ReasonsAndWarnings: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data
         {COPY.warningsHeading}
       </h3>
       {items.length === 0 ? (
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {COPY.noWarnings}
-        </p>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{COPY.noWarnings}</p>
       ) : (
         <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-700 dark:text-slate-300">
           {items.map((s) => (
@@ -743,16 +703,11 @@ const ErrorView: React.FC<ErrorViewProps> = ({ status, embed, onSignOut, onRetry
   const Icon = ERROR_ICON[status];
   const isAuthError = status === 'unauthorized' || status === 'forbidden';
   return (
-    <div
-      role="alert"
-      className={`rounded-lg border p-6 shadow-sm ${ERROR_TONE[status]}`}
-    >
+    <div role="alert" className={`rounded-lg border p-6 shadow-sm ${ERROR_TONE[status]}`}>
       <div className="flex items-start gap-3">
         <Icon size={20} className="mt-0.5 shrink-0" aria-hidden />
         <div className="flex-1">
-          <h2 className="text-base font-semibold">
-            {COPY.errorTitles[status] || 'Error'}
-          </h2>
+          <h2 className="text-base font-semibold">{COPY.errorTitles[status] || 'Error'}</h2>
           <p className="mt-1 text-sm opacity-90">
             {COPY.errorBodies[status] || 'An unexpected error occurred.'}
           </p>

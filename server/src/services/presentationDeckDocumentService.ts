@@ -153,7 +153,9 @@ function sourceRefsFromUnknown(input: unknown): DeckSourceRef[] {
             : null;
       return {
         artifact_id: String(ref?.artifact_id || ref?.artifactId || ref?.id || '').trim(),
-        artifact_type: String(ref?.artifact_type || ref?.artifactType || ref?.type || 'artifact').trim(),
+        artifact_type: String(
+          ref?.artifact_type || ref?.artifactType || ref?.type || 'artifact'
+        ).trim(),
         artifact_name: String(
           ref?.artifact_name || ref?.artifactName || ref?.name || ref?.label || 'Source'
         ).trim(),
@@ -254,16 +256,21 @@ function blocksFromUnifiedSlide(
       break;
     }
     case 'executive_summary': {
-      if (Array.isArray(content.key_findings)) push('bullet_list', { items: content.key_findings.map(String) });
-      if (Array.isArray(content.kpis) && content.kpis.length) push('metric_strip', { metrics: content.kpis }, true);
-      if (content.recommendation) push('callout', { text: String(content.recommendation), kind: 'recommendation' });
+      if (Array.isArray(content.key_findings))
+        push('bullet_list', { items: content.key_findings.map(String) });
+      if (Array.isArray(content.kpis) && content.kpis.length)
+        push('metric_strip', { metrics: content.kpis }, true);
+      if (content.recommendation)
+        push('callout', { text: String(content.recommendation), kind: 'recommendation' });
       break;
     }
     case 'key_messages': {
       const messages = Array.isArray(content.messages) ? content.messages : [];
       push('bullet_list', {
         items: messages.map((message: any) =>
-          message?.description ? `${String(message.title || '')}: ${String(message.description)}` : String(message?.title || message)
+          message?.description
+            ? `${String(message.title || '')}: ${String(message.description)}`
+            : String(message?.title || message)
         ),
       });
       break;
@@ -274,15 +281,21 @@ function blocksFromUnifiedSlide(
       break;
     }
     case 'initiative_portfolio': {
-      push('table', {
-        headers: ['Initiative', 'Priority', 'Timeline', 'Owner'],
-        rows: (Array.isArray(content.initiatives) ? content.initiatives : []).map((initiative: any) => [
-          String(initiative.name || ''),
-          String(initiative.priority || ''),
-          String(initiative.timeline || ''),
-          String(initiative.owner || ''),
-        ]),
-      }, true);
+      push(
+        'table',
+        {
+          headers: ['Initiative', 'Priority', 'Timeline', 'Owner'],
+          rows: (Array.isArray(content.initiatives) ? content.initiatives : []).map(
+            (initiative: any) => [
+              String(initiative.name || ''),
+              String(initiative.priority || ''),
+              String(initiative.timeline || ''),
+              String(initiative.owner || ''),
+            ]
+          ),
+        },
+        true
+      );
       break;
     }
     case 'roadmap': {
@@ -290,15 +303,19 @@ function blocksFromUnifiedSlide(
       break;
     }
     case 'risk_management': {
-      push('table', {
-        headers: ['Risk', 'Likelihood', 'Impact', 'Mitigation'],
-        rows: (Array.isArray(content.risks) ? content.risks : []).map((risk: any) => [
-          String(risk.risk || risk.title || ''),
-          String(risk.likelihood || risk.probability || ''),
-          String(risk.impact || ''),
-          String(risk.mitigation || ''),
-        ]),
-      }, true);
+      push(
+        'table',
+        {
+          headers: ['Risk', 'Likelihood', 'Impact', 'Mitigation'],
+          rows: (Array.isArray(content.risks) ? content.risks : []).map((risk: any) => [
+            String(risk.risk || risk.title || ''),
+            String(risk.likelihood || risk.probability || ''),
+            String(risk.impact || ''),
+            String(risk.mitigation || ''),
+          ]),
+        },
+        true
+      );
       break;
     }
     case 'next_steps': {
@@ -310,7 +327,8 @@ function blocksFromUnifiedSlide(
           String(action.deadline || ''),
         ]),
       });
-      if (content.closing_message) push('callout', { text: String(content.closing_message), kind: 'closing' });
+      if (content.closing_message)
+        push('callout', { text: String(content.closing_message), kind: 'closing' });
       break;
     }
     case 'appendix': {
@@ -326,7 +344,12 @@ function blocksFromUnifiedSlide(
   }
 
   const narrative = (slide as any)._narrative_enrichment;
-  if (narrative?.content && !blocks.some((block) => String(block.content?.text || '').includes(String(narrative.content).slice(0, 60)))) {
+  if (
+    narrative?.content &&
+    !blocks.some((block) =>
+      String(block.content?.text || '').includes(String(narrative.content).slice(0, 60))
+    )
+  ) {
     push('paragraph', {
       text: String(narrative.content),
       factsUsed: narrative.facts_used ?? 0,
@@ -364,7 +387,8 @@ export function deckDocumentFromUnifiedJson(params: {
       ...baseSourceRefs,
       ...sourceRefsFromUnknown((slide as any).source_refs),
     ]);
-    const cardId = (slide as any).slide_id || (slide as any).card_id || `card-${params.deckId}-${index}`;
+    const cardId =
+      (slide as any).slide_id || (slide as any).card_id || `card-${params.deckId}-${index}`;
     const blocks = blocksFromUnifiedSlide(params.deckId, cardId, slide, index, slideRefs);
     return {
       card_id: cardId,
@@ -383,6 +407,8 @@ export function deckDocumentFromUnifiedJson(params: {
       key_message: slide.key_message,
       blocks,
       source_refs: slideRefs,
+      speaker_notes:
+        typeof (slide as any).speaker_notes === 'string' ? (slide as any).speaker_notes : '',
       has_refreshable_data: blocks.some((block) => block.is_refreshable),
       background: {
         type: slide.intent === 'cover' ? 'gradient' : 'theme',
@@ -395,7 +421,9 @@ export function deckDocumentFromUnifiedJson(params: {
   const sourceRefs = uniqueSourceRefs([
     ...baseSourceRefs,
     ...cards.flatMap((card) => card.source_refs),
-    ...cards.flatMap((card) => card.blocks.map((block) => block.source_ref).filter(Boolean) as DeckSourceRef[]),
+    ...cards.flatMap(
+      (card) => card.blocks.map((block) => block.source_ref).filter(Boolean) as DeckSourceRef[]
+    ),
   ]);
 
   return {
@@ -537,7 +565,10 @@ function deckDocumentFromLegacyDeckJson(row: any, deckJson: any): DeckDocument {
       exportedAt: row?.exported_at || null,
     },
     generation: deckJson.generation || { outline: [], generationSettings: {}, warnings: [] },
-    delivery: deckJson.delivery || { exportFormat: row?.export_format || null, exportPath: row?.export_path || null },
+    delivery: deckJson.delivery || {
+      exportFormat: row?.export_format || null,
+      exportPath: row?.export_path || null,
+    },
     traceability: deckJson.traceability || { sourceRefs, sourceArtifacts: [] },
     ai: deckJson.ai || { reviewState: 'clean' },
     created_by: String(row?.generated_by || row?.created_by || deckJson.created_by || 'system'),
@@ -551,10 +582,14 @@ function textFromBlock(block: DeckCardBlock): string {
   if (typeof content.text === 'string') return content.text;
   if (Array.isArray(content.items)) return content.items.map(String).join(' · ');
   if (Array.isArray((content as any).metrics)) {
-    return (content as any).metrics.map((metric: any) => `${metric.label || metric.name}: ${metric.value ?? ''}`).join(' · ');
+    return (content as any).metrics
+      .map((metric: any) => `${metric.label || metric.name}: ${metric.value ?? ''}`)
+      .join(' · ');
   }
   if (Array.isArray((content as any).rows)) {
-    return (content as any).rows.map((row: any) => (Array.isArray(row) ? row.join(' · ') : String(row))).join(' | ');
+    return (content as any).rows
+      .map((row: any) => (Array.isArray(row) ? row.join(' · ') : String(row)))
+      .join(' | ');
   }
   return '';
 }
@@ -565,7 +600,8 @@ export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON
     project: deck.title,
     date: new Date().toISOString().slice(0, 10),
     author: 'Consultify',
-    confidentiality: (deck.meta?.confidentiality as UnifiedReportMeta['confidentiality']) || 'internal',
+    confidentiality:
+      (deck.meta?.confidentiality as UnifiedReportMeta['confidentiality']) || 'internal',
     language: (deck.meta?.language as UnifiedReportMeta['language']) || 'en',
     template: (deck.meta?.theme as UnifiedReportMeta['template']) || 'corporate',
   };
@@ -574,7 +610,8 @@ export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON
     .sort((a, b) => a.order_index - b.order_index)
     .map((card) => {
       const bodyBlocks = (card.blocks || []).filter((block) => block.type !== 'heading');
-      const firstText = bodyBlocks.map(textFromBlock).find(Boolean) || card.key_message || card.title;
+      const firstText =
+        bodyBlocks.map(textFromBlock).find(Boolean) || card.key_message || card.title;
       const sourceRefs = uniqueSourceRefs([
         ...sourceRefsFromUnknown(card.source_refs),
         ...sourceRefsFromUnknown(bodyBlocks.map((block) => block.source_ref).filter(Boolean)),
@@ -584,7 +621,12 @@ export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON
         intent: (card.intent || 'key_messages') as SlideIntent,
         key_message: card.key_message || card.title,
         content: {
-          type: card.intent === 'cover' ? 'cover' : card.intent === 'appendix' ? 'appendix' : 'key_messages',
+          type:
+            card.intent === 'cover'
+              ? 'cover'
+              : card.intent === 'appendix'
+                ? 'appendix'
+                : 'key_messages',
           ...(card.intent === 'cover'
             ? {
                 title: card.title,
@@ -597,7 +639,10 @@ export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON
               ? { title: card.title, body: firstText }
               : {
                   messages: bodyBlocks.length
-                    ? bodyBlocks.map((block) => ({ title: block.type.replace(/_/g, ' '), description: textFromBlock(block) }))
+                    ? bodyBlocks.map((block) => ({
+                        title: block.type.replace(/_/g, ' '),
+                        description: textFromBlock(block),
+                      }))
                     : [{ title: card.title, description: firstText }],
                 }),
         } as any,

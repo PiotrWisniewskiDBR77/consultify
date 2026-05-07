@@ -106,7 +106,10 @@ export function buildBrandLayoutSystem(params: {
   };
 }
 
-export function applyBrandLayoutSystem(deck: DeckDocument, system: DeckBrandLayoutSystem): DeckDocument {
+export function applyBrandLayoutSystem(
+  deck: DeckDocument,
+  system: DeckBrandLayoutSystem
+): DeckDocument {
   const cards = deck.cards.map((card: DeckDocumentCard, index) => ({
     ...card,
     layout_id: system.layoutLibrary[String(card.intent)] || card.layout_id || 'content-card',

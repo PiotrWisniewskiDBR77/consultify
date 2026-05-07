@@ -8,7 +8,7 @@
  */
 
 import { Download, FileText, Loader2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import Button from '@/components/ui/primitives/Button';
@@ -17,9 +17,20 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
-import { exportDocumentStudioArtifact } from './api';
+import {
+  exportDocumentStudioArtifact,
+  getDocumentStudioPolicy,
+  QaBlockingError,
+  QaOverrideUnauthorizedError,
+} from './api';
 import { DocumentStudioEditorPanel } from './DocumentStudioEditorPanel';
-import type { DocumentSchema, DocumentSection } from './types';
+import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
+import type {
+  DocumentQaReport,
+  DocumentSchema,
+  DocumentSection,
+  DocumentStudioPolicy,
+} from './types';
 
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
@@ -117,6 +128,28 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const [exportNote, setExportNote] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [openingBuilder, setOpeningBuilder] = useState(false);
+  /** When set, the previous export attempt was QA-blocked. The user can resolve findings or invoke the audited override. */
+  const [qaBlock, setQaBlock] = useState<{
+    format: 'markdown' | 'docx' | 'pdf';
+    report: DocumentQaReport;
+  } | null>(null);
+  /** Cached policy snapshot; controls whether the override button is rendered. */
+  const [policy, setPolicy] = useState<DocumentStudioPolicy | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getDocumentStudioPolicy()
+      .then((next) => {
+        if (!cancelled) setPolicy(next);
+      })
+      .catch(() => {
+        // Default deny: leave policy null → override button stays hidden.
+        if (!cancelled) setPolicy({ canOverrideQa: false, role: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const sourceCount = schema.sourceRefs.length;
   const assumptionCount = useMemo(
@@ -169,18 +202,30 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   };
 
-  const handleExport = async (format: 'markdown' | 'docx' | 'pdf'): Promise<void> => {
+  const handleExport = async (
+    format: 'markdown' | 'docx' | 'pdf',
+    options: { qaOverride?: boolean } = {}
+  ): Promise<void> => {
     setExporting(format);
     setExportError(null);
     setExportNote(null);
+    if (!options.qaOverride) setQaBlock(null);
     try {
-      const payload = await exportDocumentStudioArtifact(artifactId, format);
+      const payload = await exportDocumentStudioArtifact(artifactId, format, {
+        qaOverride: options.qaOverride === true,
+      });
       const manifest = (payload.manifest ?? {}) as Record<string, unknown>;
       const pending = manifest.pendingRendering as string | undefined;
       const pendingNote = manifest.pendingRenderingNote as string | undefined;
 
       if (typeof payload.contentBase64 === 'string' && payload.contentBase64.length > 0) {
         triggerBinaryDownload(payload.filename, payload.contentBase64, mimeForFormat(format));
+        if (manifest.qaOverride === true) {
+          setExportNote(
+            'Exported with QA override. The override has been recorded in the audit trail.'
+          );
+        }
+        setQaBlock(null);
         return;
       }
       if (typeof payload.contentText === 'string' && payload.contentText.length > 0) {
@@ -193,10 +238,34 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
               `${format.toUpperCase()} export is pending finalization. Markdown is available now.`
           );
         }
+        if (manifest.qaOverride === true) {
+          setExportNote(
+            'Exported with QA override. The override has been recorded in the audit trail.'
+          );
+        }
+        setQaBlock(null);
         return;
       }
       setExportNote('Export returned no content.');
     } catch (err) {
+      if (err instanceof QaBlockingError) {
+        setQaBlock({ format, report: err.report });
+        setExportError(
+          'Export blocked by Quality QA. Resolve the findings below or use the audited override.'
+        );
+        return;
+      }
+      if (err instanceof QaOverrideUnauthorizedError) {
+        // The frontend hides the override button for non-privileged users,
+        // but a stale policy or deep link can still surface this — refresh
+        // the cached policy and show a clear message.
+        setPolicy({ canOverrideQa: false, role: err.role ?? null });
+        setExportError(
+          err.message ||
+            'You are not authorized to override the export QA gate. Ask a privileged reviewer.'
+        );
+        return;
+      }
       setExportError(err instanceof Error ? err.message : 'Export failed');
     } finally {
       setExporting(null);
@@ -322,12 +391,80 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         </div>
       ) : null}
 
+      {qaBlock ? (
+        <div
+          role="alert"
+          className="mx-6 mt-3 rounded-md border border-danger-500/40 bg-danger-500/5 px-3 py-3 text-xs dark:border-danger-400/30 dark:bg-danger-500/10"
+        >
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="font-semibold text-danger-700 dark:text-danger-300">
+              QA blocked the {qaBlock.format.toUpperCase()} export
+            </span>
+            <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
+              {qaBlock.report.categories.filter((c) => c.blocking).length} blocking categor
+              {qaBlock.report.categories.filter((c) => c.blocking).length === 1 ? 'y' : 'ies'}
+            </span>
+          </div>
+          <ul className="mb-2 space-y-1 text-slate-700 dark:text-slate-200">
+            {qaBlock.report.categories
+              .filter((c) => c.blocking)
+              .map((c) => (
+                <li key={c.category}>
+                  <span className="font-medium uppercase tracking-wide">{c.category}</span>
+                  <span className="ml-2 text-slate-500 dark:text-slate-400">
+                    score {c.score}/100 · {c.findings.length} finding
+                    {c.findings.length === 1 ? '' : 's'}
+                  </span>
+                </li>
+              ))}
+          </ul>
+          <p className="mb-2 text-slate-600 dark:text-slate-300">
+            Resolve the findings in the QA panel below, or proceed with an audited override if the
+            export is time-critical and you accept the risk.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setQaBlock(null)}
+              disabled={exporting !== null}
+            >
+              Dismiss
+            </Button>
+            {policy?.canOverrideQa ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="border border-danger-400/40 text-danger-700 hover:bg-danger-500/10 dark:text-danger-300"
+                onClick={() => handleExport(qaBlock.format, { qaOverride: true })}
+                disabled={exporting !== null}
+              >
+                <span className="inline-flex items-center gap-1">
+                  {exporting === qaBlock.format ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : null}
+                  Override and export (audited)
+                </span>
+              </Button>
+            ) : (
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                Override requires admin or manager role
+                {policy?.role ? ` — your role: ${policy.role}` : ''}.
+              </span>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-3 overflow-y-auto p-6">
         <DocumentStudioEditorPanel
           artifactId={artifactId}
           schema={schema}
           onSchemaUpdated={onSchemaUpdated}
         />
+        <DocumentStudioQaPanel artifactId={artifactId} />
         {schema.sections.map((section, idx) => renderSectionPreview(section, idx))}
       </div>
     </div>

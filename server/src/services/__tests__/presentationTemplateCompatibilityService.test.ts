@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { normalizeTemplatePayload } from '../presentationTemplateCompatibilityService.js';
 
 describe('presentationTemplateCompatibilityService', () => {

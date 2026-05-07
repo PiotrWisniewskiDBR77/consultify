@@ -37,11 +37,7 @@ export interface SloIndicator {
   status: SloStatus;
 }
 
-export type JobId =
-  | 'retention_telemetry'
-  | 'weekly_digest'
-  | 'governance_ci_gate'
-  | 'alert_worker';
+export type JobId = 'retention_telemetry' | 'weekly_digest' | 'governance_ci_gate' | 'alert_worker';
 
 export interface JobRunSnapshot {
   jobId: JobId;
@@ -64,11 +60,7 @@ export interface AlertActivity {
   pausedSubscriptions: number;
 }
 
-export type AnomalyStatus =
-  | 'detected'
-  | 'no_anomaly'
-  | 'insufficient_data'
-  | 'invalid_input';
+export type AnomalyStatus = 'detected' | 'no_anomaly' | 'insufficient_data' | 'invalid_input';
 
 export type AnomalyDirection = 'above' | 'below';
 export type AnomalySeverity = 'minor' | 'major';
@@ -116,12 +108,7 @@ const ALLOWED_SLO_IDS = new Set<SloIndicatorId>([
   'export_blocked_rate',
 ]);
 
-const ALLOWED_SLO_STATUS = new Set<SloStatus>([
-  'pass',
-  'at_risk',
-  'breach',
-  'inconclusive',
-]);
+const ALLOWED_SLO_STATUS = new Set<SloStatus>(['pass', 'at_risk', 'breach', 'inconclusive']);
 
 const ALLOWED_JOB_IDS = new Set<JobId>([
   'retention_telemetry',
@@ -130,11 +117,7 @@ const ALLOWED_JOB_IDS = new Set<JobId>([
   'alert_worker',
 ]);
 
-const ALLOWED_JOB_STATUS = new Set<JobRunSnapshot['lastRunStatus']>([
-  'pass',
-  'fail',
-  'unknown',
-]);
+const ALLOWED_JOB_STATUS = new Set<JobRunSnapshot['lastRunStatus']>(['pass', 'fail', 'unknown']);
 
 const ALLOWED_ANOMALY_STATUS = new Set<AnomalyStatus>([
   'detected',
@@ -388,9 +371,7 @@ export async function fetchPresentationOperationsHealth(
       const res = await apiAny.get(path);
       const payload = isRecord(res) && 'data' in res ? (res as { data: unknown }).data : res;
       const innerData =
-        isRecord(payload) && 'data' in payload
-          ? (payload as { data: unknown }).data
-          : payload;
+        isRecord(payload) && 'data' in payload ? (payload as { data: unknown }).data : payload;
       const data = normalizeReport(innerData);
       if (!data) return { status: 'error', error: 'invalid_payload' };
       return { status: 'ok', data };
@@ -408,8 +389,7 @@ export async function fetchPresentationOperationsHealth(
       return { status: 'error', error: `http_${res.status}` };
     }
     const json: unknown = await res.json().catch(() => null);
-    const innerData =
-      isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
+    const innerData = isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
     const data = normalizeReport(innerData);
     if (!data) return { status: 'error', error: 'invalid_payload' };
     return { status: 'ok', data };

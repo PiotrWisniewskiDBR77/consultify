@@ -23,11 +23,7 @@ export type SavedSearchVerdict =
   | 'BLOCKED_P0'
   | 'INCONCLUSIVE';
 
-export type SavedSearchConfidentiality =
-  | 'PUBLIC'
-  | 'INTERNAL'
-  | 'CONFIDENTIAL'
-  | 'RESTRICTED';
+export type SavedSearchConfidentiality = 'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
 
 export interface ClientSavedSearchFilters {
   verdicts?: SavedSearchVerdict[];
@@ -49,11 +45,7 @@ export interface ClientSavedSearchRecord {
   createdBy: string | null;
 }
 
-export type SavedSearchFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'unavailable';
+export type SavedSearchFetchStatus = 'ok' | 'error' | 'forbidden' | 'unavailable';
 
 export interface FetchSavedSearchesResult {
   status: SavedSearchFetchStatus;
@@ -88,11 +80,7 @@ export interface CreateSavedSearchResult {
   error?: string;
 }
 
-export type DeleteSavedSearchStatus =
-  | 'ok'
-  | 'not_found'
-  | 'forbidden'
-  | 'unavailable';
+export type DeleteSavedSearchStatus = 'ok' | 'not_found' | 'forbidden' | 'unavailable';
 
 export interface DeleteSavedSearchResult {
   status: DeleteSavedSearchStatus;
@@ -174,9 +162,7 @@ function normalizeRecord(raw: unknown): ClientSavedSearchRecord | null {
   const id = asString(raw.id);
   if (!id) return null;
   const useCountRaw =
-    typeof raw.useCount === 'number'
-      ? raw.useCount
-      : Number(raw.useCount ?? 0) || 0;
+    typeof raw.useCount === 'number' ? raw.useCount : Number(raw.useCount ?? 0) || 0;
   return {
     id,
     organizationId: asString(raw.organizationId),
@@ -326,9 +312,10 @@ export async function createSavedSearch(
           return { status: 'name_conflict', error: 'name_taken' };
         }
         if (err.status === 400) {
-          const errors = isRecord(err.data) && Array.isArray(err.data.errors)
-            ? err.data.errors.filter((e: unknown): e is string => typeof e === 'string')
-            : undefined;
+          const errors =
+            isRecord(err.data) && Array.isArray(err.data.errors)
+              ? err.data.errors.filter((e: unknown): e is string => typeof e === 'string')
+              : undefined;
           return {
             status: 'invalid',
             error: safeMessage(err) || 'invalid',
@@ -377,9 +364,7 @@ export async function createSavedSearch(
   }
 }
 
-export async function deleteSavedSearch(
-  id: string
-): Promise<DeleteSavedSearchResult> {
+export async function deleteSavedSearch(id: string): Promise<DeleteSavedSearchResult> {
   const safeId = encodeURIComponent(String(id || '').trim());
   if (!safeId) return { status: 'unavailable', error: 'id_required' };
   const path = `${BASE_PATH}/${safeId}`;
@@ -413,9 +398,7 @@ export async function deleteSavedSearch(
   }
 }
 
-export async function markSavedSearchUsed(
-  id: string
-): Promise<MarkSavedSearchUsedResult> {
+export async function markSavedSearchUsed(id: string): Promise<MarkSavedSearchUsedResult> {
   const safeId = encodeURIComponent(String(id || '').trim());
   if (!safeId) return { status: 'unavailable' };
   const path = `${BASE_PATH}/${safeId}/mark-used`;

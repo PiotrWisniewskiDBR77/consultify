@@ -16,12 +16,7 @@ export interface PresentationAuditLogEvent {
   metadata: Record<string, unknown>;
 }
 
-export type AuditLogFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'not_found'
-  | 'unavailable';
+export type AuditLogFetchStatus = 'ok' | 'error' | 'forbidden' | 'not_found' | 'unavailable';
 
 export interface AuditLogFetchResult {
   status: AuditLogFetchStatus;

@@ -144,7 +144,10 @@ function buildDeckTitleIndex(decks: DigestInputDeck[]): Map<string, string> {
   const map = new Map<string, string>();
   for (const deck of decks) {
     if (deck && typeof deck.id === 'string' && deck.id.length > 0) {
-      map.set(deck.id, typeof deck.title === 'string' && deck.title.length > 0 ? deck.title : deck.id);
+      map.set(
+        deck.id,
+        typeof deck.title === 'string' && deck.title.length > 0 ? deck.title : deck.id
+      );
     }
   }
   return map;
@@ -239,9 +242,7 @@ function buildTopBlockedDecks(
   return blocked;
 }
 
-function buildGovernanceTotals(
-  verdicts: DigestInputGovernanceVerdict[]
-): DigestGovernanceTotals {
+function buildGovernanceTotals(verdicts: DigestInputGovernanceVerdict[]): DigestGovernanceTotals {
   const totals: DigestGovernanceTotals = {
     pass: 0,
     passWithP2: 0,

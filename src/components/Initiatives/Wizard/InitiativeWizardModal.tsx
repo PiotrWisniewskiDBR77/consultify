@@ -842,9 +842,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             Shortlist gate zablokował „Utwórz drafty”
           </div>
           <p className="mt-1 text-xs text-rose-800 dark:text-rose-100/80">
-            Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence
-            „contradicted”, statusem „needs_evidence” lub bez evidenceRefs nie mogą zostać
-            promowani do draftu.
+            Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence „contradicted”,
+            statusem „needs_evidence” lub bez evidenceRefs nie mogą zostać promowani do draftu.
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {shortlistGateBlockers.map((blocker) => (

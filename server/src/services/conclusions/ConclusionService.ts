@@ -124,7 +124,11 @@ function deriveConclusionStatus(row: any): ConclusionStatus {
   const evidenceCount = Number(row.evidence_count || 0);
 
   if (reviewStatus === 'published' || row.insight_status === 'published') return 'published';
-  if (confidence === 'insufficient' || evidenceCount === 0 || readbackStatus === 'needs_more_evidence') {
+  if (
+    confidence === 'insufficient' ||
+    evidenceCount === 0 ||
+    readbackStatus === 'needs_more_evidence'
+  ) {
     return 'needs_evidence';
   }
   if (confidence === 'contradicted' || readbackStatus === 'challenged_by_client') {
@@ -262,7 +266,9 @@ async function upsertInterviewFindingConclusion(row: any, actorUserId: string): 
     },
   ];
   const evidenceRefs: EvidenceRef[] = safeJsonArray<any>(row.evidence_json)
-    .filter((ptr: any) => ptr && typeof ptr === 'object' && (ptr.source_ref || ptr.sourceRef || ptr.id))
+    .filter(
+      (ptr: any) => ptr && typeof ptr === 'object' && (ptr.source_ref || ptr.sourceRef || ptr.id)
+    )
     .map((ptr: any) => ({
       type: String(ptr.pointer_type || ptr.type || 'evidence'),
       ref: String(ptr.source_ref || ptr.sourceRef || ptr.id || ''),
@@ -270,7 +276,10 @@ async function upsertInterviewFindingConclusion(row: any, actorUserId: string): 
     }));
   const sourcePackId = `sp_interview_${findingId}`;
   const status = deriveConclusionStatus(row);
-  const title = String(row.insight_title || row.finding_statement || 'Interview finding').slice(0, 180);
+  const title = String(row.insight_title || row.finding_statement || 'Interview finding').slice(
+    0,
+    180
+  );
   const projectId = row.project_id || null;
   const sourceRefsJson = JSON.stringify(sourceRefs);
 
@@ -483,8 +492,9 @@ export class ConclusionService {
 
   async syncInterviewFindings(organizationId: string, actorUserId: string): Promise<number> {
     await ensureTables();
-    const rows = await queryHelpers.queryAll<any>(
-      `SELECT
+    const rows = await queryHelpers
+      .queryAll<any>(
+        `SELECT
         f.id AS finding_id,
         f.organization_id,
         f.insight_id,
@@ -503,16 +513,19 @@ export class ConclusionService {
        JOIN interview_insights i ON i.id = f.insight_id AND i.organization_id = f.organization_id
        WHERE f.organization_id = ?
        ORDER BY f.updated_at DESC`,
-      [organizationId]
-    ).catch(() => []);
+        [organizationId]
+      )
+      .catch(() => []);
 
     for (const row of rows) {
-      const evidenceRows = await queryHelpers.queryAll<any>(
-        `SELECT id, pointer_type, source_ref, captured_excerpt, pointer_state
+      const evidenceRows = await queryHelpers
+        .queryAll<any>(
+          `SELECT id, pointer_type, source_ref, captured_excerpt, pointer_state
          FROM interview_insight_evidence_pointers
          WHERE finding_id = ? AND insight_id = ? AND organization_id = ?`,
-        [row.finding_id, row.insight_id, organizationId]
-      ).catch(() => []);
+          [row.finding_id, row.insight_id, organizationId]
+        )
+        .catch(() => []);
       const activeEvidenceRows = evidenceRows.filter(
         (ptr) => String(ptr.pointer_state || '') !== 'removed'
       );
@@ -525,15 +538,17 @@ export class ConclusionService {
 
   async syncAssessmentReports(organizationId: string, actorUserId: string): Promise<number> {
     await ensureTables();
-    const rows = await queryHelpers.queryAll<any>(
-      `SELECT id, organization_id, project_id, title, report_type, executive_summary,
+    const rows = await queryHelpers
+      .queryAll<any>(
+        `SELECT id, organization_id, project_id, title, report_type, executive_summary,
               recommendations, detailed_analysis, status, created_by, created_at, updated_at
        FROM assessment_reports
        WHERE organization_id = ?
        ORDER BY updated_at DESC
        LIMIT 100`,
-      [organizationId]
-    ).catch(() => []);
+        [organizationId]
+      )
+      .catch(() => []);
 
     for (const row of rows) {
       const recommendations = safeJsonArray<any>(row.recommendations);
@@ -563,8 +578,15 @@ export class ConclusionService {
           },
         ],
         confidenceLevel: row.status === 'approved' ? 'medium' : 'low',
-        limits: 'Assessment conclusion derived from report-level recommendations; validate source evidence before execution.',
-        evidenceRefs: [{ type: 'assessment_report', ref: String(row.id), excerpt: row.executive_summary || null }],
+        limits:
+          'Assessment conclusion derived from report-level recommendations; validate source evidence before execution.',
+        evidenceRefs: [
+          {
+            type: 'assessment_report',
+            ref: String(row.id),
+            excerpt: row.executive_summary || null,
+          },
+        ],
         recommendedNextAction:
           typeof firstRecommendation === 'string'
             ? firstRecommendation
@@ -580,19 +602,22 @@ export class ConclusionService {
 
   async syncToolOutputs(organizationId: string, actorUserId: string): Promise<number> {
     await ensureTables();
-    const rows = await queryHelpers.queryAll<any>(
-      `SELECT id, organization_id, project_id, name, tool_type, status, confidence_avg,
+    const rows = await queryHelpers
+      .queryAll<any>(
+        `SELECT id, organization_id, project_id, name, tool_type, status, confidence_avg,
               output_json, answers_json, context_snapshot, created_by, updated_at
        FROM tool_sessions
        WHERE organization_id = ?
          AND UPPER(COALESCE(status, '')) IN ('APPROVED', 'GENERATED', 'REVIEW')
        ORDER BY updated_at DESC
        LIMIT 100`,
-      [organizationId]
-    ).catch(() => []);
+        [organizationId]
+      )
+      .catch(() => []);
 
     for (const row of rows) {
-      const output = safeJsonArray<any>(row.output_json)[0] || row.output_json || row.context_snapshot;
+      const output =
+        safeJsonArray<any>(row.output_json)[0] || row.output_json || row.context_snapshot;
       const statement =
         typeof output === 'string'
           ? output
@@ -612,10 +637,14 @@ export class ConclusionService {
           },
         ],
         confidenceLevel: Number(row.confidence_avg || 0) >= 0.7 ? 'medium' : 'low',
-        limits: 'Tool-derived conclusion; validate assumptions and source inputs before converting to execution.',
-        evidenceRefs: [{ type: 'tool_session', ref: String(row.id), excerpt: row.context_snapshot || null }],
+        limits:
+          'Tool-derived conclusion; validate assumptions and source inputs before converting to execution.',
+        evidenceRefs: [
+          { type: 'tool_session', ref: String(row.id), excerpt: row.context_snapshot || null },
+        ],
         recommendedNextAction: row.name || null,
-        status: String(row.status || '').toUpperCase() === 'APPROVED' ? 'published' : 'needs_review',
+        status:
+          String(row.status || '').toUpperCase() === 'APPROVED' ? 'published' : 'needs_review',
         createdBy: row.created_by || actorUserId,
         contextSummary: row.context_snapshot || row.answers_json || '',
       });
@@ -624,7 +653,10 @@ export class ConclusionService {
     return rows.length;
   }
 
-  async syncAllSources(organizationId: string, actorUserId: string): Promise<Record<string, number>> {
+  async syncAllSources(
+    organizationId: string,
+    actorUserId: string
+  ): Promise<Record<string, number>> {
     const [interview, assessment, tools] = await Promise.all([
       this.syncInterviewFindings(organizationId, actorUserId),
       this.syncAssessmentReports(organizationId, actorUserId),

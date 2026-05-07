@@ -131,15 +131,7 @@ function safeParseDate(iso: string | null | undefined): number | null {
  */
 function nextUtcMidnight(ms: number): number {
   const day = new Date(ms);
-  return Date.UTC(
-    day.getUTCFullYear(),
-    day.getUTCMonth(),
-    day.getUTCDate() + 1,
-    0,
-    0,
-    0,
-    0
-  );
+  return Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate() + 1, 0, 0, 0, 0);
 }
 
 function clampPositiveInt(value: number, lo: number, hi: number, fallback: number): number {
@@ -174,11 +166,7 @@ interface BucketRange {
   endMs: number;
 }
 
-function buildBuckets(
-  nowMs: number,
-  windowDays: number,
-  bucketDays: number
-): BucketRange[] {
+function buildBuckets(nowMs: number, windowDays: number, bucketDays: number): BucketRange[] {
   const newestEndMs = nextUtcMidnight(nowMs);
   const bucketCount = Math.max(1, Math.ceil(windowDays / bucketDays));
   const ranges: BucketRange[] = [];
@@ -394,10 +382,7 @@ interface DeckAccumulator {
   blocked: number;
 }
 
-function ensureDeckAcc(
-  buckets: Map<string, DeckAccumulator>,
-  deckId: string
-): DeckAccumulator {
+function ensureDeckAcc(buckets: Map<string, DeckAccumulator>, deckId: string): DeckAccumulator {
   const existing = buckets.get(deckId);
   if (existing) return existing;
   const fresh: DeckAccumulator = {
@@ -442,9 +427,7 @@ function topDecksForLatency(
   for (const v of acc.values()) {
     if (v.durations.length === 0) continue;
     const observed =
-      v.durations.length >= MIN_LATENCY_SAMPLES_FOR_VERDICT
-        ? p95(v.durations)
-        : mean(v.durations);
+      v.durations.length >= MIN_LATENCY_SAMPLES_FOR_VERDICT ? p95(v.durations) : mean(v.durations);
     rows.push({
       deckId: v.deckId,
       title: titles.get(v.deckId) ?? v.deckId,
@@ -493,8 +476,7 @@ function buildTopDecks(
 ): TopProblematicDeck[] {
   const titles = deckTitleMap(input.decks || []);
   const acc = new Map<string, DeckAccumulator>();
-  const inWin = (ms: number | null) =>
-    ms !== null && ms >= windowStartMs && ms < windowEndMs;
+  const inWin = (ms: number | null) => ms !== null && ms >= windowStartMs && ms < windowEndMs;
 
   switch (sloId) {
     case 'generation_success_rate': {
@@ -546,7 +528,10 @@ function buildTopDecks(
         if (!inWin(ms)) continue;
         const deckId = String(evt.deckId || '');
         if (!deckId) continue;
-        if (evt.eventType !== 'agent_edit_proposal_created' && evt.eventType !== 'agent_edit_applied') {
+        if (
+          evt.eventType !== 'agent_edit_proposal_created' &&
+          evt.eventType !== 'agent_edit_applied'
+        ) {
           continue;
         }
         const deck = ensureDeckAcc(acc, deckId);
@@ -604,9 +589,10 @@ function formatDurationMs(ms: number): string {
 
 function excerptForExportRow(row: BuildSloDrilldownInput['exportRecords'][number]): string {
   const fmt = (row.format || 'export').toUpperCase();
-  const dur = typeof row.durationMs === 'number' && Number.isFinite(row.durationMs) && row.durationMs >= 0
-    ? formatDurationMs(row.durationMs)
-    : null;
+  const dur =
+    typeof row.durationMs === 'number' && Number.isFinite(row.durationMs) && row.durationMs >= 0
+      ? formatDurationMs(row.durationMs)
+      : null;
   switch (row.status) {
     case 'completed':
       return dur ? `Export completed: ${fmt} ${dur}` : `Export completed: ${fmt}`;
@@ -638,7 +624,9 @@ function excerptForAgentOp(op: BuildSloDrilldownInput['agentOperations'][number]
   }
 }
 
-function excerptForRuntimeEvent(evt: BuildSloDrilldownInput['runtimeEvents'][number]): string | null {
+function excerptForRuntimeEvent(
+  evt: BuildSloDrilldownInput['runtimeEvents'][number]
+): string | null {
   switch (evt.eventType) {
     case 'agent_edit_proposal_created':
       return 'Proposal created';
@@ -675,8 +663,7 @@ function buildRecentSamples(
   windowEndMs: number
 ): DrilldownEventSample[] {
   const out: RawSampleEntry[] = [];
-  const inWin = (ms: number | null) =>
-    ms !== null && ms >= windowStartMs && ms < windowEndMs;
+  const inWin = (ms: number | null) => ms !== null && ms >= windowStartMs && ms < windowEndMs;
 
   if (sloId === 'generation_success_rate') {
     for (const op of input.agentOperations || []) {
@@ -767,9 +754,7 @@ function buildRecentSamples(
 // Public entrypoint
 // ---------------------------------------------------------------------------
 
-export function buildSloDrilldownReport(
-  input: BuildSloDrilldownInput
-): SloDrilldownReport {
+export function buildSloDrilldownReport(input: BuildSloDrilldownInput): SloDrilldownReport {
   const sloId = input.sloId;
   const windowDays = clampPositiveInt(Number(input.windowDays), 1, 90, 30);
   const bucketDays = clampPositiveInt(Number(input.bucketDays), 1, 7, 1);
@@ -804,8 +789,7 @@ export function buildSloDrilldownReport(
   });
 
   const windowStartMs = buckets.length > 0 ? buckets[0]!.startMs : nowMs;
-  const windowEndMs =
-    buckets.length > 0 ? buckets[buckets.length - 1]!.endMs : nowMs;
+  const windowEndMs = buckets.length > 0 ? buckets[buckets.length - 1]!.endMs : nowMs;
 
   const topProblematicDecks = buildTopDecks(sloId, safeInput, windowStartMs, windowEndMs);
   const recentSamples = buildRecentSamples(sloId, safeInput, windowStartMs, windowEndMs);

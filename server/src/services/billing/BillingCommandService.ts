@@ -2,9 +2,9 @@ import type Stripe from 'stripe';
 import type { Stripe as StripeTypes } from 'stripe';
 
 import logger from '../../utils/Logger.js';
-import { assertSandboxAllowed } from './billingSandboxGuard.js';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
+import { assertSandboxAllowed } from './billingSandboxGuard.js';
 import type {
   BillingPlan,
   BillingServiceDependencies,

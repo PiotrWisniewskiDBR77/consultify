@@ -2,12 +2,12 @@ import crypto from 'node:crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
-  createArtifactContentEnvelope,
   type ArtifactContentEnvelope,
   type CanonicalFormat,
+  createArtifactContentEnvelope,
 } from './artifacts/contentProjectionService.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 export const WAVE5_ARTIFACT_TYPES = [
   'note',
@@ -315,7 +315,8 @@ function mapArtifact(row: any, versions: any[] = [], mutations: any[] = []): any
     canonicalFormat: contentEnvelope.canonicalFormat,
     contentMd: contentEnvelope.contentMd,
     contentJson: contentEnvelope.contentJson,
-    markdownProjectionStatus: row.markdown_projection_status || contentEnvelope.markdownProjectionStatus,
+    markdownProjectionStatus:
+      row.markdown_projection_status || contentEnvelope.markdownProjectionStatus,
     markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
     projectionError: row.projection_error || contentEnvelope.projectionError || null,
     version: Number(row.current_version || 1),
@@ -496,7 +497,9 @@ export async function createWave5Artifact(input: CreateWave5ArtifactInput): Prom
       content,
       contentEnvelope.canonicalFormat,
       contentEnvelope.contentMd,
-      contentEnvelope.contentJson === undefined ? null : safeJsonStringify(contentEnvelope.contentJson),
+      contentEnvelope.contentJson === undefined
+        ? null
+        : safeJsonStringify(contentEnvelope.contentJson),
       contentEnvelope.contentSchemaVersion || null,
       contentEnvelope.markdownProjectionStatus,
       contentEnvelope.markdownProjectedAt || null,
@@ -525,7 +528,9 @@ export async function createWave5Artifact(input: CreateWave5ArtifactInput): Prom
       content,
       contentEnvelope.canonicalFormat,
       contentEnvelope.contentMd,
-      contentEnvelope.contentJson === undefined ? null : safeJsonStringify(contentEnvelope.contentJson),
+      contentEnvelope.contentJson === undefined
+        ? null
+        : safeJsonStringify(contentEnvelope.contentJson),
       contentEnvelope.contentSchemaVersion || null,
       contentEnvelope.markdownProjectionStatus,
       contentEnvelope.markdownProjectedAt || null,
@@ -612,7 +617,8 @@ export async function listWave5ArtifactVersions(
       canonicalFormat: contentEnvelope.canonicalFormat,
       contentMd: contentEnvelope.contentMd,
       contentJson: contentEnvelope.contentJson,
-      markdownProjectionStatus: row.markdown_projection_status || contentEnvelope.markdownProjectionStatus,
+      markdownProjectionStatus:
+        row.markdown_projection_status || contentEnvelope.markdownProjectionStatus,
       markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
       projectionError: row.projection_error || contentEnvelope.projectionError || null,
       mutationId: row.mutation_id || null,

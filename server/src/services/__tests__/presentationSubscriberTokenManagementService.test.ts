@@ -47,14 +47,16 @@ interface OverridesShape extends ServiceOverrides {
   runCalls: Array<{ sql: string; params: unknown[] }>;
 }
 
-function makeOverrides(opts: {
-  subscriptionExists?: boolean;
-  tokenRows?: TokenRowFixture[];
-  tokenById?: Record<string, TokenRowFixture | null>;
-  schemaMissing?: 'list' | 'revoke' | 'sub' | 'none';
-  runResult?: { success: boolean; error?: string };
-  now?: Date;
-} = {}): OverridesShape {
+function makeOverrides(
+  opts: {
+    subscriptionExists?: boolean;
+    tokenRows?: TokenRowFixture[];
+    tokenById?: Record<string, TokenRowFixture | null>;
+    schemaMissing?: 'list' | 'revoke' | 'sub' | 'none';
+    runResult?: { success: boolean; error?: string };
+    now?: Date;
+  } = {}
+): OverridesShape {
   const {
     subscriptionExists = true,
     tokenRows = [],
@@ -69,12 +71,12 @@ function makeOverrides(opts: {
   const dbGet = vi.fn(async (sql: string, params: unknown[] = []) => {
     if (/FROM\s+presentation_governance_alert_subscriptions/i.test(sql)) {
       if (schemaMissing === 'sub') {
-        const err = new Error('relation "presentation_governance_alert_subscriptions" does not exist');
+        const err = new Error(
+          'relation "presentation_governance_alert_subscriptions" does not exist'
+        );
         throw err;
       }
-      return subscriptionExists
-        ? { id: params[0], organization_id: params[1] }
-        : null;
+      return subscriptionExists ? { id: params[0], organization_id: params[1] } : null;
     }
     if (/FROM\s+presentation_governance_subscriber_tokens/i.test(sql)) {
       if (schemaMissing === 'revoke') {
@@ -147,10 +149,7 @@ describe('classifyTokenStatus', () => {
 
   it('treats unparseable expiresAt as active (defensive)', () => {
     expect(
-      classifyTokenStatus(
-        { expiresAt: 'not-a-date', revokedAt: null },
-        '2026-05-07T12:00:00.000Z'
-      )
+      classifyTokenStatus({ expiresAt: 'not-a-date', revokedAt: null }, '2026-05-07T12:00:00.000Z')
     ).toBe('active');
   });
 });
@@ -444,9 +443,7 @@ describe('revokeSubscriberToken', () => {
     expect(result.token?.scope).toMatchObject({ revoked_by: 'user_admin' });
 
     expect(overrides.runCalls).toHaveLength(1);
-    expect(overrides.runCalls[0].sql).toMatch(
-      /UPDATE\s+presentation_governance_subscriber_tokens/
-    );
+    expect(overrides.runCalls[0].sql).toMatch(/UPDATE\s+presentation_governance_subscriber_tokens/);
     expect(overrides.runCalls[0].sql).toMatch(/revoked_at\s*=\s*\?/);
     expect(overrides.runCalls[0].sql).toMatch(/revoked_reason\s*=\s*\?/);
     expect(overrides.runCalls[0].sql).toMatch(/revoked_at IS NULL/);

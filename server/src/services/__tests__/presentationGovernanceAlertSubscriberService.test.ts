@@ -30,13 +30,15 @@ function makeRow(overrides: Partial<SubscriptionRow> = {}): SubscriptionRow {
   };
 }
 
-function makeOverrides(opts: {
-  row?: SubscriptionRow | null;
-  fetch?: ServiceOverrides['fetch'];
-  onRun?: (sql: string, params: unknown[]) => void;
-} = {}): ServiceOverrides & { runCalls: Array<{ sql: string; params: unknown[] }> } {
+function makeOverrides(
+  opts: {
+    row?: SubscriptionRow | null;
+    fetch?: ServiceOverrides['fetch'];
+    onRun?: (sql: string, params: unknown[]) => void;
+  } = {}
+): ServiceOverrides & { runCalls: Array<{ sql: string; params: unknown[] }> } {
   const runCalls: Array<{ sql: string; params: unknown[] }> = [];
-  const dbGet = vi.fn(async () => opts.row === undefined ? makeRow() : opts.row);
+  const dbGet = vi.fn(async () => (opts.row === undefined ? makeRow() : opts.row));
   const dbRun = vi.fn(async (sql: string, params: unknown[] = []) => {
     runCalls.push({ sql, params });
     if (opts.onRun) opts.onRun(sql, params);
@@ -84,7 +86,9 @@ describe('rotateSubscriptionSecret', () => {
       minSeverity: 'BLOCKED_P1',
     });
     expect(overrides.runCalls).toHaveLength(1);
-    expect(overrides.runCalls[0].sql).toMatch(/UPDATE\s+presentation_governance_alert_subscriptions/);
+    expect(overrides.runCalls[0].sql).toMatch(
+      /UPDATE\s+presentation_governance_alert_subscriptions/
+    );
     expect(overrides.runCalls[0].sql).toMatch(/signing_secret_rotated_at\s*=\s*CURRENT_TIMESTAMP/);
     // The masked target must NOT echo the full URL path/query.
     expect(result.subscription?.targetRedacted).not.toContain('abcdefghijklmnop');
@@ -203,7 +207,10 @@ describe('sendTestDelivery', () => {
     });
     expect(typeof result.durationMs).toBe('number');
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+    const [, init] = fetchMock.mock.calls[0] as [
+      string,
+      RequestInit & { headers: Record<string, string> },
+    ];
     expect(init.headers['x-consultify-signature']).toMatch(/^[0-9a-f]{64}$/);
     expect(init.headers['x-consultify-signature-algorithm']).toBe('HMAC-SHA256');
     expect(init.headers['x-consultify-event-id']).toMatch(/^test_/);

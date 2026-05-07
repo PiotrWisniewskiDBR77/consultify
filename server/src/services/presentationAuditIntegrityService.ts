@@ -240,25 +240,23 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
 
   // ----- Filter sources to window ------------------------------------------
 
-  const agentEdits = (Array.isArray(input.agentEdits) ? input.agentEdits : []).filter(
-    (e) => isWithinWindow(parseTime(e?.appliedAt), windowStartMs, nowMs)
+  const agentEdits = (Array.isArray(input.agentEdits) ? input.agentEdits : []).filter((e) =>
+    isWithinWindow(parseTime(e?.appliedAt), windowStartMs, nowMs)
   );
   const exports = (Array.isArray(input.exports) ? input.exports : []).filter((e) => {
     if (!e || typeof e !== 'object') return false;
     return isWithinWindow(parseTime(e.completedAt), windowStartMs, nowMs);
   });
-  const auditEvents = (Array.isArray(input.auditEvents) ? input.auditEvents : []).filter(
-    (ev) => {
-      if (!ev || typeof ev !== 'object') return false;
-      const t = parseTime(ev.occurredAt);
-      if (t === null) {
-        // Malformed timestamps must still be examinable so we surface them
-        // as `late_audit_record` / `orphan_audit_event` rather than throw.
-        return true;
-      }
-      return t >= auditWindowStartMs && t <= nowMs;
+  const auditEvents = (Array.isArray(input.auditEvents) ? input.auditEvents : []).filter((ev) => {
+    if (!ev || typeof ev !== 'object') return false;
+    const t = parseTime(ev.occurredAt);
+    if (t === null) {
+      // Malformed timestamps must still be examinable so we surface them
+      // as `late_audit_record` / `orphan_audit_event` rather than throw.
+      return true;
     }
-  );
+    return t >= auditWindowStartMs && t <= nowMs;
+  });
 
   // ----- Build lookup tables -----------------------------------------------
 
@@ -279,9 +277,8 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
 
   for (const ev of auditEvents) {
     const action = String(ev.action || '');
-    const related = typeof ev.relatedId === 'string' && ev.relatedId.length > 0
-      ? ev.relatedId
-      : null;
+    const related =
+      typeof ev.relatedId === 'string' && ev.relatedId.length > 0 ? ev.relatedId : null;
     if (related === null) continue;
     if (AGENT_EDIT_AUDIT_ACTIONS.has(action)) {
       const list = auditByEditId.get(related) ?? [];
@@ -307,8 +304,12 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
         deckId: edit.deckId || null,
         referenceId: edit.id,
         occurredAt: edit.appliedAt,
-        reason: 'no audit_event with relatedId=' + edit.id + ' and action in {' +
-          Array.from(AGENT_EDIT_AUDIT_ACTIONS).join(', ') + '}',
+        reason:
+          'no audit_event with relatedId=' +
+          edit.id +
+          ' and action in {' +
+          Array.from(AGENT_EDIT_AUDIT_ACTIONS).join(', ') +
+          '}',
       });
       continue;
     }
@@ -342,10 +343,14 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
         deckId: edit.deckId || null,
         referenceId: edit.id,
         occurredAt: edit.appliedAt,
-        reason: bestLatencyMs === null
-          ? 'audit_event timestamps are invalid; cannot verify ≤5min budget'
-          : 'audit_event arrived ' + formatLatency(bestLatencyMs) +
-              ' from edit (budget ' + formatLatency(AUDIT_LATENCY_BUDGET_MS) + ')',
+        reason:
+          bestLatencyMs === null
+            ? 'audit_event timestamps are invalid; cannot verify ≤5min budget'
+            : 'audit_event arrived ' +
+              formatLatency(bestLatencyMs) +
+              ' from edit (budget ' +
+              formatLatency(AUDIT_LATENCY_BUDGET_MS) +
+              ')',
       });
     }
   }
@@ -363,8 +368,12 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
         deckId: exp.deckId || null,
         referenceId: exp.id,
         occurredAt: exp.completedAt,
-        reason: 'no audit_event with relatedId=' + exp.id + ' and action in {' +
-          Array.from(EXPORT_AUDIT_ACTIONS).join(', ') + '}',
+        reason:
+          'no audit_event with relatedId=' +
+          exp.id +
+          ' and action in {' +
+          Array.from(EXPORT_AUDIT_ACTIONS).join(', ') +
+          '}',
       });
       continue;
     }
@@ -398,10 +407,14 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
         deckId: exp.deckId || null,
         referenceId: exp.id,
         occurredAt: exp.completedAt,
-        reason: bestLatencyMs === null
-          ? 'audit_event timestamps are invalid; cannot verify ≤5min budget'
-          : 'audit_event arrived ' + formatLatency(bestLatencyMs) +
-              ' from export (budget ' + formatLatency(AUDIT_LATENCY_BUDGET_MS) + ')',
+        reason:
+          bestLatencyMs === null
+            ? 'audit_event timestamps are invalid; cannot verify ≤5min budget'
+            : 'audit_event arrived ' +
+              formatLatency(bestLatencyMs) +
+              ' from export (budget ' +
+              formatLatency(AUDIT_LATENCY_BUDGET_MS) +
+              ')',
       });
     }
   }
@@ -415,12 +428,9 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
     const action = String(ev.action || '');
     if (!TRACKED_AUDIT_ACTIONS.has(action)) continue;
     const deckIdMissing =
-      typeof ev.deckId === 'string' &&
-      ev.deckId.length > 0 &&
-      !scannedDeckIds.has(ev.deckId);
-    const relatedId = typeof ev.relatedId === 'string' && ev.relatedId.length > 0
-      ? ev.relatedId
-      : null;
+      typeof ev.deckId === 'string' && ev.deckId.length > 0 && !scannedDeckIds.has(ev.deckId);
+    const relatedId =
+      typeof ev.relatedId === 'string' && ev.relatedId.length > 0 ? ev.relatedId : null;
     const relatedIsAgentAction = AGENT_EDIT_AUDIT_ACTIONS.has(action);
     const relatedIsExportAction = EXPORT_AUDIT_ACTIONS.has(action);
     const relatedMissing =
@@ -474,9 +484,16 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
           deckId: cur.deckId,
           referenceId: cur.id,
           occurredAt: cur.occurredAt,
-          reason: 'duplicate of audit_event=' + prev.id +
-            ' within ' + formatLatency(AUDIT_LATENCY_BUDGET_MS) +
-            ' (action=' + cur.action + ', relatedId=' + (cur.relatedId ?? 'null') + ')',
+          reason:
+            'duplicate of audit_event=' +
+            prev.id +
+            ' within ' +
+            formatLatency(AUDIT_LATENCY_BUDGET_MS) +
+            ' (action=' +
+            cur.action +
+            ', relatedId=' +
+            (cur.relatedId ?? 'null') +
+            ')',
         });
       }
     }
@@ -486,11 +503,7 @@ export function evaluateAuditIntegrity(input: EvaluateInput): IntegrityCheckRepo
 
   const p1 = issues.filter((i) => i.severity === 'P1').length;
   const p2 = issues.filter((i) => i.severity === 'P2').length;
-  const verdict: IntegrityVerdict = p1 > 0
-    ? 'BLOCKED_P1'
-    : p2 > 0
-      ? 'PASS_WITH_P2'
-      : 'PASS';
+  const verdict: IntegrityVerdict = p1 > 0 ? 'BLOCKED_P1' : p2 > 0 ? 'PASS_WITH_P2' : 'PASS';
 
   return {
     organizationId: String(input.organizationId || ''),
@@ -667,14 +680,16 @@ async function fetchAuditEvents(
       const resourceType = asString(row.resource_type);
       const resourceId = asString(row.resource_id);
       // For deck-scoped audit rows, the resourceId IS the deckId.
-      const deckId = resourceType === 'presentation_deck' && resourceId.length > 0
-        ? resourceId
-        : deckIdFromMeta;
+      const deckId =
+        resourceType === 'presentation_deck' && resourceId.length > 0 ? resourceId : deckIdFromMeta;
       // For agent-edit / export rows, the resourceId is the operation/export id.
-      const relatedId = resourceType === 'presentation_deck_agent_edit'
-        || resourceType === 'presentation_deck_export'
-        ? (resourceId.length > 0 ? resourceId : null)
-        : null;
+      const relatedId =
+        resourceType === 'presentation_deck_agent_edit' ||
+        resourceType === 'presentation_deck_export'
+          ? resourceId.length > 0
+            ? resourceId
+            : null
+          : null;
       return {
         id: asString(row.id),
         deckId,

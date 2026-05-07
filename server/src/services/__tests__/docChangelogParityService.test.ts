@@ -28,8 +28,8 @@ import {
   compareDocVsChangelog,
   expectedChangelogPath,
   extractLatestChangelogDate,
-  summarizeDocDiff,
   type ParityCheckInput,
+  summarizeDocDiff,
 } from '../docChangelogParityService.js';
 
 const DOC_PATH = 'docs/product/PRESENTATION_RBAC_MATRIX.md';
@@ -116,20 +116,20 @@ describe('summarizeDocDiff', () => {
 describe('expectedChangelogPath', () => {
   // 4
   it('maps docs/foo/MY_DOC.md to <dir>/CHANGELOG_MY_DOC.md', () => {
-    expect(expectedChangelogPath('docs/product/PRESENTATION_RBAC_MATRIX.md', 'docs/governance')).toBe(
-      'docs/governance/CHANGELOG_PRESENTATION_RBAC_MATRIX.md',
-    );
+    expect(
+      expectedChangelogPath('docs/product/PRESENTATION_RBAC_MATRIX.md', 'docs/governance')
+    ).toBe('docs/governance/CHANGELOG_PRESENTATION_RBAC_MATRIX.md');
   });
 
   it('handles trailing slash on changelogDir', () => {
     expect(expectedChangelogPath('docs/foo/BAR.md', 'docs/governance/')).toBe(
-      'docs/governance/CHANGELOG_BAR.md',
+      'docs/governance/CHANGELOG_BAR.md'
     );
   });
 
   it('handles a doc path with no directory', () => {
     expect(expectedChangelogPath('BAR.md', 'docs/governance')).toBe(
-      'docs/governance/CHANGELOG_BAR.md',
+      'docs/governance/CHANGELOG_BAR.md'
     );
   });
 });
@@ -166,7 +166,7 @@ describe('compareDocVsChangelog', () => {
       buildInput({
         changelogContent: SAMPLE_CHANGELOG(YESTERDAY),
         changelogLastEntryDate: YESTERDAY,
-      }),
+      })
     );
     expect(result.verdict).toBe('FAIL');
     expect(result.issues.some((i) => i.field === 'doc_changed_without_changelog')).toBe(true);
@@ -185,7 +185,7 @@ describe('compareDocVsChangelog', () => {
       buildInput({
         docContent: DOC_BEFORE,
         docContentAtChangelog: DOC_BEFORE,
-      }),
+      })
     );
     expect(result.verdict).toBe('PASS_WITH_WARNINGS');
     expect(result.issues.some((i) => i.field === 'doc_unchanged_with_changelog')).toBe(true);
@@ -195,7 +195,7 @@ describe('compareDocVsChangelog', () => {
   // 8
   it('empty changelog → changelog_missing ERROR', () => {
     const result = compareDocVsChangelog(
-      buildInput({ changelogContent: '', changelogLastEntryDate: null }),
+      buildInput({ changelogContent: '', changelogLastEntryDate: null })
     );
     expect(result.verdict).toBe('FAIL');
     expect(result.issues.some((i) => i.field === 'changelog_missing')).toBe(true);
@@ -228,7 +228,7 @@ describe('compareDocVsChangelog', () => {
         docContentAtChangelog: undefined as unknown as string | null,
         changelogContent: undefined as unknown as string,
         changelogLastEntryDate: undefined as unknown as string | null,
-      }),
+      })
     ).not.toThrow();
 
     expect(() => compareDocVsChangelog(null as unknown as ParityCheckInput)).not.toThrow();
@@ -241,7 +241,7 @@ describe('compareDocVsChangelog', () => {
         docContentAtChangelog: 0 as unknown as string | null,
         changelogContent: false as unknown as string,
         changelogLastEntryDate: 999 as unknown as string | null,
-      }),
+      })
     ).not.toThrow();
   });
 
@@ -254,7 +254,7 @@ describe('compareDocVsChangelog', () => {
   // 12
   it('FAIL verdict whenever any error issue is present', () => {
     const result = compareDocVsChangelog(
-      buildInput({ changelogContent: '', changelogLastEntryDate: null }),
+      buildInput({ changelogContent: '', changelogLastEntryDate: null })
     );
     expect(result.issues.some((i) => i.severity === 'error')).toBe(true);
     expect(result.verdict).toBe('FAIL');
@@ -266,7 +266,7 @@ describe('compareDocVsChangelog', () => {
       buildInput({
         docContent: DOC_BEFORE,
         docContentAtChangelog: DOC_BEFORE,
-      }),
+      })
     );
     expect(result.issues.length).toBeGreaterThan(0);
     expect(result.issues.every((i) => i.severity === 'warning')).toBe(true);
@@ -279,7 +279,7 @@ describe('compareDocVsChangelog', () => {
         docContentAtChangelog: null,
         changelogContent: SAMPLE_CHANGELOG(YESTERDAY),
         changelogLastEntryDate: YESTERDAY,
-      }),
+      })
     );
     expect(result.verdict).toBe('FAIL');
     expect(result.issues.some((i) => i.field === 'doc_changed_without_changelog')).toBe(true);
@@ -291,7 +291,7 @@ describe('compareDocVsChangelog', () => {
         docContent: DOC_BEFORE,
         docContentAtChangelog: DOC_BEFORE,
         changelogLastEntryDate: 'not-a-date',
-      }),
+      })
     );
     expect(result.issues.some((i) => i.field === 'changelog_invalid')).toBe(true);
     expect(result.verdict).not.toBe('FAIL');

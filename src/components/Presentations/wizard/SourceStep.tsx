@@ -44,16 +44,19 @@ function unwrap<T = any>(res: any): T {
 
 function mapArtifactToSource(row: any): SourceArtifact {
   const origin = Array.isArray(row?.originLinks) ? row.originLinks[0] : row?.originSummary || {};
-  const runtime = String(origin?.originRuntime || row?.originRuntime || row?.outputType || 'artifact');
-  const recordId = String(origin?.originRecordId || row?.originRecordId || row?.id || row?.artifactId || '');
-  const type =
-    runtime.includes('initiative')
-      ? 'initiative_portfolio'
-      : runtime.includes('assessment') || runtime.includes('drd')
-        ? 'assessment'
-        : runtime.includes('interview') || runtime.includes('survey')
-          ? 'tool_session'
-          : String(row?.outputType || row?.artifactFamily || 'report');
+  const runtime = String(
+    origin?.originRuntime || row?.originRuntime || row?.outputType || 'artifact'
+  );
+  const recordId = String(
+    origin?.originRecordId || row?.originRecordId || row?.id || row?.artifactId || ''
+  );
+  const type = runtime.includes('initiative')
+    ? 'initiative_portfolio'
+    : runtime.includes('assessment') || runtime.includes('drd')
+      ? 'assessment'
+      : runtime.includes('interview') || runtime.includes('survey')
+        ? 'tool_session'
+        : String(row?.outputType || row?.artifactFamily || 'report');
 
   return {
     type,
@@ -118,7 +121,10 @@ export const SourceStep: React.FC<SourceStepProps> = ({
       })
       .catch(() => {
         if (!cancelled) setAvailableArtifacts([]);
-        if (!cancelled) setArtifactError(t('presentations.sources.artifactLoadFailed', 'Could not load registered artifacts.'));
+        if (!cancelled)
+          setArtifactError(
+            t('presentations.sources.artifactLoadFailed', 'Could not load registered artifacts.')
+          );
       })
       .finally(() => {
         if (!cancelled) setLoadingArtifacts(false);
@@ -129,7 +135,10 @@ export const SourceStep: React.FC<SourceStepProps> = ({
   }, [t]);
 
   const artifactTypes = useMemo(
-    () => ['all', ...Array.from(new Set(availableArtifacts.map((artifact) => artifact.type))).sort()],
+    () => [
+      'all',
+      ...Array.from(new Set(availableArtifacts.map((artifact) => artifact.type))).sort(),
+    ],
     [availableArtifacts]
   );
 
@@ -141,7 +150,9 @@ export const SourceStep: React.FC<SourceStepProps> = ({
         !q ||
         artifact.label.toLowerCase().includes(q) ||
         artifact.type.toLowerCase().includes(q) ||
-        String(artifact.readiness || '').toLowerCase().includes(q);
+        String(artifact.readiness || '')
+          .toLowerCase()
+          .includes(q);
       return matchesType && matchesQuery;
     });
   }, [availableArtifacts, query, typeFilter]);
@@ -185,7 +196,10 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               setQuery(event.target.value);
               setVisibleCount(12);
             }}
-            placeholder={t('presentations.sources.searchArtifacts', 'Search project, study, report, initiative...')}
+            placeholder={t(
+              'presentations.sources.searchArtifacts',
+              'Search project, study, report, initiative...'
+            )}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
           />
           <select

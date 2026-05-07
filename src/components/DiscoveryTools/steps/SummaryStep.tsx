@@ -398,7 +398,8 @@ function DynamicSwotOutputs({
               {
                 label: isPolish ? 'Ruchy' : 'Moves',
                 value: moves.length,
-                color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+                color:
+                  'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
               },
               {
                 label: isPolish ? 'Inicjatywy' : 'Initiatives',

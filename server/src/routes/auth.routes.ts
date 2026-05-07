@@ -690,7 +690,12 @@ router.post(
         [userId, organizationId]
       );
 
-      if (!membership || String(membership.status || '').trim().toUpperCase() !== 'ACTIVE') {
+      if (
+        !membership ||
+        String(membership.status || '')
+          .trim()
+          .toUpperCase() !== 'ACTIVE'
+      ) {
         return res.status(403).json({
           error: 'You do not have access to this organization',
           code: 'ORG_ACCESS_DENIED',

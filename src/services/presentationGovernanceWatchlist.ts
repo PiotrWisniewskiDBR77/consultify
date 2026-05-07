@@ -50,12 +50,7 @@ export interface WatchlistResponse {
   appliedFilters?: { onlyBlocked: boolean; limit: number };
 }
 
-export type WatchlistFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'not_found'
-  | 'unavailable';
+export type WatchlistFetchStatus = 'ok' | 'error' | 'forbidden' | 'not_found' | 'unavailable';
 
 export interface WatchlistFetchResult {
   status: WatchlistFetchStatus;
@@ -200,9 +195,7 @@ export async function fetchPresentationGovernanceWatchlist(
       const res = await apiAny.get(path);
       const payload = isRecord(res) && 'data' in res ? (res as { data: unknown }).data : res;
       const innerData =
-        isRecord(payload) && 'data' in payload
-          ? (payload as { data: unknown }).data
-          : payload;
+        isRecord(payload) && 'data' in payload ? (payload as { data: unknown }).data : payload;
       const data = normalizeResponse(innerData);
       if (!data) return { status: 'error', error: 'invalid_payload' };
       return { status: 'ok', data };
@@ -220,8 +213,7 @@ export async function fetchPresentationGovernanceWatchlist(
       return { status: 'error', error: `http_${res.status}` };
     }
     const json: unknown = await res.json().catch(() => null);
-    const innerData =
-      isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
+    const innerData = isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
     const data = normalizeResponse(innerData);
     if (!data) return { status: 'error', error: 'invalid_payload' };
     return { status: 'ok', data };

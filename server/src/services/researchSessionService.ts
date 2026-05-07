@@ -1079,23 +1079,27 @@ export async function getResearchSession(
             contentSchemaVersion: (artifact as any).content_schema_version || undefined,
           });
           return {
-          artifactId: (artifact as any).artifact_id,
-          artifactType: (artifact as any).artifact_type,
-          title: (artifact as any).title,
-          contentMarkdown: (artifact as any).content_markdown,
-          contentEnvelope,
-          canonicalFormat: contentEnvelope.canonicalFormat,
-          contentMd: contentEnvelope.contentMd,
-          contentJson: contentEnvelope.contentJson,
-          markdownProjectionStatus:
-            (artifact as any).markdown_projection_status || contentEnvelope.markdownProjectionStatus,
-          markdownProjectedAt:
-            (artifact as any).markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
-          projectionError: (artifact as any).projection_error || contentEnvelope.projectionError || null,
-          citations: safeJsonParse((artifact as any).citations_json, []),
-          evidenceNodeIds: safeJsonParse((artifact as any).evidence_node_ids_json, []),
-          wave5ArtifactId: (artifact as any).wave5_artifact_id || null,
-          createdAt: (artifact as any).created_at,
+            artifactId: (artifact as any).artifact_id,
+            artifactType: (artifact as any).artifact_type,
+            title: (artifact as any).title,
+            contentMarkdown: (artifact as any).content_markdown,
+            contentEnvelope,
+            canonicalFormat: contentEnvelope.canonicalFormat,
+            contentMd: contentEnvelope.contentMd,
+            contentJson: contentEnvelope.contentJson,
+            markdownProjectionStatus:
+              (artifact as any).markdown_projection_status ||
+              contentEnvelope.markdownProjectionStatus,
+            markdownProjectedAt:
+              (artifact as any).markdown_projected_at ||
+              contentEnvelope.markdownProjectedAt ||
+              null,
+            projectionError:
+              (artifact as any).projection_error || contentEnvelope.projectionError || null,
+            citations: safeJsonParse((artifact as any).citations_json, []),
+            evidenceNodeIds: safeJsonParse((artifact as any).evidence_node_ids_json, []),
+            wave5ArtifactId: (artifact as any).wave5_artifact_id || null,
+            createdAt: (artifact as any).created_at,
           };
         })()
       : null

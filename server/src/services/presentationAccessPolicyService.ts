@@ -1,5 +1,6 @@
 export type PresentationCapability =
   | 'presentation_create'
+  | 'presentation_view'
   | 'presentation_edit'
   | 'presentation_approve'
   | 'presentation_export'
@@ -7,13 +8,7 @@ export type PresentationCapability =
   | 'template_approve'
   | 'brand_change';
 
-type NormalizedRole =
-  | 'SUPERADMIN'
-  | 'OWNER'
-  | 'ADMIN'
-  | 'PROJECT_MANAGER'
-  | 'USER'
-  | 'VIEWER';
+type NormalizedRole = 'SUPERADMIN' | 'OWNER' | 'ADMIN' | 'PROJECT_MANAGER' | 'USER' | 'VIEWER';
 
 function normalizeRole(role: string | null | undefined): NormalizedRole {
   const raw = String(role || '')
@@ -30,6 +25,7 @@ function normalizeRole(role: string | null | undefined): NormalizedRole {
 const CAPABILITY_MATRIX: Record<NormalizedRole, ReadonlySet<PresentationCapability>> = {
   SUPERADMIN: new Set<PresentationCapability>([
     'presentation_create',
+    'presentation_view',
     'presentation_edit',
     'presentation_approve',
     'presentation_export',
@@ -39,6 +35,7 @@ const CAPABILITY_MATRIX: Record<NormalizedRole, ReadonlySet<PresentationCapabili
   ]),
   OWNER: new Set<PresentationCapability>([
     'presentation_create',
+    'presentation_view',
     'presentation_edit',
     'presentation_approve',
     'presentation_export',
@@ -48,6 +45,7 @@ const CAPABILITY_MATRIX: Record<NormalizedRole, ReadonlySet<PresentationCapabili
   ]),
   ADMIN: new Set<PresentationCapability>([
     'presentation_create',
+    'presentation_view',
     'presentation_edit',
     'presentation_approve',
     'presentation_export',
@@ -57,17 +55,19 @@ const CAPABILITY_MATRIX: Record<NormalizedRole, ReadonlySet<PresentationCapabili
   ]),
   PROJECT_MANAGER: new Set<PresentationCapability>([
     'presentation_create',
+    'presentation_view',
     'presentation_edit',
     'presentation_export',
     'presentation_share',
   ]),
   USER: new Set<PresentationCapability>([
     'presentation_create',
+    'presentation_view',
     'presentation_edit',
     'presentation_export',
     'presentation_share',
   ]),
-  VIEWER: new Set<PresentationCapability>(['presentation_export']),
+  VIEWER: new Set<PresentationCapability>(['presentation_view', 'presentation_export']),
 };
 
 export function hasPresentationCapability(

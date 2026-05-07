@@ -3,8 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import type { TeresaChatProposal } from '@/types';
 import { usePortfolioStore } from '@/store/portfolioSlice';
+import type { TeresaChatProposal } from '@/types';
 
 type ProposalAction = 'approve' | 'reject' | 'execute';
 

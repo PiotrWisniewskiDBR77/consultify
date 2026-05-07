@@ -142,7 +142,10 @@ export const useInterviewPermissions = (): InterviewPermissions => {
   );
 
   const hasOrgLevelAssignPermission = useMemo(
-    () => isPrivilegedOrgRole || hasCapability('interview.assignment.create') || hasCapability('admin.access'),
+    () =>
+      isPrivilegedOrgRole ||
+      hasCapability('interview.assignment.create') ||
+      hasCapability('admin.access'),
     [isPrivilegedOrgRole, hasCapability]
   );
 
@@ -152,7 +155,10 @@ export const useInterviewPermissions = (): InterviewPermissions => {
   );
 
   const canAssign = useMemo(
-    () => isPrivilegedOrgRole || hasCapability('interview.assignment.create') || hasCapability('admin.access'),
+    () =>
+      isPrivilegedOrgRole ||
+      hasCapability('interview.assignment.create') ||
+      hasCapability('admin.access'),
     [isPrivilegedOrgRole, hasCapability]
   );
 
@@ -184,7 +190,12 @@ export const useInterviewPermissions = (): InterviewPermissions => {
       hasCapability('interview.assignment.review') ||
       hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_REVIEW') ||
       hasOrgLevelAssignPermission,
-    [isPrivilegedOrgRole, hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+    [
+      isPrivilegedOrgRole,
+      hasCapability,
+      hasExplicitInterviewPermission,
+      hasOrgLevelAssignPermission,
+    ]
   );
   const canPublishInsights = useMemo(
     () =>
@@ -192,7 +203,12 @@ export const useInterviewPermissions = (): InterviewPermissions => {
       hasCapability('interview.insights.publish') ||
       hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_PUBLISH') ||
       hasOrgLevelAssignPermission,
-    [isPrivilegedOrgRole, hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+    [
+      isPrivilegedOrgRole,
+      hasCapability,
+      hasExplicitInterviewPermission,
+      hasOrgLevelAssignPermission,
+    ]
   );
   const canHandoffInsights = useMemo(
     () =>

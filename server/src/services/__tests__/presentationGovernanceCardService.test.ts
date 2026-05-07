@@ -4,16 +4,18 @@ import { buildPresentationGovernanceCard } from '../presentationGovernanceCardSe
 
 const NOW = new Date('2026-05-10T12:00:00.000Z');
 
-function telemetry(overrides: Partial<{
-  windowDays: number;
-  proposalsCreated: number;
-  editsApplied: number;
-  editsRejected: number;
-  exportsBlocked: number;
-  noops: number;
-  total: number;
-  lastActivityAt: string | null;
-}> = {}) {
+function telemetry(
+  overrides: Partial<{
+    windowDays: number;
+    proposalsCreated: number;
+    editsApplied: number;
+    editsRejected: number;
+    exportsBlocked: number;
+    noops: number;
+    total: number;
+    lastActivityAt: string | null;
+  }> = {}
+) {
   const {
     windowDays = 7,
     proposalsCreated = 0,

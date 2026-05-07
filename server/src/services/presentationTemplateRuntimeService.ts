@@ -200,7 +200,10 @@ function safeJsonParse<T>(raw: unknown, fallback: T): T {
   }
 }
 
-function recipeForIntent(intent: SlideIntent, overrides?: Partial<TemplateSlideRecipe>): TemplateSlideRecipe {
+function recipeForIntent(
+  intent: SlideIntent,
+  overrides?: Partial<TemplateSlideRecipe>
+): TemplateSlideRecipe {
   const base = BASE_RECIPES[intent] || BASE_RECIPES.key_messages!;
   return {
     intent,
@@ -234,7 +237,7 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
   const mustHaveIntents = safeJsonParse<SlideIntent[]>(row.must_have_intents, []);
   const recommendedVisuals = safeJsonParse<string[]>(row.recommended_visuals, []);
   const sourceRequirements =
-    safeJsonParse<any[]>(row.source_requirements_json, null) ||
+    safeJsonParse<any[] | null>(row.source_requirements_json, null) ||
     Array.from(new Set(slideRecipes.flatMap((recipe) => recipe.sourceTypes || []))).map((type) => ({
       type,
       required: ['assessment', 'initiative_portfolio'].includes(type),
@@ -303,7 +306,9 @@ export function applyTemplateRuntime(params: {
       ...item,
       enabled: fallbackPolicy === 'skip_slide' && missingSource ? false : item.enabled,
       sourceRef: item.sourceRef || matchedSource?.artifactId || matchedSource?.id,
-      sourceRefs: item.sourceRefs || (matchedSource ? [matchedSource.artifactId || matchedSource.id || matchedSource.type] : []),
+      sourceRefs:
+        item.sourceRefs ||
+        (matchedSource ? [matchedSource.artifactId || matchedSource.id || matchedSource.type] : []),
       layoutHint:
         item.layoutHint ||
         (missingSource && fallbackPolicy === 'degradation_notice'
@@ -369,10 +374,12 @@ export function buildSystemTemplateRuntime(family: TemplateFamily): Presentation
       { intent: 'next_steps', title: 'Decisions And Next Steps' },
     ],
   };
-  const outline = (outlines[familyKey] || outlines['Digital Transformation Read Deck']).map((item) => ({
-    ...item,
-    enabled: true,
-  }));
+  const outline = (outlines[familyKey] || outlines['Digital Transformation Read Deck']).map(
+    (item) => ({
+      ...item,
+      enabled: true,
+    })
+  );
   return {
     templateFamily: family,
     minSlides: familyKey === 'Digital Transformation Read Deck' ? 40 : 6,
@@ -382,8 +389,16 @@ export function buildSystemTemplateRuntime(family: TemplateFamily): Presentation
     outline,
     slideRecipes: outline.map((item) => recipeForIntent(item.intent)),
     sourceRequirements: [
-      { type: 'assessment', required: familyKey.includes('DRD') || familyKey.includes('Transformation'), readiness: 'partial_ready' },
-      { type: 'initiative_portfolio', required: familyKey.includes('Transformation'), readiness: 'partial_ready' },
+      {
+        type: 'assessment',
+        required: familyKey.includes('DRD') || familyKey.includes('Transformation'),
+        readiness: 'partial_ready',
+      },
+      {
+        type: 'initiative_portfolio',
+        required: familyKey.includes('Transformation'),
+        readiness: 'partial_ready',
+      },
       { type: 'tool_session', required: false, readiness: 'partial_ready' },
     ],
     headerFooter: {

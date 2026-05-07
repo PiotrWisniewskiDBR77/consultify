@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ContextPack } from '../contextPackBuilder.js';
 import {
   applyBrandLayoutSystem,
   buildBrandLayoutSystem,
@@ -13,13 +14,12 @@ import {
   applyTemplateRuntime,
   buildSystemTemplateRuntime,
 } from '../presentationTemplateRuntimeService.js';
+import type { UnifiedReportJSON } from '../report/pptx/types.js';
 import { planSlides } from '../slidePlanningEngineService.js';
 import {
   applyTransformationPackToArtifactData,
   buildTransformationReadDeckPack,
 } from '../transformationReadDeckPackService.js';
-import type { ContextPack } from '../contextPackBuilder.js';
-import type { UnifiedReportJSON } from '../report/pptx/types.js';
 
 const vtsSources = [
   {
@@ -203,7 +203,9 @@ describe('presentation generator VTS golden deck contract', () => {
       sources: vtsSources,
     });
 
-    expect(runtime.slideRecipes.some((recipe) => recipe.intent === 'recommendation_portfolio')).toBe(true);
+    expect(
+      runtime.slideRecipes.some((recipe) => recipe.intent === 'recommendation_portfolio')
+    ).toBe(true);
     const recipeIntents = new Set(runtime.slideRecipes.map((recipe) => recipe.intent));
     expect(
       applied.outline
@@ -257,6 +259,8 @@ describe('presentation generator VTS golden deck contract', () => {
     });
 
     const textBlocks = deck.cards[1].blocks.filter((block) => block.type === 'paragraph');
-    expect(textBlocks.some((block) => String(block.content.text).includes('Narrative engine'))).toBe(true);
+    expect(
+      textBlocks.some((block) => String(block.content.text).includes('Narrative engine'))
+    ).toBe(true);
   });
 });

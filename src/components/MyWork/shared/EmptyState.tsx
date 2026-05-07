@@ -17,7 +17,7 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { renderIconNode, type IconNode } from '@/components/shared/renderIconNode';
+import { type IconNode, renderIconNode } from '@/components/shared/renderIconNode';
 
 type EmptyStateType =
   | 'focus'
@@ -90,7 +90,8 @@ const typeConfig: Record<
     icon: <BarChart2 size={32} />,
     defaultTitle: 'No Data Yet',
     defaultDescription: 'Complete some tasks to see your execution metrics and trends.',
-    gradient: 'from-primary-500/20 to-primary-500/20 dark:from-primary-500/10 dark:to-primary-500/10',
+    gradient:
+      'from-primary-500/20 to-primary-500/20 dark:from-primary-500/10 dark:to-primary-500/10',
   },
   generic: {
     icon: <Sparkles size={32} />,

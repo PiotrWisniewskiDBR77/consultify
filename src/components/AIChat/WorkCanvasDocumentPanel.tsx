@@ -697,7 +697,9 @@ export function WorkCanvasDocumentPanel({
             const jsonById = await responseById.json().catch(() => ({}));
             const draftById = jsonById?.data;
             if (!responseById.ok || cancelled || !draftById) return;
-            setDocumentState((current) => mapDraftResponseToCanvasDocumentState(draftById, current));
+            setDocumentState((current) =>
+              mapDraftResponseToCanvasDocumentState(draftById, current)
+            );
             lastSavedContentRef.current =
               typeof draftById.contentMd === 'string'
                 ? draftById.contentMd

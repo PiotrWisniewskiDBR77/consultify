@@ -27,7 +27,6 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 
-import { DeckTemplateGallery } from './DeckTemplateGallery';
 import {
   FilterableTable,
   FilterChip,
@@ -40,6 +39,7 @@ import {
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { DeckTemplateGallery } from './DeckTemplateGallery';
 
 // ---------------------------------------------------------------------------
 // Types

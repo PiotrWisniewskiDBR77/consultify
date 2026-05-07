@@ -61,9 +61,7 @@ const SubscriberHealthBadge: React.FC<SubscriberHealthBadgeProps> = ({
   const Icon = ICON[overall];
   const label = COPY[overall];
   const reasonText = reasons.filter((r) => typeof r === 'string' && r.length > 0).join(' · ');
-  const ariaLabel = reasonText
-    ? `${label}: ${reasonText}`
-    : `Subscription health: ${label}`;
+  const ariaLabel = reasonText ? `${label}: ${reasonText}` : `Subscription health: ${label}`;
 
   const padding = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs';
   const iconSize = size === 'sm' ? 12 : 14;

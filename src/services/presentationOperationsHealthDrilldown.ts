@@ -15,12 +15,7 @@ import { Api } from '@/services/api';
 
 import type { SloStatus } from './presentationOperationsHealth';
 
-export type DrilldownFetchStatus =
-  | 'ok'
-  | 'error'
-  | 'forbidden'
-  | 'not_found'
-  | 'unavailable';
+export type DrilldownFetchStatus = 'ok' | 'error' | 'forbidden' | 'not_found' | 'unavailable';
 
 export type DrilldownSloId =
   | 'generation_success_rate'
@@ -84,12 +79,7 @@ const ALLOWED_SLO_IDS = new Set<DrilldownSloId>([
   'export_blocked_rate',
 ]);
 
-const ALLOWED_SLO_STATUS = new Set<SloStatus>([
-  'pass',
-  'at_risk',
-  'breach',
-  'inconclusive',
-]);
+const ALLOWED_SLO_STATUS = new Set<SloStatus>(['pass', 'at_risk', 'breach', 'inconclusive']);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -173,9 +163,8 @@ function normalizeReport(raw: unknown): SloDrilldownReport | null {
   const trend = (Array.isArray(raw.trend) ? raw.trend : [])
     .map((p) => normalizeTrendPoint(p))
     .filter((p): p is TrendPoint => p !== null);
-  const topProblematicDecks = (Array.isArray(raw.topProblematicDecks)
-    ? raw.topProblematicDecks
-    : []
+  const topProblematicDecks = (
+    Array.isArray(raw.topProblematicDecks) ? raw.topProblematicDecks : []
   )
     .map((d) => normalizeTopDeck(d))
     .filter((d): d is TopProblematicDeck => d !== null);
@@ -252,9 +241,7 @@ export async function fetchSloDrilldown(
       const res = await apiAny.get(path);
       const payload = isRecord(res) && 'data' in res ? (res as { data: unknown }).data : res;
       const innerData =
-        isRecord(payload) && 'data' in payload
-          ? (payload as { data: unknown }).data
-          : payload;
+        isRecord(payload) && 'data' in payload ? (payload as { data: unknown }).data : payload;
       const data = normalizeReport(innerData);
       if (!data) return { status: 'error', error: 'invalid_payload' };
       return { status: 'ok', data };
@@ -272,8 +259,7 @@ export async function fetchSloDrilldown(
       return { status: 'error', error: `http_${res.status}` };
     }
     const json: unknown = await res.json().catch(() => null);
-    const innerData =
-      isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
+    const innerData = isRecord(json) && 'data' in json ? (json as { data: unknown }).data : json;
     const data = normalizeReport(innerData);
     if (!data) return { status: 'error', error: 'invalid_payload' };
     return { status: 'ok', data };

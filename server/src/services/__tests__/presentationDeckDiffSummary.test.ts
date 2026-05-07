@@ -4,7 +4,12 @@ import { buildDeckDiffSummary } from '../presentationDeckDiffSummaryService.js';
 
 describe('buildDeckDiffSummary', () => {
   it('detects added/removed slides', () => {
-    const before = { cards: [{ title: 'Intro', bullets: ['a'] }, { title: 'Risks', bullets: ['x'] }] };
+    const before = {
+      cards: [
+        { title: 'Intro', bullets: ['a'] },
+        { title: 'Risks', bullets: ['x'] },
+      ],
+    };
     const after = { cards: [{ title: 'Intro', bullets: ['a'] }] };
     const diff = buildDeckDiffSummary(before, after);
     expect(diff.cardsBefore).toBe(2);

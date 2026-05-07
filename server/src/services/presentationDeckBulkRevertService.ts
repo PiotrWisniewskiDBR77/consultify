@@ -22,11 +22,7 @@ export interface BulkRevertOpRow {
   createdAt: string;
 }
 
-export type BulkRevertRejectReason =
-  | 'not_found'
-  | 'org_mismatch'
-  | 'deck_mismatch'
-  | 'duplicate';
+export type BulkRevertRejectReason = 'not_found' | 'org_mismatch' | 'deck_mismatch' | 'duplicate';
 
 export interface BulkRevertRejection {
   operationId: string;

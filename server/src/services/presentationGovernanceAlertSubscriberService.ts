@@ -31,18 +31,14 @@ import { randomUUID } from 'node:crypto';
 
 import { get as dbGetReal, run as dbRunReal } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-
 import {
+  type AlertSeverity,
   buildAlertPayload,
   buildSignedRequestHeaders,
   generateSigningSecret,
   maskTarget,
-  type AlertSeverity,
 } from './presentationGovernanceAlertService.js';
-import {
-  generateRawToken,
-  hashToken,
-} from './presentationSubscriberDashboardService.js';
+import { generateRawToken, hashToken } from './presentationSubscriberDashboardService.js';
 
 // ============================================================================
 // TYPES
@@ -234,11 +230,7 @@ export async function rotateSubscriptionSecret(
   }
   const dbRun = overrides?.dbRun || dbRunReal;
 
-  const row = await loadSubscriptionRow(
-    input.subscriptionId,
-    input.organizationId,
-    overrides
-  );
+  const row = await loadSubscriptionRow(input.subscriptionId, input.organizationId, overrides);
   if (!row) return { status: 'not_found' };
   if (!normalizeActive(row.active)) return { status: 'inactive' };
 
@@ -298,11 +290,7 @@ export async function sendTestDelivery(
     return { status: 'not_found', attempted: false, signed: false };
   }
 
-  const row = await loadSubscriptionRow(
-    input.subscriptionId,
-    input.organizationId,
-    overrides
-  );
+  const row = await loadSubscriptionRow(input.subscriptionId, input.organizationId, overrides);
   if (!row) return { status: 'not_found', attempted: false, signed: false };
   if (!normalizeActive(row.active)) {
     return { status: 'inactive', attempted: false, signed: false };
@@ -414,7 +402,8 @@ export async function sendTestDelivery(
       attempted: true,
       signed: true,
       errorCategory:
-        (error as any)?.name === 'AbortError' || /timeout|aborted/i.test(String((error as any)?.message || ''))
+        (error as any)?.name === 'AbortError' ||
+        /timeout|aborted/i.test(String((error as any)?.message || ''))
           ? 'timeout'
           : 'fetch_failed',
       signaturePreview,

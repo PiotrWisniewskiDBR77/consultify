@@ -27,4 +27,3 @@ export function WorkCanvasRedirect() {
 
   return <Navigate to={`${targetPath}${search ? `?${search}` : ''}`} replace />;
 }
-

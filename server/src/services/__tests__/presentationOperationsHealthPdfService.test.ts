@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { OperationsHealthReport } from '../presentationOperationsHealthService.js';
 import { renderOperationsHealthHtml } from '../presentationOperationsHealthPdfService.js';
+import type { OperationsHealthReport } from '../presentationOperationsHealthService.js';
 
 const NOW_ISO = '2026-05-10T12:00:00.000Z';
 

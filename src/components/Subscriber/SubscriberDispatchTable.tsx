@@ -20,13 +20,7 @@
  * say so out loud.
  */
 
-import {
-  CheckCircle,
-  FlaskConical,
-  Info,
-  MinusCircle,
-  XCircle,
-} from 'lucide-react';
+import { CheckCircle, FlaskConical, Info, MinusCircle, XCircle } from 'lucide-react';
 import React from 'react';
 
 import type {
@@ -60,8 +54,7 @@ const STATUS_LABEL: Record<SubscriberDispatchStatus, string> = {
 const STATUS_TONE: Record<SubscriberDispatchStatus, string> = {
   sent: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   failed: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  suppressed:
-    'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
+  suppressed: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
   dry_run: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
 };
 
@@ -104,9 +97,7 @@ const SubscriberDispatchTable: React.FC<SubscriberDispatchTableProps> = ({
       className={`overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 ${className}`.trim()}
     >
       <div className="px-4 py-3">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-          {COPY.heading}
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{COPY.heading}</h3>
         <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
           Last {maxRows} dispatches in chronological order.
         </p>
@@ -167,9 +158,7 @@ const SubscriberDispatchTable: React.FC<SubscriberDispatchTableProps> = ({
                     <td className="px-4 py-2 tabular-nums">
                       {typeof row.httpStatus === 'number' ? row.httpStatus : '—'}
                     </td>
-                    <td className="px-4 py-2 font-mono text-[11px]">
-                      {row.toVerdict || '—'}
-                    </td>
+                    <td className="px-4 py-2 font-mono text-[11px]">{row.toVerdict || '—'}</td>
                     <td className="px-4 py-2 font-mono text-[11px]">
                       {row.deckIdMasked || '****'}
                     </td>
@@ -184,9 +173,7 @@ const SubscriberDispatchTable: React.FC<SubscriberDispatchTableProps> = ({
                         aria-label={sigTitle}
                       >
                         <Info size={10} aria-hidden className="shrink-0" />
-                        {row.signaturePresent
-                          ? COPY.signaturePresent
-                          : COPY.signatureMissing}
+                        {row.signaturePresent ? COPY.signaturePresent : COPY.signatureMissing}
                       </span>
                     </td>
                   </tr>

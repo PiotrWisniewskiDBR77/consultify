@@ -13,9 +13,7 @@ import {
   verifyWebhookSignature,
 } from '../presentationGovernanceAlertService.js';
 
-function makeTransition(
-  overrides: Partial<AlertTransitionInput> = {}
-): AlertTransitionInput {
+function makeTransition(overrides: Partial<AlertTransitionInput> = {}): AlertTransitionInput {
   return {
     deckId: 'deck_123',
     deckTitle: 'Q3 Strategy Deck',
@@ -27,9 +25,7 @@ function makeTransition(
   };
 }
 
-function makeSubscription(
-  overrides: Partial<AlertSubscription> = {}
-): AlertSubscription {
+function makeSubscription(overrides: Partial<AlertSubscription> = {}): AlertSubscription {
   return {
     id: 'sub_1',
     organizationId: 'org_acme',
@@ -268,6 +264,8 @@ describe('presentationGovernanceAlertService - buildSignedRequestHeaders', () =>
       bodyJson: BODY,
     });
 
-    expect(verifyWebhookSignature(secret, canonical, headers['x-consultify-signature']!)).toBe(true);
+    expect(verifyWebhookSignature(secret, canonical, headers['x-consultify-signature']!)).toBe(
+      true
+    );
   });
 });

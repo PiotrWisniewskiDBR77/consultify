@@ -153,10 +153,7 @@ export interface SaveSavedViewInput {
   filters: AuditLogSavedViewFilters;
 }
 
-export function saveSavedView(
-  userKey: string,
-  view: SaveSavedViewInput
-): AuditLogSavedView {
+export function saveSavedView(userKey: string, view: SaveSavedViewInput): AuditLogSavedView {
   const trimmedName = (view.name ?? '').trim();
   if (trimmedName.length < 1 || trimmedName.length > SAVED_VIEWS_NAME_MAX_LENGTH) {
     throw new Error('NAME_INVALID');
@@ -251,10 +248,7 @@ export interface ImportSavedViewsResult {
   skipped: number;
 }
 
-export function importSavedViews(
-  userKey: string,
-  json: string
-): ImportSavedViewsResult {
+export function importSavedViews(userKey: string, json: string): ImportSavedViewsResult {
   const parsed = JSON.parse(json);
   const incoming = extractIncomingViews(parsed);
   if (!incoming) throw new Error('INVALID_PAYLOAD');

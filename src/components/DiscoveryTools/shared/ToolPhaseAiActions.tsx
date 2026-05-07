@@ -85,11 +85,7 @@ export const ToolPhaseAiActions: React.FC<ToolPhaseAiActionsProps> = ({
           type="button"
           onClick={onAbort}
           className={getMenu3AiButtonClass(true)}
-          title={
-            isPolish
-              ? 'Zatrzymaj bieżące generowanie AI'
-              : 'Stop the current AI generation'
-          }
+          title={isPolish ? 'Zatrzymaj bieżące generowanie AI' : 'Stop the current AI generation'}
         >
           <Square size={12} />
           {isPolish ? 'Zatrzymaj AI' : 'Stop AI'}

@@ -2912,7 +2912,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <span className="text-slate-500">
                         {t('integrations.syncHub.errorRateLabel', 'Error rate')}:
                       </span>{' '}
-                      <span className={`${int.errorRate > 20 ? 'text-rose-400' : 'text-slate-300'}`}>
+                      <span
+                        className={`${int.errorRate > 20 ? 'text-rose-400' : 'text-slate-300'}`}
+                      >
                         {int.errorRate}%
                       </span>
                     </div>

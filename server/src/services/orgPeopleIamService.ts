@@ -10,9 +10,9 @@
  *  - Audit everything: successful mutations emit a role_change_audit_event.
  */
 
-import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -54,7 +54,9 @@ function ok(): IamSuccess {
   return { denied: false };
 }
 
-async function getOrgMembers(organizationId: string): Promise<Array<{ user_id: string; role: string }>> {
+async function getOrgMembers(
+  organizationId: string
+): Promise<Array<{ user_id: string; role: string }>> {
   const rows = await dbAll<{ user_id: string; role: string }>(
     `SELECT user_id, role FROM organization_members WHERE organization_id = ?`,
     [organizationId],
@@ -124,7 +126,10 @@ export async function addOrganizationMemberViaIam(params: {
   // Guardrail: SUPERADMIN capabilities may never be granted via this path
   const normalizedRole = String(params.role || '').toUpperCase();
   if (normalizedRole === 'SUPERADMIN') {
-    return deny('SUPERADMIN_CAPABILITY_DENIED', 'Cannot assign SUPERADMIN role through org member flow');
+    return deny(
+      'SUPERADMIN_CAPABILITY_DENIED',
+      'Cannot assign SUPERADMIN role through org member flow'
+    );
   }
 
   // Seat check (soft — returns SEAT_LIMIT_REACHED if strict limit configured)
@@ -224,7 +229,10 @@ export async function removeOrganizationMemberViaIam(params: {
       ['OWNER', 'ADMIN'].includes(String(m.role).toUpperCase())
     );
     if (adminsAndOwners.length <= 1) {
-      return deny('SELF_LOCKOUT_REJECTED', 'Removing yourself would leave the organisation without an admin');
+      return deny(
+        'SELF_LOCKOUT_REJECTED',
+        'Removing yourself would leave the organisation without an admin'
+      );
     }
   }
 

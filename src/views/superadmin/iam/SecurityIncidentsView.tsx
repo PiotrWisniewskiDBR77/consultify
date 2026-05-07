@@ -288,10 +288,9 @@ const SecurityIncidentsView: React.FC = () => {
       if (!hasListShape(incidentsData, ['incidents', 'items'])) {
         throw new Error('Security incidents response was not a list');
       }
-      const incidentsSnapshot = getListPayload<unknown>(incidentsData, [
-        'incidents',
-        'items',
-      ]).map(normalizeIncident);
+      const incidentsSnapshot = getListPayload<unknown>(incidentsData, ['incidents', 'items']).map(
+        normalizeIncident
+      );
       const statsSnapshot = normalizeStats(statsData);
       setIncidents(incidentsSnapshot);
       setStats(statsSnapshot);

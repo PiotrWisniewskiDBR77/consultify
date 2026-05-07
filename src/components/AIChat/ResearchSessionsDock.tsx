@@ -267,15 +267,17 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
     <div className={compact ? 'space-y-4 p-4' : 'p-6 space-y-6'}>
       {!compact ? (
         <div>
-        <p className="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-300 font-semibold">
-          Consultify AI OS
-        </p>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Research Sessions</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          Reproducible Deep Research with lifecycle, evidence graph, citations and final report
-          artifacts.
-        </p>
-      </div>
+          <p className="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-300 font-semibold">
+            Consultify AI OS
+          </p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+            Research Sessions
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Reproducible Deep Research with lifecycle, evidence graph, citations and final report
+            artifacts.
+          </p>
+        </div>
       ) : null}
 
       {error && (
