@@ -148,6 +148,8 @@ const PROFILE_CONFIRMATION_FIELDS = [
   'outOfOfficeMessage',
 ] as const;
 
+type ProfileConfirmationField = (typeof PROFILE_CONFIRMATION_FIELDS)[number];
+
 // Extended form state type
 interface ExtendedFormState {
   firstName: string;
@@ -354,8 +356,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 String(lastSyncedFormRef.current[field] || ''),
               ], { removeLeadingKnownValue: field === 'jobTitle' })
             : value;
-        nextValidationValue = sanitizedValue;
-        return { ...current, [field]: sanitizedValue };
+        nextValidationValue = sanitizedValue as ExtendedFormState[K];
+        return { ...current, [field]: sanitizedValue as ExtendedFormState[K] };
       });
       setSaveStatus('idle');
       setSaveError(null);
@@ -424,7 +426,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         });
       }
       if (!areProfileValuesEqual(nextValue, currentValue)) {
-        (updates as Partial<ExtendedFormState>)[field] = nextValue;
+        (updates as Partial<Record<ProfileConfirmationField, ExtendedFormState[ProfileConfirmationField]>>)[
+          field
+        ] = nextValue;
       }
     }
 

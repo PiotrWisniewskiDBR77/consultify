@@ -204,6 +204,16 @@ function statusFromError(err: unknown): SavedSearchFetchStatus {
   return 'unavailable';
 }
 
+function createStatusFromError(err: unknown): CreateSavedSearchStatus {
+  const status = statusFromError(err);
+  return status === 'error' ? 'unavailable' : status;
+}
+
+function deleteStatusFromError(err: unknown): DeleteSavedSearchStatus {
+  const status = statusFromError(err);
+  return status === 'error' ? 'unavailable' : status;
+}
+
 function safeMessage(err: unknown): string | undefined {
   if (isRecord(err) && typeof err.message === 'string') return err.message;
   return undefined;
@@ -329,7 +339,7 @@ export async function createSavedSearch(
           return { status: 'storage_error', error: 'storage_error' };
         }
       }
-      return { status: statusFromError(err), error: safeMessage(err) };
+      return { status: createStatusFromError(err), error: safeMessage(err) };
     }
   }
 
@@ -355,7 +365,7 @@ export async function createSavedSearch(
         return { status: 'invalid', error: 'invalid', ...(errors ? { errors } : {}) };
       }
       if (res.status === 503) return { status: 'storage_error', error: 'storage_error' };
-      return { status: statusFromHttp(res.status), error: `http_${res.status}` };
+      return { status: createStatusFromError({ status: res.status }), error: `http_${res.status}` };
     }
     const json: unknown = await res.json().catch(() => null);
     const data = unwrapData(json);
@@ -383,7 +393,7 @@ export async function deleteSavedSearch(
       if (isRecord(err) && err.status === 404) {
         return { status: 'not_found' };
       }
-      return { status: statusFromError(err) === 'error' ? 'unavailable' : statusFromError(err), error: safeMessage(err) };
+      return { status: deleteStatusFromError(err), error: safeMessage(err) };
     }
   }
 

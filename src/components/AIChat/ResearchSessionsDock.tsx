@@ -264,8 +264,9 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
+    <div className={compact ? 'space-y-4 p-4' : 'p-6 space-y-6'}>
+      {!compact ? (
+        <div>
         <p className="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-300 font-semibold">
           Consultify AI OS
         </p>
@@ -275,6 +276,7 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
           artifacts.
         </p>
       </div>
+      ) : null}
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -282,7 +284,11 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)]">
+      <div
+        className={
+          compact ? 'grid gap-4' : 'grid gap-4 lg:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)]'
+        }
+      >
         <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
           <div className="border-b border-slate-200 dark:border-navy-700 p-4 space-y-3">
             <div>
