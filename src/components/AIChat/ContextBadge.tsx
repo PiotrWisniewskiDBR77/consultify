@@ -52,6 +52,7 @@ const WORKSPACE_ICONS: Record<WorkspaceType, React.ReactNode> = {
   insight: <Lightbulb size={14} />,
   interview: <MessageSquare size={14} />,
   presentation: <Presentation size={14} />,
+  canvas: <NotebookPen size={14} />,
   general: <Sparkles size={14} />,
   empty: <Sparkles size={14} />,
 };
@@ -73,6 +74,7 @@ const WORKSPACE_LABELS: Record<WorkspaceType, string> = {
   insight: 'Insight',
   interview: 'Interview',
   presentation: 'Presentation',
+  canvas: 'Canvas',
   general: 'General',
   empty: 'Chat',
 };
