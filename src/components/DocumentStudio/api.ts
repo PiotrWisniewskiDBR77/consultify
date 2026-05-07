@@ -140,16 +140,22 @@ export interface CreateLocalProposalPayload {
   scope: 'local';
 }
 
+export interface CreateProposalOptions {
+  /** Opt-in bounded LLM rewrite. Falls back deterministically on any failure. */
+  useLlm?: boolean;
+}
+
 export async function createDocumentStudioLocalProposal(
   artifactId: string,
-  payload: CreateLocalProposalPayload
+  payload: CreateLocalProposalPayload,
+  options: CreateProposalOptions = {}
 ): Promise<DocumentEditorProposal> {
   const res = await fetchWithRetry(
     `${BASE}/${encodeURIComponent(artifactId)}/editor/proposals/local`,
     {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, useLlm: options.useLlm === true }),
     }
   );
   const json = await handleResponse<{ proposal: DocumentEditorProposal }>(
@@ -197,14 +203,15 @@ export async function rejectDocumentStudioProposal(
 // MVP-3 — section + global edit proposals.
 export async function createDocumentStudioSectionProposal(
   artifactId: string,
-  payload: { sectionId: string; instruction: string }
+  payload: { sectionId: string; instruction: string },
+  options: CreateProposalOptions = {}
 ): Promise<DocumentEditorProposal> {
   const res = await fetchWithRetry(
     `${BASE}/${encodeURIComponent(artifactId)}/editor/proposals/section`,
     {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, useLlm: options.useLlm === true }),
     }
   );
   const json = await handleResponse<{ proposal: DocumentEditorProposal }>(
@@ -216,14 +223,15 @@ export async function createDocumentStudioSectionProposal(
 
 export async function createDocumentStudioGlobalProposal(
   artifactId: string,
-  payload: { instruction: string }
+  payload: { instruction: string },
+  options: CreateProposalOptions = {}
 ): Promise<DocumentEditorProposal> {
   const res = await fetchWithRetry(
     `${BASE}/${encodeURIComponent(artifactId)}/editor/proposals/global`,
     {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, useLlm: options.useLlm === true }),
     }
   );
   const json = await handleResponse<{ proposal: DocumentEditorProposal }>(

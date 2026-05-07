@@ -57,6 +57,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
   const [targetKey, setTargetKey] = useState('');
   const [scope, setScope] = useState<DocumentEditorScope>('local');
   const [sectionTargetId, setSectionTargetId] = useState('');
+  const [useLlm, setUseLlm] = useState(false);
   const [pendingProposal, setPendingProposal] = useState<DocumentEditorProposal | null>(null);
   const [auditTrail, setAuditTrail] = useState<DocumentAuditEntry[]>([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
@@ -128,29 +129,51 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
     try {
       let proposal: DocumentEditorProposal;
       if (scope === 'local' && selectedTarget) {
-        proposal = await createDocumentStudioLocalProposal(artifactId, {
-          sectionId: selectedTarget.sectionId,
-          blockId: selectedTarget.blockId,
-          instruction: instruction.trim(),
-          scope: 'local',
-        });
+        proposal = await createDocumentStudioLocalProposal(
+          artifactId,
+          {
+            sectionId: selectedTarget.sectionId,
+            blockId: selectedTarget.blockId,
+            instruction: instruction.trim(),
+            scope: 'local',
+          },
+          { useLlm }
+        );
       } else if (scope === 'section') {
-        proposal = await createDocumentStudioSectionProposal(artifactId, {
-          sectionId: sectionTargetId,
-          instruction: instruction.trim(),
-        });
+        proposal = await createDocumentStudioSectionProposal(
+          artifactId,
+          {
+            sectionId: sectionTargetId,
+            instruction: instruction.trim(),
+          },
+          { useLlm }
+        );
       } else {
-        proposal = await createDocumentStudioGlobalProposal(artifactId, {
-          instruction: instruction.trim(),
-        });
+        proposal = await createDocumentStudioGlobalProposal(
+          artifactId,
+          {
+            instruction: instruction.trim(),
+          },
+          { useLlm }
+        );
       }
       setPendingProposal(proposal);
-      setNote(
-        t(
-          'documentStudio.editor.proposalReady',
-          'Proposal ready. Review the diff and choose approve or reject.'
-        )
-      );
+      const refinedNote =
+        useLlm && proposal.llmRefined
+          ? t(
+              'documentStudio.editor.proposalReadyRefined',
+              'Proposal ready (AI rewrite applied). Review the diff and approve or reject.'
+            )
+          : useLlm
+            ? t(
+                'documentStudio.editor.proposalReadyFallback',
+                'Proposal ready (AI rewrite unavailable; deterministic edit shown). Review and approve or reject.'
+              )
+            : t(
+                'documentStudio.editor.proposalReady',
+                'Proposal ready. Review the diff and choose approve or reject.'
+              );
+      setNote(refinedNote);
       await refreshAuditTrail();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create proposal');
@@ -294,6 +317,24 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
         </label>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+            checked={useLlm}
+            onChange={(e) => setUseLlm(e.target.checked)}
+            disabled={submitting}
+          />
+          <span>
+            {t(
+              'documentStudio.editor.useLlm',
+              'Refine with AI (optional, falls back to deterministic edit on any failure)'
+            )}
+          </span>
+        </label>
+      </div>
+
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button type="button" size="sm" onClick={handleCreateProposal} disabled={submitting}>
           {t('documentStudio.editor.propose', 'Create proposal')}
@@ -320,8 +361,15 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
 
       {pendingProposal ? (
         <div className="mt-3 rounded-lg border border-sky-300/60 bg-white p-3 dark:border-sky-400/30 dark:bg-navy-900">
-          <div className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-            {t('documentStudio.editor.diff', 'Diff preview')} · {pendingProposal.status}
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>
+              {t('documentStudio.editor.diff', 'Diff preview')} · {pendingProposal.status}
+            </span>
+            {pendingProposal.llmRefined ? (
+              <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                {t('documentStudio.editor.llmBadge', 'AI rewrite')}
+              </span>
+            ) : null}
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             <div className="rounded-md border border-slate-200 p-2 text-xs dark:border-navy-700">

@@ -116,6 +116,10 @@ export interface DocumentEditorProposal {
   sectionId?: string;
   blockId?: string;
   affectedSectionIds: string[];
+  /** Optional per-block LLM rewrites; applied at approval time. */
+  blockRewrites?: Record<string, string>;
+  /** True when the LLM refiner produced any rewrites for this proposal. */
+  llmRefined?: boolean;
   status: DocumentProposalStatus;
   diff: {
     before: string;
