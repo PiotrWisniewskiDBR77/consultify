@@ -1180,7 +1180,24 @@ const resolveCurrentIndexBundlePath = (): { publicPath: string; fsPath: string }
 };
 
 // Helper function to serve index.html
-const serveIndexHtml = (req: Request, res: Response): void => {
+const isViteServerReachable = async (viteUrl: string): Promise<boolean> => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1200);
+    const probeUrl = `${viteUrl}/@vite/client`;
+    const response = await fetch(probeUrl, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { Accept: '*/*' },
+    });
+    clearTimeout(timeout);
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
+const serveIndexHtml = async (req: Request, res: Response): Promise<void> => {
   // In stable dev mode we run Vite separately on :3000.
   // Serving /dist from the backend (:3001) in dev is a common source of "dead UI"
   // (stale assets, missing HMR, mismatched chunks) where navigation/sidebar appears unresponsive.
@@ -1197,9 +1214,15 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   );
 
   if (shouldRedirectToVite && req.method === 'GET' && wantsHtml) {
-    const target = `${viteUrl}${req.originalUrl || req.path || '/'}`;
-    res.redirect(302, target);
-    return;
+    const isReachable = await isViteServerReachable(viteUrl);
+    if (isReachable) {
+      const target = `${viteUrl}${req.originalUrl || req.path || '/'}`;
+      res.redirect(302, target);
+      return;
+    }
+    logger.warn(
+      `[Server] Vite redirect requested but dev server is unreachable (${viteUrl}); serving dist index instead`
+    );
   }
 
   // Use absolute path for res.sendFile (required for Railway/Docker)
@@ -1254,7 +1277,7 @@ app.get('/', (req: Request, res: Response) => {
   logger.info(`[Server] ===== Root route handler EXECUTED for: ${req.path} =====`);
   logger.debug(`[Server] frontendDistPath: ${frontendDistPath}`);
   logger.debug(`[Server] indexPath will be: ${path.join(frontendDistPath, 'index.html')}`);
-  serveIndexHtml(req, res);
+  void serveIndexHtml(req, res);
 });
 
 app.get('/sw.js', (_req: Request, res: Response) => {
@@ -1397,7 +1420,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
 
   // Serve index.html for all other routes (SPA routing)
-  serveIndexHtml(req, res);
+  void serveIndexHtml(req, res);
 });
 
 // ============================================================
