@@ -11,9 +11,23 @@ import { randomUUID } from 'node:crypto';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { getTableColumns } from '../utils/dbSchema.js';
+import { clearSchemaCache, getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type { UpdateUserRequest, UpdateUserRoleRequest } from '../validators/user.validators.js';
+
+const PROFILE_SCHEMA_RETRY_ERRORS = [
+  'does not exist',
+  'no such column',
+  'relation',
+  'column',
+  'constraint',
+  'duplicate key',
+];
+
+const isProfileSchemaWriteError = (error: unknown): boolean => {
+  const message = String((error as Error)?.message || error || '').toLowerCase();
+  return PROFILE_SCHEMA_RETRY_ERRORS.some((needle) => message.includes(needle));
+};
 
 // ==========================================
 // CONTROLLER METHODS
@@ -166,6 +180,13 @@ export class UserController {
         profileSurveyDismissedCount,
         profileSurveyLastDismissedAt,
       } = req.body;
+
+      if (firstName !== undefined && !String(firstName).trim()) {
+        res.status(400).json({ error: 'First name is required before saving' });
+        return;
+      }
+
+      clearSchemaCache();
       const userColumns = await getTableColumns('users');
       const userProfileColumns = await getTableColumns('user_profiles');
       const userProfileExtendedColumns = await getTableColumns('user_profile_extended');
@@ -198,7 +219,7 @@ export class UserController {
 
       if (firstName !== undefined) {
         updates.push('first_name = ?');
-        params.push(firstName);
+        params.push(String(firstName).trim());
       }
       if (lastName !== undefined) {
         updates.push('last_name = ?');
@@ -334,8 +355,10 @@ export class UserController {
       }
 
       if (updates.length > 0) {
-        updates.push('updated_at = ?');
-        params.push(new Date().toISOString());
+        if (userColumns.has('updated_at')) {
+          updates.push('updated_at = ?');
+          params.push(new Date().toISOString());
+        }
 
         // Users may update their own profile even when their primary
         // users.organization_id differs from the active org membership.
@@ -350,8 +373,18 @@ export class UserController {
       }
 
       if (shouldPersistProfileFallback) {
-        const upsertColumns = ['id', 'user_id', 'updated_at'];
-        const upsertValues: (string | null)[] = [randomUUID(), id, new Date().toISOString()];
+        const upsertColumns = ['user_id'];
+        const upsertValues: (string | null)[] = [id];
+
+        if (userProfileColumns.has('id')) {
+          upsertColumns.unshift('id');
+          upsertValues.unshift(randomUUID());
+        }
+
+        if (userProfileColumns.has('updated_at')) {
+          upsertColumns.push('updated_at');
+          upsertValues.push(new Date().toISOString());
+        }
 
         if (userProfileColumns.has('job_title') && persistToUserProfiles.jobTitle !== undefined) {
           upsertColumns.push('job_title');
@@ -363,7 +396,10 @@ export class UserController {
           upsertValues.push(persistToUserProfiles.department);
         }
 
-        if (upsertColumns.length > 3) {
+        if (
+          persistToUserProfiles.jobTitle !== undefined ||
+          persistToUserProfiles.department !== undefined
+        ) {
           const profileUpdates: string[] = [];
           const profileParams: (string | null)[] = [];
 
@@ -381,21 +417,27 @@ export class UserController {
           }
 
           if (profileUpdates.length > 0) {
-            profileUpdates.push('updated_at = ?');
-            profileParams.push(new Date().toISOString());
+            if (userProfileColumns.has('updated_at')) {
+              profileUpdates.push('updated_at = ?');
+              profileParams.push(new Date().toISOString());
+            }
             profileParams.push(id);
 
-            const profileUpdateResult = await queryHelpers.queryRun(
-              `UPDATE user_profiles SET ${profileUpdates.join(', ')} WHERE user_id = ?`,
-              profileParams
-            );
-
-            if (!profileUpdateResult.changes) {
-              const placeholders = upsertColumns.map(() => '?').join(', ');
-              await queryHelpers.queryRun(
-                `INSERT INTO user_profiles (${upsertColumns.join(', ')}) VALUES (${placeholders})`,
-                upsertValues
+            try {
+              const profileUpdateResult = await queryHelpers.queryRun(
+                `UPDATE user_profiles SET ${profileUpdates.join(', ')} WHERE user_id = ?`,
+                profileParams
               );
+
+              if (!profileUpdateResult.changes) {
+                const placeholders = upsertColumns.map(() => '?').join(', ');
+                await queryHelpers.queryRun(
+                  `INSERT INTO user_profiles (${upsertColumns.join(', ')}) VALUES (${placeholders})`,
+                  upsertValues
+                );
+              }
+            } catch (error) {
+              if (!isProfileSchemaWriteError(error)) throw error;
             }
           }
         }
@@ -437,45 +479,49 @@ export class UserController {
           }
           extendedParams.push(id);
 
-          const profileExtendedUpdateResult = await queryHelpers.queryRun(
-            `UPDATE user_profile_extended SET ${extendedUpdates.join(', ')} WHERE user_id = ?`,
-            extendedParams
-          );
-
-          if (!profileExtendedUpdateResult.changes) {
-            const insertColumns: string[] = ['user_id'];
-            const insertValues: (string | null)[] = [id];
-
-            if (
-              extendedJobTitleColumn &&
-              persistToUserProfileExtended.jobTitle !== undefined
-            ) {
-              insertColumns.push(extendedJobTitleColumn);
-              insertValues.push(persistToUserProfileExtended.jobTitle);
-            }
-
-            if (
-              userProfileExtendedColumns.has('department') &&
-              persistToUserProfileExtended.department !== undefined
-            ) {
-              insertColumns.push('department');
-              insertValues.push(persistToUserProfileExtended.department);
-            }
-
-            if (userProfileExtendedColumns.has('created_at')) {
-              insertColumns.push('created_at');
-              insertValues.push(new Date().toISOString());
-            }
-            if (userProfileExtendedColumns.has('updated_at')) {
-              insertColumns.push('updated_at');
-              insertValues.push(new Date().toISOString());
-            }
-
-            const placeholders = insertColumns.map(() => '?').join(', ');
-            await queryHelpers.queryRun(
-              `INSERT INTO user_profile_extended (${insertColumns.join(', ')}) VALUES (${placeholders})`,
-              insertValues
+          try {
+            const profileExtendedUpdateResult = await queryHelpers.queryRun(
+              `UPDATE user_profile_extended SET ${extendedUpdates.join(', ')} WHERE user_id = ?`,
+              extendedParams
             );
+
+            if (!profileExtendedUpdateResult.changes) {
+              const insertColumns: string[] = ['user_id'];
+              const insertValues: (string | null)[] = [id];
+
+              if (
+                extendedJobTitleColumn &&
+                persistToUserProfileExtended.jobTitle !== undefined
+              ) {
+                insertColumns.push(extendedJobTitleColumn);
+                insertValues.push(persistToUserProfileExtended.jobTitle);
+              }
+
+              if (
+                userProfileExtendedColumns.has('department') &&
+                persistToUserProfileExtended.department !== undefined
+              ) {
+                insertColumns.push('department');
+                insertValues.push(persistToUserProfileExtended.department);
+              }
+
+              if (userProfileExtendedColumns.has('created_at')) {
+                insertColumns.push('created_at');
+                insertValues.push(new Date().toISOString());
+              }
+              if (userProfileExtendedColumns.has('updated_at')) {
+                insertColumns.push('updated_at');
+                insertValues.push(new Date().toISOString());
+              }
+
+              const placeholders = insertColumns.map(() => '?').join(', ');
+              await queryHelpers.queryRun(
+                `INSERT INTO user_profile_extended (${insertColumns.join(', ')}) VALUES (${placeholders})`,
+                insertValues
+              );
+            }
+          } catch (error) {
+            if (!isProfileSchemaWriteError(error)) throw error;
           }
         }
       }

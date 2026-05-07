@@ -676,3 +676,63 @@ After adding Epics `I-J-K-L`, the task system is now complete for:
 - release discipline.
 
 Documentation can now serve as execution baseline, not only product vision.
+
+---
+
+## 16. Execution Closure (2026-05-07)
+
+All P0/P1 epic items A1–L3 plus the P2 H2 trend dashboard have been delivered across Sprints 1–15. Sprints 12 and 13 added beyond-backlog enhancements (webhook playground, real PDF rendering, subscriber dashboard, watchlist saved searches, governance deep-link URLs, anomaly detection).
+
+### Closure ledger
+
+| Epic | Item | Delivered in Sprint | Evidence |
+| --- | --- | --- | --- |
+| A | A1 / A2 | 1 | `presentationQualityGatesService.ts`, `PRESENTATION_QUALITY_GOVERNANCE_SCORECARD.md` |
+| B | B1 / B2 | 1 | `contextPackBuilder.ts` (source_coverage_map, data_gap_register) |
+| C | C1 | 1 | `presentationTemplateRuntimeService.ts` fallbackPolicy |
+| C | C2 | 14 | `presentationTemplateGovernanceService.ts`, migration 767, SuperAdmin tab |
+| D | D1 / D2 / D3 | 1, 8, 9 | `presentationAgentEditService.ts`, revert + bulk revert services |
+| E | E1 / E2 / E3 | 1 | `DeckQualityGatesPanel.tsx`, `AgentPanel.tsx` proposal flow |
+| F | F1 | 14 | `presentationExportParityService.ts` + `npm run parity:check` |
+| F | F2 | 1 | `presentation_export_records` semantics |
+| G | G1 / G2 | 1, 11 | unit + Playwright E2E governance loop |
+| G | G3 | 1 | `PRESENTATION_GENERATOR_MANUAL_TEST_BACKLOG.md` (16 cases) |
+| H | H1 | 15 | `presentationBenchmarkScorecardService.ts` + `npm run benchmark:monthly` |
+| H | H2 | 15 | `presentationBenchmarkTrendService.ts` + `PresentationBenchmarkTrendView` SuperAdmin tab |
+| I | I1 / I2 | 1, 4 | `normalize-legacy-presentation-decks.ts`, `presentationTemplateCompatibilityService.ts` |
+| I | I3 | 15 | `PRESENTATION_MIGRATION_RUNBOOK.md` + dry-run CLI + sign-off template |
+| J | J1 / J2 | 4 | `PRESENTATION_SLI_SLO.md`, runtime telemetry events |
+| J | J3 | 14 | `incident-runbooks/RB-01..04.md` + classifier service |
+| K | K1 / K2 | 1, 4 | `presentationAccessPolicyService.ts`, `presentationConfidentialityPolicyService.ts` |
+| K | K3 | 14 | `presentationAuditIntegrityService.ts` + `npm run audit:integrity` |
+| L | L1 / L2 | 1 | `EXECUTION_TASK_METADATA_STANDARD.md`, `PRESENTATION_STAGE_GATE_WORKFLOW.md` |
+| L | L3 | 15 | `DOCUMENTATION_CHANGE_CONTROL.md` + 4 starter changelogs + `npm run docs:check` |
+
+### Test inventory (final)
+
+- 49 unit test files
+- 458 unit tests passing (149 added in Sprints 14–15 alone)
+- 1 integration test file (`alert-worker.integration.test.ts`, skip-aware on no-Postgres)
+- 4 Playwright E2E tests (governance loop + export contract + confidentiality contract + artifact engine smoke)
+- Lint: zero issues
+- Drive sync: 16 snapshots taken across Sprints 1–15
+
+### CLI tools added
+
+- `npm run drive:snapshot` / `drive:restore` / `drive:restore:missing` / `drive:restore:diff`
+- `npm run parity:check`
+- `npm run audit:integrity`
+- `npm run benchmark:monthly`
+- `npm run docs:check`
+- `npm run migrate:dry-run` / `migrate:rollback-check`
+
+### SuperAdmin surfaces
+
+- Presentation Telemetry
+- Governance Watchlist (with auto-refresh, presets, saved searches, transfer)
+- Operations Health (with anomaly chips, SLO drill-down, real PDF export, runbook recommendations)
+- Alert Subscriptions (with rotate-secret, test-delivery, webhook playground)
+- Template Governance (lifecycle states, lineage, approval flow)
+- Benchmark Trend (12-month view vs Gamma target)
+
+This system meets the success criteria stated at the top of this document. Future sprints (16+) are open for product expansion (subscriber-facing UI, automated LLM judges, deck-level baselines, etc.) but no longer required for the original execution baseline.

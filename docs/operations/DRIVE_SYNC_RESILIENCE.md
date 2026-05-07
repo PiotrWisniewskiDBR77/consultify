@@ -28,6 +28,34 @@ Google Drive Desktop syncs the entire `~/Documents/Antygracity` tree. Symptoms o
 
 The pattern is workspace-wide but concentrated under `consultify/` because that subtree changes most often during agent sessions. See also the Sprint 5 rollout incident notes in `DRD/consultify/docs/operations/PRESENTATION_RUNTIME_AND_CONFIDENTIALITY_ROLLOUT_RUNBOOK.md` for related guidance on guarding multi-file workflows.
 
+## npm shortcuts (zero-config developer entry points)
+
+The most common operations are wired into `consultify/package.json`:
+
+```bash
+# Take a one-shot snapshot of the eight standard paths (uses 20-deep rotation):
+npm run drive:snapshot
+
+# Continuously snapshot in the background while you work:
+npm run drive:snapshot:watch
+
+# Restore the latest snapshot (asks before overwriting modified files):
+npm run drive:restore
+
+# Restore ONLY files that disappeared (safe even mid-session):
+npm run drive:restore:missing
+
+# Dry-run a diff-only restore to preview what would change:
+npm run drive:restore:diff
+```
+
+Use `npm run drive:restore:missing` immediately if you suspect Drive Sync ate
+freshly created files — it will not touch anything you have edited locally.
+
+For more advanced flags (custom `--paths`, `--snapshot <ISO_TS>`, `--report-file`,
+`--allow-any-root`), invoke the underlying scripts directly using the CLI
+reference below.
+
 ## CLI reference
 
 ### drive-sync-snapshot.ts

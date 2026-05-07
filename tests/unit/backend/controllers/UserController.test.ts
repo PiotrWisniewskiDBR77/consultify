@@ -10,6 +10,7 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
 
 vi.mock('../../../../server/src/utils/dbSchema.js', () => ({
   getTableColumns: vi.fn(),
+  clearSchemaCache: vi.fn(),
 }));
 
 import * as queryHelpers from '../../../../server/src/utils/queryHelpers.js';
@@ -179,6 +180,49 @@ describe('UserController', () => {
       });
     });
 
+    it('returns 400 when first name is blank', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.body = { firstName: '' };
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
+      expect(statusFn).toHaveBeenCalledWith(400);
+      expect(jsonFn).toHaveBeenCalledWith({ error: 'First name is required before saving' });
+      expect(queryHelpers.queryRun).not.toHaveBeenCalled();
+    });
+
+    it('does not require updated_at columns for profile fallback writes', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.body = { jobTitle: 'Product Lead', department: 'Engineering' };
+      vi.mocked(getTableColumns).mockImplementation(async (table: string) => {
+        if (table === 'users') {
+          return new Set(['id', 'organization_id']);
+        }
+        if (table === 'user_profiles') {
+          return new Set(['user_id', 'job_title', 'department']);
+        }
+        return new Set();
+      });
+      (queryHelpers.queryRun as any)
+        .mockResolvedValueOnce({ changes: 0 })
+        .mockResolvedValueOnce({ changes: 1 });
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        'UPDATE user_profiles SET job_title = ?, department = ? WHERE user_id = ?',
+        ['Product Lead', 'Engineering', 'user-1']
+      );
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        'INSERT INTO user_profiles (user_id, job_title, department) VALUES (?, ?, ?)',
+        ['user-1', 'Product Lead', 'Engineering']
+      );
+      expect(jsonFn).toHaveBeenCalledWith({
+        id: 'user-1',
+        message: 'User updated successfully',
+      });
+    });
+
     it('persists to user_profile_extended when users and user_profiles lack profile columns', async () => {
       mockReq.params.id = 'user-1';
       mockReq.body = { jobTitle: 'Engineering Manager', department: 'Engineering' };
@@ -208,6 +252,33 @@ describe('UserController', () => {
         expect.stringContaining('INSERT INTO user_profile_extended'),
         expect.arrayContaining(['user-1', 'Engineering Manager', 'Engineering', expect.any(String)])
       );
+      expect(jsonFn).toHaveBeenCalledWith({
+        id: 'user-1',
+        message: 'User updated successfully',
+      });
+    });
+
+    it('does not fail the profile update when optional profile fallback has schema drift', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.body = { firstName: 'Jane', jobTitle: 'Engineering Manager' };
+      vi.mocked(getTableColumns).mockImplementation(async (table: string) => {
+        if (table === 'users') {
+          return new Set(['id', 'organization_id', 'first_name', 'updated_at']);
+        }
+        if (table === 'user_profiles') {
+          return new Set(['id', 'user_id', 'job_title', 'updated_at']);
+        }
+        if (table === 'user_profile_extended') {
+          return new Set();
+        }
+        return new Set();
+      });
+      (queryHelpers.queryRun as any)
+        .mockResolvedValueOnce({ changes: 1 })
+        .mockRejectedValueOnce(new Error('column "job_title" does not exist'));
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
       expect(jsonFn).toHaveBeenCalledWith({
         id: 'user-1',
         message: 'User updated successfully',

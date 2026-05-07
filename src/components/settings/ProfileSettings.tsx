@@ -195,6 +195,81 @@ const areProfileValuesEqual = (left: unknown, right: unknown): boolean => {
   return String(left ?? '') === String(right ?? '');
 };
 
+const removeKnownSuffix = (value: string, suffix: string): string => {
+  const trimmedValue = value.trim();
+  const trimmedSuffix = suffix.trim();
+  if (!trimmedValue || !trimmedSuffix || trimmedValue === trimmedSuffix) return trimmedValue;
+  const withoutSuffix = trimmedValue.endsWith(trimmedSuffix)
+    ? trimmedValue.slice(0, -trimmedSuffix.length).trim()
+    : trimmedValue;
+  return withoutSuffix.replace(/\b(.{3,}?)\1\b/g, '$1').trim();
+};
+
+const collapseRepeatedTextFragments = (value: string): string => {
+  let next = value.trim();
+  let previous = '';
+  while (next !== previous) {
+    previous = next;
+    for (let size = Math.floor(next.length / 2); size >= 3; size--) {
+      const first = next.slice(0, size);
+      if (next.startsWith(first + first)) {
+        next = first + next.slice(size * 2);
+        break;
+      }
+    }
+  }
+  return next.trim();
+};
+
+const removeKnownValueArtifacts = (value: string, knownValue: string): string => {
+  let next = value.trim();
+  const known = knownValue.trim();
+  if (!next || !known || next === known) return next;
+
+  let previous = '';
+  while (next !== previous) {
+    previous = next;
+
+    if (next.endsWith(known) && next.length > known.length) {
+      next = next.slice(0, -known.length).trim();
+    }
+
+    for (let size = known.length - 1; size >= 3; size--) {
+      const prefix = known.slice(0, size).trim();
+      if (prefix && next.endsWith(prefix) && next.length > prefix.length) {
+        next = next.slice(0, -prefix.length).trim();
+        break;
+      }
+    }
+
+    next = collapseRepeatedTextFragments(next);
+  }
+
+  return next;
+};
+
+const sanitizeProfileTextInput = (
+  value: string,
+  knownValues: string[],
+  options: { removeLeadingKnownValue?: boolean } = {}
+): string => {
+  let next = knownValues.reduce(
+    (current, knownValue) => removeKnownValueArtifacts(current, knownValue),
+    value.trim()
+  );
+
+  if (options.removeLeadingKnownValue) {
+    for (const knownValue of knownValues) {
+      const known = knownValue.trim();
+      if (known && next.startsWith(known) && next.length > known.length) {
+        next = next.slice(known.length).trim();
+      }
+    }
+  }
+
+  return collapseRepeatedTextFragments(next);
+};
+
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   currentUser,
   onUpdateUser,
@@ -258,6 +333,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const [formState, setFormState] = useState<ExtendedFormState>(initialFormState);
   const lastSyncedFormRef = useRef<ExtendedFormState>(initialFormState);
   const previousUserIdRef = useRef<string>(currentUser.id);
+  const hasLocalEditsRef = useRef(false);
 
   const getJobTitleLabel = useCallback(
     (title: string) =>
@@ -266,6 +342,36 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   );
   const formatI18nKey = (value: string) =>
     value.replace(/\//g, '_slash_').replace(/\./g, '_dot_').replace(/-/g, '_dash_');
+  const updateFormField = useCallback(
+    <K extends keyof ExtendedFormState>(field: K, value: ExtendedFormState[K]) => {
+      hasLocalEditsRef.current = true;
+      let nextValidationValue = value;
+      setFormState((current) => {
+        const sanitizedValue =
+          typeof value === 'string' && (field === 'firstName' || field === 'jobTitle')
+            ? sanitizeProfileTextInput(value, [
+                String(current[field] || ''),
+                String(lastSyncedFormRef.current[field] || ''),
+              ], { removeLeadingKnownValue: field === 'jobTitle' })
+            : value;
+        nextValidationValue = sanitizedValue;
+        return { ...current, [field]: sanitizedValue };
+      });
+      setSaveStatus('idle');
+      setSaveError(null);
+      if (field === 'firstName') {
+        const nextFirstName = typeof nextValidationValue === 'string' ? nextValidationValue.trim() : '';
+        if (!nextFirstName) {
+          setFirstNameValidationError(
+            t('settings.profile.validation.firstNameRequired', 'First name is required before saving')
+          );
+        } else {
+          setFirstNameValidationError(null);
+        }
+      }
+    },
+    [t]
+  );
 
   // Filter job title suggestions
   const filteredJobTitles = useMemo(() => {
@@ -283,27 +389,40 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   // - local form is clean and a fresh server snapshot arrived.
   useEffect(() => {
     const incomingFormState = toFormStateFromUser(currentUser);
-    const localFormIsDirty = PROFILE_CONFIRMATION_FIELDS.some(
-      (field) => !areProfileValuesEqual(formState[field], lastSyncedFormRef.current[field])
-    );
     const incomingDiffersFromLastSynced = PROFILE_CONFIRMATION_FIELDS.some(
       (field) => !areProfileValuesEqual(incomingFormState[field], lastSyncedFormRef.current[field])
     );
     const userIdentityChanged = previousUserIdRef.current !== currentUser.id;
     previousUserIdRef.current = currentUser.id;
 
-    if (userIdentityChanged || (!localFormIsDirty && incomingDiffersFromLastSynced)) {
+    if (userIdentityChanged) {
+      hasLocalEditsRef.current = false;
+      lastSyncedFormRef.current = incomingFormState;
+      setFormState(incomingFormState);
+      return;
+    }
+
+    if (!hasLocalEditsRef.current && incomingDiffersFromLastSynced) {
       lastSyncedFormRef.current = incomingFormState;
       setFormState(incomingFormState);
     }
-  }, [currentUser, formState]);
+  }, [currentUser]);
 
   const buildProfileUpdatePayload = (): Partial<User> => {
     const updates: Partial<User> = {};
 
     for (const field of PROFILE_CONFIRMATION_FIELDS) {
-      const nextValue = formState[field];
+      let nextValue = formState[field];
       const currentValue = lastSyncedFormRef.current[field];
+      if (
+        (field === 'jobTitle' || field === 'firstName') &&
+        typeof nextValue === 'string' &&
+        typeof currentValue === 'string'
+      ) {
+        nextValue = sanitizeProfileTextInput(nextValue, [currentValue], {
+          removeLeadingKnownValue: field === 'jobTitle',
+        });
+      }
       if (!areProfileValuesEqual(nextValue, currentValue)) {
         (updates as Partial<ExtendedFormState>)[field] = nextValue;
       }
@@ -341,6 +460,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
       if (updates.firstName !== undefined) updates.firstName = normalizedFirstName;
       if (updates.lastName !== undefined) updates.lastName = formState.lastName.trim();
+      if (updates.jobTitle !== undefined) {
+        updates.jobTitle = sanitizeProfileTextInput(
+          String(updates.jobTitle || ''),
+          [formState.jobTitle, lastSyncedFormRef.current.jobTitle],
+          { removeLeadingKnownValue: true }
+        );
+      }
 
       await Api.updateUser(currentUser.id, updates);
       const persistedUser = await Api.getMe();
@@ -361,6 +487,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
       const persistedFormState = toFormStateFromUser(persistedUser);
       lastSyncedFormRef.current = persistedFormState;
+      hasLocalEditsRef.current = false;
       setFormState(persistedFormState);
       onUpdateUser(persistedUser);
       setSaveStatus('success');
@@ -511,7 +638,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.displayName}
-                    onChange={(e) => setFormState({ ...formState, displayName: e.target.value })}
+                    onChange={(e) => updateFormField('displayName', e.target.value)}
                     placeholder={`${formState.firstName} ${formState.lastName}`}
                     className={inputWithIconClass}
                   />
@@ -528,7 +655,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <select
                     value={formState.pronouns}
-                    onChange={(e) => setFormState({ ...formState, pronouns: e.target.value })}
+                    onChange={(e) => updateFormField('pronouns', e.target.value)}
                     className={inputClass + ' appearance-none cursor-pointer pr-8'}
                   >
                     {PRONOUNS_OPTIONS.map((opt) => (
@@ -565,7 +692,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <select
                     value={formState.department}
-                    onChange={(e) => setFormState({ ...formState, department: e.target.value })}
+                    onChange={(e) => updateFormField('department', e.target.value)}
                     className={selectClass}
                   >
                     {DEPARTMENT_OPTIONS.map((opt) => (
@@ -608,12 +735,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   value={formState.firstName}
                   aria-invalid={firstNameValidationError ? 'true' : undefined}
                   aria-describedby={firstNameValidationError ? 'first-name-validation-error' : undefined}
-                  onChange={(e) => {
-                    setFormState({ ...formState, firstName: e.target.value });
-                    if (firstNameValidationError && e.target.value.trim()) {
-                      setFirstNameValidationError(null);
-                    }
-                  }}
+                  onChange={(e) => updateFormField('firstName', e.target.value)}
                   className={firstNameInputClass}
                 />
                 {firstNameValidationError && (
@@ -629,7 +751,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <label className={labelClass}>{t('settings.profile.lastName', 'Last Name')}</label>
                 <input
                   value={formState.lastName}
-                  onChange={(e) => setFormState({ ...formState, lastName: e.target.value })}
+                  onChange={(e) => updateFormField('lastName', e.target.value)}
                   className={inputClass}
                 />
               </div>
@@ -642,7 +764,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.phone}
-                    onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
+                    onChange={(e) => updateFormField('phone', e.target.value)}
                     className={inputWithIconClass}
                   />
                 </div>
@@ -656,7 +778,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.companyName}
-                    onChange={(e) => setFormState({ ...formState, companyName: e.target.value })}
+                    onChange={(e) => updateFormField('companyName', e.target.value)}
                     className={inputWithIconClass}
                   />
                 </div>
@@ -672,7 +794,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.linkedinId}
-                    onChange={(e) => setFormState({ ...formState, linkedinId: e.target.value })}
+                    onChange={(e) => updateFormField('linkedinId', e.target.value)}
                     placeholder="e.g. piotr-wisniewski-123"
                     className={inputWithIconClass}
                   />
@@ -694,7 +816,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.jobTitle}
-                    onChange={(e) => setFormState({ ...formState, jobTitle: e.target.value })}
+                    onChange={(e) => updateFormField('jobTitle', e.target.value)}
                     onFocus={() => setShowJobTitleSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowJobTitleSuggestions(false), 200)}
                     placeholder={t(
@@ -711,7 +833,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                           key={title}
                           type="button"
                           onClick={() => {
-                            setFormState({ ...formState, jobTitle: getJobTitleLabel(title) });
+                            updateFormField('jobTitle', getJobTitleLabel(title));
                             setShowJobTitleSuggestions(false);
                           }}
                           className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
@@ -744,7 +866,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <input
                     value={formState.statusMessage}
-                    onChange={(e) => setFormState({ ...formState, statusMessage: e.target.value })}
+                    onChange={(e) => updateFormField('statusMessage', e.target.value)}
                     placeholder={t(
                       'settings.profile.statusPlaceholder',
                       'e.g. In meetings until 3pm, Working remotely...'
@@ -791,9 +913,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() =>
-                      setFormState({ ...formState, isOutOfOffice: !formState.isOutOfOffice })
-                    }
+                    onClick={() => updateFormField('isOutOfOffice', !formState.isOutOfOffice)}
                     className={`relative w-12 h-6 rounded-full transition-colors ${
                       formState.isOutOfOffice ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
                     }`}
@@ -815,9 +935,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       <input
                         type="date"
                         value={formState.outOfOfficeUntil}
-                        onChange={(e) =>
-                          setFormState({ ...formState, outOfOfficeUntil: e.target.value })
-                        }
+                        onChange={(e) => updateFormField('outOfOfficeUntil', e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
                         className={inputClass}
                       />
@@ -828,9 +946,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                       </label>
                       <textarea
                         value={formState.outOfOfficeMessage}
-                        onChange={(e) =>
-                          setFormState({ ...formState, outOfOfficeMessage: e.target.value })
-                        }
+                        onChange={(e) => updateFormField('outOfOfficeMessage', e.target.value)}
                         placeholder={t(
                           'settings.profile.outOfOfficePlaceholder',
                           "I'm currently out of office and will respond when I return..."
@@ -861,7 +977,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <select
                     value={formState.timezone}
-                    onChange={(e) => setFormState({ ...formState, timezone: e.target.value })}
+                    onChange={(e) => updateFormField('timezone', e.target.value)}
                     className={selectClass}
                   >
                     {COMMON_TIMEZONES.map((tz) => (
@@ -908,7 +1024,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                   <select
                     value={formState.dateFormat}
-                    onChange={(e) => setFormState({ ...formState, dateFormat: e.target.value })}
+                    onChange={(e) => updateFormField('dateFormat', e.target.value)}
                     className={selectClass}
                   >
                     {DATE_FORMATS.map((fmt) => (
@@ -955,7 +1071,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                         name="timeFormat"
                         value={fmt.value}
                         checked={formState.timeFormat === fmt.value}
-                        onChange={(e) => setFormState({ ...formState, timeFormat: e.target.value })}
+                        onChange={(e) => updateFormField('timeFormat', e.target.value)}
                         className="sr-only"
                       />
                       <span className="text-sm font-medium">

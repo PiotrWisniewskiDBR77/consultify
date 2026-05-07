@@ -6,6 +6,7 @@ import {
   History as HistoryIcon,
   MessageSquare,
   RefreshCw,
+  RotateCcw,
   Send,
   Sparkles,
   X,
@@ -15,9 +16,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  bulkRevertPresentationAgentOperations,
   fetchPresentationAgentHistory,
+  revertPresentationAgentOperation,
   type AgentHistoryFetchStatus,
   type PresentationAgentHistoryEntry,
+  type PresentationAgentHistoryRevertResult,
+  type PresentationBulkRevertResult,
 } from '@/services/presentationAgentHistory';
 
 const ACTION_CHIP_STYLE = {
@@ -362,6 +367,41 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     deckId: string;
     key: number;
   } | null>(null);
+  type RevertBanner =
+    | {
+        kind: 'success';
+        versionBefore: number;
+        versionAfter: number;
+        diffSummary: PresentationAgentHistoryRevertResult['data'] extends infer D
+          ? D extends { diffSummary: infer S }
+            ? S
+            : never
+          : never;
+      }
+    | { kind: 'conflict'; reason?: string; message: string }
+    | { kind: 'forbidden'; message: string }
+    | { kind: 'error'; message: string };
+  const [revertConfirmId, setRevertConfirmId] = useState<string | null>(null);
+  const [revertChecked, setRevertChecked] = useState(false);
+  const [revertingId, setRevertingId] = useState<string | null>(null);
+  const [revertBanners, setRevertBanners] = useState<Record<string, RevertBanner>>({});
+
+  type BulkRevertBanner =
+    | {
+        kind: 'success';
+        count: number;
+        versionBefore: number;
+        versionAfter: number;
+        diffSummary: NonNullable<PresentationBulkRevertResult['data']>['diffSummary'];
+      }
+    | { kind: 'conflict'; message: string }
+    | { kind: 'forbidden'; message: string }
+    | { kind: 'error'; message: string };
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkChecked, setBulkChecked] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkBanner, setBulkBanner] = useState<BulkRevertBanner | null>(null);
 
   useEffect(() => {
     setShowEditPlan(false);
@@ -439,7 +479,22 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     setHistoryWarnings([]);
     setExpandedHistoryId(null);
     setLoadedHistoryKey(null);
+    setRevertConfirmId(null);
+    setRevertChecked(false);
+    setRevertingId(null);
+    setRevertBanners({});
+    setSelectedHistoryIds(new Set());
+    setBulkConfirmOpen(false);
+    setBulkChecked(false);
+    setBulkBusy(false);
+    setBulkBanner(null);
   }, [deckId]);
+
+  useEffect(() => {
+    setSelectedHistoryIds(new Set());
+    setBulkConfirmOpen(false);
+    setBulkChecked(false);
+  }, [activeTab, historyCacheKey]);
 
   useEffect(() => {
     if (activeTab !== 'history') return;
@@ -463,6 +518,221 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     if (historyEntries.length >= historyTotal) return;
     void loadHistory('append', historyEntries.length);
   }, [historyLoading, historyEntries.length, historyTotal, loadHistory]);
+
+  const handleRevertEntry = useCallback(
+    async (operationId: string) => {
+      if (!deckId || !operationId) return;
+      setRevertingId(operationId);
+      try {
+        const result = await revertPresentationAgentOperation(deckId, operationId);
+        if (result.status === 'ok' && result.data) {
+          setRevertBanners((prev) => ({
+            ...prev,
+            [operationId]: {
+              kind: 'success',
+              versionBefore: result.data!.versionBefore,
+              versionAfter: result.data!.versionAfter,
+              diffSummary: result.data!.diffSummary,
+            },
+          }));
+          setRevertConfirmId(null);
+          setRevertChecked(false);
+          setHistoryCacheKey((k) => k + 1);
+          onProposalAccepted?.({
+            operationId: result.data.revertOperationId,
+            version: result.data.versionAfter,
+          });
+          return;
+        }
+        if (result.status === 'conflict') {
+          const reason = result.reason || '';
+          const message =
+            reason === 'newer_operation_exists'
+              ? t(
+                  'presentations.agent.history.revert.conflictNewer',
+                  'Cannot revert: newer applied edits exist. Revert from the most recent operation first.'
+                )
+              : reason === 'no_snapshot'
+                ? t(
+                    'presentations.agent.history.revert.conflictNoSnapshot',
+                    'Cannot revert: pre-edit snapshot is missing for this operation.'
+                  )
+                : reason === 'operation_not_applied'
+                  ? t(
+                      'presentations.agent.history.revert.conflictNotApplied',
+                      'Only applied or accepted proposals can be reverted.'
+                    )
+                  : result.error ||
+                    t('presentations.agent.history.revert.blocked', 'Revert blocked.');
+          setRevertBanners((prev) => ({
+            ...prev,
+            [operationId]: { kind: 'conflict', reason, message },
+          }));
+          return;
+        }
+        if (result.status === 'forbidden') {
+          setRevertBanners((prev) => ({
+            ...prev,
+            [operationId]: {
+              kind: 'forbidden',
+              message: t(
+                'presentations.agent.history.revert.forbidden',
+                "You don't have permission to revert this deck."
+              ),
+            },
+          }));
+          return;
+        }
+        setRevertBanners((prev) => ({
+          ...prev,
+          [operationId]: {
+            kind: 'error',
+            message: t(
+              'presentations.agent.history.revert.failed',
+              'Could not revert this proposal. Please retry.'
+            ),
+          },
+        }));
+      } finally {
+        setRevertingId((current) => (current === operationId ? null : current));
+      }
+    },
+    [deckId, onProposalAccepted, t]
+  );
+
+  const toggleHistorySelection = useCallback((entryId: string) => {
+    setSelectedHistoryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(entryId)) next.delete(entryId);
+      else next.add(entryId);
+      return next;
+    });
+  }, []);
+
+  const clearHistorySelection = useCallback(() => {
+    setSelectedHistoryIds(new Set());
+    setBulkConfirmOpen(false);
+    setBulkChecked(false);
+  }, []);
+
+  const selectableEntries = useMemo(
+    () =>
+      historyEntries.filter(
+        (entry) => entry.status === 'applied' || entry.status === 'accepted'
+      ),
+    [historyEntries]
+  );
+
+  const selectedEntries = useMemo(
+    () => selectableEntries.filter((entry) => selectedHistoryIds.has(entry.id)),
+    [selectableEntries, selectedHistoryIds]
+  );
+
+  const clientBaseSnapshot = useMemo(() => {
+    if (selectedEntries.length === 0) return null;
+    const sorted = [...selectedEntries].sort((a, b) => {
+      const ta = a.createdAt ? Date.parse(a.createdAt) : NaN;
+      const tb = b.createdAt ? Date.parse(b.createdAt) : NaN;
+      const aValid = Number.isFinite(ta);
+      const bValid = Number.isFinite(tb);
+      if (aValid && bValid && ta !== tb) return ta - tb;
+      const sa = a.createdAt || '';
+      const sb = b.createdAt || '';
+      if (sa !== sb) return sa < sb ? -1 : 1;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+    return sorted[0];
+  }, [selectedEntries]);
+
+  const handleBulkRevert = useCallback(async () => {
+    if (!deckId || selectedHistoryIds.size === 0) return;
+    const ids = Array.from(selectedHistoryIds);
+    setBulkBusy(true);
+    try {
+      const result = await bulkRevertPresentationAgentOperations(deckId, ids);
+      if (result.status === 'ok' && result.data) {
+        setBulkBanner({
+          kind: 'success',
+          count: result.data.count,
+          versionBefore: result.data.versionBefore,
+          versionAfter: result.data.versionAfter,
+          diffSummary: result.data.diffSummary,
+        });
+        setBulkConfirmOpen(false);
+        setBulkChecked(false);
+        setSelectedHistoryIds(new Set());
+        setHistoryCacheKey((k) => k + 1);
+        onProposalAccepted?.({
+          operationId: result.data.revertOperationId,
+          version: result.data.versionAfter,
+        });
+        return;
+      }
+      if (result.status === 'conflict') {
+        let message: string;
+        if (result.missingIds && result.missingIds.length > 0) {
+          message = t(
+            'presentations.agent.history.bulkRevert.missingIds',
+            'Cannot bulk-revert: selection skips operations {{ids}}. Include them or revert in two steps.',
+            { ids: result.missingIds.join(', ') }
+          );
+        } else {
+          const firstReason = (result.reasons || [])[0] || '';
+          if (firstReason.startsWith('op_') && firstReason.endsWith('_not_applied')) {
+            message = t(
+              'presentations.agent.history.bulkRevert.notApplied',
+              'Some selected operations are not applied/accepted.'
+            );
+          } else if (firstReason.startsWith('op_') && firstReason.endsWith('_no_snapshot')) {
+            message = t(
+              'presentations.agent.history.bulkRevert.noSnapshot',
+              'The oldest selected proposal has no pre-edit snapshot.'
+            );
+          } else if (firstReason === 'newer_op_outside_selection') {
+            message = t(
+              'presentations.agent.history.bulkRevert.newerOutside',
+              'Newer applied operations are not part of the selection.'
+            );
+          } else {
+            message =
+              result.error ||
+              t('presentations.agent.history.bulkRevert.blocked', 'Bulk revert blocked.');
+          }
+        }
+        setBulkBanner({ kind: 'conflict', message });
+        return;
+      }
+      if (result.status === 'forbidden') {
+        setBulkBanner({
+          kind: 'forbidden',
+          message: t(
+            'presentations.agent.history.bulkRevert.forbidden',
+            "You don't have permission to bulk-revert this deck."
+          ),
+        });
+        return;
+      }
+      if (result.status === 'not_found') {
+        setBulkBanner({
+          kind: 'error',
+          message: t(
+            'presentations.agent.history.bulkRevert.notFound',
+            'Deck or operations not found.'
+          ),
+        });
+        return;
+      }
+      setBulkBanner({
+        kind: 'error',
+        message: t(
+          'presentations.agent.history.bulkRevert.failed',
+          'Could not bulk-revert these proposals. Please retry.'
+        ),
+      });
+    } finally {
+      setBulkBusy(false);
+    }
+  }, [deckId, selectedHistoryIds, onProposalAccepted, t]);
 
   useEffect(() => {
     if (!conversationId || !activeMessages?.length) return;
@@ -1011,6 +1281,140 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
               </div>
             )}
 
+          {selectedHistoryIds.size > 0 && (
+            <div className="sticky top-0 z-10 -mx-3 px-3 py-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur border-b border-slate-200 dark:border-navy-700 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                  <span className="font-semibold">
+                    {t('presentations.agent.history.bulkRevert.selected', '{{count}} selected', {
+                      count: selectedHistoryIds.size,
+                    })}
+                  </span>
+                  {clientBaseSnapshot && (
+                    <span className="ml-1 text-slate-500 dark:text-slate-400">
+                      {t('presentations.agent.history.bulkRevert.oldest', '· oldest = {{ref}}', {
+                        ref:
+                          (clientBaseSnapshot.prompt &&
+                            clientBaseSnapshot.prompt.length > 0 &&
+                            clientBaseSnapshot.prompt.slice(0, 32)) ||
+                          clientBaseSnapshot.id.slice(0, 8),
+                      })}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkConfirmOpen(true);
+                      setBulkChecked(false);
+                      setBulkBanner(null);
+                    }}
+                    disabled={bulkBusy || bulkConfirmOpen}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50"
+                  >
+                    <RotateCcw size={11} />
+                    {t(
+                      'presentations.agent.history.bulkRevert.button',
+                      'Revert {{count}} operations',
+                      { count: selectedHistoryIds.size }
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearHistorySelection}
+                    disabled={bulkBusy}
+                    className="px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
+                  >
+                    {t('presentations.agent.history.bulkRevert.clear', 'Clear selection')}
+                  </button>
+                </div>
+              </div>
+              {bulkBanner?.kind === 'success' && (
+                <div className="rounded-md border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
+                  <div className="font-medium">
+                    {t(
+                      'presentations.agent.history.bulkRevert.successTitle',
+                      'Reverted {{count}} proposals to v{{before}} → v{{after}}',
+                      {
+                        count: bulkBanner.count,
+                        before: bulkBanner.versionBefore,
+                        after: bulkBanner.versionAfter,
+                      }
+                    )}
+                  </div>
+                  <div className="text-[10px] font-mono text-emerald-700/80 dark:text-emerald-300/80">
+                    +{bulkBanner.diffSummary.cardsAdded} -{bulkBanner.diffSummary.cardsRemoved} ~
+                    {bulkBanner.diffSummary.changedCards}
+                  </div>
+                </div>
+              )}
+              {(bulkBanner?.kind === 'conflict' ||
+                bulkBanner?.kind === 'forbidden' ||
+                bulkBanner?.kind === 'error') && (
+                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                  {bulkBanner.message}
+                </div>
+              )}
+              {bulkConfirmOpen && (
+                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50/70 dark:bg-rose-500/5 px-2 py-2 space-y-1.5">
+                  <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                    {t(
+                      'presentations.agent.history.bulkRevert.warning',
+                      'This will revert the deck to the state before the OLDEST selected proposal. The {{count}} proposals will remain in history but be marked as reverted.',
+                      { count: selectedHistoryIds.size }
+                    )}
+                  </div>
+                  <label className="flex items-start gap-1.5 text-[11px] text-slate-700 dark:text-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={bulkChecked}
+                      onChange={(e) => setBulkChecked(e.target.checked)}
+                      className="mt-0.5"
+                      disabled={bulkBusy}
+                    />
+                    <span>
+                      {t(
+                        'presentations.agent.history.bulkRevert.acknowledge',
+                        'I understand this rewrites the deck.'
+                      )}
+                    </span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleBulkRevert}
+                      disabled={!bulkChecked || bulkBusy}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50"
+                    >
+                      <RotateCcw size={11} />
+                      {bulkBusy
+                        ? t(
+                            'presentations.agent.history.bulkRevert.working',
+                            'Reverting...'
+                          )
+                        : t(
+                            'presentations.agent.history.bulkRevert.confirm',
+                            'Confirm bulk revert'
+                          )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBulkConfirmOpen(false);
+                        setBulkChecked(false);
+                      }}
+                      disabled={bulkBusy}
+                      className="px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
+                    >
+                      {t('presentations.agent.history.bulkRevert.cancel', 'Cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {historyStatus === 'ok' && historyEntries.length === 0 && !historyLoading && (
             <div className="text-[11px] italic text-slate-500 dark:text-slate-400 px-1 py-2">
               {t('presentations.agent.history.empty', 'No prior proposals yet')}
@@ -1062,18 +1466,43 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                     ? `+${entry.diff.cardsAdded} -${entry.diff.cardsRemoved} ~${entry.diff.changedCards}`
                     : '';
                 const slides = Array.isArray(entry.diff.slides) ? entry.diff.slides : [];
+                const isSelectable =
+                  entry.status === 'applied' || entry.status === 'accepted';
+                const isSelected = selectedHistoryIds.has(entry.id);
                 return (
                   <li
                     key={entry.id}
-                    className="rounded-md border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 overflow-hidden"
+                    className={`rounded-md border overflow-hidden ${
+                      isSelected
+                        ? 'border-rose-300 dark:border-rose-500/40 bg-rose-50/40 dark:bg-rose-500/5'
+                        : 'border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40'
+                    }`}
                   >
+                    <div className="flex items-stretch">
+                      {isSelectable && (
+                        <label
+                          className="flex items-center justify-center px-2 border-r border-slate-100 dark:border-navy-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={t(
+                            'presentations.agent.history.bulkRevert.selectRow',
+                            'Select operation for bulk revert'
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleHistorySelection(entry.id)}
+                            className="cursor-pointer"
+                          />
+                        </label>
+                      )}
                     <button
                       type="button"
                       onClick={() =>
                         setExpandedHistoryId((prev) => (prev === entry.id ? null : entry.id))
                       }
                       aria-expanded={isExpanded}
-                      className="w-full text-left px-2 py-1.5 hover:bg-primary-50/40 dark:hover:bg-primary-500/5 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                      className="flex-1 w-full text-left px-2 py-1.5 hover:bg-primary-50/40 dark:hover:bg-primary-500/5 focus:outline-none focus:ring-2 focus:ring-primary-400"
                     >
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span
@@ -1104,6 +1533,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                         </div>
                       )}
                     </button>
+                    </div>
 
                     {isExpanded && (
                       <div className="px-2 pb-2 pt-1 space-y-2 border-t border-slate-100 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/30">
@@ -1154,6 +1584,132 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                             v{entry.versionBefore ?? '—'} → v{entry.versionAfter ?? '—'}
                           </div>
                         )}
+                        {(entry.status === 'applied' || entry.status === 'accepted') && (() => {
+                          const banner = revertBanners[entry.id];
+                          const confirmOpen = revertConfirmId === entry.id;
+                          const isReverting = revertingId === entry.id;
+                          return (
+                            <div className="pt-1.5 mt-1.5 border-t border-slate-200/70 dark:border-navy-800/70 space-y-1.5">
+                              {banner?.kind === 'success' && (
+                                <div className="rounded-md border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1.5 text-[11px] text-emerald-700 dark:text-emerald-300">
+                                  <div className="font-medium">
+                                    {t(
+                                      'presentations.agent.history.revert.successTitle',
+                                      'Reverted to v{{before}} → v{{after}}.',
+                                      {
+                                        before: banner.versionBefore,
+                                        after: banner.versionAfter,
+                                      }
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] font-mono text-emerald-700/80 dark:text-emerald-300/80">
+                                    +{banner.diffSummary.cardsAdded} -{banner.diffSummary.cardsRemoved} ~{banner.diffSummary.changedCards}
+                                  </div>
+                                </div>
+                              )}
+                              {banner?.kind === 'conflict' && (
+                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                                  {banner.message}
+                                </div>
+                              )}
+                              {banner?.kind === 'forbidden' && (
+                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+                                  {banner.message}
+                                </div>
+                              )}
+                              {banner?.kind === 'error' && (
+                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-1.5 text-[11px] text-rose-700 dark:text-rose-300 flex items-center justify-between gap-2">
+                                  <span>{banner.message}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRevertEntry(entry.id)}
+                                    disabled={isReverting}
+                                    className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-[10px] font-medium disabled:opacity-50"
+                                  >
+                                    {t('presentations.agent.history.revert.retry', 'Retry')}
+                                  </button>
+                                </div>
+                              )}
+
+                              {!confirmOpen && banner?.kind !== 'success' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRevertConfirmId(entry.id);
+                                    setRevertChecked(false);
+                                  }}
+                                  disabled={isReverting}
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50"
+                                >
+                                  <RotateCcw size={11} />
+                                  {t(
+                                    'presentations.agent.history.revert.button',
+                                    'Revert deck'
+                                  )}
+                                </button>
+                              )}
+
+                              {confirmOpen && (
+                                <div className="rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50/70 dark:bg-rose-500/5 px-2 py-2 space-y-1.5">
+                                  <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                                    {t(
+                                      'presentations.agent.history.revert.warning',
+                                      'This will replace the current deck with the snapshot taken before this proposal. The original proposal will remain in history.'
+                                    )}
+                                  </div>
+                                  <label className="flex items-start gap-1.5 text-[11px] text-slate-700 dark:text-slate-200 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={revertChecked}
+                                      onChange={(e) => setRevertChecked(e.target.checked)}
+                                      className="mt-0.5"
+                                      disabled={isReverting}
+                                    />
+                                    <span>
+                                      {t(
+                                        'presentations.agent.history.revert.acknowledge',
+                                        'I understand this rewrites the deck.'
+                                      )}
+                                    </span>
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRevertEntry(entry.id)}
+                                      disabled={!revertChecked || isReverting}
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50"
+                                    >
+                                      <RotateCcw size={11} />
+                                      {isReverting
+                                        ? t(
+                                            'presentations.agent.history.revert.working',
+                                            'Reverting...'
+                                          )
+                                        : t(
+                                            'presentations.agent.history.revert.confirm',
+                                            'Confirm revert'
+                                          )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setRevertConfirmId(null);
+                                        setRevertChecked(false);
+                                      }}
+                                      disabled={isReverting}
+                                      className="px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
+                                    >
+                                      {t(
+                                        'presentations.agent.history.revert.cancel',
+                                        'Cancel'
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </li>

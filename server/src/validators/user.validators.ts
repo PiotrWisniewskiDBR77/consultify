@@ -26,7 +26,7 @@ export const UserStatusEnum = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDIN
 // ==========================================
 
 export const UpdateUserSchema = z.object({
-  firstName: z.string().max(255).optional(),
+  firstName: z.string().trim().min(1, 'First name is required before saving').max(255).optional(),
   lastName: z.string().max(255).optional(),
   email: z.string().email().optional(),
   role: UserRoleEnum.optional(),

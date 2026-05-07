@@ -1,24 +1,41 @@
 import {
   AlertTriangle,
+  Bookmark,
   ChevronDown,
   ChevronRight,
   Download,
   History,
+  Link2,
   RefreshCw,
+  Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   fetchPresentationAuditLog,
   type AuditLogFetchStatus,
   type PresentationAuditLogEvent,
 } from '@/services/presentationAuditLog';
+import {
+  deleteSavedView,
+  exportSavedViews,
+  findMatchingSavedView,
+  importSavedViews,
+  isSavedViewsStorageAvailable,
+  listSavedViews,
+  saveSavedView,
+  type AuditLogSavedView,
+  type AuditLogSavedViewFilters,
+} from '@/services/presentationAuditLogSavedViews';
 
 interface DeckAuditLogModalProps {
   deckId: string;
   onClose: () => void;
+  userKey?: string;
 }
+
+const SHARED_USER_KEY = '__shared__';
 
 const PAGE_SIZE = 50;
 
@@ -133,6 +150,47 @@ function actorChipStyle(actor: string): { bg: string; text: string; label: strin
 }
 
 const FILTERABLE_ACTOR_TYPES = ['USER', 'AI_AGENT', 'SYSTEM'] as const;
+
+const URL_PARAM_PREFIX = 'audit_';
+const URL_PARAM_KEYS = {
+  enable: `${URL_PARAM_PREFIX}log`,
+  actors: `${URL_PARAM_PREFIX}actors`,
+  action: `${URL_PARAM_PREFIX}action`,
+  from: `${URL_PARAM_PREFIX}from`,
+  to: `${URL_PARAM_PREFIX}to`,
+} as const;
+
+interface ParsedAuditFilters {
+  actorTypes: Set<FilterableActorType> | null;
+  action: string | null;
+  dateFrom: string | null;
+  dateTo: string | null;
+}
+
+function parseFiltersFromLocation(): ParsedAuditFilters {
+  if (typeof window === 'undefined' || !window.location) {
+    return { actorTypes: null, action: null, dateFrom: null, dateTo: null };
+  }
+  const params = new URLSearchParams(window.location.search);
+  let actorTypes: Set<FilterableActorType> | null = null;
+  const rawActors = params.get(URL_PARAM_KEYS.actors);
+  if (rawActors) {
+    const parts = rawActors
+      .split(',')
+      .map((p) => p.trim().toUpperCase())
+      .filter(Boolean) as FilterableActorType[];
+    const filtered = parts.filter((p): p is FilterableActorType =>
+      (FILTERABLE_ACTOR_TYPES as readonly string[]).includes(p)
+    );
+    if (filtered.length > 0) actorTypes = new Set(filtered);
+  }
+  return {
+    actorTypes,
+    action: params.get(URL_PARAM_KEYS.action) || null,
+    dateFrom: params.get(URL_PARAM_KEYS.from) || null,
+    dateTo: params.get(URL_PARAM_KEYS.to) || null,
+  };
+}
 type FilterableActorType = (typeof FILTERABLE_ACTOR_TYPES)[number];
 
 const ACTOR_FILTER_LABEL: Record<FilterableActorType, string> = {
@@ -223,7 +281,27 @@ const AuditEventRow: React.FC<{ event: PresentationAuditLogEvent }> = ({ event }
   );
 };
 
-export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({ deckId, onClose }) => {
+function buildFiltersPayload(
+  actorFilters: Set<FilterableActorType>,
+  actionFilter: string,
+  dateFrom: string,
+  dateTo: string
+): AuditLogSavedViewFilters {
+  return {
+    actorTypes: Array.from(actorFilters).sort(),
+    action: actionFilter || null,
+    dateFrom: dateFrom || null,
+    dateTo: dateTo || null,
+  };
+}
+
+export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
+  deckId,
+  onClose,
+  userKey,
+}) => {
+  const resolvedUserKey = userKey ?? SHARED_USER_KEY;
+
   const [status, setStatus] = useState<AuditLogFetchStatus | 'loading'>('loading');
   const [events, setEvents] = useState<PresentationAuditLogEvent[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -236,6 +314,95 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({ deckId, on
   const [actionFilter, setActionFilter] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const [savedViewsAvailable] = useState<boolean>(() => isSavedViewsStorageAvailable());
+  const [savedViews, setSavedViews] = useState<AuditLogSavedView[]>(() =>
+    isSavedViewsStorageAvailable() ? listSavedViews(resolvedUserKey) : []
+  );
+  const [activeView, setActiveView] = useState<AuditLogSavedView | null>(null);
+  const [savedViewsOpen, setSavedViewsOpen] = useState(false);
+  const [savedViewsManageOpen, setSavedViewsManageOpen] = useState(false);
+  const [saveDraftOpen, setSaveDraftOpen] = useState(false);
+  const [saveDraftName, setSaveDraftName] = useState('');
+  const [saveDraftError, setSaveDraftError] = useState<string | null>(null);
+  const [importStatus, setImportStatus] = useState<{
+    kind: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const dropdownContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const parsed = parseFiltersFromLocation();
+    if (parsed.actorTypes) setActorFilters(parsed.actorTypes);
+    if (parsed.action) setActionFilter(parsed.action);
+    if (parsed.dateFrom) setDateFrom(parsed.dateFrom);
+    if (parsed.dateTo) setDateTo(parsed.dateTo);
+  }, []);
+
+  // Auto-detect a matching saved view on mount + whenever savedViews load.
+  useEffect(() => {
+    if (!savedViewsAvailable || savedViews.length === 0) return;
+    const payload = buildFiltersPayload(actorFilters, actionFilter, dateFrom, dateTo);
+    const match = findMatchingSavedView(savedViews, payload);
+    if (match) setActiveView(match);
+    // We intentionally only run this when savedViews list changes, not on every
+    // filter change — manual filter edits are tracked separately as "modified".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedViews, savedViewsAvailable]);
+
+  const handleCopyShareLink = useCallback(() => {
+    if (typeof window === 'undefined' || !window.location) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set(URL_PARAM_KEYS.enable, 'true');
+    if (actorFilters.size !== FILTERABLE_ACTOR_TYPES.length) {
+      url.searchParams.set(
+        URL_PARAM_KEYS.actors,
+        Array.from(actorFilters).sort().join(',')
+      );
+    } else {
+      url.searchParams.delete(URL_PARAM_KEYS.actors);
+    }
+    if (actionFilter) {
+      url.searchParams.set(URL_PARAM_KEYS.action, actionFilter);
+    } else {
+      url.searchParams.delete(URL_PARAM_KEYS.action);
+    }
+    if (dateFrom) {
+      url.searchParams.set(URL_PARAM_KEYS.from, dateFrom);
+    } else {
+      url.searchParams.delete(URL_PARAM_KEYS.from);
+    }
+    if (dateTo) {
+      url.searchParams.set(URL_PARAM_KEYS.to, dateTo);
+    } else {
+      url.searchParams.delete(URL_PARAM_KEYS.to);
+    }
+    const text = url.toString();
+    const fallback = () => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {
+        // ignore
+      }
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(fallback);
+    } else {
+      fallback();
+    }
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  }, [actorFilters, actionFilter, dateFrom, dateTo]);
 
   const toggleActor = useCallback((actor: FilterableActorType) => {
     setActorFilters((prev) => {
@@ -254,7 +421,167 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({ deckId, on
     setActionFilter('');
     setDateFrom('');
     setDateTo('');
+    setActiveView(null);
   }, []);
+
+  const currentFiltersPayload = useMemo<AuditLogSavedViewFilters>(
+    () => buildFiltersPayload(actorFilters, actionFilter, dateFrom, dateTo),
+    [actorFilters, actionFilter, dateFrom, dateTo]
+  );
+
+  const activeViewModified = useMemo(() => {
+    if (!activeView) return false;
+    const a = currentFiltersPayload;
+    const b = activeView.filters;
+    if ((a.action ?? null) !== (b.action ?? null)) return true;
+    if ((a.dateFrom ?? null) !== (b.dateFrom ?? null)) return true;
+    if ((a.dateTo ?? null) !== (b.dateTo ?? null)) return true;
+    const sortedA = [...a.actorTypes].sort();
+    const sortedB = [...b.actorTypes].sort();
+    if (sortedA.length !== sortedB.length) return true;
+    for (let i = 0; i < sortedA.length; i += 1) {
+      if (sortedA[i] !== sortedB[i]) return true;
+    }
+    return false;
+  }, [activeView, currentFiltersPayload]);
+
+  const refreshSavedViews = useCallback(() => {
+    if (!savedViewsAvailable) return;
+    setSavedViews(listSavedViews(resolvedUserKey));
+  }, [resolvedUserKey, savedViewsAvailable]);
+
+  const applySavedView = useCallback((view: AuditLogSavedView) => {
+    const filterableActors = view.filters.actorTypes.filter(
+      (a): a is FilterableActorType =>
+        (FILTERABLE_ACTOR_TYPES as readonly string[]).includes(a)
+    );
+    setActorFilters(
+      filterableActors.length > 0
+        ? new Set<FilterableActorType>(filterableActors)
+        : new Set<FilterableActorType>(FILTERABLE_ACTOR_TYPES)
+    );
+    setActionFilter(view.filters.action ?? '');
+    setDateFrom(view.filters.dateFrom ?? '');
+    setDateTo(view.filters.dateTo ?? '');
+    setActiveView(view);
+    setSavedViewsOpen(false);
+    setSaveDraftOpen(false);
+    setSavedViewsManageOpen(false);
+    setImportStatus(null);
+  }, []);
+
+  const handleSaveCurrentClick = useCallback(() => {
+    setSaveDraftError(null);
+    setSaveDraftName(activeView?.name ?? '');
+    setSaveDraftOpen(true);
+  }, [activeView]);
+
+  const handleSaveDraftSubmit = useCallback(() => {
+    const name = saveDraftName.trim();
+    if (name.length < 1 || name.length > 40) {
+      setSaveDraftError('Name must be 1–40 characters');
+      return;
+    }
+    try {
+      const saved = saveSavedView(resolvedUserKey, {
+        id: activeView && activeView.name.toLowerCase() === name.toLowerCase()
+          ? activeView.id
+          : undefined,
+        name,
+        filters: currentFiltersPayload,
+      });
+      setActiveView(saved);
+      setSaveDraftOpen(false);
+      setSaveDraftName('');
+      setSaveDraftError(null);
+      refreshSavedViews();
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'UNKNOWN';
+      if (code === 'NAME_TAKEN') {
+        setSaveDraftError('A view with that name already exists');
+      } else if (code === 'LIMIT_REACHED') {
+        setSaveDraftError('Limit reached (max 20 saved views)');
+      } else if (code === 'NAME_INVALID') {
+        setSaveDraftError('Name must be 1–40 characters');
+      } else {
+        setSaveDraftError('Could not save view');
+      }
+    }
+  }, [
+    activeView,
+    currentFiltersPayload,
+    refreshSavedViews,
+    resolvedUserKey,
+    saveDraftName,
+  ]);
+
+  const handleDeleteView = useCallback(
+    (viewId: string) => {
+      deleteSavedView(resolvedUserKey, viewId);
+      if (activeView?.id === viewId) setActiveView(null);
+      refreshSavedViews();
+    },
+    [activeView, refreshSavedViews, resolvedUserKey]
+  );
+
+  const handleExportViews = useCallback(() => {
+    if (!savedViewsAvailable) return;
+    const json = exportSavedViews(resolvedUserKey);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-log-saved-views-${todayYmd()}.json`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [resolvedUserKey, savedViewsAvailable]);
+
+  const handleImportClick = useCallback(() => {
+    setImportStatus(null);
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImportFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const result = importSavedViews(resolvedUserKey, text);
+        setImportStatus({
+          kind: 'success',
+          message: `Imported ${result.added} · skipped ${result.skipped}`,
+        });
+        refreshSavedViews();
+      } catch {
+        setImportStatus({
+          kind: 'error',
+          message: 'Could not import: invalid JSON',
+        });
+      }
+    },
+    [refreshSavedViews, resolvedUserKey]
+  );
+
+  // Close popover on outside click.
+  useEffect(() => {
+    if (!savedViewsOpen) return;
+    const handlePointer = (e: MouseEvent) => {
+      const root = dropdownContainerRef.current;
+      if (!root) return;
+      if (!root.contains(e.target as Node)) {
+        setSavedViewsOpen(false);
+        setSaveDraftOpen(false);
+        setSavedViewsManageOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointer);
+    return () => document.removeEventListener('mousedown', handlePointer);
+  }, [savedViewsOpen]);
 
   const filtersActive =
     actorFilters.size !== FILTERABLE_ACTOR_TYPES.length ||
@@ -574,15 +901,214 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({ deckId, on
               />
             </div>
 
-            <button
-              type="button"
-              onClick={resetFilters}
-              disabled={!filtersActive}
-              aria-label="Reset filters"
-              className="ml-auto text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
-            >
-              Reset filters
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              {savedViewsAvailable ? (
+                <div className="relative" ref={dropdownContainerRef}>
+                  <div className="flex items-center gap-1.5">
+                    {activeView ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:text-primary-300 ring-1 ring-primary-500/30"
+                        aria-label={`Active saved view: ${activeView.name}${activeViewModified ? ' (modified)' : ''}`}
+                      >
+                        <Bookmark size={10} />
+                        <span className="max-w-[120px] truncate">
+                          {activeView.name}
+                          {activeViewModified ? ' (modified)' : ''}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveView(null)}
+                          aria-label="Clear active saved view"
+                          className="ml-0.5 rounded-full p-0.5 hover:bg-primary-500/20"
+                        >
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSavedViewsOpen((v) => !v);
+                        setImportStatus(null);
+                      }}
+                      aria-haspopup="menu"
+                      aria-expanded={savedViewsOpen}
+                      aria-label="Saved views"
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                    >
+                      <Bookmark size={11} />
+                      Saved views
+                      <ChevronDown size={10} />
+                    </button>
+                  </div>
+                  {savedViewsOpen ? (
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-full z-10 mt-1 w-72 rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg p-2 text-[12px] text-slate-700 dark:text-slate-200"
+                    >
+                      {saveDraftOpen ? (
+                        <div className="border-b border-slate-100 dark:border-navy-800 pb-2 mb-2">
+                          <label
+                            htmlFor="audit-saved-view-name"
+                            className="block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1"
+                          >
+                            View name
+                          </label>
+                          <input
+                            id="audit-saved-view-name"
+                            type="text"
+                            value={saveDraftName}
+                            maxLength={40}
+                            autoFocus
+                            onChange={(e) => {
+                              setSaveDraftName(e.target.value);
+                              setSaveDraftError(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveDraftSubmit();
+                              } else if (e.key === 'Escape') {
+                                e.preventDefault();
+                                setSaveDraftOpen(false);
+                              }
+                            }}
+                            className="w-full rounded-md border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 px-2 py-1 text-[12px] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            placeholder="e.g. AI activity, last 7 days"
+                          />
+                          {saveDraftError ? (
+                            <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                              {saveDraftError}
+                            </p>
+                          ) : null}
+                          <div className="mt-2 flex justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setSaveDraftOpen(false)}
+                              className="rounded-md px-2 py-1 text-[11px] text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSaveDraftSubmit}
+                              className="rounded-md bg-primary-500 px-2 py-1 text-[11px] font-medium text-white hover:bg-primary-600"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSaveCurrentClick}
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-navy-800"
+                        >
+                          <Bookmark size={11} className="text-primary-500" />
+                          Save current as…
+                        </button>
+                      )}
+
+                      <div className="max-h-48 overflow-y-auto">
+                        {savedViews.length === 0 ? (
+                          <p className="px-2 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                            No saved views yet.
+                          </p>
+                        ) : (
+                          savedViews.map((view) => {
+                            const isActive = activeView?.id === view.id;
+                            return (
+                              <div
+                                key={view.id}
+                                className={`group flex items-center gap-1 rounded-md px-1 ${
+                                  isActive ? 'bg-primary-500/10' : ''
+                                }`}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => applySavedView(view)}
+                                  className="flex-1 truncate rounded-md px-2 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-navy-800"
+                                  title={view.name}
+                                >
+                                  {view.name}
+                                </button>
+                                {savedViewsManageOpen ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteView(view.id)}
+                                    aria-label={`Delete saved view ${view.name}`}
+                                    className="rounded-md p-1 text-rose-500 hover:bg-rose-500/10"
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
+                                ) : null}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      <div className="mt-2 border-t border-slate-100 dark:border-navy-800 pt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setSavedViewsManageOpen((v) => !v)}
+                          className="font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                        >
+                          {savedViewsManageOpen ? 'Done' : 'Manage'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleExportViews}
+                          disabled={savedViews.length === 0}
+                          className="text-slate-500 dark:text-slate-400 hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                        >
+                          Export views
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleImportClick}
+                          className="text-slate-500 dark:text-slate-400 hover:underline"
+                        >
+                          Import views
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="application/json,.json"
+                          className="hidden"
+                          onChange={handleImportFile}
+                        />
+                      </div>
+                      {importStatus ? (
+                        <p
+                          role={importStatus.kind === 'error' ? 'alert' : undefined}
+                          className={
+                            importStatus.kind === 'error'
+                              ? 'mt-2 rounded-md border border-rose-200 dark:border-rose-700/60 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 text-[11px] text-rose-700 dark:text-rose-300'
+                              : 'mt-2 rounded-md border border-emerald-200 dark:border-emerald-700/60 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 text-[11px] text-emerald-700 dark:text-emerald-300'
+                          }
+                        >
+                          {importStatus.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="text-[10px] italic text-slate-400 dark:text-slate-500">
+                  Saved views require localStorage
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={resetFilters}
+                disabled={!filtersActive}
+                aria-label="Reset filters"
+                className="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+              >
+                Reset filters
+              </button>
+            </div>
           </div>
           <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
             Showing {filteredEvents.length} of {events.length}
@@ -658,6 +1184,15 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({ deckId, on
         <div className="flex-1 overflow-y-auto px-5 py-4">{renderBody()}</div>
         {showFooter ? (
           <footer className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-900/60">
+            <button
+              type="button"
+              onClick={handleCopyShareLink}
+              aria-label="Copy a shareable link with the current filters"
+              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+            >
+              <Link2 size={12} />
+              {shareCopied ? 'Link copied!' : 'Copy share link'}
+            </button>
             <button
               type="button"
               onClick={handleExportCsv}

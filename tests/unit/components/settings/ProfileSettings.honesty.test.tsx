@@ -141,6 +141,27 @@ describe('ProfileSettings honest UI', () => {
     expect(screen.getByDisplayValue('Janet')).toBeInTheDocument();
   });
 
+  it('keeps local edits when parent rerenders with a refreshed server snapshot', async () => {
+    const onUpdateUser = vi.fn();
+    const { rerender } = render(
+      <ProfileSettings currentUser={{ ...baseUser, jobTitle: 'Platform SuperAdmin' } as any} onUpdateUser={onUpdateUser} />
+    );
+
+    fireEvent.change(screen.getByDisplayValue('Platform SuperAdmin'), {
+      target: { value: 'Engineering Manager' },
+    });
+    expect(screen.getByDisplayValue('Engineering Manager')).toBeInTheDocument();
+
+    rerender(
+      <ProfileSettings
+        currentUser={{ ...baseUser, jobTitle: 'Platform SuperAdmin', department: 'Finance' } as any}
+        onUpdateUser={onUpdateUser}
+      />
+    );
+
+    expect(screen.getByDisplayValue('Engineering Manager')).toBeInTheDocument();
+  });
+
   it('marks first name field invalid on empty save attempt', async () => {
     const onUpdateUser = vi.fn();
     render(<ProfileSettings currentUser={baseUser as any} onUpdateUser={onUpdateUser} />);
@@ -153,7 +174,106 @@ describe('ProfileSettings honest UI', () => {
 
     await waitFor(() => {
       expect(firstNameInput).toHaveAttribute('aria-invalid', 'true');
-      expect(screen.getByText('First name is required before saving')).toBeInTheDocument();
+      expect(
+        screen.getByText('First name is required before saving', {
+          selector: '#first-name-validation-error',
+        })
+      ).toBeInTheDocument();
     });
+  });
+
+  it('sanitizes repeated first name fragments during input', async () => {
+    const onUpdateUser = vi.fn();
+    render(<ProfileSettings currentUser={{ ...baseUser, firstName: 'Piotr' } as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Piotr'), {
+      target: { value: 'PiotrPiotrTestPiotr' },
+    });
+
+    expect(screen.getByDisplayValue('PiotrTest')).toBeInTheDocument();
+  });
+
+  it('strips the previous job title when a thrashed input appends it as a suffix', async () => {
+    const onUpdateUser = vi.fn();
+    const userWithTitle = { ...baseUser, jobTitle: 'Platform SuperAdmin' };
+    const persistedUser = { ...userWithTitle, jobTitle: 'Engineering Manager' };
+    vi.mocked(Api.getMe).mockResolvedValue(persistedUser);
+
+    render(<ProfileSettings currentUser={userWithTitle as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Platform SuperAdmin'), {
+      target: { value: 'Engineering ManagerPlatform SuperAdmin' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(Api.updateUser).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ jobTitle: 'Engineering Manager' })
+      );
+    });
+  });
+
+  it('strips the previous job title when typing appends after the buffered value', async () => {
+    const onUpdateUser = vi.fn();
+    const userWithTitle = { ...baseUser, jobTitle: 'Platform SuperAdmin' };
+    const persistedUser = { ...userWithTitle, jobTitle: 'Engineering Manager' };
+    vi.mocked(Api.getMe).mockResolvedValue(persistedUser);
+
+    render(<ProfileSettings currentUser={userWithTitle as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Platform SuperAdmin'), {
+      target: { value: 'Platform SuperAdminEngineering Manager' },
+    });
+
+    expect(screen.getByDisplayValue('Engineering Manager')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(Api.updateUser).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ jobTitle: 'Engineering Manager' })
+      );
+    });
+  });
+
+  it('strips duplicated typed text plus the previous job title from thrashed payloads', async () => {
+    const onUpdateUser = vi.fn();
+    const userWithTitle = { ...baseUser, jobTitle: 'Platform SuperAdmin' };
+    const persistedUser = { ...userWithTitle, jobTitle: 'Engineering Manager' };
+    vi.mocked(Api.getMe).mockResolvedValue(persistedUser);
+
+    render(<ProfileSettings currentUser={userWithTitle as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Platform SuperAdmin'), {
+      target: { value: 'Engineering ManagerEngineering ManagerPlatform SuperAdmin' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(Api.updateUser).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ jobTitle: 'Engineering Manager' })
+      );
+    });
+  });
+
+  it('sanitizes duplicated job title fragments during input', async () => {
+    const onUpdateUser = vi.fn();
+    const userWithTitle = { ...baseUser, jobTitle: 'Platform SuperAdmin' };
+
+    render(<ProfileSettings currentUser={userWithTitle as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Platform SuperAdmin'), {
+      target: { value: 'Engineering Manager' },
+    });
+    expect(screen.getByDisplayValue('Engineering Manager')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByDisplayValue('Engineering Manager'), {
+      target: { value: 'Product LeadEngineering ManagerEngineering Man' },
+    });
+
+    expect(screen.getByDisplayValue('Product Lead')).toBeInTheDocument();
   });
 });

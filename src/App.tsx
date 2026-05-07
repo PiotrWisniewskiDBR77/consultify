@@ -27,6 +27,13 @@ import { User } from './types';
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
+// Sprint 13 — read-only Subscriber Dashboard (Bearer-token auth, no JWT).
+// Lives next to the other public, lazy-loaded routes so the main app's
+// auth-bootstrapping path does not gate the page on a logged-in
+// Consultify user — external HMAC alert subscribers do not have one.
+const SubscriberDashboardPage = React.lazy(
+  () => import('./views/subscriber/SubscriberDashboardPage')
+);
 
 type AuthBootState = {
   inflightMeRequest: Promise<User | null> | null;
@@ -375,6 +382,20 @@ function AppContent() {
               }
             >
               <PublicReportBuilderView />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/subscriber/dashboard"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <SubscriberDashboardPage />
             </React.Suspense>
           }
         />

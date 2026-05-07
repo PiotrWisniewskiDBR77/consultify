@@ -13,8 +13,8 @@
  * - API Key Management
  */
 
-import { Activity, BarChart3, Flag, HardDrive, Key, Settings, Shield, ShieldAlert, Webhook } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Activity, BarChart3, BellRing, FileCheck, Flag, HardDrive, Key, Settings, Shield, ShieldAlert, TrendingUp, Webhook } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import {
@@ -29,8 +29,18 @@ import {
 } from '../../components/SuperAdmin/system';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
+import {
+  applyDashboardDeepLinkToLocation,
+  type DashboardDeepLink,
+  type DashboardTab,
+  readDashboardDeepLinkFromLocation,
+} from '../../services/presentationGovernanceDeepLinks';
 import { APIManagementView } from './APIManagementView';
+import PresentationGovernanceAlertSubscriptionsView from './PresentationGovernanceAlertSubscriptionsView';
 import PresentationGovernanceWatchlistView from './PresentationGovernanceWatchlistView';
+import PresentationBenchmarkTrendView from './PresentationBenchmarkTrendView';
+import PresentationOperationsHealthView from './PresentationOperationsHealthView';
+import PresentationTemplateGovernanceView from './PresentationTemplateGovernanceView';
 
 interface SystemModuleProps {
   initialTab?: string;
@@ -47,15 +57,127 @@ const TAB_TO_HELP_MAP: Record<string, string> = {
   analytics: 'superadmin-system-analytics',
   backup: 'superadmin-system-backup',
   'api-keys': 'superadmin-system-api-keys',
+  'presentation-watchlist': 'superadmin-system-presentation-watchlist',
+  'presentation-operations-health': 'superadmin-system-presentation-operations-health',
+  'presentation-benchmark-trend': 'superadmin-system-presentation-benchmark-trend',
+  'presentation-alert-subscriptions': 'superadmin-system-presentation-alert-subscriptions',
+  'presentation-template-governance': 'superadmin-system-presentation-template-governance',
 };
 
+// Set of tab IDs we know how to render in this module. Deep-link tab values
+// outside this set are silently ignored on first mount so a stale share
+// link cannot land the user on a blank tab body.
+const RENDERABLE_TABS: ReadonlySet<string> = new Set<string>([
+  'health',
+  'audit-log',
+  'feature-flags',
+  'integrations',
+  'security',
+  'configuration',
+  'analytics',
+  'backup',
+  'api-keys',
+  'presentation-watchlist',
+  'presentation-operations-health',
+  'presentation-benchmark-trend',
+  'presentation-alert-subscriptions',
+  'presentation-template-governance',
+]);
+
+// Tab IDs that participate in the cross-tab deep-link contract. We only
+// write the URL when transitioning between these tabs (so opening
+// "Integrations" from "Watchlist" doesn't leak deep-link params into
+// unrelated surfaces).
+const DEEP_LINK_TABS: ReadonlySet<DashboardTab> = new Set<DashboardTab>([
+  'presentation-telemetry',
+  'presentation-watchlist',
+  'presentation-operations-health',
+  'presentation-alert-subscriptions',
+]);
+
+function isDeepLinkTab(tab: string): tab is DashboardTab {
+  return DEEP_LINK_TABS.has(tab as DashboardTab);
+}
+
 export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
-  const [activeTab, setActiveTab] = useState(initialTab || 'integrations');
+  // Deep-link state on first mount — the spec calls this the source of
+  // truth for the very first render, then user actions take over.
+  const initialDeepLinkRef = useRef<DashboardDeepLink>(
+    readDashboardDeepLinkFromLocation()
+  );
+  const [deepLink, setDeepLink] = useState<DashboardDeepLink>(
+    initialDeepLinkRef.current
+  );
+
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const fromUrl = initialDeepLinkRef.current.tab;
+    if (fromUrl && RENDERABLE_TABS.has(fromUrl)) return fromUrl;
+    return initialTab || 'integrations';
+  });
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
+
+  const handleTabChange = useCallback(
+    (nextTab: string) => {
+      setActiveTab(nextTab);
+      // Only write the URL for tabs that participate in the deep-link
+      // contract. Other tabs reset deep-link params to keep the URL honest
+      // about which surface is currently visible.
+      if (isDeepLinkTab(nextTab)) {
+        const next: DashboardDeepLink = {
+          ...deepLink,
+          tab: nextTab,
+        };
+        setDeepLink(next);
+        applyDashboardDeepLinkToLocation(next, { replace: true });
+      } else {
+        const cleared: DashboardDeepLink = {
+          tab: null,
+          deckId: null,
+          slo: null,
+          presetId: null,
+          windowDays: null,
+        };
+        setDeepLink(cleared);
+        applyDashboardDeepLinkToLocation(cleared, { replace: true });
+      }
+    },
+    [deepLink]
+  );
+
+  // popstate keeps the active tab in sync with browser back/forward and
+  // any external history mutation. We read the URL fresh and apply it
+  // without writing it back, to avoid an infinite loop.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPopState = () => {
+      const next = readDashboardDeepLinkFromLocation();
+      setDeepLink(next);
+      if (next.tab && RENDERABLE_TABS.has(next.tab)) {
+        setActiveTab(next.tab);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // Children receive the initial deep-link snapshot so their once-on-mount
+  // consumption (highlight, preselect, prefill) fires from a stable value.
+  // Tab-driven re-renders inside SystemModule do not retrigger consumption
+  // because each child uses its own internal "consumed" guard.
+  const presentationDeepLink = useMemo<DashboardDeepLink>(
+    () => ({
+      tab: deepLink.tab,
+      deckId: deepLink.deckId,
+      slo: deepLink.slo,
+      presetId: deepLink.presetId,
+      windowDays: deepLink.windowDays,
+    }),
+    [deepLink]
+  );
 
   const helpContentId = TAB_TO_HELP_MAP[activeTab] || 'superadmin-system';
 
@@ -70,6 +192,11 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
       analytics: 'superadmin_system_analytics',
       backup: 'superadmin_system_backup',
       'api-keys': 'superadmin_system_api_keys',
+      'presentation-watchlist': 'superadmin_system_presentation_watchlist',
+      'presentation-operations-health': 'superadmin_system_presentation_operations_health',
+      'presentation-benchmark-trend': 'superadmin_system_presentation_benchmark_trend',
+      'presentation-alert-subscriptions': 'superadmin_system_presentation_alert_subscriptions',
+      'presentation-template-governance': 'superadmin_system_presentation_template_governance',
     };
     setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_system');
     return () => setHelpDocumentIdOverride(null);
@@ -86,6 +213,10 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
     { id: 'backup', label: 'Backup', icon: <HardDrive size={16} /> },
     { id: 'api-keys', label: 'API Keys', icon: <Key size={16} /> },
     { id: 'presentation-watchlist', label: 'Governance Watchlist', icon: <ShieldAlert size={16} /> },
+    { id: 'presentation-operations-health', label: 'Operations Health', icon: <Activity size={16} /> },
+    { id: 'presentation-benchmark-trend', label: 'Benchmark Trend', icon: <TrendingUp size={16} /> },
+    { id: 'presentation-alert-subscriptions', label: 'Alert Subscriptions', icon: <BellRing size={16} /> },
+    { id: 'presentation-template-governance', label: 'Template Governance', icon: <FileCheck size={16} /> },
   ];
 
   const renderContent = () => {
@@ -123,7 +254,31 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
       case 'presentation-watchlist':
         return (
           <div className="p-6 overflow-y-auto h-full">
-            <PresentationGovernanceWatchlistView />
+            <PresentationGovernanceWatchlistView deepLink={presentationDeepLink} />
+          </div>
+        );
+      case 'presentation-operations-health':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <PresentationOperationsHealthView deepLink={presentationDeepLink} />
+          </div>
+        );
+      case 'presentation-benchmark-trend':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <PresentationBenchmarkTrendView />
+          </div>
+        );
+      case 'presentation-alert-subscriptions':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <PresentationGovernanceAlertSubscriptionsView />
+          </div>
+        );
+      case 'presentation-template-governance':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <PresentationTemplateGovernanceView />
           </div>
         );
       default:
@@ -135,7 +290,7 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
     <TabLayout
       tabs={tabs}
       activeTab={activeTab}
-      onTabChange={setActiveTab}
+      onTabChange={handleTabChange}
       title="Connector Ops"
       subtitle="Operate integrations, platform health, observability, and system configuration"
       actions={<InfoButton cardId={helpContentId} />}

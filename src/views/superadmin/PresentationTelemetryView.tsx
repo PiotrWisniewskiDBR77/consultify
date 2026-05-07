@@ -24,8 +24,9 @@ import {
   Sparkles,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { DashboardDeepLink } from '../../services/presentationGovernanceDeepLinks';
 import {
   fetchPresentationTelemetryRollup,
   type PresentationTelemetryRollup,
@@ -99,9 +100,26 @@ function compareDates(a: string | null, b: string | null): number {
   return va - vb;
 }
 
-const PresentationTelemetryView: React.FC = () => {
-  const [deckIdInput, setDeckIdInput] = useState<string>('');
-  const [windowDays, setWindowDays] = useState<number>(DEFAULT_WINDOW_DAYS);
+interface PresentationTelemetryViewProps {
+  deepLink?: DashboardDeepLink;
+}
+
+const PresentationTelemetryView: React.FC<PresentationTelemetryViewProps> = ({
+  deepLink,
+}) => {
+  // Snapshot the deep-link inputs once on mount. From then on the user's
+  // edits take precedence and deep-link prop changes are ignored, which
+  // matches the cross-tab contract documented in
+  // presentationGovernanceDeepLinks.ts.
+  const initialDeepLinkRef = useRef<DashboardDeepLink | null>(deepLink ?? null);
+  const initialDeckId = initialDeepLinkRef.current?.deckId ?? '';
+  const initialWindowDays =
+    initialDeepLinkRef.current?.windowDays != null
+      ? initialDeepLinkRef.current.windowDays
+      : DEFAULT_WINDOW_DAYS;
+
+  const [deckIdInput, setDeckIdInput] = useState<string>(initialDeckId);
+  const [windowDays, setWindowDays] = useState<number>(initialWindowDays);
   const [rollup, setRollup] = useState<PresentationTelemetryRollup | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [hasAttempted, setHasAttempted] = useState<boolean>(false);
@@ -109,6 +127,7 @@ const PresentationTelemetryView: React.FC = () => {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [governanceCard, setGovernanceCard] = useState<PresentationGovernanceCard | null>(null);
   const [governanceStatus, setGovernanceStatus] = useState<GovernanceFetchStatus | null>(null);
+  const deepLinkLookupRef = useRef<boolean>(false);
 
   const trimmedDeckId = deckIdInput.trim();
 
@@ -135,6 +154,18 @@ const PresentationTelemetryView: React.FC = () => {
       setLoading(false);
     }
   }, [trimmedDeckId, windowDays]);
+
+  // Deep-link deckId: trigger the lookup exactly once after the input
+  // state has settled to the deep-linked value. Subsequent renders or
+  // user edits do not re-fire because the ref guards the path.
+  useEffect(() => {
+    if (deepLinkLookupRef.current) return;
+    const wantedDeckId = initialDeepLinkRef.current?.deckId ?? null;
+    if (!wantedDeckId) return;
+    if (trimmedDeckId !== wantedDeckId) return;
+    deepLinkLookupRef.current = true;
+    void handleLoad();
+  }, [trimmedDeckId, handleLoad]);
 
   const handleExportGovernance = useCallback(() => {
     if (!governanceCard) return;

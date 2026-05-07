@@ -193,6 +193,11 @@ router.put(
     const updates = req.body;
 
     try {
+      const firstNameValue = updates?.firstName ?? updates?.first_name;
+      if (firstNameValue !== undefined && !String(firstNameValue).trim()) {
+        return res.status(400).json({ error: 'First name is required before saving' });
+      }
+
       // Build dynamic update query
       const allowedFields = ['first_name', 'last_name', 'avatar_url', 'status'];
       const setClause: string[] = [];
@@ -202,7 +207,7 @@ router.put(
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
         if (allowedFields.includes(snakeKey)) {
           setClause.push(`${snakeKey} = ?`);
-          values.push(value);
+          values.push(snakeKey === 'first_name' ? String(value).trim() : value);
         }
       }
 

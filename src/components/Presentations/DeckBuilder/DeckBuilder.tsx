@@ -304,7 +304,14 @@ export const DeckBuilder: React.FC = () => {
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
-  const [auditLogOpen, setAuditLogOpen] = useState(false);
+  const [auditLogOpen, setAuditLogOpen] = useState(() => {
+    if (typeof window === 'undefined' || !window.location) return false;
+    try {
+      return new URLSearchParams(window.location.search).get('audit_log') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [governanceModalOpen, setGovernanceModalOpen] = useState(false);
   const [governanceVerdict, setGovernanceVerdict] = useState<GovernanceVerdict | null>(null);
   const [runtimeEvents, setRuntimeEvents] = useState<{
