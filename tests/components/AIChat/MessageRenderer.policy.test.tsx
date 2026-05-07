@@ -276,7 +276,7 @@ describe('MessageRenderer policy UX (P34-B)', () => {
     expect(screen.getByText('Deep search sources')).toBeInTheDocument();
   });
 
-  it('keeps source cards hidden for regular chat answers even when citations are attached', () => {
+  it('renders source cards for regular chat answers when citations are attached', () => {
     const msg = {
       id: 'm-ai-regular-with-sources',
       role: 'ai',
@@ -297,8 +297,8 @@ describe('MessageRenderer policy UX (P34-B)', () => {
 
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
-    expect(screen.queryByText('Deep search sources')).not.toBeInTheDocument();
-    expect(screen.queryByText('Regular chat source')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Deep search sources'));
+    expect(screen.getByText('Regular chat source')).toBeInTheDocument();
   });
 
   it('sanitizes internal source/debug markers from user-visible AI text', () => {
@@ -311,6 +311,22 @@ describe('MessageRenderer policy UX (P34-B)', () => {
     expect(clean).not.toMatch(/\[(?:DT|MEM)\]/);
     expect(clean).not.toMatch(/\brag_1\b/);
     expect(clean).not.toContain('No sources: internal audit text');
+  });
+
+  it('sanitizes markdown and bullet variants of "No cited sources" debug lines', () => {
+    const clean = sanitizeUserVisibleAiText(
+      [
+        'Answer line 1.',
+        '- **No cited sources**',
+        '2) No cited sources',
+        '* No cited sources',
+        'Answer line 2.',
+      ].join('\n')
+    );
+
+    expect(clean).toContain('Answer line 1.');
+    expect(clean).toContain('Answer line 2.');
+    expect(clean).not.toMatch(/No cited sources/i);
   });
 
   it('uses sanitized AI content for user actions like copy and text-to-speech', async () => {

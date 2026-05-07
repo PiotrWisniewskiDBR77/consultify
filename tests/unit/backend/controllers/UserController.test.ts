@@ -8,7 +8,12 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryRun: vi.fn(),
 }));
 
+vi.mock('../../../../server/src/utils/dbSchema.js', () => ({
+  getTableColumns: vi.fn(),
+}));
+
 import * as queryHelpers from '../../../../server/src/utils/queryHelpers.js';
+import { getTableColumns } from '../../../../server/src/utils/dbSchema.js';
 
 describe('UserController', () => {
   let mockReq: any;
@@ -18,6 +23,24 @@ describe('UserController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getTableColumns).mockImplementation(async (table: string) => {
+      if (table === 'users') {
+        return new Set([
+          'id',
+          'organization_id',
+          'first_name',
+          'last_name',
+          'email',
+          'status',
+          'role',
+          'updated_at',
+        ]);
+      }
+      if (table === 'user_profiles') {
+        return new Set(['id', 'user_id', 'job_title', 'department', 'updated_at']);
+      }
+      return new Set();
+    });
 
     mockReq = {
       user: { id: 'user-1', organizationId: 'org-1' },
@@ -119,6 +142,32 @@ describe('UserController', () => {
       // The controller constructs SQL based on fields.
       expect(queryHelpers.queryRun).toHaveBeenCalled();
       expect(jsonFn).toHaveBeenCalled();
+    });
+
+    it('persists job title and department to user_profiles when users columns are missing', async () => {
+      mockReq.params.id = 'user-1';
+      mockReq.body = { jobTitle: 'Plant Lead', department: 'Engineering' };
+      vi.mocked(getTableColumns).mockImplementation(async (table: string) => {
+        if (table === 'users') {
+          return new Set(['id', 'organization_id', 'updated_at']);
+        }
+        if (table === 'user_profiles') {
+          return new Set(['id', 'user_id', 'job_title', 'department', 'updated_at']);
+        }
+        return new Set();
+      });
+      (queryHelpers.queryRun as any).mockResolvedValue({ changes: 1 });
+
+      await UserController.updateUser(mockReq, mockRes, vi.fn());
+
+      expect(queryHelpers.queryRun).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO user_profiles'),
+        expect.arrayContaining([expect.any(String), 'user-1'])
+      );
+      expect(jsonFn).toHaveBeenCalledWith({
+        id: 'user-1',
+        message: 'User updated successfully',
+      });
     });
   });
 });

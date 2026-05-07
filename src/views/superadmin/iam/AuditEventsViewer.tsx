@@ -48,7 +48,30 @@ function safeNumber(value: unknown, fallback = 0): number {
 
 function asText(value: unknown, fallback = '—'): string {
   if (value === null || value === undefined || value === '') return fallback;
-  return String(value);
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  // Defensive: never render `[object Object]` from upstream payloads.
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function summarizeMetadata(metadata: unknown): string {
+  if (metadata === null || metadata === undefined) return '—';
+  if (typeof metadata === 'string') {
+    const trimmed = metadata.trim();
+    return trimmed ? trimmed.slice(0, 80) : '—';
+  }
+  try {
+    const serialized = JSON.stringify(metadata);
+    if (!serialized || serialized === '{}' || serialized === '[]') return '—';
+    return serialized.slice(0, 80);
+  } catch {
+    return '—';
+  }
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -272,8 +295,11 @@ const AuditEventsViewer: React.FC = () => {
                       {asText(ev.actor_id).slice(0, 12)}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-slate-400 max-w-[200px] truncate">
-                    {ev.metadata ? JSON.stringify(ev.metadata).slice(0, 80) : '—'}
+                  <td
+                    className="px-3 py-2 text-slate-400 max-w-[200px] truncate"
+                    title={ev.metadata ? JSON.stringify(ev.metadata) : ''}
+                  >
+                    {summarizeMetadata(ev.metadata)}
                   </td>
                 </tr>
               ))

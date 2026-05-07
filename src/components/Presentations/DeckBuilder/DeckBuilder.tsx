@@ -13,9 +13,17 @@ import { useParams } from 'react-router-dom';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 import { useAppStore } from '@/store/useAppStore';
 
+import {
+  deriveLastAgentActivity,
+  fetchPresentationRuntimeEvents,
+  type PresentationRuntimeEvent,
+} from '@/services/presentationRuntimeEvents';
+
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
+import { AgentActivityPanel } from './AgentActivityPanel';
 import { AgentPanel } from './AgentPanel';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
@@ -290,6 +298,12 @@ export const DeckBuilder: React.FC = () => {
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [runtimeEvents, setRuntimeEvents] = useState<{
+    events: PresentationRuntimeEvent[];
+    degraded: boolean;
+    reason?: string;
+  }>({ events: [], degraded: false });
+  const [lastAgentActivityAt, setLastAgentActivityAt] = useState<string | null>(null);
   const [deckBacklinks, setDeckBacklinks] = useState<
     Array<{ id: string; sourceType: string; sourceId: string }>
   >([]);
@@ -298,6 +312,14 @@ export const DeckBuilder: React.FC = () => {
     deck: any;
     reply: string;
     actions: string[];
+    operationId?: string;
+    diff?: {
+      cardsBefore?: number;
+      cardsAfter?: number;
+      cardsAdded?: number;
+      cardsRemoved?: number;
+      changedCards?: number;
+    };
   } | null>(null);
 
   const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
@@ -336,6 +358,23 @@ export const DeckBuilder: React.FC = () => {
       })
       .catch(() => {});
   }, []);
+
+  const refetchRuntimeEvents = useCallback(async () => {
+    const targetDeckId = deck?.deck_id;
+    if (!targetDeckId) return;
+    const result = await fetchPresentationRuntimeEvents(targetDeckId, { limit: 50 });
+    setRuntimeEvents(result);
+    setLastAgentActivityAt(deriveLastAgentActivity(result.events));
+  }, [deck?.deck_id]);
+
+  useEffect(() => {
+    if (!deck?.deck_id) return;
+    refetchRuntimeEvents();
+    const intervalId = setInterval(refetchRuntimeEvents, 30_000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [deck?.deck_id, refetchRuntimeEvents]);
 
   useCommandPaletteShortcut(() => setCommandPaletteOpen(true));
 
@@ -618,56 +657,27 @@ export const DeckBuilder: React.FC = () => {
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
       try {
-        const request =
-          format === 'pptx'
-            ? {
-                url: `/api/presentations/decks/${deck.deck_id}/download`,
-                init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
-                extension: 'pptx',
-              }
-            : format === 'png'
-              ? {
-                  url: `/api/presentations/decks/${deck.deck_id}/export/png`,
-                  init: {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                  },
-                  extension: 'zip',
-                }
-              : {
-                  url: `/api/presentations/decks/${deck.deck_id}/export/pdf`,
-                  init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
-                  extension: 'pdf',
-                };
-        const response = await fetch(request.url, request.init);
-        if (!response.ok) {
-          let errorMsg = 'Export failed';
-          try {
-            const errorBody = await response.json();
-            errorMsg = errorBody?.error || errorMsg;
-          } catch {
-            /* ignore parse errors */
-          }
-          throw new Error(errorMsg);
-        }
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${deck.title || 'presentation'}.${request.extension}`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+        await exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format });
         toast.success(
           isPolish
             ? `Wyeksportowano jako ${format.toUpperCase()}`
             : `Exported as ${format.toUpperCase()}`
         );
       } catch (err: any) {
+        if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
+          setQualityGatesOpen(true);
+          const firstBlocker = Array.isArray(err.gates)
+            ? err.gates.find((gate: any) => typeof gate?.cardIndex === 'number')
+            : null;
+          if (firstBlocker && typeof firstBlocker.cardIndex === 'number') {
+            setActiveCardIndex(firstBlocker.cardIndex);
+          }
+        }
         const message = err?.message || (isPolish ? 'Eksport nie powiódł się' : 'Export failed');
         toast.error(message);
       }
     },
-    [deck]
+    [deck, isPolish]
   );
 
   const handleRestoreVersion = useCallback(
@@ -678,18 +688,36 @@ export const DeckBuilder: React.FC = () => {
     [restoreVersion, setDeck]
   );
 
-  const handleAcceptAgentEdit = useCallback(() => {
+  const handleAcceptAgentEdit = useCallback(async () => {
     if (pendingAgentEdit?.deck) {
-      setDeck(pendingAgentEdit.deck);
-      toast.success(isPolish ? 'Zmiany zastosowane' : 'Changes applied');
+      if (pendingAgentEdit.operationId && deck?.deck_id) {
+        const res = (await Api.post(
+          `/presentations/decks/${deck.deck_id}/agent-edit/${pendingAgentEdit.operationId}/accept`,
+          {}
+        )) as any;
+        const payload =
+          res?.data && typeof res.data === 'object' && 'data' in res.data
+            ? res.data.data
+            : res?.data;
+        setDeck(payload?.deck || pendingAgentEdit.deck);
+      } else {
+        setDeck(pendingAgentEdit.deck);
+      }
+      toast.success(isPolish ? 'Zmiany zastosowane i zapisane' : 'Changes applied and saved');
     }
     setPendingAgentEdit(null);
-  }, [pendingAgentEdit, setDeck, isPolish]);
+  }, [pendingAgentEdit, setDeck, isPolish, deck?.deck_id]);
 
-  const handleRejectAgentEdit = useCallback(() => {
+  const handleRejectAgentEdit = useCallback(async () => {
+    if (pendingAgentEdit?.operationId && deck?.deck_id) {
+      await Api.post(
+        `/presentations/decks/${deck.deck_id}/agent-edit/${pendingAgentEdit.operationId}/reject`,
+        {}
+      ).catch(() => null);
+    }
     toast(isPolish ? 'Zmiany odrzucone' : 'Changes rejected');
     setPendingAgentEdit(null);
-  }, [isPolish]);
+  }, [isPolish, pendingAgentEdit?.operationId, deck?.deck_id]);
 
   const handleAiPrompt = useCallback(
     async (prompt: string) => {
@@ -707,9 +735,15 @@ export const DeckBuilder: React.FC = () => {
           : 'I applied the requested changes to the deck.');
       const actions = Array.isArray(payload?.appliedActions) ? payload.appliedActions : [];
       if (nextDeck) {
-        setPendingAgentEdit({ deck: nextDeck, reply, actions });
+        setPendingAgentEdit({
+          deck: nextDeck,
+          reply,
+          actions,
+          operationId: payload?.operationId,
+          diff: payload?.diff,
+        });
       }
-      return { reply };
+      return payload && typeof payload === 'object' ? { ...payload, reply } : { reply };
     },
     [deck, isPolish]
   );
@@ -784,6 +818,12 @@ export const DeckBuilder: React.FC = () => {
             connectionStatus={collab.connectionStatus}
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
+            confidentiality={
+              ((deck as any)?.confidentiality ||
+                (deck as any)?.meta?.confidentiality ||
+                'internal') as 'public' | 'internal' | 'confidential'
+            }
+            lastAgentActivityAt={lastAgentActivityAt}
           />
           <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
         </div>
@@ -835,6 +875,13 @@ export const DeckBuilder: React.FC = () => {
               {pendingAgentEdit.actions.length > 0 && (
                 <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
                   ({pendingAgentEdit.actions.join(', ')})
+                </span>
+              )}
+              {pendingAgentEdit.diff && (
+                <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                  {isPolish
+                    ? `diff: +${pendingAgentEdit.diff.cardsAdded || 0}/-${pendingAgentEdit.diff.cardsRemoved || 0}, zmienione ${pendingAgentEdit.diff.changedCards || 0}`
+                    : `diff: +${pendingAgentEdit.diff.cardsAdded || 0}/-${pendingAgentEdit.diff.cardsRemoved || 0}, changed ${pendingAgentEdit.diff.changedCards || 0}`}
                 </span>
               )}
             </span>
@@ -896,6 +943,26 @@ export const DeckBuilder: React.FC = () => {
               sourceNames={deck.source_refs.map((s) => s.artifact_name)}
               onSendMessage={handleAiPrompt}
               conversationId={deckId}
+              {...(deck?.deck_id ? { deckId: deck.deck_id } : {})}
+              onProposalAccepted={async () => {
+                try {
+                  await refetchRuntimeEvents();
+                } catch {}
+              }}
+              onProposalRejected={async () => {
+                try {
+                  await refetchRuntimeEvents();
+                } catch {}
+              }}
+            />
+          )}
+
+          {/* Agent Activity Panel — runtime telemetry feed */}
+          {agentOpen && (
+            <AgentActivityPanel
+              events={runtimeEvents.events}
+              degraded={runtimeEvents.degraded}
+              reason={runtimeEvents.reason}
             />
           )}
 

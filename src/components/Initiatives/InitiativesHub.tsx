@@ -77,6 +77,7 @@ import {
   normalizeInitiativeForPortfolio,
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
+import { InitiativeDocumentView } from './InitiativeDocumentView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -88,6 +89,20 @@ import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
 const MIN_SHOWCASE_INITIATIVES = 10;
+
+const unwrapApiList = (response: unknown, listKey?: string): any[] => {
+  if (Array.isArray(response)) return response;
+  const payload = (response as { data?: unknown } | null)?.data;
+  if (Array.isArray(payload)) return payload;
+  if (listKey) {
+    const directList = (response as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(directList)) return directList;
+    const nestedList = (payload as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(nestedList)) return nestedList;
+  }
+  return [];
+};
+
 // D1.2: Complete status set — includes execution/done + archived/cancelled for restoration
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
@@ -160,8 +175,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const refreshTrigger = usePortfolioStore((state) => state.refreshTrigger);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
   const [handledDeepLinkNew, setHandledDeepLinkNew] = useState(false);
+  const handledDeepLinkOpenRef = useRef<string | null>(null);
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
@@ -592,6 +607,28 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [handlePreviewSelection]
   );
 
+  const handleOpenInitiativeDocument = useCallback(
+    (initiative: PortfolioInitiative) => {
+      const existingDoc = openDocuments.find(
+        (document) => document.id === initiative.id && document.type === 'initiative'
+      );
+      if (!existingDoc) {
+        const newDoc: OpenDocument = {
+          id: initiative.id,
+          name: initiative.name || t('initiatives.document.untitled', 'Untitled initiative'),
+          type: 'initiative',
+          subType: String(initiative.axis || 'initiative'),
+          status: (initiative.status || InitiativeStatus.DRAFT) as any,
+        };
+        setOpenDocuments((prev) => [...prev, newDoc]);
+      }
+      setActiveTab('list');
+      setActiveDocumentId(initiative.id);
+      handlePreviewSelection(initiative.id);
+    },
+    [handlePreviewSelection, openDocuments, setActiveDocumentId, setOpenDocuments, t]
+  );
+
   // Open decision as dynamic tab (called from InitiativeDocumentView → DecisionsSection)
   const handleOpenDecision = useCallback(
     async (decisionId: string) => {
@@ -661,14 +698,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Deep link: open initiative preview via URL params
   // Supported: /initiatives?open=<initiativeId>&mode=drawer|doc
   useEffect(() => {
-    if (handledDeepLinkOpen) return;
     const openId = searchParams.get('open');
     if (!openId) {
-      setHandledDeepLinkOpen(true);
+      handledDeepLinkOpenRef.current = null;
       return;
     }
 
     const mode = (searchParams.get('mode') || 'doc').toLowerCase();
+    const deepLinkKey = `${openId}:${mode}`;
+    if (handledDeepLinkOpenRef.current === deepLinkKey) return;
+    handledDeepLinkOpenRef.current = deepLinkKey;
 
     const run = async () => {
       try {
@@ -679,18 +718,42 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (!fromList && !fromShowcase) {
           try {
             response = await V8PlanningApi.getInitiative(openId);
-          } catch {
-            response = await Api.get(`/initiatives/${openId}`);
+          } catch (v8Error) {
+            try {
+              response = await Api.get(`/initiatives/${encodeURIComponent(openId)}`);
+            } catch {
+              const interviewResponse = await Api.get('/initiatives?source=interview_insight');
+              const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
+              response = interviewInitiatives.find((item: any) => String(item?.id) === openId);
+              if (!response) throw v8Error;
+            }
           }
         }
-        const initiative = (fromList || fromShowcase || response?.initiative || response) as any;
+        const initiative = normalizeInitiativeForPortfolio(
+          (fromList || fromShowcase || response?.initiative || response) as any,
+          openId
+        );
 
         if (!initiative?.id) {
           toast.error(t('initiatives.toast.notFound', 'Nie znaleziono inicjatywy'));
           return;
         }
 
-        handleInitiativeClick(initiative as any);
+        setInitiatives((prev) => upsertPortfolioInitiative(prev, initiative));
+        setAllInitiatives((prev) => upsertPortfolioInitiative(prev, initiative));
+
+        const reveal = getCreatedInitiativeRevealState(
+          { scope, activeStatusFilter },
+          initiative.status
+        );
+        setScope(reveal.scope);
+        setActiveStatusFilter(reveal.activeStatusFilter);
+
+        if (mode === 'doc') {
+          handleOpenInitiativeDocument(initiative);
+        } else {
+          handleInitiativeClick(initiative);
+        }
       } catch (e: any) {
         toast.error(
           e?.response?.data?.error ||
@@ -703,34 +766,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         next.delete('open');
         next.delete('mode');
         setSearchParams(next, { replace: true });
-        setHandledDeepLinkOpen(true);
       }
     };
 
     run();
   }, [
-    handledDeepLinkOpen,
     searchParams,
     setSearchParams,
     initiatives,
     initiativesDemoData,
     handleInitiativeClick,
+    handleOpenInitiativeDocument,
+    scope,
+    activeStatusFilter,
   ]);
-
-  useEffect(() => {
-    setOpenDocuments((prev) => {
-      const filtered = prev.filter((document) => document.type !== 'initiative');
-      return filtered.length === prev.length ? prev : filtered;
-    });
-  }, [setOpenDocuments]);
-
-  useEffect(() => {
-    if (!activeDocumentId) return;
-    const activeDoc = openDocuments.find((document) => document.id === activeDocumentId);
-    if (activeDoc?.type === 'initiative') {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId, openDocuments, setActiveDocumentId]);
 
   // Deep link: open "New Initiative" modal
   // Supported: /initiatives?new=1
@@ -1084,6 +1133,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             onClose={handleShowList}
             onSaved={() => fetchData(true)}
             onOpenDecision={handleOpenDecision}
+          />
+        );
+      }
+
+      if (activeDoc?.type === 'initiative' || !activeDoc) {
+        return (
+          <InitiativeDocumentView
+            initiativeId={activeDocumentId}
+            sourceModule="initiatives"
+            onBack={handleShowList}
+            onOpenTask={handleOpenTask}
+            onOpenDecision={handleOpenDecision}
+            onStatusChange={() => fetchData(true)}
           />
         );
       }

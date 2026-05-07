@@ -254,6 +254,86 @@ describe('AdminAuditLogsView honest UI', () => {
     });
   });
 
+  it('surfaces backend integrity banner when audit logs report degraded metadata', async () => {
+    vi.mocked(Api.getAdminAuditLogs).mockResolvedValue({
+      logs: [
+        {
+          id: 'log-degraded-1',
+          admin_id: 'admin-1',
+          action_type: 'export_data',
+          resource_type: 'organization',
+          resource_id: 'org-1',
+          ip_address: '127.0.0.1',
+          user_agent: 'Test',
+          risk_score: 90,
+          status: 'logged',
+          metadata_json: { _parseError: true, _raw: '{not-json' },
+          created_at: '2026-04-26T00:00:00.000Z',
+          resolved_at: null,
+          resolution_notes: null,
+          admin: {
+            email: 'qa-admin@qa.consultify.local',
+            firstName: 'QA',
+            lastName: 'Admin',
+          },
+        },
+      ],
+      pagination: { limit: 100, offset: 0, count: 1, hasMore: false },
+      integrity: {
+        degraded: true,
+        reason: 'Admin audit log query failed; serving an empty list to preserve UI integrity.',
+        malformedMetadataCount: 1,
+      },
+    });
+
+    render(<AdminAuditLogsView />);
+
+    await screen.findByText('export_data');
+    expect(await screen.findByTestId('audit-integrity-banner')).toHaveTextContent(
+      /malformed metadata payloads/i
+    );
+  });
+
+  it('surfaces malformed-metadata-only banner when backend is healthy but rows are partially bad', async () => {
+    vi.mocked(Api.getAdminAuditLogs).mockResolvedValue({
+      logs: [
+        {
+          id: 'log-malformed-1',
+          admin_id: 'admin-1',
+          action_type: 'login',
+          resource_type: 'session',
+          resource_id: 'session-1',
+          ip_address: '127.0.0.1',
+          user_agent: 'Test',
+          risk_score: 5,
+          status: 'logged',
+          metadata_json: {},
+          created_at: '2026-04-26T00:00:00.000Z',
+          resolved_at: null,
+          resolution_notes: null,
+          admin: {
+            email: 'qa-admin@qa.consultify.local',
+            firstName: 'QA',
+            lastName: 'Admin',
+          },
+        },
+      ],
+      pagination: { limit: 100, offset: 0, count: 1, hasMore: false },
+      integrity: {
+        degraded: false,
+        reason: null,
+        malformedMetadataCount: 2,
+      },
+    });
+
+    render(<AdminAuditLogsView />);
+
+    await screen.findByText('login');
+    expect(await screen.findByTestId('audit-integrity-banner')).toHaveTextContent(
+      /2 audit logs have malformed metadata/i
+    );
+  });
+
   it('renders malformed text fields safely and normalizes resolved status', async () => {
     vi.mocked(Api.getAdminAuditLogs).mockResolvedValue({
       logs: [

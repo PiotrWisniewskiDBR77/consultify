@@ -484,6 +484,14 @@ export interface SourceArtifact {
   type: string;
   id?: string;
   label: string;
+  artifactId?: string;
+  confidence?: number;
+  readiness?: 'ready' | 'partial_ready' | 'missing_sales_data' | 'policy_blocked' | 'insufficient_evidence';
+  lineage?: {
+    runtime?: string;
+    recordId?: string;
+    family?: string;
+  };
   data?: unknown;
 }
 
@@ -494,9 +502,14 @@ export interface OutlineItem {
   keyMessage?: string;
   enabled: boolean;
   sourceRef?: string;
+  sourceRefs?: string[];
+  confidence?: number;
+  density?: 'visual' | 'balanced' | 'document';
+  visualPolicy?: string;
   layoutHint?: string;
   suggestedBlocks?: string[];
   imageHint?: 'org_photo' | 'ai_image' | 'chart' | 'diagram' | 'none';
+  warnings?: string[];
 }
 
 export interface DeckTemplate {

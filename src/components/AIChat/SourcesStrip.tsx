@@ -31,6 +31,10 @@ export const SourcesStrip: React.FC<SourcesStripProps> = ({ bundle, isCompact = 
         ? data.citations.length
         : 0;
 
+  // Avoid noisy/confusing "No cited sources" rows in normal chat.
+  // When there are no sources, the trust badge/policy blocks already communicate it (when relevant).
+  if (citationsCount <= 0) return null;
+
   return (
     <div
       className={`flex flex-wrap items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 ${
@@ -38,7 +42,7 @@ export const SourcesStrip: React.FC<SourcesStripProps> = ({ bundle, isCompact = 
       }`}
       data-testid="sources-strip"
     >
-      <span>{citationsCount > 0 ? `${citationsCount} cited sources` : 'No cited sources'}</span>
+      <span>{`${citationsCount} cited sources`}</span>
       <span aria-hidden="true">-</span>
       {classes.map((sourceClass: unknown) => (
         <span

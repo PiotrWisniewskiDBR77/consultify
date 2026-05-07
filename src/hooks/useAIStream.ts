@@ -1125,7 +1125,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       const resolvedKnowledgeSources = {
         pmoDocuments: aiConfig?.knowledgeSources?.pmoDocuments ?? true,
         projectData: aiConfig?.knowledgeSources?.projectData ?? true,
-        organizationData: aiConfig?.knowledgeSources?.organizationData ?? false,
+        organizationData: aiConfig?.knowledgeSources?.organizationData ?? true,
       };
 
       try {

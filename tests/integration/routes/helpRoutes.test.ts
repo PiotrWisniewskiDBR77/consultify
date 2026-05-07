@@ -44,6 +44,7 @@ describe('Help routes (no placeholders)', () => {
   beforeEach(async () => {
     // Keep DB light: only clear help tables we manage.
     await db.exec(`
+      DROP TABLE IF EXISTS help_playbook_steps;
       DROP TABLE IF EXISTS help_categories;
       DROP TABLE IF EXISTS help_articles;
       DROP TABLE IF EXISTS help_playbooks;

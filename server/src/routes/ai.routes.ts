@@ -2171,6 +2171,10 @@ router.post(
         return 'user';
       })();
       const isGovernedProductTruthQuery = isDbr77ProductTruthQuery(String(message || ''));
+      const mentionsGovernedDbrProduct =
+        /\bdbr77\b|\bdbr\b|\bconsultify\b|\bmarketplace\b|\biris\b|\bvector\b|\bdigital twin\b|\biiot\b/i.test(
+          String(message || '')
+        );
       const isProductAssistantHowToQuery =
         Boolean(virtualWorkerSlug) &&
         isProductOrHowToQuery(String(message || ''), language?.startsWith('pl') ? 'pl' : 'en');
@@ -3170,7 +3174,8 @@ router.post(
 
         const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
         const governedKnowledgeSuppressesWeb =
-          shouldPreferGovernedProductKnowledge && !explicitExternalWebRequest;
+          (shouldPreferGovernedProductKnowledge || mentionsGovernedDbrProduct) &&
+          !explicitExternalWebRequest;
         if (
           !governedKnowledgeSuppressesWeb &&
           !suppressWebForInternalOpsHealth &&

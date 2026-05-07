@@ -381,6 +381,9 @@ const getOrgBilling = catchAsync(async (req, res, next) => {
  */
 const getUsers = catchAsync(async (req, res, next) => {
   const hasLicensePlanId = await hasColumn('users', 'license_plan_id').catch(() => false);
+  const hasUserJobTitle = await hasColumn('users', 'job_title').catch(() => false);
+  const hasUserDepartment = await hasColumn('users', 'department').catch(() => false);
+  const hasUserProfiles = await tableExists('user_profiles').catch(() => false);
   const organizationId =
     typeof req.query.organizationId === 'string' ? req.query.organizationId.trim() : '';
   const role = typeof req.query.role === 'string' ? req.query.role.trim() : '';
@@ -412,9 +415,21 @@ const getUsers = catchAsync(async (req, res, next) => {
             u.id, u.organization_id, u.email, u.first_name, u.last_name,
             u.role, u.status, u.last_login, u.created_at,
             ${hasLicensePlanId ? 'u.license_plan_id' : 'NULL'} as license_plan_id,
+            ${hasUserJobTitle ? 'u.job_title' : hasUserProfiles ? 'up.job_title' : 'NULL'} as job_title,
+            ${
+              hasUserDepartment
+                ? hasUserProfiles
+                  ? 'COALESCE(u.department, up.department)'
+                  : 'u.department'
+                : hasUserProfiles
+                  ? 'up.department'
+                  : 'NULL'
+            } as department,
+            ${hasUserProfiles ? 'up.preferences_json' : 'NULL'} as profile_preferences_json,
             o.name as organization_name
         FROM users u
         LEFT JOIN organizations o ON u.organization_id = o.id
+        ${hasUserProfiles ? 'LEFT JOIN user_profiles up ON up.user_id = u.id' : ''}
         ${whereClause}
         ORDER BY u.created_at DESC
     `;
@@ -422,19 +437,37 @@ const getUsers = catchAsync(async (req, res, next) => {
   deps.db.all(sql, queryParams, (err, rows) => {
     if (err) return next(new AppError(err.message, 500));
 
-    const users = rows.map((u) => ({
-      id: u.id,
-      organizationId: u.organization_id,
-      organizationName: u.organization_name,
-      firstName: u.first_name,
-      lastName: u.last_name,
-      email: u.email,
-      role: u.role,
-      status: u.status,
-      licensePlanId: u.license_plan_id,
-      lastLogin: u.last_login,
-      createdAt: u.created_at,
-    }));
+    const users = rows.map((u) => {
+      let projectRole: string | undefined;
+      if (u.profile_preferences_json) {
+        try {
+          const parsed = JSON.parse(String(u.profile_preferences_json));
+          const candidate = parsed?.defaultProjectRole || parsed?.projectRole;
+          if (typeof candidate === 'string' && candidate.trim()) {
+            projectRole = candidate.trim();
+          }
+        } catch (_err) {
+          projectRole = undefined;
+        }
+      }
+
+      return {
+        id: u.id,
+        organizationId: u.organization_id,
+        organizationName: u.organization_name,
+        firstName: u.first_name,
+        lastName: u.last_name,
+        email: u.email,
+        role: u.role,
+        status: u.status,
+        licensePlanId: u.license_plan_id,
+        jobTitle: u.job_title || undefined,
+        department: u.department || undefined,
+        projectRole,
+        lastLogin: u.last_login,
+        createdAt: u.created_at,
+      };
+    });
     // Documented shape: { users, total } (see docs/api/SUPERADMIN_API). Keeps dashboard counts and list in sync.
     res.json({ users, total: users.length });
   });
@@ -445,8 +478,23 @@ const getUsers = catchAsync(async (req, res, next) => {
  */
 const updateUser = catchAsync(async (req, res, next) => {
   const hasLicensePlanId = await hasColumn('users', 'license_plan_id').catch(() => false);
+  const hasUserJobTitle = await hasColumn('users', 'job_title').catch(() => false);
+  const hasUserDepartment = await hasColumn('users', 'department').catch(() => false);
+  const hasUserProfiles = await tableExists('user_profiles').catch(() => false);
   const { id } = req.params;
   const { organizationId, role, status, email, firstName, lastName, licensePlanId } = req.body;
+  const jobTitle =
+    req.body?.jobTitle === undefined || req.body?.jobTitle === null
+      ? undefined
+      : String(req.body.jobTitle).trim();
+  const department =
+    req.body?.department === undefined || req.body?.department === null
+      ? undefined
+      : String(req.body.department).trim();
+  const projectRole =
+    req.body?.projectRole === undefined || req.body?.projectRole === null
+      ? undefined
+      : String(req.body.projectRole).trim();
 
   const updates: string[] = [];
   const params: any[] = [];
@@ -486,6 +534,14 @@ const updateUser = catchAsync(async (req, res, next) => {
     updates.push('license_plan_id = ?');
     params.push(licensePlanId || null);
   }
+  if (hasUserJobTitle && jobTitle !== undefined) {
+    updates.push('job_title = ?');
+    params.push(jobTitle || null);
+  }
+  if (hasUserDepartment && department !== undefined) {
+    updates.push('department = ?');
+    params.push(department || null);
+  }
 
   if (updates.length === 0) {
     return res.json({ message: 'No changes submitted' });
@@ -493,19 +549,94 @@ const updateUser = catchAsync(async (req, res, next) => {
 
   const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
 
+  const persistProfileFields = (done: (error?: Error) => void) => {
+    const shouldPersistProfile =
+      hasUserProfiles && (jobTitle !== undefined || department !== undefined || projectRole !== undefined);
+    if (!shouldPersistProfile) {
+      done();
+      return;
+    }
+
+    deps.db.get(
+      'SELECT job_title, department, preferences_json FROM user_profiles WHERE user_id = ?',
+      [id],
+      (profileReadErr, existingProfile) => {
+        if (profileReadErr) {
+          done(new AppError(profileReadErr.message, 500));
+          return;
+        }
+
+        let preferences: Record<string, unknown> = {};
+        const rawPreferences = existingProfile?.preferences_json;
+        if (rawPreferences) {
+          try {
+            preferences = JSON.parse(String(rawPreferences));
+          } catch (_err) {
+            preferences = {};
+          }
+        }
+
+        if (projectRole !== undefined) {
+          if (projectRole) {
+            preferences.defaultProjectRole = projectRole;
+          } else {
+            delete preferences.defaultProjectRole;
+          }
+        }
+
+        const nextJobTitle = jobTitle !== undefined ? jobTitle || null : existingProfile?.job_title || null;
+        const nextDepartment =
+          department !== undefined ? department || null : existingProfile?.department || null;
+
+        deps.db.run(
+          `INSERT INTO user_profiles (id, user_id, job_title, department, preferences_json, updated_at)
+           VALUES (?, ?, ?, ?, ?, datetime('now'))
+           ON CONFLICT(user_id) DO UPDATE SET
+             job_title = excluded.job_title,
+             department = excluded.department,
+             preferences_json = excluded.preferences_json,
+             updated_at = datetime('now')`,
+          [deps.uuid.v4(), id, nextJobTitle, nextDepartment, JSON.stringify(preferences)],
+          (profileWriteErr) => {
+            if (profileWriteErr) {
+              done(new AppError(profileWriteErr.message, 500));
+              return;
+            }
+            done();
+          }
+        );
+      }
+    );
+  };
+
   deps.db.run(sql, [...params, id], function (err) {
     if (err) return next(new AppError(err.message, 500));
     if (this.changes === 0) return next(new AppError('User not found', 404));
 
-    deps.ActivityService.log({
-      userId: req.user?.id,
-      action: 'updated',
-      entityType: 'user',
-      entityId: id,
-      newValue: { organizationId, role, status, email, firstName, lastName, licensePlanId },
-    });
+    persistProfileFields((profileErr?: Error) => {
+      if (profileErr) return next(profileErr);
 
-    res.json({ message: 'User updated successfully' });
+      deps.ActivityService.log({
+        userId: req.user?.id,
+        action: 'updated',
+        entityType: 'user',
+        entityId: id,
+        newValue: {
+          organizationId,
+          role,
+          status,
+          email,
+          firstName,
+          lastName,
+          licensePlanId,
+          department,
+          jobTitle,
+          projectRole,
+        },
+      });
+
+      res.json({ message: 'User updated successfully' });
+    });
   });
 });
 
@@ -514,6 +645,18 @@ const updateUser = catchAsync(async (req, res, next) => {
  */
 const createUser = catchAsync(async (req, res, next) => {
   const { firstName, lastName, email, password, role, organizationId, licensePlanId } = req.body;
+  const jobTitle =
+    req.body?.jobTitle === undefined || req.body?.jobTitle === null
+      ? undefined
+      : String(req.body.jobTitle).trim();
+  const department =
+    req.body?.department === undefined || req.body?.department === null
+      ? undefined
+      : String(req.body.department).trim();
+  const projectRole =
+    req.body?.projectRole === undefined || req.body?.projectRole === null
+      ? undefined
+      : String(req.body.projectRole).trim();
 
   if (!email) return next(new AppError('Email is required', 400));
 
@@ -523,6 +666,9 @@ const createUser = catchAsync(async (req, res, next) => {
   const targetOrgId = organizationId || 'org-dbr77-system';
   const targetRole = role || 'USER';
   const hasLicensePlanId = await hasColumn('users', 'license_plan_id').catch(() => false);
+  const hasUserJobTitle = await hasColumn('users', 'job_title').catch(() => false);
+  const hasUserDepartment = await hasColumn('users', 'department').catch(() => false);
+  const hasUserProfiles = await tableExists('user_profiles').catch(() => false);
   const targetOrganization = await new Promise((resolve, reject) => {
     deps.db.get('SELECT id FROM organizations WHERE id = ?', [targetOrgId], (err, row) => {
       if (err) reject(err);
@@ -558,6 +704,16 @@ const createUser = catchAsync(async (req, res, next) => {
     values.push(licensePlanId || null);
     placeholders.push('?');
   }
+  if (hasUserJobTitle && jobTitle !== undefined) {
+    columns.push('job_title');
+    values.push(jobTitle || null);
+    placeholders.push('?');
+  }
+  if (hasUserDepartment && department !== undefined) {
+    columns.push('department');
+    values.push(department || null);
+    placeholders.push('?');
+  }
 
   const sql = `INSERT INTO users(${columns.join(', ')}) VALUES(${placeholders.join(', ')})`;
 
@@ -569,24 +725,64 @@ const createUser = catchAsync(async (req, res, next) => {
       return next(new AppError(err.message, 500));
     }
 
-    deps.ActivityService.log({
-      userId: req.user?.id,
-      action: 'created',
-      entityType: 'user',
-      entityId: id,
-      newValue: { email, role: targetRole, organizationId: targetOrgId },
-    });
+    const shouldPersistProfile =
+      hasUserProfiles && (jobTitle !== undefined || department !== undefined || projectRole !== undefined);
 
-    res.json({
-      id,
-      email,
-      firstName,
-      lastName,
-      role: targetRole,
-      status: 'active',
-      organizationId: targetOrgId,
-      temporaryPassword: password ? undefined : generatedPassword,
-    });
+    const finalizeCreateResponse = () => {
+      deps.ActivityService.log({
+        userId: req.user?.id,
+        action: 'created',
+        entityType: 'user',
+        entityId: id,
+        newValue: {
+          email,
+          role: targetRole,
+          organizationId: targetOrgId,
+          department,
+          jobTitle,
+          projectRole,
+        },
+      });
+
+      res.json({
+        id,
+        email,
+        firstName,
+        lastName,
+        role: targetRole,
+        status: 'active',
+        organizationId: targetOrgId,
+        department: department || undefined,
+        jobTitle: jobTitle || undefined,
+        projectRole: projectRole || undefined,
+        temporaryPassword: password ? undefined : generatedPassword,
+      });
+    };
+
+    if (!shouldPersistProfile) {
+      finalizeCreateResponse();
+      return;
+    }
+
+    const preferences: Record<string, unknown> = {};
+    if (projectRole) {
+      preferences.defaultProjectRole = projectRole;
+    }
+
+    deps.db.run(
+      `INSERT INTO user_profiles (id, user_id, job_title, department, preferences_json, updated_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))
+       ON CONFLICT(user_id) DO UPDATE SET
+         job_title = excluded.job_title,
+         department = excluded.department,
+         preferences_json = excluded.preferences_json,
+         updated_at = datetime('now')`,
+      [deps.uuid.v4(), id, jobTitle || null, department || null, JSON.stringify(preferences)],
+      (profileErr) => {
+        if (profileErr) return next(new AppError(profileErr.message, 500));
+        finalizeCreateResponse();
+      }
+    );
   });
 });
 
@@ -4191,8 +4387,81 @@ const getAdminSessionStats = catchAsync(async (req, res, next) => {
 });
 
 // Admin Audit Logs
-const getAdminAuditLogs = catchAsync(async (req, res, next) => {
-  const { adminId, actionType, riskScoreMin, status, limit = 100, offset = 0 } = req.query;
+//
+// Hardened against:
+//  - malformed metadata_json (try/catch instead of throwing 500),
+//  - malformed numeric query params (clamped, never NaN),
+//  - missing dedicated audit table or DB outage (degraded JSON, never silent crash).
+//
+// Response shape: { logs, pagination } so the frontend can render pagination
+// without losing back-compat (UI normalizers already accept this shape).
+const ADMIN_AUDIT_LOG_STATUSES = new Set(['logged', 'reviewed', 'escalated', 'resolved']);
+
+const clampInt = (
+  value: unknown,
+  { min, max, fallback }: { min: number; max: number; fallback: number }
+): number => {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  if (parsed < min) return min;
+  if (parsed > max) return max;
+  return parsed;
+};
+
+const safeParseMetadata = (raw: unknown): { metadata: Record<string, unknown>; ok: boolean } => {
+  if (raw == null) return { metadata: {}, ok: true };
+  if (typeof raw === 'object') return { metadata: raw as Record<string, unknown>, ok: true };
+  if (typeof raw !== 'string') return { metadata: {}, ok: true };
+  const trimmed = raw.trim();
+  if (!trimmed) return { metadata: {}, ok: true };
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return { metadata: parsed as Record<string, unknown>, ok: true };
+    }
+    return { metadata: { value: parsed }, ok: true };
+  } catch {
+    return { metadata: { _raw: trimmed, _parseError: true }, ok: false };
+  }
+};
+
+const normalizeAuditLogRow = (row: any) => {
+  const { metadata, ok } = safeParseMetadata(row?.metadata_json);
+  const firstName =
+    typeof row?.first_name === 'string' && row.first_name.trim() ? row.first_name : null;
+  const lastName =
+    typeof row?.last_name === 'string' && row.last_name.trim() ? row.last_name : null;
+  const email =
+    typeof row?.admin_email === 'string' && row.admin_email.trim() ? row.admin_email : null;
+  return {
+    ...row,
+    metadata_json: metadata,
+    metadataJson: metadata,
+    metadata_parse_ok: ok,
+    admin: {
+      id: row?.admin_id || null,
+      email,
+      firstName,
+      lastName,
+    },
+  };
+};
+
+const getAdminAuditLogs = catchAsync(async (req, res, _next) => {
+  const { adminId, actionType, status, fromDate, toDate } = req.query as Record<string, unknown>;
+
+  const limit = clampInt(req.query.limit, { min: 1, max: 1000, fallback: 100 });
+  const offset = clampInt(req.query.offset, { min: 0, max: 1_000_000, fallback: 0 });
+  const riskScoreMinRaw = req.query.riskScoreMin;
+  const riskScoreMin =
+    riskScoreMinRaw === undefined || riskScoreMinRaw === ''
+      ? null
+      : clampInt(riskScoreMinRaw, { min: 0, max: 100, fallback: 0 });
+
+  const normalizedStatus =
+    typeof status === 'string' && ADMIN_AUDIT_LOG_STATUSES.has(status.toLowerCase())
+      ? status.toLowerCase()
+      : null;
 
   let sql = `
         SELECT 
@@ -4201,50 +4470,130 @@ const getAdminAuditLogs = catchAsync(async (req, res, next) => {
         LEFT JOIN users u ON l.admin_id = u.id
         WHERE 1=1
     `;
-  const params = [];
+  const params: any[] = [];
 
-  if (adminId) {
+  if (adminId && typeof adminId === 'string') {
     sql += ' AND l.admin_id = ?';
     params.push(adminId);
   }
-  if (actionType) {
+  if (actionType && typeof actionType === 'string') {
     sql += ' AND l.action_type = ?';
     params.push(actionType);
   }
-  if (riskScoreMin) {
+  if (riskScoreMin !== null) {
     sql += ' AND l.risk_score >= ?';
-    params.push(parseInt(riskScoreMin));
+    params.push(riskScoreMin);
   }
-  if (status) {
+  if (normalizedStatus) {
     sql += ' AND l.status = ?';
-    params.push(status);
+    params.push(normalizedStatus);
+  }
+  if (fromDate && typeof fromDate === 'string') {
+    sql += ' AND l.created_at >= ?';
+    params.push(fromDate);
+  }
+  if (toDate && typeof toDate === 'string') {
+    sql += ' AND l.created_at <= ?';
+    params.push(toDate);
   }
 
   sql += ' ORDER BY l.created_at DESC LIMIT ? OFFSET ?';
-  params.push(parseInt(limit), parseInt(offset));
+  params.push(limit, offset);
 
-  const logs = await deps.db.all(sql, params);
-  res.json(
-    logs.map((l) => ({
-      ...l,
-      metadataJson: l.metadata_json ? JSON.parse(l.metadata_json) : {},
-      admin: { email: l.admin_email, firstName: l.first_name, lastName: l.last_name },
-    }))
-  );
+  let rows: any[] = [];
+  let degraded = false;
+  let degradedReason: string | null = null;
+
+  try {
+    rows = (await deps.db.all(sql, params)) || [];
+  } catch (err: any) {
+    const message = String(err?.message || '');
+    const tableMissing =
+      /no such table|does not exist|relation .* does not exist/i.test(message) ||
+      /admin_audit_logs/i.test(message);
+    logger.error('[SuperAdmin] getAdminAuditLogs query failed', {
+      error: message,
+      tableMissing,
+    });
+    rows = [];
+    degraded = true;
+    degradedReason = tableMissing
+      ? 'Admin audit log storage is not provisioned in this environment.'
+      : 'Admin audit log query failed; serving an empty list to preserve UI integrity.';
+  }
+
+  const logs = rows.map(normalizeAuditLogRow);
+  const malformedMetadataCount = logs.filter((row) => row.metadata_parse_ok === false).length;
+
+  res.json({
+    logs,
+    pagination: {
+      limit,
+      offset,
+      count: logs.length,
+      hasMore: logs.length === limit,
+    },
+    integrity: {
+      degraded,
+      reason: degradedReason,
+      malformedMetadataCount,
+    },
+  });
 });
 
-const getAdminAuditStats = catchAsync(async (req, res, next) => {
-  const stats = await deps.db.get(`
+const getAdminAuditStats = catchAsync(async (req, res, _next) => {
+  const emptyStats = {
+    total_logs: 0,
+    unresolved_count: 0,
+    high_risk_count: 0,
+    medium_risk_count: 0,
+    low_risk_count: 0,
+    avg_risk_score: 0,
+    degraded: false as boolean,
+    reason: null as string | null,
+  };
+
+  try {
+    const stats = await deps.db.get(`
         SELECT 
             COUNT(*) as total_logs,
-            SUM(CASE WHEN status = 'unresolved' THEN 1 ELSE 0 END) as unresolved_count,
+            SUM(CASE WHEN status IN ('logged', 'escalated') THEN 1 ELSE 0 END) as unresolved_count,
             SUM(CASE WHEN risk_score >= 70 THEN 1 ELSE 0 END) as high_risk_count,
             SUM(CASE WHEN risk_score >= 31 AND risk_score < 70 THEN 1 ELSE 0 END) as medium_risk_count,
             SUM(CASE WHEN risk_score < 31 THEN 1 ELSE 0 END) as low_risk_count,
             AVG(risk_score) as avg_risk_score
         FROM admin_audit_logs
     `);
-  res.json(stats);
+
+    const safeNumber = (value: unknown, fallback = 0): number => {
+      const parsed = Number(value ?? fallback);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    res.json({
+      ...emptyStats,
+      total_logs: safeNumber(stats?.total_logs),
+      unresolved_count: safeNumber(stats?.unresolved_count),
+      high_risk_count: safeNumber(stats?.high_risk_count),
+      medium_risk_count: safeNumber(stats?.medium_risk_count),
+      low_risk_count: safeNumber(stats?.low_risk_count),
+      avg_risk_score: safeNumber(stats?.avg_risk_score),
+    });
+  } catch (err: any) {
+    const message = String(err?.message || '');
+    const tableMissing = /no such table|does not exist|relation .* does not exist/i.test(message);
+    logger.error('[SuperAdmin] getAdminAuditStats query failed', {
+      error: message,
+      tableMissing,
+    });
+    res.json({
+      ...emptyStats,
+      degraded: true,
+      reason: tableMissing
+        ? 'Admin audit log storage is not provisioned in this environment.'
+        : 'Stats unavailable due to backend error; rendering safe defaults.',
+    });
+  }
 });
 
 const resolveAdminAuditLog = catchAsync(async (req, res, next) => {

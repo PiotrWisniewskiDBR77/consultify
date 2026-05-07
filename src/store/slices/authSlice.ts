@@ -112,7 +112,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         knowledgeSources: {
           pmoDocuments: true,
           projectData: true,
-          organizationData: false,
+          organizationData: true,
         },
         responseStyle: 'normal' as const,
         textToSpeech: false,

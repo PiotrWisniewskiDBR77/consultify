@@ -1,0 +1,102 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const dbGet = vi.fn();
+const normalizeDeckDocument = vi.fn();
+
+vi.mock('../../utils/DbPromise.js', () => ({
+  get: (...args: any[]) => dbGet(...args),
+}));
+
+vi.mock('../presentationDeckDocumentService.js', () => ({
+  normalizeDeckDocument: (...args: any[]) => normalizeDeckDocument(...args),
+}));
+
+import { checkDeckQualityGates } from '../presentationQualityGatesService.js';
+
+describe('presentationQualityGatesService', () => {
+  beforeEach(() => {
+    dbGet.mockReset();
+    normalizeDeckDocument.mockReset();
+  });
+
+  it('blocks export when P0/P1 governance gates fail', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks')) return { id: 'deck-1', presentation_mode: 'briefing' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'briefing',
+      cards: [
+        { intent: 'cover', title: 'Cover', blocks: [{ content: { text: 'Program Update' } }] },
+        {
+          intent: 'executive_summary',
+          title: 'Exec',
+          key_message: 'TBD',
+          source_refs: [],
+          blocks: [{ content: { text: 'to be populated from source data' } }],
+        },
+      ],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-1');
+
+    expect(report.canExport).toBe(false);
+    expect(report.result).toBe('BLOCKED_P1');
+    expect(report.scorecard.p0).toBeGreaterThan(0);
+    expect(
+      report.gates.some(
+        (gate) => gate.gateType === 'PLACEHOLDER_CONTENT' && gate.priority === 'P0'
+      )
+    ).toBe(true);
+    expect(
+      report.gates.some(
+        (gate) => gate.gateType === 'DECISION_MISSING_TRACEABILITY' && gate.priority === 'P1'
+      )
+    ).toBe(true);
+  });
+
+  it('returns PASS_WITH_P2 when only non-blocking warnings remain', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks')) return { id: 'deck-2', presentation_mode: 'show' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'show',
+      cards: [
+        { intent: 'cover', title: 'Cover', blocks: [{ content: { text: 'Board Briefing' } }] },
+        {
+          intent: 'executive_summary',
+          title: 'Executive Summary',
+          key_message: 'Decision: approve phase-one release',
+          source_refs: [{ artifact_id: 'a1', artifact_type: 'report', artifact_name: 'Report', confidence: 0.92 }],
+          blocks: [{ content: { text: 'High confidence summary' } }],
+          speaker_notes: 'Presenter narrative for executive context.',
+        },
+        {
+          intent: 'next_steps',
+          title: 'Next Steps',
+          key_message: 'Decision owners and timeline for approval',
+          source_refs: [{ artifact_id: 'a2', artifact_type: 'report', artifact_name: 'Roadmap', confidence: 0.88 }],
+          blocks: [
+            {
+              content: {
+                text: 'Action items and owners with explicit sequencing, decision framing, governance checkpoints, implementation details, dependency notes, communication paths, risk safeguards, and release prerequisites for each workstream owner.',
+              },
+            },
+          ],
+        },
+      ],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-2');
+
+    expect(report.result).toBe('PASS_WITH_P2');
+    expect(report.scorecard.p0).toBe(0);
+    expect(report.scorecard.p1).toBe(0);
+    expect(report.scorecard.p2).toBeGreaterThan(0);
+  });
+});

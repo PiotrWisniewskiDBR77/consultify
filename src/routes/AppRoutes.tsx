@@ -34,6 +34,7 @@ import { ProductEntryPage } from '@/views/ProductEntryPage';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
+import { WorkCanvasRedirect } from './WorkCanvasRedirect';
 import { ROUTES } from './routeConfig';
 
 // Lazy load views for new routes
@@ -186,9 +187,6 @@ const Wave5ArtifactRuntimePanel = React.lazy(() =>
   import('@/components/AIChat/Wave5ArtifactRuntimePanel').then((m) => ({
     default: m.Wave5ArtifactRuntimePanel,
   }))
-);
-const WorkCanvasRuntime = React.lazy(() =>
-  import('@/components/AIChat/WorkCanvasRuntime').then((m) => ({ default: m.WorkCanvasRuntime }))
 );
 const Wave6ContextLearningPanel = React.lazy(() =>
   import('@/components/AIChat/Wave6ContextLearningPanel').then((m) => ({
@@ -485,10 +483,17 @@ const AuthRouteWithTrialRedirect: React.FC<{
   onBack: () => void;
 }> = ({ isAuthenticated, authInitialStep, onAuthSuccess, onBack }) => {
   const [searchParams] = useSearchParams();
+  const routeLocation = useLocation();
   const action = searchParams.get('action');
 
   if (isAuthenticated) {
-    return <Navigate to={ROUTES.AI_CHAT} replace />;
+    const from = (routeLocation.state as { from?: { pathname?: string; search?: string } } | null)
+      ?.from;
+    const fromPath =
+      from?.pathname && from.pathname !== ROUTES.AUTH && from.pathname !== '/auth'
+        ? `${from.pathname}${from.search || ''}`
+        : null;
+    return <Navigate to={fromPath || ROUTES.AI_CHAT} replace />;
   }
   if (action === 'trial') {
     return <Navigate to="/trial/start" replace />;
@@ -1177,18 +1182,12 @@ export const AppRoutes: React.FC = () => {
           element={renderInternalToolsShell(['AI', 'Artifacts'], <Wave5ArtifactRuntimePanel />)}
         />
 
-        {/* V10 Work Canvas - split chat/canvas runtime */}
+        {/* V10 Work Canvas (legacy route) -> canonical /chat split panel */}
         <Route
-          path="/ai/work-canvas"
+          path={ROUTES.AI_OS.WORK_CANVAS}
           element={
-            <ProtectedRoute requiredRole="ADMIN">
-              <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Work Canvas']}>
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="fade">
-                    <WorkCanvasRuntime />
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </MainLayout>
+            <ProtectedRoute requiredRole="USER">
+              <WorkCanvasRedirect />
             </ProtectedRoute>
           }
         />

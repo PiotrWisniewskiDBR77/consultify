@@ -163,6 +163,19 @@ import type {
   Watcher,
 } from './sections/types';
 
+const unwrapApiList = (response: unknown, listKey?: string): any[] => {
+  if (Array.isArray(response)) return response;
+  const payload = (response as { data?: unknown } | null)?.data;
+  if (Array.isArray(payload)) return payload;
+  if (listKey) {
+    const directList = (response as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(directList)) return directList;
+    const nestedList = (payload as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(nestedList)) return nestedList;
+  }
+  return [];
+};
+
 interface InitiativeDocumentViewProps {
   initiativeId: string;
   onBack?: () => void;
@@ -1703,8 +1716,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         : null;
       const data =
         showcaseDetail?.initiative ||
-        (await V8PlanningApi.getInitiative(initiativeId).catch(() =>
-          Api.getInitiativeById(initiativeId)
+        (await V8PlanningApi.getInitiative(initiativeId).catch(async () =>
+          Api.getInitiativeById(initiativeId).catch(async () => {
+            const interviewResponse = await Api.get('/initiatives?source=interview_insight');
+            const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
+            const interviewInitiative = interviewInitiatives.find(
+              (item: any) => String(item?.id) === String(initiativeId)
+            );
+            if (!interviewInitiative) {
+              throw new Error(isPolish ? 'Nie znaleziono inicjatywy' : 'Initiative not found');
+            }
+            return interviewInitiative;
+          })
         ));
       setInitiative(data);
       setInitiativeTemplate(null);
@@ -4926,9 +4949,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         if (!srcType || !srcId) return [];
         const normalizedSourceType = String(srcType).toLowerCase();
         if (
-          !['interview', 'interview_insight', 'insight', 'conclusion', 'conclusion_readout'].includes(
-            normalizedSourceType
-          )
+          ![
+            'interview',
+            'interview_insight',
+            'insight',
+            'conclusion',
+            'conclusion_readout',
+          ].includes(normalizedSourceType)
         ) {
           return [];
         }
@@ -4964,9 +4991,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             render: () => (
               <a
                 href={sourcePath}
-                title={
-                  isPolish ? `Otwórz źródło: ${sourceTitle}` : `Open source: ${sourceTitle}`
-                }
+                title={isPolish ? `Otwórz źródło: ${sourceTitle}` : `Open source: ${sourceTitle}`}
                 className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-primary-500/10 border border-primary-500/30 text-primary-400 hover:bg-primary-500/20 transition-colors truncate"
               >
                 <Sparkles size={12} className="shrink-0" />

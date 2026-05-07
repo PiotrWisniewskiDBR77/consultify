@@ -39,6 +39,15 @@ interface ManagedUser extends User {
   organizationName?: string;
 }
 
+const DEFAULT_PROJECT_ROLE_OPTIONS = [
+  'PROJECT_EXECUTIVE',
+  'PROJECT_MANAGER',
+  'TEAM_LEAD',
+  'TEAM_MEMBER',
+  'CONSULTANT',
+  'STAKEHOLDER',
+];
+
 // User Table Row Component
 export const UserTableRow: React.FC<{
   user: ManagedUser;
@@ -103,6 +112,23 @@ export const UserTableRow: React.FC<{
         <span className={`px-2 py-1 rounded-full text-xs border ${getRoleBadgeColor(user.role)}`}>
           {user.role || 'USER'}
         </span>
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-xs text-slate-700 dark:text-slate-300">
+          {user.projectRole || <span className="text-slate-500 dark:text-slate-500 italic">Not set</span>}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex flex-col">
+          <span className="text-xs text-slate-700 dark:text-slate-300">
+            {user.department || (
+              <span className="text-slate-500 dark:text-slate-500 italic">Department not set</span>
+            )}
+          </span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-500">
+            {user.jobTitle || 'Position not set'}
+          </span>
+        </div>
       </td>
       <td className="px-6 py-4">
         <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -206,6 +232,9 @@ export const UserFormModal: React.FC<{
     lastName: '',
     email: '',
     role: UserRole.USER,
+    projectRole: '',
+    department: '',
+    jobTitle: '',
     status: 'active',
     licensePlanId: '',
     password: '',
@@ -218,6 +247,9 @@ export const UserFormModal: React.FC<{
         lastName: editingUser.lastName || '',
         email: editingUser.email || '',
         role: (editingUser.role as UserRole) || UserRole.USER,
+        projectRole: editingUser.projectRole || '',
+        department: editingUser.department || '',
+        jobTitle: editingUser.jobTitle || '',
         status: editingUser.status || 'active',
         licensePlanId: editingUser.licensePlanId || '',
         password: '',
@@ -228,6 +260,9 @@ export const UserFormModal: React.FC<{
         lastName: '',
         email: '',
         role: UserRole.USER,
+        projectRole: '',
+        department: '',
+        jobTitle: '',
         status: 'active',
         licensePlanId: '',
         password: '',
@@ -300,6 +335,30 @@ export const UserFormModal: React.FC<{
             <option value="MANAGER">Manager</option>
             <option value="ADMIN">Admin</option>
           </select>
+          <select
+            value={formData.projectRole}
+            onChange={(e) => setFormData({ ...formData, projectRole: e.target.value })}
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+          >
+            <option value="">Project Role (optional)</option>
+            {DEFAULT_PROJECT_ROLE_OPTIONS.map((projectRole) => (
+              <option key={projectRole} value={projectRole}>
+                {projectRole}
+              </option>
+            ))}
+          </select>
+          <input
+            placeholder="Department (optional)"
+            value={formData.department}
+            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+          />
+          <input
+            placeholder="Position / Job Title (optional)"
+            value={formData.jobTitle}
+            onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+            className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+          />
           <select
             value={formData.licensePlanId}
             onChange={(e) => setFormData({ ...formData, licensePlanId: e.target.value })}
@@ -523,6 +582,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
+  const [selectedProjectRole, setSelectedProjectRole] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -574,10 +634,19 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   }, [loadUsers]);
 
   const filteredUsers = users.filter(
-    (u) =>
-      (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.lastName || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (u) => {
+      const normalizedSearch = searchTerm.toLowerCase();
+      const matchesSearch =
+        (u.email || '').toLowerCase().includes(normalizedSearch) ||
+        (u.firstName || '').toLowerCase().includes(normalizedSearch) ||
+        (u.lastName || '').toLowerCase().includes(normalizedSearch) ||
+        (u.department || '').toLowerCase().includes(normalizedSearch) ||
+        (u.jobTitle || '').toLowerCase().includes(normalizedSearch) ||
+        (u.projectRole || '').toLowerCase().includes(normalizedSearch);
+
+      const matchesProjectRole = !selectedProjectRole || u.projectRole === selectedProjectRole;
+      return matchesSearch && matchesProjectRole;
+    }
   );
   const selectedOrganizationName =
     mode === 'platform'
@@ -606,6 +675,16 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       ? Array.from(
           new Set(['active', 'blocked', 'pending'].concat(users.map((user) => user.status || '')))
         ).filter(Boolean)
+      : [];
+  const projectRoleOptions =
+    mode === 'platform'
+      ? Array.from(
+          new Set(
+            DEFAULT_PROJECT_ROLE_OPTIONS.concat(
+              users.map((user) => String(user.projectRole || '').trim()).filter(Boolean)
+            )
+          )
+        )
       : [];
 
   const handleSaveUser = async (formData: any) => {
@@ -747,6 +826,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const clearPlatformFilters = () => {
     onSelectedOrganizationChange?.('');
     setSelectedRole('');
+    setSelectedProjectRole('');
     setSelectedStatus('');
     setSearchTerm('');
   };
@@ -799,6 +879,19 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                 ))}
               </select>
               <select
+                value={selectedProjectRole}
+                onChange={(e) => setSelectedProjectRole(e.target.value)}
+                disabled={!!loadError}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-primary-500 outline-none min-w-[180px]"
+              >
+                <option value="">All project roles</option>
+                {projectRoleOptions.map((projectRole) => (
+                  <option key={projectRole} value={projectRole}>
+                    {projectRole}
+                  </option>
+                ))}
+              </select>
+              <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 disabled={!!loadError}
@@ -811,7 +904,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                   </option>
                 ))}
               </select>
-              {(selectedOrganizationId || selectedRole || selectedStatus || searchTerm) && (
+              {(selectedOrganizationId ||
+                selectedRole ||
+                selectedProjectRole ||
+                selectedStatus ||
+                searchTerm) && (
                 <button
                   onClick={clearPlatformFilters}
                   className="px-3 py-2 text-sm border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
@@ -869,6 +966,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
             </>
           ) : null}
           {selectedRole ? ` with role ${selectedRole}` : ''}
+          {selectedProjectRole ? ` in project role ${selectedProjectRole}` : ''}
           {selectedStatus ? ` and status ${selectedStatus}` : ''}
         </div>
       )}
@@ -881,6 +979,8 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <th className="px-6 py-4">User</th>
               {mode === 'platform' && <th className="px-6 py-4">Organization</th>}
               <th className="px-6 py-4">Role</th>
+              <th className="px-6 py-4">Project role</th>
+              <th className="px-6 py-4">Department / Position</th>
               <th className="px-6 py-4">License</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-right">Actions</th>
@@ -889,20 +989,20 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {loading ? (
               <tr>
-                <td colSpan={mode === 'platform' ? 6 : 5} className="px-6 py-12 text-center">
+                <td colSpan={mode === 'platform' ? 8 : 7} className="px-6 py-12 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                 </td>
               </tr>
             ) : loadError ? (
               <tr>
-                <td colSpan={mode === 'platform' ? 6 : 5} className="px-6 py-6">
+                <td colSpan={mode === 'platform' ? 8 : 7} className="px-6 py-6">
                   <DegradedState title="Users unavailable" description={loadError} />
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={mode === 'platform' ? 6 : 5}
+                  colSpan={mode === 'platform' ? 8 : 7}
                   className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
                 >
                   {selectedOrganizationName

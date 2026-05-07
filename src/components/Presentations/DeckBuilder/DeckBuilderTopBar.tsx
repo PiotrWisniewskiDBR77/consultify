@@ -48,7 +48,55 @@ interface DeckBuilderTopBarProps {
   connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'error';
   onQualityGates?: () => void;
   onAnalytics?: () => void;
+  confidentiality?: 'public' | 'internal' | 'confidential';
+  lastAgentActivityAt?: string | null;
 }
+
+type ConfidentialityLevel = 'public' | 'internal' | 'confidential';
+
+const CONFIDENTIALITY_STYLES: Record<
+  ConfidentialityLevel,
+  { color: string; label: string }
+> = {
+  public: { color: 'text-emerald-500', label: 'Public' },
+  internal: { color: 'text-blue-500', label: 'Internal' },
+  confidential: { color: 'text-rose-500', label: 'Confidential' },
+};
+
+const ConfidentialityBadge: React.FC<{
+  confidentiality: ConfidentialityLevel;
+  lastAgentActivityAt?: string | null;
+}> = ({ confidentiality, lastAgentActivityAt }) => {
+  const { color, label } = CONFIDENTIALITY_STYLES[confidentiality];
+
+  const isRecentAgentActivity = (() => {
+    if (!lastAgentActivityAt) return false;
+    const ts = Date.parse(lastAgentActivityAt);
+    if (Number.isNaN(ts)) return false;
+    return Date.now() - ts <= 60_000;
+  })();
+
+  const titleParts = [`Confidentiality: ${label}`];
+  if (isRecentAgentActivity && lastAgentActivityAt) {
+    titleParts.push(`Recent agent activity at ${lastAgentActivityAt}`);
+  }
+
+  return (
+    <div
+      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300"
+      title={titleParts.join(' · ')}
+    >
+      <Shield size={14} className={color} />
+      <span className="hidden md:inline">{label}</span>
+      {isRecentAgentActivity && (
+        <span
+          aria-hidden="true"
+          className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse"
+        />
+      )}
+    </div>
+  );
+};
 
 export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   title,
@@ -70,6 +118,8 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   connectionStatus = 'disconnected',
   onQualityGates,
   onAnalytics,
+  confidentiality,
+  lastAgentActivityAt,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -163,6 +213,13 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       </div>
 
       {/* Action buttons */}
+      {confidentiality && (
+        <ConfidentialityBadge
+          confidentiality={confidentiality}
+          lastAgentActivityAt={lastAgentActivityAt}
+        />
+      )}
+
       <button
         onClick={onTheme}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"

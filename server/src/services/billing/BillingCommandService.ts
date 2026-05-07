@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 import type { Stripe as StripeTypes } from 'stripe';
 
 import logger from '../../utils/Logger.js';
+import { assertSandboxAllowed } from './billingSandboxGuard.js';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
 import type {
@@ -173,6 +174,7 @@ export class BillingCommandService {
     orgId: string,
     billingData: UpsertBillingData
   ): Promise<OrganizationBilling> {
+    assertSandboxAllowed(orgId, 'billing.upsertOrgBilling');
     const deps = this.deps();
     const id = `billing-${deps.uuidv4()}`;
     const normalizedCurrentPeriodStart = this.normalizeDateInput(billingData.current_period_start);

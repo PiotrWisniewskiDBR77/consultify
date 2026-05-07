@@ -46,6 +46,7 @@ test.describe('Wave 1 — Chat and trust retro Playwright gate [@wave:1]', () =>
     await expect(trustPanel).toContainText(/Model:/i);
     await expect(trustPanel).toContainText(/Provider:/i);
     await expect(page.locator('#root')).not.toContainText(/rag_1|\{\"/i);
+    await expect(page.locator('#root')).not.toContainText(/No cited sources/i);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expectAppMounted(page);
@@ -56,6 +57,7 @@ test.describe('Wave 1 — Chat and trust retro Playwright gate [@wave:1]', () =>
       timeout: 30000,
     });
     await expect(page.getByTestId('trust-panel').first()).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('#root')).not.toContainText(/No cited sources/i);
 
     expectNoRuntimeGateIssues(issues);
   });

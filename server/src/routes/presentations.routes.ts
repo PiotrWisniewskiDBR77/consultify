@@ -13,7 +13,28 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { send as sendNotification } from '../services/notificationService.js';
+import {
+  applyPresentationEditPlan,
+  parsePresentationEditIntent,
+} from '../services/presentationAgentEditService.js';
+import { hasPresentationCapability, type PresentationCapability } from '../services/presentationAccessPolicyService.js';
+import {
+  isPresentationActionAllowedByConfidentiality,
+  normalizePresentationRole,
+  resolvePresentationDeckConfidentiality,
+} from '../services/presentationConfidentialityPolicyService.js';
+import { buildPresentationGovernanceCard } from '../services/presentationGovernanceCardService.js';
+import {
+  buildPresentationRuntimeRollup,
+  type PresentationRuntimeEventRow,
+} from '../services/presentationRuntimeRollupService.js';
+import { writePresentationRuntimeEvent } from '../services/presentationRuntimeTelemetryService.js';
+import { normalizeTemplatePayload } from '../services/presentationTemplateCompatibilityService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
+import {
+  deckDocumentToUnifiedJson,
+  normalizeDeckDocument,
+} from '../services/presentationDeckDocumentService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
@@ -36,8 +57,84 @@ function getUserId(req: any): string {
   return req.user?.id || req.userId || 'system';
 }
 
+function ensurePresentationCapability(
+  req: any,
+  res: Response,
+  capability: PresentationCapability
+): boolean {
+  const role = req.user?.role || req.userRole || 'VIEWER';
+  if (hasPresentationCapability(role, capability)) return true;
+  res.status(403).json({
+    success: false,
+    error: 'Permission denied',
+    code: 'PERMISSION_DENIED',
+    requiredCapability: capability,
+  });
+  return false;
+}
+
+function ensureConfidentialityPolicy(
+  req: any,
+  res: Response,
+  params: { action: 'export' | 'share'; deck: any }
+): boolean {
+  const role = req.user?.role || req.userRole;
+  const confidentiality = resolvePresentationDeckConfidentiality(params.deck);
+  const allowed = isPresentationActionAllowedByConfidentiality({
+    action: params.action,
+    role,
+    confidentiality,
+  });
+  if (!allowed) {
+    const shareNeedsAdmin =
+      params.action === 'share' &&
+      confidentiality !== 'public' &&
+      normalizePresentationRole(role) === 'PROJECT_MANAGER';
+    res.status(403).json({
+      success: false,
+      error: shareNeedsAdmin
+        ? 'Sharing non-public decks requires admin approval.'
+        : 'Action blocked by confidentiality policy.',
+      code: shareNeedsAdmin
+        ? 'CONFIDENTIALITY_SHARE_REQUIRES_ADMIN'
+        : 'CONFIDENTIALITY_POLICY_BLOCKED',
+      action: params.action,
+      confidentiality,
+    });
+    return false;
+  }
+  return true;
+}
+
 const EXPORT_MAX_SLIDE_COUNT = 60;
 const EXPORT_MAX_PAYLOAD_BYTES = 50_000_000;
+const pendingDeckAiOperations = new Map<
+  string,
+  {
+    operationId: string;
+    deckId: string;
+    organizationId: string;
+    userId: string;
+    originalDeckJson: string;
+    proposedDeckJson: string;
+    reply: string;
+    actions: string[];
+    createdAt: string;
+  }
+>();
+
+type PendingDeckAiOperation = {
+  operationId: string;
+  deckId: string;
+  organizationId: string;
+  userId: string;
+  originalDeckJson: string;
+  proposedDeckJson: string;
+  reply: string;
+  actions: string[];
+  diff?: any;
+  createdAt: string;
+};
 
 async function recordCanonicalDeckExportTrace(params: {
   organizationId: string;
@@ -57,12 +154,11 @@ async function recordCanonicalDeckExportTrace(params: {
   });
   if (!artifact?.artifactId) return;
   if (params.status === 'failed') {
-    await reportsPresModelService.recordCompletedExport(
-      artifact.artifactId,
-      params.organizationId,
-      params.format as any,
-      params.userId || 'system'
-    );
+    logger.warn('[Presentations] Export failed before completion record', {
+      deckId: params.deckId,
+      format: params.format,
+      errorCategory: params.errorCategory,
+    });
     return;
   }
   await reportsPresModelService.recordCompletedExport(
@@ -71,6 +167,86 @@ async function recordCanonicalDeckExportTrace(params: {
     params.format as any,
     params.userId || 'system'
   );
+}
+
+async function recordPresentationExportRecord(params: {
+  organizationId: string;
+  deckId: string;
+  userId: string;
+  format: 'pdf' | 'pptx' | 'png' | 'html';
+  status: 'completed' | 'failed' | 'blocked';
+  qualityReport?: any;
+  filePath?: string | null;
+  fileUrl?: string | null;
+  errorCategory?: string | null;
+}) {
+  try {
+    await dbRun(
+      `INSERT INTO presentation_export_records (id, deck_id, organization_id, user_id, format, status, quality_result, quality_report_json, fidelity_score, file_path, file_url, storage_provider, error_category, completed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'local', ?, CURRENT_TIMESTAMP)`,
+      [
+        uuidv4().replace(/-/g, ''),
+        params.deckId,
+        params.organizationId,
+        params.userId,
+        params.format,
+        params.status,
+        params.qualityReport?.result || null,
+        JSON.stringify(params.qualityReport || {}),
+        typeof params.qualityReport?.score === 'number' ? params.qualityReport.score : null,
+        params.filePath || null,
+        params.fileUrl || null,
+        params.errorCategory || null,
+      ]
+    );
+  } catch (error) {
+    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not record export QA', error);
+  }
+}
+
+async function recordPresentationRuntimeEvent(params: {
+  organizationId: string;
+  deckId?: string | null;
+  userId?: string | null;
+  eventType: string;
+  status?: string | null;
+  scope?: string | null;
+  metadata?: Record<string, unknown> | null;
+}) {
+  try {
+    await writePresentationRuntimeEvent(params);
+  } catch (error) {
+    if (!isSchemaMissingError(error)) {
+      logger.warn('[Presentations] Could not record runtime event', error);
+    }
+  }
+}
+
+async function enforceQualityGateForExport(params: {
+  organizationId: string;
+  deckId: string;
+  format: 'pdf' | 'pptx' | 'png' | 'html';
+  allowOverride?: boolean;
+}) {
+  const { checkDeckQualityGates } = await import('../services/presentationQualityGatesService.js');
+  const report = await checkDeckQualityGates(params.organizationId, params.deckId);
+  if (!report.canExport && !params.allowOverride) {
+    return {
+      ok: false,
+      status: 422,
+      report,
+      payload: {
+        success: false,
+        error: 'Deck is blocked by quality gates.',
+        code: 'QUALITY_GATE_BLOCKED',
+        result: report.result,
+        scorecard: report.scorecard,
+        gates: report.gates,
+        format: params.format,
+      },
+    };
+  }
+  return { ok: true, report };
 }
 
 function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: string } {
@@ -101,8 +277,10 @@ function isSchemaMissingError(error: unknown): boolean {
 }
 
 function normalizeDeckRow(row: any) {
+  const canonicalDeck = normalizeDeckDocument(row);
   return {
     ...row,
+    deck_json: canonicalDeck ? JSON.stringify(canonicalDeck) : row.deck_json,
     source_artifacts: JSON.parse(row.source_artifacts || '[]'),
     source_refs: JSON.parse(row.source_refs_json || '[]'),
     outline_json: JSON.parse(row.outline_json || '[]'),
@@ -111,11 +289,7 @@ function normalizeDeckRow(row: any) {
 }
 
 function parseDeckPayload(row: any): any {
-  try {
-    return JSON.parse(row?.deck_json || row?.unified_json || '{}');
-  } catch {
-    return {};
-  }
+  return normalizeDeckDocument(row) || {};
 }
 
 function getDeckCards(row: any): any[] {
@@ -175,149 +349,86 @@ async function syncArtifactRegistryForDeck(params: {
   });
 }
 
-function buildAgentReply(appliedActions: string[], isPolish: boolean): string {
-  if (appliedActions.length === 0) {
-    return isPolish
-      ? 'Nie rozpoznałem instrukcji. Spróbuj np. skrócić deck, dodać summary, dodać notes lub odświeżyć dane.'
-      : 'I could not match that instruction. Try asking me to make the deck concise, add a summary, add notes, or refresh the data.';
-  }
-  return isPolish
-    ? `Zastosowałem: ${appliedActions.join(', ')}.`
-    : `Applied: ${appliedActions.join(', ')}.`;
+function buildDeckDiffSummary(originalDeck: any, proposedDeck: any) {
+  const beforeCards = Array.isArray(originalDeck?.cards) ? originalDeck.cards : [];
+  const afterCards = Array.isArray(proposedDeck?.cards) ? proposedDeck.cards : [];
+  return {
+    cardsBefore: beforeCards.length,
+    cardsAfter: afterCards.length,
+    cardsAdded: Math.max(0, afterCards.length - beforeCards.length),
+    cardsRemoved: Math.max(0, beforeCards.length - afterCards.length),
+    changedCards: afterCards.filter((card: any, index: number) => {
+      const before = beforeCards[index];
+      return before && JSON.stringify(before) !== JSON.stringify(card);
+    }).length,
+  };
 }
 
-function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
-  const normalized = String(prompt || '')
-    .trim()
-    .toLowerCase();
-  const cards = Array.isArray(deck?.cards) ? [...deck.cards] : [];
-  const appliedActions: string[] = [];
-  const nowIso = new Date().toISOString();
-
-  if (
-    normalized.includes('summary') ||
-    normalized.includes('podsum') ||
-    normalized.includes('executive')
-  ) {
-    const hasSummary = cards.some((card: any) => card.intent === 'executive_summary');
-    if (!hasSummary) {
-      const sourceTitles = cards
-        .slice(0, 4)
-        .map((card: any) => String(card.title || card.intent || 'Slide'))
-        .filter(Boolean);
-      cards.splice(1, 0, {
-        card_id: `card-summary-${Date.now()}`,
-        deck_id: deck.deck_id,
-        order_index: 1,
-        intent: 'executive_summary',
-        layout_id: 'content_full',
-        title: isPolish ? 'Podsumowanie zarządcze' : 'Executive Summary',
-        blocks: [
-          {
-            block_id: `block-summary-${Date.now()}`,
-            card_id: `card-summary-${Date.now()}`,
-            type: 'bullet_list',
-            content: {
-              items: sourceTitles.length
-                ? sourceTitles.map((title: string) =>
-                    isPolish ? `Kluczowy punkt: ${title}` : `Key point: ${title}`
-                  )
-                : [isPolish ? 'Dodano sekcję podsumowania.' : 'Summary slide added.'],
-            },
-            is_refreshable: false,
-            position: { area: 'full', order: 0 },
-            ai_editable: true,
-          },
-        ],
-        source_refs: [],
-        has_refreshable_data: false,
-        background: { type: 'theme' },
-        animations: { entrance: 'fade', block_stagger: false },
-        is_locked: false,
-      });
-      appliedActions.push(isPolish ? 'dodano slide summary' : 'added summary slide');
-    }
+async function saveAiOperation(op: PendingDeckAiOperation, prompt: string, versionBefore?: number) {
+  pendingDeckAiOperations.set(op.operationId, op);
+  try {
+    await dbRun(
+      `INSERT INTO presentation_ai_operations (id, deck_id, organization_id, user_id, operation_type, status, prompt, reply, actions_json, diff_json, original_deck_json, proposed_deck_json, version_before, created_at)
+       VALUES (?, ?, ?, ?, 'agent_edit', 'draft', ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        op.operationId,
+        op.deckId,
+        op.organizationId,
+        op.userId,
+        prompt,
+        op.reply,
+        JSON.stringify(op.actions || []),
+        JSON.stringify(op.diff || {}),
+        op.originalDeckJson,
+        op.proposedDeckJson,
+        versionBefore || null,
+      ]
+    );
+  } catch (error) {
+    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not persist AI operation', error);
   }
+}
 
-  if (
-    normalized.includes('concise') ||
-    normalized.includes('short') ||
-    normalized.includes('skr') ||
-    normalized.includes('zwi')
-  ) {
-    for (const card of cards) {
-      for (const block of card.blocks || []) {
-        if (typeof block?.content?.text === 'string') {
-          block.content.text = block.content.text.slice(0, 180);
-        }
-        if (Array.isArray(block?.content?.items)) {
-          block.content.items = block.content.items
-            .slice(0, 4)
-            .map((item: any) =>
-              typeof item === 'string'
-                ? item.slice(0, 120)
-                : String(item?.title || item).slice(0, 120)
-            );
-        }
-      }
-    }
-    appliedActions.push(isPolish ? 'skrócono copy' : 'made copy concise');
+async function getAiOperation(operationId: string): Promise<PendingDeckAiOperation | null> {
+  const cached = pendingDeckAiOperations.get(operationId);
+  if (cached) return cached;
+  try {
+    const row = (await dbGet(`SELECT * FROM presentation_ai_operations WHERE id = ?`, [
+      operationId,
+    ])) as any;
+    if (!row) return null;
+    return {
+      operationId: row.id,
+      deckId: row.deck_id,
+      organizationId: row.organization_id,
+      userId: row.user_id || 'system',
+      originalDeckJson: row.original_deck_json || '{}',
+      proposedDeckJson: row.proposed_deck_json || '{}',
+      reply: row.reply || '',
+      actions: JSON.parse(row.actions_json || '[]'),
+      diff: JSON.parse(row.diff_json || '{}'),
+      createdAt: row.created_at || new Date().toISOString(),
+    };
+  } catch (error) {
+    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not read AI operation', error);
+    return null;
   }
+}
 
-  if (
-    normalized.includes('note') ||
-    normalized.includes('speaker') ||
-    normalized.includes('notat')
-  ) {
-    for (const card of cards) {
-      const firstBlock = (card.blocks || []).find((block: any) => block?.content);
-      const baseText = extractBlockText(firstBlock || {});
-      card.speaker_notes = `${card.title || card.intent}: ${baseText || (isPolish ? 'omów kluczowy komunikat' : 'cover the key message')}`;
-    }
-    deck.speaker_notes_generated = true;
-    appliedActions.push(isPolish ? 'dodano speaker notes' : 'added speaker notes');
+async function resolveAiOperation(
+  operationId: string,
+  status: 'accepted' | 'rejected' | 'applied',
+  versionAfter?: number
+) {
+  pendingDeckAiOperations.delete(operationId);
+  try {
+    await dbRun(
+      `UPDATE presentation_ai_operations SET status = ?, version_after = COALESCE(?, version_after), resolved_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [status, versionAfter || null, operationId]
+    );
+  } catch (error) {
+    if (!isSchemaMissingError(error)) logger.warn('[Presentations] Could not resolve AI operation', error);
   }
-
-  if (
-    normalized.includes('update data') ||
-    normalized.includes('refresh') ||
-    normalized.includes('odświe')
-  ) {
-    for (const card of cards) {
-      for (const block of card.blocks || []) {
-        if (block?.is_refreshable) {
-          block.content = { ...(block.content || {}), _agent_refreshed_at: nowIso };
-        }
-      }
-    }
-    appliedActions.push(isPolish ? 'odświeżono bloki danych' : 'refreshed data blocks');
-  }
-
-  if (
-    normalized.includes('visual') ||
-    normalized.includes('styl') ||
-    normalized.includes('design')
-  ) {
-    for (const card of cards.slice(0, 3)) {
-      card.background = {
-        type: 'gradient',
-        value: 'linear-gradient(135deg, #0B3D91, #1A8A8A)',
-      };
-    }
-    appliedActions.push(isPolish ? 'wzmocniono styl slajdów' : 'improved slide styling');
-  }
-
-  const reindexedCards = cards.map((card: any, index: number) => ({ ...card, order_index: index }));
-
-  return {
-    deck: {
-      ...deck,
-      cards: reindexedCards,
-      updated_at: nowIso,
-    },
-    reply: buildAgentReply(appliedActions, isPolish),
-    appliedActions,
-  };
 }
 
 async function getTemplateForOrgOrSystem(templateId: string, organizationId: string) {
@@ -377,12 +488,7 @@ router.get(
       `SELECT * FROM presentation_templates WHERE (organization_id IS NULL OR organization_id = ?) AND is_active = TRUE ORDER BY is_system DESC, name`,
       [orgId]
     );
-    const templates = ((rows || []) as any[]).map((r: any) => ({
-      ...r,
-      outline_json: JSON.parse(r.outline_json || '[]'),
-      must_have_intents: JSON.parse(r.must_have_intents || '[]'),
-      recommended_visuals: JSON.parse(r.recommended_visuals || '[]'),
-    }));
+    const templates = ((rows || []) as any[]).map((r: any) => normalizeTemplatePayload(r));
     res.json({ success: true, data: templates });
   })
 );
@@ -393,10 +499,7 @@ router.get(
     const orgId = getOrgId(req);
     const row = await getTemplateForOrgOrSystem(String(req.params.id), orgId);
     if (!row) return res.status(404).json({ success: false, error: 'Template not found' });
-    const template = row as any;
-    template.outline_json = JSON.parse(template.outline_json || '[]');
-    template.must_have_intents = JSON.parse(template.must_have_intents || '[]');
-    template.recommended_visuals = JSON.parse(template.recommended_visuals || '[]');
+    const template = normalizeTemplatePayload(row);
     res.json({ success: true, data: template });
   })
 );
@@ -404,9 +507,11 @@ router.get(
 router.post(
   '/templates/:id/clone',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'template_approve')) return;
     const orgId = getOrgId(req);
     const source = await getTemplateForOrgOrSystem(String(req.params.id), orgId);
     if (!source) return res.status(404).json({ success: false, error: 'Template not found' });
+    const normalizedSource = normalizeTemplatePayload(source);
 
     const id = uuidv4().replace(/-/g, '');
     const { name } = req.body;
@@ -416,19 +521,19 @@ router.post(
       [
         id,
         orgId,
-        name || `${source.name} (Copy)`,
-        source.description,
-        source.deck_type,
-        source.audience,
-        source.goal,
-        source.language_default,
-        source.confidentiality_default,
-        source.theme,
-        source.outline_json,
-        source.max_slides,
-        source.min_slides,
-        source.must_have_intents,
-        source.recommended_visuals,
+        name || `${normalizedSource.name} (Copy)`,
+        normalizedSource.description,
+        normalizedSource.deck_type,
+        normalizedSource.audience,
+        normalizedSource.goal,
+        normalizedSource.language_default,
+        normalizedSource.confidentiality_default,
+        normalizedSource.theme,
+        JSON.stringify(normalizedSource.outline_json || []),
+        normalizedSource.max_slides,
+        normalizedSource.min_slides,
+        JSON.stringify(normalizedSource.must_have_intents || []),
+        JSON.stringify(normalizedSource.recommended_visuals || []),
         req.params.id,
         (req as any).user?.id,
       ]
@@ -440,6 +545,7 @@ router.post(
 router.put(
   '/templates/:id',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'template_approve')) return;
     const orgId = getOrgId(req);
     const { name, description, audience, goal, theme, outlineJson, maxSlides } = req.body;
     await dbRun(
@@ -476,6 +582,7 @@ router.get(
 router.put(
   '/brand-kit',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'brand_change')) return;
     const orgId = getOrgId(req);
     const {
       name,
@@ -538,6 +645,7 @@ router.put(
 router.post(
   '/generate/outline',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const setup: DeckSetup = req.body;
     const result = await generateOutline(setup, orgId);
@@ -548,6 +656,7 @@ router.post(
 router.post(
   '/generate/deck',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const { deckId, outline, setup } = req.body;
     const result = await generateDeck(deckId, outline, setup, orgId);
@@ -563,6 +672,7 @@ router.post(
   '/decks',
   requireAudit,
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const {
@@ -688,6 +798,7 @@ router.get(
 router.get(
   '/decks/:id/download',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_export')) return;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const authReq = req as any;
@@ -714,6 +825,38 @@ router.get(
     )) as any;
     if (!deck || !deck.export_path)
       return res.status(404).json({ success: false, error: 'Export not available' });
+    if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
+
+    const quality = await enforceQualityGateForExport({
+      organizationId: orgId,
+      deckId: String(req.params.id || ''),
+      format: 'pptx',
+      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+    });
+    if (!quality.ok) {
+      await recordPresentationRuntimeEvent({
+        organizationId: orgId,
+        deckId: String(req.params.id || ''),
+        userId,
+        eventType: 'export_blocked',
+        status: quality.report?.result || 'blocked',
+        scope: 'global',
+        metadata: {
+          format: 'pptx',
+          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
+        },
+      });
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(req.params.id || ''),
+        format: 'pptx',
+        status: 'blocked',
+        qualityReport: quality.report,
+        errorCategory: 'quality_gate_blocked',
+      });
+      return res.status(quality.status).json(quality.payload);
+    }
 
     if (!fs.existsSync(deck.export_path))
       return res.status(404).json({ success: false, error: 'File not found' });
@@ -730,6 +873,15 @@ router.get(
         status: 'failed',
         errorCategory: 'limit_exceeded',
       }).catch(() => null);
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(req.params.id || ''),
+        format: 'pptx',
+        status: 'completed',
+        qualityReport: quality.report,
+        filePath: deck.export_path,
+      });
       return res
         .status(422)
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
@@ -771,6 +923,15 @@ router.get(
         status: 'failed',
         errorCategory: exportErr?.message || 'unknown',
       }).catch(() => null);
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(req.params.id || ''),
+        format: 'pptx',
+        status: 'failed',
+        qualityReport: quality.report,
+        errorCategory: exportErr?.message || 'unknown',
+      });
       throw exportErr;
     }
   })
@@ -779,6 +940,7 @@ router.get(
 router.get(
   '/decks/:deckId/export/pdf',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_export')) return;
     const { deckId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -805,6 +967,38 @@ router.get(
       [deckId, orgId]
     )) as any;
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
+
+    const quality = await enforceQualityGateForExport({
+      organizationId: orgId,
+      deckId: String(deckId || ''),
+      format: 'pdf',
+      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+    });
+    if (!quality.ok) {
+      await recordPresentationRuntimeEvent({
+        organizationId: orgId,
+        deckId: String(deckId || ''),
+        userId,
+        eventType: 'export_blocked',
+        status: quality.report?.result || 'blocked',
+        scope: 'global',
+        metadata: {
+          format: 'pdf',
+          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
+        },
+      });
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        format: 'pdf',
+        status: 'blocked',
+        qualityReport: quality.report,
+        errorCategory: 'quality_gate_blocked',
+      });
+      return res.status(quality.status).json(quality.payload);
+    }
 
     const cards = getDeckCards(deck);
     const limitCheck = enforceExportLimits(deck, cards);
@@ -854,6 +1048,18 @@ router.get(
             .text(`• ${text.slice(0, 500)}`);
           doc.moveDown(0.35);
         });
+        const footer = card.header_footer;
+        if (footer) {
+          doc
+            .fillColor('#666')
+            .fontSize(8)
+            .text(
+              `${String(footer.confidentiality || deck.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${index + 1}/${cards.length}`,
+              48,
+              doc.page.height - 42,
+              { align: 'center' }
+            );
+        }
       });
 
       doc.end();
@@ -866,6 +1072,15 @@ router.get(
         format: 'pdf',
         status: 'completed',
       }).catch(() => null);
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        format: 'pdf',
+        status: 'completed',
+        qualityReport: quality.report,
+        filePath: null,
+      });
       sendNotification({
         userId,
         organizationId: orgId,
@@ -886,6 +1101,15 @@ router.get(
         status: 'failed',
         errorCategory: exportErr?.message || 'unknown',
       }).catch(() => null);
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        format: 'pdf',
+        status: 'failed',
+        qualityReport: quality.report,
+        errorCategory: exportErr?.message || 'unknown',
+      });
       throw exportErr;
     }
   })
@@ -934,15 +1158,17 @@ router.post(
   '/decks/:id/share',
   requireAudit,
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
     const orgId = getOrgId(req);
     const { expiresInDays } = req.body;
     const before = (await dbGet(
-      `SELECT id, title, share_token, share_expires_at FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      `SELECT id, title, share_token, share_expires_at, confidentiality, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
     )) as any;
     if (!before) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
+    if (!ensureConfidentialityPolicy(req, res, { action: 'share', deck: before })) return;
     const token = uuidv4().replace(/-/g, '');
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
@@ -1008,6 +1234,7 @@ router.get(
 router.post(
   '/decks/:deckId/export/html',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_export')) return;
     const { deckId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -1034,14 +1261,42 @@ router.post(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
+    if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
+
+    const quality = await enforceQualityGateForExport({
+      organizationId: orgId,
+      deckId: String(deckId || ''),
+      format: 'html',
+      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+    });
+    if (!quality.ok) {
+      await recordPresentationRuntimeEvent({
+        organizationId: orgId,
+        deckId: String(deckId || ''),
+        userId,
+        eventType: 'export_blocked',
+        status: quality.report?.result || 'blocked',
+        scope: 'global',
+        metadata: {
+          format: 'html',
+          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
+        },
+      });
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        format: 'html',
+        status: 'blocked',
+        qualityReport: quality.report,
+        errorCategory: 'quality_gate_blocked',
+      });
+      return res.status(quality.status).json(quality.payload);
+    }
 
     const { exportDeckAsHtml } = await import('../services/presentationHtmlExportService.js');
-    let deckData: any;
-    try {
-      deckData = JSON.parse(deck.deck_json || deck.unified_json || '{}');
-    } catch {
-      return res.status(422).json({ success: false, error: 'Invalid deck data' });
-    }
+    const deckData = normalizeDeckDocument(deck);
+    if (!deckData) return res.status(422).json({ success: false, error: 'Invalid deck data' });
 
     const htmlBuffer = await exportDeckAsHtml({
       title: deck.title || 'Presentation',
@@ -1063,6 +1318,15 @@ router.post(
       'Content-Disposition',
       `attachment; filename="${deck.title || 'presentation'}.html"`
     );
+    await recordPresentationExportRecord({
+      organizationId: orgId,
+      userId,
+      deckId: String(deckId || ''),
+      format: 'html',
+      status: 'completed',
+      qualityReport: quality.report,
+      filePath: null,
+    });
     res.send(htmlBuffer);
   })
 );
@@ -1246,8 +1510,10 @@ router.put(
 router.post(
   '/decks/:deckId/agent-edit',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
     const { deckId } = req.params;
     const orgId = getOrgId(req);
+    const userId = getUserId(req);
     const prompt = String(req.body?.prompt || '').trim();
     if (!prompt) return res.status(400).json({ success: false, error: 'prompt is required' });
 
@@ -1261,22 +1527,389 @@ router.post(
     const isPolish = String(req.headers['accept-language'] || '')
       .toLowerCase()
       .startsWith('pl');
-    const result = applyAgentEdit(
-      {
+    const plan = parsePresentationEditIntent(prompt);
+    if (!plan.actionable) {
+      await recordPresentationRuntimeEvent({
+        organizationId: orgId,
+        deckId,
+        userId,
+        eventType: 'agent_edit_noop',
+        status: 'noop',
+        scope: plan.scope,
+        metadata: { reason: plan.noOpReason || 'unsupported_intent' },
+      });
+      return res.json({
+        success: true,
+        data: {
+          status: 'noop',
+          plan,
+          reply: isPolish
+            ? `Brak zmian: ${plan.noOpReason || 'nierozpoznana intencja edycji.'}`
+            : `No changes: ${plan.noOpReason || 'unsupported edit intent.'}`,
+        },
+      });
+    }
+    const result = applyPresentationEditPlan({
+      plan,
+      prompt,
+      isPolish,
+      deck: {
         ...deck,
         deck_id: deck.deck_id || deckId,
         title: deck.title || row.title,
       },
-      prompt,
-      isPolish
-    );
+    });
+
+    const operationId = uuidv4().replace(/-/g, '');
+    const originalDeckJson = JSON.stringify(deck);
+    const proposedDeckJson = JSON.stringify(result.deck);
+    const diff = {
+      ...buildDeckDiffSummary(deck, result.deck),
+      editPlan: result.plan,
+    };
+    await saveAiOperation({
+      operationId,
+      deckId,
+      organizationId: orgId,
+      userId,
+      originalDeckJson,
+      proposedDeckJson,
+      reply: result.reply,
+      actions: result.appliedActions,
+      diff,
+      createdAt: new Date().toISOString(),
+    }, prompt, row.version || 1);
+    await recordPresentationRuntimeEvent({
+      organizationId: orgId,
+      deckId,
+      userId,
+      eventType: 'agent_edit_proposal_created',
+      status: 'proposal',
+      scope: result.plan.scope,
+      metadata: {
+        targetSlides: result.plan.targetSlides,
+        mutationKinds: result.plan.mutationKinds,
+        operationId,
+      },
+    });
+    await (req as any).emitAuditEvent?.({
+      actorType: 'AI_AGENT',
+      action: 'propose',
+      resourceType: 'presentation_deck_agent_edit',
+      resourceId: operationId,
+      metadata: {
+        organizationId: orgId,
+        deckId,
+        scope: result.plan.scope,
+        mutationKinds: result.plan.mutationKinds,
+        targetSlides: result.plan.targetSlides,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        ...result,
+        operationId,
+        status: 'proposal',
+        plan: result.plan,
+        diff,
+        reply: isPolish
+          ? `${result.reply} Przejrzyj propozycję przed zastosowaniem.`
+          : `${result.reply} Review the proposal before applying it.`,
+      },
+    });
+  })
+);
+
+router.post(
+  '/decks/:deckId/agent-edit/:operationId/accept',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_approve')) return;
+    const { deckId, operationId } = req.params;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const op = await getAiOperation(operationId);
+    if (!op || op.deckId !== deckId || op.organizationId !== orgId) {
+      return res.status(404).json({ success: false, error: 'AI proposal not found' });
+    }
+
+    const row = (await dbGet(
+      `SELECT version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, orgId]
+    )) as any;
+    if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    const nextVersion = (row.version || 1) + 1;
+    try {
+      await dbRun(
+        `INSERT INTO presentation_deck_versions (id, deck_id, version, deck_json_snapshot, slide_count, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          uuidv4().replace(/-/g, ''),
+          deckId,
+          row.version || 1,
+          row.deck_json || op.originalDeckJson,
+          getDeckCards({ deck_json: row.deck_json || op.originalDeckJson }).length,
+          userId,
+        ]
+      );
+    } catch {
+      // Version history is optional in older dev schemas.
+    }
+
+    const proposed = JSON.parse(op.proposedDeckJson);
+    proposed.ai = {
+      ...(proposed.ai || {}),
+      lastResolvedOperationId: operationId,
+      reviewState: 'clean',
+    };
+    proposed.updated_at = new Date().toISOString();
 
     await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(result.deck), deckId, orgId]
+      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(proposed), nextVersion, deckId, orgId]
     );
+    await resolveAiOperation(operationId, 'applied', nextVersion);
+    await recordPresentationRuntimeEvent({
+      organizationId: orgId,
+      deckId,
+      userId,
+      eventType: 'agent_edit_applied',
+      status: 'applied',
+      scope: String((op.diff as any)?.editPlan?.scope || 'global'),
+      metadata: {
+        operationId,
+        versionAfter: nextVersion,
+        actionCount: Array.isArray(op.actions) ? op.actions.length : 0,
+      },
+    });
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'approve',
+      resourceType: 'presentation_deck_agent_edit',
+      resourceId: operationId,
+      after: { versionAfter: nextVersion },
+      metadata: {
+        organizationId: orgId,
+        deckId,
+        scope: String((op.diff as any)?.editPlan?.scope || 'global'),
+        actionCount: Array.isArray(op.actions) ? op.actions.length : 0,
+      },
+    });
 
-    res.json({ success: true, data: result });
+    res.json({
+      success: true,
+      data: {
+        deck: proposed,
+        operationId,
+        appliedActions: op.actions,
+        reply: op.reply,
+        version: nextVersion,
+      },
+    });
+  })
+);
+
+router.post(
+  '/decks/:deckId/agent-edit/:operationId/reject',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_approve')) return;
+    const { deckId, operationId } = req.params;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const op = await getAiOperation(operationId);
+    if (!op || op.deckId !== deckId || op.organizationId !== orgId) {
+      return res.status(404).json({ success: false, error: 'AI proposal not found' });
+    }
+    await resolveAiOperation(operationId, 'rejected');
+    await recordPresentationRuntimeEvent({
+      organizationId: orgId,
+      deckId,
+      userId,
+      eventType: 'agent_edit_rejected',
+      status: 'rejected',
+      scope: String((op.diff as any)?.editPlan?.scope || 'global'),
+      metadata: { operationId },
+    });
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'reject',
+      resourceType: 'presentation_deck_agent_edit',
+      resourceId: operationId,
+      metadata: {
+        organizationId: orgId,
+        deckId,
+        scope: String((op.diff as any)?.editPlan?.scope || 'global'),
+      },
+    });
+    res.json({ success: true, data: { operationId, status: 'rejected' } });
+  })
+);
+
+router.get(
+  '/decks/:deckId/governance-card',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    const callerRole = (req as any).user?.role || (req as any).userRole || null;
+    const windowDays = Math.min(Math.max(Number(req.query.windowDays) || 7, 1), 90);
+    const cutoffIso = new Date(Date.now() - windowDays * 86_400_000).toISOString();
+
+    const deckRow = (await dbGet(
+      `SELECT id, confidentiality, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, orgId]
+    )) as any;
+    if (!deckRow) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    let qualityReport: any = null;
+    try {
+      const { checkDeckQualityGates } = await import('../services/presentationQualityGatesService.js');
+      qualityReport = await checkDeckQualityGates(orgId, String(deckId));
+    } catch (error) {
+      logger.warn('[Presentations] Quality gates failed during governance-card build', error);
+    }
+
+    let telemetryRollup: ReturnType<typeof buildPresentationRuntimeRollup> | null = null;
+    try {
+      const rows = (await dbAll(
+        `SELECT id, organization_id, deck_id, user_id, event_type, status, scope, metadata_json, created_at
+         FROM presentation_runtime_events
+         WHERE organization_id = ? AND deck_id = ? AND created_at >= ?
+         ORDER BY created_at DESC
+         LIMIT 1000`,
+        [orgId, deckId, cutoffIso]
+      )) as PresentationRuntimeEventRow[];
+      telemetryRollup = buildPresentationRuntimeRollup({ rows: rows || [], windowDays });
+    } catch (error) {
+      if (!isSchemaMissingError(error)) {
+        logger.warn('[Presentations] Telemetry load failed during governance-card build', error);
+      }
+    }
+
+    const confidentialityLevel = (() => {
+      const direct = String(deckRow?.confidentiality || '').toLowerCase();
+      if (direct === 'public' || direct === 'internal' || direct === 'confidential') return direct as any;
+      try {
+        const parsed = deckRow?.deck_json ? JSON.parse(deckRow.deck_json) : null;
+        const meta = String(parsed?.meta?.confidentiality || '').toLowerCase();
+        if (meta === 'public' || meta === 'internal' || meta === 'confidential') return meta as any;
+      } catch {
+        // ignore
+      }
+      return 'internal';
+    })();
+
+    const card = buildPresentationGovernanceCard({
+      deckId: String(deckId),
+      qualityReport,
+      confidentialityLevel,
+      callerRole: callerRole ? String(callerRole) : null,
+      telemetryRollup: telemetryRollup
+        ? {
+            windowDays: telemetryRollup.windowDays,
+            totals: telemetryRollup.totals,
+            lastActivityAt: telemetryRollup.lastActivityAt,
+          }
+        : null,
+    });
+
+    res.json({ success: true, data: card });
+  })
+);
+
+router.get(
+  '/decks/:deckId/runtime-events/summary',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    const windowDays = Math.min(Math.max(Number(req.query.windowDays) || 7, 1), 90);
+    const cutoffIso = new Date(Date.now() - windowDays * 86_400_000).toISOString();
+
+    try {
+      const rows = (await dbAll(
+        `SELECT id, organization_id, deck_id, user_id, event_type, status, scope, metadata_json, created_at
+         FROM presentation_runtime_events
+         WHERE organization_id = ? AND deck_id = ? AND created_at >= ?
+         ORDER BY created_at DESC
+         LIMIT 1000`,
+        [orgId, deckId, cutoffIso]
+      )) as PresentationRuntimeEventRow[];
+      const rollup = buildPresentationRuntimeRollup({ rows: rows || [], windowDays });
+      res.json({ success: true, data: rollup });
+    } catch (error: any) {
+      if (isSchemaMissingError(error)) {
+        return res.json({
+          success: true,
+          data: buildPresentationRuntimeRollup({ rows: [], windowDays }),
+          degraded: true,
+          reason: 'telemetry_schema_missing',
+        });
+      }
+      logger.warn('[Presentations] Could not load runtime events summary', error);
+      res.status(500).json({ success: false, error: 'Failed to load runtime events summary' });
+    }
+  })
+);
+
+router.get(
+  '/decks/:deckId/runtime-events',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const eventTypeParam = String(req.query.eventType || '').trim();
+    const sinceParam = String(req.query.since || '').trim();
+
+    const conditions: string[] = ['organization_id = ?', 'deck_id = ?'];
+    const params: any[] = [orgId, deckId];
+    if (eventTypeParam) {
+      conditions.push('event_type = ?');
+      params.push(eventTypeParam);
+    }
+    if (sinceParam && !Number.isNaN(Date.parse(sinceParam))) {
+      conditions.push('created_at >= ?');
+      params.push(new Date(sinceParam).toISOString());
+    }
+    params.push(limit);
+
+    try {
+      const rows = (await dbAll(
+        `SELECT id, organization_id, deck_id, user_id, event_type, status, scope, metadata_json, created_at
+         FROM presentation_runtime_events
+         WHERE ${conditions.join(' AND ')}
+         ORDER BY created_at DESC
+         LIMIT ?`,
+        params
+      )) as any[];
+      const events = (rows || []).map((row: any) => ({
+        id: row.id,
+        organizationId: row.organization_id,
+        deckId: row.deck_id,
+        userId: row.user_id,
+        eventType: row.event_type,
+        status: row.status,
+        scope: row.scope,
+        metadata: (() => {
+          try {
+            return JSON.parse(row.metadata_json || '{}');
+          } catch {
+            return {};
+          }
+        })(),
+        createdAt: row.created_at,
+      }));
+      res.json({ success: true, data: events });
+    } catch (error: any) {
+      if (isSchemaMissingError(error)) {
+        return res.json({ success: true, data: [], degraded: true, reason: 'telemetry_schema_missing' });
+      }
+      logger.warn('[Presentations] Could not load runtime events', error);
+      res.status(500).json({ success: false, error: 'Failed to load runtime events' });
+    }
   })
 );
 
@@ -1330,6 +1963,7 @@ router.post(
 router.post(
   '/decks/:deckId/export/png',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_export')) return;
     const { deckId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -1355,13 +1989,40 @@ router.post(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
+    if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
-    let deckData: any;
-    try {
-      deckData = JSON.parse(deck.deck_json || deck.unified_json || '{}');
-    } catch {
-      deckData = {};
+    const quality = await enforceQualityGateForExport({
+      organizationId: orgId,
+      deckId: String(deckId || ''),
+      format: 'png',
+      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+    });
+    if (!quality.ok) {
+      await recordPresentationRuntimeEvent({
+        organizationId: orgId,
+        deckId: String(deckId || ''),
+        userId,
+        eventType: 'export_blocked',
+        status: quality.report?.result || 'blocked',
+        scope: 'global',
+        metadata: {
+          format: 'png',
+          gateCount: Array.isArray(quality.report?.gates) ? quality.report.gates.length : 0,
+        },
+      });
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        format: 'png',
+        status: 'blocked',
+        qualityReport: quality.report,
+        errorCategory: 'quality_gate_blocked',
+      });
+      return res.status(quality.status).json(quality.payload);
     }
+
+    const deckData: any = normalizeDeckDocument(deck) || {};
     const cards = deckData.cards || deckData.slides || [];
     const title = deck.title || 'presentation';
 
@@ -1391,6 +2052,15 @@ router.post(
     }
 
     await archive.finalize();
+    await recordPresentationExportRecord({
+      organizationId: orgId,
+      userId,
+      deckId: String(deckId || ''),
+      format: 'png',
+      status: 'completed',
+      qualityReport: quality.report,
+      filePath: null,
+    });
   })
 );
 
@@ -1401,6 +2071,10 @@ function renderCardToSvg(card: any, index: number, deckTitle: string, theme: str
 
   const title = escapeXml(card.title || card.key_message || `Slide ${index + 1}`);
   const subtitle = escapeXml(deckTitle);
+  const footer = card.header_footer;
+  const footerText = footer
+    ? `${String(footer.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${footer.pageNumber || index + 1}/${footer.totalPages || ''}`
+    : String(index + 1);
 
   let blocksContent = '';
   const blocks = card.blocks || [];
@@ -1421,7 +2095,7 @@ function renderCardToSvg(card: any, index: number, deckTitle: string, theme: str
   <text x="120" y="200" font-size="24" fill="${textColor}" opacity="0.6" font-family="Arial, Helvetica, sans-serif">${subtitle}</text>
   <line x1="120" y1="260" x2="1800" y2="260" stroke="${accentColor}" stroke-width="1" opacity="0.3"/>
   ${blocksContent}
-  <text x="120" y="1020" font-size="14" fill="${textColor}" opacity="0.3" font-family="Arial, Helvetica, sans-serif">${index + 1}</text>
+  <text x="120" y="1020" font-size="14" fill="${textColor}" opacity="0.45" font-family="Arial, Helvetica, sans-serif">${escapeXml(footerText)}</text>
 </svg>`;
 }
 

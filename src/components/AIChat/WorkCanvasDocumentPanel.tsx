@@ -1,6 +1,7 @@
 import {
   Copy,
   Download,
+  FileDown,
   FileText,
   FolderOpen,
   Lightbulb,
@@ -60,6 +61,7 @@ interface StarterTemplate {
 interface WorkCanvasDocumentPanelProps {
   conversationId?: string | null;
   initialStarterId?: CanvasStarterId | null;
+  initialDraftId?: string | null;
   initialProjectionStatus?: CanvasProjectionStatus;
   initialBlocks?: CanvasArtifactBlock[];
   onActiveDocumentChange?: (document: ActiveCanvasDocument) => void;
@@ -582,6 +584,7 @@ function getWorkflowTerminalExecutionLabel(workflow: CanvasWorkflowRun): string 
 export function WorkCanvasDocumentPanel({
   conversationId,
   initialStarterId,
+  initialDraftId,
   initialProjectionStatus = 'synced',
   initialBlocks = [],
   onActiveDocumentChange,
@@ -673,7 +676,40 @@ export function WorkCanvasDocumentPanel({
         const json = await response.json().catch(() => ({}));
         if (!response.ok || cancelled) return;
         const drafts = Array.isArray(json?.data) ? json.data : [];
-        const latestDraft = drafts[0];
+        const preferredDraftId = String(initialDraftId || '').trim();
+        const match =
+          preferredDraftId.length > 0
+            ? drafts.find(
+                (draft: any) =>
+                  String((draft as any)?.draftId || (draft as any)?.id || '') === preferredDraftId
+              )
+            : null;
+        const latestDraft = match || drafts[0];
+
+        if (!latestDraft && preferredDraftId) {
+          try {
+            const responseById = await fetch(
+              `/api/work-canvas/drafts/${encodeURIComponent(preferredDraftId)}`,
+              {
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+              }
+            );
+            const jsonById = await responseById.json().catch(() => ({}));
+            const draftById = jsonById?.data;
+            if (!responseById.ok || cancelled || !draftById) return;
+            setDocumentState((current) => mapDraftResponseToCanvasDocumentState(draftById, current));
+            lastSavedContentRef.current =
+              typeof draftById.contentMd === 'string'
+                ? draftById.contentMd
+                : lastSavedContentRef.current;
+            lastSavedTitleRef.current =
+              typeof draftById.title === 'string' ? draftById.title : lastSavedTitleRef.current;
+          } catch {
+            // ignore, fallback to local defaults
+          }
+          return;
+        }
+
         if (latestDraft) {
           setDocumentState((current) =>
             mapDraftResponseToCanvasDocumentState(latestDraft, current)
@@ -696,7 +732,7 @@ export function WorkCanvasDocumentPanel({
     return () => {
       cancelled = true;
     };
-  }, [conversationId]);
+  }, [conversationId, initialDraftId]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -1961,6 +1997,15 @@ export function WorkCanvasDocumentPanel({
             data-testid="canvas-output-actions"
           >
             {outputActionIds.map(renderCommandButton)}
+            <button
+              type="button"
+              onClick={() => void exportDocument('pdf')}
+              className={toolbarButtonClass}
+              aria-label="Export PDF"
+              title="Export PDF"
+            >
+              <FileDown size={15} />
+            </button>
           </div>
 
           <div
@@ -2009,18 +2054,6 @@ export function WorkCanvasDocumentPanel({
             >
               <FileText size={15} />
             </button>
-            {(['pdf', 'docx', 'xlsx', 'pptx'] as const).map((format) => (
-              <button
-                key={format}
-                type="button"
-                onClick={() => void exportDocument(format)}
-                className={toolbarButtonClass}
-                aria-label={`Export ${format.toUpperCase()}`}
-                title={`Export ${format.toUpperCase()}`}
-              >
-                <span className="text-[9px] font-bold uppercase">{format}</span>
-              </button>
-            ))}
             <button
               type="button"
               onClick={() => uploadInputRef.current?.click()}

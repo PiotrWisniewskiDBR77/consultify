@@ -188,6 +188,18 @@ const getTransportPath = (url: string): string => {
   }
 };
 
+export const normalizeTransportPath = (rawPath: string): string => {
+  const input = String(rawPath || '').trim();
+  if (!input) return '';
+  try {
+    return new URL(input, window.location.origin).pathname;
+  } catch {
+    const withoutHash = input.split('#')[0] || '';
+    const withoutQuery = withoutHash.split('?')[0] || '';
+    return withoutQuery || input;
+  }
+};
+
 const getTransportCircuitKey = (path: string): string | null => {
   const conversationMatch = path.match(/\/api\/conversations\/([^/?#]+)/);
   if (conversationMatch?.[1]) {
@@ -244,24 +256,35 @@ const maybeGetBlockedTransportResponse = (path: string): Response | null => {
   return null;
 };
 
-const shouldBypassGlobalCircuit = (path: string): boolean =>
-  path === '/api/ready' ||
-  path.startsWith('/api/health') ||
-  path.startsWith('/api/auth/login') ||
-  path.startsWith('/api/auth/refresh') ||
-  path.startsWith('/api/auth/logout');
+export const shouldBypassGlobalCircuit = (path: string): boolean => {
+  const normalizedPath = normalizeTransportPath(path);
+  return (
+    normalizedPath === '/api/ready' ||
+    normalizedPath.startsWith('/api/health') ||
+    normalizedPath.startsWith('/api/auth/login') ||
+    normalizedPath.startsWith('/api/auth/refresh') ||
+    normalizedPath.startsWith('/api/auth/logout') ||
+    normalizedPath.startsWith('/api/interview') ||
+    normalizedPath.startsWith('/api/v8/interview') ||
+    normalizedPath.startsWith('/api/education') ||
+    normalizedPath.startsWith('/api/audits') ||
+    normalizedPath.startsWith('/api/tools') ||
+    normalizedPath.startsWith('/api/discovery-tools')
+  );
+};
 
-const maybeGetGlobalBlockedTransportResponse = (path: string): Response | null => {
-  if (shouldBypassGlobalCircuit(path)) return null;
+export const maybeGetGlobalBlockedTransportResponse = (path: string): Response | null => {
+  const normalizedPath = normalizeTransportPath(path);
+  if (shouldBypassGlobalCircuit(normalizedPath)) return null;
   if (Date.now() < globalTransportCircuitState.blockedUntil) {
     logTransportStabilityMarker('global_transport_circuit_open', {
-      path,
+      path: normalizedPath,
       blockedForMs: globalTransportCircuitState.blockedUntil - Date.now(),
       failures: globalTransportCircuitState.failures,
       lastStatus: globalTransportCircuitState.lastStatus,
       lastPath: globalTransportCircuitState.lastPath,
     });
-    return buildGlobalBlockedResponse(path);
+    return buildGlobalBlockedResponse(normalizedPath);
   }
   return null;
 };
@@ -324,10 +347,12 @@ const recordTransportFailure = (path: string, status: number) => {
   });
 };
 
-const recordGlobalTransportFailure = (path: string, status: number) => {
-  if (!path.startsWith('/api/')) return;
-  if (shouldBypassGlobalCircuit(path)) return;
-  if (![401, 403, 404, 429].includes(status)) return;
+export const recordGlobalTransportFailure = (path: string, status: number) => {
+  const normalizedPath = normalizeTransportPath(path);
+  if (!normalizedPath.startsWith('/api/')) return;
+  if (shouldBypassGlobalCircuit(normalizedPath)) return;
+  // IMPACT-TR-001: transient client errors should not block the entire platform.
+  if (status && [400, 401, 403, 404, 422].includes(status)) return;
 
   const now = Date.now();
   const withinWindow =
@@ -343,13 +368,13 @@ const recordGlobalTransportFailure = (path: string, status: number) => {
         ? Math.max(globalTransportCircuitState.blockedUntil, now + GLOBAL_TRANSPORT_BLOCK_MS)
         : globalTransportCircuitState.blockedUntil,
     lastStatus: status,
-    lastPath: path,
+    lastPath: normalizedPath,
   };
   persistGlobalTransportCircuit();
 
   if (failures >= GLOBAL_TRANSPORT_FAILURE_THRESHOLD) {
     logTransportStabilityMarker('global_transport_circuit_failure', {
-      path,
+      path: normalizedPath,
       status,
       failures,
       blockedForMs: globalTransportCircuitState.blockedUntil - now,
@@ -357,15 +382,19 @@ const recordGlobalTransportFailure = (path: string, status: number) => {
   }
 };
 
-const clearGlobalTransportFailure = (path: string) => {
-  if (!path.startsWith('/api/')) return;
-  if (Date.now() < globalTransportCircuitState.blockedUntil) return;
+export const clearGlobalTransportFailure = (path: string = '/api/') => {
+  const normalizedPath = normalizeTransportPath(path);
+  if (!normalizedPath.startsWith('/api/')) return;
+
   if (
     globalTransportCircuitState.failures === 0 &&
-    globalTransportCircuitState.windowStartedAt === 0
+    globalTransportCircuitState.windowStartedAt === 0 &&
+    globalTransportCircuitState.blockedUntil === 0
   ) {
     return;
   }
+
+  // IMPACT-TR-001: Reset/recovery of global circuit after a successful request.
   globalTransportCircuitState = {
     failures: 0,
     windowStartedAt: 0,
@@ -374,6 +403,7 @@ const clearGlobalTransportFailure = (path: string) => {
     lastPath: '',
   };
   persistGlobalTransportCircuit();
+  logTransportStabilityMarker('global_circuit_cleared_on_success', { path: normalizedPath });
 };
 
 const clearTransportFailure = (path: string) => {
@@ -1422,12 +1452,12 @@ export const Api = {
   },
 
   updateUser: async (id: string, updates: any): Promise<void> => {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    await handleResponse(res, 'Failed to update user');
   },
 
   deleteUser: async (id: string): Promise<void> => {
@@ -1933,7 +1963,7 @@ export const Api = {
     const knowledgeSources = {
       pmoDocuments: options?.knowledgeSources?.pmoDocuments ?? true,
       projectData: options?.knowledgeSources?.projectData ?? true,
-      organizationData: options?.knowledgeSources?.organizationData ?? false,
+      organizationData: options?.knowledgeSources?.organizationData ?? true,
     };
 
     const responseStyle = options?.responseStyle ?? 'normal';
@@ -2114,7 +2144,9 @@ export const Api = {
       const knowledgeSources = {
         pmoDocuments: options?.knowledgeSources?.pmoDocuments ?? true,
         projectData: options?.knowledgeSources?.projectData ?? true,
-        organizationData: options?.knowledgeSources?.organizationData ?? false,
+        // Default ON: without org knowledge the assistant falls back to generic/web-shaped answers,
+        // which is not acceptable for DBR77-focused tenants.
+        organizationData: options?.knowledgeSources?.organizationData ?? true,
       };
 
       const responseStyle = options?.responseStyle ?? 'normal';
@@ -2725,6 +2757,9 @@ export const Api = {
       firstName?: string;
       lastName?: string;
       licensePlanId?: string | null;
+      department?: string;
+      jobTitle?: string;
+      projectRole?: string;
     }
   ): Promise<void> => {
     // Feedback #1e3d749a / #682d4134 / #76ef6831 — surface the specific backend

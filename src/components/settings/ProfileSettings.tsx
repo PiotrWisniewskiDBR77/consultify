@@ -226,6 +226,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [firstNameValidationError, setFirstNameValidationError] = useState<string | null>(null);
   const [showJobTitleSuggestions, setShowJobTitleSuggestions] = useState(false);
 
   const [formState, setFormState] = useState<ExtendedFormState>({
@@ -288,13 +289,51 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     });
   }, [currentUser]);
 
+  const buildProfileUpdatePayload = (): Partial<User> => {
+    const updates: Partial<User> = {};
+
+    for (const field of PROFILE_CONFIRMATION_FIELDS) {
+      const nextValue = formState[field];
+      const currentValue = (currentUser as Partial<ExtendedFormState>)[field];
+      if (String(nextValue ?? '') !== String(currentValue ?? '')) {
+        (updates as Partial<ExtendedFormState>)[field] = nextValue;
+      }
+    }
+
+    return updates;
+  };
+
   // Handle manual save
   const handleSave = async () => {
+    const normalizedFirstName = formState.firstName.trim();
+    if (!normalizedFirstName) {
+      const validationMessage = t(
+        'settings.profile.validation.firstNameRequired',
+        'First name is required before saving'
+      );
+      setFirstNameValidationError(validationMessage);
+      setSaveError(validationMessage);
+      setSaveStatus('error');
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus('idle');
     setSaveError(null);
+    setFirstNameValidationError(null);
     try {
-      await Api.updateUser(currentUser.id, formState as Partial<User>);
+      const updates = buildProfileUpdatePayload();
+
+      if (Object.keys(updates).length === 0) {
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        return;
+      }
+
+      if (updates.firstName !== undefined) updates.firstName = normalizedFirstName;
+      if (updates.lastName !== undefined) updates.lastName = formState.lastName.trim();
+
+      await Api.updateUser(currentUser.id, updates);
       const persistedUser = await Api.getMe();
 
       if (!persistedUser) {
@@ -552,9 +591,19 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 </label>
                 <input
                   value={formState.firstName}
-                  onChange={(e) => setFormState({ ...formState, firstName: e.target.value })}
+                  onChange={(e) => {
+                    setFormState({ ...formState, firstName: e.target.value });
+                    if (firstNameValidationError && e.target.value.trim()) {
+                      setFirstNameValidationError(null);
+                    }
+                  }}
                   className={inputClass}
                 />
+                {firstNameValidationError && (
+                  <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                    {firstNameValidationError}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <label className={labelClass}>{t('settings.profile.lastName', 'Last Name')}</label>

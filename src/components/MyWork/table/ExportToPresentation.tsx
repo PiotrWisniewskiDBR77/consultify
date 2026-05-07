@@ -240,12 +240,16 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
         slides: deckJson.slides,
         source: 'idea_table',
       });
-      if (result?.id) {
-        onExportComplete?.(result.id);
+      const deckId = (result as any)?.id || (result as any)?.data?.id;
+      if (deckId) {
+        onExportComplete?.(deckId);
+        setExportDone(true);
+      } else {
+        throw new Error(isPl ? 'Brak ID utworzonej prezentacji' : 'Created deck ID missing');
       }
-      setExportDone(true);
-    } catch {
-      setExportDone(true);
+    } catch (error) {
+      console.error('[ExportToPresentation] export failed', error);
+      setExportDone(false);
     } finally {
       setExporting(false);
     }

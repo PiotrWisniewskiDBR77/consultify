@@ -100,6 +100,7 @@ verification_results.txt
 lint_report.txt
 unit-results.json
 component-results.json
+vitest.out
 *_keys.txt
 
 # Auto-fix marker
@@ -190,6 +191,7 @@ coverage/.tmp
 
 # Export artifacts
 server/exports/
+/exports/
 
 # Local backups
 _backup/

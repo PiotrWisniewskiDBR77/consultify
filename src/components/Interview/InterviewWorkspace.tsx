@@ -213,6 +213,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState<CompanyProfile>({});
 
+  // IMPACT-UX-002: Degraded UX Error State
+  const [loadError, setLoadError] = useState<{ message: string; isTransportBlock: boolean } | null>(
+    null
+  );
+
   // Expanded sections state - wszystkie sekcje domyślnie zamknięte dla czytelności
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
 
@@ -543,6 +548,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       };
 
       setIsLoading(true);
+      setLoadError(null);
       try {
         let currentSession: InterviewSession | null = null;
 
@@ -584,6 +590,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           setAssignmentInfo(null);
           onSessionChange?.(currentSession);
 
+          const fetchOptional = async <T,>(request: Promise<T>, fallback: T): Promise<T> => {
+            try {
+              return await request;
+            } catch (optionalError: any) {
+              const status = Number(optionalError?.status || optionalError?.data?.status || 0);
+              const code = String(optionalError?.code || optionalError?.data?.code || '');
+              if (status >= 500 || code === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN') {
+                throw optionalError;
+              }
+              return fallback;
+            }
+          };
+
           const [
             questionsRes,
             notesRes,
@@ -593,11 +612,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             assignmentRes,
             linkedItemsRes,
           ] = await Promise.all([
-            Api.get(`/interview/sessions/${currentSession.id}/questions`).catch(() => []),
-            Api.get(`/interview/sessions/${currentSession.id}/notes`).catch(() => []),
-            Api.get(`/interview/sessions/${currentSession.id}/evidence`).catch(() => []),
-            Api.get('/interview/context').catch(() => null),
-            Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
+            fetchOptional(Api.get(`/interview/sessions/${currentSession.id}/questions`), []),
+            fetchOptional(Api.get(`/interview/sessions/${currentSession.id}/notes`), []),
+            fetchOptional(Api.get(`/interview/sessions/${currentSession.id}/evidence`), []),
+            fetchOptional(Api.get('/interview/context'), null),
+            fetchOptional(Api.get(`/interview/sessions/${currentSession.id}/summary`), null),
             currentSession.assignmentId
               ? V8InterviewApi.getManagedAssignments()
                   .then(
@@ -606,11 +625,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                         (item) => item.id === currentSession?.assignmentId
                       ) || null
                   )
-                  .catch(() => Api.get(`/interview/assignments/${currentSession.assignmentId}`))
-                  .catch(() => Api.get(`/interview/assignments/my?includeCompleted=true`))
-                  .catch(() => null)
+                  .catch(() =>
+                    fetchOptional(
+                      Api.get(`/interview/assignments/${currentSession.assignmentId}`),
+                      null
+                    )
+                  )
+                  .catch(() =>
+                    fetchOptional(Api.get(`/interview/assignments/my?includeCompleted=true`), null)
+                  )
               : Promise.resolve(null),
-            Api.get(`/interview/sessions/${currentSession.id}/linked-items`).catch(() => []),
+            fetchOptional(Api.get(`/interview/sessions/${currentSession.id}/linked-items`), []),
           ]);
 
           const demoFallback = interviewDemoData.sessionDetailsById[currentSession.id];
@@ -680,10 +705,32 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           } else if (demoFallback?.summary) {
             setSummaryData(demoFallback.summary as SummaryData);
           }
+
+          const resolvedQuestions =
+            Array.isArray(questionsRes) && questionsRes.length > 0
+              ? questionsRes
+              : (demoFallback?.questions as InterviewQuestion[]) || [];
+          if (!demoFallback && resolvedQuestions.length === 0) {
+            setLoadError({
+              message: isPolish
+                ? 'Sesja wywiadu została załadowana, ale pytania nie zostały pobrane. Spróbuj ponownie lub sprawdź połączenie.'
+                : 'Interview session loaded, but questions were not fetched. Retry or check the connection.',
+              isTransportBlock: false,
+            });
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[InterviewWorkspace] Failed to load session:', error);
         if (initialSessionId && applyDemoSession(initialSessionId)) return;
+        const isTransportBlock =
+          error?.code === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN' ||
+          error?.message?.includes('transport safeguard');
+        setLoadError({
+          message:
+            error?.message ||
+            (isPolish ? 'Nie udało się załadować sesji' : 'Failed to load session'),
+          isTransportBlock,
+        });
         toast.error(isPolish ? 'Nie udało się załadować sesji' : 'Failed to load session');
       } finally {
         setIsLoading(false);
@@ -1437,6 +1484,36 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             {isPolish ? 'Ładowanie wywiadu...' : 'Loading interview...'}
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // IMPACT-UX-002: Degraded UX Error State
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
+        <CircleAlert className="w-12 h-12 text-rose-500 mb-4" />
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+          {loadError.isTransportBlock
+            ? isPolish
+              ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
+              : 'Requests blocked by global transport safeguard'
+            : isPolish
+              ? 'Błąd pobierania danych'
+              : 'Data Loading Error'}
+        </h3>
+        <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">{loadError.message}</p>
+        <button
+          onClick={() => {
+            setLoadError(null);
+            setIsLoading(true);
+            window.location.reload();
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md font-medium"
+        >
+          <RefreshCw className="w-4 h-4" />
+          {isPolish ? 'Spróbuj ponownie' : 'Retry'}
+        </button>
       </div>
     );
   }

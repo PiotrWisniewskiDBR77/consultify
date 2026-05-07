@@ -520,7 +520,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!formData.email || !formData.password) {
+    const form = e.currentTarget instanceof HTMLFormElement ? e.currentTarget : null;
+    const emailInput = form?.elements.namedItem('email');
+    const passwordInput = form?.elements.namedItem('password');
+    const submittedEmail = (
+      emailInput instanceof HTMLInputElement ? emailInput.value : formData.email
+    ).trim();
+    const submittedPassword =
+      passwordInput instanceof HTMLInputElement ? passwordInput.value : formData.password;
+
+    if (!submittedEmail || !submittedPassword) {
       setError('Email and password are required');
       return;
     }
@@ -529,7 +538,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
       setIsDemoLoading(true);
       try {
-        const user = await Api.login(formData.email, formData.password);
+        const user = await Api.login(submittedEmail, submittedPassword);
         await Api.enterDemo();
         onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
       } catch (err: any) {
@@ -541,7 +550,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
 
     // Check if email is from DBR77 domain
-    if (!isDBR77Domain(formData.email)) {
+    if (!isDBR77Domain(submittedEmail)) {
       // Non-DBR77 users should use demo mode
       setShowDemoRedirect(true);
       return;
@@ -554,7 +563,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     while (retries > 0) {
       try {
         console.log('Calling Api.login... (attempts remaining:', retries, ')');
-        const user = await Api.login(formData.email, formData.password);
+        const user = await Api.login(submittedEmail, submittedPassword);
 
         // Verify token was stored
         const token = localStorage.getItem('token');
@@ -1031,9 +1040,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </label>
           <input
             type="email"
+            name="email"
+            autoComplete="email"
             required
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) => setFormData((current) => ({ ...current, email: e.target.value }))}
             data-testid="email-input"
             className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />
@@ -1054,9 +1065,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
           <input
             type="password"
+            name="password"
+            autoComplete="current-password"
             required
             value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            onChange={(e) => setFormData((current) => ({ ...current, password: e.target.value }))}
             data-testid="password-input"
             className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />

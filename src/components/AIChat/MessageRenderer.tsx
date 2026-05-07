@@ -88,7 +88,8 @@ const VERBOSE_CITATION_PREFIX_RE = /\s*Source\s+\d+\s*;\s*[A-Za-z0-9_-]+\s*;\s*(
 const INTERNAL_SOURCE_MARKER_RE = /\s*\[(?:MEM|DT|BM|KB|WEB|ASS|FIN)\](?=[\s.,;:!?)]|$)/gi;
 const INTERNAL_RAG_ID_RE = /\b(?:rag|chunk)_\d+\b/gi;
 const INTERNAL_DEBUG_LINE_RE =
-  /^[^\S\r\n]*(?:No sources|Uncertainty\s*\/\s*verification|Source ledger|cross_tenant)\b.*(?:\r?\n)?/gim;
+  /^[^\S\r\n]*(?:[-*•]|\d+[.)])?[^\S\r\n]*(?:\*\*)?(?:No sources|No cited sources|Uncertainty\s*\/\s*verification|Source ledger|Blocked scopes|cross_tenant|other_user_private|organization_data|forbidden_by_policy|disabled_by_user|Source\s+\d+)(?:\*\*)?\b.*(?:\r?\n)?/gim;
+const RAW_ARTIFACT_ENVELOPE_RE = /(?:^|\n)artifact:[a-z0-9_-]+:\s*\{[\s\S]*$/i;
 
 function stripVerboseCitationPrefixes(text: string): string {
   if (!text) return text;
@@ -98,6 +99,7 @@ function stripVerboseCitationPrefixes(text: string): string {
 export function sanitizeUserVisibleAiText(text: string): string {
   if (!text) return text;
   return text
+    .replace(RAW_ARTIFACT_ENVELOPE_RE, '')
     .replace(INTERNAL_DEBUG_LINE_RE, '')
     .replace(INTERNAL_SOURCE_MARKER_RE, '')
     .replace(INTERNAL_RAG_ID_RE, '')
@@ -399,7 +401,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const hasCitations = Array.isArray(msg.citations) && msg.citations.length > 0;
   const metadata = (msg as any).metadata || {};
   const isDeepSearchAnswer = Boolean(metadata?.deepThinking?.kind === 'report');
-  const visibleCitations = isDeepSearchAnswer && Array.isArray(msg.citations) ? msg.citations : [];
+  const visibleCitations = Array.isArray(msg.citations) ? msg.citations : [];
   const hasVisibleCitations = visibleCitations.length > 0;
   const isCopied = copiedMessageId === msg.id;
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
@@ -1629,10 +1631,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* TRUST T-TR1 — compact summary chip. In regular chat we keep the
-          answer visually quiet; source disclosure appears only for deep
-          search/research outputs where citations are part of the workflow. */}
-      {msg.role === 'ai' && !msg.isStreaming && isDeepSearchAnswer && (
+      {/* TRUST T-TR1 — compact summary chip. Render whenever the backend
+          provides real citations; empty/missing citations stay silent. */}
+      {msg.role === 'ai' && !msg.isStreaming && hasVisibleCitations && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
           <TrustBadge
             citations={visibleCitations}
@@ -1664,7 +1665,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         unaffected. Skipped while streaming — the bundle is only sealed
         at DONE.
       */}
-      {msg.role === 'ai' && !msg.isStreaming && isDeepSearchAnswer && metadata?.trustBundle && (
+      {msg.role === 'ai' && !msg.isStreaming && metadata?.trustBundle && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-col gap-1`}>
           {/* Chat V9 / TRUST TS1 — post-send sources aggregate. Silent when
               the bundle has no meaningful breakdown, so single-class turns

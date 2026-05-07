@@ -307,12 +307,52 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                 className="text-xs text-slate-500 dark:text-slate-400 mt-1 bg-transparent border-none outline-none w-full"
               />
 
+              <input
+                value={item.keyMessage || ''}
+                onChange={(e) => updateSlide(index, { keyMessage: e.target.value })}
+                placeholder={t(
+                  'presentations.outline.keyMessagePlaceholder',
+                  'Key message for this slide...'
+                )}
+                className="text-xs text-slate-600 dark:text-slate-300 mt-1 bg-transparent border-none outline-none w-full"
+              />
+
               {/* Source references */}
-              {item.sourceRef && (
-                <div className="flex items-center gap-1 mt-1.5">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    {item.sourceRef}
-                  </span>
+              {(item.sourceRef || item.layoutHint || item.visualPolicy || item.confidence !== undefined) && (
+                <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                  {item.sourceRef && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                      source: {item.sourceRef}
+                    </span>
+                  )}
+                  {item.confidence !== undefined && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      confidence: {Math.round(item.confidence * 100)}%
+                    </span>
+                  )}
+                  {item.layoutHint && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
+                      {item.layoutHint}
+                    </span>
+                  )}
+                  {item.visualPolicy && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300">
+                      {item.visualPolicy}
+                    </span>
+                  )}
+                </div>
+              )}
+              {Array.isArray(item.warnings) && item.warnings.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                  {item.warnings.map((warning) => (
+                    <div
+                      key={warning}
+                      className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300"
+                    >
+                      <AlertTriangle size={11} />
+                      {warning}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

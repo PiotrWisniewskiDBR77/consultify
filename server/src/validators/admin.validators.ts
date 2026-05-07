@@ -42,6 +42,9 @@ export const CreateUserAdminSchema = z.object({
   organizationId: z.string().trim().min(1).max(255).optional(),
   password: z.string().min(8).max(255).optional(),
   licensePlanId: z.string().trim().max(255).nullable().optional(),
+  department: z.string().trim().max(255).optional(),
+  jobTitle: z.string().trim().max(255).optional(),
+  projectRole: z.string().trim().max(100).optional(),
 });
 
 export const UpdateUserAdminSchema = z.object({
@@ -52,6 +55,9 @@ export const UpdateUserAdminSchema = z.object({
   organizationId: z.string().trim().min(1).max(255).optional(),
   status: userStatusSchema.optional(),
   licensePlanId: z.string().trim().max(255).nullable().optional(),
+  department: z.string().trim().max(255).optional(),
+  jobTitle: z.string().trim().max(255).optional(),
+  projectRole: z.string().trim().max(100).optional(),
 });
 
 export const ImpersonateUserSchema = z.object({

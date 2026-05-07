@@ -1084,17 +1084,49 @@ app.get(['/__build-info', '/api/build-info'], (_req: Request, res: Response) => 
     staleEntryBundleAliasGuard: true,
     cacheSelfHealV4: html.includes('__consultify_hard_reset_done_v4'),
   };
+  let scannedAssetCount = 0;
+
+  const scanJsForMarkers = (js: string) => {
+    markers.oldAppProvidersLog =
+      markers.oldAppProvidersLog || js.includes('[AppProviders] Initializing providers');
+    markers.oldTokenServiceLog =
+      markers.oldTokenServiceLog || js.includes('[TokenService] Initialized');
+    markers.transportCircuitOpen =
+      markers.transportCircuitOpen || js.includes('CLIENT_TRANSPORT_CIRCUIT_OPEN');
+    markers.globalTransportCircuitOpen =
+      markers.globalTransportCircuitOpen || js.includes('CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN');
+    markers.tokenServiceInitGuard =
+      markers.tokenServiceInitGuard || js.includes('__consultifyTokenServiceInitialized__');
+  };
 
   if (bundleFsPath && fs.existsSync(bundleFsPath)) {
     try {
       const js = fs.readFileSync(bundleFsPath, 'utf-8');
-      markers.oldAppProvidersLog = js.includes('[AppProviders] Initializing providers');
-      markers.oldTokenServiceLog = js.includes('[TokenService] Initialized');
-      markers.transportCircuitOpen = js.includes('CLIENT_TRANSPORT_CIRCUIT_OPEN');
-      markers.globalTransportCircuitOpen = js.includes('CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN');
-      markers.tokenServiceInitGuard = js.includes('__consultifyTokenServiceInitialized__');
+      scanJsForMarkers(js);
+      scannedAssetCount += 1;
     } catch {
       // Keep defaults when asset cannot be read.
+    }
+  }
+
+  const assetsPath = path.resolve(frontendDistPath, 'assets');
+  if (fs.existsSync(assetsPath)) {
+    try {
+      const jsAssetNames = fs
+        .readdirSync(assetsPath)
+        .filter((assetName) => assetName.endsWith('.js'));
+      for (const assetName of jsAssetNames) {
+        const assetPath = path.resolve(assetsPath, assetName);
+        if (assetPath === bundleFsPath) continue;
+        try {
+          scanJsForMarkers(fs.readFileSync(assetPath, 'utf-8'));
+          scannedAssetCount += 1;
+        } catch {
+          // Keep scanning other chunks when one asset cannot be read.
+        }
+      }
+    } catch {
+      // Keep marker defaults when assets cannot be listed.
     }
   }
 
@@ -1105,6 +1137,7 @@ app.get(['/__build-info', '/api/build-info'], (_req: Request, res: Response) => 
     bundlePublicPath,
     bundleFsPath,
     bundleExists: !!(bundleFsPath && fs.existsSync(bundleFsPath)),
+    scannedAssetCount,
     markers,
     generatedAt: new Date().toISOString(),
   });

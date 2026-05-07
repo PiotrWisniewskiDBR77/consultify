@@ -375,7 +375,9 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
     }
   }, [humanizeEnabled, modelLabel, reasoningObservations, writeToClipboard]);
 
-  if (!isEnabled()) return null;
+  // If there are no citations, don't render the badge: it is often interpreted as a system error
+  // ("No cited sources" while the answer contains [1] markers) and creates noise for simple chats.
+  if (!isEnabled() || !hasSources) return null;
 
   const Icon = hasSources ? CheckCircle2 : AlertCircle;
   const sourceLabel = hasSources

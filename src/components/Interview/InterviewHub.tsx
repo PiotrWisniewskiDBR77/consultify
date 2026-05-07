@@ -57,18 +57,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
-import { Api, shouldAllowDemoData } from '@/services/api';
-import { V8InterviewApi } from '@/services/api/v8/interview';
-import { useAppStore } from '@/store/useAppStore';
-
-import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
-
-// Helper function to safely display error messages
-const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) => {
-  toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
-};
-
 import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
 import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
 import {
@@ -93,6 +81,11 @@ import {
   type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import { getPriorityStyle, getStatusStyle, getTypeStyle } from '@/constants/statusColors';
+import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
+import { Api, shouldAllowDemoData } from '@/services/api';
+import { V8InterviewApi } from '@/services/api/v8/interview';
+import { useAppStore } from '@/store/useAppStore';
 
 import {
   type FilterChip,
@@ -112,6 +105,7 @@ import {
   InterviewAssignmentPreviewFooter,
 } from './InterviewAssignmentPreview';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
+import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
 import {
   InterviewInsightPreviewBody,
   InterviewInsightPreviewFooter,
@@ -134,6 +128,11 @@ import {
   type TemplateScope,
   type TemplateSourceFilter,
 } from './templateLibraryMeta';
+
+// Helper function to safely display error messages
+const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) => {
+  toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
+};
 
 const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
 const INTERVIEW_INBOX_ROW_DESCRIPTION_STORAGE_KEY =
@@ -2126,9 +2125,7 @@ export const InterviewHub: React.FC = () => {
         await Api.patch(`/initiatives/${initiativeId}/status`, { status });
         await loadInterviewInitiatives();
         if (status === 'PENDING_REVIEW') {
-          toast.success(
-            isPolish ? 'Inicjatywa wysłana do przeglądu' : 'Initiative sent to review'
-          );
+          toast.success(isPolish ? 'Inicjatywa wysłana do przeglądu' : 'Initiative sent to review');
         } else if (status === 'REVIEW') {
           toast.success(
             isPolish
@@ -2139,9 +2136,7 @@ export const InterviewHub: React.FC = () => {
             navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
           }
         } else {
-          toast.success(
-            isPolish ? 'Inicjatywa wróciła do szkicu' : 'Initiative returned to draft'
-          );
+          toast.success(isPolish ? 'Inicjatywa wróciła do szkicu' : 'Initiative returned to draft');
         }
       } catch (error) {
         console.error('[InterviewHub] Failed to update interview initiative:', error);
@@ -2835,37 +2830,7 @@ export const InterviewHub: React.FC = () => {
                 );
               })}
             </div>
-            <div className={MENU_3_RIGHT_CLASS}>
-              {canCreateInsights ? (
-                <button
-                  type="button"
-                  data-testid="interview-add-initiatives-cta"
-                  onClick={() => setShowInitiativeWizard(true)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-blue-300/70 bg-blue-500/10 px-3 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:border-blue-400/25 dark:text-blue-200"
-                  title={
-                    isPolish
-                      ? 'Uruchom kreator inicjatyw z evidence z wywiadow'
-                      : 'Run initiative wizard with interview evidence'
-                  }
-                >
-                  <Sparkles size={14} />
-                  {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
-                </button>
-              ) : (
-                <span
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/60 px-3 text-[11px] font-medium text-slate-400 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-500"
-                  title={
-                    isPolish
-                      ? 'Brak uprawnien: poproś admina o capability initiative.create lub interview.insight.create.'
-                      : 'No permission: request initiative.create or interview.insight.create capability from admin.'
-                  }
-                  aria-disabled
-                >
-                  <Sparkles size={14} />
-                  {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
-                </span>
-              )}
-            </div>
+            <div className="shrink-0" />
           </div>
         </div>
       );
@@ -3579,87 +3544,90 @@ export const InterviewHub: React.FC = () => {
 
   // Insight promptType config (backend uses promptType)
   const getInsightTypeConfig = (type?: string) => {
+    const typeStyle = getTypeStyle(type);
+    const neutralBadgeClass = `border border-current/20 ${typeStyle.bg} ${typeStyle.text}`;
+    const neutralTextClass = typeStyle.text;
     const configs: Record<
       string,
-      { label: { en: string; pl: string }; bgColor: string; textColor: string }
+      { label: { en: string; pl: string }; bgColor: string; textColor: string; accentColor: string }
     > = {
       summary: {
         label: { en: 'Executive Summary', pl: 'Podsumowanie Wykonawcze' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       general_analysis: {
         label: { en: 'General Analysis', pl: 'Analiza Ogólna' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       trends: {
         label: { en: 'Trend Analysis', pl: 'Analiza trendów' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       problems: {
         label: { en: 'Problem Discovery', pl: 'Problemy' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       recommendations: {
         label: { en: 'Recommendations', pl: 'Rekomendacje' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       comparison: {
         label: { en: 'Comparison', pl: 'Porównanie' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       gaps: {
         label: { en: 'Gap Analysis', pl: 'Luki' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       risk_assessment: {
         label: { en: 'Risk Assessment', pl: 'Ryzyka' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       opportunity_scan: {
         label: { en: 'Opportunity Scan', pl: 'Szanse' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       maturity: {
         label: { en: 'Maturity', pl: 'Dojrzałość' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       stakeholder_map: {
         label: { en: 'Stakeholder Map', pl: 'Interesariusze' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       between_the_lines: {
         label: { en: 'Between the Lines', pl: 'Między Wierszami' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
       general: {
         label: { en: 'General', pl: 'Ogólny' },
-        bgColor:
-          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
-        textColor: 'text-slate-500 dark:text-slate-400',
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
     };
     return configs[type || 'summary'] || configs.summary;
@@ -4061,43 +4029,53 @@ export const InterviewHub: React.FC = () => {
                 | 'failed';
               const statusConfig: Record<
                 typeof status,
-                { label: { en: string; pl: string }; bg: string; text: string }
+                { label: { en: string; pl: string }; statusKey: string }
               > = {
                 draft: {
                   label: { en: 'Draft', pl: 'Szkic' },
-                  bg: 'border border-slate-200 bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06]',
-                  text: 'text-slate-600 dark:text-slate-300',
+                  statusKey: 'DRAFT',
                 },
                 generating: {
                   label: { en: 'Generating', pl: 'Generowanie' },
-                  bg: 'border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10',
-                  text: 'text-amber-700 dark:text-amber-300',
+                  statusKey: 'GENERATING',
                 },
                 completed: {
                   label: { en: 'Completed', pl: 'Gotowe' },
-                  bg: 'border border-slate-200 bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06]',
-                  text: 'text-slate-600 dark:text-slate-300',
+                  statusKey: 'COMPLETED',
                 },
                 in_review: {
                   label: { en: 'In Review', pl: 'W recenzji' },
-                  bg: 'border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10',
-                  text: 'text-amber-700 dark:text-amber-300',
+                  statusKey: 'IN_REVIEW',
                 },
                 published: {
                   label: { en: 'Published', pl: 'Opublikowane' },
-                  bg: 'border border-slate-200 bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06]',
-                  text: 'text-slate-600 dark:text-slate-300',
+                  statusKey: 'APPROVED',
                 },
                 failed: {
                   label: { en: 'Failed', pl: 'Błąd' },
-                  bg: 'border border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10',
-                  text: 'text-rose-700 dark:text-rose-300',
+                  statusKey: 'BLOCKED',
                 },
               };
-              const sc = statusConfig[status] || statusConfig.completed;
+              const statusCopy = statusConfig[status] || statusConfig.completed;
+              const statusStyle = getStatusStyle(statusCopy.statusKey);
+              const sourceStyle = getTypeStyle('source');
+              const sc = {
+                label: statusCopy.label,
+                bg: `border border-current/20 ${statusStyle.bg}`,
+                text: statusStyle.text,
+                dot: statusStyle.dot,
+              };
 
               const isSelected = opts?.selectedId === insight.id;
               const isInsightSelected = selectedInsightIds.has(insight.id);
+              const rowAccentClass =
+                isSelected || isInsightSelected
+                  ? 'shadow-[inset_4px_0_0_theme(colors.primary.500)]'
+                  : typeConfig.accentColor;
+              const rowToneClass =
+                isSelected || isInsightSelected
+                  ? 'bg-primary-50 dark:bg-primary-500/[0.14]'
+                  : 'hover:bg-slate-50 dark:hover:bg-white/[0.045]';
               const rowDescription = String(
                 insight.description || insight.content || insight.sourceQuote || ''
               ).trim();
@@ -4113,10 +4091,8 @@ export const InterviewHub: React.FC = () => {
                   key={insight.id}
                   onClick={handleClick}
                   onDoubleClick={handleDoubleClick}
-                  className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 ${
-                    isSelected || isInsightSelected
-                      ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
-                      : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
+                  className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-white/[0.08] last:border-0 ${rowAccentClass} ${rowToneClass} ${
+                    isSelected || isInsightSelected ? 'ring-1 ring-primary-500/25 ring-inset' : ''
                   }`}
                 >
                   <td className="px-3 py-3" style={{ width: insightColumnWidths.select }}>
@@ -4145,8 +4121,12 @@ export const InterviewHub: React.FC = () => {
                   </td>
                   <td className="px-3 py-3" style={{ width: insightColumnWidths.title }}>
                     <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className={`h-8 w-1.5 shrink-0 rounded-full shadow-[0_0_14px] shadow-slate-500/20 ${sc.dot}`}
+                        aria-hidden="true"
+                      />
                       <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${typeConfig.bgColor}`}
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${typeConfig.bgColor}`}
                       >
                         <Lightbulb size={15} className={typeConfig.textColor} />
                       </div>
@@ -4190,7 +4170,7 @@ export const InterviewHub: React.FC = () => {
                       style={{ width: insightColumnWidths.type }}
                     >
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${typeConfig.bgColor}`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ${typeConfig.bgColor}`}
                       >
                         {isPolish ? typeConfig.label.pl : typeConfig.label.en}
                       </span>
@@ -4202,8 +4182,9 @@ export const InterviewHub: React.FC = () => {
                       style={{ width: insightColumnWidths.status }}
                     >
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${sc.bg} ${sc.text}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sc.bg} ${sc.text}`}
                       >
+                        <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} aria-hidden="true" />
                         {isPolish ? sc.label.pl : sc.label.en}
                       </span>
                     </td>
@@ -4213,7 +4194,9 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: insightColumnWidths.source }}
                     >
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span
+                        className={`inline-flex items-center justify-center rounded-full border border-current/20 px-2.5 py-1 text-xs font-semibold ${sourceStyle.bg} ${sourceStyle.text}`}
+                      >
                         {insight.sourceSessionCount
                           ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
                           : insight.sessionId
@@ -6847,22 +6830,41 @@ Return ONLY the answer text (no markdown fences).`;
 
       const statusMeta = (statusValue?: string) => {
         const status = String(statusValue || 'DRAFT').toUpperCase();
+        const style = getStatusStyle(status);
         if (status === 'PENDING_REVIEW') {
           return {
             label: isPolish ? 'Do przeglądu' : 'Pending review',
-            cls: 'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
+            cls: `border border-current/20 ${style.bg} ${style.text}`,
+            accentClass: `shadow-[inset_4px_0_0_theme(colors.amber.500)]`,
+            dotClass: style.dot,
           };
         }
         if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(status)) {
+          const movedStyle = getStatusStyle(status);
           return {
             label: isPolish ? 'Przekazane dalej' : 'Moved forward',
-            cls: 'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
+            cls: `border border-current/20 ${movedStyle.bg} ${movedStyle.text}`,
+            accentClass:
+              status === 'PROMOTED'
+                ? 'shadow-[inset_4px_0_0_theme(colors.blue.500)]'
+                : status === 'APPROVED'
+                  ? 'shadow-[inset_4px_0_0_theme(colors.emerald.500)]'
+                  : 'shadow-[inset_4px_0_0_theme(colors.amber.500)]',
+            dotClass: movedStyle.dot,
           };
         }
+        const draftStyle = getStatusStyle('DRAFT');
         return {
           label: isPolish ? 'Szkic' : 'Draft',
-          cls: 'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
+          cls: `border border-current/20 ${draftStyle.bg} ${draftStyle.text}`,
+          accentClass: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
+          dotClass: draftStyle.dot,
         };
+      };
+
+      const priorityMeta = (priorityValue?: string) => {
+        const style = getPriorityStyle(priorityValue);
+        return `border border-current/20 ${style.bg} ${style.text}`;
       };
 
       const hiddenSet = new Set(initiativesHiddenColumns);
@@ -7138,6 +7140,7 @@ Return ONLY the answer text (no markdown fences).`;
                   const sourceInsight = initiative.sourceId
                     ? insights.find((insight) => insight.id === initiative.sourceId)
                     : null;
+                  const sourceStyle = getTypeStyle('source');
                   const isSelected = selectedInterviewInitiativeId === initiative.id;
                   const isInitiativeSelected = selectedInitiativeIds.has(initiative.id);
                   const status = String(initiative.status || 'DRAFT').toUpperCase();
@@ -7150,10 +7153,14 @@ Return ONLY the answer text (no markdown fences).`;
                       key={initiative.id}
                       className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
                         isSelected || isInitiativeSelected
-                          ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
-                          : INTERVIEW_TABLE_HOVER_ROW_CLASS
+                          ? `${INTERVIEW_TABLE_SELECTED_ROW_CLASS} shadow-[inset_4px_0_0_theme(colors.primary.500)]`
+                          : `${INTERVIEW_TABLE_HOVER_ROW_CLASS} ${meta.accentClass}`
                       }`}
-                      onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
+                      onClick={() => {
+                        setSelectedInterviewInitiativeId(initiative.id);
+                        navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`);
+                      }}
+                      title={isPolish ? 'Otwórz inicjatywę' : 'Open initiative'}
                     >
                       <td className="px-3 py-3" style={{ width: initiativesColumnWidths.select }}>
                         <button
@@ -7183,8 +7190,14 @@ Return ONLY the answer text (no markdown fences).`;
                         className="px-3 py-3 align-middle"
                         style={{ width: initiativesColumnWidths.title }}
                       >
-                        <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
-                          {title}
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span
+                            className={`h-3 w-3 shrink-0 rounded-full shadow-[0_0_16px] ${meta.dotClass}`}
+                            aria-hidden="true"
+                          />
+                          <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
+                            {title}
+                          </div>
                         </div>
                         {showInitiativeRowDescription && cleanedDescription ? (
                           <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
@@ -7200,6 +7213,10 @@ Return ONLY the answer text (no markdown fences).`;
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none ${meta.cls}`}
                           >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${meta.dotClass}`}
+                              aria-hidden="true"
+                            />
                             {meta.label}
                           </span>
                         </td>
@@ -7210,7 +7227,11 @@ Return ONLY the answer text (no markdown fences).`;
                           style={{ width: initiativesColumnWidths.priority }}
                         >
                           {initiative.priority ? (
-                            <span className={INTERVIEW_META_CHIP_CLASS}>
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none ${priorityMeta(
+                                initiative.priority
+                              )}`}
+                            >
                               {String(initiative.priority).toLowerCase()}
                             </span>
                           ) : (
@@ -7230,7 +7251,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 event.stopPropagation();
                                 handleViewInsight(sourceInsight);
                               }}
-                              className={`${INTERVIEW_META_CHIP_CLASS} gap-1 hover:border-slate-400/80 dark:hover:border-white/[0.18]`}
+                              className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
                             >
                               <Lightbulb size={12} />
                               {isPolish ? 'Insight' : 'Insight'}
@@ -8329,6 +8350,32 @@ Return ONLY the answer text (no markdown fences).`;
           className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
+        </button>
+      );
+    }
+    if (activeTab === 'initiatives') {
+      return (
+        <button
+          type="button"
+          data-testid="interview-add-initiatives-cta"
+          onClick={() => {
+            if (!canCreateInsights) return;
+            setShowInitiativeWizard(true);
+          }}
+          disabled={!canCreateInsights}
+          title={
+            canCreateInsights
+              ? isPolish
+                ? 'Uruchom kreator inicjatyw z evidence z wywiadow'
+                : 'Run initiative wizard with interview evidence'
+              : isPolish
+                ? 'Brak uprawnien: poproś admina o capability initiative.create lub interview.insight.create.'
+                : 'No permission: request initiative.create or interview.insight.create capability from admin.'
+          }
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+        >
+          <Sparkles size={15} />
+          <span>{isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}</span>
         </button>
       );
     }

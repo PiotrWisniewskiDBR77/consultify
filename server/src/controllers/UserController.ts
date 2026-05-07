@@ -7,6 +7,7 @@
  */
 
 import type { Response } from 'express';
+import { randomUUID } from 'node:crypto';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -166,6 +167,13 @@ export class UserController {
         profileSurveyLastDismissedAt,
       } = req.body;
       const userColumns = await getTableColumns('users');
+      const userProfileColumns = await getTableColumns('user_profiles');
+      const canPersistToUserProfiles =
+        userProfileColumns.size > 0 && userProfileColumns.has('user_id');
+      const persistToUserProfiles: {
+        jobTitle?: string | null;
+        department?: string | null;
+      } = {};
 
       // Build dynamic update query
       const updates: string[] = [];
@@ -212,27 +220,48 @@ export class UserController {
         params.push(role);
       }
       if (title !== undefined) {
-        addColumnUpdate(userColumns.has('job_title') ? 'job_title' : 'title', title);
+        const usersJobTitleColumn = userColumns.has('job_title')
+          ? 'job_title'
+          : userColumns.has('title')
+            ? 'title'
+            : null;
+        if (usersJobTitleColumn) {
+          addColumnUpdate(usersJobTitleColumn, title);
+        } else if (canPersistToUserProfiles) {
+          persistToUserProfiles.jobTitle = title === null ? null : String(title || '').trim() || null;
+        }
       }
       if (jobTitle !== undefined) {
-        addColumnUpdate(userColumns.has('job_title') ? 'job_title' : 'title', jobTitle);
+        const usersJobTitleColumn = userColumns.has('job_title')
+          ? 'job_title'
+          : userColumns.has('title')
+            ? 'title'
+            : null;
+        if (usersJobTitleColumn) {
+          addColumnUpdate(usersJobTitleColumn, jobTitle);
+        } else if (canPersistToUserProfiles) {
+          persistToUserProfiles.jobTitle =
+            jobTitle === null ? null : String(jobTitle || '').trim() || null;
+        }
       }
       if (phone !== undefined) {
-        updates.push('phone = ?');
-        params.push(phone);
+        addColumnUpdate('phone', phone);
       }
       if (avatarUrl !== undefined) {
-        updates.push('avatar_url = ?');
-        params.push(avatarUrl);
+        addColumnUpdate('avatar_url', avatarUrl);
       }
       if (licensePlanId !== undefined) {
-        updates.push('license_plan_id = ?');
-        params.push(licensePlanId);
+        addColumnUpdate('license_plan_id', licensePlanId);
       }
       addColumnUpdate('linkedin_id', linkedinId);
       addColumnUpdate('display_name', displayName);
       addColumnUpdate('pronouns', pronouns);
-      addColumnUpdate('department', department);
+      if (userColumns.has('department')) {
+        addColumnUpdate('department', department);
+      } else if (department !== undefined && canPersistToUserProfiles) {
+        persistToUserProfiles.department =
+          department === null ? null : String(department || '').trim() || null;
+      }
       addColumnUpdate('status_message', statusMessage);
       addBooleanColumnUpdate('out_of_office', isOutOfOffice);
       addColumnUpdate('vacation_end', outOfOfficeUntil);
@@ -261,20 +290,54 @@ export class UserController {
       }
       addColumnUpdate('profile_survey_last_dismissed_at', profileSurveyLastDismissedAt);
 
-      if (updates.length === 0) {
+      const shouldPersistProfileFallback =
+        canPersistToUserProfiles &&
+        (persistToUserProfiles.jobTitle !== undefined || persistToUserProfiles.department !== undefined);
+
+      if (updates.length === 0 && !shouldPersistProfileFallback) {
         res.status(400).json({ error: 'No fields to update' });
         return;
       }
 
-      updates.push('updated_at = ?');
-      params.push(new Date().toISOString());
+      if (updates.length > 0) {
+        updates.push('updated_at = ?');
+        params.push(new Date().toISOString());
 
-      // Add WHERE clause params
-      params.push(id);
-      params.push(orgId);
+        // Add WHERE clause params
+        params.push(id);
+        params.push(orgId);
 
-      const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
-      await queryHelpers.queryRun(sql, params);
+        const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
+        await queryHelpers.queryRun(sql, params);
+      }
+
+      if (shouldPersistProfileFallback) {
+        const upsertColumns = ['id', 'user_id', 'updated_at'];
+        const upsertValues: (string | null)[] = [randomUUID(), id, new Date().toISOString()];
+        const updateClauses = ['updated_at = excluded.updated_at'];
+
+        if (userProfileColumns.has('job_title') && persistToUserProfiles.jobTitle !== undefined) {
+          upsertColumns.push('job_title');
+          upsertValues.push(persistToUserProfiles.jobTitle);
+          updateClauses.push('job_title = excluded.job_title');
+        }
+
+        if (userProfileColumns.has('department') && persistToUserProfiles.department !== undefined) {
+          upsertColumns.push('department');
+          upsertValues.push(persistToUserProfiles.department);
+          updateClauses.push('department = excluded.department');
+        }
+
+        if (upsertColumns.length > 3) {
+          const placeholders = upsertColumns.map(() => '?').join(', ');
+          await queryHelpers.queryRun(
+            `INSERT INTO user_profiles (${upsertColumns.join(', ')})
+             VALUES (${placeholders})
+             ON CONFLICT(user_id) DO UPDATE SET ${updateClauses.join(', ')}`,
+            upsertValues
+          );
+        }
+      }
 
       res.json({ id, message: 'User updated successfully' });
     }

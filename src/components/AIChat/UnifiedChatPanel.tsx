@@ -566,6 +566,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [requestedCanvasStarterId, setRequestedCanvasStarterId] = useState<CanvasStarterId | null>(
     null
   );
+  const [requestedCanvasDraftId, setRequestedCanvasDraftId] = useState<string | null>(null);
   const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
     null
   );
@@ -2150,6 +2151,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         sourceUrl?: string;
         kind?: 'file' | 'url';
       }> = [];
+      const failedAttachments: Array<{
+        filename: string;
+        error: string;
+        code?: string;
+        extractionStatus?: string;
+        mimeType?: string;
+        kind?: 'file' | 'url';
+      }> = [];
 
       // Show a visible "Analyzing file..." status message while files are being processed (C4.1)
       const sourcesCount = files.length + urlAttachments.length;
@@ -2219,6 +2228,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         } catch (err: any) {
           console.error('[UnifiedChatPanel] Failed to upload attachment:', err);
           const errMsg = String(err?.message || '');
+          const data = (err as any)?.data || (err as any)?.response?.data || {};
+          failedAttachments.push({
+            filename: file.name,
+            error:
+              String(data?.error || errMsg || '').trim() ||
+              t(
+                'aiChat.attachments.extractionFailedShort',
+                'Could not extract readable text from this file.'
+              ),
+            code: typeof data?.code === 'string' ? data.code : undefined,
+            extractionStatus:
+              typeof data?.extractionStatus === 'string' ? data.extractionStatus : undefined,
+            mimeType: file.type || undefined,
+            kind: 'file',
+          });
           const isTextExtraction = errMsg.includes('extract') || errMsg.includes('text');
           toast.error(
             isTextExtraction
@@ -2263,6 +2287,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           toast.success(t('aiChat.attachments.urlReady', 'Link przetworzony.'), { duration: 1500 });
         } catch (err: any) {
           console.error('[UnifiedChatPanel] Failed to ingest URL attachment:', err);
+          failedAttachments.push({
+            filename: urlAtt.name || url,
+            error: String((err as any)?.data?.error || err?.message || 'URL ingestion failed'),
+            code: typeof (err as any)?.data?.code === 'string' ? (err as any).data.code : undefined,
+            extractionStatus:
+              typeof (err as any)?.data?.extractionStatus === 'string'
+                ? (err as any).data.extractionStatus
+                : undefined,
+            mimeType: undefined,
+            kind: 'url',
+          });
           toast.error(
             t('aiChat.attachments.urlError', 'Błąd przetwarzania linku: {{error}}', {
               error: String(err?.message || '').slice(0, 120),
@@ -2333,9 +2368,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (conversationId) {
         try {
           const userMessageMetadata =
-            uploadedAttachments.length > 0 || canvasContextPacket
+            uploadedAttachments.length > 0 || failedAttachments.length > 0 || canvasContextPacket
               ? {
                   ...(uploadedAttachments.length > 0 ? { attachments: uploadedAttachments } : {}),
+                  ...(failedAttachments.length > 0 ? { failedAttachments } : {}),
                   ...(canvasContextPacket
                     ? {
                         canvasContext: {
@@ -2378,6 +2414,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const context = {
         focusMode,
         attachments: uploadedAttachments,
+        failedAttachments,
         attachmentDocIds,
         // Provide file names and types so the AI can reference them in its response
         attachmentFileNames: uploadedAttachments.map((a) => a.filename),
@@ -2808,6 +2845,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       isStreaming: true,
     });
 
+    // Consume the confirm card before streaming starts. If the stream is slow,
+    // subsequent user input must not regenerate another confirm card for the
+    // same task and look like a Deep Thinking loop.
+    setDtPendingConfirm(null);
+
     // Start stream with Deep Thinking context hints
     await startStream(
       dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage,
@@ -2831,7 +2873,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       chatLanguage
     );
 
-    setDtPendingConfirm(null);
   }, [
     dtPendingConfirm,
     isDisabled,
@@ -3786,6 +3827,39 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isWelcomeEmptyState = !hasRenderableMessages && !isRehydratingConversation;
   const canUseWorkPanel = mode === 'full';
   const showWorkPanel = isWorkPanelMode;
+
+  // Deep-link support: open the Work Canvas split panel from canonical /chat.
+  // Used by `/ai/work-canvas` redirect and external links.
+  useEffect(() => {
+    if (mode !== 'full') return;
+    const params = new URLSearchParams(location.search);
+    const shouldOpen =
+      params.get('workPanel') === '1' || params.get('workPanel') === 'true' || params.get('workCanvas') === '1';
+    if (!shouldOpen) return;
+
+    setIsWorkPanelOpen(true);
+
+    const draftId = String(params.get('canvasDraftId') || params.get('draftId') || '').trim();
+    if (draftId) setRequestedCanvasDraftId(draftId);
+
+    // Consume params to avoid re-triggering on subsequent renders/navigation.
+    const consumedKeys = ['workPanel', 'workCanvas', 'canvasDraftId', 'draftId', 'canvasKind', 'kind'];
+    let changed = false;
+    for (const key of consumedKeys) {
+      if (params.has(key)) {
+        params.delete(key);
+        changed = true;
+      }
+    }
+    if (changed) {
+      const nextSearch = params.toString();
+      navigateToRoute(
+        { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
+        { replace: true }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search, mode, navigateToRoute]);
   // Full `/chat` must always use the rich start screen, regardless of persisted displayMode.
   // Once the work panel is open, the left side behaves like an active conversation panel:
   // no marketing welcome surface, input stays pinned at the bottom.
@@ -4540,6 +4614,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <WorkCanvasDocumentPanel
               conversationId={activeConversationId}
               initialStarterId={requestedCanvasStarterId}
+              initialDraftId={requestedCanvasDraftId}
               onActiveDocumentChange={setActiveCanvasDocument}
               onCanvasSelectionChange={setActiveCanvasSelection}
               onClose={() => setIsWorkPanelOpen(false)}

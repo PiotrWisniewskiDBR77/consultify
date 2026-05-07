@@ -43,7 +43,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
@@ -526,6 +526,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     index: number;
   } | null>(null);
   const [handoffSubmitting, setHandoffSubmitting] = useState(false);
+  const handoffSubmitLockRef = useRef(false);
 
   // Lifecycle transition state
   const [lifecycleTransitioning, setLifecycleTransitioning] = useState(false);
@@ -1679,90 +1680,91 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const handleHandoffSubmit = useCallback(
     async (mode: 'link' | 'create') => {
-      if (!insight || !handoffFinding) return;
+      if (!insight || !handoffFinding || handoffSubmitLockRef.current || handoffSubmitting) return;
+      handoffSubmitLockRef.current = true;
       setHandoffSubmitting(true);
-
-      const MAX_RETRIES = 2;
-      const findingId = handoffFinding.findingId;
-      if (!findingId) {
-        toast.error(
-          isPolish
-            ? 'Finding nie został jeszcze zapisany w artefakcie P10. Zapisz lub odśwież insight.'
-            : 'This finding is not yet persisted in the P10 artifact. Refresh the insight first.'
-        );
-        setHandoffSubmitting(false);
-        return;
-      }
-      let lastError: unknown;
-
-      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-        try {
-          const res = await V8InterviewApi.handoffFinding(
-            insight.id,
-            findingId,
-            mode === 'link' ? { target_initiative_id: 'select' } : undefined
-          );
-          setHandoffModalOpen(false);
-          setHandoffFinding(null);
-          const initiativeId = res?.initiative?.id;
-          toast.success(
+      try {
+        const MAX_RETRIES = 2;
+        const findingId = handoffFinding.findingId;
+        if (!findingId) {
+          toast.error(
             isPolish
-              ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${initiativeId ? ` (${initiativeId})` : ''}`
-              : `Initiative ${mode === 'create' ? 'created' : 'linked'}${initiativeId ? ` (${initiativeId})` : ''}`
+              ? 'Finding nie został jeszcze zapisany w artefakcie P10. Zapisz lub odśwież insight.'
+              : 'This finding is not yet persisted in the P10 artifact. Refresh the insight first.'
           );
           return;
-        } catch (err: unknown) {
-          lastError = err;
-          const errMsg = err instanceof Error ? err.message : String(err);
+        }
+        let lastError: unknown;
 
-          if (
-            errMsg.includes('403') ||
-            errMsg.includes('permission') ||
-            errMsg.includes('forbidden')
-          ) {
-            toast.error(
-              isPolish
-                ? 'Brak uprawnień do przekazania do Inicjatyw. Dostępny jest eksport lub link.'
-                : 'Permission denied for initiative handoff. Export or link-only is available.'
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            const res = await V8InterviewApi.handoffFinding(
+              insight.id,
+              findingId,
+              mode === 'link' ? { target_initiative_id: 'select' } : undefined
             );
-            setHandoffSubmitting(false);
-            return;
-          }
-
-          if (errMsg.includes('422') || errMsg.includes('HANDOFF_BLOCKED')) {
-            toast.error(
+            setHandoffModalOpen(false);
+            setHandoffFinding(null);
+            const initiativeId = res?.initiative?.id;
+            toast.success(
               isPolish
-                ? 'Handoff zablokowany — sprawdź confidence i evidence findingu.'
-                : 'Handoff blocked — check finding confidence and evidence.'
+                ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${initiativeId ? ` (${initiativeId})` : ''}`
+                : `Initiative ${mode === 'create' ? 'created' : 'linked'}${initiativeId ? ` (${initiativeId})` : ''}`
             );
-            setHandoffSubmitting(false);
             return;
-          }
+          } catch (err: unknown) {
+            lastError = err;
+            const errMsg = err instanceof Error ? err.message : String(err);
 
-          if (attempt < MAX_RETRIES) {
-            await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-            continue;
+            if (
+              errMsg.includes('403') ||
+              errMsg.includes('permission') ||
+              errMsg.includes('forbidden')
+            ) {
+              toast.error(
+                isPolish
+                  ? 'Brak uprawnień do przekazania do Inicjatyw. Dostępny jest eksport lub link.'
+                  : 'Permission denied for initiative handoff. Export or link-only is available.'
+              );
+              return;
+            }
+
+            if (errMsg.includes('422') || errMsg.includes('HANDOFF_BLOCKED')) {
+              toast.error(
+                isPolish
+                  ? 'Handoff zablokowany — sprawdź confidence i evidence findingu.'
+                  : 'Handoff blocked — check finding confidence and evidence.'
+              );
+              return;
+            }
+
+            if (attempt < MAX_RETRIES) {
+              await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
           }
         }
-      }
 
-      const errMsg = lastError instanceof Error ? lastError.message : '';
-      if (errMsg.includes('network') || errMsg.includes('fetch') || errMsg.includes('timeout')) {
-        toast.error(
-          isPolish
-            ? 'Problem z siecią — payload zachowany. Spróbuj ponownie.'
-            : 'Network issue — payload preserved. Please retry.'
-        );
-      } else {
-        toast.error(
-          isPolish
-            ? 'Nie udało się przekazać finding do inicjatywy'
-            : 'Failed to hand off finding to initiative'
-        );
+        const errMsg = lastError instanceof Error ? lastError.message : '';
+        if (errMsg.includes('network') || errMsg.includes('fetch') || errMsg.includes('timeout')) {
+          toast.error(
+            isPolish
+              ? 'Problem z siecią — payload zachowany. Spróbuj ponownie.'
+              : 'Network issue — payload preserved. Please retry.'
+          );
+        } else {
+          toast.error(
+            isPolish
+              ? 'Nie udało się przekazać finding do inicjatywy'
+              : 'Failed to hand off finding to initiative'
+          );
+        }
+      } finally {
+        handoffSubmitLockRef.current = false;
+        setHandoffSubmitting(false);
       }
-      setHandoffSubmitting(false);
     },
-    [insight, handoffFinding, isPolish]
+    [insight, handoffFinding, handoffSubmitting, isPolish]
   );
 
   const handleLifecycleTransition = useCallback(

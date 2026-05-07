@@ -3767,6 +3767,7 @@ export interface User {
   displayName?: string;
   pronouns?: 'he/him' | 'she/her' | 'they/them' | 'other' | '';
   department?: string;
+  projectRole?: string;
   isOutOfOffice?: boolean;
   outOfOfficeUntil?: string;
   outOfOfficeMessage?: string;

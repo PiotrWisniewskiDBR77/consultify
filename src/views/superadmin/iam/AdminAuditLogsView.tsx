@@ -56,10 +56,23 @@ interface AuditStats {
   avg_risk_score: number;
 }
 
+interface AuditLogsIntegrity {
+  degraded: boolean;
+  reason: string | null;
+  malformedMetadataCount: number;
+}
+
 interface AuditLogsSnapshot {
   logs: AuditLog[];
   stats: AuditStats;
+  integrity: AuditLogsIntegrity;
 }
+
+const EMPTY_INTEGRITY: AuditLogsIntegrity = {
+  degraded: false,
+  reason: null,
+  malformedMetadataCount: 0,
+};
 
 function formatDateTime(value?: string | null): string {
   if (!value) return 'Unknown date';
@@ -88,9 +101,31 @@ const getObjectPayload = (value: unknown) => {
   return data && isRecord(data.data) ? data.data : data || value;
 };
 
-const normalizeLog = (log: AuditLog): AuditLog => ({
+const reconstructAdminFromFlatFields = (raw: any): AuditLog['admin'] => {
+  const nested = isRecord(raw?.admin) ? (raw.admin as Record<string, unknown>) : null;
+  const email =
+    asText(nested?.email, '') || asText(raw?.admin_email, '') || asText(raw?.adminEmail, '');
+  const firstName =
+    asText(nested?.firstName, '') ||
+    asText(raw?.first_name, '') ||
+    asText(raw?.firstName, '') ||
+    '';
+  const lastName =
+    asText(nested?.lastName, '') ||
+    asText(raw?.last_name, '') ||
+    asText(raw?.lastName, '') ||
+    '';
+  return {
+    email: email || '',
+    firstName: firstName || '',
+    lastName: lastName || '',
+  };
+};
+
+const normalizeLog = (log: AuditLog & Record<string, unknown>): AuditLog => ({
   ...log,
   status: asText(log.status, 'unresolved').toLowerCase(),
+  admin: reconstructAdminFromFlatFields(log),
 });
 
 const normalizeLogs = (value: unknown): AuditLog[] => {
@@ -105,6 +140,27 @@ const normalizeLogs = (value: unknown): AuditLog[] => {
     }
   }
   throw new Error('Admin audit logs response was not a list');
+};
+
+const normalizeIntegrity = (value: unknown): AuditLogsIntegrity => {
+  const candidates = [value];
+  if (isRecord(value)) {
+    if (isRecord(value.integrity)) candidates.push(value.integrity);
+    if (isRecord(value.data) && isRecord((value.data as any).integrity)) {
+      candidates.push((value.data as any).integrity);
+    }
+  }
+  for (const candidate of candidates) {
+    if (isRecord(candidate) && 'degraded' in candidate) {
+      return {
+        degraded: Boolean((candidate as any).degraded),
+        reason:
+          typeof (candidate as any).reason === 'string' ? (candidate as any).reason : null,
+        malformedMetadataCount: safeNumber((candidate as any).malformedMetadataCount),
+      };
+    }
+  }
+  return EMPTY_INTEGRITY;
 };
 
 const normalizeStats = (value: unknown): AuditStats => {
@@ -124,6 +180,7 @@ const normalizeStats = (value: unknown): AuditStats => {
 const AdminAuditLogsView: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [stats, setStats] = useState<AuditStats | null>(null);
+  const [integrity, setIntegrity] = useState<AuditLogsIntegrity>(EMPTY_INTEGRITY);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -167,13 +224,20 @@ const AdminAuditLogsView: React.FC = () => {
 
       const nextLogs = normalizeLogs(logsData);
       const nextStats = normalizeStats(statsData);
+      const nextIntegrity = normalizeIntegrity(logsData);
       setLogs(nextLogs);
       setStats(nextStats);
-      return { logs: nextLogs, stats: nextStats } satisfies AuditLogsSnapshot;
+      setIntegrity(nextIntegrity);
+      return {
+        logs: nextLogs,
+        stats: nextStats,
+        integrity: nextIntegrity,
+      } satisfies AuditLogsSnapshot;
     } catch (err: unknown) {
       setLoadError(normalizeApiErrorMessage(err, 'Failed to load audit logs'));
       setLogs([]);
       setStats(null);
+      setIntegrity(EMPTY_INTEGRITY);
       return null;
     } finally {
       setLoading(false);
@@ -400,6 +464,33 @@ const AdminAuditLogsView: React.FC = () => {
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
               Dismiss
             </button>
+          </div>
+        </Card>
+      )}
+
+      {/* Honest integrity banner (degraded backend but not a hard failure) */}
+      {!loadError && integrity.degraded && (
+        <Card variant="bordered" className="p-4 border-amber-500/30 bg-amber-500/5">
+          <div role="status" className="flex items-center gap-2 text-amber-400">
+            <AlertTriangle className="w-5 h-5" />
+            <span data-testid="audit-integrity-banner">
+              {integrity.reason || 'Audit data is currently degraded.'}
+              {integrity.malformedMetadataCount > 0
+                ? ` (${integrity.malformedMetadataCount} malformed metadata payloads)`
+                : ''}
+            </span>
+          </div>
+        </Card>
+      )}
+      {!loadError && !integrity.degraded && integrity.malformedMetadataCount > 0 && (
+        <Card variant="bordered" className="p-4 border-amber-500/30 bg-amber-500/5">
+          <div role="status" className="flex items-center gap-2 text-amber-400">
+            <AlertTriangle className="w-5 h-5" />
+            <span data-testid="audit-integrity-banner">
+              {integrity.malformedMetadataCount} audit log
+              {integrity.malformedMetadataCount === 1 ? ' has' : 's have'} malformed metadata; raw
+              payload preserved.
+            </span>
           </div>
         </Card>
       )}

@@ -82,4 +82,46 @@ describe('ProfileSettings honest UI', () => {
 
     expect(onUpdateUser).toHaveBeenCalledWith(persistedUser);
   });
+
+  it('sends only changed profile fields when saving', async () => {
+    const onUpdateUser = vi.fn();
+    const persistedUser = { ...baseUser, department: 'Operations' };
+    vi.mocked(Api.getMe).mockResolvedValue(persistedUser);
+
+    render(<ProfileSettings currentUser={baseUser as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Select department...'), {
+      target: { value: 'Operations' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(Api.updateUser).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ department: 'Operations' })
+      );
+    });
+
+    const payload = vi.mocked(Api.updateUser).mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(payload.firstName).toBeUndefined();
+    expect(payload.phone).toBeUndefined();
+    expect(payload.jobTitle).toBeUndefined();
+  });
+
+  it('blocks save and shows validation when first name is empty', async () => {
+    const onUpdateUser = vi.fn();
+
+    render(<ProfileSettings currentUser={baseUser as any} onUpdateUser={onUpdateUser} />);
+
+    fireEvent.change(screen.getByDisplayValue('Jane'), {
+      target: { value: '   ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('First name is required before saving');
+    });
+    expect(Api.updateUser).not.toHaveBeenCalled();
+    expect(Api.getMe).not.toHaveBeenCalled();
+  });
 });

@@ -8,6 +8,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 import { initializeTokenServiceOnce } from '@/services/tokenService';
+import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
 import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
@@ -106,6 +107,7 @@ function AppContent() {
   } = useAppStore();
 
   const { i18n } = useTranslation();
+  const skipRouterSync = isRuntimeDiagnosticMode('no-router-sync');
 
   // Handle Dark/Light Theme class - use useLayoutEffect to prevent flicker
   // This runs synchronously before browser paint, preventing visual flicker
@@ -148,6 +150,16 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    if (skipRouterSync) {
+      logRuntimeDiagnosticMarker('router_sync_skipped');
+    }
+  }, [skipRouterSync]);
+
+  useEffect(() => {
+    if (isRuntimeDiagnosticMode('no-auth')) {
+      logRuntimeDiagnosticMarker('auth_boot_skipped');
+      return;
+    }
     if (isAuthLoopGuardOpen()) return;
     const hasAnyAuthToken = Boolean(
       localStorage.getItem('token') || localStorage.getItem('refreshToken')
@@ -174,6 +186,14 @@ function AppContent() {
     let isMounted = true;
 
     const verifyAuth = async () => {
+      if (isRuntimeDiagnosticMode('no-auth')) {
+        logRuntimeDiagnosticMarker('auth_verification_skipped');
+        if (isMounted) {
+          setCurrentUser(null);
+          setAuthInitializing(false);
+        }
+        return;
+      }
       if (isAuthLoopGuardOpen()) {
         if (isMounted) setAuthInitializing(false);
         return;
@@ -291,7 +311,7 @@ function AppContent() {
     <>
       <ImpersonationBanner />
       {/* Single source of truth for URL ↔ State sync */}
-      <RouterSync />
+      {skipRouterSync ? null : <RouterSync />}
       {/* Chat V9 / ADMIN AG1 — URL-triggered flag dashboard. Mounted
           globally so `?v9flags=1` opens it on any route without a new
           route definition. Returns null when inactive (zero cost). */}

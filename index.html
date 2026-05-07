@@ -34,6 +34,7 @@
 
   <script>
     (function () {
+      var cacheSelfHealMarker = '__consultify_hard_reset_done_v4';
       var host = String(location.hostname || '').toLowerCase();
       var isCacheSensitiveHost =
         host === 'consultify.ai' ||
@@ -42,16 +43,18 @@
         host === 'stage.consultinity.ai';
       if (!isCacheSensitiveHost) return;
 
+      var cleanupTasks = [];
+
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        cleanupTasks.push(navigator.serviceWorker.getRegistrations().then(function (registrations) {
           registrations.forEach(function (registration) {
             registration.unregister().catch(function () {});
           });
-        });
+        }));
       }
 
       if ('caches' in window) {
-        caches.keys().then(function (keys) {
+        cleanupTasks.push(caches.keys().then(function (keys) {
           keys.forEach(function (key) {
             var isKnownAppCache =
               key.indexOf('consultify-') === 0 ||
@@ -62,7 +65,19 @@
               caches.delete(key).catch(function () {});
             }
           });
-        });
+        }));
+      }
+
+      try {
+        if (sessionStorage.getItem(cacheSelfHealMarker) !== '1') {
+          sessionStorage.setItem(cacheSelfHealMarker, '1');
+          window.__consultifyBlockAppBoot = true;
+          Promise.allSettled(cleanupTasks).finally(function () {
+            location.replace(location.href);
+          });
+        }
+      } catch (error) {
+        window.__consultifyBlockAppBoot = false;
       }
     })();
   </script>

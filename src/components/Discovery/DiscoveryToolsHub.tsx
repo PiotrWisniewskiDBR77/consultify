@@ -35,6 +35,7 @@ import {
   MessageSquare,
   Play,
   Plus,
+  RefreshCw,
   Settings,
   Shield,
   Sparkles,
@@ -780,6 +781,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // IMPACT-UX-002: Degraded UX Error State
+  const [loadError, setLoadError] = useState<{ message: string; isTransportBlock: boolean } | null>(
+    null
+  );
+
   // Initiative detail state
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiativeData | null>(null);
   const [initiativeTasks, setInitiativeTasks] = useState<InitiativeTask[]>([]);
@@ -872,7 +878,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             window.setTimeout(() => reject(new Error(`${label} bootstrap timeout`)), timeoutMs)
           ),
         ]);
-      } catch (error) {
+      } catch (error: any) {
+        const status = Number(error?.status || error?.data?.status || 0);
+        const code = String(error?.code || error?.data?.code || '');
+        if (status >= 500 || code === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN') {
+          throw error;
+        }
         console.warn(`[DiscoveryToolsHub] ${label} bootstrap fallback:`, error);
         return fallback;
       }
@@ -888,6 +899,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       } else {
         setIsLoading(true);
       }
+      setLoadError(null);
 
       try {
         const [toolSessionsRes, assessmentRes, assessmentReports, reportBuilderList, decksList] =
@@ -1107,6 +1119,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         }
       } catch (error: any) {
         console.error('[DiscoveryToolsHub] Fetch error:', error);
+        const isTransportBlock =
+          error?.code === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN' ||
+          error?.message?.includes('transport safeguard');
+        setLoadError({
+          message: error?.message || 'Failed to load tools data',
+          isTransportBlock,
+        });
         toast.error('Failed to load tool sessions');
       } finally {
         setIsLoading(false);
@@ -3130,6 +3149,36 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
   // Render content
   const renderContent = () => {
+    // IMPACT-UX-002: Degraded UX Error State
+    if (loadError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
+          <AlertTriangle className="w-12 h-12 text-rose-500 mb-4" />
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+            {loadError.isTransportBlock
+              ? isPolish
+                ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
+                : 'Requests blocked by global transport safeguard'
+              : isPolish
+                ? 'Błąd pobierania danych'
+                : 'Data Loading Error'}
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">{loadError.message}</p>
+          <button
+            onClick={() => {
+              setLoadError(null);
+              setIsLoading(true);
+              fetchData();
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md font-medium"
+          >
+            <RefreshCw className="w-4 h-4" />
+            {isPolish ? 'Spróbuj ponownie' : 'Retry'}
+          </button>
+        </div>
+      );
+    }
+
     // Show loading state
     if (isLoading) {
       return (

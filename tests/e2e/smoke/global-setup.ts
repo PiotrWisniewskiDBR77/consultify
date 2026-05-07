@@ -61,7 +61,10 @@ export default async function globalSetup(_config: FullConfig) {
       status === 503 &&
       (bodyJson?.code === 'SERVER_STARTING' || String(bodyJson?.error || '').includes('Server starting'));
 
-    if (!isServerStarting) {
+    const isTestSupportRouteMissing =
+      status === 404 && String(bodyText || '').includes('Not found') && Date.now() + 1000 < deadlineMs;
+
+    if (!isServerStarting && !isTestSupportRouteMissing) {
       throw new Error(`test-support bootstrap failed: ${lastError}`);
     }
 

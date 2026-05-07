@@ -499,6 +499,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [isLoadingContextDocuments, setIsLoadingContextDocuments] = useState(false);
   const [isUploadingContextDocument, setIsUploadingContextDocument] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const sessionSelectionTouchedRef = useRef(false);
 
   // Data
   const [completedSessions, setCompletedSessions] = useState<CompletedSession[]>([]);
@@ -653,32 +654,51 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setIsLoading(true);
       setLoadError(null);
       try {
-        const [sessionsRes, templatesRes] = await Promise.allSettled([
-          Api.get('/interview/sessions/completed'),
-          Api.get('/interview/templates'),
-        ]);
+        const sessionsRes = await Promise.allSettled([Api.get('/interview/sessions/completed')]);
+        const sessionsResult = sessionsRes[0];
 
         const nextSessions =
-          sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
-            ? sessionsRes.value
+          sessionsResult.status === 'fulfilled' && Array.isArray(sessionsResult.value)
+            ? sessionsResult.value
             : [];
 
         setCompletedSessions(nextSessions);
+        setSelectedSessions((prev) => {
+          const validSessionIds = new Set(nextSessions.map((session) => session.id));
+          const stillValid = prev.filter((sessionId) => validSessionIds.has(sessionId));
+          if (stillValid.length > 0 || sessionSelectionTouchedRef.current) {
+            return stillValid;
+          }
+          return nextSessions.map((session) => session.id);
+        });
 
-        if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
-          setLoadError(
-            isPolish
-              ? 'Nie udało się wczytać danych do generatora wniosków.'
-              : 'Failed to load insight generator data.'
-          );
+        if (sessionsResult.status === 'rejected') {
+          const reason = sessionsResult.reason as
+            | { status?: number; message?: string }
+            | Error
+            | undefined;
+          const status = (reason as { status?: number } | undefined)?.status;
+          if (status === 401 || status === 403) {
+            setLoadError(
+              isPolish
+                ? 'Brak uprawnień do listy zakończonych sesji wywiadów. Poproś admina o capability INTERVIEW_VIEW.'
+                : 'No permission to list completed interview sessions. Ask admin for INTERVIEW_VIEW capability.'
+            );
+          } else {
+            setLoadError(
+              isPolish
+                ? 'Nie udało się wczytać zakończonych sesji wywiadów. Generowanie nadal może nie zadziałać, jeżeli model LLM nie jest dostępny.'
+                : 'Failed to load completed interview sessions. Generation may still fail if the LLM model is unavailable.'
+            );
+          }
         }
         await fetchContextDocuments();
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
         setLoadError(
           isPolish
-            ? 'Nie udało się wczytać danych do generatora wniosków.'
-            : 'Failed to load insight generator data.'
+            ? 'Nie udało się wczytać zakończonych sesji wywiadów. Generowanie nadal może nie zadziałać, jeżeli model LLM nie jest dostępny.'
+            : 'Failed to load completed interview sessions. Generation may still fail if the LLM model is unavailable.'
         );
       } finally {
         setIsLoading(false);
@@ -701,6 +721,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setContextMode('selected_material_plus_approved_org_knowledge');
       setSelectedRespondents([]);
       setSelectedSessions([]);
+      sessionSelectionTouchedRef.current = false;
       setCustomPrompt('');
       setCurrentStep(0);
       setInternalArtifactLinks('');
@@ -823,7 +844,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   useEffect(() => {
     const visibleSessionIds = new Set(filteredSessions.map((session) => session.id));
-    setSelectedSessions((prev) => prev.filter((sessionId) => visibleSessionIds.has(sessionId)));
+    setSelectedSessions((prev) => {
+      const visibleSelected = prev.filter((sessionId) => visibleSessionIds.has(sessionId));
+      if (visibleSelected.length > 0 || sessionSelectionTouchedRef.current) {
+        return visibleSelected;
+      }
+      return filteredSessions.map((session) => session.id);
+    });
   }, [filteredSessions]);
 
   // Modal chrome stays monochromatic; semantic colors belong to data/status badges only.
@@ -974,7 +1001,40 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       onClose();
     } catch (error) {
       toast.dismiss(toastId);
-      toast.error(isPolish ? 'Nie udało się wygenerować wniosków' : 'Failed to generate insights');
+      const err = error as { status?: number; message?: string } | undefined;
+      const status = err?.status;
+      const message = String(err?.message || '').toLowerCase();
+      const looksLikeLlm =
+        status === 502 ||
+        status === 503 ||
+        status === 504 ||
+        message.includes('llm') ||
+        message.includes('openai') ||
+        message.includes('anthropic') ||
+        message.includes('model') ||
+        message.includes('timeout') ||
+        message.includes('econnrefused');
+      if (status === 401 || status === 403) {
+        toast.error(
+          isPolish
+            ? 'Brak uprawnień do generowania wniosków (capability INTERVIEW_INSIGHT_CREATE / AI_LLM_USE).'
+            : 'No permission to generate insights (capability INTERVIEW_INSIGHT_CREATE / AI_LLM_USE).',
+          { duration: 6000 }
+        );
+      } else if (looksLikeLlm) {
+        toast.error(
+          isPolish
+            ? 'Nie udało się wygenerować: model LLM jest niedostępny lub klucz API nie jest skonfigurowany. Skontaktuj się z administratorem.'
+            : 'Generation failed: the LLM model is unavailable or the API key is not configured. Contact your administrator.',
+          { duration: 6000 }
+        );
+      } else {
+        toast.error(
+          isPolish
+            ? 'Nie udało się wygenerować wniosków. Sprawdź połączenie i spróbuj ponownie.'
+            : 'Failed to generate insights. Check the connection and retry.'
+        );
+      }
       console.error('[InsightCreatorModal] Failed to generate insight:', error);
     } finally {
       setIsGenerating(false);
@@ -995,6 +1055,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
 
   const toggleSession = (sessionId: string) => {
+    sessionSelectionTouchedRef.current = true;
     setSelectedSessions((prev) =>
       prev.includes(sessionId) ? prev.filter((id) => id !== sessionId) : [...prev, sessionId]
     );
@@ -1002,6 +1063,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   // Select all / deselect all
   const toggleAllSessions = () => {
+    sessionSelectionTouchedRef.current = true;
     const allVisibleSelected =
       filteredSessions.length > 0 &&
       filteredSessions.every((session) => selectedSessions.includes(session.id));
@@ -1018,24 +1080,32 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     setLoadError(null);
     void (async () => {
       try {
-        const [sessionsRes, templatesRes] = await Promise.allSettled([
-          Api.get('/interview/sessions/completed'),
-          Api.get('/interview/templates'),
-        ]);
+        const sessionsRes = await Promise.allSettled([Api.get('/interview/sessions/completed')]);
+        const sessionsResult = sessionsRes[0];
 
         const nextSessions =
-          sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
-            ? sessionsRes.value
+          sessionsResult.status === 'fulfilled' && Array.isArray(sessionsResult.value)
+            ? sessionsResult.value
             : [];
 
         setCompletedSessions(nextSessions);
 
-        if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
-          setLoadError(
-            isPolish
-              ? 'Nie udało się wczytać danych do generatora wniosków.'
-              : 'Failed to load insight generator data.'
-          );
+        if (sessionsResult.status === 'rejected') {
+          const reason = sessionsResult.reason as { status?: number } | undefined;
+          const status = reason?.status;
+          if (status === 401 || status === 403) {
+            setLoadError(
+              isPolish
+                ? 'Brak uprawnień do listy zakończonych sesji wywiadów. Poproś admina o capability INTERVIEW_VIEW.'
+                : 'No permission to list completed interview sessions. Ask admin for INTERVIEW_VIEW capability.'
+            );
+          } else {
+            setLoadError(
+              isPolish
+                ? 'Nie udało się wczytać zakończonych sesji wywiadów. Generowanie nadal może nie zadziałać, jeżeli model LLM nie jest dostępny.'
+                : 'Failed to load completed interview sessions. Generation may still fail if the LLM model is unavailable.'
+            );
+          }
         }
         await fetchContextDocuments();
       } finally {
@@ -1051,7 +1121,28 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     return true;
   };
 
+  const getStepBlockerMessage = (stepIndex: number): string | null => {
+    const stepId = CREATOR_STEPS[stepIndex]?.id;
+    if (stepId === 'goal' && !title.trim()) {
+      return isPolish ? 'Podaj tytuł wniosków.' : 'Enter an insight title.';
+    }
+    if (stepId === 'goal' && selectedTypes.length === 0) {
+      return isPolish ? 'Wybierz przynajmniej jeden typ wyniku.' : 'Select at least one output type.';
+    }
+    if (stepId === 'source' && selectedSessions.length === 0) {
+      return isPolish
+        ? 'Wybierz przynajmniej jedną sesję źródłową.'
+        : 'Select at least one source session.';
+    }
+    return null;
+  };
+
   const goToNextStep = () => {
+    const blocker = getStepBlockerMessage(currentStep);
+    if (blocker) {
+      toast.error(blocker);
+      return;
+    }
     setCurrentStep((step) => Math.min(step + 1, CREATOR_STEPS.length - 1));
   };
 
@@ -1090,9 +1181,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         : `${selectedRespondents.length} selected people`;
 
   const isLastStep = currentStep === CREATOR_STEPS.length - 1;
-  const canGenerate = Boolean(
-    title.trim() && selectedTypes.length > 0 && selectedSessions.length > 0 && !isGenerating
-  );
+  const canGenerate = !isGenerating;
   const getContextDocStatusMeta = (status: V8ContextDocument['status']) => {
     switch (status) {
       case 'ready':
@@ -1136,7 +1225,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               key={step.id}
               type="button"
               onClick={() => setCurrentStep(index)}
-              className={`rounded-lg border px-2 py-1.5 text-left transition-all ${
+              className={`rounded-xl border px-2 py-1.5 text-left transition-all ${
                 isActive
                   ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
                   : isComplete
@@ -1173,21 +1262,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       <EmptyStateInline
         icon={AlertTriangle}
         dashed={false}
-        message={
-          isPolish
-            ? 'Generator wniosków jest chwilowo niedostępny.'
-            : 'Insight generator is temporarily unavailable.'
-        }
+        message={loadError}
         hint={
           isPolish
-            ? 'To nie oznacza, że nie ma zakończonych sesji. Spróbuj ponownie wczytać dane.'
-            : 'This does not mean there are no completed sessions. Retry loading the data.'
+            ? 'Sprawdź uprawnienia do modułu Wywiad oraz dostępność modelu LLM (capability AI_LLM_USE / klucz API). Po naprawie kliknij Ponów.'
+            : 'Check Interview module permissions and LLM model availability (capability AI_LLM_USE / API key). Retry once fixed.'
         }
         action={{
           label: isPolish ? 'Ponów' : 'Retry',
           onClick: retryLoadData,
         }}
-        className="rounded-lg border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
+        className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
       />
     );
   };
@@ -1509,49 +1594,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           <EmptyStateInline
             icon={AlertTriangle}
             dashed={false}
-            message={
-              isPolish
-                ? 'Generator wniosków jest chwilowo niedostępny.'
-                : 'Insight generator is temporarily unavailable.'
-            }
+            message={loadError}
             hint={
               isPolish
-                ? 'To nie oznacza, że nie ma zakończonych sesji. Spróbuj ponownie wczytać dane.'
-                : 'This does not mean there are no completed sessions. Retry loading the data.'
+                ? 'Sprawdź uprawnienia do modułu Wywiad oraz dostępność modelu LLM (capability AI_LLM_USE / klucz API). Po naprawie kliknij Ponów.'
+                : 'Check Interview module permissions and LLM model availability (capability AI_LLM_USE / API key). Retry once fixed.'
             }
             action={{
               label: isPolish ? 'Ponów' : 'Retry',
-              onClick: () => {
-                setIsLoading(true);
-                setLoadError(null);
-                void (async () => {
-                  try {
-                    const [sessionsRes, templatesRes] = await Promise.allSettled([
-                      Api.get('/interview/sessions/completed'),
-                      Api.get('/interview/templates'),
-                    ]);
-
-                    const nextSessions =
-                      sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
-                        ? sessionsRes.value
-                        : [];
-
-                    setCompletedSessions(nextSessions);
-
-                    if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
-                      setLoadError(
-                        isPolish
-                          ? 'Nie udało się wczytać danych do generatora wniosków.'
-                          : 'Failed to load insight generator data.'
-                      );
-                    }
-                  } finally {
-                    setIsLoading(false);
-                  }
-                })();
-              },
+              onClick: retryLoadData,
             }}
-            className="rounded-lg border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
+            className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
           />
         ) : filteredSessions.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
@@ -1925,7 +1978,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm">
-      <div className="mx-4 flex h-[560px] w-[720px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
+      <div className="mx-4 flex h-[560px] w-[720px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -1954,7 +2007,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             type="button"
             onClick={onClose}
             disabled={isGenerating}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
           >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
@@ -1964,7 +2017,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={goToPreviousStep}
               disabled={isGenerating}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
               {isPolish ? 'Wstecz' : 'Back'}
             </button>
@@ -1974,7 +2027,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={goToNextStep}
               disabled={isGenerating}
-              className="min-w-[150px] rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-w-[150px] rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPolish ? 'Dalej' : 'Next'}
             </button>
@@ -1984,7 +2037,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={submitInsight}
               disabled={!canGenerate}
-              className="flex min-w-[150px] items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-w-[150px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isGenerating ? (
                 <>

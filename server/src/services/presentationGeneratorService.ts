@@ -14,6 +14,11 @@ import { buildContextPack, saveContextPackSnapshot } from './contextPackBuilder.
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
+import {
+  applyBrandLayoutSystem,
+  buildBrandLayoutSystem,
+} from './presentationBrandLayoutService.js';
+import { deckDocumentFromUnifiedJson } from './presentationDeckDocumentService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
 import { planDeckVisuals } from './presentationVisualDirectorService.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
@@ -23,6 +28,17 @@ import type {
   UnifiedReportMeta,
   UnifiedSlide,
 } from './report/pptx/types.js';
+import { planSlides } from './slidePlanningEngineService.js';
+import {
+  applyTemplateRuntime,
+  buildSystemTemplateRuntime,
+  buildTemplateRuntimeFromRow,
+  type PresentationTemplateRuntime,
+} from './presentationTemplateRuntimeService.js';
+import {
+  applyTransformationPackToArtifactData,
+  buildTransformationReadDeckPack,
+} from './transformationReadDeckPackService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
 
 // ============================================================
@@ -68,9 +84,26 @@ export interface SourceArtifact {
     | 'report'
     | 'valuation'
     | 'financial_analysis'
+    | 'interview_study'
+    | 'insight_pack'
+    | 'decision_pack'
+    | 'workspace'
     | 'custom';
   id?: string;
+  artifactId?: string;
   label: string;
+  confidence?: number;
+  readiness?:
+    | 'ready'
+    | 'partial_ready'
+    | 'missing_sales_data'
+    | 'policy_blocked'
+    | 'insufficient_evidence';
+  lineage?: {
+    runtime?: string;
+    recordId?: string;
+    family?: string;
+  };
   data?: any;
 }
 
@@ -80,6 +113,14 @@ export interface OutlineItem {
   keyMessage?: string;
   enabled: boolean;
   sourceRef?: string;
+  sourceRefs?: string[];
+  confidence?: number;
+  density?: 'visual' | 'balanced' | 'document';
+  visualPolicy?: string;
+  layoutHint?: string;
+  suggestedBlocks?: string[];
+  notesPolicy?: 'none' | 'light' | 'standard' | 'speaker_heavy';
+  warnings?: string[];
 }
 
 export interface GenerationResult {
@@ -213,11 +254,95 @@ function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
   return items;
 }
 
+function getSourceKey(source: SourceArtifact): string {
+  return String(source.artifactId || source.id || source.type);
+}
+
+function outlineSourceRefs(item: OutlineItem, setup: DeckSetup) {
+  const selected = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
+  const ids = new Set<string>([
+    ...(Array.isArray(item.sourceRefs) ? item.sourceRefs : []),
+    ...(item.sourceRef ? [item.sourceRef] : []),
+  ]);
+  const matched =
+    selected.find((source) => ids.has(getSourceKey(source))) ||
+    selected.find((source) => item.title.toLowerCase().includes(source.type.replace(/_/g, ' '))) ||
+    selected[0];
+  const refs = matched ? [matched] : [];
+  return refs.map((source) => ({
+    artifact_id: source.artifactId || source.id || source.type,
+    artifact_type: source.type,
+    artifact_name: source.label || source.type,
+    confidence: source.confidence ?? item.confidence ?? null,
+    readiness: source.readiness || 'ready',
+    freshness_days:
+      typeof (source.data as any)?.freshness_days === 'number'
+        ? Number((source.data as any).freshness_days)
+        : typeof (source.data as any)?.freshnessDays === 'number'
+          ? Number((source.data as any).freshnessDays)
+          : null,
+    captured_at: (source.data as any)?.captured_at || (source.data as any)?.capturedAt || null,
+    lineage: source.lineage || null,
+  }));
+}
+
+function attachSlideGovernance(slide: UnifiedSlide, item: OutlineItem, setup: DeckSetup): UnifiedSlide {
+  const sourceRefs = outlineSourceRefs(item, setup);
+  return {
+    ...slide,
+    key_message: String(slide.key_message || item.keyMessage || item.title).split(/\s+/).slice(0, 14).join(' '),
+    ...(sourceRefs.length ? { source_refs: sourceRefs } : {}),
+    ...(item.layoutHint ? { layout_hint: item.layoutHint } : {}),
+    ...(item.visualPolicy ? { visual_policy: item.visualPolicy } : {}),
+    ...(item.confidence !== undefined ? { confidence: item.confidence } : {}),
+    ...(item.notesPolicy && item.notesPolicy !== 'none'
+      ? { speaker_notes: `${item.title}: ${item.keyMessage || slide.key_message || ''}` }
+      : {}),
+  } as UnifiedSlide;
+}
+
+function getStringList(value: unknown, fallback: string[] = []): string[] {
+  if (!Array.isArray(value)) return fallback;
+  return value.map((item) => String(item)).filter(Boolean);
+}
+
+const ENCODING_REPAIRS: Array<[RegExp, string]> = [
+  [/&amp;/g, '&'],
+  [/&nbsp;/g, ' '],
+  [/â€™/g, "'"],
+  [/â€“/g, '-'],
+  [/â€œ/g, '"'],
+  [/â€\u009d/g, '"'],
+  [/�/g, ''],
+];
+
+function sanitizePrimitiveText(text: string): string {
+  let cleaned = String(text || '');
+  for (const [pattern, replacement] of ENCODING_REPAIRS) {
+    cleaned = cleaned.replace(pattern, replacement);
+  }
+  cleaned = cleaned.replace(/\[object Object\]/gi, '').trim();
+  return cleaned;
+}
+
+function sanitizeSlideContentValue(value: unknown): unknown {
+  if (typeof value === 'string') return sanitizePrimitiveText(value);
+  if (Array.isArray(value)) return value.map((entry) => sanitizeSlideContentValue(entry));
+  if (value && typeof value === 'object') {
+    const output: Record<string, unknown> = {};
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      output[key] = sanitizeSlideContentValue(nested);
+    }
+    return output;
+  }
+  return value;
+}
+
 // ============================================================
 // SLIDE CONTENT GENERATORS
 // ============================================================
 
-function buildSlideContent(
+function buildSlideContentBase(
   item: OutlineItem,
   setup: DeckSetup,
   artifactData: Record<string, any>
@@ -269,15 +394,21 @@ function buildSlideContent(
           messages: artifactData._keyMessages || [
             {
               title: isPl ? 'Wniosek 1' : 'Finding 1',
-              body: isPl ? 'Do uzupełnienia' : 'To be populated from source data',
+              description: isPl
+                ? 'Evidence gap: brak kompletnego materiału źródłowego (owner danych: PMO).'
+                : 'Evidence gap: complete source material is missing (data owner: PMO).',
             },
             {
               title: isPl ? 'Wniosek 2' : 'Finding 2',
-              body: isPl ? 'Do uzupełnienia' : 'To be populated from source data',
+              description: isPl
+                ? 'Evidence gap: brak kompletnego materiału źródłowego (owner danych: PMO).'
+                : 'Evidence gap: complete source material is missing (data owner: PMO).',
             },
             {
               title: isPl ? 'Wniosek 3' : 'Finding 3',
-              body: isPl ? 'Do uzupełnienia' : 'To be populated from source data',
+              description: isPl
+                ? 'Evidence gap: brak kompletnego materiału źródłowego (owner danych: PMO).'
+                : 'Evidence gap: complete source material is missing (data owner: PMO).',
             },
           ],
         },
@@ -315,16 +446,16 @@ function buildSlideContent(
           type: 'roadmap',
           phases: artifactData._phases || [
             {
-              name: isPl ? 'Faza 1: Quick Wins' : 'Phase 1: Quick Wins',
+              label: isPl ? 'Faza 1: Quick Wins' : 'Phase 1: Quick Wins',
               timeframe: '0-3m',
               items: [],
             },
             {
-              name: isPl ? 'Faza 2: Optymalizacja' : 'Phase 2: Optimization',
+              label: isPl ? 'Faza 2: Optymalizacja' : 'Phase 2: Optimization',
               timeframe: '3-6m',
               items: [],
             },
-            { name: isPl ? 'Faza 3: Skalowanie' : 'Phase 3: Scale', timeframe: '6-12m', items: [] },
+            { label: isPl ? 'Faza 3: Skalowanie' : 'Phase 3: Scale', timeframe: '6-12m', items: [] },
           ],
         },
       };
@@ -336,7 +467,13 @@ function buildSlideContent(
           item.keyMessage || (isPl ? 'Kluczowe ryzyka i mitygacje' : 'Key risks and mitigations'),
         content: {
           type: 'risk_management',
-          risks: artifactData._risks || [],
+          risks: (artifactData._risks || []).map((risk: any) => ({
+            risk: risk.risk || risk.title || risk.description || 'Risk',
+            likelihood: String(risk.likelihood || risk.probability || 'medium').toLowerCase(),
+            impact: String(risk.impact || 'medium').toLowerCase(),
+            mitigation: risk.mitigation || risk.strategy || 'Define mitigation owner',
+            owner: risk.owner,
+          })),
         },
       };
 
@@ -367,6 +504,120 @@ function buildSlideContent(
         },
       };
 
+    case 'section_intro':
+      return {
+        intent: 'section_intro',
+        key_message: item.keyMessage || item.title,
+        content: {
+          type: 'section_intro',
+          section_title: item.title,
+          section_number: Number((item as any).orderIndex || 0) + 1,
+          description:
+            item.keyMessage ||
+            (isPl
+              ? 'Sekcja decku oparta na wybranych źródłach.'
+              : 'Deck section grounded in selected sources.'),
+        },
+      };
+
+    case 'single_insight':
+      return {
+        intent: 'single_insight',
+        key_message: item.keyMessage || artifactData._toolInsight?.summary || item.title,
+        content: {
+          type: 'single_insight',
+          chart_type: 'bar',
+          chart_data: artifactData._insightChart || {
+            labels: getStringList(artifactData._categories, ['Current', 'Target']).slice(0, 5),
+            series: [
+              {
+                name: isPl ? 'Wynik' : 'Score',
+                values: [Number(artifactData._overallScore || 3), Number(artifactData._maxScore || 5)],
+              },
+            ],
+          },
+          insight_text:
+            artifactData._toolInsight?.summary ||
+            item.keyMessage ||
+            (isPl
+              ? 'Wniosek częściowo ugruntowany: wymagane dodatkowe potwierdzenie źródłowe.'
+              : 'Insight is partially grounded: additional source confirmation required.'),
+          source: item.sourceRef || artifactData._framework || 'Consultify evidence',
+        },
+      };
+
+    case 'recommendation_portfolio':
+      return {
+        intent: 'recommendation_portfolio',
+        key_message:
+          item.keyMessage ||
+          (isPl ? 'Rekomendacje wynikające z diagnozy' : 'Recommendations derived from the diagnostic'),
+        content: {
+          type: 'recommendation_portfolio',
+          recommendations:
+            artifactData._recommendations ||
+            (artifactData._initiatives || []).slice(0, 6).map((initiative: any) => ({
+              title: initiative.name,
+              description: initiative.summary || initiative.status || '',
+              impact: String(initiative.impact || initiative.roi || 'Data gap'),
+              priority: String(initiative.priority || 'medium').toLowerCase(),
+              category: initiative.axis || initiative.category,
+            })) ||
+            [],
+        },
+      };
+
+    case 'recommendation_single':
+      return {
+        intent: 'recommendation_single',
+        key_message: item.keyMessage || item.title,
+        content: {
+          type: 'recommendation_single',
+          title: item.title,
+          description:
+            item.keyMessage ||
+            (isPl ? 'Rekomendacja oparta na wybranym materiale.' : 'Recommendation grounded in selected evidence.'),
+          impact: artifactData._recommendationImpact || 'High',
+          effort: artifactData._recommendationEffort || 'Medium',
+          priority: 'high',
+          timeline: artifactData._recommendationTimeline || '30-90 days',
+        },
+      };
+
+    case 'prioritization_matrix':
+      return {
+        intent: 'prioritization_matrix',
+        key_message: item.keyMessage || (isPl ? 'Priorytetyzacja inicjatyw' : 'Initiative prioritization'),
+        content: {
+          type: 'prioritization_matrix',
+          xAxisLabel: isPl ? 'Wysiłek' : 'Effort',
+          yAxisLabel: isPl ? 'Wpływ' : 'Impact',
+          quadrants: artifactData._prioritizationQuadrants || [
+            { label: 'Quick wins', position: 'top_left', items: [] },
+            { label: 'Strategic bets', position: 'top_right', items: [] },
+            { label: 'Fill-ins', position: 'bottom_left', items: [] },
+            { label: 'Defer', position: 'bottom_right', items: [] },
+          ],
+        },
+      };
+
+    case 'root_cause':
+      return {
+        intent: 'root_cause',
+        key_message: item.keyMessage || (isPl ? 'Źródła problemu' : 'Root causes'),
+        content: {
+          type: 'root_cause',
+          problem: item.title,
+          causes: (artifactData._rootCauses || [
+            {
+              cause: isPl ? 'Niedojrzałość procesu' : 'Process maturity gap',
+              impact: isPl ? 'Wolniejsze decyzje' : 'Slower decisions',
+              severity: 'medium',
+            },
+          ]).slice(0, 5),
+        },
+      };
+
     case 'next_steps':
       return {
         intent: 'next_steps',
@@ -378,13 +629,13 @@ function buildSlideContent(
           actions: artifactData._actions || [
             {
               action: isPl ? 'Zdefiniować priorytety' : 'Define priorities',
-              owner: 'TBD',
-              deadline: 'TBD',
+              owner: isPl ? 'Do ustalenia przez PMO' : 'To be assigned by PMO',
+              deadline: isPl ? 'Do potwierdzenia w planie programu' : 'To be confirmed in program plan',
             },
             {
               action: isPl ? 'Zatwierdzić roadmapę' : 'Approve roadmap',
-              owner: 'TBD',
-              deadline: 'TBD',
+              owner: isPl ? 'Do ustalenia przez Sponsor Board' : 'To be assigned by Sponsor Board',
+              deadline: isPl ? 'Do potwierdzenia w planie programu' : 'To be confirmed in program plan',
             },
           ],
         },
@@ -414,6 +665,38 @@ function buildSlideContent(
         } as any,
       };
   }
+}
+
+function buildSlideContent(
+  item: OutlineItem,
+  setup: DeckSetup,
+  artifactData: Record<string, any>
+): UnifiedSlide {
+  const hasDataGapFallback = (item.suggestedBlocks || []).includes('data_gap_notice');
+  const baseSlide = hasDataGapFallback
+    ? ({
+        intent: item.intent,
+        key_message:
+          setup.language === 'pl'
+            ? `Data gap: ${item.title} wymaga dodatkowych źródeł`
+            : `Data gap: ${item.title} requires additional evidence`,
+        content: {
+          type: 'section_intro',
+          section_title: item.title,
+          description:
+            setup.language === 'pl'
+              ? 'Ten slajd został wygenerowany w trybie degradacji: brak pełnych danych źródłowych. Uzupełnij evidence i właściciela danych.'
+              : 'This slide is in degradation mode: complete source evidence is missing. Add evidence and data owner.',
+        },
+      } as UnifiedSlide)
+    : buildSlideContentBase(item, setup, artifactData);
+  const governed = attachSlideGovernance(baseSlide, item, setup);
+  const keyMessage = sanitizePrimitiveText(String(governed.key_message || item.title || item.intent));
+  return {
+    ...governed,
+    key_message: keyMessage.length >= 8 ? keyMessage : sanitizePrimitiveText(String(item.title || item.intent)),
+    content: sanitizeSlideContentValue(governed.content) as any,
+  } as UnifiedSlide;
 }
 
 // ============================================================
@@ -612,6 +895,17 @@ function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
     );
   }
 
+  const manualOrUnreadySources = setup.sourceArtifacts.filter(
+    (source) => !source.id || source.id.startsWith('manual-') || source.readiness !== 'ready'
+  );
+  if (manualOrUnreadySources.length > 0) {
+    warnings.push(
+      isPl
+        ? 'Część źródeł nie jest konkretnym, gotowym artefaktem. Deck zostanie oznaczony jako częściowo ugruntowany.'
+        : 'Some sources are not concrete ready artifacts. The deck will be marked as partially grounded.'
+    );
+  }
+
   return warnings;
 }
 
@@ -620,27 +914,43 @@ export async function generateOutline(
   organizationId: string
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
+  let templateOutlineUsed = false;
+  let templateRuntime: PresentationTemplateRuntime | null = null;
+  let templateWarnings: string[] = [];
   const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
 
   if (setup.templateId) {
     const template = await dbGet(
-      `SELECT outline_json FROM presentation_templates WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
+      `SELECT * FROM presentation_templates WHERE id = ? AND is_active = TRUE AND (organization_id IS NULL OR organization_id = ?)`,
       [setup.templateId, organizationId]
     );
     if (template) {
-      const templateOutline = JSON.parse((template as any).outline_json).map((o: any) => ({
-        intent: o.intent as SlideIntent,
-        title: o.title,
-        keyMessage: o.keyMessage,
-        enabled: true,
-      }));
+      templateRuntime = buildTemplateRuntimeFromRow(template);
+      const templateOutline = templateRuntime?.outline || [];
       outline = generateOutlineFromTemplate(templateOutline, sourceArtifacts);
+      const templated = applyTemplateRuntime({ outline, runtime: templateRuntime, sources: sourceArtifacts });
+      outline = templated.outline;
+      templateWarnings = templated.warnings;
+      templateOutlineUsed = true;
     } else {
       outline = generateDefaultOutline(setup);
     }
   } else {
-    outline = generateDefaultOutline(setup);
+    const requestedFamily = (setup as any).templateFamily || (setup as any).deckType;
+    if (requestedFamily) {
+      templateRuntime = buildSystemTemplateRuntime(requestedFamily);
+      outline = templateRuntime.outline;
+      const templated = applyTemplateRuntime({ outline, runtime: templateRuntime, sources: sourceArtifacts });
+      outline = templated.outline;
+      templateWarnings = templated.warnings;
+      templateOutlineUsed = true;
+    } else {
+      outline = generateDefaultOutline(setup);
+    }
   }
+
+  const planning = planSlides({ setup, outline, templateOutlineUsed });
+  outline = planning.outline;
 
   const deckId = uuidv4().replace(/-/g, '');
   const resolvedSourceType =
@@ -662,7 +972,27 @@ export async function generateOutline(
       setup.theme,
       null,
       JSON.stringify(sourceArtifacts),
-      JSON.stringify(outline),
+      JSON.stringify({
+        deckIntentSummary: planning.deckIntentSummary,
+        createMode: planning.createMode,
+        templateRuntime: templateRuntime
+          ? {
+              templateId: templateRuntime.templateId,
+              templateFamily: templateRuntime.templateFamily,
+              minSlides: templateRuntime.minSlides,
+              maxSlides: templateRuntime.maxSlides,
+              mustHaveIntents: templateRuntime.mustHaveIntents,
+              recommendedVisuals: templateRuntime.recommendedVisuals,
+              sourceRequirements: templateRuntime.sourceRequirements,
+              headerFooter: templateRuntime.headerFooter,
+            }
+          : null,
+        outline,
+        slideRecipes: planning.slideRecipes,
+        sourcePriorityMap: planning.sourcePriorityMap,
+        evidenceGaps: planning.evidenceGaps,
+        warnings: [...planning.warnings, ...templateWarnings],
+      }),
       null,
       resolvedSourceType,
       resolvedSourceId,
@@ -700,7 +1030,7 @@ export async function generateOutline(
     throw err;
   }
 
-  const validationWarnings = validateOutline(outline, setup);
+  const validationWarnings = [...validateOutline(outline, setup), ...planning.warnings, ...templateWarnings];
   if (validationWarnings.length > 0) {
     await dbRun(
       `UPDATE presentation_decks SET validation_warnings = ? WHERE id = ? AND organization_id = ?`,
@@ -739,9 +1069,12 @@ export async function generateDeck(
     // Build structured ContextPack for AI consumption
     const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
     const sourceRefs = sourceArtifacts.map((sa) => ({
-      artifact_id: sa.id || '',
+      artifact_id: sa.artifactId || sa.id || '',
       artifact_type: sa.type,
       artifact_name: sa.label,
+      confidence: sa.confidence ?? null,
+      readiness: sa.readiness || 'ready',
+      lineage: sa.lineage || null,
     }));
     const contextPack = await buildContextPack(organizationId, sourceRefs, setup.language);
     await saveContextPackSnapshot(deckId, contextPack);
@@ -749,7 +1082,7 @@ export async function generateDeck(
       `[PresentationGen] ContextPack built: ${contextPack.key_points.length} key points, ${contextPack.data_points.length} data points, confidence=${contextPack.metadata.confidence_score.toFixed(2)}`
     );
 
-    const artifactData = await loadArtifactData(sourceArtifacts, organizationId);
+    let artifactData = await loadArtifactData(sourceArtifacts, organizationId);
     // Enrich artifact data with ContextPack extracted data
     if (contextPack.key_points.length > 0 && !artifactData._keyFindings) {
       artifactData._keyFindings = contextPack.key_points.slice(0, 5);
@@ -762,6 +1095,13 @@ export async function generateDeck(
         trend: dp.trend,
       }));
     }
+    const transformationPack = buildTransformationReadDeckPack({
+      contextPack,
+      artifactData,
+      sources: sourceArtifacts,
+      language: setup.language,
+    });
+    artifactData = applyTransformationPackToArtifactData(artifactData, transformationPack);
 
     const enabledSlides = outline.filter((o) => o.enabled);
 
@@ -939,6 +1279,46 @@ export async function generateDeck(
     }
 
     const unifiedJson: UnifiedReportJSON = { meta, slides };
+    const warnings = [...extraWarnings];
+    let deckDocument = deckDocumentFromUnifiedJson({
+      deckId,
+      organizationId,
+      title: setup.title,
+      unifiedJson,
+      outline,
+      setup: {
+        audience: setup.audience,
+        goal: setup.goal,
+        language: setup.language,
+        confidentiality: setup.confidentiality,
+        theme: setup.theme,
+        presentationMode: (setup as any).presentationMode,
+        communicationRegister: (setup as any).communicationRegister,
+        contentDepth: (setup as any).contentDepth,
+        colorSetId: (setup as any).colorSetId,
+        additionalInstructions: (setup as any).additionalInstructions,
+        imageSource: setup.visuals?.enabled === false ? 'none' : 'smart',
+        transformationReadDeckPack: transformationPack,
+      },
+      sourceArtifacts,
+      sourceRefs,
+      status: 'ready',
+      warnings,
+      createdBy: 'system',
+    });
+    deckDocument = applyBrandLayoutSystem(
+      deckDocument,
+      buildBrandLayoutSystem({
+        brandColor,
+        confidentiality: setup.confidentiality,
+        templateFamily:
+          (setup as any).templateFamily ||
+          ((setup as any).presentationMode === 'document'
+            ? 'Digital Transformation Read Deck'
+            : 'Board Decision Deck'),
+        footerText: setup.confidentiality === 'public' ? 'Consultify' : 'Confidential · Consultify',
+      })
+    );
     const pipeline = new PptxPipelineService();
     const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
       template: setup.theme,
@@ -955,14 +1335,43 @@ export async function generateDeck(
     const exportPath = path.default.join(exportDir, `${deckId}.pptx`);
     fs.default.writeFileSync(exportPath, result.buffer);
 
+    deckDocument.delivery = {
+      exportFormat: 'pptx',
+      exportPath,
+    };
+    deckDocument.lifecycle.exportedAt = new Date().toISOString();
+    deckDocument.generation.warnings = [...(result.warnings || []), ...warnings];
+
+    let outlinePayload: unknown = outline;
+    try {
+      const existingDeck = (await dbGet(
+        `SELECT outline_json FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+        [deckId, organizationId]
+      )) as any;
+      const parsedOutline = existingDeck?.outline_json
+        ? JSON.parse(existingDeck.outline_json)
+        : null;
+      outlinePayload =
+        parsedOutline && typeof parsedOutline === 'object' && !Array.isArray(parsedOutline)
+          ? {
+              ...parsedOutline,
+              outline,
+              generatedAt: new Date().toISOString(),
+            }
+          : outline;
+    } catch {
+      outlinePayload = outline;
+    }
+
     await dbRun(
-      `UPDATE presentation_decks SET status = 'ready', unified_json = ?, slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, validation_warnings = ?, outline_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      `UPDATE presentation_decks SET status = 'ready', deck_json = ?, unified_json = ?, slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, validation_warnings = ?, outline_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
       [
+        JSON.stringify(deckDocument),
         JSON.stringify(unifiedJson),
         result.slideCount,
         exportPath,
-        JSON.stringify([...(result.warnings || []), ...extraWarnings]),
-        JSON.stringify(outline),
+        JSON.stringify(deckDocument.generation.warnings),
+        JSON.stringify(outlinePayload),
         deckId,
         organizationId,
       ]

@@ -164,6 +164,8 @@ export class PptxPipelineService {
           }
         }
 
+        this.addHeaderFooter(slide, report.meta, tokens, i + 1, report.slides.length);
+
         renderedCount++;
       } catch (err: any) {
         logger.error(
@@ -235,6 +237,30 @@ export class PptxPipelineService {
   // ============================================================
   // UTILITY SLIDES
   // ============================================================
+
+  private addHeaderFooter(
+    slide: any,
+    meta: UnifiedReportMeta,
+    tokens: DesignTokens,
+    pageNumber: number,
+    totalPages: number
+  ): void {
+    if (pageNumber === 1) return;
+    const confidentiality = String(meta.confidentiality || 'internal').toUpperCase();
+    const footer = `${confidentiality} · Consultify · ${pageNumber}/${totalPages}`;
+    slide.addText(footer, {
+      x: 0.45,
+      y: 5.28,
+      w: 9.1,
+      h: 0.16,
+      fontFace: tokens.fonts.body,
+      fontSize: 6.5,
+      color: tokens.colors.textSecondary,
+      margin: 0,
+      breakLine: false,
+      fit: 'shrink',
+    });
+  }
 
   private addClosingSlide(pptx: any, meta: UnifiedReportMeta, tokens: DesignTokens): void {
     const slide = pptx.addSlide({ masterName: 'COVER' });

@@ -148,7 +148,6 @@ export const SetupStep: React.FC<SetupStepProps> = ({
             </p>
           </button>
           {templates
-            .filter((tmpl) => tmpl.is_system)
             .map((tmpl) => (
               <button
                 key={tmpl.id}
@@ -160,7 +159,14 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                 }`}
               >
                 <Layout className="w-5 h-5 text-blue-400 mb-2" />
-                <p className="font-medium text-slate-900 dark:text-white text-sm">{tmpl.name}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-slate-900 dark:text-white text-sm">{tmpl.name}</p>
+                  {!tmpl.is_system && (
+                    <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-300">
+                      ORG
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{tmpl.description}</p>
               </button>
             ))}

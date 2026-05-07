@@ -22,6 +22,7 @@ import {
   requireSuperAdminCapability,
   verifySuperAdmin as requireSuperAdmin,
 } from '../middleware/superAdmin.middleware.js';
+import { superadminAuditMonitor } from '../middleware/superadminAuditMonitor.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import {
   getAllOrgPolicies,
@@ -350,6 +351,9 @@ router.use(requireSuperAdmin);
 // Gated actions that already pass requireAudit per-route get a second (harmless)
 // assignment; ungated mutations now have the function available too.
 router.use(requireAudit);
+
+// Monitor 5xx on superadmin audit-log endpoints for SRE alerting.
+router.use(superadminAuditMonitor);
 router.use('/security', requireSuperAdminCapability('security_ops'));
 router.use('/admin/sessions', requireSuperAdminCapability('security_ops'));
 router.use('/admin/approval-workflows', requireSuperAdminCapability('security_ops'));
@@ -3406,6 +3410,8 @@ router.get(
 
 router.get('/admin/audit-logs', SuperAdminController.getAdminAuditLogs);
 router.get('/admin/audit-logs/stats', SuperAdminController.getAdminAuditStats);
+// Frontend (Api.exportAdminAuditLogs) calls this; previously unregistered → 404 in UI.
+router.get('/admin/audit-logs/export', SuperAdminController.exportAuditLogs);
 router.put(
   '/admin/audit-logs/:id/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {

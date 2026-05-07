@@ -18,6 +18,7 @@ function main(): void {
 
   const routes = read(root, 'server/src/routes/presentations.routes.ts');
   const deckBuilder = read(root, 'src/components/Presentations/DeckBuilder/DeckBuilder.tsx');
+  const exportService = read(root, 'src/services/presentationExport.ts');
   const agentPanel = read(root, 'src/components/Presentations/DeckBuilder/AgentPanel.tsx');
   const mediaBrowser = read(root, 'src/components/Presentations/DeckBuilder/MediaLibraryBrowser.tsx');
 
@@ -33,12 +34,14 @@ function main(): void {
 
   checks.push({
     name: 'Deck builder export buttons hit real deck endpoints with correct formats',
-    pass: includesAll(deckBuilder, [
-      "/api/presentations/decks/${deck.deck_id}/download",
-      "/api/presentations/decks/${deck.deck_id}/export/png",
-      "/api/presentations/decks/${deck.deck_id}/export/pdf",
-      "extension: 'zip'",
-    ]),
+    pass:
+      includesAll(deckBuilder, ['exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format })']) &&
+      includesAll(exportService, [
+        '/api/presentations/decks/${deckId}/download',
+        '/api/presentations/decks/${deckId}/export/png',
+        '/api/presentations/decks/${deckId}/export/${format}',
+        "extension: 'zip'",
+      ]),
   });
 
   checks.push({

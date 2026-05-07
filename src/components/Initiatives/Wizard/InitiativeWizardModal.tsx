@@ -535,31 +535,31 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   };
 
   const renderIntent = () => (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           Decyzja transformacyjna
         </label>
         <select
           value={mode}
           onChange={(event) => setMode(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/[0.12] dark:bg-navy-900 dark:text-white"
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         >
-          <option value="create_first_portfolio">Create first portfolio</option>
-          <option value="generate_from_evidence">Generate from selected evidence</option>
-          <option value="prioritize_by_goal">Prioritize by business goal</option>
-          <option value="match_existing">Match against existing initiatives</option>
-          <option value="refresh_portfolio">Refresh portfolio with new evidence</option>
-          <option value="build_waves">Build waves (sequence into roadmap)</option>
-          <option value="improve_portfolio">Improve existing portfolio (gap closure)</option>
+          <option value="create_first_portfolio">Stwórz pierwsze portfolio</option>
+          <option value="generate_from_evidence">Wygeneruj z wybranych evidence</option>
+          <option value="prioritize_by_goal">Priorytetyzuj wg celu biznesowego</option>
+          <option value="match_existing">Dopasuj do istniejących inicjatyw</option>
+          <option value="refresh_portfolio">Odśwież portfolio nowymi evidence</option>
+          <option value="build_waves">Buduj fale (sekwencja w roadmapę)</option>
+          <option value="improve_portfolio">Popraw istniejące portfolio (gap closure)</option>
         </select>
       </div>
 
       <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           Priorytety biznesowe
         </label>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {BUSINESS_PRIORITIES.map((priority) => {
             const active = businessPriorities.includes(priority.id);
             return (
@@ -567,10 +567,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 key={priority.id}
                 type="button"
                 onClick={() => togglePriority(priority.id)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                   active
-                    ? 'border-blue-400 bg-blue-500/10 text-blue-700 dark:text-blue-200'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/[0.12] dark:text-slate-300 dark:hover:bg-white/[0.04]'
+                    ? 'border-primary-500/50 bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-200'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
                 }`}
               >
                 {priority.label}
@@ -580,8 +580,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <label className="text-xs font-medium text-slate-500">
+      <div className="grid grid-cols-3 gap-2">
+        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
           Liczba
           <input
             type="number"
@@ -589,28 +589,28 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             max={10}
             value={targetCount}
             onChange={(event) => setTargetCount(Number(event.target.value))}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/[0.12] dark:bg-navy-900 dark:text-white"
+            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           />
         </label>
-        <label className="text-xs font-medium text-slate-500">
+        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
           Horyzont
           <select
             value={timeHorizon}
             onChange={(event) => setTimeHorizon(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/[0.12] dark:bg-navy-900 dark:text-white"
+            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           >
             <option value="30_days">30 dni</option>
             <option value="90_days">90 dni</option>
-            <option value="6_months">6 miesiecy</option>
-            <option value="12_months">12 miesiecy</option>
+            <option value="6_months">6 miesięcy</option>
+            <option value="12_months">12 miesięcy</option>
           </select>
         </label>
-        <label className="text-xs font-medium text-slate-500">
+        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
           Ryzyko
           <select
             value={riskAppetite}
             onChange={(event) => setRiskAppetite(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/[0.12] dark:bg-navy-900 dark:text-white"
+            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           >
             <option value="conservative">Szybkie i pewne</option>
             <option value="balanced">Mieszany portfel</option>
@@ -619,33 +619,36 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         </label>
       </div>
 
-      <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
-        Notatka konsultanta / kontekst
+      <div>
+        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+          Notatka konsultanta / kontekst
+        </label>
         <textarea
           value={manualNotes}
           onChange={(event) => setManualNotes(event.target.value)}
-          placeholder="Np. po assessment chcemy wybrac 3 inicjatywy o najwiekszym efekcie na marze, terminowosc i jakosc danych..."
-          className="mt-2 min-h-[120px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm normal-case tracking-normal text-slate-800 dark:border-white/[0.12] dark:bg-navy-900 dark:text-white"
+          rows={4}
+          placeholder="Np. po assessment chcemy wybrać 3 inicjatywy o największym efekcie na marżę, terminowość i jakość danych..."
+          className="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
-      </label>
+      </div>
     </div>
   );
 
   const renderCandidates = () => (
-    <div className="grid min-h-[440px] grid-cols-[minmax(0,1fr)_340px] gap-4">
-      <div className="space-y-2 overflow-auto pr-1">
+    <div className="grid min-h-[440px] grid-cols-[minmax(0,1fr)_360px] gap-3">
+      <div className="space-y-1.5 overflow-auto pr-1">
         {candidates.length === 0 && (
           <div
             data-testid="initiative-wizard-empty-candidates"
-            className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/60 p-6 text-center dark:border-white/[0.1] dark:bg-white/[0.02]"
+            className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-white/[0.1] dark:bg-navy-900/50"
           >
             <Sparkles className="h-8 w-8 text-slate-400" />
             <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-              Brak kandydatow do triage
+              Brak kandydatów do triage
             </p>
             <p className="mt-1 max-w-md text-xs text-slate-500">
-              Wroc do kroku Intent i wygeneruj kandydatow. Jezeli sourceBasket jest pusty, system
-              zaproponuje kandydatow z portfolio hygieny (oznaczonych nizszym confidence).
+              Wróć do kroku Intencja i wygeneruj kandydatów. Jeżeli sourceBasket jest pusty, system
+              zaproponuje kandydatów z portfolio hygieny (oznaczonych niższym confidence).
             </p>
           </div>
         )}
@@ -657,27 +660,27 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               key={candidate.id}
               type="button"
               onClick={() => setSelectedCandidateId(candidate.id)}
-              className={`w-full rounded-xl border p-3 text-left transition ${
+              className={`w-full rounded-xl border p-2.5 text-left transition-all ${
                 active
-                  ? 'border-blue-400 bg-blue-500/10'
-                  : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-white/[0.1] dark:bg-navy-900 dark:hover:bg-white/[0.04]'
+                  ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                  : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {candidate.title}
                   </div>
-                  <div className="mt-1 line-clamp-2 text-xs text-slate-500">
+                  <div className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
                     {candidate.problemStatement}
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-white/[0.08] dark:text-slate-300">
+                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.08] dark:text-slate-300">
                   {STATUS_LABELS[candidate.triageStatus]}
                 </span>
               </div>
               {match && (
-                <div className="mt-2 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-300">
+                <div className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-300">
                   <AlertTriangle className="h-3 w-3" />
                   Podobna inicjatywa: {match.name || match.title}
                 </div>
@@ -688,40 +691,40 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       </div>
 
       {selectedCandidate && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/[0.1] dark:bg-navy-950">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Szczegoly kandydata
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Szczegóły kandydata
           </div>
-          <h3 className="mt-2 text-base font-semibold text-slate-900 dark:text-white">
+          <h3 className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
             {selectedCandidate.title}
           </h3>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
             {selectedCandidate.opportunityStatement}
           </p>
 
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-lg bg-white p-2 dark:bg-white/[0.04]">
+          <div className="mt-3 grid grid-cols-2 gap-1.5 text-xs">
+            <div className="rounded-xl bg-white px-2.5 py-1.5 text-slate-700 dark:bg-white/[0.04] dark:text-slate-200">
               Impact: {selectedCandidate.impactScore}/5
             </div>
-            <div className="rounded-lg bg-white p-2 dark:bg-white/[0.04]">
+            <div className="rounded-xl bg-white px-2.5 py-1.5 text-slate-700 dark:bg-white/[0.04] dark:text-slate-200">
               Effort: {selectedCandidate.effortScore}/5
             </div>
-            <div className="rounded-lg bg-white p-2 dark:bg-white/[0.04]">
+            <div className="rounded-xl bg-white px-2.5 py-1.5 text-slate-700 dark:bg-white/[0.04] dark:text-slate-200">
               Risk: {selectedCandidate.riskScore}/5
             </div>
-            <div className="rounded-lg bg-white p-2 dark:bg-white/[0.04]">
+            <div className="rounded-xl bg-white px-2.5 py-1.5 text-slate-700 dark:bg-white/[0.04] dark:text-slate-200">
               Confidence: {selectedCandidate.confidenceLevel}
             </div>
           </div>
 
           {selectedCandidate.suggestedKpi && (
-            <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs text-blue-800 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-100">
+            <div className="mt-2.5 rounded-xl border border-primary-300/60 bg-primary-50 px-2.5 py-1.5 text-xs text-primary-800 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
               KPI: {selectedCandidate.suggestedKpi}
             </div>
           )}
 
           {selectedCandidate.limits.length > 0 && (
-            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
+            <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
               Limits: {selectedCandidate.limits.join(' ')}
             </div>
           )}
@@ -729,7 +732,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           {(selectedCandidate.evidenceRefs.length > 0 ||
             (Array.isArray(selectedCandidate.sourceRefs) &&
               selectedCandidate.sourceRefs.length > 0)) && (
-            <div className="mt-3 rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-200">
+            <div className="mt-2.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200">
               <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                 Evidence trail
               </div>
@@ -739,7 +742,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   {selectedCandidate.evidenceRefs.map((ref, idx) => (
                     <span
                       key={`${ref}-${idx}`}
-                      className="mr-1 inline-flex items-center rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-white/[0.08] dark:text-slate-200"
+                      className="mr-1 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-white/[0.08] dark:text-slate-200"
                     >
                       {ref}
                     </span>
@@ -758,7 +761,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                         return (
                           <span
                             key={`${type}-${id}-${idx}`}
-                            className="mr-1 inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[10px] text-blue-700 dark:bg-blue-500/10 dark:text-blue-200"
+                            className="mr-1 inline-flex items-center rounded-full bg-primary-50 px-1.5 py-0.5 text-[10px] text-primary-700 dark:bg-primary-500/10 dark:text-primary-200"
                             title={title}
                           >
                             {type}
@@ -772,34 +775,34 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             </div>
           )}
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={() => triageCandidate(selectedCandidate, 'accepted_for_shortlist')}
-              className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-500"
+              className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-emerald-500"
             >
-              <Check className="mr-1 inline h-3 w-3" />
+              <Check className="h-3 w-3" />
               Accept
             </button>
             <button
               type="button"
               onClick={() => triageCandidate(selectedCandidate, 'rejected')}
-              className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-medium text-white hover:bg-rose-500"
+              className="inline-flex items-center justify-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-rose-500"
             >
-              <X className="mr-1 inline h-3 w-3" />
+              <X className="h-3 w-3" />
               Reject
             </button>
             <button
               type="button"
               onClick={() => triageCandidate(selectedCandidate, 'needs_evidence')}
-              className="rounded-lg border border-amber-300 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 dark:border-amber-400/30 dark:text-amber-200 dark:hover:bg-amber-500/10"
+              className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50 dark:border-amber-400/30 dark:bg-navy-900/50 dark:text-amber-200 dark:hover:bg-amber-500/10"
             >
               Needs evidence
             </button>
             <button
               type="button"
               onClick={() => triageCandidate(selectedCandidate, 'ready_for_charter')}
-              className="rounded-lg border border-blue-300 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-400/30 dark:text-blue-200 dark:hover:bg-blue-500/10"
+              className="rounded-xl border border-primary-300 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-50 dark:border-primary-400/30 dark:bg-navy-900/50 dark:text-primary-200 dark:hover:bg-primary-500/10"
             >
               Ready
             </button>
@@ -812,10 +815,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 const match = findExistingMatch(selectedCandidate, existingInitiatives);
                 void triageCandidate(selectedCandidate, 'already_covered', match?.id || null);
               }}
-              className="mt-2 w-full rounded-lg border border-primary-300 px-3 py-2 text-xs font-medium text-primary-700 hover:bg-primary-50 dark:border-primary-400/30 dark:text-primary-200 dark:hover:bg-primary-500/10"
+              className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-primary-300 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-50 dark:border-primary-400/30 dark:bg-navy-900/50 dark:text-primary-200 dark:hover:bg-primary-500/10"
             >
-              <Link2 className="mr-1 inline h-3 w-3" />
-              Link as already covered
+              <Link2 className="h-3 w-3" />
+              Powiąż jako już pokryty
             </button>
           )}
         </div>
@@ -824,27 +827,28 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   );
 
   const renderGovernance = () => (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-100">
-        Proposal preview: system utworzy drafty tylko dla zaakceptowanych kandydatow bez linku do
-        istniejacej inicjatywy. Odrzucone i `already covered` nie tworza trwalych obiektow.
+    <div className="space-y-3">
+      <div className="rounded-2xl border border-primary-300/60 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
+        Proposal preview: system utworzy drafty tylko dla zaakceptowanych kandydatów bez linku do
+        istniejącej inicjatywy. Odrzucone i „already covered” nie tworzą trwałych obiektów.
       </div>
       {!shortlistGateOk && (
         <div
           data-testid="initiative-wizard-shortlist-gate-blocked"
-          className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100"
+          className="rounded-2xl border border-rose-300 bg-rose-50 p-3 text-sm text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100"
         >
           <div className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="h-4 w-4" />
-            Shortlist gate zablokowal Utworz drafty
+            Shortlist gate zablokował „Utwórz drafty”
           </div>
           <p className="mt-1 text-xs text-rose-800 dark:text-rose-100/80">
-            Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence "contradicted",
-            statusem "needs_evidence" lub bez evidenceRefs nie moga zostac promowani do draftu.
+            Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence
+            „contradicted”, statusem „needs_evidence” lub bez evidenceRefs nie mogą zostać
+            promowani do draftu.
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {shortlistGateBlockers.map((blocker) => (
-              <li key={blocker.candidateId} className="rounded-md bg-white/60 px-2 py-1">
+              <li key={blocker.candidateId} className="rounded-xl bg-white/60 px-2.5 py-1.5">
                 <span className="font-semibold">{blocker.title}: </span>
                 {blocker.message}
               </li>
@@ -852,33 +856,33 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           </ul>
         </div>
       )}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {actionableCandidates.map((candidate) => {
           const blocker = shortlistGateBlockers.find((entry) => entry.candidateId === candidate.id);
           return (
             <div
               key={candidate.id}
-              className={`rounded-lg border p-3 ${
+              className={`rounded-xl border p-2.5 transition-all ${
                 blocker
                   ? 'border-rose-300 bg-rose-50/60 dark:border-rose-400/30 dark:bg-rose-500/10'
-                  : 'border-slate-200 bg-white dark:border-white/[0.1] dark:bg-navy-900'
+                  : 'border-slate-200 bg-white dark:border-white/[0.08] dark:bg-navy-900/70'
               }`}
             >
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {candidate.title}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {blocker
                       ? blocker.message
                       : candidate.linkedInitiativeId
-                        ? 'Zostanie zlinkowana z istniejaca inicjatywa.'
+                        ? 'Zostanie zlinkowana z istniejącą inicjatywą.'
                         : 'Zostanie utworzony draft inicjatywy.'}
                   </div>
                 </div>
                 <span
-                  className={`rounded-full px-2 py-1 text-[11px] ${
+                  className={`rounded-full px-2 py-0.5 text-[11px] ${
                     blocker
                       ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-100'
                       : 'bg-slate-100 text-slate-600 dark:bg-white/[0.08] dark:text-slate-300'
@@ -898,23 +902,25 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     <div className="flex min-h-[360px] flex-col">
       <div className="flex flex-col items-center text-center">
         <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-        <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
-          Kreator zakonczyl prace
+        <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">
+          Kreator zakończył pracę
         </h3>
-        <p className="mt-2 max-w-xl text-sm text-slate-500">
+        <p className="mt-1.5 max-w-xl text-sm text-slate-500 dark:text-slate-400">
           Utworzone drafty: {createdInitiatives.length}. Kandydaci odrzuceni lub oznaczeni jako
           pokryci nie zostali utworzeni jako nowe inicjatywy.
         </p>
       </div>
 
       {createdInitiatives.length > 0 && (
-        <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100">
-          <div className="text-xs font-semibold uppercase tracking-wide">Nowe drafty inicjatyw</div>
+        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100">
+          <div className="text-[10px] font-semibold uppercase tracking-wide">
+            Nowe drafty inicjatyw
+          </div>
           <ul className="mt-2 space-y-1">
             {createdInitiatives.map((initiative) => (
               <li
                 key={initiative.id}
-                className="flex items-center justify-between rounded-md bg-white/70 px-2 py-1 text-xs"
+                className="flex items-center justify-between rounded-xl bg-white/70 px-2.5 py-1.5 text-xs dark:bg-emerald-500/5"
               >
                 <span className="font-medium">{initiative.name || initiative.id}</span>
                 <span className="ml-3 truncate font-mono text-[10px] text-emerald-800 dark:text-emerald-200">
@@ -927,25 +933,25 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       )}
 
       <div
-        className="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-white/[0.1] dark:bg-navy-900"
+        className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-white/[0.08] dark:bg-navy-900/50"
         data-testid="initiative-wizard-audit-timeline"
       >
         <div className="flex items-center justify-between">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Audyt sesji - proposal -&gt; approval -&gt; execution -&gt; audit
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Audyt sesji – proposal → approval → execution → audit
           </div>
           {auditLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
         </div>
         {auditError && (
-          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
             {auditError}
           </div>
         )}
         {!auditLoading && !auditError && auditEvents.length === 0 && (
-          <div className="mt-2 text-xs text-slate-500">Brak zdarzen audytu dla tej sesji.</div>
+          <div className="mt-2 text-xs text-slate-500">Brak zdarzeń audytu dla tej sesji.</div>
         )}
         {auditEvents.length > 0 && (
-          <ol className="mt-3 space-y-2">
+          <ol className="mt-3 space-y-1.5">
             {auditEvents.map((event) => {
               const meta = AUDIT_EVENT_LABELS[event.eventType] || {
                 label: event.eventType,
@@ -958,11 +964,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                     ? 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100'
                     : meta.tone === 'warn'
                       ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100'
-                      : 'border-slate-200 bg-slate-50 text-slate-800 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200';
+                      : 'border-slate-200 bg-white text-slate-800 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200';
               return (
                 <li
                   key={event.id}
-                  className={`rounded-lg border px-3 py-2 text-xs ${toneClasses}`}
+                  className={`rounded-xl border px-2.5 py-1.5 text-xs ${toneClasses}`}
                   data-event-type={event.eventType}
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -981,11 +987,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         )}
       </div>
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-5 flex justify-center">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+          className="min-w-[180px] rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-500"
         >
           Zamknij
         </button>
@@ -993,70 +999,122 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     </div>
   );
 
+  const STEP_DEFS: Array<{ id: WizardStep; label: string }> = [
+    { id: 'intent', label: 'Intencja' },
+    { id: 'candidates', label: 'Kandydaci' },
+    { id: 'governance', label: 'Governance' },
+    { id: 'result', label: 'Wynik' },
+  ];
+  const currentStepIndex = STEP_DEFS.findIndex((entry) => entry.id === step);
+  const stepReachable: Record<WizardStep, boolean> = {
+    intent: true,
+    candidates: candidates.length > 0,
+    governance: actionableCandidates.length > 0,
+    result: createdInitiatives.length > 0,
+  };
+
+  const renderStepper = () => (
+    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
+      <div className="grid grid-cols-4 gap-1.5">
+        {STEP_DEFS.map((entry, index) => {
+          const isActive = entry.id === step;
+          const isComplete = index < currentStepIndex;
+          const canJump = stepReachable[entry.id];
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => {
+                if (canJump) setStep(entry.id);
+              }}
+              disabled={!canJump}
+              className={`rounded-xl border px-2 py-1.5 text-left transition-all hover:border-primary-500/50 disabled:cursor-not-allowed disabled:opacity-60 ${
+                isActive
+                  ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
+                  : isComplete
+                    ? 'border-slate-200 bg-white text-slate-600 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
+                    : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold ${
+                    isActive
+                      ? 'bg-primary-500 text-white'
+                      : isComplete
+                        ? 'bg-slate-200 text-slate-700 dark:bg-navy-700 dark:text-slate-200'
+                        : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
+                  }`}
+                >
+                  {index + 1}
+                </span>
+                <span className="text-xs font-semibold leading-none">{entry.label}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const goToPreviousStep = () => {
+    if (step === 'candidates') setStep('intent');
+    else if (step === 'governance') setStep('candidates');
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
       data-testid="initiative-wizard-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="initiative-wizard-title"
     >
-      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.1] dark:bg-navy-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-white/[0.1]">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-300">
-              <Sparkles className="h-4 w-4" />
-              AI Initiative Wizard
-            </div>
-            <h2
-              id="initiative-wizard-title"
-              className="mt-1 text-xl font-semibold text-slate-900 dark:text-white"
-            >
-              Interaktywny kreator inicjatyw transformacyjnych
-            </h2>
-          </div>
+      <div className="mx-4 flex h-[640px] w-[1080px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
+          <h2
+            id="initiative-wizard-title"
+            className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100"
+          >
+            <Sparkles size={20} className="text-slate-500 dark:text-slate-400" />
+            AI Initiative Wizard
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.08]"
+            className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
           >
-            <X className="h-5 w-5" />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="flex gap-2 border-b border-slate-200 px-5 py-3 text-xs dark:border-white/[0.1]">
-          {[
-            ['intent', 'Intent'],
-            ['candidates', 'Candidates'],
-            ['governance', 'Governance'],
-            ['result', 'Result'],
-          ].map(([id, label]) => (
-            <span
-              key={id}
-              className={`rounded-full px-3 py-1 ${
-                step === id
-                  ? 'bg-blue-500/10 text-blue-700 dark:text-blue-200'
-                  : 'bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-              }`}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
+        {renderStepper()}
 
-        <div className="min-h-0 flex-1 overflow-auto p-5">
+        {/* Content */}
+        <div className="flex-1 space-y-4 overflow-auto p-3">
           {step === 'intent' && renderIntent()}
           {step === 'candidates' && renderCandidates()}
           {step === 'governance' && renderGovernance()}
           {step === 'result' && renderResult()}
         </div>
 
+        {/* Footer */}
         {step !== 'result' && (
-          <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4 dark:border-white/[0.1]">
-            <div className="text-xs text-slate-500">
+          <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isWorking}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+            >
+              Anuluj
+            </button>
+
+            <div className="flex flex-1 items-center justify-center text-xs text-slate-500">
               {candidates.length > 0
-                ? `${actionableCandidates.length} kandydatow w shortlist / ${candidates.length} lacznie`
-                : 'Ustaw intencje i wygeneruj kandydatow.'}
+                ? `${actionableCandidates.length} kandydatów w shortlist / ${candidates.length} łącznie`
+                : 'Ustaw intencję i wygeneruj kandydatów.'}
               {step === 'governance' && actionableCandidates.length > 0 ? (
                 <span
                   className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -1071,55 +1129,62 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 </span>
               ) : null}
             </div>
-            <div className="flex items-center gap-2">
+
+            {step !== 'intent' && (
               <button
                 type="button"
-                onClick={onClose}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-white/[0.12] dark:text-slate-300 dark:hover:bg-white/[0.05]"
+                onClick={goToPreviousStep}
+                disabled={isWorking}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
               >
-                Anuluj
+                Wstecz
               </button>
-              {step === 'intent' && (
-                <button
-                  type="button"
-                  disabled={isWorking}
-                  onClick={startWizard}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-60"
-                >
-                  {isWorking ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
-                  Wygeneruj kandydatow
-                </button>
-              )}
-              {step === 'candidates' && (
-                <button
-                  type="button"
-                  data-testid="initiative-wizard-governance-preview"
-                  disabled={actionableCandidates.length === 0}
-                  onClick={() => setStep('governance')}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-60"
-                >
-                  Governance preview
-                  <ArrowRight className="ml-2 inline h-4 w-4" />
-                </button>
-              )}
-              {step === 'governance' && (
-                <button
-                  type="button"
-                  data-testid="initiative-wizard-create-drafts"
-                  disabled={isWorking || !shortlistGateOk}
-                  onClick={createDrafts}
-                  title={
-                    !shortlistGateOk
-                      ? 'Shortlist gate: rozstrzygnij contradicted / uzupelnij evidence przed Utworz drafty.'
-                      : undefined
-                  }
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
-                >
-                  {isWorking ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
-                  Utworz drafty
-                </button>
-              )}
-            </div>
+            )}
+
+            {step === 'intent' && (
+              <button
+                type="button"
+                disabled={isWorking}
+                onClick={startWizard}
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isWorking ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Sparkles size={16} />
+                )}
+                Wygeneruj kandydatów
+              </button>
+            )}
+            {step === 'candidates' && (
+              <button
+                type="button"
+                data-testid="initiative-wizard-governance-preview"
+                disabled={actionableCandidates.length === 0}
+                onClick={() => setStep('governance')}
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Governance preview
+                <ArrowRight size={16} />
+              </button>
+            )}
+            {step === 'governance' && (
+              <button
+                type="button"
+                data-testid="initiative-wizard-create-drafts"
+                disabled={isWorking || !shortlistGateOk}
+                onClick={createDrafts}
+                title={
+                  !shortlistGateOk
+                    ? 'Shortlist gate: rozstrzygnij contradicted / uzupełnij evidence przed Utwórz drafty.'
+                    : undefined
+                }
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isWorking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                Utwórz drafty
+              </button>
+            )}
           </div>
         )}
       </div>

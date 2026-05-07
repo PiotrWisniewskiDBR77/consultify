@@ -39,6 +39,7 @@
 /knowledge/**/*.pptx
 /knowledge/**/*.docx
 /knowledge/**/*.zip
+/knowledge/Pigułki wiedzy /**/*.zip
 /docs/
 /wdrozenia/
 /Plast-met/
@@ -98,6 +99,8 @@
 /server/seeds/**
 /server/migrations-v2/
 /server/migrations-v2/**
+/server/src/_backup/
+/server/src/_backup/**
 
 # Build outputs
 /dist/
