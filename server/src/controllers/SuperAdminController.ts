@@ -1321,14 +1321,28 @@ const getLegalEvents = catchAsync(async (req, res, next) => {
     limit: limit ? parseInt(limit, 10) : 1000,
   });
 
-  const parsedEvents = events.map((e) => ({
-    ...e,
-    metadata: typeof e.metadata === 'string' ? JSON.parse(e.metadata) : e.metadata,
-  }));
+  // Same hardening as getAdminAuditLogs: never let one malformed metadata row
+  // turn the whole endpoint into a 500. Keep the original raw value in
+  // metadataRaw so QA can still inspect what came from the DB, and surface a
+  // simple counter so the UI can warn the operator when integrity is degraded.
+  let malformedMetadataCount = 0;
+  const parsedEvents = events.map((e) => {
+    if (typeof e.metadata !== 'string') return { ...e };
+    try {
+      return { ...e, metadata: JSON.parse(e.metadata) };
+    } catch {
+      malformedMetadataCount += 1;
+      return { ...e, metadata: {}, metadataRaw: e.metadata };
+    }
+  });
 
   res.json({
     count: parsedEvents.length,
     events: parsedEvents,
+    integrity: {
+      degraded: malformedMetadataCount > 0,
+      malformedMetadataCount,
+    },
   });
 });
 
