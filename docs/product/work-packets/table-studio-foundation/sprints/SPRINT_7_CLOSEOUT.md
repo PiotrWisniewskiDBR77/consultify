@@ -2,7 +2,7 @@
 
 **Sprint ID:** `S7`
 **Owner:** Orchestrator
-**Status:** `BLOCKED — pending Sprint 6 GREEN`
+**Status:** `PASS_WITH_P2 — closeout complete with baseline constraints`
 **Wave:** 5 (final)
 **Estimate:** ~0.5 day
 
@@ -72,8 +72,14 @@ Fill `03_BLOCK_CLOSEOUT.md` per `.cursor/BLOCK_CLOSEOUT_TEMPLATE.md`, update SoT
 
 ## Realized risks
 
-> _to fill at sprint end_
+- Sprint 6 returned `GO_WITH_CONSTRAINTS`, not full `GO`, because repo-wide lint/typecheck/i18n have unrelated baseline failures.
+- Screenshot/demo evidence was not captured in this CLI run; automated e2e/component/backend evidence is recorded.
+- TBL-FU-2 changed from "patch if leak found" to "regression guard" because the P0 ACL patch was completed during this block.
 
 ## Daily evidence
 
-> _to fill_
+- Filled `03_BLOCK_CLOSEOUT.md`.
+- Added `TABLE_V8_SSOT.md` appendix for Table Studio Foundation lane integration.
+- Updated `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md` with delivered status note for three lane-integration gaps.
+- Created follow-up cards `TBL-FU-1` through `TBL-FU-5` under `docs/product/work-packets/follow-ups/`.
+- Final recommendation: `GO_WITH_CONSTRAINTS`.
