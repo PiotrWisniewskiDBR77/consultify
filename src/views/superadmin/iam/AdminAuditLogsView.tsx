@@ -122,7 +122,7 @@ const reconstructAdminFromFlatFields = (raw: any): AuditLog['admin'] => {
   };
 };
 
-const normalizeLog = (log: AuditLog & Record<string, unknown>): AuditLog => ({
+const normalizeLog = (log: AuditLog): AuditLog => ({
   ...log,
   status: asText(log.status, 'unresolved').toLowerCase(),
   admin: reconstructAdminFromFlatFields(log),

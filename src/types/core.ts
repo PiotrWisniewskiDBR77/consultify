@@ -21,6 +21,7 @@ export interface Invoice {
 
 export enum AppView {
   AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
+  AI_CHAT_V10_RUNTIME = 'AI_CHAT_V10_RUNTIME', // AI Chat v10 runtime route alias
   APP_INTRO = 'APP_INTRO', // In-app orientation screen
   INTERVIEW = 'INTERVIEW', // AI Interview - structured knowledge gathering (was Project Intelligence)
   DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas (legacy alias for INTERVIEW)
@@ -176,6 +177,7 @@ export enum AppView {
   // AI Action Proposals Review
   AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS',
   AI_OS_HOME = 'AI_OS_HOME',
+  AI_OS_WORK_CANVAS = 'AI_OS_WORK_CANVAS',
   AI_OS_ACTION_CENTER = 'AI_OS_ACTION_CENTER',
   AI_OS_RESEARCH = 'AI_OS_RESEARCH',
   AI_OS_ARTIFACTS = 'AI_OS_ARTIFACTS',

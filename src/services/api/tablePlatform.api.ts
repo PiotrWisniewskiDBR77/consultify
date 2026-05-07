@@ -299,6 +299,12 @@ export interface ExecutionResult {
   executed?: boolean;
   appliedOperationIds?: string[];
   auditId?: string;
+  createdIds?: {
+    baseId?: string;
+    tableIds?: string[];
+    fieldIds?: string[];
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 

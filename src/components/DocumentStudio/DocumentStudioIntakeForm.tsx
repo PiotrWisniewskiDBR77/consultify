@@ -172,8 +172,8 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             This template requires the following sources before it can generate
           </div>
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            Add matching items to the source pack of this run (or attach them upstream); the
-            backend rejects generation if any of these is missing.
+            Add matching items to the source pack of this run (or attach them upstream); the backend
+            rejects generation if any of these is missing.
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {selectedTemplate.requiredInputs.map((requirement) => (

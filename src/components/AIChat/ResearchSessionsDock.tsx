@@ -12,7 +12,7 @@ import React from 'react';
 
 import { Api } from '../../services/api';
 
-type ResearchSessionView = {
+export type ResearchSessionView = {
   sessionId: string;
   status: 'planned' | 'approved' | 'running' | 'paused' | 'completed' | 'failed' | 'archived';
   mission: string;
@@ -58,13 +58,25 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string)
   });
 }
 
-export const ResearchSessionsDock: React.FC = () => {
+interface ResearchSessionsDockProps {
+  compact?: boolean;
+  initialMission?: string;
+  selectedSessionId?: string | null;
+  onSessionSelected?: (session: ResearchSessionView | null) => void;
+}
+
+export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
+  compact = false,
+  initialMission = '',
+  selectedSessionId = null,
+  onSessionSelected,
+}) => {
   const [sessions, setSessions] = React.useState<ResearchSessionView[]>([]);
   const [selected, setSelected] = React.useState<ResearchSessionView | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [busyById, setBusyById] = React.useState<Record<string, boolean>>({});
-  const [mission, setMission] = React.useState('');
+  const [mission, setMission] = React.useState(initialMission);
   const [scope, setScope] = React.useState('');
   const [questions, setQuestions] = React.useState('');
   const [allowedSources, setAllowedSources] = React.useState<
@@ -80,7 +92,12 @@ export const ResearchSessionsDock: React.FC = () => {
 
   React.useEffect(() => {
     selectedSessionIdRef.current = selected?.sessionId || null;
+    onSessionSelected?.(selected);
   }, [selected?.sessionId]);
+
+  React.useEffect(() => {
+    selectedSessionIdRef.current = selectedSessionId || selected?.sessionId || null;
+  }, [selected?.sessionId, selectedSessionId]);
 
   const load = React.useCallback(async (options?: { silent?: boolean }) => {
     const requestId = ++loadSeqRef.current;

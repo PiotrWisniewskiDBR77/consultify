@@ -704,7 +704,8 @@ export const DeckBuilder: React.FC = () => {
           setQualityGatesOpen(true);
           const firstBlocker = (Array.isArray(err.gates)
             ? err.gates.find(
-                (gate: { cardIndex?: unknown }) => typeof gate?.cardIndex === 'number'
+                (gate: unknown): gate is { cardIndex: number } =>
+                  typeof (gate as { cardIndex?: unknown } | null)?.cardIndex === 'number'
               )
             : null) as { cardIndex?: number } | null;
           if (firstBlocker && typeof firstBlocker.cardIndex === 'number') {

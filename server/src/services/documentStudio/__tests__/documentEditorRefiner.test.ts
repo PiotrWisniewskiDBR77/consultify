@@ -133,11 +133,7 @@ describe('AI Editor refiner safety contract (MVP-3 hardening)', () => {
     generateChatResponseMock.mockResolvedValueOnce({
       content: JSON.stringify({ text: inflated }),
     });
-    const result = await refineEditorTextWithLlm(
-      before,
-      'Inflate dramatically.',
-      baseContext
-    );
+    const result = await refineEditorTextWithLlm(before, 'Inflate dramatically.', baseContext);
     expect(result).toBeNull();
   });
 
