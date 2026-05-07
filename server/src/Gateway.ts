@@ -8,9 +8,9 @@ import { requireInternalToolsAccess } from './middleware/internalTools.middlewar
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
+import effectiveAccessRoutes from './routes/access.routes.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
-import effectiveAccessRoutes from './routes/access.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
@@ -80,11 +80,11 @@ import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
 import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
+import conclusionsRoutes from './routes/conclusions.routes.js';
 import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
 import consultantRoutes from './routes/consultants.routes.js';
 import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
-import conclusionsRoutes from './routes/conclusions.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
 import coreDocsRoutes from './routes/core-docs.routes.js';
@@ -93,6 +93,7 @@ import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import demoRoutes from './routes/demo.routes.js';
+import documentStudioRoutes from './routes/document-studio.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import economicsRoutes from './routes/economics.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
@@ -146,6 +147,7 @@ import megatrendRoutes from './routes/megatrend.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
+import moduleAccessRoutes from './routes/module-access.routes.js';
 import moduleInterestRoutes from './routes/module-interest.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
@@ -237,6 +239,7 @@ import superAdminRoutes from './routes/superadmin.routes.js';
 import syncHubRoutes from './routes/syncHub.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
+import tablePlatformRelationsExplainRoutes from './routes/table-platform.relations-explain.routes.js';
 import tablePlatformRoutes, { publicFormRouter } from './routes/table-platform.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import testSupportRoutes from './routes/testSupport.routes.js';
@@ -272,8 +275,8 @@ import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
-import workbookRoutes from './routes/workbook.routes.js';
 import workCanvasRoutes from './routes/work-canvas.routes.js';
+import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
@@ -478,6 +481,7 @@ export class ApiGateway {
 
       // Module interest / waitlist
       app.use('/api/module-interest', moduleInterestRoutes);
+      app.use('/api/module-access', moduleAccessRoutes);
 
       // Admin routes
       app.use('/api/superadmin', superAdminRoutes);
@@ -645,6 +649,9 @@ export class ApiGateway {
       app.use('/api/my-work', myWorkRoutes);
       app.use('/api/artifact-runs', v8FeatureGate, artifactRunsRoutes);
       app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
+      // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
+      // above the V8.1 substrate. See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md
+      app.use('/api/document-studio', documentStudioRoutes);
       app.use('/api/ai-context', wave6ContextRoutes);
       app.use('/api/ai-connectors', wave7ConnectorsRoutes);
       app.use('/api/ai-agents', wave8AgentsRoutes);
@@ -777,6 +784,7 @@ export class ApiGateway {
       app.use('/api/webhooks/subscriptions', webhookSubRoutes);
       app.use('/api/sync-hub', deprecationHeader('/api/v8/sync'), syncHubRoutes);
       app.use('/api/table-platform', tablePlatformRoutes);
+      app.use('/api/table-platform', tablePlatformRelationsExplainRoutes);
       app.use('/api/table-platform', publicFormRouter);
       app.use('/api/table-platform', dataCollectionRoutes);
       app.use('/api/studio', studioRoutes);

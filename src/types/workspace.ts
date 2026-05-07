@@ -136,6 +136,7 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
     [AppView.WORDY]: 'document',
     [AppView.EXCELE]: 'artifact',
     [AppView.PREZENTACJE_GEN]: 'artifact',
+    [AppView.TABELE]: 'document',
     [AppView.ECONOMICS]: 'finance',
   };
 

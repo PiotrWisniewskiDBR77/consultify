@@ -13,6 +13,7 @@ import {
   Inbox,
   LayoutGrid,
   MessageSquare,
+  Plus,
   Presentation,
   Table2,
   User,
@@ -887,29 +888,48 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const commandRowRightContent = useMemo(
     () => (
-      <button
-        type="button"
-        onClick={() =>
-          openChatWithContext({
-            entityType: 'outputs_module',
-            entityId: activeTab,
-            entityName: t('rap.hub.entityName', 'Reports & Presentations'),
-            contextData: {
-              activeTab,
-              viewMode,
-              activeFiltersCount: activeFilters.length,
-              openDocumentsCount: openDocuments.length,
-            },
-          })
-        }
-        className={getMenu3AiButtonClass(false)}
-        title={t('rap.actions.discuss', 'Discuss')}
-      >
-        <MessageSquare size={12} />
-        <span>{t('rap.actions.discuss', 'Discuss')}</span>
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => navigate('/document-studio')}
+          className={`${getMenu3AiButtonClass(false)} !border-sky-300/60 !bg-sky-500/10 !text-sky-800 dark:!border-sky-400/30 dark:!bg-sky-500/20 dark:!text-sky-200`}
+          title={t('rap.actions.newDocumentStudio', 'New AI document (Document Studio)')}
+        >
+          <Plus size={12} />
+          <span>{t('rap.actions.newDocumentStudio', 'New AI document')}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            openChatWithContext({
+              entityType: 'outputs_module',
+              entityId: activeTab,
+              entityName: t('rap.hub.entityName', 'Reports & Presentations'),
+              contextData: {
+                activeTab,
+                viewMode,
+                activeFiltersCount: activeFilters.length,
+                openDocumentsCount: openDocuments.length,
+              },
+            })
+          }
+          className={getMenu3AiButtonClass(false)}
+          title={t('rap.actions.discuss', 'Discuss')}
+        >
+          <MessageSquare size={12} />
+          <span>{t('rap.actions.discuss', 'Discuss')}</span>
+        </button>
+      </>
     ),
-    [activeFilters.length, activeTab, openChatWithContext, openDocuments.length, t, viewMode]
+    [
+      activeFilters.length,
+      activeTab,
+      navigate,
+      openChatWithContext,
+      openDocuments.length,
+      t,
+      viewMode,
+    ]
   );
 
   const handleShowList = useCallback(() => {

@@ -304,9 +304,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const currentUser = useAppStore((s) => s.currentUser);
 
   const outputType: ArtifactPlanOutputType =
-    lane === 'wordy' ? 'report' : lane === 'excele' ? 'sheet' : 'presentation';
+    lane === 'wordy' ? 'report' : lane === 'excele' || lane === 'tabele' ? 'sheet' : 'presentation';
   const artifactFamily: ArtifactFamily =
-    lane === 'wordy' ? 'document' : lane === 'excele' ? 'sheet' : 'presentation';
+    lane === 'wordy'
+      ? 'document'
+      : lane === 'excele' || lane === 'tabele'
+        ? 'sheet'
+        : 'presentation';
 
   const { data: snapshots } = useV8Snapshots(conversationId ? conversationId : undefined);
   const captureSnapshot = useV8CaptureSnapshot();
@@ -383,7 +387,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       const origin = currentRun.materializationOrigin;
       const title =
         currentRun.plan.titleHint ||
-        (lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation');
+        (lane === 'wordy'
+          ? 'Document'
+          : lane === 'excele'
+            ? 'Spreadsheet'
+            : lane === 'tabele'
+              ? 'Table'
+              : 'Presentation');
 
       if (lane === 'prezentacje' && origin?.originRecordId) {
         const deckId = origin.originRecordId;
@@ -607,11 +617,123 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         return;
       }
 
+      if (lane === 'tabele' && origin?.originRecordId) {
+        const tableId = origin.originRecordId;
+        const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
+
+        try {
+          const [tableInfo, recordsResult, proposalsResult] = await Promise.all([
+            TablePlatformApi.getTable(tableId).catch(() => null),
+            TablePlatformApi.listRecords(tableId, { pageSize: 25 }).catch(() => null),
+            workspaceIdForProposals
+              ? TablePlatformApi.listSchemaProposals(workspaceIdForProposals, 'pending').catch(
+                  () => [] as Awaited<ReturnType<typeof TablePlatformApi.listSchemaProposals>>
+                )
+              : Promise.resolve(
+                  [] as Awaited<ReturnType<typeof TablePlatformApi.listSchemaProposals>>
+                ),
+          ]);
+
+          const fields = Array.isArray(tableInfo?.fields) ? (tableInfo as any).fields : [];
+          const proposalByFieldId = new Map<string, string>();
+          for (const p of Array.isArray(proposalsResult) ? proposalsResult : []) {
+            const targetFieldId = (p as any)?.targetFieldId;
+            const proposalId = (p as any)?.id;
+            if (typeof targetFieldId === 'string' && typeof proposalId === 'string') {
+              proposalByFieldId.set(targetFieldId, proposalId);
+            }
+          }
+
+          const tabeleSchemaFields = fields.map((f: any) => {
+            const proposalId = proposalByFieldId.get(f?.id ?? f?.fieldId ?? '');
+            return {
+              fieldId: String(f?.id ?? f?.fieldId ?? ''),
+              name: String(f?.name ?? ''),
+              fieldType: String(f?.type ?? f?.fieldType ?? 'text'),
+              governanceState: proposalId ? ('proposed' as const) : ('committed' as const),
+              ...(proposalId ? { proposalId } : {}),
+            };
+          });
+
+          const tabeleRelations = fields
+            .filter((f: any) => (f?.type ?? f?.fieldType) === 'relation')
+            .map((f: any) => ({
+              fieldId: String(f?.id ?? f?.fieldId ?? ''),
+              fieldName: String(f?.name ?? ''),
+              targetTableId: String(f?.targetTableId ?? f?.relation?.targetTableId ?? ''),
+              targetTableName: String(f?.targetTableName ?? f?.relation?.targetTableName ?? ''),
+              targetCount: Number(f?.targetCount ?? 0),
+            }));
+
+          // Reserve a slot for explainRelation per relation. Sprint 3 / EPIC-2 will
+          // resolve these per-record. Failures must NOT block the preview, so we
+          // intentionally leave `tabeleRationale` undefined when explain is unavailable.
+          let tabeleRationale: ArtifactPreview['tabeleRationale'] = undefined;
+          if (tabeleRelations.length > 0) {
+            const firstRecord = Array.isArray(recordsResult?.records)
+              ? recordsResult.records[0]
+              : Array.isArray(recordsResult)
+                ? recordsResult[0]
+                : null;
+            const firstRecordId = (firstRecord as any)?.id;
+            if (firstRecordId) {
+              try {
+                const explained = await TablePlatformApi.explainRelation(tableId, firstRecordId, {
+                  max: 12,
+                });
+                if (explained?.relations && explained.relations.length > 0) {
+                  tabeleRationale = {
+                    summary: `Explained ${explained.relations.length} relations`,
+                    bullets: explained.relations.map(
+                      (r: any) => `${r.fieldName} → ${r.targetDisplayName}: ${r.reason}`
+                    ),
+                    citedSourceIds: explained.relations
+                      .map((r: any) => r.targetRecordId)
+                      .filter(Boolean),
+                    proposalStatus: 'none',
+                  };
+                }
+              } catch {
+                tabeleRationale = undefined;
+              }
+            }
+          }
+
+          setPreview({
+            type: 'tabele',
+            title,
+            tableId,
+            tabeleSchemaFields,
+            tabeleRelations,
+            ...(tabeleRationale ? { tabeleRationale } : {}),
+          });
+        } catch {
+          setPreview({
+            type: 'tabele',
+            title,
+            tableId,
+            tabeleSchemaFields: [],
+            tabeleRelations: [],
+          });
+        }
+        setContentGenerated(true);
+        return;
+      }
+
       if (lane === 'wordy') {
         setPreview({
           type: 'pdf',
           title,
           fileName: `${title.replace(/\s+/g, '_')}.pdf`,
+        });
+      } else if (lane === 'tabele') {
+        // Tail fallback: origin missing — render a minimal Tabele preview shell so
+        // Sprint 3 / Agent C still has a `'tabele'` shape to bind to.
+        setPreview({
+          type: 'tabele',
+          title,
+          tabeleSchemaFields: [],
+          tabeleRelations: [],
         });
       } else {
         setPreview({
@@ -627,7 +749,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     };
 
     void runContentGeneration();
-  }, [effectiveStatus, currentRun, lane, lastGoal]);
+  }, [effectiveStatus, currentRun, lane, lastGoal, currentOrganization?.id, currentProjectId]);
 
   const startGeneration = useCallback(
     async (goal: string, templateArtifactId?: string) => {
@@ -646,7 +768,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       if (!activeConvId) {
         try {
           const laneTitle =
-            lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation';
+            lane === 'wordy'
+              ? 'Document'
+              : lane === 'excele'
+                ? 'Spreadsheet'
+                : lane === 'tabele'
+                  ? 'Table'
+                  : 'Presentation';
           await useConversationStore.getState().createConversation({
             title: `${laneTitle}: ${goal.slice(0, 60)}`,
           });
@@ -871,6 +999,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, []);
 
   const handleDownload = useCallback(async () => {
+    // TODO(Sprint 4 / EPIC-4 US-4.4): Wire to
+    //   `tabeleArtifactOpen.downloadTabeleArtifactCsv(tableId)`
+    // once Agent D creates `src/utils/tabeleArtifactOpen.ts`. Until then, this
+    // placeholder prevents Tabele lane from accidentally calling the wrong
+    // sheet/deck download path.
+    if (lane === 'tabele') {
+      console.warn('[Tabele] CSV download wired in Sprint 4');
+      return;
+    }
+
     // P23-ext: Check for workbook download first
     if (lane === 'excele' && preview && (preview as any).workbookId) {
       Api.downloadWorkbook((preview as any).workbookId);
@@ -913,8 +1051,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     myWorkNotified.current = true;
 
     const origin = currentRun.materializationOrigin;
+    const laneSegment =
+      lane === 'wordy'
+        ? 'wordy'
+        : lane === 'prezentacje'
+          ? 'prezentacje'
+          : lane === 'tabele'
+            ? 'tabele'
+            : 'excele';
     const artifactPath = origin?.originRecordId
-      ? `/${lane === 'wordy' ? 'wordy' : lane === 'prezentacje' ? 'prezentacje' : 'excele'}?artifactId=${origin.originRecordId}`
+      ? `/${laneSegment}?artifactId=${origin.originRecordId}`
       : null;
 
     Api.post('/mywork/items', {

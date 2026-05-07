@@ -754,7 +754,8 @@
     "toolsLibrary": "Biblioteka",
     "wordy": "Dokumenty",
     "excele": "Tabele",
-    "prezentacje": "Prezentacje"
+    "prezentacje": "Prezentacje",
+    "tabele": "Tabele Studio"
   },
   "widgets": {
     "help": {
@@ -9205,13 +9206,16 @@
     "generatingDoc": "Tworzenie dokumentu",
     "generatingSheet": "Tworzenie arkusza",
     "generatingDeck": "Tworzenie prezentacji",
+    "generatingTable": "Tworzenie tabeli operacyjnej",
     "emptyWordy": "Twój dokument pojawi się tutaj",
     "emptyExcele": "Twój arkusz pojawi się tutaj",
     "emptyDeck": "Twoja prezentacja pojawi się tutaj",
+    "emptyTabele": "Twoja tabela operacyjna pojawi się tutaj",
     "emptyHint": "Opisz czego potrzebujesz i kliknij Generuj",
     "generateDoc": "Generuj dokument",
     "generateSheet": "Generuj arkusz",
     "generateDeck": "Generuj prezentację",
+    "generateTable": "Generuj tabelę",
     "docReady": "Dokument gotowy — użyj Podglądu pliku lub Pobierz",
     "showingRows": "Pokazywanie 25 z {{total}} wierszy",
     "xlsxPreview": "Podgląd arkusza",
@@ -9226,6 +9230,7 @@
     "laneWordy": "Dokumenty",
     "laneExcele": "Tabele",
     "lanePrezentacje": "Prezentacje",
+    "laneTabele": "Tabele",
     "stepSnapshot": "Przechwytywanie kontekstu",
     "stepPlan": "Tworzenie planu artefaktu",
     "stepPreflight": "Walidacja kontroli wstępnej",
@@ -9234,7 +9239,86 @@
     "stepApprove": "Zatwierdzenie wykonania",
     "stepMaterialize": "Materializacja artefaktu",
     "stepGenerate": "Generowanie treści",
-    "sheetReady": "Arkusz gotowy — użyj Podglądu pliku lub Pobierz"
+    "sheetReady": "Arkusz gotowy — użyj Podglądu pliku lub Pobierz",
+    "tableReady": "Tabela gotowa — użyj Podglądu pliku lub Pobierz",
+    "tabele": {
+      "preview": {
+        "documentLabel": "Podgląd tabeli operacyjnej Tabele",
+        "subtitle": "Tabela operacyjna",
+        "untitled": "Tabela bez tytułu",
+        "coverDescription": "Dokumentowy canvas w stylu Word do przeglądu schematu, przykładowych rekordów, relacji i uzasadnienia governance przed otwarciem Buildera Tabel.",
+        "livePreview": "Podgląd na żywo",
+        "rowsKpi": "Wiersze",
+        "columnsKpi": "Kolumny",
+        "statusKpi": "Status",
+        "formatKpi": "Format",
+        "statusGoverned": "Governed",
+        "statusPreview": "Podgląd",
+        "formatOperational": "Operacyjna",
+        "formatDraft": "Szkic",
+        "schemaTitle": "Schemat",
+        "schemaMeta": "{{count}} pól w schemacie podglądu",
+        "emptySchema": "Brak pól schematu w tym podglądzie.",
+        "schemaCollapsed": "Schemat zwinięty dla kompaktowego przeglądu.",
+        "recordsTitle": "Rekordy",
+        "recordsMeta": "Pokazywanie przykładowych rekordów z wygenerowanej tabeli",
+        "emptyRecords": "Brak przykładowych rekordów w tym podglądzie.",
+        "showingRows": "Pokazywanie 25 z {{total}} wierszy",
+        "relationsTitle": "Relacje",
+        "relationsMeta": "{{count}} chipów relacji dostępnych",
+        "emptyRelations": "Brak relacji tabel w tym podglądzie.",
+        "relationsCollapsed": "Relacje zwinięte dla kompaktowego przeglądu.",
+        "noRelationsCollapsed": "Relacje zwinięte, ponieważ nie są dostępne.",
+        "expandSection": "Rozwiń",
+        "collapseSection": "Zwiń",
+        "rationaleTitle": "Uzasadnienie AI"
+      },
+      "schema": {
+        "committed": "Zatwierdzone",
+        "proposed": "Proponowane",
+        "rejected": "Odrzucone",
+        "caption": "Pole schematu wyrenderowane jako blok dokumentu tabeli operacyjnej",
+        "proposalCaption": "Powiązane z propozycją schematu {{proposalId}}",
+        "unnamedField": "pole_bez_nazwy",
+        "defaultType": "tekst"
+      },
+      "relations": {
+        "loadingRationale": "Ładowanie uzasadnienia relacji...",
+        "noRationale": "Uzasadnienie relacji nie jest dostępne w tym podglądzie.",
+        "tooltipTitle": "Wyjaśnialność relacji",
+        "tooltipSource": "Źródło: metadane relacji tabeli filtrowane ACL"
+      },
+      "rationale": {
+        "proposalPending": "Oczekujące",
+        "proposalApproved": "Zatwierdzone",
+        "proposalRejected": "Odrzucone",
+        "proposalNone": "Brak",
+        "proposalStatus": "Status propozycji: {{status}}",
+        "emptySummary": "Brak podsumowania uzasadnienia dla tego podglądu.",
+        "points": "Punkty uzasadnienia",
+        "showLess": "Pokaż mniej",
+        "showMore": "Pokaż jeszcze {{count}}",
+        "citedSources": "Cytowane źródła",
+        "noSources": "Brak cytowanych źródeł",
+        "reviewProposals": "Przejrzyj propozycje"
+      }
+    }
+  },
+  "tabele": {
+    "defaultTitle": "Tabela operacyjna",
+    "loadPreviewFailed": "Nie udało się załadować podglądu tabeli.",
+    "builderUnreachable": "Nie udało się ustalić workspace dla tej tabeli",
+    "openingBuilder": "Otwieram Builder Tabel...",
+    "intentRouted": {
+      "exportCsv": "Rozpoczęto eksport CSV",
+      "exportXlsx": "Rozpoczęto eksport XLSX",
+      "exportJson": "Rozpoczęto eksport JSON",
+      "schemaProposalCreated": "Utworzono propozycję schematu: {{proposalId}}",
+      "explainRelation": "Załadowano uzasadnienie relacji",
+      "relationRecordMissing": "Brak rekordu do wyjaśnienia",
+      "workspaceMissing": "Wymagany jest kontekst workspace",
+      "failed": "Nie udało się obsłużyć tej instrukcji"
+    }
   },
   "contact": {
     "badge": "Skontaktuj się",

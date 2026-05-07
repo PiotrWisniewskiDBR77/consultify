@@ -150,6 +150,105 @@ async function checkOrgQuota(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+function extractBaseIdFromSchemaProposalOperations(operations: unknown): string | null {
+  const parsed = typeof operations === 'string' ? JSON.parse(operations) : operations;
+  if (!Array.isArray(parsed)) return null;
+  for (const op of parsed) {
+    const target = (op as { target?: Record<string, unknown> } | null)?.target;
+    const baseId = target?.base_id ?? target?.baseId;
+    if (typeof baseId === 'string' && baseId && !baseId.startsWith('@ref:')) return baseId;
+  }
+  return null;
+}
+
+async function resolveSchemaProposalBaseId(proposalId: string): Promise<string | null> {
+  const db = (await import('../database/Database.js')).getDatabase();
+  const proposalResult = await db.query(
+    'SELECT workspace_id, operations FROM tp_schema_proposals WHERE id = $1',
+    [proposalId]
+  );
+  const proposal = proposalResult.rows[0] as
+    | { workspace_id?: string; operations?: string | unknown[] }
+    | undefined;
+  if (!proposal) return null;
+
+  const baseIdFromOperations = extractBaseIdFromSchemaProposalOperations(proposal.operations);
+  if (baseIdFromOperations) return baseIdFromOperations;
+
+  if (!proposal.workspace_id) return null;
+  const baseResult = await db.query(
+    'SELECT id FROM tp_bases WHERE workspace_id = $1 ORDER BY created_at ASC LIMIT 1',
+    [proposal.workspace_id]
+  );
+  return (baseResult.rows[0] as { id?: string } | undefined)?.id ?? null;
+}
+
+async function workspaceBelongsToOrganization(
+  workspaceId: string,
+  organizationId: string
+): Promise<boolean> {
+  const db = (await import('../database/Database.js')).getDatabase();
+  const result = await db.query(
+    'SELECT 1 FROM tp_bases WHERE workspace_id = $1 AND organization_id = $2 LIMIT 1',
+    [workspaceId, organizationId]
+  );
+  return result.rows.length > 0;
+}
+
+function requireWorkspaceTenantAccess(req: Request, res: Response, next: NextFunction): void {
+  const authReq = req as AuthRequest;
+  const workspaceId = authReq.params?.workspaceId ?? authReq.body?.workspaceId;
+  const orgId = authReq.organizationId;
+  if (!orgId) {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
+  if (!workspaceId || typeof workspaceId !== 'string') {
+    res.status(400).json({ error: 'workspaceId is required' });
+    return;
+  }
+  workspaceBelongsToOrganization(workspaceId, orgId)
+    .then((allowed) => {
+      if (!allowed) {
+        res.status(403).json({ error: 'Access denied to this workspace' });
+        return;
+      }
+      next();
+    })
+    .catch(next);
+}
+
+function requireSchemaProposalAccess(req: Request, res: Response, next: NextFunction): void {
+  const authReq = req as AuthRequest;
+  const userId = authReq.userId;
+  const orgId = authReq.organizationId;
+  const proposalId = authReq.params?.proposalId;
+  if (!userId || !orgId) {
+    res.status(403).json({ error: 'Authentication and organization context required' });
+    return;
+  }
+  if (!proposalId) {
+    res.status(400).json({ error: 'proposalId is required' });
+    return;
+  }
+
+  resolveSchemaProposalBaseId(proposalId)
+    .then(async (baseId) => {
+      if (!baseId) {
+        res.status(404).json({ error: 'Proposal not found or base cannot be resolved' });
+        return;
+      }
+      (authReq as any).resolvedBaseId = baseId;
+      const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+      if (!allowed) {
+        res.status(403).json({ error: 'Access denied to this schema proposal' });
+        return;
+      }
+      next();
+    })
+    .catch(next);
+}
+
 // ==========================================
 // HEALTH CHECK (no auth required)
 // ==========================================
@@ -1454,7 +1553,7 @@ router.post(
 // CHAT-TO-SCHEMA API
 // ==========================================
 
-router.post('/schema/propose', async (req: Request, res: Response) => {
+router.post('/schema/propose', requireWorkspaceTenantAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { workspaceId, message, existingSchema, language, baseId, tableId } = req.body ?? {};
@@ -1549,7 +1648,10 @@ router.post(
   }
 );
 
-router.post('/schema/proposals/:proposalId/reject', async (req: Request, res: Response) => {
+router.post(
+  '/schema/proposals/:proposalId/reject',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { proposalId } = req.params;
@@ -1562,9 +1664,13 @@ router.post('/schema/proposals/:proposalId/reject', async (req: Request, res: Re
     logger.error('[TablePlatform] schema/reject failed', { error: (e as Error).message });
     return res.status(500).json({ error: 'Rejection failed', details: (e as Error).message });
   }
-});
+  }
+);
 
-router.post('/schema/proposals/:proposalId/refine', async (req: Request, res: Response) => {
+router.post(
+  '/schema/proposals/:proposalId/refine',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { proposalId } = req.params;
@@ -1581,14 +1687,19 @@ router.post('/schema/proposals/:proposalId/refine', async (req: Request, res: Re
     logger.error('[TablePlatform] schema/refine failed', { error: (e as Error).message });
     return res.status(500).json({ error: 'Refinement failed', details: (e as Error).message });
   }
-});
+  }
+);
 
-router.post('/schema/proposals/:proposalId/undo', async (req: Request, res: Response) => {
+router.post(
+  '/schema/proposals/:proposalId/undo',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     const { proposalId } = req.params;
-    const { baseId } = req.body ?? {};
+    const baseId = (authReq as any).resolvedBaseId as string | undefined;
     if (!baseId) {
-      return res.status(400).json({ error: 'baseId is required' });
+      return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
     }
     const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
       .default;
@@ -1601,14 +1712,19 @@ router.post('/schema/proposals/:proposalId/undo', async (req: Request, res: Resp
     logger.error('[TablePlatform] schema/undo failed', { error: (e as Error).message });
     return res.status(500).json({ error: 'Undo failed', details: (e as Error).message });
   }
-});
+  }
+);
 
-router.post('/schema/proposals/:proposalId/redo', async (req: Request, res: Response) => {
+router.post(
+  '/schema/proposals/:proposalId/redo',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     const { proposalId } = req.params;
-    const { baseId } = req.body ?? {};
+    const baseId = (authReq as any).resolvedBaseId as string | undefined;
     if (!baseId) {
-      return res.status(400).json({ error: 'baseId is required' });
+      return res.status(400).json({ error: 'Cannot resolve baseId for proposal' });
     }
     const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
       .default;
@@ -1621,7 +1737,8 @@ router.post('/schema/proposals/:proposalId/redo', async (req: Request, res: Resp
     logger.error('[TablePlatform] schema/redo failed', { error: (e as Error).message });
     return res.status(500).json({ error: 'Redo failed', details: (e as Error).message });
   }
-});
+  }
+);
 
 router.get(
   '/bases/:baseId/schema-history',
@@ -1640,7 +1757,10 @@ router.get(
   }
 );
 
-router.get('/schema/proposals/:proposalId', async (req: Request, res: Response) => {
+router.get(
+  '/schema/proposals/:proposalId',
+  requireSchemaProposalAccess,
+  async (req: Request, res: Response) => {
   try {
     const { proposalId } = req.params;
     const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
@@ -1652,9 +1772,13 @@ router.get('/schema/proposals/:proposalId', async (req: Request, res: Response) 
     logger.error('[TablePlatform] schema/get failed', { error: (e as Error).message });
     return res.status(500).json({ error: 'Fetch failed', details: (e as Error).message });
   }
-});
+  }
+);
 
-router.get('/workspaces/:workspaceId/schema/proposals', async (req: Request, res: Response) => {
+router.get(
+  '/workspaces/:workspaceId/schema/proposals',
+  requireWorkspaceTenantAccess,
+  async (req: Request, res: Response) => {
   try {
     const { workspaceId } = req.params;
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
@@ -1666,7 +1790,8 @@ router.get('/workspaces/:workspaceId/schema/proposals', async (req: Request, res
     logger.error('[TablePlatform] schema/proposals list failed', { error: (e as Error).message });
     return res.status(500).json({ error: 'List failed', details: (e as Error).message });
   }
-});
+  }
+);
 
 // ==========================================
 // AUDIT TRAIL

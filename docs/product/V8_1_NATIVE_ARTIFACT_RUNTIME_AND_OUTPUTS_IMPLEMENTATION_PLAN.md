@@ -738,3 +738,8 @@ This package is engineering-complete when:
 - `docs/product/REPORTS_AND_PRESENTATIONS_V8_MASTER_SUMMARY.md`
 - `docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
 - `docs/product/TOOLS_CATALOG_V3.md`
+
+## 19. Document runtime productization plan
+
+The Document format runtime planned in this document is productized as **Consultify Document Studio**. The wave-by-wave plan for the Document runtime itself lives in `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md`. That plan layers above this substrate plan; it does not introduce a parallel artifact registry or a parallel approval universe.
+

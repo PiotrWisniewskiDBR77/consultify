@@ -569,3 +569,15 @@ Recommended order:
 - `docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
 - `docs/product/TOOLS_CATALOG_V3.md`
 - `docs/product/REPORTS_AND_PRESENTATIONS_V8_MASTER_SUMMARY.md`
+
+## 20. Document runtime productization
+
+The Document format runtime defined in this spec is productized as **Consultify Document Studio**. The productized doctrine, document type taxonomy, gap matrix and implementation plan live in:
+
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_TYPE_TAXONOMY.md`
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_GAP_MATRIX.md`
+- `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md`
+
+Document Studio specializes the Document format runtime above this substrate. It does not replace anything in this spec.
+

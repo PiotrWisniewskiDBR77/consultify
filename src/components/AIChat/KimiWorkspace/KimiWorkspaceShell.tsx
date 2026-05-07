@@ -23,6 +23,7 @@ import {
   Presentation,
   RefreshCw,
   Sparkles,
+  Table,
   X,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -30,12 +31,18 @@ import { useTranslation } from 'react-i18next';
 
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import type {
+  TabelePreviewRationale,
+  TabelePreviewRelation,
+  TabelePreviewSchemaField,
+} from '@/types/tabeleArtifact';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
 
 import { UnifiedChatPanel } from '../UnifiedChatPanel';
+import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
-export type KimiLane = 'wordy' | 'excele' | 'prezentacje';
+export type KimiLane = 'wordy' | 'excele' | 'prezentacje' | 'tabele';
 
 export type TaskStepStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -46,7 +53,7 @@ export interface TaskStep {
   detail?: string;
 }
 
-export type ArtifactPreviewType = 'pdf' | 'xlsx' | 'deck' | 'none';
+export type ArtifactPreviewType = 'pdf' | 'xlsx' | 'deck' | 'tabele' | 'none';
 
 export interface ArtifactPreview {
   type: ArtifactPreviewType;
@@ -78,6 +85,12 @@ export interface ArtifactPreview {
   downloadUrl?: string;
   qualityScore?: number | null;
   pipelineLog?: unknown;
+  // Tabele (Table Studio Foundation block) extras — populated by Sprint 3 / EPIC-2.
+  // All optional; Sprint 2 only registers the shape so consumers can compile.
+  tableId?: string;
+  tabeleSchemaFields?: TabelePreviewSchemaField[];
+  tabeleRelations?: TabelePreviewRelation[];
+  tabeleRationale?: TabelePreviewRationale;
 }
 
 interface KimiWorkspaceShellProps {
@@ -124,6 +137,14 @@ const LANE_CONFIG = {
     accentColor: 'fuchsia',
     inputPlaceholder: 'Describe the presentation you want to create...',
     inputPlaceholderPl: 'Opisz prezentację, którą chcesz stworzyć...',
+  },
+  tabele: {
+    icon: Table,
+    label: 'Table Studio',
+    labelPl: 'Tabele Studio',
+    accentColor: 'sky',
+    inputPlaceholder: 'Describe the operational table you want to build...',
+    inputPlaceholderPl: 'Opisz tabelę operacyjną, którą chcesz zbudować...',
   },
 } as const;
 
@@ -297,7 +318,9 @@ function ArtifactPreviewPane({
                 ? t('kimi.generatingDoc', 'Building your document')
                 : lane === 'excele'
                   ? t('kimi.generatingSheet', 'Building your spreadsheet')
-                  : t('kimi.generatingDeck', 'Building your presentation')}
+                  : lane === 'tabele'
+                    ? t('kimi.generatingTabele', 'Building your operational table')
+                    : t('kimi.generatingDeck', 'Building your presentation')}
             </p>
           </div>
         </div>
@@ -351,7 +374,9 @@ function ArtifactPreviewPane({
                 ? t('kimi.emptyWordy', 'Your document will appear here')
                 : lane === 'excele'
                   ? t('kimi.emptyExcele', 'Your spreadsheet will appear here')
-                  : t('kimi.emptyDeck', 'Your presentation will appear here')}
+                  : lane === 'tabele'
+                    ? t('kimi.emptyTabele', 'Your operational table will appear here')
+                    : t('kimi.emptyDeck', 'Your presentation will appear here')}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {t('kimi.emptyHint', 'Describe what you need and click Generate')}
@@ -380,7 +405,9 @@ function ArtifactPreviewPane({
                   ? t('kimi.generateDoc', 'Generate Document')
                   : lane === 'excele'
                     ? t('kimi.generateSheet', 'Generate Spreadsheet')
-                    : t('kimi.generateDeck', 'Generate Presentation')}
+                    : lane === 'tabele'
+                      ? t('kimi.generateTabele', 'Generate Table')
+                      : t('kimi.generateDeck', 'Generate Presentation')}
               </button>
             </div>
           )}
@@ -539,6 +566,12 @@ function ArtifactPreviewPane({
             )}
           </div>
         )}
+        {preview.type === 'tabele' && (
+          <TabelePreviewLayout
+            preview={preview as ArtifactPreview & { type: 'tabele' }}
+            isPolish={isPolish}
+          />
+        )}
         {preview.type === 'deck' && (
           <div className="space-y-4">
             {preview.summary && (
@@ -691,7 +724,9 @@ function ArtifactPreviewPane({
                     ? 'document.pdf'
                     : lane === 'excele'
                       ? 'spreadsheet.xlsx'
-                      : 'presentation.pptx')}
+                      : lane === 'tabele'
+                        ? 'table.csv'
+                        : 'presentation.pptx')}
               </span>
               <span className="text-xs text-slate-400">
                 {t('kimi.previewFile', 'Preview File')}
@@ -745,6 +780,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
       wordy: AppView.WORDY,
       excele: AppView.EXCELE,
       prezentacje: AppView.PREZENTACJE_GEN,
+      tabele: AppView.TABELE,
     };
     const view = laneViewMap[lane];
     const type = getDefaultWorkspaceType(view);

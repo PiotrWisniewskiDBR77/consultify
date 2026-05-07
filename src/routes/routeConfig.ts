@@ -28,11 +28,13 @@ export const ROUTES = {
 
   // Main App Routes
   AI_CHAT: '/chat',
+  AI_CHAT_V10_RUNTIME: '/internal/v10-runtime',
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   WORDY: '/wordy',
   EXCELE: '/excele',
   PREZENTACJE_GEN: '/prezentacje',
+  TABELE: '/tabele',
   INTERVIEW: '/interview',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
 
@@ -203,6 +205,9 @@ export const ROUTES = {
   // Wizards
   ORG_SETUP: '/setup/organization',
   ONBOARDING: '/setup/onboarding',
+  ONBOARDING_ADMIN: '/setup/onboarding/admin',
+  ONBOARDING_SEED: '/setup/onboarding/seed/:persona',
+  ONBOARDING_SEED_BASE: '/setup/onboarding/seed',
   TRIAL_ENTRY: '/trial',
 
   // Affiliate
@@ -274,6 +279,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // Main
   [AppView.AI_CHAT]: ROUTES.AI_CHAT,
+  [AppView.AI_CHAT_V10_RUNTIME]: ROUTES.AI_CHAT_V10_RUNTIME,
   [AppView.APP_INTRO]: ROUTES.APP_INTRO,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -338,6 +344,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.WORDY]: ROUTES.WORDY,
   [AppView.EXCELE]: ROUTES.EXCELE,
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
+  [AppView.TABELE]: ROUTES.TABELE,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
   [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
@@ -633,6 +640,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
 
+  if (normalized === ROUTES.AI_CHAT_V10_RUNTIME) return AppView.AI_CHAT_V10_RUNTIME;
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
   if (normalized.startsWith(ROUTES.DOCS)) return AppView.KNOWLEDGE_BASE;
@@ -719,6 +727,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.WORDY)) return AppView.WORDY;
   if (normalized.startsWith(ROUTES.EXCELE)) return AppView.EXCELE;
   if (normalized.startsWith(ROUTES.PREZENTACJE_GEN)) return AppView.PREZENTACJE_GEN;
+  if (normalized.startsWith(ROUTES.TABELE)) return AppView.TABELE;
 
   // Meeting & MCP
   if (normalized.startsWith(ROUTES.MEETING)) return AppView.MEETING;

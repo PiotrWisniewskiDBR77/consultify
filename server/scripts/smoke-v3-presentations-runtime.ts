@@ -27,7 +27,7 @@ function main(): void {
     pass: includesAll(routes, [
       "'/decks/:deckId/export/pdf'",
       "'/decks/:deckId/agent-edit'",
-      'applyAgentEdit(',
+      "'/decks/:deckId/agent-edit/:operationId/accept'",
       'deck_json = ?',
     ]),
   });

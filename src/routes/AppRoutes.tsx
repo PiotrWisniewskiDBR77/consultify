@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
   Navigate,
@@ -22,6 +23,7 @@ import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
+import { apiGet } from '@/services/api/baseClient';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
@@ -34,8 +36,8 @@ import { ProductEntryPage } from '@/views/ProductEntryPage';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
-import { WorkCanvasRedirect } from './WorkCanvasRedirect';
 import { ROUTES } from './routeConfig';
+import { WorkCanvasRedirect } from './WorkCanvasRedirect';
 
 // Lazy load views for new routes
 const StudioView = React.lazy(() =>
@@ -132,6 +134,14 @@ const ReportsAndPresentationsHub = React.lazy(() =>
     default: m.ReportsAndPresentationsHub,
   }))
 );
+// Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
+// above the V8.1 substrate.
+// See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md.
+const DocumentStudioView = React.lazy(() =>
+  import('@/components/DocumentStudio/DocumentStudioView').then((m) => ({
+    default: m.DocumentStudioView,
+  }))
+);
 const DeckBuilder = React.lazy(() =>
   import('@/components/Presentations/DeckBuilder/DeckBuilder').then((m) => ({
     default: m.DeckBuilder,
@@ -219,6 +229,12 @@ const ExceleView = React.lazy(() =>
 const PrezentacjeView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/PrezentacjeView').then((m) => ({
     default: m.PrezentacjeView,
+  }))
+);
+// KIMI-style Tabele workspace (Table Studio Foundation block — sky accent, D1=visible)
+const TabeleView = React.lazy(() =>
+  import('@/components/AIChat/KimiWorkspace/TabeleView').then((m) => ({
+    default: m.default,
   }))
 );
 
@@ -475,6 +491,29 @@ const ReportsBuilderLegacyRedirect: React.FC = () => {
   return <Navigate to={to} replace />;
 };
 
+const MyWorkSheetsDeepLinkRedirect: React.FC = () => {
+  const params = useParams<{ workspaceId?: string; tableId?: string }>();
+  const navigate = useNavigate();
+  const workspaceId = String(params.workspaceId || '').trim();
+  const tableId = String(params.tableId || '').trim();
+  React.useEffect(() => {
+    if (!workspaceId || !tableId) {
+      navigate('/my-work', { replace: true });
+      return;
+    }
+    toast.success('Transitioning to Sheets Builder lane...');
+    navigate(
+      `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table?tpTable=${encodeURIComponent(tableId)}`,
+      { replace: true, state: { transition: 'sheets_deep_link_option_a' } }
+    );
+  }, [navigate, tableId, workspaceId]);
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-sky-500" />
+    </div>
+  );
+};
+
 /** Redirects /auth?action=trial to /trial/start */
 const AuthRouteWithTrialRedirect: React.FC<{
   isAuthenticated: boolean;
@@ -569,6 +608,76 @@ export const AppRoutes: React.FC = () => {
     []
   );
   const internalToolsEnabled = canUseInternalTools(currentUser);
+  const directKimiModuleAccess = React.useMemo(() => {
+    if (!currentUser?.isAuthenticated) return false;
+    if (isSuperAdminRole(currentUser?.role)) return true;
+
+    const email = String(currentUser?.email || '')
+      .trim()
+      .toLowerCase();
+    if (!email) return false;
+
+    const defaults = ['piotr.wisniewski@dbr77.com', 'piotrwisniewski@dbr77.com'];
+    const configured = String(
+      import.meta.env.VITE_DIRECT_KIMI_MODULE_ACCESS_EMAILS || 'piotr.wisniewski@dbr77.com'
+    )
+      .split(',')
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+    const allowlist = new Set([...defaults, ...configured]);
+    return allowlist.has(email);
+  }, [currentUser?.isAuthenticated, currentUser?.role, currentUser?.email]);
+
+  const KimiModuleGate: React.FC<{
+    moduleKey: 'wordy' | 'excele' | 'prezentacje';
+    children: React.ReactNode;
+  }> = ({ moduleKey, children }) => {
+    const [loading, setLoading] = React.useState(true);
+    const [allowed, setAllowed] = React.useState(false);
+
+    React.useEffect(() => {
+      let cancelled = false;
+      const run = async () => {
+        if (directKimiModuleAccess) {
+          if (!cancelled) {
+            setAllowed(true);
+            setLoading(false);
+          }
+          return;
+        }
+
+        try {
+          const data = await apiGet<{ modules?: string[] }>('/module-access/my');
+          const modules = Array.isArray(data?.modules) ? data.modules : [];
+          if (!cancelled) {
+            setAllowed(modules.includes(moduleKey));
+          }
+        } catch {
+          if (!cancelled) {
+            setAllowed(false);
+          }
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }
+      };
+      void run();
+      return () => {
+        cancelled = true;
+      };
+    }, [moduleKey, directKimiModuleAccess]);
+
+    if (loading) {
+      return (
+        <div className="flex h-[40vh] items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        </div>
+      );
+    }
+
+    return <>{allowed ? children : <V4ComingSoonView />}</>;
+  };
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -1128,6 +1237,10 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        <Route
+          path="/my-work/sheets/:workspaceId/tables/:tableId"
+          element={<MyWorkSheetsDeepLinkRedirect />}
+        />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
         {/* AI Chat - Full Screen Chat View */}
@@ -1239,7 +1352,9 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]}>
                 <RouteErrorBoundary>
-                  <V4ComingSoonView />
+                  <KimiModuleGate moduleKey="wordy">
+                    <WordyView />
+                  </KimiModuleGate>
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
@@ -1253,7 +1368,9 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Tables')]}>
                 <RouteErrorBoundary>
-                  <V4ComingSoonView />
+                  <KimiModuleGate moduleKey="excele">
+                    <ExceleView />
+                  </KimiModuleGate>
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
@@ -1267,7 +1384,23 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
                 <RouteErrorBoundary>
-                  <V4ComingSoonView />
+                  <KimiModuleGate moduleKey="prezentacje">
+                    <PrezentacjeView />
+                  </KimiModuleGate>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* KIMI Tabele Studio — operational tables workspace (D1=visible, sky accent) */}
+        <Route
+          path={ROUTES.TABELE}
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.tabele', 'Tables')]}>
+                <RouteErrorBoundary>
+                  <TabeleView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
@@ -1888,6 +2021,52 @@ export const AppRoutes: React.FC = () => {
                   <AnimationWrapper variant="slideUp">
                     <DeckBuilder />
                   </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/document-studio"
+          element={
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('documentStudio.breadcrumb', 'Document Studio'),
+                ]
+              }
+              noPadding
+            >
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <DocumentStudioView />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/document-studio/:artifactId"
+          element={
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('documentStudio.breadcrumb', 'Document Studio'),
+                ]
+              }
+              noPadding
+            >
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Outputs"
+              >
+                <RouteErrorBoundary>
+                  <DocumentStudioView />
                 </RouteErrorBoundary>
               </ProductionModuleGate>
             </MainLayout>

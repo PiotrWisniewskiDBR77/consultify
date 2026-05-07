@@ -294,16 +294,30 @@ export async function generateSchemaProposal(
 }
 
 /** Chat-to-Schema: execute proposal */
+export interface ExecutionResult {
+  proposalId?: string;
+  executed?: boolean;
+  appliedOperationIds?: string[];
+  auditId?: string;
+  [key: string]: unknown;
+}
+
 export async function executeSchemaProposal(
   proposalId: string,
-  approvedOperationIds?: string[]
-): Promise<any> {
+  options?: string[] | { approvedOperationIds?: string[]; executedBy?: string }
+): Promise<ExecutionResult> {
+  const body = Array.isArray(options)
+    ? { approvedOperationIds: options }
+    : {
+        approvedOperationIds: options?.approvedOperationIds,
+        executedBy: options?.executedBy,
+      };
   const res = await fetchWithRetry(`${BASE_PATH}/schema/proposals/${proposalId}/execute`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify({ approvedOperationIds }),
+    body: JSON.stringify(body),
   });
-  return handleResponse(res, 'Failed to execute schema proposal');
+  return handleResponse<ExecutionResult>(res, 'Failed to execute schema proposal');
 }
 
 /** Chat-to-Schema: reject proposal */
@@ -353,6 +367,137 @@ export async function getSchemaProposal(proposalId: string): Promise<any> {
     headers: getHeaders(),
   });
   return handleResponse(res, 'Failed to fetch schema proposal');
+}
+
+// ============================================================================
+// SCHEMA-GOVERNANCE PROPOSALS — Table Studio Foundation block (Wave 1)
+// ----------------------------------------------------------------------------
+// These typed clients are added/refined by Sprint 2 / EPIC-1 US-1.7. The
+// existing execute/reject call sites remain source-compatible.
+// Backend routes are owned by Agent A (Sprint 1 / EPIC-3) — see
+// DRD/consultify/docs/product/work-packets/table-studio-foundation/epics/EPIC-3_BACKEND_RELATION_EXPLAINABILITY.md
+// for the agreed response shapes.
+// ============================================================================
+
+/**
+ * Schema-Governance Proposal lifecycle.
+ *
+ * Backed by `POST /api/table-platform/schema/proposals` and the proposal
+ * queue endpoints. All field shapes are intentionally permissive (extra
+ * server-added fields preserved via `[key: string]: unknown`) so additive
+ * backend changes do not break the frontend.
+ */
+export interface SchemaProposal {
+  id: string;
+  workspaceId: string;
+  intent: string;
+  actor?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'executed';
+  /** Optional target hints surfaced by Sprint 3 schema preview (US-2.2). */
+  targetTableId?: string;
+  targetFieldId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Relation-explain response shape — agreed with Agent A in EPIC-3.
+ *
+ * The route transport may wrap this object in `{ data }`; the client unwraps
+ * that envelope so callers receive the inner shape directly.
+ */
+export interface RelationExplainResponse {
+  relations: Array<{
+    targetTableId: string;
+    targetRecordId: string;
+    targetDisplayName: string;
+    fieldId: string;
+    fieldName: string;
+    reason: string;
+    confidence: number;
+    evidence: Array<{ kind: 'field_match' | 'temporal' | 'semantic'; ref: string }>;
+  }>;
+  cacheHit: boolean;
+  computedInMs: number;
+}
+
+/**
+ * Propose a chat-to-schema change. The backend persists a `SchemaProposal`
+ * in `pending` status awaiting governance review.
+ */
+export async function proposeSchemaChange(
+  workspaceId: string,
+  intent: string,
+  options?: { actor?: string; tableId?: string; context?: Record<string, unknown> }
+): Promise<SchemaProposal> {
+  const res = await fetchWithRetry(`${BASE_PATH}/schema/propose`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      workspaceId,
+      message: intent,
+      actor: options?.actor,
+      tableId: options?.tableId,
+      context: options?.context,
+    }),
+  });
+  return handleResponse<SchemaProposal>(res, 'Failed to propose schema change');
+}
+
+/**
+ * List Schema-Governance proposals for a workspace, optionally filtered by
+ * lifecycle status. Returns an empty array when the workspace has none.
+ */
+export async function listSchemaProposals(
+  workspaceId: string,
+  status?: 'pending' | 'approved' | 'rejected' | 'executed'
+): Promise<SchemaProposal[]> {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  const query = params.toString();
+  const url = query
+    ? `${BASE_PATH}/workspaces/${workspaceId}/schema/proposals?${query}`
+    : `${BASE_PATH}/workspaces/${workspaceId}/schema/proposals`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  const data = await handleResponse<{ proposals?: SchemaProposal[] } | SchemaProposal[]>(
+    res,
+    'Failed to list schema proposals'
+  );
+  if (Array.isArray(data)) return data;
+  return Array.isArray(data?.proposals) ? data.proposals : [];
+}
+
+function unwrapDataEnvelope<T>(value: T | { data?: T }): T {
+  if (value && typeof value === 'object' && 'data' in value) {
+    const wrapped = value as { data?: T };
+    if (wrapped.data !== undefined) return wrapped.data;
+  }
+  return value as T;
+}
+
+/**
+ * Explain why a record is related to others. Used by Sprint 3 preview to
+ * render rationale chips. Failures must be handled by the caller; the
+ * Tabele preview pipeline intentionally treats this call as best-effort.
+ */
+export async function explainRelation(
+  tableId: string,
+  recordId: string,
+  opts?: { max?: number }
+): Promise<RelationExplainResponse> {
+  const params = new URLSearchParams();
+  if (opts?.max) params.set('max', String(opts.max));
+  const query = params.toString();
+  const url = query
+    ? `${BASE_PATH}/tables/${tableId}/records/${recordId}/relations/explain?${query}`
+    : `${BASE_PATH}/tables/${tableId}/records/${recordId}/relations/explain`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  const data = await handleResponse<RelationExplainResponse | { data?: RelationExplainResponse }>(
+    res,
+    'Failed to explain relations'
+  );
+  return unwrapDataEnvelope<RelationExplainResponse>(data);
 }
 
 /** Delete view */

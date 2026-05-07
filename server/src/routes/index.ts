@@ -122,6 +122,7 @@ export { default as superAdminRoutes } from './superadmin.routes.js';
 export { default as systemConfigRoutes } from './systemConfig.routes.js';
 export { default as systemHealthRoutes } from './systemHealth.routes.js';
 export { publicFormRouter, default as tablePlatformRoutes } from './table-platform.routes.js';
+export { default as tablePlatformRelationsExplainRoutes } from './table-platform.relations-explain.routes.js';
 export { default as taskAdvisorRoutes } from './task-advisor.routes.js';
 export { default as trialRoutes } from './trial.routes.js';
 export { default as verifyRoutes } from './verify.routes.js';

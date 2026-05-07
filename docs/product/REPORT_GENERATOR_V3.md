@@ -1,5 +1,7 @@
 # Report Generator v3 — SSOT (Sponsor‑ready reports)
 
+> **SUPERSEDED for Document runtime doctrine.** Document runtime, document templates, narrative planning, formatting and style governance, AI document editing semantics and document QA contract now live in `docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`. R1–R4 reports remain a `report` family inside Document Studio's Template Registry and continue to honor `docs/product/REPORTING_CANONICAL_TEMPLATES.md` for required sections, RAG and escalation rules. This document is preserved as historical reference per the archive-first policy and remains useful for understanding the as-is Report Builder runtime in code.
+>
 > **Status:** Canonical (v3)  
 > **Priorytet:** P0 — “reports are the management layer”  
 > **Cel:** Zdefiniować spójny system raportowania w Consultinity: biblioteki, generatory, canonical report types (R1–R4), templates, AI narrative, quality gates i eksporty (PDF/DOCX/PPTX).  

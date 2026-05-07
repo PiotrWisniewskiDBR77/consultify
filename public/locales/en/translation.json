@@ -1288,7 +1288,8 @@
     "toolsLibrary": "Library",
     "wordy": "Documents",
     "excele": "Tables",
-    "prezentacje": "Presentations"
+    "prezentacje": "Presentations",
+    "tabele": "Table Studio"
   },
   "widgets": {
     "help": {
@@ -8516,13 +8517,16 @@
     "generatingDoc": "Building your document",
     "generatingSheet": "Building your spreadsheet",
     "generatingDeck": "Building your presentation",
+    "generatingTable": "Building your operational table",
     "emptyWordy": "Your document will appear here",
     "emptyExcele": "Your spreadsheet will appear here",
     "emptyDeck": "Your presentation will appear here",
+    "emptyTabele": "Your operational table will appear here",
     "emptyHint": "Describe what you need and click Generate",
     "generateDoc": "Generate Document",
     "generateSheet": "Generate Spreadsheet",
     "generateDeck": "Generate Presentation",
+    "generateTable": "Generate Table",
     "docReady": "Document ready — use Preview File or Download",
     "showingRows": "Showing 25 of {{total}} rows",
     "xlsxPreview": "Spreadsheet preview",
@@ -8537,6 +8541,7 @@
     "laneWordy": "Documents",
     "laneExcele": "Tables",
     "lanePrezentacje": "Presentations",
+    "laneTabele": "Tabele",
     "stepSnapshot": "Capture context snapshot",
     "stepPlan": "Create artifact plan",
     "stepPreflight": "Validate preflight checks",
@@ -8545,7 +8550,86 @@
     "stepApprove": "Approve execution",
     "stepMaterialize": "Materialize artifact",
     "stepGenerate": "Generate content",
-    "sheetReady": "Spreadsheet ready — use Preview File or Download"
+    "sheetReady": "Spreadsheet ready — use Preview File or Download",
+    "tableReady": "Table ready — use Preview File or Download",
+    "tabele": {
+      "preview": {
+        "documentLabel": "Tabele operational table preview",
+        "subtitle": "Operational Table",
+        "untitled": "Untitled table",
+        "coverDescription": "A Word-style document canvas for reviewing schema, sample records, relations, and governance rationale before opening the Table Builder.",
+        "livePreview": "Live preview",
+        "rowsKpi": "Rows",
+        "columnsKpi": "Columns",
+        "statusKpi": "Status",
+        "formatKpi": "Format",
+        "statusGoverned": "Governed",
+        "statusPreview": "Preview",
+        "formatOperational": "Operational",
+        "formatDraft": "Draft",
+        "schemaTitle": "Schema",
+        "schemaMeta": "{{count}} fields in the preview schema",
+        "emptySchema": "No schema fields are available in this preview yet.",
+        "schemaCollapsed": "Schema is collapsed for compact review.",
+        "recordsTitle": "Records",
+        "recordsMeta": "Showing sample records from the generated table",
+        "emptyRecords": "No record sample is available in this preview yet.",
+        "showingRows": "Showing 25 of {{total}} rows",
+        "relationsTitle": "Relations",
+        "relationsMeta": "{{count}} relation chips available",
+        "emptyRelations": "No table relations are available in this preview yet.",
+        "relationsCollapsed": "Relations are collapsed for compact review.",
+        "noRelationsCollapsed": "Relations are collapsed because no relations are available.",
+        "expandSection": "Expand",
+        "collapseSection": "Collapse",
+        "rationaleTitle": "AI Rationale"
+      },
+      "schema": {
+        "committed": "Committed",
+        "proposed": "Proposed",
+        "rejected": "Rejected",
+        "caption": "Schema field rendered as an operational table document block",
+        "proposalCaption": "Linked to schema proposal {{proposalId}}",
+        "unnamedField": "unnamed_field",
+        "defaultType": "text"
+      },
+      "relations": {
+        "loadingRationale": "Loading relation rationale...",
+        "noRationale": "Relation rationale is not available in this preview.",
+        "tooltipTitle": "Relation explainability",
+        "tooltipSource": "Source: ACL-filtered table relation metadata"
+      },
+      "rationale": {
+        "proposalPending": "Pending",
+        "proposalApproved": "Approved",
+        "proposalRejected": "Rejected",
+        "proposalNone": "None",
+        "proposalStatus": "Proposal status: {{status}}",
+        "emptySummary": "No rationale summary was provided for this preview.",
+        "points": "Rationale points",
+        "showLess": "Show less",
+        "showMore": "Show {{count}} more",
+        "citedSources": "Cited sources",
+        "noSources": "No cited sources",
+        "reviewProposals": "Review proposals"
+      }
+    }
+  },
+  "tabele": {
+    "defaultTitle": "Operational table",
+    "loadPreviewFailed": "Could not load table preview.",
+    "builderUnreachable": "Could not resolve workspace for this table",
+    "openingBuilder": "Opening Table Builder...",
+    "intentRouted": {
+      "exportCsv": "CSV export started",
+      "exportXlsx": "XLSX export started",
+      "exportJson": "JSON export started",
+      "schemaProposalCreated": "Schema proposal created: {{proposalId}}",
+      "explainRelation": "Relation rationale loaded",
+      "relationRecordMissing": "No record is available to explain",
+      "workspaceMissing": "Workspace context is required",
+      "failed": "Could not process that instruction"
+    }
   },
   "contact": {
     "badge": "Get in touch",

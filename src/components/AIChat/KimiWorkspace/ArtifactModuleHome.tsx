@@ -18,6 +18,7 @@ import {
   Presentation,
   Save,
   Sparkles,
+  Table,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +57,12 @@ const LANE_META: Record<
     accentBg: 'bg-fuchsia-500/10',
     accentText: 'text-fuchsia-500',
   },
+  tabele: {
+    icon: Table,
+    route: '/tabele',
+    accentBg: 'bg-sky-500/10',
+    accentText: 'text-sky-500',
+  },
 };
 
 interface ArtifactModuleHomeProps {
@@ -83,6 +90,10 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
       return isPolish
         ? 'Budżety, modele finansowe, harmonogramy, matryce ryzyk'
         : 'Budgets, financial models, timelines, risk matrices';
+    if (lane === 'tabele')
+      return isPolish
+        ? 'Tabele operacyjne, master data, rejestry, logi, OKR-y, decyzje'
+        : 'Operational tables, master data, registers, logs, OKRs, decisions';
     return isPolish
       ? 'Decki zarządcze, pitch, status update, prezentacje warsztatowe'
       : 'Executive decks, pitch, status updates, workshop presentations';
@@ -91,6 +102,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const laneLabel = useMemo(() => {
     if (lane === 'wordy') return isPolish ? 'Dokumenty' : 'Documents';
     if (lane === 'excele') return isPolish ? 'Tabele' : 'Tables';
+    if (lane === 'tabele') return isPolish ? 'Tabele Studio' : 'Table Studio';
     return isPolish ? 'Prezentacje' : 'Presentations';
   }, [lane, isPolish]);
 
@@ -381,6 +393,64 @@ const BUILTIN_TEMPLATES: Record<
       titlePl: 'Ocena transformacji cyfrowej',
       desc: 'Maturity, gaps, recommendations',
       descPl: 'Dojrzałość, luki, rekomendacje',
+    },
+  ],
+  tabele: [
+    {
+      id: 'bt-tab-rolereg',
+      title: 'Role Register',
+      titlePl: 'Rejestr ról',
+      desc: 'Roles, owners, RACI matrix per initiative',
+      descPl: 'Role, właściciele, macierz RACI per inicjatywa',
+    },
+    {
+      id: 'bt-tab-vendor',
+      title: 'Vendor Master Data',
+      titlePl: 'Master danych dostawców',
+      desc: 'Vendor master data, contracts, status, SLAs',
+      descPl: 'Master danych dostawców, umowy, status, SLA',
+    },
+    {
+      id: 'bt-tab-okrset',
+      title: 'OKR Set',
+      titlePl: 'Zestaw OKR',
+      desc: 'Objectives and key results with check-ins',
+      descPl: 'Cele i kluczowe rezultaty z check-inami',
+    },
+    {
+      id: 'bt-tab-incidentlog',
+      title: 'Incident Log',
+      titlePl: 'Log incydentów',
+      desc: 'Operational incidents with severity and owners',
+      descPl: 'Incydenty operacyjne z severity i właścicielami',
+    },
+    {
+      id: 'bt-tab-clientreg',
+      title: 'Client Registry',
+      titlePl: 'Rejestr klientów',
+      desc: 'Customer accounts, segment, lifecycle',
+      descPl: 'Konta klientów, segment, cykl życia',
+    },
+    {
+      id: 'bt-tab-tasktracker',
+      title: 'Task Tracker',
+      titlePl: 'Tracker zadań',
+      desc: 'Cross-team task backlog with owners and due dates',
+      descPl: 'Backlog zadań między zespołami z właścicielami i terminami',
+    },
+    {
+      id: 'bt-tab-meetingbacklog',
+      title: 'Meeting Backlog',
+      titlePl: 'Backlog spotkań',
+      desc: 'Pending meetings, agenda items, follow-ups',
+      descPl: 'Oczekujące spotkania, punkty agendy, follow-upy',
+    },
+    {
+      id: 'bt-tab-decisionlog',
+      title: 'Decision Log',
+      titlePl: 'Log decyzji',
+      desc: 'Captured decisions, owners, rationale, status',
+      descPl: 'Zapisane decyzje, właściciele, uzasadnienie, status',
     },
   ],
 };

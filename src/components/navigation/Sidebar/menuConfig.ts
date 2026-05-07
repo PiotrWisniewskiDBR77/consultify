@@ -32,6 +32,7 @@ import {
   Rocket,
   Settings,
   Shield,
+  Table,
   TrendingUp,
   Users,
   Wrench,
@@ -146,6 +147,13 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PREZENTACJE_GEN,
       badge: 'soon',
+    },
+    // 13. Tabele Studio — operational tables (Table Studio Foundation block, D1=visible, sky accent)
+    {
+      id: 'MODULE_TABELE',
+      label: t('sidebar.tabele', 'Tables'),
+      icon: React.createElement(Table, { size: 20 }),
+      viewId: AppView.TABELE,
     },
     {
       id: 'MODULE_MEETING',
@@ -306,6 +314,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentations'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
     [AppView.EXCELE]: t('sidebar.excele', 'Tables'),
+    [AppView.TABELE]: t('sidebar.tabele', 'Tables'),
   };
   return viewNames[view] || t('common.previousStep');
 }
