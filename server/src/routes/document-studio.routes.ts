@@ -424,6 +424,7 @@ router.post(
           blockId: input.blockId,
           instruction: input.instruction,
         },
+        useLlm: req.body?.useLlm === true,
       });
       res.json({ proposal });
     } catch (err) {
@@ -465,6 +466,7 @@ router.post(
         userId,
         sectionId,
         instruction,
+        useLlm: req.body?.useLlm === true,
       });
       res.json({ proposal });
     } catch (err) {
@@ -500,6 +502,7 @@ router.post(
         organizationId,
         userId,
         instruction,
+        useLlm: req.body?.useLlm === true,
       });
       res.json({ proposal });
     } catch (err) {

@@ -54,10 +54,19 @@ export function TabeleRationaleSection({
           </p>
 
           {visibleBullets.length > 0 && (
-            <ul className="mt-4 space-y-2" aria-label={t('kimi.tabele.rationale.points', { defaultValue: 'Rationale points' })}>
+            <ul
+              className="mt-4 space-y-2"
+              aria-label={t('kimi.tabele.rationale.points', { defaultValue: 'Rationale points' })}
+            >
               {visibleBullets.map((bullet, index) => (
-                <li key={`${bullet}-${index}`} className="flex gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-hig-full bg-sky-500" aria-hidden="true" />
+                <li
+                  key={`${bullet}-${index}`}
+                  className="flex gap-2 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  <span
+                    className="mt-2 h-1.5 w-1.5 rounded-hig-full bg-sky-500"
+                    aria-hidden="true"
+                  />
                   <span>{bullet}</span>
                 </li>
               ))}

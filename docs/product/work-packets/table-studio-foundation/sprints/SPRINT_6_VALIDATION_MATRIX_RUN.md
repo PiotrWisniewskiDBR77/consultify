@@ -2,7 +2,7 @@
 
 **Sprint ID:** `S6`
 **Owner:** Orchestrator (sequential, with QA assist)
-**Status:** `BLOCKED — pending Sprint 5 merged`
+**Status:** `GO_WITH_CONSTRAINTS — Tabele-focused gates green; repo-wide baseline failures recorded`
 **Wave:** 4
 **Estimate:** ~1.5 days
 
@@ -100,8 +100,21 @@ If any P0 / P1 lands during this sprint:
 
 ## Realized risks
 
-> _to fill at sprint end_
+- **Full repo lint baseline:** `npm run lint` fails on unrelated broad Prettier/import-sort issues; scoped Tabele source lint passes.
+- **Full frontend typecheck baseline:** `npm run type-check` fails on existing non-Tabele modules (`AIChat/WorkCanvas`, `DeckBuilder`, `ProfileSettings`, `routeConfig`, `AdminAuditLogsView`).
+- **Full backend typecheck baseline:** server typecheck fails on existing presentation backend modules.
+- **Global i18n baseline:** `npm run i18n:check` fails on existing DE/ES/AR/JA `help.*` gaps; PL complete and EN/PL Tabele keys parse.
+- **Manual evidence gap:** screenshots for DBR77/Menu 3/Wordy parity were not captured in this CLI run; code-level scans/audits passed.
 
 ## Daily evidence
 
-> _to fill_
+- QA report created: `evidence/sprint-6/qa-report.md`.
+- Backend focused gate PASS: 3 files / 32 tests (`schema-proposals-acl-audit`, `relations-explain`, `RelationExplainabilityService`).
+- Frontend focused gate PASS: 7 files / 28 tests (`TabeleView`, `tabelePreview`, `useKimiArtifactPipeline`, `ArtifactModuleHome`).
+- E2E focused smoke PASS: `tests/e2e/smoke/tabele-foundation.spec.ts`, 3/3 tests.
+- Scoped source lint PASS: `TabeleView.tsx`, `tabelePreview/*.tsx`, `tablePlatform.api.ts`.
+- Scoped diagnostics PASS via `ReadLints`.
+- DBR77 hex scan PASS: no hex literals in Tabele source paths.
+- Locale JSON parse PASS for EN/PL.
+- `npm run i18n:check` FAIL only on existing non-EN/PL `help.*` gaps.
+- Recommendation set: `GO_WITH_CONSTRAINTS`.

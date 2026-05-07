@@ -42,9 +42,7 @@ export function TabeleSchemaBlock({ field, onClickProposal }: TabeleSchemaBlockP
   return (
     <Component
       type={canOpenProposal ? 'button' : undefined}
-      onClick={
-        canOpenProposal ? () => onClickProposal?.(field.proposalId as string) : undefined
-      }
+      onClick={canOpenProposal ? () => onClickProposal?.(field.proposalId as string) : undefined}
       className={`group w-full rounded-hig-md border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:border-navy-700 dark:bg-navy-900 dark:hover:bg-navy-800/50 ${
         canOpenProposal ? 'cursor-pointer' : ''
       }`}

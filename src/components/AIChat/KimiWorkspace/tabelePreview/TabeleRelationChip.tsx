@@ -34,7 +34,12 @@ export function TabeleRelationChip({
 
       computePosition(buttonRef.current, tooltipRef.current, {
         placement: 'top-start',
-        middleware: [offset(10), flip(), shift({ padding: 12 }), arrow({ element: arrowRef.current! })],
+        middleware: [
+          offset(10),
+          flip(),
+          shift({ padding: 12 }),
+          arrow({ element: arrowRef.current! }),
+        ],
       }).then(({ x, y, placement, middlewareData }) => {
         if (!tooltipRef.current) return;
         Object.assign(tooltipRef.current.style, {

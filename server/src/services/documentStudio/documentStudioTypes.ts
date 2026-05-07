@@ -199,6 +199,13 @@ export interface DocumentEditorProposalDiff {
  * present a reviewable preview without leaking the raw schema to clients
  * that only know about the editor surface. The full structural change is
  * applied at approval time using `affectedSectionIds`.
+ *
+ * `blockRewrites` is an optional map `blockId -> rewritten text` that the
+ * LLM-augmented refiner populates at proposal time. When present, approval
+ * uses the rewritten text per block; when absent, approval falls back to the
+ * deterministic instruction-marker application. This keeps the governance
+ * envelope (proposal → approval → execution → audit) intact regardless of
+ * whether AI rewrites are involved.
  */
 export interface DocumentEditorProposal {
   proposalId: string;
@@ -210,6 +217,10 @@ export interface DocumentEditorProposal {
   blockId?: string;
   /** Sections touched by the proposal. For local: one section. */
   affectedSectionIds: string[];
+  /** Optional per-block LLM rewrites applied at approval time. */
+  blockRewrites?: Record<string, string>;
+  /** Whether the LLM refiner produced any rewrites for this proposal. */
+  llmRefined?: boolean;
   status: DocumentProposalStatus;
   diff: DocumentEditorProposalDiff;
   createdBy: string;

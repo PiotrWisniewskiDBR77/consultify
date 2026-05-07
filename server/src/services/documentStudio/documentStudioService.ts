@@ -27,6 +27,7 @@ import {
 } from '../wave5ArtifactRuntimeService.js';
 import { buildDocumentSchema } from './documentContentGenerator.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
+import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import { planDocumentOutline } from './documentNarrativePlanner.js';
 import { refineOutlineWithLlm } from './documentNarrativeRefiner.js';
 import { renderDocumentSchemaToPdfBuffer } from './documentPdfRenderer.js';
@@ -444,11 +445,33 @@ function findSectionAndBlock(schema: DocumentSchema, sectionId: string, blockId:
   return { section, block };
 }
 
+async function computeRefinedAfter(
+  before: string,
+  instruction: string,
+  context: {
+    schema: DocumentSchema;
+    scope: 'local' | 'section' | 'global';
+  },
+  useLlm: boolean,
+  fallback: string
+): Promise<string> {
+  if (!useLlm) return fallback;
+  const refined = await refineEditorTextWithLlm(before, instruction, {
+    documentType: context.schema.documentType,
+    scope: context.scope,
+    communicationRegister: context.schema.communicationRegister,
+    language: context.schema.language,
+  });
+  return refined ?? fallback;
+}
+
 export interface CreateLocalEditProposalParams {
   artifactId: string;
   organizationId: string;
   userId: string;
   input: DocumentEditorProposalInput;
+  /** Opt-in bounded LLM rewrite. Falls back deterministically on any failure. */
+  useLlm?: boolean;
 }
 
 export async function createLocalEditProposal(
@@ -467,7 +490,14 @@ export async function createLocalEditProposal(
   }
   const { block } = findSectionAndBlock(schema, input.sectionId, input.blockId);
   const before = blockToEditableText(block.content);
-  const after = applyInstruction(before, input.instruction);
+  const deterministicAfter = applyInstruction(before, input.instruction);
+  const after = await computeRefinedAfter(
+    before,
+    input.instruction,
+    { schema, scope: 'local' },
+    Boolean(params.useLlm),
+    deterministicAfter
+  );
   const createdAt = nowIso();
   const proposal: DocumentEditorProposal = {
     proposalId: makeId('doc-proposal'),
@@ -529,6 +559,8 @@ export interface CreateSectionEditProposalParams {
   userId: string;
   sectionId: string;
   instruction: string;
+  /** Opt-in bounded LLM rewrite. Falls back deterministically on any failure. */
+  useLlm?: boolean;
 }
 
 export async function createSectionEditProposal(
@@ -543,7 +575,28 @@ export async function createSectionEditProposal(
   if (!section) throw new Error('section_not_found');
 
   const before = projectSectionToText(section);
-  const previewAfter = `${before}\n\n[Section-scope edit applied at approval: ${trimmed}]`;
+  const blockRewrites: Record<string, string> = {};
+  let llmRefined = false;
+  if (params.useLlm) {
+    for (const block of section.blocks) {
+      const blockBefore = blockToEditableText(block.content);
+      const refined = await refineEditorTextWithLlm(blockBefore, trimmed, {
+        documentType: schema.documentType,
+        scope: 'section',
+        communicationRegister: schema.communicationRegister,
+        language: schema.language,
+      });
+      if (refined) {
+        blockRewrites[block.blockId] = refined;
+        llmRefined = true;
+      }
+    }
+  }
+  const previewAfter = llmRefined
+    ? section.blocks
+        .map((block) => blockRewrites[block.blockId] ?? blockToEditableText(block.content))
+        .join('\n\n')
+    : `${before}\n\n[Section-scope edit applied at approval: ${trimmed}]`;
   const createdAt = nowIso();
   const proposal: DocumentEditorProposal = {
     proposalId: makeId('doc-proposal'),
@@ -553,6 +606,8 @@ export async function createSectionEditProposal(
     sectionId,
     instruction: trimmed,
     affectedSectionIds: [sectionId],
+    blockRewrites: llmRefined ? blockRewrites : undefined,
+    llmRefined: llmRefined || undefined,
     status: 'proposed',
     diff: { before, after: previewAfter },
     createdBy: userId,
@@ -577,6 +632,8 @@ export interface CreateGlobalEditProposalParams {
   organizationId: string;
   userId: string;
   instruction: string;
+  /** Opt-in bounded LLM rewrite. Falls back deterministically on any failure. */
+  useLlm?: boolean;
 }
 
 export async function createGlobalEditProposal(
@@ -591,13 +648,43 @@ export async function createGlobalEditProposal(
     throw new Error('document_has_no_sections');
   }
 
+  const blockRewrites: Record<string, string> = {};
+  let llmRefined = false;
+  if (params.useLlm) {
+    for (const section of schema.sections) {
+      for (const block of section.blocks) {
+        const blockBefore = blockToEditableText(block.content);
+        const refined = await refineEditorTextWithLlm(blockBefore, trimmed, {
+          documentType: schema.documentType,
+          scope: 'global',
+          communicationRegister: schema.communicationRegister,
+          language: schema.language,
+        });
+        if (refined) {
+          blockRewrites[block.blockId] = refined;
+          llmRefined = true;
+        }
+      }
+    }
+  }
+
   const projections: SectionMarkdownProjection[] = schema.sections.map((section) => {
     const before = projectSectionToText(section);
+    const after = llmRefined
+      ? [
+          `## ${section.title}`,
+          ...section.blocks.map(
+            (block) => blockRewrites[block.blockId] ?? blockToEditableText(block.content)
+          ),
+        ]
+          .filter((line) => line.trim().length > 0)
+          .join('\n\n')
+      : `${before}\n\n[Global edit at approval: ${trimmed}]`;
     return {
       sectionId: section.sectionId,
       title: section.title,
       before,
-      after: `${before}\n\n[Global edit at approval: ${trimmed}]`,
+      after,
     };
   });
 
@@ -611,6 +698,8 @@ export async function createGlobalEditProposal(
     scope: 'global',
     instruction: trimmed,
     affectedSectionIds: schema.sections.map((s) => s.sectionId),
+    blockRewrites: llmRefined ? blockRewrites : undefined,
+    llmRefined: llmRefined || undefined,
     status: 'proposed',
     diff: { before, after },
     createdBy: userId,
@@ -670,23 +759,33 @@ function applyProposalToSchema(
   proposal: DocumentEditorProposal
 ): DocumentSchema {
   const next = cloneSchema(schema);
+  const rewrites = proposal.blockRewrites ?? {};
+
   if (proposal.scope === 'local') {
     if (!proposal.sectionId || !proposal.blockId) {
       throw new Error('proposal_missing_targets');
     }
     const { block } = findSectionAndBlock(next, proposal.sectionId, proposal.blockId);
+    // Local proposals encode the rewrite directly in `diff.after`; LLM and
+    // deterministic paths share the same field.
     block.content = withBlockText(block.content, proposal.diff.after);
   } else if (proposal.scope === 'section') {
     if (!proposal.sectionId) throw new Error('proposal_missing_targets');
     const section = next.sections.find((s) => s.sectionId === proposal.sectionId);
     if (!section) throw new Error('section_not_found');
     for (const block of section.blocks) {
-      block.content = applyInstructionToBlock(block.content, proposal.instruction);
+      const refinedText = rewrites[block.blockId];
+      block.content = refinedText
+        ? withBlockText(block.content, refinedText)
+        : applyInstructionToBlock(block.content, proposal.instruction);
     }
   } else {
     for (const section of next.sections) {
       for (const block of section.blocks) {
-        block.content = applyInstructionToBlock(block.content, proposal.instruction);
+        const refinedText = rewrites[block.blockId];
+        block.content = refinedText
+          ? withBlockText(block.content, refinedText)
+          : applyInstructionToBlock(block.content, proposal.instruction);
       }
     }
   }

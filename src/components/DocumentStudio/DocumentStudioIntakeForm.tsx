@@ -166,6 +166,32 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
         </label>
       ) : null}
 
+      {selectedTemplate && selectedTemplate.requiredInputs.length > 0 ? (
+        <div className="rounded-lg border border-sky-300/50 bg-sky-50 px-3 py-2 text-sm dark:border-sky-400/30 dark:bg-sky-500/5">
+          <div className="font-medium text-sky-900 dark:text-sky-200">
+            This template requires the following sources before it can generate
+          </div>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            Add matching items to the source pack of this run (or attach them upstream); the
+            backend rejects generation if any of these is missing.
+          </p>
+          <ul className="mt-2 space-y-1 text-xs">
+            {selectedTemplate.requiredInputs.map((requirement) => (
+              <li
+                key={requirement}
+                className="flex items-start gap-2 text-slate-700 dark:text-slate-200"
+              >
+                <span
+                  aria-hidden
+                  className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-sky-500"
+                />
+                <span>{requirement}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">
           Description <span className="text-danger-500">*</span>

@@ -153,10 +153,7 @@ export function TabelePreviewLayout({
           </div>
         </header>
 
-        <section
-          aria-labelledby="tabele-preview-kpis-heading"
-          className="py-6"
-        >
+        <section aria-labelledby="tabele-preview-kpis-heading" className="py-6">
           <h2 id="tabele-preview-kpis-heading" className="sr-only">
             {t('kimi.tabele.preview.kpiSection', { defaultValue: 'Table metrics' })}
           </h2>
@@ -185,7 +182,11 @@ export function TabelePreviewLayout({
             <div id="tabele-preview-schema-heading-content" className="space-y-3">
               {schemaFields.length > 0 ? (
                 schemaFields.map((field) => (
-                  <TabeleSchemaBlock key={field.fieldId || field.name} field={field} isPolish={isPolish} />
+                  <TabeleSchemaBlock
+                    key={field.fieldId || field.name}
+                    field={field}
+                    isPolish={isPolish}
+                  />
                 ))
               ) : (
                 <p className="rounded-hig-md border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-navy-700 dark:text-slate-400">
@@ -328,7 +329,10 @@ export function TabelePreviewLayout({
         >
           <div className="mb-4 flex items-center gap-2">
             <Database size={18} className="text-slate-500" aria-hidden="true" />
-            <h2 id="tabele-preview-rationale-heading" className="text-lg font-semibold text-slate-950 dark:text-slate-100">
+            <h2
+              id="tabele-preview-rationale-heading"
+              className="text-lg font-semibold text-slate-950 dark:text-slate-100"
+            >
               {t('kimi.tabele.preview.rationaleTitle', { defaultValue: 'AI Rationale' })}
             </h2>
           </div>

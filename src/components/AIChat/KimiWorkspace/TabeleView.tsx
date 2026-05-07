@@ -14,10 +14,7 @@ import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
-import {
-  downloadTabeleArtifactCsv,
-  openTableBuilderInNewTab,
-} from '@/utils/tabeleArtifactOpen';
+import { downloadTabeleArtifactCsv, openTableBuilderInNewTab } from '@/utils/tabeleArtifactOpen';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
@@ -177,7 +174,8 @@ export const TabeleView: React.FC = () => {
     autoTriggered.current = true;
     Api.get(`/artifacts/${templateArtifactId}`)
       .then((tmpl: any) => {
-        const desc = tmpl?.originSummary?.template?.description || tmpl?.title || 'Table from template';
+        const desc =
+          tmpl?.originSummary?.template?.description || tmpl?.title || 'Table from template';
         void startRef.current(desc, templateArtifactId);
       })
       .catch(() => {
@@ -319,14 +317,20 @@ export const TabeleView: React.FC = () => {
       {
         match: /export\s*xlsx|pobierz\s*xlsx|download\s*xlsx/,
         handler: async () => {
-          window.open(`/api/table-platform/tables/${encodeURIComponent(effectiveTableId)}/export/xlsx`, '_blank');
+          window.open(
+            `/api/table-platform/tables/${encodeURIComponent(effectiveTableId)}/export/xlsx`,
+            '_blank'
+          );
           toast.success(t('tabele.intentRouted.exportXlsx', 'XLSX export started'));
         },
       },
       {
         match: /export\s*json|pobierz\s*json|download\s*json/,
         handler: async () => {
-          window.open(`/api/table-platform/tables/${encodeURIComponent(effectiveTableId)}/export.json`, '_blank');
+          window.open(
+            `/api/table-platform/tables/${encodeURIComponent(effectiveTableId)}/export.json`,
+            '_blank'
+          );
           toast.success(t('tabele.intentRouted.exportJson', 'JSON export started'));
         },
       },
@@ -355,14 +359,15 @@ export const TabeleView: React.FC = () => {
           const firstRecord = rows[0] as { id?: unknown; recordId?: unknown } | undefined;
           const recordId = String(firstRecord?.id ?? firstRecord?.recordId ?? '');
           if (!recordId) {
-            toast.error(t('tabele.intentRouted.relationRecordMissing', 'No record is available to explain'));
+            toast.error(
+              t('tabele.intentRouted.relationRecordMissing', 'No record is available to explain')
+            );
             return;
           }
           const response = await TablePlatformApi.explainRelation(effectiveTableId, recordId);
           const firstReason = response.relations[0]?.reason;
           toast.success(
-            firstReason ||
-              t('tabele.intentRouted.explainRelation', 'Relation rationale loaded')
+            firstReason || t('tabele.intentRouted.explainRelation', 'Relation rationale loaded')
           );
         },
       },
