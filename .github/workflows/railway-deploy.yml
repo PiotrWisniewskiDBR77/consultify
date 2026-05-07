@@ -1,18 +1,6 @@
 name: Railway Deploy
 
 on:
-  push:
-    branches: [staging]
-    paths:
-      - 'src/**'
-      - 'server/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'Dockerfile*'
-      - 'railway*.json'
-      - 'infrastructure/**'
-      - 'scripts/deploy-gate.sh'
-      - '.github/workflows/railway-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -30,13 +18,13 @@ on:
         type: string
 
 concurrency:
-  group: railway-deploy-${{ github.event_name == 'push' && 'staging' || github.event.inputs.environment }}
+  group: railway-deploy-${{ github.event.inputs.environment }}
   cancel-in-progress: false
 
 jobs:
   deploy-staging:
     name: Deploy Staging
-    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && github.ref == 'refs/heads/staging')
+    if: github.event.inputs.environment == 'staging' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     environment: staging
