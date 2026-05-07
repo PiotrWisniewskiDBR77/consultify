@@ -2,7 +2,7 @@ name: Railway Deploy
 
 on:
   push:
-    branches: [develop, feat/ai-chat-v9]
+    branches: [staging]
     paths:
       - 'src/**'
       - 'server/**'
@@ -36,7 +36,7 @@ concurrency:
 jobs:
   deploy-staging:
     name: Deploy Staging
-    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feat/ai-chat-v9'))
+    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && github.ref == 'refs/heads/staging')
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     environment: staging

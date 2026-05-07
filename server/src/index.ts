@@ -1315,6 +1315,37 @@ app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextF
 const isHashedAssetFilename = (filename: string): boolean =>
   /-[a-z0-9]{8,}\.(js|css|map|png|jpg|jpeg|svg|webp|gif|ico|woff2?)$/i.test(filename);
 
+const isMissingHashedJsChunkRequest = (requestPath: string): boolean =>
+  /^\/assets\/[^/]+-[a-z0-9]{8,}\.js$/i.test(requestPath);
+
+const sendStaleChunkReloadScript = (req: Request, res: Response): void => {
+  logger.warn(`[Server] Missing hashed JS chunk, forcing client reload: ${req.path}`);
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Consultify-Stale-Chunk-Guard', 'reload-current-build-v1');
+  res.status(200).send(`
+console.warn('[Consultify] Stale application chunk missing: ${JSON.stringify(req.path)}. Reloading current build.');
+(function () {
+  try {
+    var key = 'consultify:stale-chunk-reload';
+    var now = Date.now();
+    var last = Number(sessionStorage.getItem(key) || '0');
+    if (now - last < 10000) {
+      throw new Error('Stale chunk reload throttled');
+    }
+    sessionStorage.setItem(key, String(now));
+    window.location.reload();
+  } catch (error) {
+    window.location.href = '/?recoveredFromStaleChunk=1';
+  }
+})();
+export {};
+`);
+};
+
 const staticFrontendSmartCache = express.static(frontendDistPath, {
   maxAge: 0,
   setHeaders: (res, filePath) => {
@@ -1406,6 +1437,10 @@ app.use((req: Request, res: Response) => {
           res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
           return res.sendFile(currentBundle.fsPath);
         }
+      }
+
+      if (isMissingHashedJsChunkRequest(req.path)) {
+        return sendStaleChunkReloadScript(req, res);
       }
 
       logger.warn(`[Server] Missing static asset: ${req.path}`);
