@@ -2,7 +2,7 @@
 
 **Sprint ID:** `S5`
 **Owner:** Orchestrator (sequential, single-agent — integration-heavy)
-**Status:** `BLOCKED — pending Sprint 4 merged`
+**Status:** `PASS_WITH_P2 — focused validation green; i18n global check has unrelated baseline gaps`
 **Wave:** 3
 **Epic:** EPIC-4 (US-4.3, US-4.5, US-4.6, US-4.7)
 **Estimate:** ~2 days
@@ -95,8 +95,31 @@ If a subagent is delegated, use this contract:
 
 ## Realized risks
 
-> _to fill at sprint end_
+- **T8 — i18n missing keys:** EN/PL Tabele keys were added and locale JSON parses. `npm run i18n:check` still fails on pre-existing DE/ES/AR/JA `help.*` gaps (25 total), while PL reports complete.
+- **S6 — XSS via interpolation:** implemented with React text rendering and `t()` interpolation only; no `dangerouslySetInnerHTML`.
+- **Intent double-fire risk:** mitigated with `lastRoutedMsgRef` and completion/table-id gates.
+- **Governance hidden-write risk:** schema-changing intents route through `proposeSchemaChange` only; no direct schema execution.
+- **E2E runtime risk:** focused Tabele smoke passes under mock DB/web server; broader e2e suite remains Sprint 6.
 
 ## Daily evidence
 
-> _to fill_
+- Added chat intent routing in `TabeleView.tsx` for CSV/XLSX/JSON export, add column, summarize, open builder, explain relation, and propose schema.
+- Fixed `proposeSchemaChange` client path to use the existing backend route `POST /api/table-platform/schema/propose`.
+- Added EN/PL locale keys for Tabele lane, preview sections, schema blocks, relation tooltips, rationale section, builder/deeplink toasts, and intent routing toasts.
+- Added `tests/e2e/smoke/tabele-foundation.spec.ts` with 3 route-level smoke scenarios.
+- Extended `TabeleView.test.tsx` to cover 3 intent-routing patterns: export CSV, open builder, explain relation.
+- Targeted component validation:
+  `npx vitest run tests/components/AIChat/KimiWorkspace/TabeleView.test.tsx tests/components/AIChat/KimiWorkspace/tabelePreview tests/components/AIChat/KimiWorkspace/useKimiArtifactPipeline.test.ts tests/components/AIChat/KimiWorkspace/ArtifactModuleHome.test.tsx --maxWorkers=1 --maxConcurrency=1`
+  → PASS, 7 files / 28 tests.
+- Locale JSON validation:
+  `node -e "JSON.parse(...en...); JSON.parse(...pl...)"`
+  → PASS.
+- i18n check:
+  `npm run i18n:check`
+  → FAIL on pre-existing DE/ES/AR/JA `help.*` missing translations; PL complete. Recorded as P2 baseline, not introduced by Tabele EN/PL additions.
+- Scoped diagnostics:
+  `ReadLints(TabeleView.tsx, tablePlatform.api.ts, TabeleView.test.tsx, tabele-foundation.spec.ts)`
+  → PASS, no linter errors.
+- Focused e2e:
+  `CI=true E2E_MODE=true E2E_USE_WEB_SERVER=true E2E_BACKEND_RUNNER=tsx E2E_MOCK_DB=true E2E_API_URL=http://127.0.0.1:3101 E2E_BASE_URL=http://127.0.0.1:3100 npx playwright test --config playwright.smoke.config.ts tests/e2e/smoke/tabele-foundation.spec.ts --project=chromium --workers=1`
+  → PASS, 3/3 tests.
