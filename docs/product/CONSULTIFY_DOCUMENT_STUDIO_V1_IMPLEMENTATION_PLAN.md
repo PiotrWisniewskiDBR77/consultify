@@ -181,6 +181,22 @@ Users can pick an `approved` template and generate a document from it. The syste
 - AI Editor handles section and global scope edits with diffs.
 - QA Engine adds Methodology, Executive, Risk and Data categories.
 
+### 6.3 MVP-3 status — delivered slice (governance + scope expansion + bounded AI architect)
+
+The first MVP-3 slice has shipped end-to-end (governance and editor reach; QA categories deferred to a follow-up slice):
+
+- **Source-pack preflight**: `preflightRequiredSources` and `MissingRequiredSourceError` in `documentStudioService.ts`. `materializeDocumentArtifact` rejects Mode 3 generation when the active template's `requiredInputs` are not satisfied by the source pack. The matcher is token-aware and case-insensitive across `sourceType`, `sourceId`, `sourceTitle` so consultants can express requirements in plain language. `/api/document-studio/generate` returns `400 missing_required_source` with the missing list; the frontend `MissingRequiredSourceError` decodes the structured payload and surfaces a remediation message in `DocumentStudioView`.
+- **AI Editor section + global scopes**: `DocumentEditorScope` is now `'local' | 'section' | 'global'`. New service exports `createSectionEditProposal`, `createGlobalEditProposal`, generic `approveEditProposal` / `rejectEditProposal` (legacy `approveLocalEditProposal` / `rejectLocalEditProposal` retained as aliases). Approval applies the edit deterministically to one block, every block of one section, or every block of every section, with full audit traces (`affectedSectionIds` recorded). New routes `POST /api/document-studio/:artifactId/editor/proposals/section` and `POST /api/document-studio/:artifactId/editor/proposals/global`. Frontend `DocumentStudioEditorPanel` exposes a scope selector (Local block / Section / Whole document) with the right target picker per scope.
+- **AI Document Template Architect refinement**: `documentTemplateRefiner.ts` mirrors the safety contract of the narrative refiner: the LLM may rewrite section purposes and propose a refined template name; new / removed / renamed / reordered sections trigger deterministic fallback. `documentTemplateService.draftTemplateAsync({ useLlm })` performs the refinement and persists a `template_updated` audit entry only when refinement actually changed anything. `/api/document-studio/templates/plan` accepts `useLlm` and returns `{ template, llmRefined }`. The frontend Template Architect view exposes a "Refine with AI" checkbox and a status hint after each draft.
+- **Tests**: 18 new tests across `documentStudioPreflight.test.ts` (6), `documentStudioEditorScopes.test.ts` (5), and `documentTemplateRefiner.test.ts` (7). Full Document Studio backend suite at 49 passing tests across 9 files.
+
+### 6.4 MVP-3 deferred to a follow-up slice
+
+- Persistence of the Template Registry to the wave5 substrate (replace the in-process map with `template`-typed artifacts).
+- Brand QA + Language QA scoring categories (require an organization Brand Voice profile data model).
+- Methodology / Executive / Risk / Data QA categories.
+- LLM-driven section / global edit rewrite (current implementation is deterministic and audit-friendly; LLM-assisted rewrite will follow the same `proposal → approval → execution → audit` envelope).
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export
