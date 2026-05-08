@@ -1,5 +1,5 @@
 /**
- * Consultify Document Studio — PDF renderer (MVP-1 finalization).
+ * Consultify Document Studio — PDF renderer.
  *
  * Schema-aware PDF renderer using `pdfkit`. Honors the document's
  * `FormattingSchema` (page size, margins, headers, footers, page numbering,
@@ -8,13 +8,34 @@
  * The renderer streams `pdfkit` output into an in-memory Buffer so it can be
  * returned through the existing wave5 export pipeline as `contentBase64`.
  *
- * Out of scope for MVP-1 finalization: image embedding, rich charts,
- * watermarking, custom fonts beyond the system stack. These are reserved for
- * MVP-4 advanced export.
+ * MVP-1 finalization scope: cover, headings, paragraphs, callouts, quotes,
+ * lists, basic tables, sources appendix, header/footer with page numbering.
+ *
+ * Epic E8 (Advanced DOCX) — Slice 8.4 PDF parity:
+ *   - structural numbering (body sections + appendix lettering/numbering)
+ *     shares the `documentDocxStructure.ts` helpers with the DOCX renderer
+ *     so the two outputs stay in sync;
+ *   - cover page lives on its own page (real `addPage()` after the cover);
+ *   - manual Table of Contents emitted when `formattingSchema.toc` is true;
+ *   - tables auto-emit a `Table N — caption` line; images render as
+ *     `Figure N — caption` placeholders (asset embedding still deferred);
+ *   - source-ref citations follow `formattingSchema.citationStyle`:
+ *     `'inline_marker'` appends `[N]` markers; `'footnote'`/`'endnote'`
+ *     accumulate a Notes appendix at the end of the document.
+ *
+ * Still deferred: native bottom-of-page footnote positioning, image
+ * embedding, charts, custom fonts beyond the system stack.
  */
 
 import PDFDocument from 'pdfkit';
 
+import {
+  formatAppendixHeading,
+  formatBodyHeading,
+  partitionSections,
+  planSectionHeadings,
+} from './documentDocxStructure.js';
+import { type FormattingClass, resolveFormattingClass } from './documentDocxStyles.js';
 import type {
   DocumentBlock,
   DocumentSchema,
@@ -41,6 +62,159 @@ interface BlockTableContent {
 interface BlockCalloutContent {
   variant?: string;
   text?: string;
+}
+
+/**
+ * PDF font sizes (in points) per formatting class. Mirrors
+ * `documentDocxStyles.ts` SIZING_BY_CLASS but in pdfkit's points
+ * convention so the two renderers can be inspected side-by-side
+ * without cross-translating units.
+ */
+interface PdfClassSizing {
+  title: number;
+  subtitle: number;
+  heading1: number;
+  heading2: number;
+  heading3: number;
+  body: number;
+  caption: number;
+  footnote: number;
+}
+
+const PDF_SIZING_BY_CLASS: Record<FormattingClass, PdfClassSizing> = {
+  executive: {
+    title: 28,
+    subtitle: 13,
+    heading1: 17,
+    heading2: 14,
+    heading3: 12,
+    body: 11,
+    caption: 9,
+    footnote: 9,
+  },
+  professional: {
+    title: 24,
+    subtitle: 12,
+    heading1: 16,
+    heading2: 13,
+    heading3: 11,
+    body: 11,
+    caption: 9,
+    footnote: 9,
+  },
+  narrative: {
+    title: 24,
+    subtitle: 12,
+    heading1: 15,
+    heading2: 12.5,
+    heading3: 11,
+    body: 11.5,
+    caption: 9,
+    footnote: 9,
+  },
+  legal: {
+    title: 20,
+    subtitle: 11,
+    heading1: 14,
+    heading2: 12,
+    heading3: 11,
+    body: 10,
+    caption: 8,
+    footnote: 8,
+  },
+};
+
+/**
+ * Per-render mutable state — caption counters, footnote registry,
+ * source-ref registry. Mirrors the DOCX renderer's RenderContext so
+ * captions and citations behave identically across formats.
+ */
+interface PdfRenderContext {
+  schema: DocumentSchema;
+  formattingClass: FormattingClass;
+  sizing: PdfClassSizing;
+  citationStyle: 'inline_marker' | 'footnote' | 'endnote';
+  tableCounter: { value: number };
+  figureCounter: { value: number };
+  /** Footnote bodies in append order (notes appendix renders them all). */
+  footnoteBodies: { id: number; body: string }[];
+  nextFootnoteId: { value: number };
+  /** 1-based citation index per `${type}::${id}` source ref. */
+  sourceRefIndex: Map<string, number>;
+}
+
+function buildPdfRenderContext(schema: DocumentSchema): PdfRenderContext {
+  const formattingClass = resolveFormattingClass(schema);
+  const sizing = PDF_SIZING_BY_CLASS[formattingClass];
+  const sourceRefIndex = new Map<string, number>();
+  schema.sourceRefs.forEach((ref, idx) => {
+    sourceRefIndex.set(`${ref.sourceType}::${ref.sourceId}`, idx + 1);
+  });
+  return {
+    schema,
+    formattingClass,
+    sizing,
+    citationStyle: schema.formattingSchema.citationStyle,
+    tableCounter: { value: 0 },
+    figureCounter: { value: 0 },
+    footnoteBodies: [],
+    nextFootnoteId: { value: 1 },
+    sourceRefIndex,
+  };
+}
+
+function registerFootnoteBody(ctx: PdfRenderContext, body: string): number {
+  const id = ctx.nextFootnoteId.value;
+  ctx.nextFootnoteId.value += 1;
+  ctx.footnoteBodies.push({ id, body });
+  return id;
+}
+
+function citationIndexFor(
+  ctx: PdfRenderContext,
+  ref: { sourceType: string; sourceId: string }
+): number {
+  const key = `${ref.sourceType}::${ref.sourceId}`;
+  const existing = ctx.sourceRefIndex.get(key);
+  if (typeof existing === 'number') return existing;
+  const next = ctx.sourceRefIndex.size + 1;
+  ctx.sourceRefIndex.set(key, next);
+  return next;
+}
+
+function describeSourceRef(ref: {
+  sourceType: string;
+  sourceId: string;
+  sourceTitle?: string;
+}): string {
+  const title = ref.sourceTitle ? ` — ${ref.sourceTitle}` : '';
+  return `Source: ${ref.sourceType}#${ref.sourceId}${title}`;
+}
+
+/**
+ * Build the inline citation suffix string for a block whose
+ * `sourceRef` is set, side-effecting `ctx` so footnote-style
+ * citations land in the notes appendix.
+ *
+ * Returns an empty string when no marker should be emitted (defensive
+ * branch covering future citation styles).
+ */
+function buildCitationSuffix(
+  ctx: PdfRenderContext,
+  ref: { sourceType: string; sourceId: string; sourceTitle?: string }
+): string {
+  if (ctx.citationStyle === 'inline_marker') {
+    return ` [${citationIndexFor(ctx, ref)}]`;
+  }
+  if (ctx.citationStyle === 'footnote' || ctx.citationStyle === 'endnote') {
+    const id = registerFootnoteBody(ctx, describeSourceRef(ref));
+    // PDF has no native footnote anchor; we render a superscript-like
+    // marker `^N` that the Notes appendix at the end of the document
+    // resolves. Word users still see real footnotes via the DOCX
+    // renderer; the PDF parity surface is intentionally simpler.
+    return ` ^${id}`;
+  }
+  return '';
 }
 
 function asString(value: unknown): string {
@@ -72,59 +246,98 @@ function marginsInPoints(formatting: FormattingSchema): {
   };
 }
 
-function drawCover(doc: PDFKit.PDFDocument, schema: DocumentSchema): void {
+function drawCover(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
+  const schema = ctx.schema;
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
     .slice(0, 10);
   const audience = schema.audience.length > 0 ? schema.audience.join(', ') : 'Internal';
   const subtitle = `${schema.documentType.replace(/_/g, ' ')} · ${schema.language.toUpperCase()} · ${schema.density} · ${schema.confidentiality}`;
   doc.moveDown(4);
-  doc.fontSize(28).fillColor('#0F172A').text(schema.title, { align: 'center' });
+  doc.fontSize(ctx.sizing.title).fillColor('#0F172A').text(schema.title, { align: 'center' });
   doc.moveDown(0.5);
-  doc.fontSize(12).fillColor('#475569').text(subtitle, { align: 'center' });
+  doc.fontSize(ctx.sizing.subtitle).fillColor('#475569').text(subtitle, { align: 'center' });
   doc.moveDown(0.3);
-  doc.fontSize(11).fillColor('#64748B').text(`Audience: ${audience}`, { align: 'center' });
-  doc.fontSize(10).fillColor('#94A3B8').text(`Generated: ${generatedAt}`, { align: 'center' });
+  doc
+    .fontSize(ctx.sizing.subtitle)
+    .fillColor('#64748B')
+    .text(`Audience: ${audience}`, { align: 'center' });
+  doc
+    .fontSize(ctx.sizing.caption)
+    .fillColor('#94A3B8')
+    .text(`Generated: ${generatedAt}`, { align: 'center' });
   doc.addPage();
 }
 
-function drawHeading(doc: PDFKit.PDFDocument, text: string, level: 1 | 2 | 3): void {
-  const sizes: Record<1 | 2 | 3, number> = { 1: 16, 2: 13, 3: 11 };
+function drawTableOfContents(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
+  const plan = planSectionHeadings(ctx.schema.sections, ctx.schema.formattingSchema);
+  if (plan.length === 0) return;
+  drawHeading(doc, 'Table of Contents', 1, ctx);
+  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font('Helvetica');
+  for (const entry of plan) {
+    doc.text(entry.heading, { indent: 8 });
+  }
+  doc.moveDown(0.4);
+  doc.addPage();
+}
+
+function drawHeading(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  level: 1 | 2 | 3,
+  ctx: PdfRenderContext,
+  options: { pageBreakBefore?: boolean } = {}
+): void {
+  const sizes: Record<1 | 2 | 3, number> = {
+    1: ctx.sizing.heading1,
+    2: ctx.sizing.heading2,
+    3: ctx.sizing.heading3,
+  };
   const colors: Record<1 | 2 | 3, string> = { 1: '#0F172A', 2: '#1E293B', 3: '#334155' };
+  if (options.pageBreakBefore === true) doc.addPage();
   doc.moveDown(level === 1 ? 0.7 : 0.4);
   doc.fontSize(sizes[level]).fillColor(colors[level]).font('Helvetica-Bold').text(text);
   doc.moveDown(0.2);
   doc.font('Helvetica');
 }
 
-function drawParagraph(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
+function drawParagraph(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
   const value = (block.content ?? {}) as BlockTextContent;
   const text = asString(value.text ?? '');
   if (!text) return;
+  const citationSuffix = block.sourceRef ? buildCitationSuffix(ctx, block.sourceRef) : '';
   if (block.isAssumption) {
-    doc.fontSize(11).fillColor('#92400E').font('Helvetica-Oblique').text(text, { continued: true });
     doc
-      .fontSize(9)
+      .fontSize(ctx.sizing.body)
+      .fillColor('#92400E')
+      .font('Helvetica-Oblique')
+      .text(`${text}${citationSuffix}`, { continued: true });
+    doc
+      .fontSize(ctx.sizing.caption)
       .fillColor('#B45309')
       .text('  [Assumption — needs source]', { continued: false });
   } else {
-    doc.fontSize(11).fillColor('#0F172A').font('Helvetica').text(text);
+    doc
+      .fontSize(ctx.sizing.body)
+      .fillColor('#0F172A')
+      .font('Helvetica')
+      .text(`${text}${citationSuffix}`);
   }
   doc.moveDown(0.4);
 }
 
-function drawList(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
+function drawList(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
   const value = (block.content ?? {}) as BlockListContent;
   const items = Array.isArray(value.items) ? value.items : [];
   const numbered = value.style === 'numbered' || block.type === 'numbered_list';
-  doc.fontSize(11).fillColor('#0F172A').font('Helvetica');
+  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font('Helvetica');
   items.forEach((raw, idx) => {
     const prefix = numbered ? `${idx + 1}. ` : '• ';
     doc.text(`${prefix}${asString(raw)}`, { indent: 12 });
   });
   if (block.isAssumption) {
     doc
-      .fontSize(9)
+      .fontSize(ctx.sizing.caption)
       .fillColor('#B45309')
       .font('Helvetica-Oblique')
       .text('  [Assumption — needs source]', { indent: 12 });
@@ -133,13 +346,13 @@ function drawList(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
   doc.moveDown(0.4);
 }
 
-function drawCallout(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
+function drawCallout(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
   const value = (block.content ?? {}) as BlockCalloutContent;
   const text = asString(value.text ?? '');
   if (!text) return;
   const label = value.variant ? `[${String(value.variant).toUpperCase()}] ` : '[Key message] ';
   doc
-    .fontSize(11)
+    .fontSize(ctx.sizing.body)
     .fillColor('#4338CA')
     .font('Helvetica-Bold')
     .text(label, { continued: true })
@@ -150,27 +363,28 @@ function drawCallout(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
   doc.moveDown(0.4);
 }
 
-function drawQuote(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
+function drawQuote(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
   const value = (block.content ?? {}) as BlockTextContent & { attribution?: string };
   const text = asString(value.text ?? '');
   if (!text) return;
   const attribution = value.attribution ? ` — ${asString(value.attribution)}` : '';
+  const citationSuffix = block.sourceRef ? buildCitationSuffix(ctx, block.sourceRef) : '';
   doc
-    .fontSize(11)
+    .fontSize(ctx.sizing.body)
     .fillColor('#475569')
     .font('Helvetica-Oblique')
-    .text(`“${text}”${attribution}`, { indent: 18 });
+    .text(`“${text}”${attribution}${citationSuffix}`, { indent: 18 });
   doc.font('Helvetica');
   doc.moveDown(0.4);
 }
 
-function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
-  const value = (block.content ?? {}) as BlockTableContent;
+function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
+  const value = (block.content ?? {}) as BlockTableContent & { caption?: string };
   const headers = Array.isArray(value.headers) ? value.headers : [];
   const rows = Array.isArray(value.rows) ? value.rows : [];
   if (headers.length === 0 && rows.length === 0) {
     doc
-      .fontSize(10)
+      .fontSize(ctx.sizing.caption)
       .fillColor('#64748B')
       .font('Helvetica-Oblique')
       .text('[Table placeholder — populate with structured data once sources are attached.]');
@@ -178,7 +392,7 @@ function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
     doc.moveDown(0.4);
     return;
   }
-  doc.fontSize(10).fillColor('#0F172A').font('Helvetica');
+  doc.fontSize(ctx.sizing.caption).fillColor('#0F172A').font('Helvetica');
   if (headers.length > 0) {
     doc.font('Helvetica-Bold').text(headers.map((h) => asString(h)).join(' | '));
     doc.font('Helvetica');
@@ -187,58 +401,127 @@ function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
     const cells = Array.isArray(row) ? row.map((c) => asString(c)) : [];
     doc.text(cells.join(' | '));
   }
+
+  // Auto-numbered caption — mirrors the DOCX renderer so two tables
+  // across formats agree on "Table 1" / "Table 2".
+  ctx.tableCounter.value += 1;
+  const captionLabel = `Table ${ctx.tableCounter.value}`;
+  const captionText = value.caption ? `${captionLabel} — ${asString(value.caption)}` : captionLabel;
+  const citationSuffix = block.sourceRef ? buildCitationSuffix(ctx, block.sourceRef) : '';
+  doc
+    .fontSize(ctx.sizing.caption)
+    .fillColor('#64748B')
+    .font('Helvetica-Oblique')
+    .text(`${captionText}${citationSuffix}`);
+  doc.font('Helvetica');
   doc.moveDown(0.4);
 }
 
-function drawBlock(doc: PDFKit.PDFDocument, block: DocumentBlock): void {
+function drawImage(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
+  const value = (block.content ?? {}) as { caption?: string; alt?: string };
+  ctx.figureCounter.value += 1;
+  const captionLabel = `Figure ${ctx.figureCounter.value}`;
+  const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
+  const captionText = `${captionLabel} — ${description}`;
+  const citationSuffix = block.sourceRef ? buildCitationSuffix(ctx, block.sourceRef) : '';
+  doc
+    .fontSize(ctx.sizing.caption)
+    .fillColor('#64748B')
+    .font('Helvetica-Oblique')
+    .text(`[${captionLabel} placeholder — image asset not yet embedded]`);
+  doc.text(`${captionText}${citationSuffix}`);
+  doc.font('Helvetica');
+  doc.moveDown(0.4);
+}
+
+function drawInlineFootnote(
+  doc: PDFKit.PDFDocument,
+  block: DocumentBlock,
+  ctx: PdfRenderContext
+): void {
+  const value = (block.content ?? {}) as BlockTextContent;
+  const bodyText = asString(value.text ?? '').trim();
+  if (bodyText.length === 0) return;
+  const id = registerFootnoteBody(ctx, bodyText);
+  doc.fontSize(ctx.sizing.body).fillColor('#64748B').font('Helvetica-Oblique').text(`Note ^${id}`);
+  doc.font('Helvetica');
+  doc.moveDown(0.2);
+}
+
+function drawBlock(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
   switch (block.type) {
     case 'heading': {
       const value = (block.content ?? {}) as { text?: string; level?: 1 | 2 | 3 };
-      drawHeading(doc, asString(value.text ?? ''), value.level ?? 2);
+      drawHeading(doc, asString(value.text ?? ''), value.level ?? 2, ctx);
       return;
     }
     case 'paragraph':
-      drawParagraph(doc, block);
+      drawParagraph(doc, block, ctx);
       return;
     case 'bullet_list':
     case 'numbered_list':
-      drawList(doc, block);
+      drawList(doc, block, ctx);
       return;
     case 'callout':
-      drawCallout(doc, block);
+      drawCallout(doc, block, ctx);
       return;
     case 'quote':
-      drawQuote(doc, block);
+      drawQuote(doc, block, ctx);
       return;
     case 'table':
     case 'risk_table':
     case 'kpi_strip':
-      drawTable(doc, block);
+      drawTable(doc, block, ctx);
       return;
     case 'image':
+      drawImage(doc, block, ctx);
+      return;
     case 'footnote':
+      drawInlineFootnote(doc, block, ctx);
+      return;
     case 'citation':
     default:
-      drawParagraph(doc, block);
+      drawParagraph(doc, block, ctx);
       return;
   }
 }
 
-function drawSection(doc: PDFKit.PDFDocument, section: DocumentSection, index: number): void {
-  drawHeading(doc, `${index + 1}. ${section.title}`, section.level ?? 1);
+function drawSection(
+  doc: PDFKit.PDFDocument,
+  section: DocumentSection,
+  ctx: PdfRenderContext,
+  headingText: string,
+  options: { pageBreakBefore?: boolean } = {}
+): void {
+  drawHeading(doc, headingText, section.level ?? 1, ctx, options);
   if (section.purpose) {
-    doc.fontSize(9).fillColor('#64748B').font('Helvetica-Oblique').text(section.purpose);
+    doc
+      .fontSize(ctx.sizing.caption)
+      .fillColor('#64748B')
+      .font('Helvetica-Oblique')
+      .text(section.purpose);
     doc.font('Helvetica');
     doc.moveDown(0.3);
   }
-  for (const block of section.blocks) drawBlock(doc, block);
+  for (const block of section.blocks) drawBlock(doc, block, ctx);
 }
 
-function drawSources(doc: PDFKit.PDFDocument, schema: DocumentSchema): void {
-  drawHeading(doc, 'Sources & traceability', 1);
+function drawNotesAppendix(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
+  if (ctx.footnoteBodies.length === 0) return;
+  drawHeading(doc, 'Notes', 1, ctx);
+  doc.fontSize(ctx.sizing.footnote).fillColor('#475569').font('Helvetica');
+  for (const note of ctx.footnoteBodies) {
+    doc.text(`^${note.id} — ${note.body}`);
+  }
+  doc.moveDown(0.4);
+}
+
+function drawSources(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
+  const schema = ctx.schema;
+  drawHeading(doc, 'Sources & traceability', 1, ctx);
   if (schema.sourceRefs.length === 0) {
     doc
-      .fontSize(11)
+      .fontSize(ctx.sizing.body)
       .fillColor('#92400E')
       .font('Helvetica-Oblique')
       .text(
@@ -247,7 +530,7 @@ function drawSources(doc: PDFKit.PDFDocument, schema: DocumentSchema): void {
     doc.font('Helvetica');
     return;
   }
-  doc.fontSize(11).fillColor('#0F172A').font('Helvetica');
+  doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font('Helvetica');
   schema.sourceRefs.forEach((ref, idx) => {
     const title = ref.sourceTitle ? ` — ${ref.sourceTitle}` : '';
     doc.text(`${idx + 1}. ${ref.sourceType}#${ref.sourceId}${title}`);
@@ -322,6 +605,7 @@ function drawHeaderFooter(
 export async function renderDocumentSchemaToPdfBuffer(schema: DocumentSchema): Promise<Buffer> {
   const formatting = schema.formattingSchema;
   const margins = marginsInPoints(formatting);
+  const ctx = buildPdfRenderContext(schema);
   return new Promise<Buffer>((resolve, reject) => {
     try {
       const doc = new PDFDocument({
@@ -331,7 +615,7 @@ export async function renderDocumentSchemaToPdfBuffer(schema: DocumentSchema): P
         info: {
           Title: schema.title,
           Author: 'Consultify Document Studio',
-          Subject: schema.documentType,
+          Subject: `${schema.documentType} · ${ctx.formattingClass}`,
         },
       });
       const chunks: Buffer[] = [];
@@ -339,9 +623,26 @@ export async function renderDocumentSchemaToPdfBuffer(schema: DocumentSchema): P
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', (err: Error) => reject(err));
 
-      if (formatting.coverPage) drawCover(doc, schema);
-      schema.sections.forEach((section, index) => drawSection(doc, section, index));
-      drawSources(doc, schema);
+      if (formatting.coverPage) drawCover(doc, ctx);
+      if (formatting.toc) drawTableOfContents(doc, ctx);
+
+      // Partition into body + appendix groups so the PDF renderer
+      // matches the DOCX renderer's structural contract (appendices
+      // always trail, with lettered/numbered/none labelling driven
+      // by `formattingSchema.appendixStyle`). The first appendix
+      // forces a fresh page; subsequent appendices flow naturally.
+      const partitioned = partitionSections(schema.sections);
+      partitioned.body.forEach((section, index) => {
+        drawSection(doc, section, ctx, formatBodyHeading(section, index));
+      });
+      partitioned.appendix.forEach((section, index) => {
+        drawSection(doc, section, ctx, formatAppendixHeading(section, index, formatting), {
+          pageBreakBefore: index === 0,
+        });
+      });
+
+      drawNotesAppendix(doc, ctx);
+      drawSources(doc, ctx);
 
       // Stamp header/footer onto every page after content has flowed.
       const range = doc.bufferedPageRange();
