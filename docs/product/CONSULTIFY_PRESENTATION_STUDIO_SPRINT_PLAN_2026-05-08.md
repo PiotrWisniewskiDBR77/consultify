@@ -742,3 +742,71 @@ Mode: Backend-only this sprint. UI for the approval/execute CTAs is moved to S7 
   - Component tests cover: hidden CTA when canProceed=false; visible CTA on healthy preview; ticket countdown rendering; 412 banner; 403 INVALID_APPROVAL_TICKET banner; deck-id reveal on success.
   - No backend changes in S7.
 
+## Sprint S7 Gate Report — Studio Surface Approval CTA flow (UI) (2026-05-08)
+
+Sprint owner: Engineering
+Phase: 2 (implementation)
+Mode: Frontend-only. Backend from S6 unchanged.
+
+### Changes made
+
+- `consultify/src/services/api/presentationStudio.api.ts`
+  - Added `PresentationStudioApprovalTicket`, `RequestApprovalRequest`, `RequestApprovalResponse`, `ExecuteGenerateRequest`, and `ExecuteGenerateResponse` typed surfaces matching the S6 backend contract.
+  - Added `PresentationStudioApiError` class with `status`, `code`, `reason?`, and `preview?` fields. Lets the UI distinguish `PRECONDITION_NOT_MET` (412 with embedded preview) from `INVALID_APPROVAL_TICKET` (403 with typed reason) without parsing raw responses.
+  - Added a new `studioPostTyped` helper that bypasses the standard `handleResponse` (which throws generic `Error` on non-2xx) so the mutating endpoints can surface typed envelopes directly. Read-only endpoints continue to use the existing `studioPost`.
+  - Added two new methods on `PresentationStudioApi`: `requestApproval(...)` (S6 phase A) and `executeGenerate(...)` (S6 phase B).
+- `consultify/src/components/PresentationStudio/PresentationStudioPage.tsx`
+  - Added `ApprovalState` (ticket, pending, approval-error reason, ticket-rejection reason, generated deck) alongside the existing `PreviewState`.
+  - Added `requestApproval` and `confirmGenerate` callbacks that call the new API methods. `requestApproval` runs only when `state.generate.wouldGenerate.canProceed === true`; `confirmGenerate` runs only when a fresh, unconsumed ticket is held. Both surface typed banners on failure.
+  - Added a 1 Hz interval (only mounted while a ticket exists) to drive a live TTL countdown on the Confirm-generate CTA label (e.g. `Confirm generate · 9:48`).
+  - Added two new CTA buttons in the Menu 3 right slot (`commandRowRightContent` equivalent) per `.cursor/rules/ai-actions-menu3.mdc`:
+    - `Request approval` — visible only when `canProceed=true` and no ticket is held.
+    - `Confirm generate` — visible only with a fresh ticket; disables on expiry; primary tone (CTA).
+  - Added three new banners in the canvas:
+    - Approval-error banner (amber) — surfaces 412 `PRECONDITION_NOT_MET` reasons, or any other `request-approval` failure.
+    - Ticket-error banner (rose) — surfaces 403 `INVALID_APPROVAL_TICKET` with the typed reason translated through `TICKET_REJECTION_LABELS` (e.g. `payload_mismatch` → "Setup changed since the ticket was issued. Re-run preview and request a new approval.").
+    - Generate-success banner (emerald) — surfaces deck id, slide count, audit event marker, and any backend validation warnings.
+  - Re-running the preview clears the in-flight approval state to prevent fingerprint mismatches across runs.
+- `consultify/src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`
+  - Updated the API mock factory to use `vi.importActual` so the real `PresentationStudioApiError` class is shared across page and test (otherwise `instanceof` checks in the component would always fail under the mock).
+  - Added six new tests:
+    1. `Request approval` CTA hidden when `canProceed=false`.
+    2. `Request approval` CTA visible in the Menu 3 right slot after a healthy preview, with no `Confirm generate` yet.
+    3. `requestApproval` mints a ticket and surfaces `Confirm generate` with a `\d+:\d{2}` TTL countdown label, also in the right slot.
+    4. 412 `PRECONDITION_NOT_MET` surfaces an honest approval-error banner; no `Confirm generate` is rendered.
+    5. Successful `executeGenerate` shows the deck-id success banner with `audit:presentation_generated_via_studio` and clears both CTAs (single-use semantics).
+    6. 403 `INVALID_APPROVAL_TICKET` (`payload_mismatch`) clears the ticket, shows the typed banner, and brings back the `Request approval` CTA.
+
+### Validation performed
+
+- `npx vitest run src/components/PresentationStudio server/src/services/__tests__/presentationStudioApprovalTicketService.test.ts server/src/routes/__tests__/presentationStudio.routes.test.ts --no-coverage` — 51/51 passed across the Studio surface (8 ticket service + 32 route integration + 11 component).
+- `npx eslint` on three in-scope files — 0 errors, 1 warning. The single warning (`no-empty-object-type` on `SourcePackPreviewRequest extends PresentationStudioSetupInput {}`) is pre-existing from S5; no new error or warning class introduced. The new mutating-flow `RequestApprovalRequest` was switched from an empty-extends interface to a `type =` alias to avoid a fresh warning.
+- `npx tsc --noEmit -p consultify/tsconfig.json` filtered to `presentationStudio*` — 0 type errors. Out-of-scope `tablePlatform/*` errors remain unchanged.
+- Tenant safety: client never sends `organizationId` in the body for the new endpoints; `studioPostTyped` defers tenancy to the server (which reads it from the authenticated session). No client-side trust boundary moved.
+
+### Gate result: `PASS_WITH_P2`
+
+- 0 P0, 0 P1, 0 P2.
+- P3 deferred: 1 pre-existing `no-empty-object-type` warning. No new deferred items.
+
+### Acceptance criteria (from contract) covered by S7
+
+- The approval-gated generate flow is wired end-to-end on the UI. Users can never trigger generation without first having minted (and immediately holding) a valid approval ticket; the proposal -> approval -> execution -> audit invariant is preserved on the client.
+- All mutating CTAs (`Request approval`, `Confirm generate`) live in the Menu 3 right slot per `.cursor/rules/ai-actions-menu3.mdc`. The canvas only renders honest read-only state and banners.
+- Honest UI states fully covered: empty (initial), loading (per CTA), success (deck-id banner), error (preview / approval / ticket banners), degraded (`canProceed=false` blocks the approval CTA from appearing at all).
+- Status semantics use the canonical color map (`slate`/`blue`/`amber`/`emerald`/`rose`); the only `primary` element is the Confirm-generate CTA, which is the explicit primary action by design.
+
+### Risks / next-step notes
+
+- R-S7-1: The Confirm-generate CTA shows a live countdown but does not disable mid-redemption when the ticket flips from "fresh" to "expired" while the request is in flight. The server still rejects expired tickets correctly (`expired` reason), and the UI surfaces the typed banner. A P2 follow-up may add a soft client-side "ticket expired" state before clicking.
+- R-S7-2: The page still uses `DEFAULT_SETUP` (a hard-coded steering deck) for both preview and approval. Real-world wiring (org-aware setup form, source artifact picker, deck-type selector) lands in a later sprint and is independent of the approval invariant.
+- R-S7-3: The "View deck" deep-link from the success banner is not wired yet (the deck id is shown but not clickable). The follow-up sprint will route to the existing deck builder once the cross-module navigation contract lands.
+
+### Next sprint plan
+
+- Sprint S8 starts Studio Surface — Setup Form & Deck Type Selector. Scope:
+  - Replace `DEFAULT_SETUP` with a small, governance-aware form (title, audience, goal, deck type, language). Existing read-only previews and approval flow consume the form state.
+  - Add a deck-type selector (steering committee, project pulse, board update, sales pitch). The selector wires straight into `setup.deckType` so the existing template architect dispatcher picks up the right family.
+  - Add input validation honest states: "title required", "deck type required". No silent defaults.
+  - No backend changes. No mutating contract changes. The approval ticket flow keeps working unchanged.
+

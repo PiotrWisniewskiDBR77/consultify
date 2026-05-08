@@ -1,5 +1,5 @@
 /**
- * PresentationStudioPage (Sprint S5)
+ * PresentationStudioPage (Sprints S5 + S7)
  *
  * Module: Consultify Presentation Studio.
  * Source of truth:
@@ -8,30 +8,50 @@
  *   - DRD/consultify/docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md
  *   - DRD/consultify/docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md
  *
- * Minimal, read-only Studio surface that consumes the four S1..S4 preview
- * endpoints and renders honest source/narrative/template/generate previews.
- * NEVER mutates anything. There is no "Generate" or "Approve" CTA: those
- * land in later sprints behind explicit approval flows.
+ * Studio surface that consumes the four S1..S4 preview endpoints plus the
+ * S6 approval-gated generate endpoints. The page is read-only by default;
+ * the only mutating actions are gated by an explicit two-step flow:
+ *   1. `Request approval` mints a single-use ticket (server validates
+ *      `wouldGenerate.canProceed`). Visible only on a healthy preview.
+ *   2. `Confirm generate` redeems the ticket; on success the deck is
+ *      persisted (server-side) and the audit event
+ *      `presentation_generated_via_studio` is emitted.
  *
  * UI/UX governance:
- *   - The contextual AI action ("Run preview") lives in the local Menu 3
- *     command-row right slot per `.cursor/rules/ai-actions-menu3.mdc`.
- *     This page does not yet adopt the full ModuleHub shell, so the local
- *     command row stands in for `commandRowRightContent`. Adopting the
- *     full ModuleHub shell will be a separate sprint.
+ *   - All contextual AI actions ("Run preview", "Request approval",
+ *     "Confirm generate") live on the right side of the local Menu 3
+ *     command row per `.cursor/rules/ai-actions-menu3.mdc`. This page does
+ *     not yet adopt the full ModuleHub shell, so the local command row
+ *     stands in for `commandRowRightContent`. Adopting the full ModuleHub
+ *     shell will be a separate sprint.
  *   - Status semantics use the canonical color map (slate/blue/amber/
  *     emerald/rose; primary reserved for selection/CTA).
  *   - Loading, success, error, empty, and degraded states are all rendered
  *     honestly. No fake success, no infinite spinner, no hidden writes.
+ *   - Approval failures (`PRECONDITION_NOT_MET`) and ticket rejections
+ *     (`INVALID_APPROVAL_TICKET` with typed reason) are surfaced in
+ *     dedicated banners, never silently swallowed.
  */
 
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  ExecuteGenerateResponse,
   GeneratePreviewResponse,
   NarrativePlanPreviewResponse,
   PresentationStudioApi,
+  PresentationStudioApiError,
+  PresentationStudioApprovalTicket,
   PresentationStudioSetupInput,
   SourcePackPreviewResponse,
   TemplatePlanPreviewResponse,
@@ -50,6 +70,19 @@ interface PreviewState {
   generate: GeneratePreviewResponse | null;
 }
 
+interface ApprovalState {
+  /** Currently held single-use ticket. Null when none has been minted (or after redemption / expiry / rejection). */
+  ticket: PresentationStudioApprovalTicket | null;
+  /** Truthy while either CTA (request-approval / confirm-generate) is in flight. */
+  pending: 'requesting' | 'executing' | null;
+  /** Honest banner shown when /request-approval returns 412 PRECONDITION_NOT_MET. Cleared on next attempt. */
+  approvalErrorReason: string | null;
+  /** Honest banner shown when /generate returns 403 INVALID_APPROVAL_TICKET. Cleared on next attempt. */
+  ticketRejectionReason: string | null;
+  /** Successfully generated deck info, surfaced after /generate returns 200. */
+  generated: ExecuteGenerateResponse | null;
+}
+
 const INITIAL_STATE: PreviewState = {
   loading: false,
   error: null,
@@ -58,6 +91,34 @@ const INITIAL_STATE: PreviewState = {
   templatePlan: null,
   generate: null,
 };
+
+const INITIAL_APPROVAL_STATE: ApprovalState = {
+  ticket: null,
+  pending: null,
+  approvalErrorReason: null,
+  ticketRejectionReason: null,
+  generated: null,
+};
+
+/**
+ * Human-readable labels for the typed `INVALID_APPROVAL_TICKET` reasons
+ * surfaced by the backend. Defensive default ('Unknown reason') keeps the UI
+ * honest when the server adds a new reason before the client is updated.
+ */
+const TICKET_REJECTION_LABELS: Record<string, string> = {
+  not_found: 'Ticket not found.',
+  expired: 'Ticket expired before confirmation.',
+  consumed: 'Ticket has already been used.',
+  tenant_mismatch: 'Ticket was issued for a different organization.',
+  user_mismatch: 'Ticket was issued for a different user.',
+  payload_mismatch:
+    'Setup changed since the ticket was issued. Re-run preview and request a new approval.',
+};
+
+function formatTicketRejection(reason: string | null | undefined): string {
+  if (!reason) return 'Approval ticket was rejected.';
+  return TICKET_REJECTION_LABELS[reason] || `Approval ticket rejected: ${reason}`;
+}
 
 const DEFAULT_SETUP: PresentationStudioSetupInput = {
   title: 'Steering Committee Preview',
@@ -175,9 +236,18 @@ function toneForTemplateStatus(status?: string): StatusTone {
 export const PresentationStudioPage: React.FC = () => {
   const [setup] = useState<PresentationStudioSetupInput>(DEFAULT_SETUP);
   const [state, setState] = useState<PreviewState>(INITIAL_STATE);
+  const [approval, setApproval] = useState<ApprovalState>(INITIAL_APPROVAL_STATE);
+  // Tick state used purely to drive the ticket TTL countdown re-render.
+  // The numeric value is intentionally read by the countdown memos below so
+  // the linter sees a real dependency, not a hidden `Date.now()` side effect.
+  const [nowTick, setNowTick] = useState<number>(() => Date.now());
 
   const runPreview = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
+    // Re-running the preview invalidates any in-flight approval flow: the
+    // ticket is fingerprinted against the previous payload and a new run may
+    // produce a different fingerprint. Clear the ticket and any banners.
+    setApproval(INITIAL_APPROVAL_STATE);
     try {
       const [sourcePack, narrativePlan, templatePlan, generate] = await Promise.all([
         PresentationStudioApi.previewSourcePack(setup),
@@ -201,6 +271,110 @@ export const PresentationStudioPage: React.FC = () => {
       }));
     }
   }, [setup]);
+
+  const requestApproval = useCallback(async () => {
+    setApproval((prev) => ({
+      ...prev,
+      pending: 'requesting',
+      approvalErrorReason: null,
+      ticketRejectionReason: null,
+      generated: null,
+    }));
+    try {
+      const result = await PresentationStudioApi.requestApproval({ setup });
+      setApproval({
+        ticket: result.ticket,
+        pending: null,
+        approvalErrorReason: null,
+        ticketRejectionReason: null,
+        generated: null,
+      });
+    } catch (error) {
+      const reason =
+        error instanceof PresentationStudioApiError
+          ? error.code === 'PRECONDITION_NOT_MET'
+            ? error.preview?.wouldGenerate.blockingReasons[0] ||
+              'Generation preview blocks approval.'
+            : error.message
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error requesting approval.';
+      setApproval((prev) => ({
+        ...prev,
+        pending: null,
+        ticket: null,
+        approvalErrorReason: reason,
+      }));
+    }
+  }, [setup]);
+
+  const confirmGenerate = useCallback(async () => {
+    if (!approval.ticket) return;
+    setApproval((prev) => ({
+      ...prev,
+      pending: 'executing',
+      ticketRejectionReason: null,
+    }));
+    try {
+      const result = await PresentationStudioApi.executeGenerate({
+        setup,
+        approvalTicket: approval.ticket.ticketId,
+      });
+      setApproval((prev) => ({
+        ...prev,
+        pending: null,
+        ticket: null, // single-use; clear once redeemed
+        ticketRejectionReason: null,
+        generated: result,
+      }));
+    } catch (error) {
+      const isApi = error instanceof PresentationStudioApiError;
+      setApproval((prev) => ({
+        ...prev,
+        pending: null,
+        ticket: null, // any rejection invalidates the ticket
+        ticketRejectionReason: isApi
+          ? error.code === 'INVALID_APPROVAL_TICKET'
+            ? formatTicketRejection(error.reason)
+            : error.message
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error confirming generation.',
+      }));
+    }
+  }, [approval.ticket, setup]);
+
+  // 1 Hz tick to refresh the visible TTL countdown on the ticket badge.
+  // Only mounts the interval while a ticket exists.
+  useEffect(() => {
+    if (!approval.ticket) return undefined;
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [approval.ticket]);
+
+  const ticketCountdownLabel = useMemo<string | null>(() => {
+    if (!approval.ticket) return null;
+    const remainingMs = Date.parse(approval.ticket.expiresAt) - nowTick;
+    if (remainingMs <= 0) return 'expired';
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  }, [approval.ticket, nowTick]);
+
+  const ticketLooksFresh = useMemo<boolean>(() => {
+    if (!approval.ticket) return false;
+    return Date.parse(approval.ticket.expiresAt) - nowTick > 0;
+  }, [approval.ticket, nowTick]);
+
+  const canRequestApproval =
+    state.generate?.wouldGenerate.canProceed === true &&
+    !approval.pending &&
+    !approval.ticket &&
+    !approval.generated;
+
+  const canConfirmGenerate =
+    !!approval.ticket && ticketLooksFresh && approval.pending !== 'executing';
 
   const isEmpty =
     !state.sourcePack && !state.narrativePlan && !state.templatePlan && !state.generate;
@@ -245,7 +419,7 @@ export const PresentationStudioPage: React.FC = () => {
               type="button"
               onClick={runPreview}
               disabled={state.loading}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-primary-500 dark:hover:bg-primary-400"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
               data-testid="presentation-studio-run-preview"
             >
               {state.loading ? (
@@ -255,6 +429,48 @@ export const PresentationStudioPage: React.FC = () => {
               )}
               <span>{state.loading ? 'Running preview…' : 'Run preview'}</span>
             </button>
+
+            {canRequestApproval ? (
+              <button
+                type="button"
+                onClick={requestApproval}
+                disabled={approval.pending !== null}
+                className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3.5 py-1.5 text-sm font-medium text-amber-800 shadow-sm transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-900/40"
+                data-testid="presentation-studio-request-approval"
+              >
+                {approval.pending === 'requesting' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <KeyRound className="h-4 w-4" aria-hidden="true" />
+                )}
+                <span>
+                  {approval.pending === 'requesting' ? 'Requesting approval…' : 'Request approval'}
+                </span>
+              </button>
+            ) : null}
+
+            {approval.ticket ? (
+              <button
+                type="button"
+                onClick={confirmGenerate}
+                disabled={!canConfirmGenerate}
+                className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-primary-500 dark:hover:bg-primary-400"
+                data-testid="presentation-studio-confirm-generate"
+              >
+                {approval.pending === 'executing' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                )}
+                <span data-testid="presentation-studio-confirm-generate-label">
+                  {approval.pending === 'executing'
+                    ? 'Generating…'
+                    : ticketCountdownLabel === 'expired'
+                      ? 'Ticket expired'
+                      : `Confirm generate · ${ticketCountdownLabel}`}
+                </span>
+              </button>
+            ) : null}
           </div>
         </div>
       </header>
@@ -270,6 +486,70 @@ export const PresentationStudioPage: React.FC = () => {
             <div>
               <div className="font-medium">Studio preview failed</div>
               <div className="mt-1">{state.error}</div>
+            </div>
+          </div>
+        ) : null}
+
+        {approval.approvalErrorReason ? (
+          <div
+            className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+            role="alert"
+            data-testid="presentation-studio-approval-error"
+          >
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <div>
+              <div className="font-medium">Approval cannot be requested yet</div>
+              <div className="mt-1">{approval.approvalErrorReason}</div>
+            </div>
+          </div>
+        ) : null}
+
+        {approval.ticketRejectionReason ? (
+          <div
+            className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            role="alert"
+            data-testid="presentation-studio-ticket-error"
+          >
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <div>
+              <div className="font-medium">Approval ticket rejected</div>
+              <div className="mt-1">{approval.ticketRejectionReason}</div>
+            </div>
+          </div>
+        ) : null}
+
+        {approval.generated ? (
+          <div
+            className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200"
+            role="status"
+            data-testid="presentation-studio-generated"
+          >
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">Deck generated and audited</div>
+              <div className="mt-1">
+                Deck id{' '}
+                <span
+                  className="font-mono text-emerald-900 dark:text-emerald-100"
+                  data-testid="presentation-studio-generated-deck-id"
+                >
+                  {approval.generated.deckId}
+                </span>{' '}
+                · {approval.generated.slideCount} slides ·{' '}
+                <span className="font-mono text-xs text-emerald-700 dark:text-emerald-300">
+                  audit:{approval.generated.auditEvent}
+                </span>
+              </div>
+              {approval.generated.validationWarnings.length > 0 ? (
+                <ul
+                  className="mt-2 list-disc space-y-0.5 pl-5 text-emerald-900 dark:text-emerald-100"
+                  data-testid="presentation-studio-generated-warnings"
+                >
+                  {approval.generated.validationWarnings.map((warning, idx) => (
+                    <li key={idx}>{warning}</li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           </div>
         ) : null}
