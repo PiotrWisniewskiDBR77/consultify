@@ -80,7 +80,29 @@ import {
   listDocumentVersionSnapshots,
   registerDocumentVersionSnapshotAuditPump,
 } from './documentVersionSnapshotService.js';
-import { registerDocumentCommentsAuditPump } from './documentCommentsService.js';
+import {
+  createDocumentComment as createDocumentCommentInternal,
+  deleteDocumentComment as deleteDocumentCommentInternal,
+  DocumentCommentError,
+  ensureDocumentCommentsHydrated,
+  getDocumentComment,
+  getDocumentCommentSectionCounts,
+  listDocumentComments,
+  listDocumentCommentThreads,
+  registerDocumentCommentsAuditPump,
+  reopenDocumentComment as reopenDocumentCommentInternal,
+  replyToDocumentComment as replyToDocumentCommentInternal,
+  resolveDocumentComment as resolveDocumentCommentInternal,
+} from './documentCommentsService.js';
+import type {
+  CreateDocumentCommentParams,
+  DeleteDocumentCommentParams,
+  ListDocumentCommentsOptions,
+  ListDocumentCommentThreadsOptions,
+  ReopenDocumentCommentParams,
+  ReplyToDocumentCommentParams,
+  ResolveDocumentCommentParams,
+} from './documentCommentsService.js';
 
 const SCHEMA_METADATA_KEY = 'documentStudioSchema';
 const STUDIO_MODE_METADATA_KEY = 'documentStudioMode';
@@ -1699,6 +1721,53 @@ export async function rollbackDocumentToVersion(
 /** @internal — test helper to clear the schema overlay between specs. */
 export function __resetSchemaOverlayForTests(): void {
   schemaOverlayStore.clear();
+}
+
+// =============================================================================
+// Epic E6 — Comments + review mode public surface (slices 6.1 + 6.2).
+// The studio service is the single import surface routes / external
+// callers consume; the comments service stays an internal module so
+// the studio is the audit-pump owner and the natural place to add
+// cross-cutting concerns later (e.g. lifecycle gates that prevent
+// resolving comments on archived documents).
+// =============================================================================
+
+export {
+  DocumentCommentError,
+  ensureDocumentCommentsHydrated,
+  getDocumentComment,
+  getDocumentCommentSectionCounts,
+  listDocumentComments,
+  listDocumentCommentThreads,
+};
+export type {
+  CreateDocumentCommentParams,
+  DeleteDocumentCommentParams,
+  ListDocumentCommentsOptions,
+  ListDocumentCommentThreadsOptions,
+  ReopenDocumentCommentParams,
+  ReplyToDocumentCommentParams,
+  ResolveDocumentCommentParams,
+};
+
+export function createDocumentComment(params: CreateDocumentCommentParams) {
+  return createDocumentCommentInternal(params);
+}
+
+export function replyToDocumentComment(params: ReplyToDocumentCommentParams) {
+  return replyToDocumentCommentInternal(params);
+}
+
+export function resolveDocumentComment(params: ResolveDocumentCommentParams) {
+  return resolveDocumentCommentInternal(params);
+}
+
+export function reopenDocumentComment(params: ReopenDocumentCommentParams) {
+  return reopenDocumentCommentInternal(params);
+}
+
+export function deleteDocumentComment(params: DeleteDocumentCommentParams) {
+  return deleteDocumentCommentInternal(params);
 }
 
 // =============================================================================

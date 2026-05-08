@@ -83,6 +83,18 @@
  *                                                                                     rollback_revert, force lifecycle to draft.
  *                                                                                     Returns { schema, revertSnapshot, restoredFrom, lifecycle }
  *
+ * Comments + review mode — Epic E6:
+ *   GET    /api/document-studio/:artifactId/comments                               — flat list (status?, sectionId?, blockId?, hideDeleted?)
+ *   POST   /api/document-studio/:artifactId/comments                               — body: { body, anchor: { kind, sectionId?, blockId? } }
+ *                                                                                     201 with { comment }
+ *   GET    /api/document-studio/:artifactId/comments/threads                       — grouped view (status?, sectionId?, blockId?)
+ *   GET    /api/document-studio/:artifactId/comments/counts                        — totals + per-section / per-block buckets
+ *   GET    /api/document-studio/:artifactId/comments/:commentId                    — single comment
+ *   POST   /api/document-studio/:artifactId/comments/:commentId/reply              — body: { body }
+ *   POST   /api/document-studio/:artifactId/comments/:commentId/resolve            — body: { reason? }; thread-wide
+ *   POST   /api/document-studio/:artifactId/comments/:commentId/reopen             — body: { reason? }; thread-wide
+ *   DELETE /api/document-studio/:artifactId/comments/:commentId                    — author-only soft-delete
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
 
@@ -114,20 +126,28 @@ import {
   approveEditProposal,
   canOverrideQa,
   type CreateChatSourcePackConnectorInput,
+  createDocumentComment,
   createDocumentFromChatSourcePack,
   createDocumentSnapshot,
   createGlobalEditProposal,
   createLocalEditProposal,
   createSectionEditProposal,
+  deleteDocumentComment,
+  DocumentCommentError,
   DocumentLifecycleTransitionError,
   DocumentRollbackError,
+  ensureDocumentCommentsHydrated,
   ensureDocumentLifecycleHydrated,
   ensureDocumentVersionSnapshotsHydrated,
   exportDocumentArtifact,
   getDocumentArtifact,
+  getDocumentComment,
+  getDocumentCommentSectionCounts,
   getDocumentLifecycleState,
   getDocumentVersionSnapshot,
   listDocumentAuditEntries,
+  listDocumentComments,
+  listDocumentCommentThreads,
   listDocumentVersionSnapshots,
   materializeDocumentArtifact,
   MissingRequiredSourceError,
@@ -136,10 +156,15 @@ import {
   QaBlockingError,
   QaOverrideUnauthorizedError,
   rejectEditProposal,
+  reopenDocumentComment,
+  replyToDocumentComment,
+  resolveDocumentComment,
   rollbackDocumentToVersion,
   transitionDocumentStatus,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
+  DocumentCommentAnchor,
+  DocumentCommentStatus,
   DocumentEditorProposalInput,
   DocumentIntake,
   DocumentOutline,
@@ -503,6 +528,45 @@ function mapRollbackErrorToStatus(code: DocumentRollbackError['code']): number {
     default:
       return 500;
   }
+}
+
+/** Epic E6 — map DocumentCommentError codes to HTTP. */
+function mapCommentErrorToStatus(code: DocumentCommentError['code']): number {
+  switch (code) {
+    case 'invalid_input':
+      return 400;
+    case 'unknown_comment':
+    case 'unknown_thread':
+      return 404;
+    case 'comment_already_resolved':
+    case 'comment_not_resolved':
+    case 'reply_to_reply_forbidden':
+    case 'comment_deleted':
+      return 409;
+    case 'forbidden':
+      return 403;
+    default:
+      return 500;
+  }
+}
+
+function parseCommentAnchorFromBody(body: unknown): DocumentCommentAnchor | null {
+  if (!body || typeof body !== 'object') return null;
+  const a = (body as { anchor?: unknown }).anchor;
+  if (!a || typeof a !== 'object') return null;
+  const obj = a as { kind?: unknown; sectionId?: unknown; blockId?: unknown };
+  if (obj.kind === 'document') return { kind: 'document' };
+  if (obj.kind === 'section' && typeof obj.sectionId === 'string') {
+    return { kind: 'section', sectionId: obj.sectionId };
+  }
+  if (
+    obj.kind === 'block' &&
+    typeof obj.sectionId === 'string' &&
+    typeof obj.blockId === 'string'
+  ) {
+    return { kind: 'block', sectionId: obj.sectionId, blockId: obj.blockId };
+  }
+  return null;
 }
 
 router.post(
@@ -1116,6 +1180,309 @@ router.post(
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] rollback failed', { message });
       res.status(500).json({ error: 'rollback_failed', message });
+    }
+  })
+);
+
+// =============================================================================
+// Epic E6 — Comments + review mode. Routes scoped under
+// /:artifactId/comments and /:artifactId/comments/threads, all
+// registered before the generic /:artifactId GET so the path matcher
+// hits the most specific route first. Lifecycle gating (e.g.
+// preventing comment mutations on archived documents) is intentionally
+// NOT enforced here — review mode must stay usable on any document
+// status; the lifecycle check belongs in a UI / governance layer.
+// =============================================================================
+
+const VALID_COMMENT_STATUSES: ReadonlyArray<DocumentCommentStatus> = ['open', 'resolved'];
+
+router.get(
+  '/:artifactId/comments/threads',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureDocumentCommentsHydrated(organizationId);
+    const status =
+      typeof req.query.status === 'string' &&
+      VALID_COMMENT_STATUSES.includes(req.query.status as DocumentCommentStatus)
+        ? (req.query.status as DocumentCommentStatus)
+        : undefined;
+    const sectionId =
+      typeof req.query.sectionId === 'string' ? req.query.sectionId : undefined;
+    const blockId = typeof req.query.blockId === 'string' ? req.query.blockId : undefined;
+    const threads = listDocumentCommentThreads(artifactId, organizationId, {
+      status,
+      sectionId,
+      blockId,
+    });
+    res.json({ threads });
+  })
+);
+
+router.get(
+  '/:artifactId/comments/counts',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureDocumentCommentsHydrated(organizationId);
+    const counts = getDocumentCommentSectionCounts(artifactId, organizationId);
+    res.json({ counts });
+  })
+);
+
+router.get(
+  '/:artifactId/comments',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureDocumentCommentsHydrated(organizationId);
+    const status =
+      typeof req.query.status === 'string' &&
+      VALID_COMMENT_STATUSES.includes(req.query.status as DocumentCommentStatus)
+        ? (req.query.status as DocumentCommentStatus)
+        : undefined;
+    const sectionId =
+      typeof req.query.sectionId === 'string' ? req.query.sectionId : undefined;
+    const blockId = typeof req.query.blockId === 'string' ? req.query.blockId : undefined;
+    const hideDeleted = req.query.hideDeleted !== 'false';
+    const comments = listDocumentComments(artifactId, organizationId, {
+      status,
+      sectionId,
+      blockId,
+      hideDeleted,
+    });
+    res.json({ comments });
+  })
+);
+
+router.post(
+  '/:artifactId/comments',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const body = typeof req.body?.body === 'string' ? req.body.body : '';
+    const anchor = parseCommentAnchorFromBody(req.body);
+    if (!anchor) {
+      res.status(400).json({
+        error: 'invalid_anchor',
+        message:
+          'anchor must be { kind: "document" } | { kind: "section", sectionId } | { kind: "block", sectionId, blockId }',
+      });
+      return;
+    }
+    await ensureDocumentCommentsHydrated(organizationId);
+    try {
+      const comment = createDocumentComment({
+        organizationId,
+        artifactId,
+        authorId: userId,
+        body,
+        anchor,
+      });
+      res.status(201).json({ comment });
+    } catch (err) {
+      if (err instanceof DocumentCommentError) {
+        const status = mapCommentErrorToStatus(err.code);
+        res.status(status).json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn('[DocumentStudio] create comment failed', { message });
+      res.status(500).json({ error: 'create_comment_failed', message });
+    }
+  })
+);
+
+router.get(
+  '/:artifactId/comments/:commentId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const commentId = String(req.params.commentId);
+    if (!artifactId || !commentId) {
+      res.status(400).json({ error: 'artifactId and commentId are required' });
+      return;
+    }
+    await ensureDocumentCommentsHydrated(organizationId);
+    const comment = getDocumentComment(commentId, organizationId);
+    if (!comment || comment.artifactId !== artifactId) {
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+    res.json({ comment });
+  })
+);
+
+router.post(
+  '/:artifactId/comments/:commentId/reply',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const parentCommentId = String(req.params.commentId);
+    if (!artifactId || !parentCommentId) {
+      res.status(400).json({ error: 'artifactId and commentId are required' });
+      return;
+    }
+    const body = typeof req.body?.body === 'string' ? req.body.body : '';
+    await ensureDocumentCommentsHydrated(organizationId);
+    try {
+      const reply = replyToDocumentComment({
+        organizationId,
+        artifactId,
+        authorId: userId,
+        parentCommentId,
+        body,
+      });
+      res.status(201).json({ comment: reply });
+    } catch (err) {
+      if (err instanceof DocumentCommentError) {
+        const status = mapCommentErrorToStatus(err.code);
+        res.status(status).json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn('[DocumentStudio] reply comment failed', { message });
+      res.status(500).json({ error: 'reply_comment_failed', message });
+    }
+  })
+);
+
+router.post(
+  '/:artifactId/comments/:commentId/resolve',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const commentId = String(req.params.commentId);
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    await ensureDocumentCommentsHydrated(organizationId);
+    try {
+      const root = resolveDocumentComment({
+        organizationId,
+        artifactId,
+        userId,
+        commentId,
+        reason,
+      });
+      res.json({ comment: root });
+    } catch (err) {
+      if (err instanceof DocumentCommentError) {
+        const status = mapCommentErrorToStatus(err.code);
+        res.status(status).json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn('[DocumentStudio] resolve comment failed', { message });
+      res.status(500).json({ error: 'resolve_comment_failed', message });
+    }
+  })
+);
+
+router.post(
+  '/:artifactId/comments/:commentId/reopen',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const commentId = String(req.params.commentId);
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    await ensureDocumentCommentsHydrated(organizationId);
+    try {
+      const root = reopenDocumentComment({
+        organizationId,
+        artifactId,
+        userId,
+        commentId,
+        reason,
+      });
+      res.json({ comment: root });
+    } catch (err) {
+      if (err instanceof DocumentCommentError) {
+        const status = mapCommentErrorToStatus(err.code);
+        res.status(status).json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn('[DocumentStudio] reopen comment failed', { message });
+      res.status(500).json({ error: 'reopen_comment_failed', message });
+    }
+  })
+);
+
+router.delete(
+  '/:artifactId/comments/:commentId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const commentId = String(req.params.commentId);
+    await ensureDocumentCommentsHydrated(organizationId);
+    try {
+      const deleted = deleteDocumentComment({
+        organizationId,
+        artifactId,
+        userId,
+        commentId,
+      });
+      res.json({ comment: deleted });
+    } catch (err) {
+      if (err instanceof DocumentCommentError) {
+        const status = mapCommentErrorToStatus(err.code);
+        res.status(status).json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn('[DocumentStudio] delete comment failed', { message });
+      res.status(500).json({ error: 'delete_comment_failed', message });
     }
   })
 );
