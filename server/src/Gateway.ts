@@ -94,6 +94,7 @@ import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import demoRoutes from './routes/demo.routes.js';
 import documentStudioRoutes from './routes/document-studio.routes.js';
+import executionModulesRoutes from './routes/execution-modules.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import economicsRoutes from './routes/economics.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
@@ -653,6 +654,10 @@ export class ApiGateway {
       // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
       // above the V8.1 substrate. See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md
       app.use('/api/document-studio', documentStudioRoutes);
+      // Execution-module UI/UX standard (Epic E11) — read-only governance
+      // surface exposing the canonical Doc / Excel / Deck Builder standard
+      // and the system-owned reference manifests.
+      app.use('/api/execution-modules', executionModulesRoutes);
       app.use('/api/ai-context', wave6ContextRoutes);
       app.use('/api/ai-connectors', wave7ConnectorsRoutes);
       app.use('/api/ai-agents', wave8AgentsRoutes);
