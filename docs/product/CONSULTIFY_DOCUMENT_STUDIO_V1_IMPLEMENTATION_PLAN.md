@@ -1036,6 +1036,49 @@ Without these fields, Template Architects cannot fully express SOP / governance 
 
 **Closes gaps.** §15.3 of the gap-vs-target report (spec §8.3 SectionBlueprint contract) — SUBSTRATE DELIVERED. Consumer integrations (Mode-3 generation review UI, Source Pack matrix, per-section approval gate) are scheduled as follow-ups on top of this substrate.
 
+### 6.15.7 Slice E15.artifact — Explicit spec §8.1 ref fields on `DocumentSchema`
+
+**Why.** §15.1 of the gap-vs-target report flagged that `DocumentSchema` is not self-describing for the spec §8.1 contract — readers had to chase cross-service joins to answer "which template was this generated from?", "which source pack drives this artifact?", "which client is this for?", "who currently owns this?". V8 ACL and per-service lookups carried the data, but the artifact itself did not.
+
+The lack of self-descriptiveness has concrete downstream cost:
+- the FE-E2 Properties tab cannot render Template / Source Pack / Client / Owner rows without joining 3-4 services,
+- audit trails cannot prove which template version applied at generation time once a template is reapproved into a newer revision,
+- the @owner mention handler in comments has no canonical pointer to resolve.
+
+**Substrate-only scope (no consumer wiring in this slice).** Like every prior §15 substrate (E5.6, E14, E14.blueprint), this slice ships ONLY the type contract + 2 helpers. Consumers (materialize wiring `templateRef` + `sourcePackId`, V8 work-canvas wiring `clientId`, owner-change service wiring `owner`, FE-E2 Properties tab consuming the helpers) are deferred to follow-up slices on top of this substrate. The diff stays surgical and zero-collision because no service code is touched.
+
+**What ships in this slice.**
+- `documentStudioTypes.ts` — extend `DocumentSchema` with **4** backwards-compatible optional fields:
+    - `templateRef?: DocumentTemplateRef` (with `templateId` + `templateVersion` so audit trails can prove the exact revision applied at generation time, even after the template moves on),
+    - `sourcePackId?: string` (Epic E4 binding pointer, separate from the `sourceRefs[]` citation surface),
+    - `clientId?: string` (V8 client / customer record pointer for the FE-E2 Properties tab),
+    - `owner?: string` (mutable consultant accountability pointer, vs. `createdBy` which is immutable).
+- New nested type: `DocumentTemplateRef` (re-exported on the FE).
+- Two new public helpers exported from `documentStudioTypes.ts`:
+    - `documentSchemaHasTemplateBinding(schema)` — true iff both `templateId` AND `templateVersion` are non-empty after trimming. Defensive against accidental empty-string persistence.
+    - `summarizeDocumentSchemaArtifactRefs(schema)` — collapses the 4 optional refs into a stable plain-object summary `{ templateId, templateVersion, sourcePackId, clientId, owner }` with `null` for unset / whitespace-only fields. Stable shape suitable for log lines, audit entries, and FE-E2 Properties rendering. Never throws, never mutates.
+- `src/components/DocumentStudio/types.ts` — frontend mirror of all 4 fields plus `DocumentTemplateRef`.
+
+**Backwards compatibility.** Pre-E15.artifact schemas continue to work unchanged. `materializeDocumentArtifact`, hydration, persistence, the QA pipeline, and the rendering pipeline all spread the schema with `...schema, ...overrides`, so the new optional fields ride along for free without any consumer-side modifications. No tests, no integration paths, no service surfaces were touched in this slice.
+
+**Coverage.** New `documentSchemaArtifactRefs.test.ts` with **19** specs:
+- legacy schema leaves all 4 new fields `undefined`;
+- spreading a legacy schema preserves the legacy shape;
+- each new field accepts independent assignment (4 cases);
+- all four ref fields can coexist;
+- `documentSchemaHasTemplateBinding` returns false for null / undefined / legacy (3);
+- `documentSchemaHasTemplateBinding` returns true for fully-populated templateRef;
+- `documentSchemaHasTemplateBinding` returns false for whitespace-only / empty-string templateId / templateVersion (3);
+- `summarizeDocumentSchemaArtifactRefs` returns all-null for null / undefined / legacy (2);
+- `summarizeDocumentSchemaArtifactRefs` trims values for fully-populated schema;
+- `summarizeDocumentSchemaArtifactRefs` collapses whitespace-only fields to null;
+- `summarizeDocumentSchemaArtifactRefs` produces partial summary for partial population;
+- `summarizeDocumentSchemaArtifactRefs` does not mutate the input.
+
+**Validation.** Document Studio + Execution Module Standard suite **656/656 green** (+19 from E15.artifact). tsc clean for the modified files. ESLint clean for all modified files after `--fix`.
+
+**Closes gaps.** §15.1 of the gap-vs-target report (spec §8.1 DocumentArtifact contract) — SUBSTRATE DELIVERED. Materialize wiring + V8 client resolver wiring + owner-change service + FE-E2 Properties consumption are scheduled as follow-up slices on top of this substrate.
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export

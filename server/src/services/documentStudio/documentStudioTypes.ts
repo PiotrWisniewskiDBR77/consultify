@@ -191,6 +191,61 @@ export interface FormattingSchema {
  * The Document Schema is the canonical structured representation of a document
  * before any DOCX/PDF rendering. It is the source of truth; renderers are derivable.
  */
+/**
+ * Slice E15.artifact (§15.1 of the gap-vs-target report) — explicit
+ * reference fields the spec §8.1 contract demands at the artifact
+ * level. Pre-E15.artifact schemas relied on V8 ACL + per-service
+ * lookups for these (organizationId carried tenancy, materialize
+ * carried `templateId` only into the build pipeline, etc.), but the
+ * artifact itself was not self-describing — readers had to chase
+ * cross-service joins to answer "which template was this generated
+ * from?" or "which source pack drives this artifact?". The 4 fields
+ * below close that gap as backwards-compatible optional pointers.
+ *
+ * Field semantics:
+ * - `templateRef` — the canonical pointer to the template the
+ *   artifact was generated from (Mode-3) or refined under
+ *   (template-aware Mode 1). Carries both `templateId` and
+ *   `templateVersion` so audit trails can prove which version of
+ *   the template applied at generation time, even if the template
+ *   has been reapproved into a newer version since. Mode-1
+ *   artifacts that were never associated with a template legitimately
+ *   omit this field.
+ * - `sourcePackId` — pointer to the bound source pack (Epic E4).
+ *   Document-level source refs (`sourceRefs[]`) continue to live on
+ *   the artifact as the citation surface; this top-level pointer
+ *   identifies the *binding* (one source pack per artifact) so the
+ *   FE-E2 Sources tab can render the matrix used/skipped/approved/
+ *   draft/missing without iterating refs.
+ * - `clientId` — optional pointer to the V8 client / customer
+ *   record this artifact is for. V8 ACL still gates access via
+ *   `organizationId`; `clientId` adds the "scoped to this end-
+ *   client" semantic that the spec §8.1 mentions and that the
+ *   FE-E2 Properties tab needs to render the client name.
+ * - `owner` — userId of the consultant currently accountable for
+ *   the artifact (vs. createdBy which is immutable). Powers the
+ *   "Owner" column in the Documents list and the @owner mention
+ *   handler in comments.
+ *
+ * All four fields are OPTIONAL. Pre-E15.artifact schemas omit them
+ * and the service layer (materialize / hydration / persistence)
+ * stays unchanged in this slice — populating these refs is delegated
+ * to follow-up slices that wire them at the appropriate ingestion
+ * points (materialize for `templateRef` + `sourcePackId`, V8 work-
+ * canvas resolver for `clientId`, owner-change service for `owner`).
+ */
+export interface DocumentTemplateRef {
+  /** Canonical template ID. */
+  templateId: string;
+  /**
+   * Version label captured at generation time. Locks the audit
+   * trail to the exact template revision that produced the
+   * artifact, even after the template moves on to v1.1 / v2.0 /
+   * etc. Format mirrors `DocumentTemplate.version`.
+   */
+  templateVersion: string;
+}
+
 export interface DocumentSchema {
   documentId: string;
   artifactId: string;
@@ -217,6 +272,74 @@ export interface DocumentSchema {
   statusChangedAt?: string;
   statusChangedBy?: string;
   statusReason?: string;
+
+  // ---------------------------------------------------------------------
+  // Slice E15.artifact (§15.1) — explicit spec §8.1 refs. All optional /
+  // backwards-compatible. See the doc-comment above the interface for
+  // semantics + populate-side ownership.
+  // ---------------------------------------------------------------------
+  templateRef?: DocumentTemplateRef;
+  sourcePackId?: string;
+  clientId?: string;
+  owner?: string;
+}
+
+/**
+ * Slice E15.artifact helper — true if the artifact is bound to a
+ * specific template (i.e. carries `templateRef.templateId` AND
+ * `templateRef.templateVersion`). Whitespace-only fields are treated
+ * as unbound (defensive — protects against accidental empty-string
+ * persistence).
+ */
+export function documentSchemaHasTemplateBinding(
+  schema: DocumentSchema | undefined | null
+): boolean {
+  if (!schema) return false;
+  const ref = schema.templateRef;
+  if (!ref) return false;
+  if (typeof ref.templateId !== 'string' || ref.templateId.trim().length === 0) return false;
+  if (typeof ref.templateVersion !== 'string' || ref.templateVersion.trim().length === 0) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Slice E15.artifact helper — collapses the optional artifact-level
+ * refs into a stable plain-object summary suitable for log lines,
+ * audit entries, and FE-E2 Properties tab rendering. Returns `null`
+ * for every field that is not set, never throws, and never mutates
+ * the input. Use this instead of touching the optional fields
+ * directly so consumers don't drift from each other on edge-case
+ * handling (whitespace, empty strings, etc.).
+ */
+export function summarizeDocumentSchemaArtifactRefs(schema: DocumentSchema | undefined | null): {
+  templateId: string | null;
+  templateVersion: string | null;
+  sourcePackId: string | null;
+  clientId: string | null;
+  owner: string | null;
+} {
+  const empty = {
+    templateId: null,
+    templateVersion: null,
+    sourcePackId: null,
+    clientId: null,
+    owner: null,
+  };
+  if (!schema) return empty;
+  const trim = (v: unknown): string | null => {
+    if (typeof v !== 'string') return null;
+    const trimmed = v.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  };
+  return {
+    templateId: schema.templateRef ? trim(schema.templateRef.templateId) : null,
+    templateVersion: schema.templateRef ? trim(schema.templateRef.templateVersion) : null,
+    sourcePackId: trim(schema.sourcePackId),
+    clientId: trim(schema.clientId),
+    owner: trim(schema.owner),
+  };
 }
 
 export interface DocumentIntake {

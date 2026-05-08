@@ -99,6 +99,20 @@ export interface DocumentSection {
   sourceRefs: DocumentSourceRef[];
 }
 
+/**
+ * Slice E15.artifact (§15.1) — frontend mirror of the four explicit
+ * spec §8.1 reference fields added on the server side. All optional /
+ * backwards-compatible. The FE-E2 Properties tab uses these to render
+ * "Template: X v1.2", "Source pack: Y", "Client: Z", "Owner: @user"
+ * without having to chase cross-service joins. Pre-E15.artifact
+ * artifacts simply omit the fields and the FE renders the legacy
+ * behaviour (no Properties row for that pointer).
+ */
+export interface DocumentTemplateRef {
+  templateId: string;
+  templateVersion: string;
+}
+
 export interface DocumentSchema {
   documentId: string;
   artifactId: string;
@@ -113,6 +127,10 @@ export interface DocumentSchema {
   confidentiality: DocumentConfidentiality;
   sections: DocumentSection[];
   sourceRefs: DocumentSourceRef[];
+  templateRef?: DocumentTemplateRef;
+  sourcePackId?: string;
+  clientId?: string;
+  owner?: string;
 }
 
 // Slice E3.5 widened from 3 → 5 scopes to match the SSOT 5-scope
