@@ -600,6 +600,64 @@ Epic E8 lifts the DOCX export from "real .docx file" (MVP-1 finalization) to "co
 
 ---
 
+## 6.11 Epic E9 — Audience-driven warianty
+
+Epic E9 lifts the document model from "single canonical schema rendered once" to "single canonical schema with N audience-aware projections." A consultant authors a board memo once, tags the executive-only / engineering-only / client-only material on the source schema, and the projector derives a tailored variant for every active audience profile (Board, Client, Engineering, PMO, plus tenant-custom profiles). No re-authoring, no LLM rewrite — the projection is a pure structural transformation with explicit provenance so downstream tooling can explain why a section is missing in a given variant.
+
+### 6.11.1 Slice 9.1 — AudienceProfile types + projector + 4 system seeds (commit `d2475d8e6`)
+
+- Additive, backwards-compatible type extensions on `documentStudioTypes.ts`:
+    - `DocumentBlock.audienceTags?: string[]` and `DocumentSection.audienceTags?: string[]` — free-form tag lists used by the projector to decide whether the element survives projection. Untagged elements are default-include so pre-E9 schemas project unchanged.
+    - `AudienceProfile`, `AudienceProfileStatus`, `AudienceProfileTagFilter`, `AudienceProfileExecutiveSummaryPolicy`, `AudienceProfileAppendixPolicy`, `AudienceProfileJargonPolicy`, `AudienceProfileDraftInput / UpdateInput / AuditEntry`, `DocumentVariant`, `DocumentVariantProvenance`.
+- New `documentAudienceProjector.ts` exposes the pure projection contract:
+    - `projectDocumentForAudience(schema, profile, opts) → { schema, provenance }` — deep-clones every kept section / block, applies schema-level scalar overrides (`audience` / `communicationRegister` / `density` / `languageStyle`), filters sections + blocks against the profile's tag filters, applies the executive-summary policy (EN+PL title heuristics) and appendix policy (reusing the E8 `isAppendixSection` detector). Provenance carries `sectionsKept`, `sectionsDropped` (with reasons: `appendix_policy_drop` / `executive_summary_drop` / `section_tag_filter`), and `blocksDropped`.
+    - `describeAudienceProjectionPlan(schema, profile)` — same decisions without the deep clone, used for the `/:artifactId/variants` overview endpoint.
+    - `passesTagFilter(tags, filter)` and `isExecutiveSummarySection(section)` are exported for direct testing and reuse.
+- New `documentAudienceProfileSeeds.ts` ships four immutable system-default profiles owned by `'system'` org:
+    - `system_board_executive` — executive register, concise density, drops appendices + `technical_detail` + `engineering_only`, audience: `Board / CEO / CFO`.
+    - `system_client_external` — professional register, standard density, drops `internal_only` + `engineering_only`, keeps appendices, audience: `Client`.
+    - `system_engineering_technical` — technical register, detailed density, drops executive summary + `client_only`, keeps appendices, audience: `Engineering / Technical Lead`.
+    - `system_pmo_operational` — professional register, standard density, drops `client_only`, audience: `PMO / Project Team`.
+- Stable `SYSTEM_AUDIENCE_TAG_VOCABULARY` (`technical_detail`, `engineering_only`, `internal_only`, `client_only`) shared across all four defaults so authors tag once and every variant projects correctly.
+- New tests:
+    - `documentAudienceProjector.test.ts` (27 specs): tag-filter precedence, executive-summary detector, scalar overrides, section / block filtering, executive-summary + appendix policies, immutability + provenance, all four system defaults, plan-equals-projection consistency.
+
+### 6.11.2 Slice 9.2 — AudienceProfile DAO + service registry (commit `06ea47206`)
+
+- New `documentAudienceProfileRegistryDao.ts`: in-memory profile + audit stores keyed by `(organizationId, profileId)`, failure-tolerant API (`load* → null/[]`, `persist* → { ok }`), tenant-boundary deny-by-default, Postgres-ready signatures so the wave5 migration is a mechanical swap.
+- New `documentAudienceProfileService.ts` mirrors the E7 brand-voice contract with two structural differences:
+    - **Multiple active profiles per organization.** Brand Voice limits to one active because it controls QA scoring; audience profiles describe orthogonal output renditions (board / client / engineering) and a tenant typically activates several at once.
+    - **System seeds overlaid into reads** without persistence. `getAudienceProfile`, `listAudienceProfiles`, `listActiveAudienceProfiles` return the four immutable defaults alongside tenant rows. Mutations against system seeds throw `system_profile_immutable`.
+- `AudienceProfileError` taxonomy: `invalid_input`, `profile_not_found`, `profile_archived`, `profile_already_active`, `profile_already_archived`, `system_profile_immutable`, `forbidden`.
+- Lifecycle: `draft → active → archived` (archived rows immutable, queryable for audit). Activation never auto-supersedes; `activateAudienceProfile` is idempotency-guarded against `profile_already_active`.
+- `ensureAudienceProfileRegistryHydrated(organizationId)` is the cold-start hook — idempotent, awaited by every read-path route.
+- New `documentAudienceProfileService.test.ts` (22 specs): draft (5: normalization, invalid-input guards, system-org forbidden, unsupported scalar overrides, write-through), update (5: version bump, null clears overrides, archived rejected, system seed immutable, profile_not_found), activate / archive (5: stamp, multiple actives allowed, idempotency guards, system seed archive rejection), reads (5: cross-tenant denial, list includes seeds, includeSystem=false, includeArchived flag, system seed lookup), hydration (1), full-lifecycle audit (1).
+
+### 6.11.3 Slice 9.3 — Routes (commit `c6b8491b7`)
+
+- 9 new endpoints under `/api/document-studio`:
+    - `GET /audience-profiles` (status?, includeArchived?, includeSystem?), `POST /audience-profiles`, `GET /audience-profiles/:profileId`, `PATCH /audience-profiles/:profileId`, `POST /audience-profiles/:profileId/activate`, `POST /audience-profiles/:profileId/archive`, `GET /audience-profiles/:profileId/audit`.
+    - `GET /:artifactId/variants` returns active profiles (tenant + system) each accompanied by a `describeAudienceProjectionPlan` summary against the document.
+    - `GET /:artifactId/variants/:profileId` returns the projected `DocumentSchema` + provenance via `projectDocumentForAudience`.
+- HTTP error mapping (`mapAudienceProfileErrorToStatus`): 400 invalid_input · 403 system_profile_immutable / forbidden · 404 profile_not_found / document_not_found · 409 profile_archived / profile_already_active / profile_already_archived.
+- Defensive body parsing: `parseAudienceTagFilter`, `parseAudienceRegister/Density/LanguageStyle` (with null-clear semantics), `parseAudienceExecutiveSummaryPolicy/AppendixPolicy/JargonPolicy`. Variant routes are read-only projections — no QA, no artifact mutation. Variant binary export through the renderers is intentionally deferred (downstream tooling renders the projected schema if needed).
+- Following the E5 / E6 / E7 pattern, route-level integration tests are intentionally not added — the data plane is fully covered at the service layer (E9.1: 27 specs, E9.2: 22 specs) and the error-code → HTTP-status switch is a trivial mapper.
+
+### 6.11.4 Validation summary
+
+- Document Studio scope: **45 files / 468 specs**, all green (was 43 / 419 at end of Epic E8; +2 files / +49 specs from E9).
+- `npx tsc --noEmit -p .` clean across the full server tsconfig.
+- `npx eslint --fix` clean for the new modules + tests; only pre-existing `no-useless-escape` warning on `documentQaService.ts` (Recovery Sprint 6, called out in §6.5) and pre-existing `any` warnings in `getAuthContext` survive.
+- Backward-compatible additive types: pre-E9 schemas without `audienceTags` continue to project unchanged (untagged elements are default-include); pre-E9 `DocumentSection.kind` semantics from E8 are preserved; existing renderer tests (DOCX / PDF parity) pass without modification.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - LLM-driven jargon substitution. `AudienceProfileJargonPolicy` is wired through the projector and stored on profiles, but a `'plain_language'` profile today only carries the policy intent — actual rewrite requires a refiner pass that reuses `documentEditorRefiner.ts` guards (methodology + source scope) under the audience constraint. Non-trivial; lands when the audience-aware AI editor flow ships.
+    - Variant binary export through the DOCX / PDF renderers. The renderers consume `DocumentSchema` directly so the projected schema is renderable today, but a dedicated `/:artifactId/variants/:profileId/export/:format` route needs a QA-gating policy decision (run QA on the variant — flagging dropped exec summary as a finding; vs treat the variant as derivative of an already-QA'd source — which is the natural model). Decision deferred.
+    - Density adjustment beyond scalar override. Today `densityOverride` rewrites the schema scalar; future slices may drop "detail-level" tagged blocks when the effective density steps down (e.g. comprehensive → concise). Plumbing exists (`audienceTags`); semantics unfrozen.
+    - Persistence migration. Both DAOs (audience profiles + audit) sit on the in-memory store consistent with the rest of MVP-2..MVP-4; the wave5 Postgres migration is shared infrastructure landing across all Document Studio modules at once.
+    - Frontend audience-variant picker. Today server-only; the consultant UI surface (Menu 3 right-side action: "Render variant…") needs to mirror the active-profile list and the projection plan, owned by Epic E11.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
