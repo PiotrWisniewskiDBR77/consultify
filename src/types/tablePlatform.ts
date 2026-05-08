@@ -36,7 +36,13 @@ export type FieldType =
   | 'button'
   | 'rating'
   | 'duration'
-  | 'barcode';
+  | 'barcode'
+  // Specialized consulting field types (EPIC-T7 / Block A · Sprint 3 backend, Sprint 5 frontend).
+  | 'risk_score'
+  | 'priority'
+  | 'ai_generated_summary'
+  | 'ai_classification'
+  | 'source_reference';
 
 /** Select option for singleSelect / multiSelect fields (avoids conflict with ui SelectOption) */
 export interface TablePlatformSelectOption {
@@ -115,6 +121,36 @@ export interface DurationFieldOptions {
   format?: 'h:mm' | 'h:mm:ss' | 'h:mm:ss.S';
 }
 
+// Specialized consulting field-type option shapes (mirror server-side
+// `SpecializedFieldTypes.ts` from EPIC-T7 backend. Treat as the authoritative
+// frontend contract for cell renderers and AI Editor proposals.)
+export interface RiskScoreFieldOptions {
+  scale: 3 | 5 | 25;
+  axes?: { likelihood?: number; impact?: number };
+}
+
+export interface PriorityFieldOptions {
+  levels: 'P0_P1_P2_P3' | 'CRITICAL_HIGH_MEDIUM_LOW';
+  defaultLevel?: string;
+}
+
+export interface AiGeneratedSummaryFieldOptions {
+  prompt_template: string;
+  max_chars: number;
+  recompute_on?: string[];
+  aiAuto?: boolean;
+}
+
+export interface AiClassificationFieldOptions {
+  classes: string[];
+  prompt_template: string;
+  aiAuto?: boolean;
+}
+
+export interface SourceReferenceFieldOptions {
+  allow_external: boolean;
+}
+
 export type FieldOptions =
   | NumberFieldOptions
   | CurrencyFieldOptions
@@ -130,6 +166,11 @@ export type FieldOptions =
   | FormulaFieldOptions
   | RatingFieldOptions
   | DurationFieldOptions
+  | RiskScoreFieldOptions
+  | PriorityFieldOptions
+  | AiGeneratedSummaryFieldOptions
+  | AiClassificationFieldOptions
+  | SourceReferenceFieldOptions
   | Record<string, never>;
 
 // ============================================================================

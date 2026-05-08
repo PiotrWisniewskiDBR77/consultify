@@ -166,9 +166,80 @@ Project Backlog, Interview Tracker, Workshop Output Table, Digital Transformatio
 
 ---
 
+## Q9 — A-S5 Field Types Frontend scope (decided 2026-05-08, refined for execution)
+
+**Decision:** A-S5 ships ONLY `PlatformCellRenderer` integration (5 specialized field-type display renderers) and i18n keys. Legacy `tableTypes.ColumnType` + `AddColumnDialog.tsx` integration is deferred to follow-up `A-FU-S5b` (Add-Field UX for specialized types).
+
+**Reasoning:**
+- The 5 specialized field types (`risk_score`, `priority`, `ai_generated_summary`, `ai_classification`, `source_reference`) are platform-side `FieldType` values registered in `consultify/src/types/tablePlatform.ts` and consumed by `PlatformCellRenderer`. Rendering specialized values in the platform grid is the user-facing P0 surface.
+- `tableTypes.ts` `ColumnType` union belongs to the legacy Idea Table subsystem and contains raw hex literals (pre-DBR77 baseline). Adding specialized types there mixes two registries and risks duplicating render paths.
+- AddColumnDialog UX for specialized types (option pickers for `risk_score.scale`, `priority.levels`, AI prompt template editor for `ai_generated_summary`/`ai_classification`, `allow_external` toggle for `source_reference`) is a non-trivial UX surface deserving its own sprint with proper option-validator wiring.
+- Rendering-first delivery unblocks AI-generated schema flows (chat → schema proposal → field list with these types) which already produce valid records via `SchemaValidationService`.
+- TabeleRightRail + shortcuts (originally inside A-S5 scope) were already landed in EPIC-T16 (S2/S4b); A-S5 effectively narrows to cell renderers only.
+
+**Risk:** UX gap — power users cannot manually create specialized fields via legacy AddColumnDialog. Mitigation: chat-driven schema creation (Foundation Block path) covers 100 % of consulting templates' specialized fields; `A-FU-S5b` is filed for follow-up before Block C-S5 (when AI Editor needs UI parity).
+
+---
+
+## Q10 — Block C AI Editor delivery shape (decided 2026-05-08)
+
+**Decision:** 8 levels in 2 sprints (C-S2 levels 1–4: cell/record/column/structure; C-S3 levels 5–8: view/relational/methodological/source). Each level MUST honour `proposal → preview/diff → approval → execution → audit`. Default OFF feature flag `ff.tabele_ai_editor` per workspace.
+
+**Reasoning:** matches existing master roadmap; minimizes scope expansion risk; preserves Foundation Block governance invariant.
+
+**Risk:** AI hallucination on mass mutation. Mitigation: `TableAiEditorService` enforces `proposed_changes` schema validation pre-execution; record batch capped at 100 per proposal; cross-tenant ACL audit on every endpoint.
+
+---
+
+## Q11 — Block D Table → Doc/Deck conversion (decided 2026-05-08)
+
+**Decision:** Reuse `Document Studio v1` runtime (per `CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`) and `DeckBuilder` runtime as consumer pipelines. New `TableArtifactConversionService` produces JSON-native artifact (Markdown-first content per Document Studio doctrine). No direct PDF/PPTX file generation from this service.
+
+**Reasoning:**
+- Document Studio v1 is the canonical document runtime; bypassing it would create a parallel doctrine.
+- Markdown-first projection respects `Markdown-first, JSON-when-native, always Markdown projection` content storage contract.
+- PDF/PPTX export remains responsibility of Document Studio / DeckBuilder export pipelines, not of conversion service.
+
+**Risk:** Schema impedance mismatch between TableArtifact and Document Studio templates. Mitigation: explicit mapping layer in `TableArtifactConversionService` with fallback to summary doctype.
+
+---
+
+## Q12 — Lane Power Layer (kanban/calendar/timeline/dashboard/form/automation views) (decided 2026-05-08)
+
+**Decision:** Defer to follow-up program `tabele-lane-power-layer` (Block E in master roadmap addendum), gated by feature flag `ff.tabele_power_layer`. Main program closes once Blocks A/B/C/D `GO`. The TablePlatform backend services (`AutomationService`, `FormService`, `ViewQueryEngine`) already support these views for the Builder route; surfacing them in lane Tabele is a separate UX commitment.
+
+**Reasoning:**
+- Adding 6 new view types to MELS right rail balloons UX scope and risks Right Rail tool overflow (Q1 risk register R8).
+- Backend power layer is reusable as-is for `tabele-lane-power-layer` program.
+- Main program completion (A→D) is the higher business priority.
+
+**Risk:** Perceived "not Airtable-grade" gap during sales demo. Mitigation: P0 trial #2 (D-S5) demonstrates AI-governed differentiation; power layer is positioned as enterprise extension, not gap.
+
+---
+
+## Q13 — Rollback / Diff UI (decided 2026-05-08)
+
+**Decision:** Ship semantic diff renderer in C-S5 (AI Editor + QA frontend) reusing the existing schema-proposal contract from Foundation Block. Artifact-level rollback endpoint ships in C-S4 (alongside QA Engine backend) with UI in C-S5.
+
+**Reasoning:** Diff and rollback share the same proposal/version contract; bundling them in the same UI sprint ensures coherent UX. C-S5 already owns the right-rail panel for AI Editor and QA, so `TabeleRollbackPanel` + `TabeleDiffViewer` slot in naturally.
+
+**Risk:** Diff rendering for cross-table changes (relational level) is non-trivial. Mitigation: scoped diff first (per-table), cross-table aggregation logged in audit but not visualized in C-S5; deferred to D-FU-1 if needed.
+
+---
+
+## Q14 — AI cost control (Q4 carry-over) (locked execution 2026-05-08)
+
+**Decision:** Q4 implementation (soft 70 % / hard 100 % daily token budget) lands in C-S0 BEFORE C-S2 starts. C-S0 also creates `tp_workspace_settings.ai_daily_token_budget INTEGER DEFAULT 100000` migration and `aiTokenBudget.ts` frontend hook for banner rendering. No AI mutation endpoints (C-S1+) accept requests without budget gate.
+
+**Reasoning:** Cost incidents are P0 risks; gating must precede AI Editor exposure to any real workspace.
+
+**Risk:** Quota too low for power users. Mitigation: telemetry in C-S0 measures real usage during dry-run; quota adjustable per `tp_workspace_settings` row by super-admin.
+
+---
+
 ## Sign-off
 
-- Decided: 2026-05-07 (CTO mode under user delegation). Q6 / Q7 / Q8 added 2026-05-08 under same delegation ("Ty jetes CTO wiec decyduj").
+- Decided: 2026-05-07 (CTO mode under user delegation). Q6 / Q7 / Q8 added 2026-05-08 under same delegation ("Ty jetes CTO wiec decyduj"). Q9 / Q10 / Q11 / Q12 / Q13 / Q14 added 2026-05-08 (later same day) under explicit re-delegation ("100% zgody — ty jesteś CTO — więc decyzja należy do ciebie. Działaj zatem").
 - Reviewer (UI/UX): pending block kick-off.
 - Reviewer (Security): pending block kick-off.
 - Reviewer (QA): pending Sprint 6 of each block.

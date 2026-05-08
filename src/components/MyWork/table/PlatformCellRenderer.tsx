@@ -18,7 +18,23 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import type { FieldType, TablePlatformSelectOption } from '@/types/tablePlatform';
+import type {
+  AiClassificationFieldOptions,
+  AiGeneratedSummaryFieldOptions,
+  FieldType,
+  PriorityFieldOptions,
+  RiskScoreFieldOptions,
+  SourceReferenceFieldOptions,
+  TablePlatformSelectOption,
+} from '@/types/tablePlatform';
+
+import {
+  AiClassificationCell,
+  AiSummaryCell,
+  PriorityCell,
+  RiskScoreCell,
+  SourceReferenceCell,
+} from './cells';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -445,6 +461,37 @@ const RENDERERS: Partial<Record<FieldType, React.FC<PlatformCellRendererProps>>>
   barcode: ({ value }) => <BarcodeDisplay value={value} />,
   createdBy: (props) => <CreatedByDisplay {...props} />,
   lastModifiedBy: (props) => <LastModifiedByDisplay {...props} />,
+  // Specialized consulting field types (EPIC-T7 · Sprint A-S5).
+  risk_score: ({ value, fieldOptions }) => (
+    <RiskScoreCell value={value} fieldOptions={fieldOptions as RiskScoreFieldOptions | undefined} />
+  ),
+  priority: ({ value, fieldOptions }) => (
+    <PriorityCell value={value} fieldOptions={fieldOptions as PriorityFieldOptions | undefined} />
+  ),
+  ai_generated_summary: ({ value, fieldOptions, record }) => (
+    <AiSummaryCell
+      value={value}
+      fieldOptions={fieldOptions as AiGeneratedSummaryFieldOptions | undefined}
+      manualOverride={Boolean(
+        (record?.data as { __manual_override?: boolean } | undefined)?.__manual_override
+      )}
+    />
+  ),
+  ai_classification: ({ value, fieldOptions, record }) => (
+    <AiClassificationCell
+      value={value}
+      fieldOptions={fieldOptions as AiClassificationFieldOptions | undefined}
+      manualOverride={Boolean(
+        (record?.data as { __manual_override?: boolean } | undefined)?.__manual_override
+      )}
+    />
+  ),
+  source_reference: ({ value, fieldOptions }) => (
+    <SourceReferenceCell
+      value={value}
+      fieldOptions={fieldOptions as SourceReferenceFieldOptions | undefined}
+    />
+  ),
 };
 
 export const PlatformCellRenderer: React.FC<PlatformCellRendererProps> = React.memo((props) => {

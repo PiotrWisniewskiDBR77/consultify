@@ -9318,6 +9318,28 @@
       "relationRecordMissing": "Brak rekordu do wyjaśnienia",
       "workspaceMissing": "Wymagany jest kontekst workspace",
       "failed": "Nie udało się obsłużyć tej instrukcji"
+    },
+    "fieldTypes": {
+      "risk_score": {
+        "label": "Ocena ryzyka",
+        "description": "Prawdopodobieństwo × wpływ w skali 3, 5 lub 25. Ton wagi wynika z procentu skali."
+      },
+      "priority": {
+        "label": "Priorytet",
+        "description": "Poziom priorytetu (P0–P3 albo krytyczny/wysoki/średni/niski). Najwyższy poziom używa najmocniejszego tonu."
+      },
+      "ai_generated_summary": {
+        "label": "Podsumowanie AI",
+        "description": "Podsumowanie rekordu wygenerowane przez AI. Ręczne edycje są dozwolone i audytowane jako manual override."
+      },
+      "ai_classification": {
+        "label": "Klasyfikacja AI",
+        "description": "Klasa wygenerowana przez AI z konfigurowalnej listy. Ręczne edycje są dozwolone i audytowane."
+      },
+      "source_reference": {
+        "label": "Odwołanie do źródła",
+        "description": "Link provenance do źródła rekordu (UUID) lub URL zewnętrznego, gdy dozwolone."
+      }
     }
   },
   "contact": {

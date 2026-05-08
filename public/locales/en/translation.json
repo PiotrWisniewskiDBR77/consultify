@@ -8629,6 +8629,28 @@
       "relationRecordMissing": "No record is available to explain",
       "workspaceMissing": "Workspace context is required",
       "failed": "Could not process that instruction"
+    },
+    "fieldTypes": {
+      "risk_score": {
+        "label": "Risk Score",
+        "description": "Likelihood × impact on a 3, 5, or 25 scale. Severity tone derives from the percentage of scale."
+      },
+      "priority": {
+        "label": "Priority",
+        "description": "Priority level (P0–P3 or critical/high/medium/low). Highest level uses the most prominent tone."
+      },
+      "ai_generated_summary": {
+        "label": "AI Summary",
+        "description": "AI-derived record summary. Manual edits are allowed and audited as manual override."
+      },
+      "ai_classification": {
+        "label": "AI Classification",
+        "description": "AI-derived class from a configured list. Manual edits are allowed and audited."
+      },
+      "source_reference": {
+        "label": "Source Reference",
+        "description": "Provenance link to a record source (UUID) or external URL when allowed."
+      }
     }
   },
   "contact": {
