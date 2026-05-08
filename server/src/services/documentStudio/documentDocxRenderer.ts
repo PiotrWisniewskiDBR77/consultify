@@ -51,6 +51,7 @@ interface DocxRuntime {
   AlignmentType: { CENTER: unknown; LEFT: unknown; RIGHT: unknown };
   Document: new (options: Record<string, unknown>) => unknown;
   Footer: new (options: Record<string, unknown>) => unknown;
+  FootnoteReferenceRun: new (id: number) => DocxTextRun;
   Header: new (options: Record<string, unknown>) => unknown;
   HeadingLevel: { HEADING_1: unknown; HEADING_2: unknown; HEADING_3: unknown };
   PageBreak: new () => DocxTextRun;
@@ -79,6 +80,7 @@ const {
   AlignmentType,
   Document,
   Footer,
+  FootnoteReferenceRun,
   Header,
   HeadingLevel,
   PageBreak,
@@ -124,20 +126,127 @@ interface BlockCalloutContent {
 
 /**
  * Render-context the renderer threads through every block helper. Holds
- * the resolved formatting class + fonts so each helper avoids re-running
- * the resolver for every paragraph (and so future slices, e.g. captions,
- * can pull the body font without re-importing the styles module).
+ * the resolved formatting class + fonts plus the mutable registries
+ * Slice 8.3 needs (caption counters, footnote bodies, source-ref
+ * indices). Single-pass rendering accumulates state into these
+ * registries; the final {@link Document} constructor consumes the
+ * footnote registry once every block has emitted.
  */
 interface RenderContext {
   schema: DocumentSchema;
   bodyFont: string;
   headingFont: string;
+  citationStyle: 'inline_marker' | 'footnote' | 'endnote';
+  /** Auto-incremented per `table` / `risk_table` / `kpi_strip` block. */
+  tableCounter: { value: number };
+  /** Auto-incremented per `image` block (captions render as "Figure N"). */
+  figureCounter: { value: number };
+  /** Footnote ids start at 1 and grow monotonically. */
+  nextFootnoteId: { value: number };
+  /** id → ordered paragraphs that constitute the footnote body. */
+  footnotes: Map<number, DocxParagraph[]>;
+  /** Stable 1-based marker index per source ref (`{type}::{id}`). */
+  sourceRefIndex: Map<string, number>;
 }
 
 function buildRenderContext(schema: DocumentSchema): RenderContext {
   const formattingClass = resolveFormattingClass(schema);
   const fonts = resolveDocxFonts(schema, formattingClass);
-  return { schema, bodyFont: fonts.body, headingFont: fonts.heading };
+  const sourceRefIndex = new Map<string, number>();
+  schema.sourceRefs.forEach((ref, idx) => {
+    sourceRefIndex.set(`${ref.sourceType}::${ref.sourceId}`, idx + 1);
+  });
+  return {
+    schema,
+    bodyFont: fonts.body,
+    headingFont: fonts.heading,
+    citationStyle: schema.formattingSchema.citationStyle,
+    tableCounter: { value: 0 },
+    figureCounter: { value: 0 },
+    nextFootnoteId: { value: 1 },
+    footnotes: new Map(),
+    sourceRefIndex,
+  };
+}
+
+/**
+ * Register a footnote body and return the assigned id. Word + the
+ * `docx` package treat ids 0 and 1 as reserved for separator runs,
+ * so we start at 2 to be safe across docx releases.
+ */
+function registerFootnote(ctx: RenderContext, paragraphs: DocxParagraph[]): number {
+  // Bump past the docx-reserved ids before the first allocation. The
+  // bump happens here (not at ctx init) so the test surface stays
+  // tolerant if a future docx version stops reserving ids.
+  if (ctx.nextFootnoteId.value < 2) ctx.nextFootnoteId.value = 2;
+  const id = ctx.nextFootnoteId.value;
+  ctx.nextFootnoteId.value += 1;
+  ctx.footnotes.set(id, paragraphs);
+  return id;
+}
+
+/**
+ * Build the lookup key for a source ref so duplicate refs across
+ * blocks share a single citation index.
+ */
+function sourceRefKey(ref: { sourceType: string; sourceId: string }): string {
+  return `${ref.sourceType}::${ref.sourceId}`;
+}
+
+/**
+ * Resolve (or assign) the 1-based citation index for a source ref.
+ * Refs that were not in `schema.sourceRefs` get appended to the
+ * registry on the fly so the rendered marker is still meaningful.
+ */
+function citationIndexFor(
+  ctx: RenderContext,
+  ref: { sourceType: string; sourceId: string }
+): number {
+  const key = sourceRefKey(ref);
+  const existing = ctx.sourceRefIndex.get(key);
+  if (typeof existing === 'number') return existing;
+  const next = ctx.sourceRefIndex.size + 1;
+  ctx.sourceRefIndex.set(key, next);
+  return next;
+}
+
+/**
+ * Pretty-print a source ref into the footnote / endnote body text.
+ */
+function describeSourceRef(ref: {
+  sourceType: string;
+  sourceId: string;
+  sourceTitle?: string;
+}): string {
+  const title = ref.sourceTitle ? ` — ${ref.sourceTitle}` : '';
+  return `Source: ${ref.sourceType}#${ref.sourceId}${title}`;
+}
+
+/**
+ * Build a citation marker run for a block whose `sourceRef` is set.
+ * Returns either a TextRun (for inline_marker) or a FootnoteReferenceRun
+ * (for footnote / endnote — folded into footnote semantics for MVP-4
+ * since Word renders them functionally identically).
+ */
+function buildCitationRuns(
+  ctx: RenderContext,
+  ref: { sourceType: string; sourceId: string; sourceTitle?: string }
+): DocxTextRun[] {
+  if (ctx.citationStyle === 'inline_marker') {
+    const idx = citationIndexFor(ctx, ref);
+    return [new TextRun({ text: ` [${idx}]`, font: ctx.bodyFont })];
+  }
+  // 'footnote' + 'endnote' both render via Word footnotes; endnotes
+  // are folded into footnotes for MVP-4 because the docx package
+  // surfaces both with the same FootnoteReferenceRun primitive and
+  // Word's print layout collapses the visual difference.
+  const id = registerFootnote(ctx, [
+    new Paragraph({
+      style: DOCX_STYLE_IDS.FOOTNOTE_TEXT,
+      children: [new TextRun({ text: describeSourceRef(ref), font: ctx.bodyFont })],
+    }),
+  ]);
+  return [new FootnoteReferenceRun(id)];
 }
 
 function asString(value: unknown): string {
@@ -200,6 +309,7 @@ function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragra
     }),
   ];
   if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont));
+  if (block.sourceRef) children.push(...buildCitationRuns(ctx, block.sourceRef));
   return new Paragraph({
     style: block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
     children,
@@ -242,32 +352,36 @@ function renderQuoteBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as BlockTextContent & { attribution?: string };
   const text = asString(value.text ?? '');
   const attribution = value.attribution ? ` — ${asString(value.attribution)}` : '';
+  const children: TextRun[] = [
+    new TextRun({
+      text: `“${text}”${attribution}`,
+      font: ctx.bodyFont,
+    }),
+  ];
+  if (block.sourceRef) children.push(...buildCitationRuns(ctx, block.sourceRef));
   return new Paragraph({
     style: DOCX_STYLE_IDS.BLOCK_QUOTE,
-    children: [
-      new TextRun({
-        text: `“${text}”${attribution}`,
-        font: ctx.bodyFont,
-      }),
-    ],
+    children,
   });
 }
 
-function renderTableBlock(block: DocumentBlock, ctx: RenderContext): Table | Paragraph {
-  const value = (block.content ?? {}) as BlockTableContent;
+function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Paragraph)[] {
+  const value = (block.content ?? {}) as BlockTableContent & { caption?: string };
   const headers = Array.isArray(value.headers) ? value.headers : [];
   const rows = Array.isArray(value.rows) ? value.rows : [];
 
   if (headers.length === 0 && rows.length === 0) {
-    return new Paragraph({
-      style: DOCX_STYLE_IDS.CAPTION,
-      children: [
-        new TextRun({
-          text: '[Table placeholder — populate with structured data once sources are attached.]',
-          font: ctx.bodyFont,
-        }),
-      ],
-    });
+    return [
+      new Paragraph({
+        style: DOCX_STYLE_IDS.CAPTION,
+        children: [
+          new TextRun({
+            text: '[Table placeholder — populate with structured data once sources are attached.]',
+            font: ctx.bodyFont,
+          }),
+        ],
+      }),
+    ];
   }
 
   const tableRows: unknown[] = [];
@@ -310,10 +424,79 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): Table | Par
     );
   }
 
-  return new Table({
+  const table = new Table({
     rows: tableRows,
     width: { size: 100, type: WidthType.PERCENTAGE },
   });
+
+  // Auto-numbered caption — emitted after the table so Word's "Update
+  // captions" command and screen-reader navigation pick it up. The
+  // counter increments per renderer invocation so two tables in the
+  // same document end up "Table 1" / "Table 2" regardless of section.
+  ctx.tableCounter.value += 1;
+  const captionLabel = `Table ${ctx.tableCounter.value}`;
+  const captionText = value.caption ? `${captionLabel} — ${asString(value.caption)}` : captionLabel;
+  const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
+  if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
+  const caption = new Paragraph({
+    style: DOCX_STYLE_IDS.CAPTION,
+    children: captionChildren,
+  });
+
+  return [table, caption];
+}
+
+function renderImagePlaceholder(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
+  const value = (block.content ?? {}) as { caption?: string; alt?: string };
+  ctx.figureCounter.value += 1;
+  const captionLabel = `Figure ${ctx.figureCounter.value}`;
+  const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
+  const captionText = `${captionLabel} — ${description}`;
+  // We do not embed the image bytes in MVP-4 (image embedding is
+  // deferred to a later epic); we still surface the caption + a
+  // typographic placeholder so the visual flow + counter are correct.
+  const placeholder = new Paragraph({
+    style: DOCX_STYLE_IDS.CAPTION,
+    children: [
+      new TextRun({
+        text: `[${captionLabel} placeholder — image asset not yet embedded]`,
+        font: ctx.bodyFont,
+      }),
+    ],
+  });
+  const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
+  if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
+  const caption = new Paragraph({
+    style: DOCX_STYLE_IDS.CAPTION,
+    children: captionChildren,
+  });
+  return [placeholder, caption];
+}
+
+function renderFootnoteBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
+  const value = (block.content ?? {}) as BlockTextContent;
+  const bodyText = asString(value.text ?? '').trim();
+  if (bodyText.length === 0) return [];
+  const id = registerFootnote(ctx, [
+    new Paragraph({
+      style: DOCX_STYLE_IDS.FOOTNOTE_TEXT,
+      children: [new TextRun({ text: bodyText, font: ctx.bodyFont })],
+    }),
+  ]);
+  // Anchor paragraph: emits the superscript reference so Word's
+  // footnote pane links back to a specific spot in the body. We keep
+  // a tiny "Note" marker preceding the reference so users skimming
+  // the body still see *something* even if Word's footnote pane is
+  // collapsed.
+  return [
+    new Paragraph({
+      style: DOCX_STYLE_IDS.BODY_TEXT,
+      children: [
+        new TextRun({ text: 'Note ', italics: true, font: ctx.bodyFont, color: '64748B' }),
+        new FootnoteReferenceRun(id),
+      ],
+    }),
+  ];
 }
 
 function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Table)[] {
@@ -332,13 +515,17 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
     case 'table':
     case 'risk_table':
     case 'kpi_strip':
-      return [renderTableBlock(block, ctx)];
+      return renderTableBlock(block, ctx);
     case 'image':
+      return renderImagePlaceholder(block, ctx);
     case 'footnote':
+      return renderFootnoteBlock(block, ctx);
     case 'citation':
     default:
       // Fall back to paragraph text rendering for block types not covered by
-      // the MVP-1 finalization renderer.
+      // a dedicated renderer (citations are usually attached via
+      // `block.sourceRef` on a body block, so a standalone `citation`
+      // block degrades gracefully into a paragraph).
       return [renderParagraphBlock(block, ctx)];
   }
 }
@@ -578,11 +765,27 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
         ]
       : [];
 
+  // Materialise the accumulated footnote registry into the
+  // string-keyed shape `Document({ footnotes })` expects. Empty when
+  // no footnote / footnote-style citation block was emitted, in which
+  // case we omit the property so docx does not write an empty
+  // `word/footnotes.xml` part.
+  const footnotesPayload =
+    ctx.footnotes.size > 0
+      ? Object.fromEntries(
+          Array.from(ctx.footnotes.entries()).map(([id, paragraphs]) => [
+            String(id),
+            { children: paragraphs },
+          ])
+        )
+      : undefined;
+
   const doc = new Document({
     creator: 'Consultify Document Studio',
     title: schema.title,
     description: `Consultify Document Studio · ${schema.documentType} · ${formattingClass}`,
     styles,
+    ...(footnotesPayload ? { footnotes: footnotesPayload } : {}),
     sections: [
       {
         properties: {
