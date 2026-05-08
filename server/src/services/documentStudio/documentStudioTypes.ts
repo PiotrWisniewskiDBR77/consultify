@@ -218,7 +218,27 @@ export interface DocumentExportResult {
   manifest: Record<string, unknown>;
 }
 
-export type DocumentEditorScope = 'local' | 'section' | 'global';
+/**
+ * Editor scopes (Epic E3 — extended in Sprint 4):
+ *  - local:        single block under the cursor
+ *  - section:      every editable block in one section
+ *  - global:       every editable block in every section
+ *  - methodology:  every editable block in Methodology/Approach/Scope/Założenia/
+ *                  Assumptions/Sensitivity sections only — stricter prompt
+ *                  rules ("do not invent methodology steps, do not reorder
+ *                  phases, only refine prose")
+ *  - source:       every editable block whose block.sourceRef is set —
+ *                  stricter prompt rules ("never modify numbers, names,
+ *                  citation markers; polish prose only") + post-rewrite
+ *                  preservation guard (digits + bracketed citations must
+ *                  match before/after; otherwise deterministic fallback)
+ */
+export type DocumentEditorScope =
+  | 'local'
+  | 'section'
+  | 'global'
+  | 'methodology'
+  | 'source';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**

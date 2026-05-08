@@ -862,6 +862,281 @@ export async function createGlobalEditProposal(
   return proposal;
 }
 
+// =============================================================================
+// Sprint 4 (Epic E3) — Editor methodology + source scope proposals.
+// =============================================================================
+
+/**
+ * Title heuristics for methodology-aligned sections. PL+EN. Matched against
+ * a normalized (lowercased, diacritics-stripped, ł→l) title prefix.
+ */
+const METHODOLOGY_SECTION_HINTS: ReadonlyArray<string> = [
+  'methodology',
+  'method',
+  'approach',
+  'scope',
+  'assumptions',
+  'scenarios',
+  'sensitivity',
+  'risks',
+  'metodologia',
+  'metoda',
+  'podejscie',
+  'zakres',
+  'zalozenia',
+  'scenariusze',
+  'wrazliwosc',
+  'ryzyka',
+  'ryzyko',
+];
+
+function normalizeSectionTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    // Polish "ł" (U+0142) does not decompose under NFD; map it explicitly
+    // so the lexicon match works on titles like "Założenia" / "Wnioski
+    // końcowe" / "Cele biznesowe".
+    .replace(/ł/g, 'l')
+    .trim();
+}
+
+function isMethodologyAlignedSection(section: DocumentSchema['sections'][number]): boolean {
+  const norm = normalizeSectionTitle(section.title || '');
+  if (!norm) return false;
+  return METHODOLOGY_SECTION_HINTS.some((hint) => norm.startsWith(hint));
+}
+
+export interface CreateMethodologyEditProposalParams {
+  artifactId: string;
+  organizationId: string;
+  userId: string;
+  instruction: string;
+  /** Opt-in bounded LLM rewrite. Falls back deterministically on any failure. */
+  useLlm?: boolean;
+}
+
+/**
+ * Methodology-scope edit proposal. Operates on every editable block in
+ * sections whose title matches METHODOLOGY_SECTION_HINTS (Methodology,
+ * Approach, Scope, Assumptions, Scenarios, Sensitivity, Risks; PL+EN).
+ * Other sections are untouched.
+ *
+ * The refiner system prompt for `methodology` scope adds explicit
+ * guardrails: no new methodology steps, no reordering, no removal —
+ * prose-only refinement.
+ */
+export async function createMethodologyEditProposal(
+  params: CreateMethodologyEditProposalParams
+): Promise<DocumentEditorProposal> {
+  const { artifactId, organizationId, userId, instruction } = params;
+  const trimmed = instruction.trim();
+  if (!trimmed) throw new Error('instruction is required');
+  const schema = await getDocumentArtifact(artifactId, organizationId);
+  if (!schema) throw new Error('artifact_not_found');
+
+  const targetSections = schema.sections.filter(isMethodologyAlignedSection);
+  if (targetSections.length === 0) {
+    throw new Error('no_methodology_sections');
+  }
+
+  const blockRewrites: Record<string, string> = {};
+  let llmRefined = false;
+  if (params.useLlm) {
+    for (const section of targetSections) {
+      for (const block of section.blocks) {
+        const blockBefore = blockToEditableText(block.content);
+        if (!blockBefore.trim()) continue;
+        const refined = await refineEditorTextWithLlm(blockBefore, trimmed, {
+          documentType: schema.documentType,
+          scope: 'methodology',
+          communicationRegister: schema.communicationRegister,
+          language: schema.language,
+        });
+        if (refined) {
+          blockRewrites[block.blockId] = refined;
+          llmRefined = true;
+        }
+      }
+    }
+  }
+
+  const projections: SectionMarkdownProjection[] = targetSections.map((section) => {
+    const before = projectSectionToText(section);
+    const after = llmRefined
+      ? [
+          `## ${section.title}`,
+          ...section.blocks.map(
+            (block) => blockRewrites[block.blockId] ?? blockToEditableText(block.content)
+          ),
+        ]
+          .filter((line) => line.trim().length > 0)
+          .join('\n\n')
+      : `${before}\n\n[Methodology-scope edit applied at approval: ${trimmed}]`;
+    return {
+      sectionId: section.sectionId,
+      title: section.title,
+      before,
+      after,
+    };
+  });
+
+  const before = projections.map((p) => p.before).join('\n\n---\n\n');
+  const after = projections.map((p) => p.after).join('\n\n---\n\n');
+  const createdAt = nowIso();
+  const proposal: DocumentEditorProposal = {
+    proposalId: makeId('doc-proposal'),
+    artifactId,
+    organizationId,
+    scope: 'methodology',
+    instruction: trimmed,
+    affectedSectionIds: targetSections.map((s) => s.sectionId),
+    blockRewrites: llmRefined ? blockRewrites : undefined,
+    llmRefined: llmRefined || undefined,
+    status: 'proposed',
+    diff: { before, after },
+    createdBy: userId,
+    createdAt,
+  };
+  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  pushAuditEntry({
+    auditId: makeId('doc-audit'),
+    artifactId,
+    organizationId,
+    proposalId: proposal.proposalId,
+    action: 'proposal_created',
+    actorId: userId,
+    occurredAt: createdAt,
+    details: {
+      scope: 'methodology',
+      affectedSectionCount: proposal.affectedSectionIds.length,
+    },
+  });
+  return proposal;
+}
+
+export interface CreateSourceEditProposalParams {
+  artifactId: string;
+  organizationId: string;
+  userId: string;
+  instruction: string;
+  /** Opt-in bounded LLM rewrite. Falls back deterministically on any failure. */
+  useLlm?: boolean;
+}
+
+/**
+ * Source-scope edit proposal. Operates on every editable block whose
+ * `block.sourceRef` is set. Other blocks are untouched.
+ *
+ * The refiner system prompt for `source` scope adds explicit guardrails:
+ * no number changes, no name changes, no citation marker drift —
+ * prose-only refinement. Additionally, the refiner runs a multiset
+ * preservation guard on numbers and bracketed citations and falls back
+ * to deterministic if either drifts.
+ */
+export async function createSourceEditProposal(
+  params: CreateSourceEditProposalParams
+): Promise<DocumentEditorProposal> {
+  const { artifactId, organizationId, userId, instruction } = params;
+  const trimmed = instruction.trim();
+  if (!trimmed) throw new Error('instruction is required');
+  const schema = await getDocumentArtifact(artifactId, organizationId);
+  if (!schema) throw new Error('artifact_not_found');
+
+  const targetBlocks: Array<{
+    section: DocumentSchema['sections'][number];
+    block: DocumentSchema['sections'][number]['blocks'][number];
+  }> = [];
+  for (const section of schema.sections) {
+    for (const block of section.blocks) {
+      if (block.sourceRef && blockToEditableText(block.content).trim().length > 0) {
+        targetBlocks.push({ section, block });
+      }
+    }
+  }
+  if (targetBlocks.length === 0) {
+    throw new Error('no_source_anchored_blocks');
+  }
+
+  const blockRewrites: Record<string, string> = {};
+  let llmRefined = false;
+  if (params.useLlm) {
+    for (const { block } of targetBlocks) {
+      const blockBefore = blockToEditableText(block.content);
+      const refined = await refineEditorTextWithLlm(blockBefore, trimmed, {
+        documentType: schema.documentType,
+        scope: 'source',
+        communicationRegister: schema.communicationRegister,
+        language: schema.language,
+      });
+      if (refined) {
+        blockRewrites[block.blockId] = refined;
+        llmRefined = true;
+      }
+    }
+  }
+
+  const affectedSectionIds = Array.from(new Set(targetBlocks.map((t) => t.section.sectionId)));
+  const projections: SectionMarkdownProjection[] = affectedSectionIds.map((sectionId) => {
+    const section = schema.sections.find((s) => s.sectionId === sectionId);
+    if (!section) {
+      return { sectionId, title: '', before: '', after: '' };
+    }
+    const before = projectSectionToText(section);
+    const after = llmRefined
+      ? [
+          `## ${section.title}`,
+          ...section.blocks.map(
+            (block) => blockRewrites[block.blockId] ?? blockToEditableText(block.content)
+          ),
+        ]
+          .filter((line) => line.trim().length > 0)
+          .join('\n\n')
+      : `${before}\n\n[Source-scope edit applied at approval: ${trimmed}]`;
+    return {
+      sectionId: section.sectionId,
+      title: section.title,
+      before,
+      after,
+    };
+  });
+
+  const before = projections.map((p) => p.before).join('\n\n---\n\n');
+  const after = projections.map((p) => p.after).join('\n\n---\n\n');
+  const createdAt = nowIso();
+  const proposal: DocumentEditorProposal = {
+    proposalId: makeId('doc-proposal'),
+    artifactId,
+    organizationId,
+    scope: 'source',
+    instruction: trimmed,
+    affectedSectionIds,
+    blockRewrites: llmRefined ? blockRewrites : undefined,
+    llmRefined: llmRefined || undefined,
+    status: 'proposed',
+    diff: { before, after },
+    createdBy: userId,
+    createdAt,
+  };
+  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  pushAuditEntry({
+    auditId: makeId('doc-audit'),
+    artifactId,
+    organizationId,
+    proposalId: proposal.proposalId,
+    action: 'proposal_created',
+    actorId: userId,
+    occurredAt: createdAt,
+    details: {
+      scope: 'source',
+      affectedSectionCount: affectedSectionIds.length,
+      affectedBlockCount: targetBlocks.length,
+    },
+  });
+  return proposal;
+}
+
 function updateProposalStatus(
   proposal: DocumentEditorProposal,
   status: DocumentProposalStatus
@@ -912,7 +1187,11 @@ function applyProposalToSchema(
     // Local proposals encode the rewrite directly in `diff.after`; LLM and
     // deterministic paths share the same field.
     block.content = withBlockText(block.content, proposal.diff.after);
-  } else if (proposal.scope === 'section') {
+    next.updatedAt = nowIso();
+    return next;
+  }
+
+  if (proposal.scope === 'section') {
     if (!proposal.sectionId) throw new Error('proposal_missing_targets');
     const section = next.sections.find((s) => s.sectionId === proposal.sectionId);
     if (!section) throw new Error('section_not_found');
@@ -922,14 +1201,26 @@ function applyProposalToSchema(
         ? withBlockText(block.content, refinedText)
         : applyInstructionToBlock(block.content, proposal.instruction);
     }
-  } else {
-    for (const section of next.sections) {
-      for (const block of section.blocks) {
-        const refinedText = rewrites[block.blockId];
-        block.content = refinedText
-          ? withBlockText(block.content, refinedText)
-          : applyInstructionToBlock(block.content, proposal.instruction);
-      }
+    next.updatedAt = nowIso();
+    return next;
+  }
+
+  // Resolve which sections this proposal is allowed to touch. For
+  // `global` scope we touch every section; for `methodology` / `source`
+  // scope we restrict to the recorded `affectedSectionIds`. Source scope
+  // additionally restricts to blocks whose sourceRef is set.
+  const allowedSectionIds: ReadonlySet<string> | null =
+    proposal.scope === 'global' ? null : new Set(proposal.affectedSectionIds);
+  const sourceRestrictedScope = proposal.scope === 'source';
+
+  for (const section of next.sections) {
+    if (allowedSectionIds && !allowedSectionIds.has(section.sectionId)) continue;
+    for (const block of section.blocks) {
+      if (sourceRestrictedScope && !block.sourceRef) continue;
+      const refinedText = rewrites[block.blockId];
+      block.content = refinedText
+        ? withBlockText(block.content, refinedText)
+        : applyInstructionToBlock(block.content, proposal.instruction);
     }
   }
   next.updatedAt = nowIso();
