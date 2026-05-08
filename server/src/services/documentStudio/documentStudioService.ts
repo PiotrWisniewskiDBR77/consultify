@@ -80,6 +80,7 @@ import {
   listDocumentVersionSnapshots,
   registerDocumentVersionSnapshotAuditPump,
 } from './documentVersionSnapshotService.js';
+import { registerDocumentCommentsAuditPump } from './documentCommentsService.js';
 
 const SCHEMA_METADATA_KEY = 'documentStudioSchema';
 const STUDIO_MODE_METADATA_KEY = 'documentStudioMode';
@@ -626,6 +627,7 @@ function pushAuditEntry(entry: DocumentAuditEntry): void {
 // downstream module overwrites the pump).
 registerDocumentLifecycleAuditPump(pushAuditEntry);
 registerDocumentVersionSnapshotAuditPump(pushAuditEntry);
+registerDocumentCommentsAuditPump(pushAuditEntry);
 
 function blockToEditableText(content: unknown): string {
   if (!content || typeof content !== 'object') return '';

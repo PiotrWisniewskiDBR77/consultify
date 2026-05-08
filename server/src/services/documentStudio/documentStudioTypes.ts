@@ -315,7 +315,117 @@ export type DocumentAuditAction =
   // Epic E5 — Document Lifecycle
   | 'document_status_changed'
   | 'document_version_snapshot_created'
-  | 'document_rolled_back';
+  | 'document_rolled_back'
+  // Epic E6 — Comments + review mode
+  | 'comment_added'
+  | 'comment_replied'
+  | 'comment_resolved'
+  | 'comment_reopened'
+  | 'comment_deleted';
+
+// =============================================================================
+// Epic E6 — Comments + review mode
+// =============================================================================
+
+/**
+ * Lifecycle status of a `DocumentComment`. Comments live in two
+ * states only — `'open'` (the default on creation) and `'resolved'`
+ * (closed after a reviewer marked it done). Reopening flips the
+ * state back to `'open'` and bumps `reopenedAt`. We deliberately
+ * keep this binary so the UI affordances (thread badges, unresolved
+ * counts) stay simple and the audit trail unambiguous.
+ */
+export type DocumentCommentStatus = 'open' | 'resolved';
+
+/**
+ * Anchor — what part of the document the comment is attached to.
+ *
+ *   document   The whole artifact (general feedback, no anchor).
+ *   section    Bound to a specific section by `sectionId`.
+ *   block      Bound to a specific block inside a section by both
+ *              `sectionId` AND `blockId` (enables inline annotation
+ *              UX in the editor canvas).
+ *
+ * The discriminant is captured in `anchor.kind`; required ids ride
+ * along on the same object so the type narrows them automatically.
+ */
+export type DocumentCommentAnchor =
+  | { kind: 'document' }
+  | { kind: 'section'; sectionId: string }
+  | { kind: 'block'; sectionId: string; blockId: string };
+
+/**
+ * A reviewer comment on a document. Threads are formed by sharing
+ * `threadId` — the root comment of a thread carries
+ * `parentCommentId === undefined` and all replies carry
+ * `parentCommentId === root.commentId`. Replies inherit the root's
+ * `anchor`.
+ *
+ * Resolution semantics: resolving the root marks every comment in
+ * the thread as resolved (atomic operation in the service); replies
+ * cannot be resolved independently in MVP. Reopen mirrors that.
+ */
+export interface DocumentComment {
+  commentId: string;
+  threadId: string;
+  artifactId: string;
+  organizationId: string;
+  /** Root of a thread has parentCommentId === undefined. */
+  parentCommentId?: string;
+  anchor: DocumentCommentAnchor;
+  authorId: string;
+  body: string;
+  status: DocumentCommentStatus;
+  createdAt: string;
+  updatedAt: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  resolveReason?: string;
+  reopenedBy?: string;
+  reopenedAt?: string;
+  /** Soft-delete: the comment row stays in the timeline so the
+   *  audit trail is complete, but body is replaced with `''` and
+   *  `deletedAt` is stamped. Replies on a deleted root keep working. */
+  deletedBy?: string;
+  deletedAt?: string;
+}
+
+/**
+ * Aggregated view of a comment thread for UI rendering. The service
+ * groups comments by `threadId` and returns:
+ *   - `root`    The first comment in the thread (parentCommentId === undefined).
+ *   - `replies` All other comments in the thread, ordered by createdAt asc.
+ *   - `status`  Mirrors the root's status (resolution is thread-wide).
+ *   - `anchor`  Mirrors the root's anchor.
+ */
+export interface DocumentCommentThread {
+  threadId: string;
+  artifactId: string;
+  organizationId: string;
+  anchor: DocumentCommentAnchor;
+  status: DocumentCommentStatus;
+  root: DocumentComment;
+  replies: DocumentComment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Per-section unresolved-comment counts for the editor canvas to
+ * render thread badges next to section / block headings.
+ */
+export interface DocumentCommentSectionCounts {
+  artifactId: string;
+  organizationId: string;
+  /** Sum of `'open'` thread counts across the entire artifact. */
+  totalOpen: number;
+  /** Sum of `'resolved'` thread counts across the entire artifact. */
+  totalResolved: number;
+  /** Per-section breakdown. The map omits sections with zero threads. */
+  perSection: Record<string, { open: number; resolved: number }>;
+  /** Per-block breakdown — only `'block'`-anchored threads contribute. */
+  perBlock: Record<string, { open: number; resolved: number }>;
+}
 
 /**
  * Origin of a `DocumentVersionSnapshot` (Epic E5 Slice 5.2 / 5.3).
