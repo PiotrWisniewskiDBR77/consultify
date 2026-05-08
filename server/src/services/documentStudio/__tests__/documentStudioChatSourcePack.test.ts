@@ -27,15 +27,15 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => ({
 }));
 
 import {
-  createDocumentFromChatSourcePack,
-  type CreateChatSourcePackConnectorInput,
-} from '../documentStudioService.js';
-import {
   __resetSourcePackRegistryAndPersistenceForTests,
   getSourcePack,
   listSourcePackAuditEntries,
   listSourcePacks,
 } from '../documentSourcePackService.js';
+import {
+  type CreateChatSourcePackConnectorInput,
+  createDocumentFromChatSourcePack,
+} from '../documentStudioService.js';
 import type { DocumentIntake } from '../documentStudioTypes.js';
 
 const ORG = 'org-chat-create';

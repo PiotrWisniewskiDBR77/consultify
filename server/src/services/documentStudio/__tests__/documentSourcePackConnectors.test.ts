@@ -67,8 +67,8 @@ describe('Source Pack Connectors — URL', () => {
         <noscript>NoScript</noscript>
       </body></html>
     `;
-    const fakeFetch = vi.fn(async () =>
-      new Response(html, { status: 200, headers: { 'content-type': 'text/html' } })
+    const fakeFetch = vi.fn(
+      async () => new Response(html, { status: 200, headers: { 'content-type': 'text/html' } })
     ) as unknown as typeof fetch;
     const item = await ingestUrlSource({
       url: 'https://example.com/sample',
@@ -86,8 +86,8 @@ describe('Source Pack Connectors — URL', () => {
   });
 
   it('falls back to hostname when no <title> tag is present', async () => {
-    const fakeFetch = vi.fn(async () =>
-      new Response('<p>Body only</p>', { status: 200 })
+    const fakeFetch = vi.fn(
+      async () => new Response('<p>Body only</p>', { status: 200 })
     ) as unknown as typeof fetch;
     const item = await ingestUrlSource({
       url: 'https://news.example.org/article',
@@ -103,8 +103,8 @@ describe('Source Pack Connectors — URL', () => {
   });
 
   it('throws fetch_failed when the response is not 2xx', async () => {
-    const fakeFetch = vi.fn(async () =>
-      new Response('Not Found', { status: 404 })
+    const fakeFetch = vi.fn(
+      async () => new Response('Not Found', { status: 404 })
     ) as unknown as typeof fetch;
     await expect(
       ingestUrlSource({ url: 'https://example.com/missing', fetcher: fakeFetch })
@@ -112,8 +112,8 @@ describe('Source Pack Connectors — URL', () => {
   });
 
   it('throws extraction_failed when body strip yields no text', async () => {
-    const fakeFetch = vi.fn(async () =>
-      new Response('<script>only()</script>', { status: 200 })
+    const fakeFetch = vi.fn(
+      async () => new Response('<script>only()</script>', { status: 200 })
     ) as unknown as typeof fetch;
     await expect(
       ingestUrlSource({ url: 'https://example.com/empty', fetcher: fakeFetch })
@@ -229,7 +229,9 @@ describe('Source Pack Connectors — V8 artifact', () => {
   });
 
   it('throws artifact_not_found when the loader returns null', async () => {
-    const loader = vi.fn(async () => null) as unknown as typeof import('../../wave5ArtifactRuntimeService.js').getWave5Artifact;
+    const loader = vi.fn(
+      async () => null
+    ) as unknown as typeof import('../../wave5ArtifactRuntimeService.js').getWave5Artifact;
     await expect(
       ingestV8ArtifactSource({
         artifactId: 'missing',

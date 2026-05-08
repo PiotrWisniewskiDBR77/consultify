@@ -233,12 +233,7 @@ export interface DocumentExportResult {
  *                  preservation guard (digits + bracketed citations must
  *                  match before/after; otherwise deterministic fallback)
  */
-export type DocumentEditorScope =
-  | 'local'
-  | 'section'
-  | 'global'
-  | 'methodology'
-  | 'source';
+export type DocumentEditorScope = 'local' | 'section' | 'global' | 'methodology' | 'source';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**

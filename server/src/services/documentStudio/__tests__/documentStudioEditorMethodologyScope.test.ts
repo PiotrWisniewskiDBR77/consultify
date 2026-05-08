@@ -149,16 +149,15 @@ const noMethodologySchema: DocumentSchema = {
   ],
 };
 
+// Add an additional artifact via a second mock layer for the "no methodology
+// sections" case. We piggy-back on the same getWave5Artifact mock by
+// extending its branching at runtime via vi.mocked.
+import { getWave5Artifact } from '../../wave5ArtifactRuntimeService.js';
 import {
   approveEditProposal,
   createMethodologyEditProposal,
   listDocumentAuditEntries,
 } from '../documentStudioService.js';
-
-// Add an additional artifact via a second mock layer for the "no methodology
-// sections" case. We piggy-back on the same getWave5Artifact mock by
-// extending its branching at runtime via vi.mocked.
-import { getWave5Artifact } from '../../wave5ArtifactRuntimeService.js';
 const mockedGet = vi.mocked(getWave5Artifact);
 
 describe('Document Studio editor — methodology scope', () => {

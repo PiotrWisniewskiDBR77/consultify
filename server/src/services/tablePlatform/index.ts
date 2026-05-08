@@ -57,6 +57,32 @@ export {
   default as tabeleConsultingTemplatesSeeder,
 } from './seeds/tabeleConsultingTemplatesSeeder.js';
 export { ServiceAccountService, serviceAccountService } from './ServiceAccountService.js';
+export {
+  AI_CLASSIFICATION_MAX_CLASSES,
+  AI_CLASSIFICATION_MIN_CLASSES,
+  AI_PROMPT_TEMPLATE_MAX_LENGTH,
+  AI_REGEN_FIELD_TYPES,
+  AI_SUMMARY_MAX_CHARS_HARD_LIMIT,
+  type AiClassificationOptions,
+  type AiGeneratedSummaryOptions,
+  checkSpecializedFieldValue,
+  defaultOptionsFor as defaultSpecializedOptionsFor,
+  isSpecializedFieldType,
+  PRIORITY_LEVEL_PRESETS,
+  type PriorityLevelPreset,
+  type PriorityOptions,
+  priorityValuesFor,
+  RISK_SCORE_VALID_SCALES,
+  riskScoreMatrixSize,
+  type RiskScoreOptions,
+  type RiskScoreScale,
+  SOURCE_REFERENCE_MAX_EXTERNAL_URL,
+  type SourceReferenceOptions,
+  SPECIALIZED_FIELD_TYPES,
+  type SpecializedFieldOptions,
+  type SpecializedFieldType,
+  validateSpecializedField,
+} from './SpecializedFieldTypes.js';
 export { SSOService, ssoService } from './SSOService.js';
 export { default as TableContextService } from './TableContextService.js';
 export type {
@@ -68,9 +94,9 @@ export type {
 } from './TemplateLifecycleService.js';
 export { default as TemplateLifecycleService } from './TemplateLifecycleService.js';
 export {
-  default as ValidationStatusService,
   type SetStatusOptions,
   type SetStatusResult,
   type ValidationStatus,
+  default as ValidationStatusService,
 } from './ValidationStatusService.js';
 export { default as ViewQueryEngine } from './ViewQueryEngine.js';

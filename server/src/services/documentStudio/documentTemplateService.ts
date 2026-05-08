@@ -113,9 +113,7 @@ async function ensureHydrated(organizationId: string): Promise<void> {
     try {
       const [tenantTemplates, systemTemplates] = await Promise.all([
         loadTemplatesForOrg(organizationId),
-        organizationId === SYSTEM_ORG_ID
-          ? Promise.resolve([])
-          : loadTemplatesForOrg(SYSTEM_ORG_ID),
+        organizationId === SYSTEM_ORG_ID ? Promise.resolve([]) : loadTemplatesForOrg(SYSTEM_ORG_ID),
       ]);
       for (const template of tenantTemplates) {
         registryStore.set(templateKey(template.organizationId, template.templateId), template);

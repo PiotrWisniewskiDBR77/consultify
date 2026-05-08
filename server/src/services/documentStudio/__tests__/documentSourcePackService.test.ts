@@ -38,7 +38,11 @@ const USER = 'user-1';
 function makeItem(overrides: Partial<SourcePackItem> = {}): Omit<
   SourcePackItem,
   'itemId' | 'ingestedAt' | 'ingestedBy'
-> & { itemId?: string; ingestedAt?: string; ingestedBy?: string } {
+> & {
+  itemId?: string;
+  ingestedAt?: string;
+  ingestedBy?: string;
+} {
   return {
     itemType: 'text',
     title: 'Discovery interview transcript',
@@ -404,9 +408,10 @@ describe('Source Pack Service — audit', () => {
     const audit = listSourcePackAuditEntries(pack.packId, ORG_A);
     const archived = audit.find((e) => e.action === 'pack_archived');
     expect(archived).toBeDefined();
-    expect((archived?.details as { previousStatus?: string; reason?: string } | undefined)?.previousStatus).toBe(
-      'ready'
-    );
+    expect(
+      (archived?.details as { previousStatus?: string; reason?: string } | undefined)
+        ?.previousStatus
+    ).toBe('ready');
     expect((archived?.details as { reason?: string } | undefined)?.reason).toBe(
       'duplicate of a newer pack'
     );

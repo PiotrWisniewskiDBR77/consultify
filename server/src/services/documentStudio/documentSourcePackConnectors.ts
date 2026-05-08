@@ -47,10 +47,7 @@ export const DEFAULT_URL_TIMEOUT_MS = 10_000;
  * accepts exactly this shape — `itemId` and `ingestedAt`/`ingestedBy`
  * are filled by the service so connectors stay stateless.
  */
-export type SourcePackItemDraft = Omit<
-  SourcePackItem,
-  'itemId' | 'ingestedAt' | 'ingestedBy'
->;
+export type SourcePackItemDraft = Omit<SourcePackItem, 'itemId' | 'ingestedAt' | 'ingestedBy'>;
 
 /**
  * Stable error code vocabulary for connector failures. The route layer
@@ -70,7 +67,11 @@ export type SourcePackConnectorErrorCode =
 export class SourcePackConnectorError extends Error {
   readonly code: SourcePackConnectorErrorCode;
   readonly details?: Record<string, unknown>;
-  constructor(code: SourcePackConnectorErrorCode, message: string, details?: Record<string, unknown>) {
+  constructor(
+    code: SourcePackConnectorErrorCode,
+    message: string,
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'SourcePackConnectorError';
     this.code = code;
@@ -155,7 +156,10 @@ export async function ingestUrlSource(input: UrlConnectorInput): Promise<SourceP
     throw new SourcePackConnectorError('invalid_input', `not a valid URL: ${input.url}`);
   }
   if (!SUPPORTED_URL_SCHEMES.has(parsed.protocol)) {
-    throw new SourcePackConnectorError('unsupported_scheme', `unsupported URL scheme: ${parsed.protocol}`);
+    throw new SourcePackConnectorError(
+      'unsupported_scheme',
+      `unsupported URL scheme: ${parsed.protocol}`
+    );
   }
   const fetcher = input.fetcher ?? fetch;
   const timeoutMs = input.timeoutMs ?? DEFAULT_URL_TIMEOUT_MS;
@@ -175,9 +179,15 @@ export async function ingestUrlSource(input: UrlConnectorInput): Promise<SourceP
   } catch (err) {
     if (err instanceof SourcePackConnectorError) throw err;
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new SourcePackConnectorError('fetch_timeout', `URL fetch timed out after ${timeoutMs}ms`);
+      throw new SourcePackConnectorError(
+        'fetch_timeout',
+        `URL fetch timed out after ${timeoutMs}ms`
+      );
     }
-    throw new SourcePackConnectorError('fetch_failed', `URL fetch threw: ${(err as Error).message ?? err}`);
+    throw new SourcePackConnectorError(
+      'fetch_failed',
+      `URL fetch threw: ${(err as Error).message ?? err}`
+    );
   } finally {
     clearTimeout(timeoutHandle);
   }
@@ -235,7 +245,10 @@ export function ingestFileSource(input: FileConnectorInput): SourcePackItemDraft
     throw new SourcePackConnectorError('invalid_input', 'filename is required');
   }
   if (typeof input.body !== 'string' || input.body.length === 0) {
-    throw new SourcePackConnectorError('invalid_input', 'file body must be a non-empty text string');
+    throw new SourcePackConnectorError(
+      'invalid_input',
+      'file body must be a non-empty text string'
+    );
   }
   const mime = (input.mimeType || '').toLowerCase();
   const extension = (input.filename.split('.').pop() ?? '').toLowerCase();
@@ -310,7 +323,10 @@ export async function ingestV8ArtifactSource(
   const loader = input.loader ?? getWave5Artifact;
   const artifact = (await loader(input.artifactId, input.organizationId)) as MaybeArtifact | null;
   if (!artifact) {
-    throw new SourcePackConnectorError('artifact_not_found', `artifact ${input.artifactId} not found`);
+    throw new SourcePackConnectorError(
+      'artifact_not_found',
+      `artifact ${input.artifactId} not found`
+    );
   }
   const candidates = [
     typeof artifact.content_md === 'string' ? (artifact.content_md as string) : undefined,
@@ -328,7 +344,10 @@ export async function ingestV8ArtifactSource(
   const fullLength = rawBody.length;
   const body = rawBody.length > budget ? rawBody.slice(0, budget) : rawBody;
   const artifactTitle = typeof artifact.title === 'string' ? (artifact.title as string).trim() : '';
-  const title = (input.title?.trim() || artifactTitle || `V8 artifact ${input.artifactId}`).slice(0, 200);
+  const title = (input.title?.trim() || artifactTitle || `V8 artifact ${input.artifactId}`).slice(
+    0,
+    200
+  );
   const sourceRef: DocumentSourceRef = {
     sourceType: 'v8_artifact',
     sourceId: input.artifactId,
@@ -410,7 +429,10 @@ function stableTextId(title: string, body: string): string {
   // pack key is `${packId}::${itemId}`). Sufficient entropy comes from
   // body length and the first 32 chars.
   const head = body.slice(0, 32).replace(/[^a-zA-Z0-9]+/g, '_');
-  const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 64);
+  const safeTitle = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .slice(0, 64);
   return `text::${safeTitle}::${body.length}::${head}`;
 }
 

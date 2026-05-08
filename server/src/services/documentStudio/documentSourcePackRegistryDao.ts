@@ -104,7 +104,12 @@ export async function loadAuditForPack(
 ): Promise<SourcePackAuditEntry[]> {
   if (!packId || !organizationId) return [];
   const entries = auditStore.get(key(organizationId, packId));
-  return entries ? entries.map((entry) => ({ ...entry, details: entry.details ? { ...entry.details } : undefined })) : [];
+  return entries
+    ? entries.map((entry) => ({
+        ...entry,
+        details: entry.details ? { ...entry.details } : undefined,
+      }))
+    : [];
 }
 
 /**

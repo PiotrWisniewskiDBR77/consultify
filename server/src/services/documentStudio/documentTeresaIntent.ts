@@ -177,15 +177,17 @@ const LOCAL_PHRASES: ReadonlyArray<string> = [
 // -----------------------------------------------------------------------------
 
 function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    // Polish "ł" does not decompose under NFD; map it explicitly so
-    // phrases like "cały dokument" / "całość" survive normalization.
-    .replace(/ł/g, 'l')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      // Polish "ł" does not decompose under NFD; map it explicitly so
+      // phrases like "cały dokument" / "całość" survive normalization.
+      .replace(/ł/g, 'l')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 function matchesAnyPhrase(
@@ -236,9 +238,7 @@ function findCursorBlock(
  *   7. Cursor section only  → scope = 'section'
  *   8. Nothing actionable   → null (UI clarifies)
  */
-export function detectTeresaEditorIntent(
-  input: TeresaIntentInput
-): TeresaEditorIntent | null {
+export function detectTeresaEditorIntent(input: TeresaIntentInput): TeresaEditorIntent | null {
   const message = normalize(input.message ?? '');
   const cursor = input.cursor ?? {};
   const { section: cursorSection, block: cursorBlock } = findCursorBlock(
@@ -460,9 +460,7 @@ export interface TeresaCreationIntent {
  * Pure / deterministic / no I/O — same constraints as the editor
  * classifier so the UI can render the resolved intent live.
  */
-export function detectTeresaCreationIntent(
-  message: string
-): TeresaCreationIntent | null {
+export function detectTeresaCreationIntent(message: string): TeresaCreationIntent | null {
   const normalized = normalize(message ?? '');
   if (!normalized) return null;
 

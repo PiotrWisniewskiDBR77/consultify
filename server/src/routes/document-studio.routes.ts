@@ -77,6 +77,7 @@
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { runDocumentQa } from '../services/documentStudio/documentQaService.js';
 import {
   ingestFileSource,
   ingestIntegrationSource,
@@ -97,10 +98,10 @@ import {
   markSourcePackReady,
   removeSourcePackItem,
 } from '../services/documentStudio/documentSourcePackService.js';
-import { runDocumentQa } from '../services/documentStudio/documentQaService.js';
 import {
   approveEditProposal,
   canOverrideQa,
+  type CreateChatSourcePackConnectorInput,
   createDocumentFromChatSourcePack,
   createGlobalEditProposal,
   createLocalEditProposal,
@@ -115,7 +116,6 @@ import {
   QaBlockingError,
   QaOverrideUnauthorizedError,
   rejectEditProposal,
-  type CreateChatSourcePackConnectorInput,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
   DocumentEditorProposalInput,
@@ -462,8 +462,10 @@ router.post(
       return;
     }
     const name = typeof req.body?.name === 'string' ? req.body.name : '';
-    const language = req.body?.language === 'pl' || req.body?.language === 'en' ? req.body.language : 'pl';
-    const description = typeof req.body?.description === 'string' ? req.body.description : undefined;
+    const language =
+      req.body?.language === 'pl' || req.body?.language === 'en' ? req.body.language : 'pl';
+    const description =
+      typeof req.body?.description === 'string' ? req.body.description : undefined;
     const notes = typeof req.body?.notes === 'string' ? req.body.notes : undefined;
     if (!name.trim()) {
       res.status(400).json({ error: 'name is required' });
@@ -506,7 +508,8 @@ router.get(
       req.query.language === 'pl' || req.query.language === 'en'
         ? (req.query.language as 'pl' | 'en')
         : undefined;
-    const includeArchived = req.query.includeArchived === 'true' || req.query.includeArchived === '1';
+    const includeArchived =
+      req.query.includeArchived === 'true' || req.query.includeArchived === '1';
     const packs = listSourcePacks(organizationId, { status, language, includeArchived });
     res.json({ packs });
   })
@@ -586,7 +589,10 @@ router.post(
           draft = ingestRawTextSource({
             title: String(input.title ?? ''),
             body: String(input.body ?? ''),
-            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            language:
+              input.language === 'pl' || input.language === 'en'
+                ? (input.language as 'pl' | 'en')
+                : undefined,
             sourceTitle: typeof input.sourceTitle === 'string' ? input.sourceTitle : undefined,
             notes: typeof input.notes === 'string' ? input.notes : undefined,
           });
@@ -595,7 +601,10 @@ router.post(
           draft = await ingestUrlSource({
             url: String(input.url ?? ''),
             title: typeof input.title === 'string' ? input.title : undefined,
-            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            language:
+              input.language === 'pl' || input.language === 'en'
+                ? (input.language as 'pl' | 'en')
+                : undefined,
             notes: typeof input.notes === 'string' ? input.notes : undefined,
             timeoutMs: typeof input.timeoutMs === 'number' ? input.timeoutMs : undefined,
           });
@@ -606,7 +615,10 @@ router.post(
             mimeType: String(input.mimeType ?? 'text/plain'),
             body: String(input.body ?? ''),
             title: typeof input.title === 'string' ? input.title : undefined,
-            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            language:
+              input.language === 'pl' || input.language === 'en'
+                ? (input.language as 'pl' | 'en')
+                : undefined,
             notes: typeof input.notes === 'string' ? input.notes : undefined,
           });
           break;
@@ -615,7 +627,10 @@ router.post(
             artifactId: String(input.artifactId ?? ''),
             organizationId,
             title: typeof input.title === 'string' ? input.title : undefined,
-            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            language:
+              input.language === 'pl' || input.language === 'en'
+                ? (input.language as 'pl' | 'en')
+                : undefined,
             notes: typeof input.notes === 'string' ? input.notes : undefined,
           });
           break;
@@ -625,7 +640,10 @@ router.post(
             externalId: String(input.externalId ?? ''),
             title: String(input.title ?? ''),
             preview: typeof input.preview === 'string' ? input.preview : undefined,
-            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            language:
+              input.language === 'pl' || input.language === 'en'
+                ? (input.language as 'pl' | 'en')
+                : undefined,
             notes: typeof input.notes === 'string' ? input.notes : undefined,
           });
           break;

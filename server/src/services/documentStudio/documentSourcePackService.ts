@@ -28,15 +28,6 @@
  *   attached to new documents but stay visible in audit history).
  */
 
-import type {
-  DocumentSourceRef,
-  SourcePack,
-  SourcePackAuditAction,
-  SourcePackAuditEntry,
-  SourcePackItem,
-  SourcePackItemType,
-  SourcePackStatus,
-} from './documentStudioTypes.js';
 import {
   __resetSourcePackRegistryDaoForTests,
   loadAuditForPack,
@@ -46,6 +37,14 @@ import {
   persistSourcePack,
   persistSourcePackAuditEntry,
 } from './documentSourcePackRegistryDao.js';
+import type {
+  DocumentSourceRef,
+  SourcePack,
+  SourcePackAuditEntry,
+  SourcePackItem,
+  SourcePackItemType,
+  SourcePackStatus,
+} from './documentStudioTypes.js';
 
 // Synchronous source of truth; key = `${organizationId}::${packId}` so
 // tenants never collide on accidental id reuse.

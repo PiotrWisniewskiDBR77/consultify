@@ -891,15 +891,17 @@ const METHODOLOGY_SECTION_HINTS: ReadonlyArray<string> = [
 ];
 
 function normalizeSectionTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    // Polish "ł" (U+0142) does not decompose under NFD; map it explicitly
-    // so the lexicon match works on titles like "Założenia" / "Wnioski
-    // końcowe" / "Cele biznesowe".
-    .replace(/ł/g, 'l')
-    .trim();
+  return (
+    title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      // Polish "ł" (U+0142) does not decompose under NFD; map it explicitly
+      // so the lexicon match works on titles like "Założenia" / "Wnioski
+      // końcowe" / "Cele biznesowe".
+      .replace(/ł/g, 'l')
+      .trim()
+  );
 }
 
 function isMethodologyAlignedSection(section: DocumentSchema['sections'][number]): boolean {
@@ -1365,7 +1367,6 @@ export function listDocumentAuditEntries(
 // map them to actionable HTTP statuses.
 // =============================================================================
 
-import type { SourcePackItem } from './documentStudioTypes.js';
 import {
   ingestFileSource,
   ingestIntegrationSource,
@@ -1381,6 +1382,7 @@ import {
   draftSourcePack,
   markSourcePackReady,
 } from './documentSourcePackService.js';
+import type { SourcePackItem } from './documentStudioTypes.js';
 
 export type CreateChatSourcePackConnectorInput =
   | {

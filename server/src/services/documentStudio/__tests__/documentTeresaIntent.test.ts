@@ -9,8 +9,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { detectTeresaEditorIntent } from '../documentTeresaIntent.js';
 import type { DocumentSchema } from '../documentStudioTypes.js';
+import { detectTeresaEditorIntent } from '../documentTeresaIntent.js';
 
 function makeSchema(): DocumentSchema {
   return {
@@ -55,9 +55,7 @@ function makeSchema(): DocumentSchema {
         orderIndex: 1,
         level: 1,
         title: 'Findings',
-        blocks: [
-          { blockId: 'blk-3', type: 'paragraph', content: { text: 'A finding.' } },
-        ],
+        blocks: [{ blockId: 'blk-3', type: 'paragraph', content: { text: 'A finding.' } }],
         sourceRefs: [],
       },
     ],

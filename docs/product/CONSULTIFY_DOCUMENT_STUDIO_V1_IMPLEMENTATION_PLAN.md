@@ -294,6 +294,73 @@ The following batches close the four largest items the original MVP-3 plan defer
 
 ---
 
+## 6.6 Epic E4 — Source Pack Connectors + chat-first creation entry
+
+Lands the persistent, tenant-scoped, addressable bundle of evidence (`SourcePack`) consumed by Mode 1 / Mode 2 / Mode 3 generation. Five connector adapters, nine HTTP routes, and a one-call chat-first orchestration that lets Teresa turn "make me a memo from these sources" into a fully grounded document artifact in one transactional flow. Four narrow slices (4.1 → 4.4) plus this closeout, all landed on `staging` of the `consultify` submodule.
+
+### 6.6.1 Slice 4.1 — Source Pack registry (commit `a65f39c52`)
+
+- **Types** (`documentStudioTypes.ts`, additive): `SourcePackItemType` union (`'url' | 'text' | 'file' | 'integration' | 'v8_artifact'`), `SourcePack`, `SourcePackItem`, `SourcePackStatus`, `SourcePackAuditAction`, `SourcePackAuditEntry`. Names mirror `DocumentTemplate / TemplateAuditEntry` so the route layer can reuse the same envelope contract.
+- **DAO** (`documentSourcePackRegistryDao.ts`, NEW): in-memory persistence stores keyed on `${organizationId}::${packId}`, isolated to this file so the wave5 Postgres swap is mechanical. Failure-tolerant write surface; idempotent on duplicate `auditId` (replace not append). Cross-tenant reads return `null` / `[]` deny-by-default. `__resetSourcePackRegistryDaoForTests` test-only reset.
+- **Service** (`documentSourcePackService.ts`, NEW): synchronous public surface backed by an in-process Map cache; every mutation issues a best-effort `void persistX().catch(...)` so callers never have to await persistence. Lifecycle: `draftSourcePack → addSourcePackItem` (resets status to draft if the pack was already ready) `→ markSourcePackReady` (rejects empty packs, idempotent) `→ archiveSourcePack` (irreversible, refuses further mutation). `attachSourcePackToDocument` projects a `ready` pack to `DocumentSourceRef[]` and audits the attach with the artifact id; refuses draft and archived packs. `ensureSourcePackRegistryHydrated(orgId)` follows the template-service pattern: idempotent per organization, deduplicates concurrent reads via `hydrationInflight`. `listSourcePacks` excludes archived packs by default (opt-in via `includeArchived: true`); newest-first sort.
+- **Tests**: `documentSourcePackService.test.ts` — 14/14 green. Covers full lifecycle, attach, tenancy, audit composition, and write-through persistence.
+
+### 6.6.2 Slice 4.2 — Source Pack connectors (commit `5c55542d6`)
+
+- **Module** `documentSourcePackConnectors.ts` (NEW). Stateless / failure-honest / budget-bounded.
+- **Public surface**: `SourcePackConnectorError` + stable code vocabulary (`'invalid_input' | 'unsupported_scheme' | 'fetch_failed' | 'fetch_timeout' | 'fetch_too_large' | 'extraction_failed' | 'artifact_not_found' | 'integration_not_configured'`). `DEFAULT_BODY_BUDGET_CHARS = 32_000`. `DEFAULT_URL_TIMEOUT_MS = 10_000`.
+- **Connectors**:
+    - `ingestRawTextSource` — wraps a consultant-pasted block verbatim; stable `sourceRef` id derived from title + length + leading 32-char body slice.
+    - `ingestUrlSource` — fetches HTTPS/HTTP, strips `<script>/<style>/<noscript>` + remaining tags, decodes the common entities, falls back to hostname when no `<title>`. Rejects `file://` / `data://` schemes deny-by-default. Surfaces `fetch_timeout` / `fetch_failed` / `extraction_failed` with structured details. Fetcher injectable for tests.
+    - `ingestFileSource` — accepts `text/*` + `application/json|xml` mimes and the `.md/.txt/.csv/.tsv/.json/.xml/.log` extension allowlist. Rejects binary mimes (PPTX/DOCX/PDF) with `extraction_failed`; binary extraction lands in a follow-up slice.
+    - `ingestV8ArtifactSource` — references an existing wave5 artifact in the same tenant. Content priority: `content_md > content > content_text`. Loader injectable for tests.
+    - `ingestIntegrationSource` — stub for `notion / drive / sharepoint / confluence`. Validates shape, returns reference-only item (no body). Real handlers follow once the integration secrets path is approved (deferred per the security-tenancy rule).
+- **Tests**: `documentSourcePackConnectors.test.ts` — 19/19 green. Covers budget truncation, HTML strip with title fallback, AbortController timeout via injected fetcher, content priority order, missing artifact, mime/extension allowlist, integration vocabulary guard.
+
+### 6.6.3 Slice 4.3 — Routes (commit `f20d9c37f`)
+
+Wires the registry + connector layer into the existing `/api/document-studio` router. Routes registered BEFORE the generic `/:artifactId` matcher so the static `/source-packs/...` prefix wins.
+
+- `POST /source-packs` — draft (name, language, description?, notes?) → 201
+- `GET /source-packs` — list (status?, language?, includeArchived?)
+- `GET /source-packs/:packId` — get
+- `GET /source-packs/:packId/audit` — list audit entries
+- `POST /source-packs/:packId/items` — ingest via `{ connector, input }` → 201
+- `DELETE /source-packs/:packId/items/:itemId` — remove
+- `POST /source-packs/:packId/ready` — promote draft → ready
+- `POST /source-packs/:packId/archive` — irreversible archive
+- `POST /source-packs/:packId/attach` — attach to a document; returns `{ pack, sourceRefs }`
+
+Error mapping: `SourcePackConnectorError → 400 (invalid_input | unsupported_scheme | integration_not_configured), 404 (artifact_not_found), 422 (fetch_failed | fetch_timeout | fetch_too_large | extraction_failed)`. Service errors → 404 / 400 via stable `mapServiceErrorToStatus`. Every read path awaits `ensureSourcePackRegistryHydrated(orgId)`.
+
+### 6.6.4 Slice 4.4 — Chat-first creation entry (commit `73b005622`)
+
+Closes the E4 surface end-to-end.
+
+- **Service** (`documentStudioService.ts`): `CreateChatSourcePackConnectorInput` discriminated union over the five connector vocabularies. `createDocumentFromChatSourcePack(params)` orchestration:
+    1. Draft pack (tenant-scoped, defaults name to `${intake.title} — sources`, packLanguage falls back to `intake.language`),
+    2. Ingest every supplied connector input via the connector adapters,
+    3. `markSourcePackReady`,
+    4. `materializeDocumentArtifact` with the pack's `DocumentSourceRef[]`,
+    5. `attachSourcePackToDocument` writes the pack → artifact audit row.
+- **Rollback**: connector failures roll back the partial pack via `archiveSourcePack` with reason `'chat_source_pack_ingest_failed'`. Original error rethrown so the route layer can map it to an actionable HTTP status.
+- **Teresa intent extension** (`documentTeresaIntent.ts`): `detectTeresaCreationIntent(message): TeresaCreationIntent | null`. PL + EN creation lexicons (~40 phrases — `'create a memo'`, `'draft a report'`, `'wygeneruj dokument'`, `'zrób mi raport'`, …). `SOURCE_ATTACHMENT_PHRASES` flips `sourceSignal` from `'unspecified'` to `'with_pack'` when the user says `'from these sources'` / `'na podstawie tych źródeł'` / `'z tych linków'`. Polish `ł` normalization preserved. Returns `null` for editor-style requests so `detectTeresaEditorIntent` keeps owning in-document scope resolution.
+- **Route**: `POST /api/document-studio/chat/create-from-sources` accepts `{ intake, sources[], packName?, packDescription?, packLanguage?, templateId?, projectId?, useLlm?, outline? }` and returns `201 { artifactId, schema, packId, itemCount }`.
+- **Tests**: `documentTeresaCreationIntent.test.ts` (9), `documentStudioChatSourcePack.test.ts` (6) — 15/15 green. Covers PL + EN creation matching, source-signal detection, the Polish `ł` normalization fix, full orchestration audit trail, connector-failure rollback to archived, input validation, custom packName trimming, language fallback. wave5 service mocked per the `documentStudioPreflight` pattern.
+
+### 6.6.5 Validation summary
+
+- **Suite**: 30 vitest files / **268 specs** in `src/services/documentStudio/__tests__/` green (was 220 at the end of Sprint 4 recovery; +48 specs from Epic E4: 14 + 19 + 15).
+- **Type-check**: `tsc --noEmit -p .` clean.
+- **Lint**: ESLint clean for every file in the diff.
+- **Commits**: `a65f39c52` (4.1) → `5c55542d6` (4.2) → `f20d9c37f` (4.3) → `73b005622` (4.4) → this closeout. Each slice landed in its own commit per the recovery-era "commit early, commit narrow" discipline.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - Wave5 Postgres backing for the source-pack DAO (today: in-memory write-through with the same surface; the DAO swap is mechanical).
+    - `multipart/form-data` ingestion for the file connector (today: file body posted as text in the JSON body — the connector is multipart-ready once the route adopts `multer`).
+    - Live integration handlers for Notion / Drive / SharePoint / Confluence (today: stub validates shape and stores a reference-only item; deferred per the security-tenancy rule).
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

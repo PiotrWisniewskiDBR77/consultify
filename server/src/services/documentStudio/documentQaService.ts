@@ -452,10 +452,7 @@ function normalizeForHints(text: string): string {
     .trim();
 }
 
-function sectionTitleMatchesAnyHint(
-  title: string,
-  hints: ReadonlyArray<string>
-): boolean {
+function sectionTitleMatchesAnyHint(title: string, hints: ReadonlyArray<string>): boolean {
   const norm = normalizeForHints(title);
   return hints.some((hint) => norm.includes(hint));
 }
@@ -902,8 +899,7 @@ function runCompletenessQa(
   // Type-aware: executive summary requirement.
   if (EXEC_SUMMARY_REQUIRED.has(schema.documentType)) {
     const hasExecSummary =
-      sections.length > 0 &&
-      Boolean(findSectionByHints(schema, EXEC_SUMMARY_HINTS));
+      sections.length > 0 && Boolean(findSectionByHints(schema, EXEC_SUMMARY_HINTS));
     if (!hasExecSummary) {
       findings.push(
         makeFinding(
@@ -1112,7 +1108,8 @@ const EXEC_OWNER_TOKENS: ReadonlyArray<string> = [
   'zarzad',
 ];
 
-const EXEC_TIME_ANCHORS = /\b(q[1-4]|h[12]|fy\d{2,4}|\d{1,3}\s?(?:days?|day|dni|dzien|tygodni|miesiac|miesiecy)|january|february|march|april|may|june|july|august|september|october|november|december|styczen|luty|marzec|kwiecien|maj|czerwiec|lipiec|sierpien|wrzesien|pazdziernik|listopad|grudzien|by\s+(?:end\s+of\s+)?q[1-4]|do\s+konca\s+q[1-4]|10\/0?\d|0?\d\/0?\d\/\d{2,4}|\d{4}-\d{2}-\d{2}|2026|2025|30\/60\/90)\b/i;
+const EXEC_TIME_ANCHORS =
+  /\b(q[1-4]|h[12]|fy\d{2,4}|\d{1,3}\s?(?:days?|day|dni|dzien|tygodni|miesiac|miesiecy)|january|february|march|april|may|june|july|august|september|october|november|december|styczen|luty|marzec|kwiecien|maj|czerwiec|lipiec|sierpien|wrzesien|pazdziernik|listopad|grudzien|by\s+(?:end\s+of\s+)?q[1-4]|do\s+konca\s+q[1-4]|10\/0?\d|0?\d\/0?\d\/\d{2,4}|\d{4}-\d{2}-\d{2}|2026|2025|30\/60\/90)\b/i;
 
 const EXEC_SUMMARY_WORD_BUDGET = 220;
 
@@ -1120,8 +1117,11 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
   const findings: DocumentQaFinding[] = [];
 
   if (!EXECUTIVE_QA_APPLIES.has(schema.documentType)) {
-    return categoryReport('executive', [], 70, () =>
-      'Executive QA: not applicable to this document type.'
+    return categoryReport(
+      'executive',
+      [],
+      70,
+      () => 'Executive QA: not applicable to this document type.'
     );
   }
 
@@ -1136,7 +1136,10 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
     );
   } else {
     const editable = execSection.blocks.filter(isEditableBlock);
-    const summaryText = editable.map((b) => blockToText(b)).join(' ').trim();
+    const summaryText = editable
+      .map((b) => blockToText(b))
+      .join(' ')
+      .trim();
     const summaryWords = countWords(summaryText);
     if (summaryWords > EXEC_SUMMARY_WORD_BUDGET) {
       findings.push(
@@ -1181,7 +1184,9 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
     }
     const decisionText = editable.map((b) => blockToText(b)).join(' ');
     const decisionLower = normalizeForHints(decisionText);
-    const hasOwner = EXEC_OWNER_TOKENS.some((token) => decisionLower.includes(normalizeForHints(token)));
+    const hasOwner = EXEC_OWNER_TOKENS.some((token) =>
+      decisionLower.includes(normalizeForHints(token))
+    );
     if (!hasOwner && decisionText.length > 0) {
       findings.push(
         makeFinding(
@@ -1312,9 +1317,10 @@ function runRiskQa(schema: DocumentSchema): DocumentQaCategoryReport {
   const riskTableBlocks = risksSection.blocks.filter((b) => String(b.type) === 'risk_table');
   const nonEmptyRiskTables = riskTableBlocks.filter((block) => {
     const content = block.content as Record<string, unknown> | undefined;
-    const rows = content && Array.isArray((content as { rows?: unknown[] }).rows)
-      ? ((content as { rows?: unknown[] }).rows as unknown[])
-      : [];
+    const rows =
+      content && Array.isArray((content as { rows?: unknown[] }).rows)
+        ? ((content as { rows?: unknown[] }).rows as unknown[])
+        : [];
     return rows.length > 0;
   });
 
@@ -1381,9 +1387,10 @@ function runRiskQa(schema: DocumentSchema): DocumentQaCategoryReport {
 
   for (const block of riskTableBlocks) {
     const content = block.content as Record<string, unknown> | undefined;
-    const rows = content && Array.isArray((content as { rows?: unknown[] }).rows)
-      ? ((content as { rows?: unknown[] }).rows as unknown[])
-      : [];
+    const rows =
+      content && Array.isArray((content as { rows?: unknown[] }).rows)
+        ? ((content as { rows?: unknown[] }).rows as unknown[])
+        : [];
     if (rows.length === 0) {
       findings.push(
         makeFinding(
@@ -1429,7 +1436,10 @@ const FX_CONVERSION_HINTS: ReadonlyArray<string> = [
 
 const PERCENT_PATTERN = /([\w \t\/_-]{1,40}?)(\d{1,3}(?:[.,]\d+)?)\s?%/g;
 
-const SUSPICIOUS_PLACEHOLDER_PATTERNS: ReadonlyArray<{ pattern: RegExp; severity: DocumentQaSeverity }> = [
+const SUSPICIOUS_PLACEHOLDER_PATTERNS: ReadonlyArray<{
+  pattern: RegExp;
+  severity: DocumentQaSeverity;
+}> = [
   { pattern: /\bTBD\b/, severity: 'medium' },
   { pattern: /\bN\/A\b/, severity: 'medium' },
   { pattern: /\bXXX+\b/, severity: 'medium' },
@@ -1440,8 +1450,16 @@ const SUSPICIOUS_PLACEHOLDER_PATTERNS: ReadonlyArray<{ pattern: RegExp; severity
 const DATE_FORMAT_PATTERNS: ReadonlyArray<{ name: string; regex: RegExp }> = [
   { name: 'iso', regex: /\b\d{4}-\d{2}-\d{2}\b/ },
   { name: 'slash', regex: /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/ },
-  { name: 'long_en', regex: /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/i },
-  { name: 'long_pl', regex: /\b(?:styczen|luty|marzec|kwiecien|maj|czerwiec|lipiec|sierpien|wrzesien|pazdziernik|listopad|grudzien)\s+\d{4}\b/i },
+  {
+    name: 'long_en',
+    regex:
+      /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/i,
+  },
+  {
+    name: 'long_pl',
+    regex:
+      /\b(?:styczen|luty|marzec|kwiecien|maj|czerwiec|lipiec|sierpien|wrzesien|pazdziernik|listopad|grudzien)\s+\d{4}\b/i,
+  },
 ];
 
 function runDataQa(schema: DocumentSchema): DocumentQaCategoryReport {
@@ -1645,15 +1663,13 @@ function runFormatQa(schema: DocumentSchema): DocumentQaCategoryReport {
       const type = String(block.type);
       if (type === 'bullet_list' || type === 'numbered_list') {
         const content = block.content as { items?: unknown[] } | undefined;
-        const items = Array.isArray(content?.items) ? content?.items ?? [] : [];
+        const items = Array.isArray(content?.items) ? (content?.items ?? []) : [];
         if (items.length === 0) {
           findings.push(
-            makeFinding(
-              'low',
-              `Empty list in section "${section.title}".`,
-              'format_empty_list',
-              { sectionId: section.sectionId, blockId: block.blockId }
-            )
+            makeFinding('low', `Empty list in section "${section.title}".`, 'format_empty_list', {
+              sectionId: section.sectionId,
+              blockId: block.blockId,
+            })
           );
         } else if (items.length === 1) {
           findings.push(
@@ -1666,10 +1682,9 @@ function runFormatQa(schema: DocumentSchema): DocumentQaCategoryReport {
           );
         }
       } else if (type === 'table') {
-        const content = block.content as
-          | { header?: unknown; rows?: unknown }
-          | undefined;
-        const hasHeader = Array.isArray(content?.header) && (content?.header as unknown[]).length > 0;
+        const content = block.content as { header?: unknown; rows?: unknown } | undefined;
+        const hasHeader =
+          Array.isArray(content?.header) && (content?.header as unknown[]).length > 0;
         if (!hasHeader) {
           findings.push(
             makeFinding(
@@ -1803,11 +1818,7 @@ function runExportQa(schema: DocumentSchema): DocumentQaCategoryReport {
       )
     );
     findings.push(
-      makeFinding(
-        'high',
-        'Empty schema cannot be exported.',
-        'export_zero_content_blocks_export'
-      )
+      makeFinding('high', 'Empty schema cannot be exported.', 'export_zero_content_blocks_export')
     );
   }
 

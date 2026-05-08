@@ -194,9 +194,7 @@ describe('Document Studio editor — source scope', () => {
     });
     expect(proposal.scope).toBe('source');
     // Cited blocks live in sec-findings + sec-context.
-    expect(proposal.affectedSectionIds.sort()).toEqual(
-      ['sec-context', 'sec-findings'].sort()
-    );
+    expect(proposal.affectedSectionIds.sort()).toEqual(['sec-context', 'sec-findings'].sort());
     expect(proposal.affectedSectionIds).not.toContain('sec-summary');
   });
 
