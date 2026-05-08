@@ -13,7 +13,7 @@
  * Plus per-module structural assertions:
  *
  *   - moduleId is the documented value;
- *   - cta_primary chip carries the module-specific label
+ *   - run chip carries the module-specific label
  *     (Prezentuj for Deck, Eksportuj for Doc / Excel);
  *   - agent surface is teresa-only;
  *   - registry helpers (`getSystemExecutionModuleManifest`,
@@ -42,7 +42,7 @@ describe('reference manifests — structural identity', () => {
   it('doc-builder uses Eksportuj CTA + section unit + teresa drawer', () => {
     expect(DOC_BUILDER_MANIFEST.moduleId).toBe('doc-builder');
     expect(DOC_BUILDER_MANIFEST.status).toBe('reference');
-    const cta = DOC_BUILDER_MANIFEST.menu2Chips.find((c) => c.chipId === 'cta_primary');
+    const cta = DOC_BUILDER_MANIFEST.menu2Chips.find((c) => c.chipId === 'run');
     expect(cta?.ctaLabel).toBe('Eksportuj');
     expect(DOC_BUILDER_MANIFEST.agent.exposedAgentIds).toEqual(['teresa']);
     expect(DOC_BUILDER_MANIFEST.agent.teresaSurface).toBe('drawer');
@@ -51,30 +51,30 @@ describe('reference manifests — structural identity', () => {
 
   it('deck-builder uses Prezentuj CTA + slide unit + teresa drawer', () => {
     expect(DECK_BUILDER_MANIFEST.moduleId).toBe('deck-builder');
-    const cta = DECK_BUILDER_MANIFEST.menu2Chips.find((c) => c.chipId === 'cta_primary');
+    const cta = DECK_BUILDER_MANIFEST.menu2Chips.find((c) => c.chipId === 'run');
     expect(cta?.ctaLabel).toBe('Prezentuj');
     expect(DECK_BUILDER_MANIFEST.agent.contextAwareOn).toBe('slide');
   });
 
   it('excel-builder uses Eksportuj CTA + sheet unit + teresa drawer', () => {
     expect(EXCEL_BUILDER_MANIFEST.moduleId).toBe('excel-builder');
-    const cta = EXCEL_BUILDER_MANIFEST.menu2Chips.find((c) => c.chipId === 'cta_primary');
+    const cta = EXCEL_BUILDER_MANIFEST.menu2Chips.find((c) => c.chipId === 'run');
     expect(cta?.ctaLabel).toBe('Eksportuj');
     expect(EXCEL_BUILDER_MANIFEST.agent.contextAwareOn).toBe('sheet');
   });
 
-  it('every reference manifest declares all 10 canonical chips as present', () => {
+  it('every reference manifest declares all 10 canonical chips as present (MELS-aligned)', () => {
     const expected = [
       'internal',
-      'motyw',
+      'theme',
       'history',
       'qa',
       'governance',
       'analytics',
       'audit',
-      'udostepnij',
+      'share',
       'agent',
-      'cta_primary',
+      'run',
     ];
     for (const manifest of [DOC_BUILDER_MANIFEST, DECK_BUILDER_MANIFEST, EXCEL_BUILDER_MANIFEST]) {
       const ids = manifest.menu2Chips.map((c) => c.chipId);

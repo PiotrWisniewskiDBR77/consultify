@@ -742,7 +742,7 @@ Epic E11 turns the SSOT-codified "Standard Modułów Wykonawczych (Doc / Excel /
 - New `services/executionModuleStandard/` folder.
 - New `executionModuleStandardTypes.ts` declares the full type surface:
     - `ExecutionModuleId`, `ExecutionModuleZoneId` (`'leftNav' | 'canvas' | 'rightPanel'`), `ExecutionModuleZoneSpec`.
-    - `ExecutionModuleMenu2ChipId` (10-id enum: internal · motyw · history · qa · governance · analytics · audit · udostepnij · agent · cta_primary), `ExecutionModuleMenu2CtaLabel` (`'Prezentuj' | 'Eksportuj'`), `ExecutionModuleMenu2ChipDeclaration`.
+    - `ExecutionModuleMenu2ChipId` (10-id enum: internal · theme · history · qa · governance · analytics · audit · share · agent · run; MELS-aligned with `src/components/shared/ExecutiveModuleShell/ChipDescriptor.ts`), `ExecutionModuleMenu2CtaLabel` (`'Prezentuj' | 'Eksportuj'`), `ExecutionModuleMenu2ChipDeclaration`.
     - `ExecutionModuleRightPanelCollapseContract` (collapsedWidthPx=32, expandedWidthRangePx 280..360, persistence='per_user_per_module', triggerPosition='top_left_seam', triggerStyle='soft_chevron') + `ExecutionModuleRightPanelDeclaration` (with `parallelPanelsAllowed: false` invariant).
     - `ExecutionModuleAgentDeclaration` (`exposedAgentIds`, `teresaSurface: popover|drawer|side_panel`, `contextAwareOn: section|slide|sheet|block`).
     - `ExecutionModuleAiActionsDeclaration` (`slot: commandRowRightContent | DynamicTabs.rightContent | localCommandRowRight | pending_migration`, `actionIds[]`, `duplicatedInCanvas` invariant).
@@ -788,6 +788,23 @@ Epic E11 turns the SSOT-codified "Standard Modułów Wykonawczych (Doc / Excel /
     - **Persistence.** The three reference manifests + the standard are shipped as in-process frozen constants (the right shape for system-owned canonical data). When tenant manifests arrive, they land on the same DAO + write-through pattern as E7 / E9 / E10 and the wave5 Postgres migration covers them in lockstep.
 
 This closes Epic E11 and the full V1 Document Studio implementation plan.
+
+### 6.13.5 Slice 11.5 — MELS chip-id reconciliation (post-closeout follow-up)
+
+Discovered during the FE-E1 reconnaissance: the production frontend ships a shared `ExecutiveModuleShell` (MELS) under `src/components/shared/ExecutiveModuleShell/` that already implements the 3-zone shell + 10-chip canonical row + collapse contract + keyboard shortcuts. The MELS chip ids are English-canonical (`internal · theme · history · qa · governance · analytics · audit · share · agent · run`) and Tabele consumes them via `TabeleTopBarChips.tsx` already.
+
+The Slice 11.1 codification mistakenly introduced Polish-phonetic ids (`motyw · udostepnij · cta_primary`) that diverged from MELS naming. Both encodings refer to the same SSOT line 265 (`Internal · Motyw · History · QA · Governance · Analytics · Audit · Udostępnij · Agent · Prezentuj/Eksportuj`) — the SSOT specifies *display labels*, not ids — but parallel naming would have forced a frontend adapter at the boundary.
+
+Slice 11.5 reconciles the manifest ids to MELS naming so the FE wiring stays adapter-free:
+
+- `ExecutionModuleMenu2ChipId` enum: `motyw → theme`, `udostepnij → share`, `cta_primary → run`.
+- `EXECUTION_MODULE_MENU2_CHIP_ORDER` constant updated.
+- All three reference manifests (doc / deck / excel) re-emit chip ids in MELS order.
+- Validator's `menu2_cta_label_missing` rule now references `run` instead of `cta_primary` (rule id stable; only the message copy changed).
+- All 45 specs in the executionModuleStandard suite re-validated post-rename — green.
+- Per-module `label` and `ctaLabel` (`Prezentuj` / `Eksportuj`) continue to carry the Polish display copy, so the SSOT-mandated user-visible labels are preserved.
+
+The reconciliation is internal-API only (the manifests are not yet consumed by any external client) and the change is a pure rename; no business behaviour shifted.
 
 ---
 

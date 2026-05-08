@@ -85,15 +85,15 @@ export const EXECUTION_MODULE_ZONES: ReadonlyArray<ExecutionModuleZoneSpec> = Ob
 export const EXECUTION_MODULE_MENU2_CHIP_ORDER: ReadonlyArray<ExecutionModuleMenu2ChipId> =
   Object.freeze([
     'internal',
-    'motyw',
+    'theme',
     'history',
     'qa',
     'governance',
     'analytics',
     'audit',
-    'udostepnij',
+    'share',
     'agent',
-    'cta_primary',
+    'run',
   ]) as ReadonlyArray<ExecutionModuleMenu2ChipId>;
 
 /** The primary CTA is module-specific copy: Prezentuj (Deck) / Eksportuj (Doc/Excel). */
@@ -299,14 +299,14 @@ function validateMenu2(
   }
 
   // CTA chip — when present, must carry a label.
-  const cta = chips.find((c) => c.chipId === 'cta_primary');
+  const cta = chips.find((c) => c.chipId === 'run');
   if (cta && cta.present && !cta.ctaLabel) {
     mustViolations.push(
       makeViolation(
         'menu2_cta_label_missing',
         'must',
         'menu2',
-        'cta_primary chip is present but ctaLabel is missing (Prezentuj | Eksportuj)'
+        'run chip is present but ctaLabel is missing (Prezentuj | Eksportuj)'
       )
     );
   }

@@ -47,15 +47,15 @@ function makeBaselineManifest(
     ],
     menu2Chips: [
       { chipId: 'internal', present: true },
-      { chipId: 'motyw', present: true },
+      { chipId: 'theme', present: true },
       { chipId: 'history', present: true },
       { chipId: 'qa', present: true },
       { chipId: 'governance', present: true },
       { chipId: 'analytics', present: true },
       { chipId: 'audit', present: true },
-      { chipId: 'udostepnij', present: true },
+      { chipId: 'share', present: true },
       { chipId: 'agent', present: true },
-      { chipId: 'cta_primary', present: true, ctaLabel: 'Eksportuj' },
+      { chipId: 'run', present: true, ctaLabel: 'Eksportuj' },
     ],
     rightPanel: {
       collapseTriggerPosition: 'top_left_seam',
@@ -90,18 +90,18 @@ describe('canonical constants', () => {
     ]);
   });
 
-  it('lists the canonical Menu 2 chips in SSOT order', () => {
+  it('lists the canonical Menu 2 chips in MELS-aligned order', () => {
     expect(EXECUTION_MODULE_MENU2_CHIP_ORDER).toEqual([
       'internal',
-      'motyw',
+      'theme',
       'history',
       'qa',
       'governance',
       'analytics',
       'audit',
-      'udostepnij',
+      'share',
       'agent',
-      'cta_primary',
+      'run',
     ]);
   });
 
@@ -207,7 +207,7 @@ describe('Menu 2 chips', () => {
     const result = validateExecutionModuleManifest({
       ...baseline,
       menu2Chips: baseline.menu2Chips.map((chip) =>
-        chip.chipId === 'cta_primary' ? { ...chip, ctaLabel: undefined } : chip
+        chip.chipId === 'run' ? { ...chip, ctaLabel: undefined } : chip
       ),
     });
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('menu2_cta_label_missing');

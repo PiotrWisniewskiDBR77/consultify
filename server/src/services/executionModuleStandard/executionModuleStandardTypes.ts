@@ -63,30 +63,39 @@ export interface ExecutionModuleZoneSpec {
 // =============================================================================
 
 /**
- * Canonical chip ids in the canonical order (Internal → Motyw → …
- * → Prezentuj/Eksportuj). The standard requires the ordering and the
- * exact set; modules MAY hide individual chips when the underlying
- * function does not exist (e.g. `Prezentuj` is hidden in Excel) but
- * MUST NOT reorder the visible subset.
+ * Canonical chip ids in the canonical order (Internal → Theme → …
+ * → Run). The standard requires the ordering and the exact set;
+ * modules MAY hide individual chips when the underlying function
+ * does not exist (e.g. `run` is hidden in modules without a primary
+ * action) but MUST NOT reorder the visible subset.
+ *
+ * Chip ids are aligned with the production MELS shell
+ * (`src/components/shared/ExecutiveModuleShell/ChipDescriptor.ts`)
+ * so the frontend can wire the manifest directly into the existing
+ * `<TopBar chips={...}>` surface without an intermediate adapter.
+ * The user-visible labels are localised per-module via the
+ * `label` (e.g. "Motyw", "Udostępnij") and the `ctaLabel`
+ * (`Prezentuj` / `Eksportuj`) per the SSOT
+ * (`DRD/UI_UX_SOURCE_OF_TRUTH.md` §"Standard Modułów Wykonawczych").
  */
 export type ExecutionModuleMenu2ChipId =
   | 'internal'
-  | 'motyw'
+  | 'theme'
   | 'history'
   | 'qa'
   | 'governance'
   | 'analytics'
   | 'audit'
-  | 'udostepnij'
+  | 'share'
   | 'agent'
-  | 'cta_primary';
+  | 'run';
 
 export type ExecutionModuleMenu2CtaLabel = 'Prezentuj' | 'Eksportuj';
 
 /**
  * Per-module chip declaration. `present` indicates the module
  * actually renders that chip; `ctaLabel` only applies to the
- * `cta_primary` chip and selects which copy is shown.
+ * `run` chip and selects which copy is shown.
  */
 export interface ExecutionModuleMenu2ChipDeclaration {
   chipId: ExecutionModuleMenu2ChipId;

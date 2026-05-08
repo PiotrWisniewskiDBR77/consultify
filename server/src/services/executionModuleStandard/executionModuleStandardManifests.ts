@@ -16,7 +16,7 @@
  *     the primary CTA is `Eksportuj`. Status `'reference'`.
  *
  * Every manifest declares the full canonical chip set as `present`
- * (cta_primary's label is module-local — `Prezentuj` for Deck,
+ * (run's label is module-local — `Prezentuj` for Deck,
  * `Eksportuj` for Doc / Excel) so each one validates clean against
  * the standard with zero `should` violations.
  *
@@ -41,15 +41,15 @@ const FROZEN_RIGHT_PANEL = Object.freeze({
 function buildCanonicalMenu2Chips(ctaLabel: 'Prezentuj' | 'Eksportuj') {
   return Object.freeze([
     Object.freeze({ chipId: 'internal', present: true }),
-    Object.freeze({ chipId: 'motyw', present: true }),
+    Object.freeze({ chipId: 'theme', present: true }),
     Object.freeze({ chipId: 'history', present: true }),
     Object.freeze({ chipId: 'qa', present: true }),
     Object.freeze({ chipId: 'governance', present: true }),
     Object.freeze({ chipId: 'analytics', present: true }),
     Object.freeze({ chipId: 'audit', present: true }),
-    Object.freeze({ chipId: 'udostepnij', present: true }),
+    Object.freeze({ chipId: 'share', present: true }),
     Object.freeze({ chipId: 'agent', present: true }),
-    Object.freeze({ chipId: 'cta_primary', present: true, ctaLabel }),
+    Object.freeze({ chipId: 'run', present: true, ctaLabel }),
   ]) as ExecutionModuleManifest['menu2Chips'];
 }
 
