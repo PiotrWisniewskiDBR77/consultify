@@ -260,7 +260,18 @@ describe('Export QA gate — approval-gated types', () => {
       | undefined;
     expect(Array.isArray(snapshot?.categories)).toBe(true);
     // Must include all three categories for forensic replay.
-    expect(snapshot?.categories?.map((c) => c.category)).toEqual(['brand', 'language', 'sources']);
+    expect(snapshot?.categories?.map((c) => c.category)).toEqual([
+      'brand',
+      'language',
+      'completeness',
+      'sources',
+      'methodology',
+      'executive',
+      'risk',
+      'data',
+      'format',
+      'export',
+    ]);
     // At least one category must be marked blocking.
     expect(snapshot?.categories?.some((c) => c.blocking)).toBe(true);
   });

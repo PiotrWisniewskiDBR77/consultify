@@ -554,7 +554,18 @@ describe('Document QA — engine envelope', () => {
     });
     const report = runDocumentQa(schema);
     expect(report.artifactId).toBe('artifact-qa-1');
-    expect(report.categories.map((c) => c.category)).toEqual(['brand', 'language', 'sources']);
+    expect(report.categories.map((c) => c.category)).toEqual([
+      'brand',
+      'language',
+      'completeness',
+      'sources',
+      'methodology',
+      'executive',
+      'risk',
+      'data',
+      'format',
+      'export',
+    ]);
     // Many banned phrases → brand score collapses below 70 → blocking → anyBlocking.
     expect(report.anyBlocking).toBe(true);
     expect(report.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);

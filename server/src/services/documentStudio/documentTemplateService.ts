@@ -41,11 +41,30 @@ import type {
 } from './documentStudioTypes.js';
 import { DEFAULT_CONSULTING_FORMATTING_SCHEMA } from './documentStudioTypes.js';
 import { refineTemplateWithLlm } from './documentTemplateRefiner.js';
+import {
+  __resetTemplateRegistryDaoForTests,
+  loadAuditForTemplate,
+  loadTemplatesForOrg,
+  persistAuditEntry,
+  persistTemplate,
+  SYSTEM_ORG_ID,
+} from './documentTemplateRegistryDao.js';
+import { seedSystemDocumentTemplates } from './documentTemplateSeeder.js';
 
 // In-process registry. Key = `${organizationId}::${templateId}` so we never
-// leak across tenants by accidental key collision.
+// leak across tenants by accidental key collision. The registry is the
+// SYNCHRONOUS source of truth; persistence is best-effort write-through to
+// the DAO and lazy hydration on the first read per organization.
 const registryStore = new Map<string, DocumentTemplate>();
 const auditStore = new Map<string, TemplateAuditEntry[]>();
+
+// Sprint-1 hydration bookkeeping. `hydratedOrgs` records which tenants have
+// already been hydrated from the DAO (and bracketed with the system seeder
+// on first invocation). `hydrationInflight` deduplicates concurrent
+// requests so two parallel route handlers don't double-load the catalogue.
+const hydratedOrgs = new Set<string>();
+const hydrationInflight = new Map<string, Promise<void>>();
+let systemSeedInflight: Promise<void> | null = null;
 
 function makeId(prefix: string): string {
   const random = Math.random().toString(36).slice(2, 10);
@@ -65,6 +84,73 @@ function pushAudit(entry: TemplateAuditEntry): void {
   const current = auditStore.get(key) ?? [];
   current.push(entry);
   auditStore.set(key, current);
+  // Best-effort write-through to persistence; never blocks the synchronous
+  // service surface and never throws (DAO returns `{ ok: false }` on
+  // failure, which we deliberately swallow because the in-process audit is
+  // already captured for the running session).
+  void persistAuditEntry(entry).catch(() => undefined);
+}
+
+async function ensureHydrated(organizationId: string): Promise<void> {
+  if (hydratedOrgs.has(organizationId)) return;
+  const inflight = hydrationInflight.get(organizationId);
+  if (inflight) return inflight;
+
+  const promise = (async () => {
+    // Seed the system catalogue once per process. The seeder is idempotent
+    // at the DAO level (ON CONFLICT DO NOTHING), so concurrent processes
+    // are safe; we still gate locally to keep the cold path tight.
+    if (!systemSeedInflight) {
+      systemSeedInflight = seedSystemDocumentTemplates()
+        .then(() => undefined)
+        .catch(() => undefined);
+    }
+    await systemSeedInflight;
+
+    // Load the tenant-scoped templates AND the system-scoped templates so
+    // every organization sees the curated catalogue without per-tenant
+    // duplication.
+    try {
+      const [tenantTemplates, systemTemplates] = await Promise.all([
+        loadTemplatesForOrg(organizationId),
+        organizationId === SYSTEM_ORG_ID
+          ? Promise.resolve([])
+          : loadTemplatesForOrg(SYSTEM_ORG_ID),
+      ]);
+      for (const template of tenantTemplates) {
+        registryStore.set(templateKey(template.organizationId, template.templateId), template);
+        const audit = await loadAuditForTemplate(template.templateId, template.organizationId);
+        if (audit.length > 0) {
+          auditStore.set(templateKey(template.organizationId, template.templateId), audit);
+        }
+      }
+      for (const template of systemTemplates) {
+        registryStore.set(templateKey(SYSTEM_ORG_ID, template.templateId), template);
+      }
+    } catch {
+      // Persistence offline → cache stays empty; subsequent writes will
+      // still attempt write-through and the in-process state remains
+      // operational for the current process.
+    }
+    hydratedOrgs.add(organizationId);
+  })();
+
+  hydrationInflight.set(organizationId, promise);
+  try {
+    await promise;
+  } finally {
+    hydrationInflight.delete(organizationId);
+  }
+}
+
+/**
+ * Public hydration trigger used by route handlers before list/get reads so
+ * a cold-start process serves the persisted catalogue (including the
+ * 22 × 2 system-seeded templates) on the first request. Idempotent per
+ * organization; subsequent calls are no-ops.
+ */
+export async function ensureTemplateRegistryHydrated(organizationId: string): Promise<void> {
+  return ensureHydrated(organizationId);
 }
 
 function defaultExportRules(category: TemplateCategory): TemplateExportRules {
@@ -229,6 +315,7 @@ export function draftTemplate(params: DraftTemplateParams): DraftTemplateResult 
   };
 
   registryStore.set(templateKey(params.organizationId, template.templateId), template);
+  void persistTemplate(template).catch(() => undefined);
   pushAudit({
     auditId: makeId('doc-template-audit'),
     templateId: template.templateId,
@@ -277,6 +364,7 @@ export async function draftTemplateAsync(
   if (!changed) return { ...baseResult, llmRefined: false };
 
   registryStore.set(templateKey(params.organizationId, refined.templateId), refined);
+  void persistTemplate(refined).catch(() => undefined);
   pushAudit({
     auditId: makeId('doc-template-audit'),
     templateId: refined.templateId,
@@ -291,7 +379,13 @@ export async function draftTemplateAsync(
 }
 
 export function getTemplate(templateId: string, organizationId: string): DocumentTemplate | null {
-  return registryStore.get(templateKey(organizationId, templateId)) ?? null;
+  // Tenant-scoped lookup wins; system-org fallback exposes the curated
+  // catalogue to every tenant without per-tenant duplication. Non-system
+  // organizations cannot pierce another tenant's namespace.
+  const tenantHit = registryStore.get(templateKey(organizationId, templateId));
+  if (tenantHit) return tenantHit;
+  if (organizationId === SYSTEM_ORG_ID) return null;
+  return registryStore.get(templateKey(SYSTEM_ORG_ID, templateId)) ?? null;
 }
 
 export interface ListTemplatesOptions {
@@ -303,13 +397,25 @@ export function listTemplates(
   organizationId: string,
   options: ListTemplatesOptions = {}
 ): DocumentTemplate[] {
-  const prefix = `${organizationId}::`;
+  const tenantPrefix = `${organizationId}::`;
+  const systemPrefix = `${SYSTEM_ORG_ID}::`;
   const templates: DocumentTemplate[] = [];
+  // Tenant-scoped templates first.
   for (const [key, template] of registryStore.entries()) {
-    if (!key.startsWith(prefix)) continue;
+    if (!key.startsWith(tenantPrefix)) continue;
     if (options.status && template.status !== options.status) continue;
     if (options.documentType && template.documentType !== options.documentType) continue;
     templates.push(template);
+  }
+  // Merge system catalogue, but never duplicate or self-merge for the
+  // synthetic system organization itself.
+  if (organizationId !== SYSTEM_ORG_ID) {
+    for (const [key, template] of registryStore.entries()) {
+      if (!key.startsWith(systemPrefix)) continue;
+      if (options.status && template.status !== options.status) continue;
+      if (options.documentType && template.documentType !== options.documentType) continue;
+      templates.push(template);
+    }
   }
   // Newest first.
   return templates.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
@@ -338,6 +444,7 @@ export function approveTemplate(params: ApproveTemplateParams): DocumentTemplate
     notes: params.notes?.trim() || template.notes,
   };
   registryStore.set(templateKey(params.organizationId, template.templateId), next);
+  void persistTemplate(next).catch(() => undefined);
   pushAudit({
     auditId: makeId('doc-template-audit'),
     templateId: template.templateId,
@@ -370,6 +477,7 @@ export function deprecateTemplate(params: DeprecateTemplateParams): DocumentTemp
     updatedAt: now,
   };
   registryStore.set(templateKey(params.organizationId, template.templateId), next);
+  void persistTemplate(next).catch(() => undefined);
   pushAudit({
     auditId: makeId('doc-template-audit'),
     templateId: template.templateId,
@@ -422,6 +530,19 @@ function bumpVersion(version: string, action: 'approve'): string {
 export function __resetTemplateRegistryForTests(): void {
   registryStore.clear();
   auditStore.clear();
+  hydratedOrgs.clear();
+  hydrationInflight.clear();
+  systemSeedInflight = null;
+}
+
+/**
+ * @internal Test-only helper that ALSO clears the persistence DAO state
+ * (in-memory mock backing the wave5 storage). Call from suites that exercise
+ * hydration/seeding paths so each test starts from a clean slate.
+ */
+export async function __resetTemplateRegistryAndPersistenceForTests(): Promise<void> {
+  __resetTemplateRegistryForTests();
+  await __resetTemplateRegistryDaoForTests();
 }
 
 /** @internal */

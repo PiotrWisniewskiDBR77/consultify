@@ -88,6 +88,7 @@ import {
   deprecateTemplate,
   draftTemplate,
   draftTemplateAsync,
+  ensureTemplateRegistryHydrated,
   getTemplate,
   listTemplateAuditEntries,
   listTemplates,
@@ -219,6 +220,7 @@ router.get(
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
     const documentType =
       typeof req.query.documentType === 'string' ? req.query.documentType : undefined;
+    await ensureTemplateRegistryHydrated(organizationId);
     const templates = listTemplates(organizationId, {
       status:
         status === 'draft' || status === 'approved' || status === 'deprecated' ? status : undefined,
@@ -276,6 +278,7 @@ router.get(
       res.status(400).json({ error: 'templateId is required' });
       return;
     }
+    await ensureTemplateRegistryHydrated(organizationId);
     const template = getTemplate(templateId, organizationId);
     if (!template) {
       res.status(404).json({ error: 'template_not_found' });
@@ -349,6 +352,7 @@ router.get(
       res.status(400).json({ error: 'templateId is required' });
       return;
     }
+    await ensureTemplateRegistryHydrated(organizationId);
     const template = getTemplate(templateId, organizationId);
     if (!template) {
       res.status(404).json({ error: 'template_not_found' });

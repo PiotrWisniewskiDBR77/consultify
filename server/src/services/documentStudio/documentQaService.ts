@@ -36,8 +36,22 @@ import type {
   DocumentQaReport,
   DocumentQaSeverity,
   DocumentSchema,
+  DocumentTemplate,
   DocumentTypeKey,
+  FormattingSchema,
+  TemplateSectionBlueprint,
 } from './documentStudioTypes.js';
+
+/**
+ * Options accepted by `runDocumentQa`. The template is optional because the
+ * QA engine MUST stay useful for Mode 1 (no template) and for documents
+ * authored before MVP-2; when a template is supplied, the Completeness and
+ * Methodology categories switch into template-aware mode and check
+ * blueprint coverage / order on top of their type-aware baseline.
+ */
+export interface RunDocumentQaOptions {
+  template?: DocumentTemplate | null;
+}
 
 /**
  * Document types that require a clean QA pass before export. Mode 3 export
@@ -308,6 +322,244 @@ function categoryReport(
 }
 
 // -----------------------------------------------------------------------------
+// Section-title heuristics (PL + EN)
+// -----------------------------------------------------------------------------
+
+const STOPWORDS_TITLE = new Set<string>([
+  // EN
+  'and',
+  'or',
+  'of',
+  'the',
+  'a',
+  'an',
+  'to',
+  'for',
+  'in',
+  'on',
+  'with',
+  'by',
+  'at',
+  'into',
+  // PL
+  'i',
+  'oraz',
+  'do',
+  'na',
+  'w',
+  'z',
+  'o',
+  'dla',
+  'po',
+  'pod',
+  'nad',
+  'bez',
+]);
+
+function normalizeTitle(title: string): string[] {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/ł/g, 'l')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 0 && !STOPWORDS_TITLE.has(token));
+}
+
+/**
+ * Returns true when every significant token of the blueprint title appears
+ * (in any order) in the section title. This tolerates Mode 3 reworded
+ * titles like "Findings — operational diagnostic" still satisfying the
+ * blueprint's "Findings" entry.
+ */
+function fuzzyMatchTitle(blueprintTitle: string, sectionTitle: string): boolean {
+  const blueprintTokens = normalizeTitle(blueprintTitle);
+  if (blueprintTokens.length === 0) return false;
+  const sectionTokens = new Set(normalizeTitle(sectionTitle));
+  return blueprintTokens.every((token) => sectionTokens.has(token));
+}
+
+const EXEC_SUMMARY_HINTS: ReadonlyArray<string> = [
+  'executive summary',
+  'tl dr',
+  'tldr',
+  'streszczenie zarzadcze',
+  'streszczenie',
+  'podsumowanie zarzadcze',
+  'decision summary',
+  'key takeaways',
+];
+
+const DECISION_SECTION_HINTS: ReadonlyArray<string> = [
+  'recommendations',
+  'recommended actions',
+  'next steps',
+  'next-steps',
+  'action items',
+  'decisions',
+  'decisions required',
+  'rekomendacje',
+  'kolejne kroki',
+  'decyzje',
+  'wnioski i rekomendacje',
+  'zalecenia',
+];
+
+const METHODOLOGY_SECTION_HINTS_QA: ReadonlyArray<string> = [
+  'methodology',
+  'approach',
+  'scope and methodology',
+  'scope methodology',
+  'metodologia',
+  'podejscie',
+  'zakres prac',
+  'zakres i metodologia',
+];
+
+const ASSUMPTIONS_SECTION_HINTS_QA: ReadonlyArray<string> = [
+  'assumptions',
+  'scenarios',
+  'sensitivity',
+  'zalozenia',
+  'scenariusze',
+  'wrazliwosc',
+];
+
+const RISKS_SECTION_HINTS_QA: ReadonlyArray<string> = [
+  'risks',
+  'risk register',
+  'ryzyka',
+  'rejestr ryzyk',
+];
+
+const APPENDIX_SECTION_HINTS: ReadonlyArray<string> = [
+  'appendix',
+  'appendices',
+  'attachment',
+  'zalacznik',
+  'zalaczniki',
+];
+
+function normalizeForHints(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/ł/g, 'l')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sectionTitleMatchesAnyHint(
+  title: string,
+  hints: ReadonlyArray<string>
+): boolean {
+  const norm = normalizeForHints(title);
+  return hints.some((hint) => norm.includes(hint));
+}
+
+function findSectionByHints(
+  schema: DocumentSchema,
+  hints: ReadonlyArray<string>
+): DocumentSchema['sections'][number] | undefined {
+  return schema.sections.find((section) => sectionTitleMatchesAnyHint(section.title, hints));
+}
+
+/**
+ * Document-type policies that drive Completeness / Executive QA.
+ *
+ * - `EXEC_SUMMARY_REQUIRED`: types where missing Executive Summary is a
+ *   blocking finding (executive deliverables that drive a decision).
+ * - `DECISION_SECTION_REQUIRED`: types where the document MUST contain a
+ *   forward-looking action / next-steps / recommendations section.
+ * - `EXECUTIVE_QA_APPLIES`: types where Executive QA's tone / verb /
+ *   accountability / time-anchor checks fire at all (others are exempt).
+ */
+const EXEC_SUMMARY_REQUIRED: ReadonlySet<DocumentTypeKey> = new Set<DocumentTypeKey>([
+  'executive_memo',
+  'decision_memo',
+  'board_report',
+  'steering_committee_report',
+  'business_case',
+  'sales_proposal',
+  'client_final_report',
+  'due_diligence_note',
+  'ai_audit_report',
+  'internal_policy_document',
+]);
+
+const DECISION_SECTION_REQUIRED: ReadonlySet<DocumentTypeKey> = new Set<DocumentTypeKey>([
+  'executive_memo',
+  'decision_memo',
+  'board_report',
+  'steering_committee_report',
+  'project_status_report',
+  'business_case',
+  'sales_proposal',
+  'client_final_report',
+  'due_diligence_note',
+  'ai_audit_report',
+  'internal_policy_document',
+  'implementation_plan',
+  'change_management_plan',
+]);
+
+const EXECUTIVE_QA_APPLIES: ReadonlySet<DocumentTypeKey> = new Set<DocumentTypeKey>([
+  'executive_memo',
+  'decision_memo',
+  'board_report',
+  'steering_committee_report',
+  'business_case',
+  'sales_proposal',
+  'client_final_report',
+  'due_diligence_note',
+  'ai_audit_report',
+  'internal_policy_document',
+]);
+
+const METHODOLOGY_REQUIRED_TYPES: ReadonlySet<DocumentTypeKey> = new Set<DocumentTypeKey>([
+  'ai_audit_report',
+  'research_report',
+  'due_diligence_note',
+  'client_final_report',
+  'business_case',
+]);
+
+const ASSUMPTIONS_REQUIRED_TYPES: ReadonlySet<DocumentTypeKey> = new Set<DocumentTypeKey>([
+  'business_case',
+  'due_diligence_note',
+  'ai_audit_report',
+]);
+
+const RISKS_REQUIRED_TYPES: ReadonlySet<DocumentTypeKey> = new Set<DocumentTypeKey>([
+  'ai_audit_report',
+  'business_case',
+  'due_diligence_note',
+  'risk_register_report',
+  'steering_committee_report',
+  'board_report',
+  'implementation_plan',
+  'change_management_plan',
+]);
+
+const RISK_BEARING_TYPES: ReadonlySet<DocumentTypeKey> = RISKS_REQUIRED_TYPES;
+
+const RISK_CRITICAL_TYPES: ReadonlySet<DocumentTypeKey> = new Set<DocumentTypeKey>([
+  'risk_register_report',
+  'ai_audit_report',
+]);
+
+/** Word-count floor per blueprint length hint. */
+const BLUEPRINT_MIN_WORDS: Record<string, number> = {
+  short: 12,
+  medium: 35,
+  long: 80,
+  comprehensive: 120,
+};
+
+// -----------------------------------------------------------------------------
 // Brand QA
 // -----------------------------------------------------------------------------
 
@@ -558,14 +810,1034 @@ function runSourceQa(schema: DocumentSchema): DocumentQaCategoryReport {
 }
 
 // -----------------------------------------------------------------------------
+// Completeness QA (Sprint 2 — Slice 2.1)
+// -----------------------------------------------------------------------------
+
+function isSectionEmpty(section: DocumentSchema['sections'][number]): boolean {
+  if (!Array.isArray(section.blocks) || section.blocks.length === 0) return true;
+  for (const block of section.blocks) {
+    if (!isEditableBlock(block)) continue;
+    const text = blockToText(block);
+    if (text.trim().length > 0) return false;
+  }
+  return true;
+}
+
+function runCompletenessQa(
+  schema: DocumentSchema,
+  template: DocumentTemplate | null
+): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+  const sections = Array.isArray(schema.sections) ? schema.sections : [];
+
+  if (sections.length === 0) {
+    findings.push(
+      makeFinding(
+        'high',
+        'Document has zero sections — there is nothing to render or export.',
+        'completeness_no_sections'
+      )
+    );
+  } else {
+    for (const section of sections) {
+      if (isSectionEmpty(section)) {
+        findings.push(
+          makeFinding(
+            'high',
+            `Section "${section.title || section.sectionId}" is empty (no editable blocks or all blocks blank).`,
+            'completeness_empty_section',
+            { sectionId: section.sectionId }
+          )
+        );
+      }
+    }
+  }
+
+  // Template-aware: blueprint-required sections that are missing from the
+  // schema and per-section length floor.
+  if (template) {
+    const blueprintRequired = template.sectionBlueprint.filter((s) => s.required);
+    for (const required of blueprintRequired) {
+      const found = sections.find((section) => fuzzyMatchTitle(required.title, section.title));
+      if (!found) {
+        findings.push(
+          makeFinding(
+            'high',
+            `Required template section "${required.title}" is missing from the schema.`,
+            'completeness_required_section_missing'
+          )
+        );
+      }
+    }
+
+    for (const blueprint of template.sectionBlueprint) {
+      const lengthHint = blueprint.expectedLengthHint;
+      if (!lengthHint) continue;
+      const minWords = BLUEPRINT_MIN_WORDS[lengthHint];
+      if (!minWords) continue;
+      const matchingSection = sections.find((section) =>
+        fuzzyMatchTitle(blueprint.title, section.title)
+      );
+      if (!matchingSection) continue;
+      const editableBlocks = matchingSection.blocks.filter(isEditableBlock);
+      if (editableBlocks.length === 0) continue;
+      const allShort = editableBlocks.every((block) => {
+        const text = blockToText(block).trim();
+        if (!text) return true;
+        return countWords(text) < minWords;
+      });
+      if (allShort) {
+        findings.push(
+          makeFinding(
+            'low',
+            `Section "${matchingSection.title}" is short of the "${lengthHint}" target (≥ ${minWords} words/block).`,
+            'completeness_block_too_short',
+            { sectionId: matchingSection.sectionId }
+          )
+        );
+      }
+    }
+  }
+
+  // Type-aware: executive summary requirement.
+  if (EXEC_SUMMARY_REQUIRED.has(schema.documentType)) {
+    const hasExecSummary =
+      sections.length > 0 &&
+      Boolean(findSectionByHints(schema, EXEC_SUMMARY_HINTS));
+    if (!hasExecSummary) {
+      findings.push(
+        makeFinding(
+          'high',
+          `Document type "${schema.documentType}" requires an Executive Summary (or PL: "Streszczenie zarządcze").`,
+          'completeness_missing_executive_summary'
+        )
+      );
+    }
+  }
+
+  // Type-aware: decision / next-steps / recommendations requirement.
+  if (DECISION_SECTION_REQUIRED.has(schema.documentType)) {
+    const hasDecisionSection =
+      sections.length > 0 && Boolean(findSectionByHints(schema, DECISION_SECTION_HINTS));
+    if (!hasDecisionSection) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `Document type "${schema.documentType}" should contain a Recommendations / Next Steps / Decisions section.`,
+          'completeness_missing_decision_section'
+        )
+      );
+    }
+  }
+
+  return categoryReport('completeness', findings, 70, (score, fs) =>
+    fs.length === 0
+      ? 'Completeness clean: every required section is present and populated.'
+      : `Completeness QA: ${fs.length} finding(s); score ${score}/100.`
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Methodology QA (Sprint 2 — Slice 2.2)
+// -----------------------------------------------------------------------------
+
+function runMethodologyQa(
+  schema: DocumentSchema,
+  template: DocumentTemplate | null
+): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+  const sections = Array.isArray(schema.sections) ? schema.sections : [];
+
+  // Template-aware: order, optional missing, drift.
+  if (template) {
+    const blueprint = template.sectionBlueprint;
+
+    // Build the indices of blueprint sections in the order they appear in
+    // the schema. If the resulting array is not monotonically increasing
+    // we have an order mismatch.
+    const orderTrace: number[] = [];
+    for (const section of sections) {
+      const idx = blueprint.findIndex((b) => fuzzyMatchTitle(b.title, section.title));
+      if (idx >= 0) orderTrace.push(idx);
+    }
+    let orderMismatch = false;
+    for (let i = 1; i < orderTrace.length; i += 1) {
+      const prev = orderTrace[i - 1];
+      const curr = orderTrace[i];
+      if (prev !== undefined && curr !== undefined && curr < prev) {
+        orderMismatch = true;
+        break;
+      }
+    }
+    if (orderMismatch) {
+      findings.push(
+        makeFinding(
+          'medium',
+          'Section ordering does not match the template blueprint.',
+          'methodology_section_order_mismatch'
+        )
+      );
+    }
+
+    for (const bp of blueprint) {
+      if (bp.required) continue;
+      const present = sections.some((section) => fuzzyMatchTitle(bp.title, section.title));
+      if (!present) {
+        findings.push(
+          makeFinding(
+            'low',
+            `Optional blueprint section "${bp.title}" is missing.`,
+            'methodology_optional_section_missing'
+          )
+        );
+      }
+    }
+
+    for (const section of sections) {
+      const matched = blueprint.some((b: TemplateSectionBlueprint) =>
+        fuzzyMatchTitle(b.title, section.title)
+      );
+      if (!matched) {
+        findings.push(
+          makeFinding(
+            'low',
+            `Section "${section.title}" is not declared in the template blueprint (drift).`,
+            'methodology_drift_section',
+            { sectionId: section.sectionId }
+          )
+        );
+      }
+    }
+  }
+
+  // Type-aware: structural sections required regardless of template.
+  if (METHODOLOGY_REQUIRED_TYPES.has(schema.documentType)) {
+    const hasMethodology = Boolean(findSectionByHints(schema, METHODOLOGY_SECTION_HINTS_QA));
+    if (!hasMethodology) {
+      findings.push(
+        makeFinding(
+          'high',
+          `Document type "${schema.documentType}" requires a Methodology / Approach / Scope section.`,
+          'methodology_missing_methodology_section'
+        )
+      );
+    }
+  }
+
+  if (ASSUMPTIONS_REQUIRED_TYPES.has(schema.documentType)) {
+    const hasAssumptions = Boolean(findSectionByHints(schema, ASSUMPTIONS_SECTION_HINTS_QA));
+    if (!hasAssumptions) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `Document type "${schema.documentType}" should contain an Assumptions / Scenarios section.`,
+          'methodology_missing_assumptions_section'
+        )
+      );
+    }
+  }
+
+  if (RISKS_REQUIRED_TYPES.has(schema.documentType)) {
+    const hasRisks = Boolean(findSectionByHints(schema, RISKS_SECTION_HINTS_QA));
+    if (!hasRisks) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `Document type "${schema.documentType}" should contain a Risks section.`,
+          'methodology_missing_risks_section'
+        )
+      );
+    }
+  }
+
+  return categoryReport('methodology', findings, 70, (score, fs) =>
+    fs.length === 0
+      ? 'Methodology clean: blueprint coverage and structural sections present.'
+      : `Methodology QA: ${fs.length} finding(s); score ${score}/100.`
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Executive QA (Sprint 2 — Slice 2.3)
+// -----------------------------------------------------------------------------
+
+const EXEC_ACTION_VERBS_EN: ReadonlyArray<string> = [
+  'recommend',
+  'recommends',
+  'recommended',
+  'approve',
+  'approves',
+  'approved',
+  'decide',
+  'decides',
+  'decided',
+  'authorize',
+  'authorise',
+  'endorse',
+  'commit',
+  'mandate',
+  'we propose',
+  'we recommend',
+];
+
+const EXEC_ACTION_VERBS_PL: ReadonlyArray<string> = [
+  'rekomendujemy',
+  'rekomenduje',
+  'decydujemy',
+  'zatwierdzamy',
+  'akceptujemy',
+  'proponujemy',
+  'wnosimy',
+  'rekomendacja',
+  'decyzja',
+];
+
+const EXEC_OWNER_TOKENS: ReadonlyArray<string> = [
+  'cfo',
+  'ceo',
+  'coo',
+  'cio',
+  'cto',
+  'chro',
+  'pmo',
+  'sponsor',
+  'owner',
+  'steerco',
+  'steering committee',
+  'sponsor projektu',
+  'wlasciciel',
+  'wlasciciela',
+  'kierownik',
+  'dyrektor',
+  'zarzad',
+];
+
+const EXEC_TIME_ANCHORS = /\b(q[1-4]|h[12]|fy\d{2,4}|\d{1,3}\s?(?:days?|day|dni|dzien|tygodni|miesiac|miesiecy)|january|february|march|april|may|june|july|august|september|october|november|december|styczen|luty|marzec|kwiecien|maj|czerwiec|lipiec|sierpien|wrzesien|pazdziernik|listopad|grudzien|by\s+(?:end\s+of\s+)?q[1-4]|do\s+konca\s+q[1-4]|10\/0?\d|0?\d\/0?\d\/\d{2,4}|\d{4}-\d{2}-\d{2}|2026|2025|30\/60\/90)\b/i;
+
+const EXEC_SUMMARY_WORD_BUDGET = 220;
+
+function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+
+  if (!EXECUTIVE_QA_APPLIES.has(schema.documentType)) {
+    return categoryReport('executive', [], 70, () =>
+      'Executive QA: not applicable to this document type.'
+    );
+  }
+
+  const execSection = findSectionByHints(schema, EXEC_SUMMARY_HINTS);
+  if (!execSection) {
+    findings.push(
+      makeFinding(
+        'high',
+        `Executive document type "${schema.documentType}" has no Executive Summary section.`,
+        'executive_summary_absent'
+      )
+    );
+  } else {
+    const editable = execSection.blocks.filter(isEditableBlock);
+    const summaryText = editable.map((b) => blockToText(b)).join(' ').trim();
+    const summaryWords = countWords(summaryText);
+    if (summaryWords > EXEC_SUMMARY_WORD_BUDGET) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `Executive Summary has ${summaryWords} words (>${EXEC_SUMMARY_WORD_BUDGET}). Tighten to a single board-ready paragraph.`,
+          'executive_summary_too_long',
+          { sectionId: execSection.sectionId }
+        )
+      );
+    }
+    const verbs = schema.language === 'pl' ? EXEC_ACTION_VERBS_PL : EXEC_ACTION_VERBS_EN;
+    const lower = normalizeForHints(summaryText);
+    const hasActionVerb = verbs.some((verb) => lower.includes(normalizeForHints(verb)));
+    if (!hasActionVerb && summaryText.length > 0) {
+      findings.push(
+        makeFinding(
+          'high',
+          'Executive Summary contains no action / decision verb (e.g. "recommend", "approve", "rekomendujemy").',
+          'executive_summary_missing_action_verb',
+          { sectionId: execSection.sectionId }
+        )
+      );
+    }
+  }
+
+  const decisionSection = findSectionByHints(schema, DECISION_SECTION_HINTS);
+  if (decisionSection) {
+    const editable = decisionSection.blocks.filter(isEditableBlock).filter((b) => {
+      const t = blockToText(b).trim();
+      return t.length > 0;
+    });
+    if (editable.length < 2) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `Decision section "${decisionSection.title}" has only ${editable.length} actionable block(s); should be ≥ 2.`,
+          'executive_thin_decision_section',
+          { sectionId: decisionSection.sectionId }
+        )
+      );
+    }
+    const decisionText = editable.map((b) => blockToText(b)).join(' ');
+    const decisionLower = normalizeForHints(decisionText);
+    const hasOwner = EXEC_OWNER_TOKENS.some((token) => decisionLower.includes(normalizeForHints(token)));
+    if (!hasOwner && decisionText.length > 0) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `Decision section "${decisionSection.title}" names no owner / responsible role.`,
+          'executive_decisions_without_owner',
+          { sectionId: decisionSection.sectionId }
+        )
+      );
+    }
+    const hasTime = EXEC_TIME_ANCHORS.test(decisionText);
+    if (!hasTime && decisionText.length > 0) {
+      findings.push(
+        makeFinding(
+          'low',
+          `Decision section "${decisionSection.title}" contains no time anchor (Q1–Q4, deadline, or day count).`,
+          'executive_decisions_without_time_anchor',
+          { sectionId: decisionSection.sectionId }
+        )
+      );
+    }
+  }
+
+  return categoryReport('executive', findings, 70, (score, fs) =>
+    fs.length === 0
+      ? 'Executive QA clean: Executive Summary and decision section drive a decision with owner + time anchor.'
+      : `Executive QA: ${fs.length} finding(s); score ${score}/100.`
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Risk QA (Sprint 3 — Slice 3.1)
+// -----------------------------------------------------------------------------
+
+const RISK_SEVERITY_HINTS_EN: ReadonlyArray<string> = [
+  'high',
+  'medium',
+  'low',
+  'critical',
+  'severe',
+  'p0',
+  'p1',
+  'p2',
+  'p3',
+  'rag',
+  'red',
+  'amber',
+  'green',
+];
+
+const RISK_SEVERITY_HINTS_PL: ReadonlyArray<string> = [
+  'krytyczny',
+  'krytyczne',
+  'wysoki',
+  'wysokie',
+  'wysoka',
+  'sredni',
+  'srednia',
+  'srednie',
+  'niski',
+  'niska',
+  'niskie',
+  'priorytet',
+];
+
+const RISK_MITIGATION_HINTS_EN: ReadonlyArray<string> = [
+  'mitigation',
+  'mitigated',
+  'mitigate',
+  'control',
+  'controls',
+  'remediation',
+  'remediate',
+  'mitigation plan',
+  'parallel poc',
+  'retention review',
+];
+
+const RISK_MITIGATION_HINTS_PL: ReadonlyArray<string> = [
+  'mitygacja',
+  'mityguj',
+  'plan naprawczy',
+  'plan dzialan',
+  'kontrola',
+  'kontrole',
+  'monitoring',
+  'monitorowanie',
+];
+
+function runRiskQa(schema: DocumentSchema): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+
+  const risksSection = findSectionByHints(schema, RISKS_SECTION_HINTS_QA);
+
+  // Risk-bearing types missing the section entirely.
+  if (!risksSection) {
+    if (RISK_BEARING_TYPES.has(schema.documentType)) {
+      findings.push(
+        makeFinding(
+          RISK_CRITICAL_TYPES.has(schema.documentType) ? 'high' : 'medium',
+          `Document type "${schema.documentType}" requires a Risks section.`,
+          'risk_section_missing'
+        )
+      );
+      // Stack a second finding for risk-critical types so the score
+      // collapses below the blocking threshold even with a single
+      // structural omission.
+      if (RISK_CRITICAL_TYPES.has(schema.documentType)) {
+        findings.push(
+          makeFinding(
+            'high',
+            'Risk register report without a Risks section is incoherent and cannot be exported.',
+            'risk_section_missing_blocks_export'
+          )
+        );
+      }
+    }
+    return categoryReport('risk', findings, 70, (score, fs) =>
+      fs.length === 0
+        ? 'Risk QA: not applicable.'
+        : `Risk QA: ${fs.length} finding(s); score ${score}/100.`
+    );
+  }
+
+  // Section exists. Check structural content.
+  const editableBlocks = risksSection.blocks.filter(isEditableBlock);
+  const populatedEditableBlocks = editableBlocks.filter((b) => blockToText(b).trim().length > 0);
+  const riskTableBlocks = risksSection.blocks.filter((b) => String(b.type) === 'risk_table');
+  const nonEmptyRiskTables = riskTableBlocks.filter((block) => {
+    const content = block.content as Record<string, unknown> | undefined;
+    const rows = content && Array.isArray((content as { rows?: unknown[] }).rows)
+      ? ((content as { rows?: unknown[] }).rows as unknown[])
+      : [];
+    return rows.length > 0;
+  });
+
+  if (populatedEditableBlocks.length === 0 && nonEmptyRiskTables.length === 0) {
+    findings.push(
+      makeFinding(
+        'high',
+        'Risks section is empty (no narrative blocks and no populated risk_table).',
+        'risk_section_empty',
+        { sectionId: risksSection.sectionId }
+      )
+    );
+    if (RISK_CRITICAL_TYPES.has(schema.documentType)) {
+      findings.push(
+        makeFinding(
+          'high',
+          'Risk register report has an empty Risks section — export must be blocked.',
+          'risk_section_empty_blocks_export',
+          { sectionId: risksSection.sectionId }
+        )
+      );
+    }
+  } else if (populatedEditableBlocks.length > 0) {
+    const sectionText = populatedEditableBlocks.map((b) => blockToText(b)).join(' ');
+    const lower = normalizeForHints(sectionText);
+    const severityHints =
+      schema.language === 'pl' ? RISK_SEVERITY_HINTS_PL : RISK_SEVERITY_HINTS_EN;
+    const mitigationHints =
+      schema.language === 'pl' ? RISK_MITIGATION_HINTS_PL : RISK_MITIGATION_HINTS_EN;
+    const hasSeverity = severityHints.some((hint) => lower.includes(normalizeForHints(hint)));
+    if (!hasSeverity) {
+      findings.push(
+        makeFinding(
+          'medium',
+          'Risks section contains no severity / impact classification (high / medium / low / critical / RAG / P0–P3).',
+          'risk_section_no_severity',
+          { sectionId: risksSection.sectionId }
+        )
+      );
+    }
+    const hasMitigation = mitigationHints.some((hint) => lower.includes(normalizeForHints(hint)));
+    if (!hasMitigation) {
+      findings.push(
+        makeFinding(
+          'medium',
+          'Risks section contains no mitigation / control language.',
+          'risk_section_no_mitigation',
+          { sectionId: risksSection.sectionId }
+        )
+      );
+    }
+    const hasOwner = EXEC_OWNER_TOKENS.some((token) => lower.includes(normalizeForHints(token)));
+    if (!hasOwner) {
+      findings.push(
+        makeFinding(
+          'low',
+          'Risks section names no owner / responsible role.',
+          'risk_section_no_owner',
+          { sectionId: risksSection.sectionId }
+        )
+      );
+    }
+  }
+
+  for (const block of riskTableBlocks) {
+    const content = block.content as Record<string, unknown> | undefined;
+    const rows = content && Array.isArray((content as { rows?: unknown[] }).rows)
+      ? ((content as { rows?: unknown[] }).rows as unknown[])
+      : [];
+    if (rows.length === 0) {
+      findings.push(
+        makeFinding(
+          'medium',
+          'Empty `risk_table` block: no rows declared.',
+          'risk_empty_risk_table',
+          { sectionId: risksSection.sectionId, blockId: block.blockId }
+        )
+      );
+    }
+  }
+
+  return categoryReport('risk', findings, 70, (score, fs) =>
+    fs.length === 0
+      ? 'Risk QA clean: severity, mitigation and ownership present.'
+      : `Risk QA: ${fs.length} finding(s); score ${score}/100.`
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Data QA (Sprint 3 — Slice 3.2)
+// -----------------------------------------------------------------------------
+
+const CURRENCY_PATTERNS: ReadonlyArray<{ code: string; regex: RegExp }> = [
+  { code: 'USD', regex: /\b(?:USD|US\$|\$)\s?\d/i },
+  { code: 'EUR', regex: /\b(?:EUR|€)\s?\d/i },
+  { code: 'GBP', regex: /\b(?:GBP|£)\s?\d/i },
+  { code: 'PLN', regex: /\b(?:PLN|z[ł]?)\s?\d/i },
+  { code: 'CHF', regex: /\bCHF\s?\d/i },
+];
+
+const FX_CONVERSION_HINTS: ReadonlyArray<string> = [
+  'fx',
+  'foreign exchange',
+  'exchange rate',
+  'converted at',
+  'converted using',
+  'kurs walutowy',
+  'kurs wymiany',
+  'przeliczone',
+  'po kursie',
+];
+
+const PERCENT_PATTERN = /([\w \t\/_-]{1,40}?)(\d{1,3}(?:[.,]\d+)?)\s?%/g;
+
+const SUSPICIOUS_PLACEHOLDER_PATTERNS: ReadonlyArray<{ pattern: RegExp; severity: DocumentQaSeverity }> = [
+  { pattern: /\bTBD\b/, severity: 'medium' },
+  { pattern: /\bN\/A\b/, severity: 'medium' },
+  { pattern: /\bXXX+\b/, severity: 'medium' },
+  { pattern: /\bdo uzupelnienia\b/, severity: 'low' },
+  { pattern: /\bdo uzupe[ł]nienia\b/, severity: 'low' },
+];
+
+const DATE_FORMAT_PATTERNS: ReadonlyArray<{ name: string; regex: RegExp }> = [
+  { name: 'iso', regex: /\b\d{4}-\d{2}-\d{2}\b/ },
+  { name: 'slash', regex: /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/ },
+  { name: 'long_en', regex: /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/i },
+  { name: 'long_pl', regex: /\b(?:styczen|luty|marzec|kwiecien|maj|czerwiec|lipiec|sierpien|wrzesien|pazdziernik|listopad|grudzien)\s+\d{4}\b/i },
+];
+
+function runDataQa(schema: DocumentSchema): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+
+  const detectedCurrencies = new Set<string>();
+  let fxMentioned = false;
+
+  // Aggregate placeholder hits and date format names across the document.
+  let placeholderHits = 0;
+  let placeholderSeverity: DocumentQaSeverity = 'low';
+  const detectedDateFormats = new Set<string>();
+
+  // KPI inconsistency: same key noun phrase + percent on different blocks.
+  const kpiByKey = new Map<string, Set<string>>();
+
+  for (const section of schema.sections) {
+    for (const block of section.blocks) {
+      // Empty kpi_strip block (structural).
+      if (String(block.type) === 'kpi_strip') {
+        const content = block.content as { items?: unknown[] } | undefined;
+        const items = Array.isArray(content?.items) ? content?.items : [];
+        if (!items || items.length === 0) {
+          findings.push(
+            makeFinding(
+              'medium',
+              'Empty `kpi_strip` block: no KPIs declared.',
+              'data_empty_kpi_strip',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        }
+        continue;
+      }
+      if (!isEditableBlock(block)) continue;
+      const text = blockToText(block);
+      if (!text) continue;
+      const normalized = normalizeForHints(text);
+
+      // Currency tokens
+      for (const { code, regex } of CURRENCY_PATTERNS) {
+        if (regex.test(text)) detectedCurrencies.add(code);
+      }
+      if (FX_CONVERSION_HINTS.some((hint) => normalized.includes(hint))) {
+        fxMentioned = true;
+      }
+
+      // KPI percent matches (per-block to avoid cross-line bleed).
+      let match: RegExpExecArray | null;
+      const blockRegex = new RegExp(PERCENT_PATTERN.source, 'g');
+      while ((match = blockRegex.exec(text)) !== null) {
+        const keyRaw = (match[1] ?? '').trim();
+        const value = match[2] ?? '';
+        if (!keyRaw || keyRaw.length < 3) continue;
+        const keyTokens = normalizeTitle(keyRaw);
+        if (keyTokens.length === 0) continue;
+        const key = keyTokens.slice(-2).join('_');
+        if (!key) continue;
+        const set = kpiByKey.get(key) ?? new Set<string>();
+        set.add(value);
+        kpiByKey.set(key, set);
+      }
+
+      // Placeholder values
+      for (const { pattern, severity } of SUSPICIOUS_PLACEHOLDER_PATTERNS) {
+        const localPattern = new RegExp(pattern.source, 'gi');
+        const hits = text.match(localPattern);
+        if (hits && hits.length > 0) {
+          placeholderHits += hits.length;
+          if (severity === 'medium') placeholderSeverity = 'medium';
+        }
+      }
+
+      // Date formats
+      for (const { name, regex } of DATE_FORMAT_PATTERNS) {
+        if (regex.test(text)) detectedDateFormats.add(name);
+      }
+    }
+  }
+
+  if (detectedCurrencies.size > 1 && !fxMentioned) {
+    findings.push(
+      makeFinding(
+        'medium',
+        `Mixed currencies (${[...detectedCurrencies].sort().join(', ')}) without an FX / conversion phrase.`,
+        'data_currency_mix_without_fx'
+      )
+    );
+  }
+
+  for (const [key, valueSet] of kpiByKey.entries()) {
+    if (valueSet.size > 1) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `KPI "${key.replace(/_/g, ' ')}" reported with conflicting values: ${[...valueSet].join(', ')}%.`,
+          'data_inconsistent_kpi_percent'
+        )
+      );
+    }
+  }
+
+  if (placeholderHits > 0) {
+    findings.push(
+      makeFinding(
+        placeholderSeverity,
+        `${placeholderHits} placeholder value(s) detected (TBD / N/A / XXX / "do uzupełnienia").`,
+        'data_placeholder_values_present'
+      )
+    );
+  }
+
+  if (detectedDateFormats.size >= 3) {
+    findings.push(
+      makeFinding(
+        'medium',
+        `Mixed date formats across the document: ${[...detectedDateFormats].sort().join(', ')}.`,
+        'data_mixed_date_formats'
+      )
+    );
+  }
+
+  return categoryReport('data', findings, 70, (score, fs) =>
+    fs.length === 0
+      ? 'Data QA clean: currencies, KPIs and dates are internally consistent.'
+      : `Data QA: ${fs.length} finding(s); score ${score}/100.`
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Format QA (Sprint 3 — Slice 3.3)
+// -----------------------------------------------------------------------------
+
+function runFormatQa(schema: DocumentSchema): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+
+  // Section-level heading hierarchy: levels MUST not skip (e.g. H1 → H3
+  // without an H2 in between).
+  let prevSectionLevel: number | null = null;
+  for (const section of schema.sections) {
+    const level = typeof section.level === 'number' ? section.level : 1;
+    if (prevSectionLevel !== null && level > prevSectionLevel + 1) {
+      findings.push(
+        makeFinding(
+          'low',
+          `Heading level skip across sections: H${prevSectionLevel} → H${level} (no intermediate level).`,
+          'format_heading_level_skip',
+          { sectionId: section.sectionId }
+        )
+      );
+    }
+    prevSectionLevel = level;
+
+    // Block-level heading skip inside a section's block stream.
+    let prevBlockHeadingLevel: number | null = level;
+    for (const block of section.blocks) {
+      if (String(block.type) === 'heading') {
+        const content = block.content as { level?: number } | undefined;
+        const headingLevel = typeof content?.level === 'number' ? content.level : 1;
+        if (prevBlockHeadingLevel !== null && headingLevel > prevBlockHeadingLevel + 1) {
+          findings.push(
+            makeFinding(
+              'low',
+              `Heading level skip inside section "${section.title}": H${prevBlockHeadingLevel} → H${headingLevel}.`,
+              'format_block_heading_skip',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        }
+        prevBlockHeadingLevel = headingLevel;
+      }
+    }
+
+    // Whitespace artifacts: 2+ consecutive empty paragraphs.
+    let consecutiveEmpty = 0;
+    for (const block of section.blocks) {
+      if (String(block.type) === 'paragraph') {
+        const text = blockToText(block).trim();
+        if (text === '') {
+          consecutiveEmpty += 1;
+          if (consecutiveEmpty === 2) {
+            findings.push(
+              makeFinding(
+                'low',
+                `Two or more consecutive empty paragraphs in section "${section.title}" — collapse them before export.`,
+                'format_consecutive_empty_paragraphs',
+                { sectionId: section.sectionId, blockId: block.blockId }
+              )
+            );
+          }
+        } else {
+          consecutiveEmpty = 0;
+        }
+      } else {
+        consecutiveEmpty = 0;
+      }
+    }
+
+    // Lists and tables.
+    for (const block of section.blocks) {
+      const type = String(block.type);
+      if (type === 'bullet_list' || type === 'numbered_list') {
+        const content = block.content as { items?: unknown[] } | undefined;
+        const items = Array.isArray(content?.items) ? content?.items ?? [] : [];
+        if (items.length === 0) {
+          findings.push(
+            makeFinding(
+              'low',
+              `Empty list in section "${section.title}".`,
+              'format_empty_list',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        } else if (items.length === 1) {
+          findings.push(
+            makeFinding(
+              'low',
+              `Single-item list in section "${section.title}" — convert to a paragraph.`,
+              'format_single_item_list',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        }
+      } else if (type === 'table') {
+        const content = block.content as
+          | { header?: unknown; rows?: unknown }
+          | undefined;
+        const hasHeader = Array.isArray(content?.header) && (content?.header as unknown[]).length > 0;
+        if (!hasHeader) {
+          findings.push(
+            makeFinding(
+              'medium',
+              `Table in section "${section.title}" has no header row.`,
+              'format_table_without_header',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        }
+      }
+    }
+  }
+
+  return categoryReport('format', findings, 70, (score, fs) =>
+    fs.length === 0
+      ? 'Format QA clean: heading hierarchy, lists and tables are well-formed.'
+      : `Format QA: ${fs.length} finding(s); score ${score}/100.`
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Export QA (Sprint 3 — Slice 3.4)
+// -----------------------------------------------------------------------------
+
+function isFormattingSchemaUsable(formattingSchema: FormattingSchema | undefined): boolean {
+  if (!formattingSchema || typeof formattingSchema !== 'object') return false;
+  if (!formattingSchema.fonts || !formattingSchema.headingStyles) return false;
+  if (!formattingSchema.page || !formattingSchema.page.size) return false;
+  return true;
+}
+
+function runExportQa(schema: DocumentSchema): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+  const formattingSchema = schema.formattingSchema as FormattingSchema | undefined;
+
+  if (!formattingSchema) {
+    findings.push(
+      makeFinding(
+        'high',
+        'FormattingSchema is missing — exporters cannot render fonts, page or styles.',
+        'export_missing_formatting_schema'
+      )
+    );
+    findings.push(
+      makeFinding(
+        'high',
+        'Document without a FormattingSchema cannot be exported safely.',
+        'export_missing_formatting_schema_blocks_export'
+      )
+    );
+  } else {
+    const missingKeys: string[] = [];
+    if (!formattingSchema.fonts) missingKeys.push('fonts');
+    if (!formattingSchema.headingStyles) missingKeys.push('headingStyles');
+    if (!formattingSchema.page || !formattingSchema.page.size) missingKeys.push('page.size');
+    if (missingKeys.length > 0) {
+      findings.push(
+        makeFinding(
+          'medium',
+          `FormattingSchema is missing required keys: ${missingKeys.join(', ')}.`,
+          'export_formatting_schema_keys_missing'
+        )
+      );
+    }
+    if (formattingSchema.coverPage && (!schema.title || schema.title.trim().length === 0)) {
+      findings.push(
+        makeFinding(
+          'medium',
+          'Cover page is enabled but the document has no title.',
+          'export_cover_page_without_title'
+        )
+      );
+    }
+    if (formattingSchema.toc) {
+      const hasLevelOne = schema.sections.some((section) => section.level === 1);
+      if (!hasLevelOne) {
+        findings.push(
+          makeFinding(
+            'medium',
+            'Table of contents is enabled but the document has no level-1 sections.',
+            'export_toc_without_level_one'
+          )
+        );
+      }
+    }
+    if (formattingSchema.appendixStyle && formattingSchema.appendixStyle !== 'none') {
+      const hasAppendix = schema.sections.some((section) =>
+        sectionTitleMatchesAnyHint(section.title, APPENDIX_SECTION_HINTS)
+      );
+      if (!hasAppendix) {
+        findings.push(
+          makeFinding(
+            'low',
+            `Appendix style "${formattingSchema.appendixStyle}" is set but no Appendix sections are present.`,
+            'export_appendix_style_without_sections'
+          )
+        );
+      }
+    }
+    if (
+      formattingSchema.footers?.enabled &&
+      formattingSchema.footers?.confidentialityLabel &&
+      !schema.confidentiality
+    ) {
+      findings.push(
+        makeFinding(
+          'low',
+          'Confidentiality footer is enabled but the document has no confidentiality value.',
+          'export_confidentiality_footer_without_value'
+        )
+      );
+    }
+  }
+
+  // Schema walk: count total renderable text.
+  let totalTextChars = 0;
+  for (const section of schema.sections) {
+    if (section.title.trim().length > 0) totalTextChars += section.title.trim().length;
+    for (const block of section.blocks) {
+      const text = blockToText(block).trim();
+      totalTextChars += text.length;
+    }
+  }
+  if (isFormattingSchemaUsable(formattingSchema) && totalTextChars === 0) {
+    findings.push(
+      makeFinding(
+        'high',
+        'Schema walk produced zero renderable text — the document is effectively empty.',
+        'export_zero_content_after_walk'
+      )
+    );
+    findings.push(
+      makeFinding(
+        'high',
+        'Empty schema cannot be exported.',
+        'export_zero_content_blocks_export'
+      )
+    );
+  }
+
+  return categoryReport('export', findings, 70, (score, fs) =>
+    fs.length === 0
+      ? 'Export QA clean: formatting schema and structure are export-ready.'
+      : `Export QA: ${fs.length} finding(s); score ${score}/100.`
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Public entry point
 // -----------------------------------------------------------------------------
 
-export function runDocumentQa(schema: DocumentSchema): DocumentQaReport {
+export function runDocumentQa(
+  schema: DocumentSchema,
+  options: RunDocumentQaOptions = {}
+): DocumentQaReport {
+  const template = options.template ?? null;
   const categories: DocumentQaCategoryReport[] = [
     runBrandQa(schema),
     runLanguageQa(schema),
+    runCompletenessQa(schema, template),
     runSourceQa(schema),
+    runMethodologyQa(schema, template),
+    runExecutiveQa(schema),
+    runRiskQa(schema),
+    runDataQa(schema),
+    runFormatQa(schema),
+    runExportQa(schema),
   ];
   return {
     artifactId: schema.artifactId,
