@@ -71,6 +71,18 @@
  *                                                                    Body: { intake, sources[], packName?, templateId?, ... }
  *                                                                    Returns: { artifactId, schema, packId, itemCount }
  *
+ * Document Lifecycle — Epic E5:
+ *   GET    /api/document-studio/:artifactId/lifecycle                              — current status + history
+ *   POST   /api/document-studio/:artifactId/status                                 — body: { to, reason? }; transitions per matrix
+ *                                                                                     409 invalid_transition / 400 unknown_status / 404 unknown_artifact
+ *   GET    /api/document-studio/:artifactId/snapshots                              — list snapshots (versionNumber asc)
+ *   POST   /api/document-studio/:artifactId/snapshots                              — body: { label?, reason? }; capture current schema
+ *                                                                                     201 with { snapshot }; 404 document_not_found
+ *   GET    /api/document-studio/:artifactId/snapshots/:versionId                   — get a specific snapshot
+ *   POST   /api/document-studio/:artifactId/snapshots/:versionId/rollback          — body: { reason? }; restore snapshot, capture
+ *                                                                                     rollback_revert, force lifecycle to draft.
+ *                                                                                     Returns { schema, revertSnapshot, restoredFrom, lifecycle }
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
 
@@ -103,12 +115,20 @@ import {
   canOverrideQa,
   type CreateChatSourcePackConnectorInput,
   createDocumentFromChatSourcePack,
+  createDocumentSnapshot,
   createGlobalEditProposal,
   createLocalEditProposal,
   createSectionEditProposal,
+  DocumentLifecycleTransitionError,
+  DocumentRollbackError,
+  ensureDocumentLifecycleHydrated,
+  ensureDocumentVersionSnapshotsHydrated,
   exportDocumentArtifact,
   getDocumentArtifact,
+  getDocumentLifecycleState,
+  getDocumentVersionSnapshot,
   listDocumentAuditEntries,
+  listDocumentVersionSnapshots,
   materializeDocumentArtifact,
   MissingRequiredSourceError,
   planDocument,
@@ -116,12 +136,15 @@ import {
   QaBlockingError,
   QaOverrideUnauthorizedError,
   rejectEditProposal,
+  rollbackDocumentToVersion,
+  transitionDocumentStatus,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
   DocumentEditorProposalInput,
   DocumentIntake,
   DocumentOutline,
   DocumentSourceRef,
+  DocumentStatus,
   SourcePackStatus,
   TemplateDraftInput,
 } from '../services/documentStudio/documentStudioTypes.js';
@@ -451,6 +474,35 @@ function mapServiceErrorToStatus(message: string): number {
     return 400;
   }
   return 500;
+}
+
+/** Epic E5 — map DocumentLifecycleTransitionError codes to HTTP. */
+function mapLifecycleErrorToStatus(code: DocumentLifecycleTransitionError['code']): number {
+  switch (code) {
+    case 'unknown_status':
+      return 400;
+    case 'invalid_transition':
+      return 409;
+    case 'unknown_artifact':
+      return 404;
+    default:
+      return 500;
+  }
+}
+
+/** Epic E5 — map DocumentRollbackError codes to HTTP. */
+function mapRollbackErrorToStatus(code: DocumentRollbackError['code']): number {
+  switch (code) {
+    case 'invalid_input':
+      return 400;
+    case 'snapshot_not_found':
+    case 'document_not_found':
+      return 404;
+    case 'tenant_mismatch':
+      return 403;
+    default:
+      return 500;
+  }
 }
 
 router.post(
@@ -854,6 +906,216 @@ router.post(
       const message = err instanceof Error ? err.message : 'source_pack_attach_failed';
       const status = mapServiceErrorToStatus(message);
       res.status(status).json({ error: message, message });
+    }
+  })
+);
+
+// =============================================================================
+// Epic E5 — Document Lifecycle (status mutation + version snapshot +
+// rollback). All routes are scoped under /:artifactId/... and registered
+// before the generic /:artifactId GET handler so the path matcher always
+// hits the most specific route first.
+// =============================================================================
+
+const VALID_DOCUMENT_STATUSES: ReadonlyArray<DocumentStatus> = [
+  'draft',
+  'in_review',
+  'approved',
+  'published',
+  'archived',
+];
+
+router.get(
+  '/:artifactId/lifecycle',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureDocumentLifecycleHydrated(organizationId);
+    const lifecycle = getDocumentLifecycleState(artifactId, organizationId);
+    if (!lifecycle) {
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+    res.json({ lifecycle });
+  })
+);
+
+router.post(
+  '/:artifactId/status',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const to = req.body?.to as DocumentStatus | undefined;
+    if (!to || !VALID_DOCUMENT_STATUSES.includes(to)) {
+      res.status(400).json({
+        error: 'invalid_target_status',
+        message: `to must be one of: ${VALID_DOCUMENT_STATUSES.join(', ')}`,
+      });
+      return;
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    await ensureDocumentLifecycleHydrated(organizationId);
+    try {
+      const lifecycle = transitionDocumentStatus({
+        organizationId,
+        artifactId,
+        userId,
+        to,
+        reason,
+      });
+      res.json({ lifecycle });
+    } catch (err) {
+      if (err instanceof DocumentLifecycleTransitionError) {
+        const status = mapLifecycleErrorToStatus(err.code);
+        res
+          .status(status)
+          .json({ error: err.code, message: err.message, from: err.from, to: err.to });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn('[DocumentStudio] status transition failed', { message });
+      res.status(500).json({ error: 'transition_failed', message });
+    }
+  })
+);
+
+router.get(
+  '/:artifactId/snapshots',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureDocumentVersionSnapshotsHydrated(organizationId);
+    const snapshots = listDocumentVersionSnapshots(artifactId, organizationId);
+    res.json({ snapshots });
+  })
+);
+
+router.post(
+  '/:artifactId/snapshots',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const label = typeof req.body?.label === 'string' ? req.body.label : undefined;
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    await ensureDocumentLifecycleHydrated(organizationId);
+    await ensureDocumentVersionSnapshotsHydrated(organizationId);
+    try {
+      const snapshot = await createDocumentSnapshot({
+        organizationId,
+        artifactId,
+        userId,
+        label,
+        reason,
+        // 'manual' — the explicit-origin path stays @internal and only
+        // the rollback orchestrator and (future) auto-status-change
+        // hooks set it.
+      });
+      res.status(201).json({ snapshot });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message === 'document_not_found') {
+        res.status(404).json({ error: 'document_not_found', message });
+        return;
+      }
+      logger.warn('[DocumentStudio] snapshot capture failed', { message });
+      res.status(500).json({ error: 'snapshot_failed', message });
+    }
+  })
+);
+
+router.get(
+  '/:artifactId/snapshots/:versionId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const versionId = String(req.params.versionId);
+    if (!artifactId || !versionId) {
+      res.status(400).json({ error: 'artifactId and versionId are required' });
+      return;
+    }
+    await ensureDocumentVersionSnapshotsHydrated(organizationId);
+    const snapshot = getDocumentVersionSnapshot(versionId, organizationId);
+    if (!snapshot || snapshot.artifactId !== artifactId) {
+      // Don't leak existence across artifacts in the same tenant — same
+      // 404 for missing AND mismatched.
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+    res.json({ snapshot });
+  })
+);
+
+router.post(
+  '/:artifactId/snapshots/:versionId/rollback',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const versionId = String(req.params.versionId);
+    if (!artifactId || !versionId) {
+      res.status(400).json({ error: 'artifactId and versionId are required' });
+      return;
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    await ensureDocumentLifecycleHydrated(organizationId);
+    await ensureDocumentVersionSnapshotsHydrated(organizationId);
+    try {
+      const result = await rollbackDocumentToVersion({
+        organizationId,
+        artifactId,
+        userId,
+        versionId,
+        reason,
+      });
+      res.json(result);
+    } catch (err) {
+      if (err instanceof DocumentRollbackError) {
+        const status = mapRollbackErrorToStatus(err.code);
+        res.status(status).json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn('[DocumentStudio] rollback failed', { message });
+      res.status(500).json({ error: 'rollback_failed', message });
     }
   })
 );

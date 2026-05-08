@@ -77,11 +77,11 @@ export interface DocumentLifecycleTransition {
  */
 export const ALLOWED_TRANSITIONS: Readonly<Record<DocumentStatus, ReadonlyArray<DocumentStatus>>> =
   Object.freeze({
-    draft: Object.freeze(['in_review', 'archived']),
-    in_review: Object.freeze(['approved', 'draft', 'archived']),
-    approved: Object.freeze(['published', 'in_review', 'archived']),
-    published: Object.freeze(['archived']),
-    archived: Object.freeze(['draft']),
+    draft: Object.freeze<DocumentStatus[]>(['in_review', 'archived']),
+    in_review: Object.freeze<DocumentStatus[]>(['approved', 'draft', 'archived']),
+    approved: Object.freeze<DocumentStatus[]>(['published', 'in_review', 'archived']),
+    published: Object.freeze<DocumentStatus[]>(['archived']),
+    archived: Object.freeze<DocumentStatus[]>(['draft']),
   });
 
 export class DocumentLifecycleTransitionError extends Error {
