@@ -337,3 +337,151 @@ export const TERESA_INTENT_LEXICONS = Object.freeze({
   section: SECTION_PHRASES,
   local: LOCAL_PHRASES,
 });
+
+// =============================================================================
+// Document-creation intent (Epic E4 — chat-first creation entry).
+//
+// The editor classifier above only covers in-document requests. The
+// chat-first creation flow needs a SEPARATE classifier for "user wants
+// Teresa to make a brand-new document, optionally grounded in attached
+// sources". Splitting the two keeps each lexicon precise and lets the
+// chat handler dispatch them independently.
+// =============================================================================
+
+const CREATION_PHRASES_EN: ReadonlyArray<string> = [
+  'create a document',
+  'create a new document',
+  'create a report',
+  'create a memo',
+  'create a deck',
+  'draft a document',
+  'draft a report',
+  'draft a memo',
+  'write a document',
+  'write a report',
+  'write a memo',
+  'generate a document',
+  'generate a report',
+  'generate a memo',
+  'make a document',
+  'make a report',
+  'prepare a document',
+  'prepare a report',
+  'prepare a memo',
+  'build me a document',
+  'build me a report',
+];
+
+const CREATION_PHRASES_PL: ReadonlyArray<string> = [
+  'stworz dokument',
+  'stworz raport',
+  'stworz memo',
+  'stworz notatke',
+  'stworz prezentacje',
+  'utworz dokument',
+  'utworz raport',
+  'wygeneruj dokument',
+  'wygeneruj raport',
+  'wygeneruj memo',
+  'napisz dokument',
+  'napisz raport',
+  'napisz memo',
+  'przygotuj dokument',
+  'przygotuj raport',
+  'przygotuj memo',
+  'zrob dokument',
+  'zrob raport',
+  'zrob mi raport',
+  'zrob mi dokument',
+];
+
+/**
+ * "Source-signal" phrases the user uses to indicate they have evidence
+ * to ground the new document on. Hits flip `sourceSignal` from
+ * `unspecified` to `with_pack` so the orchestrator surfaces a
+ * pack-builder UI affordance instead of jumping straight to generation.
+ */
+const SOURCE_ATTACHMENT_PHRASES: ReadonlyArray<string> = [
+  'from these sources',
+  'from these urls',
+  'from these links',
+  'from this transcript',
+  'from this interview',
+  'from this evidence',
+  'based on these sources',
+  'based on these urls',
+  'based on this transcript',
+  'based on the attached',
+  'using these sources',
+  'using these urls',
+  'using this transcript',
+  'using the attached',
+  'with these sources',
+  'with these attachments',
+  'with the attached',
+  'oprzyj sie na tych zrodlach',
+  'oprzyj sie na tych linkach',
+  'na podstawie tych zrodel',
+  'na podstawie tych linkow',
+  'na podstawie zalaczonych',
+  'na podstawie zalacznikow',
+  'z tych zrodel',
+  'z tych linkow',
+  'z tych zalacznikow',
+  'z tego transkryptu',
+  'z tego wywiadu',
+  'wykorzystaj te zrodla',
+  'wykorzystaj te linki',
+  'wykorzystaj zalaczniki',
+];
+
+export type TeresaCreationSourceSignal = 'with_pack' | 'unspecified';
+
+export interface TeresaCreationIntent {
+  kind: 'create_document';
+  /**
+   * `with_pack` when the message explicitly references attached evidence
+   * (URLs / transcripts / files). `unspecified` when the user only said
+   * "create a memo" without any source signal — orchestrator may then
+   * either prompt the user for sources or proceed without a pack
+   * depending on the document type's required inputs.
+   */
+  sourceSignal: TeresaCreationSourceSignal;
+  matchedPhrase: string;
+  /** Phrase that triggered the source signal, when present. */
+  sourceMatchedPhrase?: string;
+}
+
+/**
+ * Classify a free-form Teresa chat message as a document-creation
+ * request. Returns null when the message is not a creation request so
+ * callers can fall back to the editor-scope classifier above.
+ *
+ * Pure / deterministic / no I/O — same constraints as the editor
+ * classifier so the UI can render the resolved intent live.
+ */
+export function detectTeresaCreationIntent(
+  message: string
+): TeresaCreationIntent | null {
+  const normalized = normalize(message ?? '');
+  if (!normalized) return null;
+
+  const allCreationPhrases = [...CREATION_PHRASES_EN, ...CREATION_PHRASES_PL];
+  const creationMatch = matchesAnyPhrase(normalized, allCreationPhrases);
+  if (!creationMatch.hit) return null;
+
+  const sourceMatch = matchesAnyPhrase(normalized, SOURCE_ATTACHMENT_PHRASES);
+  return {
+    kind: 'create_document',
+    sourceSignal: sourceMatch.hit ? 'with_pack' : 'unspecified',
+    matchedPhrase: creationMatch.phrase,
+    sourceMatchedPhrase: sourceMatch.hit ? sourceMatch.phrase : undefined,
+  };
+}
+
+/** Read-only export of creation lexicons for tests / future i18n. */
+export const TERESA_CREATION_LEXICONS = Object.freeze({
+  creationEn: CREATION_PHRASES_EN,
+  creationPl: CREATION_PHRASES_PL,
+  sourceAttachment: SOURCE_ATTACHMENT_PHRASES,
+});

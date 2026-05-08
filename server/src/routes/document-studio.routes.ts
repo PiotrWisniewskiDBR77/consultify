@@ -64,6 +64,13 @@
  *   POST   /api/document-studio/source-packs/:packId/archive       — irreversible archive
  *   POST   /api/document-studio/source-packs/:packId/attach        — attach to document, returns { pack, sourceRefs }
  *
+ * Chat-first creation entry — Epic E4 Slice 4.4:
+ *   POST   /api/document-studio/chat/create-from-sources           — Teresa-driven flow: drafts a pack, ingests every
+ *                                                                    supplied connector input, marks ready, and generates
+ *                                                                    the document artifact in one transactional call.
+ *                                                                    Body: { intake, sources[], packName?, templateId?, ... }
+ *                                                                    Returns: { artifactId, schema, packId, itemCount }
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
 
@@ -94,6 +101,7 @@ import { runDocumentQa } from '../services/documentStudio/documentQaService.js';
 import {
   approveEditProposal,
   canOverrideQa,
+  createDocumentFromChatSourcePack,
   createGlobalEditProposal,
   createLocalEditProposal,
   createSectionEditProposal,
@@ -107,6 +115,7 @@ import {
   QaBlockingError,
   QaOverrideUnauthorizedError,
   rejectEditProposal,
+  type CreateChatSourcePackConnectorInput,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
   DocumentEditorProposalInput,
@@ -719,6 +728,83 @@ router.post(
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_archive_failed';
       const status = mapServiceErrorToStatus(message);
+      res.status(status).json({ error: message, message });
+    }
+  })
+);
+
+router.post(
+  '/chat/create-from-sources',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const intake = (req.body?.intake ?? null) as DocumentIntake | null;
+    if (!intake || typeof intake !== 'object') {
+      res.status(400).json({ error: 'intake is required' });
+      return;
+    }
+    const sources = req.body?.sources;
+    if (!Array.isArray(sources) || sources.length === 0) {
+      res.status(400).json({ error: 'sources array is required (at least one item)' });
+      return;
+    }
+    const packName = typeof req.body?.packName === 'string' ? req.body.packName : undefined;
+    const packDescription =
+      typeof req.body?.packDescription === 'string' ? req.body.packDescription : undefined;
+    const packLanguage =
+      req.body?.packLanguage === 'pl' || req.body?.packLanguage === 'en'
+        ? (req.body.packLanguage as 'pl' | 'en')
+        : undefined;
+    const templateId =
+      typeof req.body?.templateId === 'string' && req.body.templateId.trim().length > 0
+        ? (req.body.templateId as string)
+        : null;
+    const projectId =
+      typeof req.body?.projectId === 'string' && req.body.projectId.length > 0
+        ? (req.body.projectId as string)
+        : null;
+    const useLlm = req.body?.useLlm === true;
+    const outline = (req.body?.outline ?? undefined) as DocumentOutline | undefined;
+
+    try {
+      const result = await createDocumentFromChatSourcePack({
+        organizationId,
+        userId,
+        intake,
+        sources: sources as CreateChatSourcePackConnectorInput[],
+        packName,
+        packDescription,
+        packLanguage,
+        templateId,
+        projectId,
+        useLlm,
+        outline,
+      });
+      res.status(201).json(result);
+    } catch (err) {
+      if (err instanceof SourcePackConnectorError) {
+        const status = mapConnectorErrorToStatus(err.code);
+        res.status(status).json({
+          error: err.code,
+          message: err.message,
+          details: err.details,
+        });
+        return;
+      }
+      if (err instanceof MissingRequiredSourceError) {
+        res.status(400).json({
+          error: 'missing_required_source',
+          message: err.message,
+          missing: err.missing,
+        });
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'chat_create_from_sources_failed';
+      const status = mapServiceErrorToStatus(message);
+      logger.warn('[DocumentStudio] chat-first creation failed', { message });
       res.status(status).json({ error: message, message });
     }
   })
