@@ -1,6 +1,12 @@
 export { default as AttachmentService } from './AttachmentService.js';
 export { default as AuditService } from './AuditService.js';
 export { default as ChatToSchemaService } from './ChatToSchemaService.js';
+export {
+  CONFIDENCE_WEIGHTS,
+  type ConfidenceComponents,
+  default as ConfidenceScoringService,
+  type RecomputeOutcome,
+} from './ConfidenceScoringService.js';
 export { default as CsvImportService } from './CsvImportService.js';
 export { DependencyGraph } from './dependencyGraph.js';
 export { default as ErrorHandling } from './ErrorHandling.js';
@@ -61,4 +67,10 @@ export type {
   TemplateStatus,
 } from './TemplateLifecycleService.js';
 export { default as TemplateLifecycleService } from './TemplateLifecycleService.js';
+export {
+  default as ValidationStatusService,
+  type SetStatusOptions,
+  type SetStatusResult,
+  type ValidationStatus,
+} from './ValidationStatusService.js';
 export { default as ViewQueryEngine } from './ViewQueryEngine.js';

@@ -1053,6 +1053,81 @@ router.delete(
 );
 
 // ==========================================
+// VALIDATION STATUS (Block B · EPIC-T9)
+// ==========================================
+//
+// Flips a record's validation_status with a state-machine guard. Audit
+// trail is written by the service. Confidence recompute is triggered as a
+// side-effect inside the service (best-effort).
+
+router.post(
+  '/records/:recordId/validation-status',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { recordId } = req.params;
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+
+      const rawStatus = req.body?.status;
+      if (rawStatus !== 'unverified' && rawStatus !== 'verified' && rawStatus !== 'flagged') {
+        return res.status(400).json({
+          error: "status must be one of 'unverified' | 'verified' | 'flagged'",
+        });
+      }
+      const note = typeof req.body?.note === 'string' ? req.body.note : undefined;
+      const validationSvc = (
+        await import('../services/tablePlatform/ValidationStatusService.js')
+      ).default;
+      const result = await validationSvc.setStatus(recordId, rawStatus, {
+        actorUserId: String(authReq.userId ?? authReq.user?.id ?? ''),
+        isSuperAdmin: Boolean(authReq.user?.isSuperAdmin),
+        note,
+      });
+      return res.status(200).json(result);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      const message = (err as Error).message;
+      if (code === 'INVALID_INPUT') {
+        return res.status(400).json({ error: message, code });
+      }
+      if (code === 'RECORD_NOT_FOUND') {
+        return res.status(404).json({ error: message, code });
+      }
+      if (code === 'INVALID_VALIDATION_TRANSITION') {
+        return res.status(409).json({ error: message, code });
+      }
+      if (code === 'TRANSITION_REQUIRES_SUPER_ADMIN') {
+        return res.status(403).json({ error: message, code });
+      }
+      handleRouteError(err, res, 'setValidationStatus');
+    }
+  }
+);
+
+router.get(
+  '/records/:recordId/validation-status/transitions',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+      const validationSvc = (
+        await import('../services/tablePlatform/ValidationStatusService.js')
+      ).default;
+      const current = await validationSvc.getStatus(recordId);
+      if (current === null) return res.status(404).json({ error: 'Record not found' });
+      return res.status(200).json({
+        current,
+        allowed: validationSvc.getAllowedTransitions(current),
+      });
+    } catch (err) {
+      handleRouteError(err, res, 'getValidationStatusTransitions');
+    }
+  }
+);
+
+// ==========================================
 // RECORD COMMENTS
 // ==========================================
 
