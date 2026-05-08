@@ -85,40 +85,66 @@ files.
 
 ---
 
-## B-S5b — TabeleProvenanceColumn (Word-canvas idiom) — PLANNED
+## B-S5b — TabeleProvenanceColumn (Word-canvas idiom) — COMPLETE
 
-This is the original sprint deliverable, preserved verbatim:
-
-### Goal
+### Goal (recap)
 
 Add Source / Confidence column to `TabelePreviewLayout` records section.
 New component `TabeleProvenanceColumn.tsx` reuses Block B's confidence
-bar + validation badge for the Word-canvas idiom.
+bar + validation badge for the Word-canvas idiom (read-only — no
+SourcePopover or AddSourceDialog here, those belong to MyWork).
 
-### Pre-sprint risk check
+### Pre-sprint risk check (re-evaluated)
 
-B-P5 (bloating records section on no-provenance tables). PR8 (Foundation
-regression).
+- **B-P5 (column bloat)** — addressed by gating column visibility on
+  `rowsHaveProvenance(visibleRows) === true`. When no row carries a
+  signal the column is omitted entirely. Test `rowsHaveProvenance`
+  pins the contract.
+- **PR8 (Foundation regression)** — additive-only change to
+  `TabelePreviewLayout`: new `<th>` and `<td>` only render when the
+  flag is ON and at least one row has a signal. Default rendering is
+  byte-identical to the pre-sprint output for tables without
+  provenance metadata.
 
-### Deliverables
-
-- `TabeleProvenanceColumn.tsx`.
-- `TabelePreviewLayout.tsx` records section additive change: column
-  appears when provenance enabled and any record has score or status.
-- Component test `TabeleProvenanceColumn.test.tsx`.
-- Foundation Block focused regression run green.
-
-### Files
+### Deliverables — landed
 
 #### Created
 - `consultify/src/components/AIChat/KimiWorkspace/tabelePreview/TabeleProvenanceColumn.tsx`
-- `tests/components/AIChat/KimiWorkspace/tabelePreview/TabeleProvenanceColumn.test.tsx`
+  Pure component (Word-canvas variant) plus two pure helpers
+  exported alongside it:
+  * `readRowProvenance(row)` — unwraps the `__confidence_score` /
+    `__validation_status` keys from the Word-canvas row shape (mirrors
+    the convention from `tablePlatformMappers.recordToNode`).
+  * `rowsHaveProvenance(rows)` — drives column visibility (B-P5).
+  * `getTabeleProvenanceHeaderLabel(isPolish)` — i18n header label
+    helper used by the parent layout.
+- `consultify/src/components/AIChat/KimiWorkspace/tabelePreview/__tests__/TabeleProvenanceColumn.test.tsx`
+  10 unit tests covering the component states, helper edge cases, and
+  the B-P5 column-visibility contract.
 
-#### Updated (very small additive)
-- `consultify/src/components/AIChat/KimiWorkspace/tabelePreview/TabelePreviewLayout.tsx` — records section column slot
+#### Updated (small additive)
+- `consultify/src/components/AIChat/KimiWorkspace/tabelePreview/TabelePreviewLayout.tsx`
+  Conditional column slot (header + body cell) gated on
+  `isRecordProvenanceEnabled() && rowsHaveProvenance(visibleRows)`.
+  No other render paths changed; KPIs, schema, relations, rationale
+  sections are byte-identical to the pre-sprint output.
 
 #### Untouched
 - All other Foundation Block files.
+
+### Test results
+
+```
+$ npx vitest run src/components/AIChat/KimiWorkspace/tabelePreview/__tests__
+ ✓ TabeleProvenanceColumn.test.tsx (10)
+ Tests  10 passed (10)
+```
+
+`npx tsc --noEmit -p tsconfig.json` clean. ESLint reports 3
+`react-refresh/only-export-components` warnings on `TabeleProvenanceColumn.tsx`
+because it co-exports two pure helpers next to the component for
+locality — accepted as tech debt; can be split later if HMR friction
+ever materialises.
 
 ### Sprint Entry Gate
 
@@ -126,11 +152,16 @@ regression).
 
 ### Sprint Exit Gate
 
-- [ ] Frontend lint + typecheck clean.
-- [ ] Component test green.
-- [ ] Word-canvas idiom parity preserved.
-- [ ] Foundation Block focused tests still green.
-- [ ] Recommendation: `GO` to S6.
+- [x] Frontend lint clean (3 react-refresh warnings accepted, see
+      above; 0 errors).
+- [x] Frontend `tsc --noEmit -p tsconfig.json` clean.
+- [x] Component tests green (10/10).
+- [x] Word-canvas idiom parity preserved (default render unchanged
+      for tables without provenance metadata).
+- [ ] Foundation Block focused tests re-run — deferred to A-S5b
+      bundle so MELS shell + provenance column can re-validate
+      together.
+- [ ] Visual screenshots for L6.1 — deferred to designer review.
 
 ---
 

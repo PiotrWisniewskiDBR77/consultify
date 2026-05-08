@@ -2,7 +2,15 @@ import { ChevronDown, ChevronUp, Database, Rows3, Table2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isRecordProvenanceEnabled } from '@/utils/recordProvenanceFlag';
+
 import type { ArtifactPreview } from '../KimiWorkspaceShell';
+import {
+  getTabeleProvenanceHeaderLabel,
+  readRowProvenance,
+  rowsHaveProvenance,
+  TabeleProvenanceColumn,
+} from './TabeleProvenanceColumn';
 import TabeleRationaleSection from './TabeleRationaleSection';
 import TabeleRelationChip from './TabeleRelationChip';
 import TabeleSchemaBlock from './TabeleSchemaBlock';
@@ -91,6 +99,14 @@ export function TabelePreviewLayout({
   const [isSchemaCollapsed, setIsSchemaCollapsed] = useState(schemaFields.length <= 3);
   const [isRelationsCollapsed, setIsRelationsCollapsed] = useState(relations.length === 0);
   const visibleRows = tableData.rows.slice(0, 25);
+  // Block B / B-S5b — Word-canvas provenance column. Renders only when:
+  // (1) the feature flag is ON, and (2) at least one visible row carries a
+  // signal (B-P5: don't bloat tables that have no provenance metadata).
+  const showProvenanceColumn = useMemo(
+    () => isRecordProvenanceEnabled() && rowsHaveProvenance(visibleRows),
+    [visibleRows]
+  );
+  const provenanceHeaderLabel = useMemo(() => getTabeleProvenanceHeaderLabel(isPolish), [isPolish]);
   const formatLabel =
     preview.tableId || preview.tabeleRelations || preview.tabeleSchemaFields
       ? t('kimi.tabele.preview.formatOperational', { defaultValue: 'Operational' })
@@ -234,24 +250,44 @@ export function TabelePreviewLayout({
                           {column}
                         </th>
                       ))}
+                      {showProvenanceColumn && (
+                        <th
+                          scope="col"
+                          data-testid="tabele-preview-provenance-header"
+                          className="border-b border-slate-300/70 px-3 py-2 font-semibold text-slate-600 dark:border-white/[0.10] dark:text-slate-300"
+                        >
+                          {provenanceHeaderLabel}
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleRows.map((row, rowIndex) => (
-                      <tr
-                        key={rowIndex}
-                        className="border-b border-slate-200/95 last:border-b-0 hover:bg-slate-100/80 dark:border-white/[0.085] dark:hover:bg-white/[0.04]"
-                      >
-                        {tableData.columns.map((column) => (
-                          <td
-                            key={column}
-                            className="max-w-[220px] truncate px-3 py-2 text-slate-700 dark:text-slate-300"
-                          >
-                            {String(row[column] ?? '')}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
+                    {visibleRows.map((row, rowIndex) => {
+                      const provenance = showProvenanceColumn ? readRowProvenance(row) : null;
+                      return (
+                        <tr
+                          key={rowIndex}
+                          className="border-b border-slate-200/95 last:border-b-0 hover:bg-slate-100/80 dark:border-white/[0.085] dark:hover:bg-white/[0.04]"
+                        >
+                          {tableData.columns.map((column) => (
+                            <td
+                              key={column}
+                              className="max-w-[220px] truncate px-3 py-2 text-slate-700 dark:text-slate-300"
+                            >
+                              {String(row[column] ?? '')}
+                            </td>
+                          ))}
+                          {provenance && (
+                            <td className="px-3 py-2 align-middle">
+                              <TabeleProvenanceColumn
+                                confidenceScore={provenance.confidenceScore}
+                                validationStatus={provenance.validationStatus}
+                              />
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
