@@ -228,6 +228,7 @@ describe('TableAiEditorService.proposeEdit', () => {
         workspaceId: WS,
         organizationId: ORG,
         actorUserId: ACTOR,
+        actorIsSuperAdmin: true, // covers methodological + source admin gate
         estimatedTokensInput: 1,
         estimatedTokensOutput: 1,
         model: 'gpt-test',
@@ -249,6 +250,27 @@ describe('TableAiEditorService.proposeEdit', () => {
         model: 'gpt-test',
       })
     ).rejects.toBeInstanceOf(TableAiEditorError);
+  });
+
+  it('5b) rejects methodological/source levels for non-super-admin', async () => {
+    for (const level of ['methodological', 'source'] as const) {
+      await expect(
+        tableAiEditorService.proposeEdit({
+          tableId: TABLE,
+          level,
+          prompt: 'p',
+          workspaceId: WS,
+          organizationId: ORG,
+          actorUserId: ACTOR,
+          actorIsSuperAdmin: false,
+          estimatedTokensInput: 1,
+          estimatedTokensOutput: 1,
+          model: 'gpt-test',
+        })
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_REQUIRED', status: 403 });
+    }
+    // Budget MUST NOT be consumed when admin gate fails.
+    expect(mockConsume).not.toHaveBeenCalled();
   });
 
   it('6) rejects missing required fields', async () => {

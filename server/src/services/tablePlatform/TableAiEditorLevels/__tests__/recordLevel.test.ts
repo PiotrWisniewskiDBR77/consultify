@@ -72,6 +72,7 @@ describe('recordLevel.proposeRecordEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -109,6 +110,7 @@ describe('recordLevel.proposeRecordEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -136,6 +138,7 @@ describe('recordLevel.proposeRecordEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -158,6 +161,7 @@ describe('recordLevel.proposeRecordEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{}'),
     });
     expect(out.warnings).toContain('record_tenant_violation');
@@ -174,6 +178,7 @@ describe('recordLevel.proposeRecordEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{"fieldChanges":[]}'),
     });
     expect(out.warnings).toContain('record_no_candidate_fields');
@@ -199,6 +204,7 @@ describe('recordLevel.proposeRecordEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{}'),
     });
     expect(out.warnings).toContain('record_not_found');

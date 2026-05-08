@@ -142,6 +142,114 @@ export type OpSchemaRenameField = z.infer<typeof opSchemaRenameField>;
 export type OpSchemaRetypeField = z.infer<typeof opSchemaRetypeField>;
 export type OpSchemaDropField = z.infer<typeof opSchemaDropField>;
 
+// ── Level 5: View ────────────────────────────────────────────────────────────
+//
+// op_view_create / op_view_update — view-only mutations (filter, sort,
+// grouping, hidden columns). Operates per view; never touches primary data.
+
+const viewType = z.enum(['grid', 'kanban', 'calendar', 'gallery', 'form']);
+
+export const opViewCreate = opCommon.extend({
+  type: z.literal('op_view_create'),
+  target: idTarget,
+  payload: z.object({
+    name: z.string().min(1),
+    viewType,
+    config: z.record(z.string(), z.unknown()).default({}),
+  }),
+});
+export const opViewUpdate = opCommon.extend({
+  type: z.literal('op_view_update'),
+  target: idTarget.extend({
+    viewId: z.string().min(1),
+  }),
+  payload: z.object({
+    /** Partial config patch; merge semantics resolved by MutationExecutor. */
+    config: z.record(z.string(), z.unknown()),
+  }),
+});
+export type OpViewCreate = z.infer<typeof opViewCreate>;
+export type OpViewUpdate = z.infer<typeof opViewUpdate>;
+
+// ── Level 6: Relational ──────────────────────────────────────────────────────
+//
+// op_relation_create — proposes a new `linkedRecord` field that wires two
+// tables together. Cross-tenant invariant: both endpoints MUST belong to
+// the same workspace + organization (handler enforces).
+
+export const opRelationCreate = opCommon.extend({
+  type: z.literal('op_relation_create'),
+  target: idTarget,
+  payload: z.object({
+    fromTableId: z.string().min(1),
+    toTableId: z.string().min(1),
+    fromFieldName: z.string().min(1),
+    /** Reverse relation? Optional — defaults to one-way. */
+    bidirectional: z.boolean().default(false),
+  }),
+});
+export type OpRelationCreate = z.infer<typeof opRelationCreate>;
+
+// ── Level 7: Methodological ──────────────────────────────────────────────────
+//
+// op_methodological_flag — read-only proposal. Records a deviation found
+// when comparing table data against template `governance_rules`. The user
+// reviews the flag list and decides whether to fix the data or change the
+// rule. This level NEVER mutates data; it surfaces audit findings.
+
+const deviationKind = z.enum([
+  'missing_required_field',
+  'invalid_value',
+  'rule_violated',
+  'schema_mismatch',
+  'other',
+]);
+
+export const opMethodologicalFlag = opCommon.extend({
+  type: z.literal('op_methodological_flag'),
+  target: idTarget.extend({
+    recordId: z.string().min(1).optional(),
+    fieldId: z.string().min(1).optional(),
+  }),
+  payload: z.object({
+    deviationKind,
+    /** ID of the governance rule that fired (from Block A template). */
+    ruleId: z.string().min(1).optional(),
+    message: z.string().min(1),
+    /** Heuristic severity — UI can sort by this. */
+    severity: z.enum(['info', 'warn', 'error']).default('warn'),
+  }),
+});
+export type OpMethodologicalFlag = z.infer<typeof opMethodologicalFlag>;
+
+// ── Level 8: Source ──────────────────────────────────────────────────────────
+//
+// op_source_suggest — read-only proposal. For records missing required
+// sources, the LLM suggests candidate sources (URLs / internal record refs).
+// Apply step (C-S6 SourcePackService) creates the actual `tp_record_sources`
+// rows; here we only record the suggestion envelope so the user can confirm.
+
+const sourceCandidate = z.object({
+  kind: z.enum(['url', 'internal_record', 'document']),
+  ref: z.string().min(1),
+  /** Optional human-readable label rendered in the UI. */
+  label: z.string().optional(),
+  confidence: z.number().min(0).max(1),
+});
+
+export const opSourceSuggest = opCommon.extend({
+  type: z.literal('op_source_suggest'),
+  target: idTarget.extend({
+    recordId: z.string().min(1),
+  }),
+  payload: z.object({
+    candidates: z.array(sourceCandidate).min(1),
+    /** Optional fieldId hint when the source attaches to a specific cell. */
+    fieldId: z.string().min(1).optional(),
+  }),
+});
+export type OpSourceSuggest = z.infer<typeof opSourceSuggest>;
+
 // ── Discriminated union of all operations ────────────────────────────────────
 
 export const aiEditorOperation = z.discriminatedUnion('type', [
@@ -153,6 +261,11 @@ export const aiEditorOperation = z.discriminatedUnion('type', [
   opSchemaRenameField,
   opSchemaRetypeField,
   opSchemaDropField,
+  opViewCreate,
+  opViewUpdate,
+  opRelationCreate,
+  opMethodologicalFlag,
+  opSourceSuggest,
 ]);
 export type AiEditorOperation = z.infer<typeof aiEditorOperation>;
 

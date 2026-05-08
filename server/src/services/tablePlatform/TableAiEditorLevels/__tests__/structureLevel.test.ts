@@ -69,6 +69,7 @@ describe('structureLevel.proposeStructureEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -104,6 +105,7 @@ describe('structureLevel.proposeStructureEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -137,6 +139,7 @@ describe('structureLevel.proposeStructureEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -170,6 +173,7 @@ describe('structureLevel.proposeStructureEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -197,6 +201,7 @@ describe('structureLevel.proposeStructureEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -216,6 +221,7 @@ describe('structureLevel.proposeStructureEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{}'),
     });
     expect(out.warnings).toContain('structure_tenant_violation');
@@ -232,6 +238,7 @@ describe('structureLevel.proposeStructureEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('not-json'),
     });
     expect(out.operations).toEqual([]);

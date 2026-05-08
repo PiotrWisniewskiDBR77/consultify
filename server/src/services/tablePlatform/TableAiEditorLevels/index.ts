@@ -30,6 +30,10 @@ export interface LevelStubInput {
   organizationId: string;
   workspaceId: string;
   actorUserId: string;
+  /** True when the actor's session JWT carries super-admin. C-S3 levels
+   *  7 (methodological) and 8 (source) require this; orchestrator
+   *  enforces the gate before dispatching. */
+  actorIsSuperAdmin: boolean;
   /** Test-only injection point. Production routes do not pass this. */
   llmProvider?: LlmProvider;
 }

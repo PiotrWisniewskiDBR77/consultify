@@ -82,6 +82,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -107,6 +108,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{}'),
     });
     expect(out.operations).toEqual([]);
@@ -125,6 +127,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{"after":"x"}'),
     });
     expect(out.operations).toEqual([]);
@@ -148,6 +151,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{"after":"x"}'),
     });
     expect(out.warnings).toContain('cell_field_not_found');
@@ -172,6 +176,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{"after":"x"}'),
     });
     expect(out.warnings).toContain('cell_record_not_found');
@@ -187,6 +192,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider(JSON.stringify({ after: null, confidence: 0 })),
     });
     expect(out.operations).toEqual([]);
@@ -207,6 +213,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
     expect(out.operations).toEqual([]);
@@ -223,6 +230,7 @@ describe('cellLevel.proposeCellEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('not json at all'),
     });
     expect(out.operations).toEqual([]);

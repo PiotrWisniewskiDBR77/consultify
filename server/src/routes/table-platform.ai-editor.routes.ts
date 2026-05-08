@@ -200,6 +200,7 @@ router.post(
         workspaceId: resolved.workspaceId,
         organizationId: resolved.organizationId,
         actorUserId,
+        actorIsSuperAdmin: Boolean(authReq.user?.isSuperAdmin),
         estimatedTokensInput,
         estimatedTokensOutput,
         model,

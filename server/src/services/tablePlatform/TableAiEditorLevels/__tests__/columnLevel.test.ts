@@ -76,6 +76,7 @@ describe('columnLevel.proposeColumnEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -111,6 +112,7 @@ describe('columnLevel.proposeColumnEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 
@@ -129,6 +131,7 @@ describe('columnLevel.proposeColumnEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{}'),
     });
     expect(out.warnings).toContain('column_context_missing_field');
@@ -143,6 +146,7 @@ describe('columnLevel.proposeColumnEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{}'),
     });
     expect(out.warnings).toContain('column_context_no_visible_records');
@@ -160,6 +164,7 @@ describe('columnLevel.proposeColumnEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: makeProvider('{}'),
     });
     expect(out.warnings).toContain('column_tenant_violation');
@@ -183,6 +188,7 @@ describe('columnLevel.proposeColumnEdit', () => {
       organizationId: ORG,
       workspaceId: WS,
       actorUserId: ACTOR,
+      actorIsSuperAdmin: false,
       llmProvider: provider,
     });
 

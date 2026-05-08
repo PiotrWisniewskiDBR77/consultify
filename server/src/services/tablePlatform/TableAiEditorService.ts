@@ -74,6 +74,8 @@ export interface ProposeEditInput {
   organizationId: string;
   /** Authenticated actor. */
   actorUserId: string;
+  /** Super-admin flag from the JWT. Required for level 7/8. */
+  actorIsSuperAdmin?: boolean;
 
   /** Token estimates (input/output). Routes pass conservative upper bounds. */
   estimatedTokensInput: number;
@@ -173,6 +175,20 @@ const tableAiEditorService = {
       throw new TableAiEditorError('ACTOR_REQUIRED', 'actorUserId is required');
     }
 
+    // Levels 7 (methodological) and 8 (source) are super-admin-only per
+    // EPIC-T10 §"Acceptance criteria". Gate runs BEFORE consume() so a
+    // forbidden caller cannot drain another tenant's budget.
+    if (
+      (input.level === 'methodological' || input.level === 'source') &&
+      input.actorIsSuperAdmin !== true
+    ) {
+      throw new TableAiEditorError(
+        'SUPER_ADMIN_REQUIRED',
+        `Level '${input.level}' requires super-admin role`,
+        403
+      );
+    }
+
     // Step 1: budget gate. Throws AiBudgetExhaustedError on hard cap; the
     // service writes a hard_cap_429 audit row internally.
     const consume = await aiUsageService.consume({
@@ -185,7 +201,7 @@ const tableAiEditorService = {
       model: input.model,
     });
 
-    // Step 2: dispatch to level handler. C-S1 stubs only.
+    // Step 2: dispatch to level handler.
     const stub = await dispatchLevelStub({
       level: input.level,
       tableId: input.tableId,
@@ -194,6 +210,7 @@ const tableAiEditorService = {
       organizationId: input.organizationId,
       workspaceId: input.workspaceId,
       actorUserId: input.actorUserId,
+      actorIsSuperAdmin: input.actorIsSuperAdmin === true,
     });
 
     // Step 3: persist proposal row.
