@@ -8,7 +8,7 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import multer from 'multer';
 
 import { featureFlags } from '../config/FeatureFlags.js';
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { automationService } from '../services/tablePlatform/AutomationService.js';
 import { handleRouteError } from '../services/tablePlatform/ErrorHandling.js';
@@ -3543,6 +3543,99 @@ router.get('/templates', async (req: Request, res: Response) => {
     handleRouteError(err, res, 'listTemplates');
   }
 });
+
+// ── Template Lifecycle (Block A · EPIC-T6) ─────────────────────────────────
+//
+// MUST appear BEFORE the `/templates/:templateId` catch-all so Express does
+// not interpret 'lifecycle' as a templateId.
+//
+// Read endpoint is open to any authenticated tenant member (read-only). Write
+// endpoints (approve/deprecate) require super-admin because `tp_base_templates`
+// is a system-owned catalog with no tenant column.
+
+router.get('/templates/lifecycle', async (req: Request, res: Response) => {
+  try {
+    const rawStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const rawCategory = typeof req.query.category === 'string' ? req.query.category : undefined;
+    if (
+      rawStatus !== undefined &&
+      rawStatus !== 'draft' &&
+      rawStatus !== 'approved' &&
+      rawStatus !== 'deprecated'
+    ) {
+      return res.status(400).json({
+        error: "status must be one of 'draft' | 'approved' | 'deprecated' (or omitted)",
+      });
+    }
+    const lifecycleSvc = (await import('../services/tablePlatform/TemplateLifecycleService.js'))
+      .default;
+    const items = await lifecycleSvc.listTemplates({
+      status: rawStatus as 'draft' | 'approved' | 'deprecated' | undefined,
+      category: rawCategory,
+    });
+    return res.status(200).json(items);
+  } catch (err) {
+    handleRouteError(err, res, 'listLifecycleTemplates');
+  }
+});
+
+router.post(
+  '/templates/:templateId/approve',
+  requireSuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { templateId } = req.params;
+      if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+      const note = typeof req.body?.note === 'string' ? req.body.note : undefined;
+      const lifecycleSvc = (await import('../services/tablePlatform/TemplateLifecycleService.js'))
+        .default;
+      const updated = await lifecycleSvc.approveTemplate(templateId, {
+        actorUserId: String(authReq.userId ?? authReq.user?.id ?? ''),
+        note,
+      });
+      return res.status(200).json(updated);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === 'INVALID_LIFECYCLE_TRANSITION') {
+        return res.status(409).json({ error: (err as Error).message, code });
+      }
+      if (code === 'TEMPLATE_NOT_FOUND') {
+        return res.status(404).json({ error: (err as Error).message, code });
+      }
+      handleRouteError(err, res, 'approveTemplate');
+    }
+  }
+);
+
+router.post(
+  '/templates/:templateId/deprecate',
+  requireSuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { templateId } = req.params;
+      if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+      const note = typeof req.body?.note === 'string' ? req.body.note : undefined;
+      const lifecycleSvc = (await import('../services/tablePlatform/TemplateLifecycleService.js'))
+        .default;
+      const updated = await lifecycleSvc.deprecateTemplate(templateId, {
+        actorUserId: String(authReq.userId ?? authReq.user?.id ?? ''),
+        note,
+      });
+      return res.status(200).json(updated);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === 'INVALID_LIFECYCLE_TRANSITION') {
+        return res.status(409).json({ error: (err as Error).message, code });
+      }
+      if (code === 'TEMPLATE_NOT_FOUND') {
+        return res.status(404).json({ error: (err as Error).message, code });
+      }
+      handleRouteError(err, res, 'deprecateTemplate');
+    }
+  }
+);
 
 router.get('/templates/:templateId', async (req: Request, res: Response) => {
   try {

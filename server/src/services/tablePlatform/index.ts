@@ -21,6 +21,14 @@ export { getLinkStatus, syncToModule } from './ModuleSyncService.js';
 export { default as PermissionsService } from './PermissionsService.js';
 export { default as ProjectionService } from './ProjectionService.js';
 export { tablePlatformRealtime, TablePlatformRealtimeService } from './RealtimeService.js';
+export type {
+  CreateSourceInput,
+  ListSourcesOptions,
+  RecordSource,
+  SourceType,
+  UpdateSourceInput,
+} from './RecordSourcesService.js';
+export { default as RecordSourcesService } from './RecordSourcesService.js';
 export { default as RecordsService } from './RecordsService.js';
 export { default as RelationService } from './RelationService.js';
 export {
@@ -33,4 +41,12 @@ export { SCIMService, scimService } from './SCIMService.js';
 export { ServiceAccountService, serviceAccountService } from './ServiceAccountService.js';
 export { SSOService, ssoService } from './SSOService.js';
 export { default as TableContextService } from './TableContextService.js';
+export type {
+  ApprovalHistoryEntry,
+  LifecycleMutationOptions,
+  LifecycleTemplate,
+  ListLifecycleTemplatesOptions,
+  TemplateStatus,
+} from './TemplateLifecycleService.js';
+export { default as TemplateLifecycleService } from './TemplateLifecycleService.js';
 export { default as ViewQueryEngine } from './ViewQueryEngine.js';

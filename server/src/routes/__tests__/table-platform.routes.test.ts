@@ -97,6 +97,7 @@ vi.mock('../../services/tablePlatform/PermissionsService.js', () => ({
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
+  requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../config/FeatureFlags.js', () => ({

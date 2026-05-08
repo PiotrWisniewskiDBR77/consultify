@@ -32,6 +32,7 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
     if (req.user) return next();
     return res.status(401).json({ error: 'No token provided' });
   },
+  requireSuperAdmin: (_req: any, _res: any, next: any) => next(),
 }));
 
 vi.mock('../../utils/Logger.js', () => ({

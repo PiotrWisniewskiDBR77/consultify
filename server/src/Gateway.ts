@@ -239,6 +239,7 @@ import superAdminRoutes from './routes/superadmin.routes.js';
 import syncHubRoutes from './routes/syncHub.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
+import tablePlatformRecordSourcesRoutes from './routes/table-platform.record-sources.routes.js';
 import tablePlatformRelationsExplainRoutes from './routes/table-platform.relations-explain.routes.js';
 import tablePlatformRoutes, { publicFormRouter } from './routes/table-platform.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
@@ -785,6 +786,7 @@ export class ApiGateway {
       app.use('/api/sync-hub', deprecationHeader('/api/v8/sync'), syncHubRoutes);
       app.use('/api/table-platform', tablePlatformRoutes);
       app.use('/api/table-platform', tablePlatformRelationsExplainRoutes);
+      app.use('/api/table-platform', tablePlatformRecordSourcesRoutes);
       app.use('/api/table-platform', publicFormRouter);
       app.use('/api/table-platform', dataCollectionRoutes);
       app.use('/api/studio', studioRoutes);
