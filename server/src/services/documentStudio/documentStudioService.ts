@@ -41,6 +41,14 @@ import {
   registerDocumentLifecycleAuditPump,
   transitionDocumentStatus as transitionDocumentStatusInternal,
 } from './documentLifecycleService.js';
+import {
+  createDocumentVersionSnapshot as createDocumentVersionSnapshotInternal,
+  ensureDocumentVersionSnapshotsHydrated,
+  getDocumentVersionSnapshot,
+  getDocumentVersionSnapshotByNumber,
+  listDocumentVersionSnapshots,
+  registerDocumentVersionSnapshotAuditPump,
+} from './documentVersionSnapshotService.js';
 import { planDocumentOutline } from './documentNarrativePlanner.js';
 import { refineOutlineWithLlm } from './documentNarrativeRefiner.js';
 import { renderDocumentSchemaToPdfBuffer } from './documentPdfRenderer.js';
@@ -64,6 +72,8 @@ import type {
   DocumentSchema,
   DocumentSourceRef,
   DocumentTemplate,
+  DocumentVersionSnapshot,
+  DocumentVersionSnapshotOrigin,
 } from './documentStudioTypes.js';
 import {
   getTemplate as getRegisteredTemplate,
@@ -569,13 +579,15 @@ function pushAuditEntry(entry: DocumentAuditEntry): void {
   auditStore.set(key, current);
 }
 
-// Wire the lifecycle service's audit emissions into the studio's
-// per-artifact audit store so every status change / snapshot / rollback
-// shows up in `listDocumentAuditEntries(...)` alongside proposals + QA
-// decisions. Registration is module-scope so it runs exactly once per
-// process boot (and is harmless when the studio service is re-imported
-// in isolated test files — the lifecycle module overwrites the pump).
+// Wire the lifecycle + snapshot services' audit emissions into the
+// studio's per-artifact audit store so every status change / snapshot
+// creation / rollback shows up in `listDocumentAuditEntries(...)`
+// alongside proposals + QA decisions. Registration is module-scope so
+// it runs exactly once per process boot (and is harmless when the
+// studio service is re-imported in isolated test files — the
+// downstream module overwrites the pump).
 registerDocumentLifecycleAuditPump(pushAuditEntry);
+registerDocumentVersionSnapshotAuditPump(pushAuditEntry);
 
 function blockToEditableText(content: unknown): string {
   if (!content || typeof content !== 'object') return '';
@@ -1418,6 +1430,61 @@ export function transitionDocumentStatus(
   params: TransitionDocumentStatusParams
 ): DocumentLifecycleState {
   return transitionDocumentStatusInternal(params);
+}
+
+// =============================================================================
+// Epic E5 — Version snapshots (slice 5.2). The studio service is the
+// resolver of "current schema" and orchestrates the snapshot service.
+// =============================================================================
+
+export {
+  ensureDocumentVersionSnapshotsHydrated,
+  getDocumentVersionSnapshot,
+  getDocumentVersionSnapshotByNumber,
+  listDocumentVersionSnapshots,
+};
+
+export interface CreateDocumentSnapshotParams {
+  organizationId: string;
+  artifactId: string;
+  userId: string;
+  label?: string;
+  reason?: string;
+  /** Defaults to 'manual'. */
+  origin?: DocumentVersionSnapshotOrigin;
+}
+
+/**
+ * Capture the current schema as a versioned snapshot. Resolves the
+ * live schema via `getDocumentArtifact` (which already overlays the
+ * current lifecycle status) and forwards the deep clone to the
+ * snapshot service together with the lifecycle status at capture time.
+ *
+ * Throws when the artifact does not exist (so callers don't silently
+ * snapshot nothing).
+ */
+export async function createDocumentSnapshot(
+  params: CreateDocumentSnapshotParams
+): Promise<DocumentVersionSnapshot> {
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.artifactId) throw new Error('artifactId is required');
+  if (!params.userId) throw new Error('userId is required');
+
+  const schema = await getDocumentArtifact(params.artifactId, params.organizationId);
+  if (!schema) {
+    throw new Error('document_not_found');
+  }
+  const lifecycle = getDocumentStatusOrDefault(params.artifactId, params.organizationId);
+  return createDocumentVersionSnapshotInternal({
+    organizationId: params.organizationId,
+    artifactId: params.artifactId,
+    userId: params.userId,
+    schema,
+    statusAtCapture: lifecycle.status,
+    label: params.label,
+    reason: params.reason,
+    origin: params.origin ?? 'manual',
+  });
 }
 
 // =============================================================================

@@ -318,6 +318,44 @@ export type DocumentAuditAction =
   | 'document_rolled_back';
 
 /**
+ * Origin of a `DocumentVersionSnapshot` (Epic E5 Slice 5.2 / 5.3).
+ *
+ *   manual              Operator clicked "snapshot now" or wrote a label
+ *                       at a meaningful moment.
+ *   auto_status_change  Created automatically on a meaningful lifecycle
+ *                       transition (e.g. → approved) so rollback can
+ *                       always reach the cleared version.
+ *   rollback_revert     Created right before a rollback overwrites the
+ *                       current schema, so the operator never loses the
+ *                       state they rolled away from.
+ */
+export type DocumentVersionSnapshotOrigin =
+  | 'manual'
+  | 'auto_status_change'
+  | 'rollback_revert';
+
+/**
+ * Frozen, addressable copy of a `DocumentSchema` at a point in time.
+ * Snapshots are append-only; the rollback machinery in slice 5.3
+ * restores a snapshot by writing a new "rollback_revert" snapshot of
+ * the current schema, then activating the target snapshot's schema.
+ */
+export interface DocumentVersionSnapshot {
+  versionId: string;
+  artifactId: string;
+  organizationId: string;
+  /** Monotonic 1-based per-artifact counter. */
+  versionNumber: number;
+  capturedAt: string;
+  capturedBy: string;
+  label?: string;
+  reason?: string;
+  statusAtCapture: DocumentStatus;
+  schema: DocumentSchema;
+  origin: DocumentVersionSnapshotOrigin;
+}
+
+/**
  * Document Lifecycle (Epic E5).
  *
  *   draft        Working copy; freely mutable. Initial state on creation.
