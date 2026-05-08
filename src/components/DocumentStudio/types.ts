@@ -148,6 +148,31 @@ export type DocumentEditorScope =
   | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
+/**
+ * Slice E15.4.edit (§15.4) — frontend mirror. Adds the spec §8.4
+ * substrate fields: `editType`, `proposedChanges[]`, and
+ * `versionBeforeId` / `versionAfterId` snapshot links. All
+ * backwards-compatible / optional. The FE-E2 review UI uses
+ * `proposedChanges` (when present) for the structured per-target
+ * change list, and falls back to the aggregate `diff` when absent.
+ */
+export type DocumentEditType =
+  | 'rewrite'
+  | 'replace'
+  | 'restructure'
+  | 'annotate'
+  | 'expand'
+  | 'condense'
+  | 'reformat';
+
+export interface DocumentEditTargetedChange {
+  targetSectionId: string;
+  targetBlockId?: string;
+  before: string;
+  after: string;
+  editType?: DocumentEditType;
+}
+
 export interface DocumentEditorProposal {
   proposalId: string;
   artifactId: string;
@@ -172,6 +197,10 @@ export interface DocumentEditorProposal {
   rejectedBy?: string;
   rejectedAt?: string;
   executedAt?: string;
+  editType?: DocumentEditType;
+  proposedChanges?: DocumentEditTargetedChange[];
+  versionBeforeId?: string;
+  versionAfterId?: string;
 }
 
 export interface DocumentAuditEntry {

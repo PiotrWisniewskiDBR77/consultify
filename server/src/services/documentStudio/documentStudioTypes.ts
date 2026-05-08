@@ -504,6 +504,66 @@ export interface DocumentEditorProposalDiff {
 }
 
 /**
+ * Slice E15.4.edit (§15.4 of the gap-vs-target report) — closes the
+ * spec §8.4 DocumentEdit contract gap. Spec demands:
+ * - `edit_type` enum naming the *kind* of mutation independently of
+ *   the scope (local/section/global etc. answer "where", edit_type
+ *   answers "what kind of change");
+ * - `proposed_changes[]` as a structured array of per-target diffs
+ *   so reviewers can approve/reject individual changes (not just
+ *   the whole proposal as one blob);
+ * - `version_before` / `version_after` snapshot links so the audit
+ *   trail can reconstruct the pre/post-execution state without
+ *   chasing cross-service joins.
+ *
+ * The current `DocumentEditorProposal` carries scope + a single
+ * before/after string diff, with snapshots created at execute time
+ * but NOT linked back onto the proposal. That works for the
+ * happy-path UI but breaks the spec contract for forensic replay.
+ *
+ * This slice ships the substrate ONLY: type + helpers. Service
+ * code (proposal creation paths in editor / refiner / transformative
+ * service slices) is NOT touched in this slice — it would multiply
+ * the diff and the collision risk against parallel agents in the
+ * service layer. Follow-up slices wire the new fields into the
+ * existing proposal-creation code paths and into the snapshot
+ * service so executed proposals carry both `versionBeforeId` and
+ * `versionAfterId`.
+ */
+export type DocumentEditType =
+  | 'rewrite' // local rewrite of existing prose
+  | 'replace' // wholesale block/section replacement
+  | 'restructure' // section reorder / split / merge — typically `transformative`
+  | 'annotate' // add comment / note / footnote without altering prose
+  | 'expand' // grow content (more detail / examples / data)
+  | 'condense' // shrink content (executive cut / TLDR pass)
+  | 'reformat'; // formatting-only change (style / list / table)
+
+/**
+ * Per-target structured change inside a proposal. Each entry
+ * names the editorial target (section + optional block) and
+ * carries a before/after pair so the reviewer can approve / reject
+ * individual changes. The aggregate `diff` field on the proposal
+ * stays as the human-readable summary; this array is the
+ * machine-readable fan-out used by the FE-E2 review UI and the
+ * forensic audit replay.
+ */
+export interface DocumentEditTargetedChange {
+  targetSectionId: string;
+  targetBlockId?: string;
+  before: string;
+  after: string;
+  /**
+   * Optional kind override per change — if a single proposal touches
+   * both a `rewrite` and an `annotate` target, the proposal-level
+   * `editType` names the dominant kind and individual entries can
+   * override. When omitted, consumers fall back to the proposal's
+   * top-level `editType`.
+   */
+  editType?: DocumentEditType;
+}
+
+/**
  * For section/global scopes, `diff` carries a stringified summary of the
  * before/after sections (rendered via the markdown projection) so the UI can
  * present a reviewable preview without leaking the raw schema to clients
@@ -516,6 +576,13 @@ export interface DocumentEditorProposalDiff {
  * deterministic instruction-marker application. This keeps the governance
  * envelope (proposal → approval → execution → audit) intact regardless of
  * whether AI rewrites are involved.
+ *
+ * Slice E15.4.edit (§15.4) extends the proposal with four
+ * backwards-compatible optional fields that close the spec §8.4
+ * gap. See the `DocumentEditType` and `DocumentEditTargetedChange`
+ * doc-comments above for semantics. All four are `undefined` on
+ * pre-E15.4.edit proposals; service code is NOT touched in this
+ * slice (substrate-only).
  */
 export interface DocumentEditorProposal {
   proposalId: string;
@@ -540,6 +607,118 @@ export interface DocumentEditorProposal {
   rejectedBy?: string;
   rejectedAt?: string;
   executedAt?: string;
+
+  // ---------------------------------------------------------------------
+  // Slice E15.4.edit (§15.4) — spec §8.4 substrate. All optional /
+  // backwards-compatible. Populate-side ownership is delegated to
+  // follow-up slices in the service layer.
+  // ---------------------------------------------------------------------
+  /**
+   * Dominant kind of mutation this proposal represents. Independent
+   * of `scope` (which answers "where"); `editType` answers "what
+   * kind of change". Used by the FE-E2 review UI to render
+   * scope-appropriate review affordances and by the audit trail
+   * for category aggregation.
+   */
+  editType?: DocumentEditType;
+  /**
+   * Per-target structured changes. When populated, the FE renders
+   * a list of individually-reviewable changes; when empty/absent,
+   * the FE falls back to the aggregate `diff` field. Approval
+   * semantics for partial-acceptance of a structured array is a
+   * follow-up; today the proposal is approved or rejected as a
+   * whole unit.
+   */
+  proposedChanges?: DocumentEditTargetedChange[];
+  /**
+   * Snapshot ID captured immediately BEFORE the proposal executes.
+   * Populated by the snapshot service at execute-time in a
+   * follow-up wiring slice. Allows forensic replay: "show me the
+   * artifact exactly as it was when this proposal was approved".
+   */
+  versionBeforeId?: string;
+  /**
+   * Snapshot ID captured immediately AFTER the proposal executes.
+   * Pair of `versionBeforeId`. Together they let the audit log
+   * reconstruct the diff that the approval actually delivered,
+   * independent of whether the proposal's pre-computed `diff`
+   * remained accurate (defensive: prose may have been re-edited
+   * between approval and execute on contended workflows).
+   */
+  versionAfterId?: string;
+}
+
+/**
+ * Slice E15.4.edit helper — true if the proposal carries the
+ * structured per-target changes array (non-empty). Consumers
+ * should branch on this to decide whether to render the
+ * machine-readable change list or fall back to the aggregate
+ * `diff`. Defensive: returns false for null / undefined / empty
+ * arrays; treats non-array values as "no structured changes".
+ */
+export function documentEditorProposalHasStructuredChanges(
+  proposal: DocumentEditorProposal | undefined | null
+): boolean {
+  if (!proposal) return false;
+  if (!Array.isArray(proposal.proposedChanges)) return false;
+  return proposal.proposedChanges.length > 0;
+}
+
+/**
+ * Slice E15.4.edit helper — true if both `versionBeforeId` and
+ * `versionAfterId` are non-empty after trimming. Used by audit
+ * surfaces to decide whether the proposal carries a complete
+ * forensic-replay link (only `executed` proposals will satisfy
+ * this; `proposed` / `approved` / `rejected` proposals
+ * legitimately lack one or both ends of the version pair).
+ */
+export function documentEditorProposalHasVersionLink(
+  proposal: DocumentEditorProposal | undefined | null
+): boolean {
+  if (!proposal) return false;
+  const before =
+    typeof proposal.versionBeforeId === 'string' ? proposal.versionBeforeId.trim() : '';
+  const after = typeof proposal.versionAfterId === 'string' ? proposal.versionAfterId.trim() : '';
+  return before.length > 0 && after.length > 0;
+}
+
+/**
+ * Slice E15.4.edit helper — collapses the §15.4 substrate fields
+ * into a stable plain-object summary suitable for log lines, audit
+ * entries, and the FE-E2 review UI's "what kind of change is
+ * this?" header. Returns `null` for every field that is not set
+ * (after trimming for strings). Never throws, never mutates input.
+ *
+ * `changesCount` is always a number (defaults to 0 when
+ * `proposedChanges` is absent / non-array / empty); other fields
+ * are nullable strings.
+ */
+export function summarizeDocumentEditorProposalAuditFields(
+  proposal: DocumentEditorProposal | undefined | null
+): {
+  editType: DocumentEditType | null;
+  changesCount: number;
+  versionBeforeId: string | null;
+  versionAfterId: string | null;
+} {
+  const empty = {
+    editType: null as DocumentEditType | null,
+    changesCount: 0,
+    versionBeforeId: null as string | null,
+    versionAfterId: null as string | null,
+  };
+  if (!proposal) return empty;
+  const trim = (v: unknown): string | null => {
+    if (typeof v !== 'string') return null;
+    const trimmed = v.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  };
+  return {
+    editType: proposal.editType ?? null,
+    changesCount: Array.isArray(proposal.proposedChanges) ? proposal.proposedChanges.length : 0,
+    versionBeforeId: trim(proposal.versionBeforeId),
+    versionAfterId: trim(proposal.versionAfterId),
+  };
 }
 
 export type DocumentAuditAction =

@@ -1079,6 +1079,43 @@ The lack of self-descriptiveness has concrete downstream cost:
 
 **Closes gaps.** §15.1 of the gap-vs-target report (spec §8.1 DocumentArtifact contract) — SUBSTRATE DELIVERED. Materialize wiring + V8 client resolver wiring + owner-change service + FE-E2 Properties consumption are scheduled as follow-up slices on top of this substrate.
 
+### 6.15.8 Slice E15.4.edit — Spec §8.4 DocumentEdit substrate
+
+**Why.** §15.4 of the gap-vs-target report flagged that `DocumentEditorProposal` carries scope + a single before/after string diff, with snapshots created at execute-time but NOT linked back onto the proposal. Spec §8.4 demands richer audit substrate:
+- `edit_type` enum naming the *kind* of mutation independently of `scope` (`scope` answers "where", `edit_type` answers "what kind");
+- `proposed_changes[]` as a structured per-target diff array so reviewers can see / approve individual changes (FE-E2 review UI);
+- `version_before` / `version_after` snapshot links so audit replay can reconstruct the pre/post-execution state without cross-service joins.
+
+Without these fields, the audit trail cannot answer "did this proposal expand a section or condense it?" without re-running the diff, and forensic replay has to chase the snapshot service for the version that was active immediately before approval — both surfaces are hot paths in regulated tenants and proved fragile during the E10 approvals integration.
+
+**Substrate-only scope (no service-layer wiring in this slice).** Service code (proposal creation in editor / refiner / transformative service slices, snapshot service wiring at execute-time) is NOT touched in this slice — it would multiply the diff and the collision risk against parallel agents in the service layer. Follow-up slices wire the new fields into the existing creation paths and into the snapshot service so executed proposals carry both `versionBeforeId` and `versionAfterId`.
+
+**What ships in this slice.**
+- `documentStudioTypes.ts` — extend `DocumentEditorProposal` with **4** backwards-compatible optional fields:
+    - `editType?: DocumentEditType` — 7-value enum (`rewrite | replace | restructure | annotate | expand | condense | reformat`) naming the dominant kind of mutation;
+    - `proposedChanges?: DocumentEditTargetedChange[]` — per-target structured diff array with `targetSectionId`, optional `targetBlockId`, before/after pair, and optional per-change `editType` override;
+    - `versionBeforeId?: string` — snapshot ID captured immediately BEFORE execution;
+    - `versionAfterId?: string` — snapshot ID captured immediately AFTER execution.
+- New types: `DocumentEditType` + `DocumentEditTargetedChange` (re-exported on the FE).
+- Three new public helpers exported from `documentStudioTypes.ts`:
+    - `documentEditorProposalHasStructuredChanges(proposal)` — true if `proposedChanges` is a non-empty array (defensive: returns false for null / undefined / empty / non-array).
+    - `documentEditorProposalHasVersionLink(proposal)` — true if both ends of the version pair are non-empty after trimming. Only `executed` proposals will satisfy this; `proposed` / `approved` / `rejected` proposals legitimately lack one or both ends.
+    - `summarizeDocumentEditorProposalAuditFields(proposal)` — collapses the 4 substrate fields into a stable plain-object summary `{ editType, changesCount, versionBeforeId, versionAfterId }` with `null` for unset / whitespace-only fields. Stable shape suitable for log lines, audit entries, and FE-E2 review UI rendering. Never throws, never mutates.
+- `src/components/DocumentStudio/types.ts` — frontend mirror of all 4 fields plus `DocumentEditType` and `DocumentEditTargetedChange`.
+
+**Backwards compatibility.** Pre-E15.4.edit proposals continue to work unchanged. Service code in `documentStudioService.ts` only iterates `Object.keys(proposal.blockRewrites)` (already verified) and never iterates the proposal's own keys, so adding optional fields cannot break audit aggregation. The existing 6 editor-scope service slices (local / section / global / methodology / source / transformative) and the LLM refiner all build proposals via explicit field assignment, so the new optional fields stay `undefined` until a follow-up slice wires them.
+
+**Coverage.** New `documentEditorProposalSpecFields.test.ts` with **23** specs:
+- legacy backwards-compat (2): all 4 new fields undefined; spread-preserves legacy shape;
+- new fields acceptance (5): each editType enum value (loops 7 values), proposedChanges with single + multi-entry arrays, per-change editType override, version snapshot links, all-four coexistence;
+- `documentEditorProposalHasStructuredChanges` contract (5): null / undefined / legacy / empty array / non-array (defensive) → false; non-empty array → true;
+- `documentEditorProposalHasVersionLink` contract (5): null / undefined / legacy → false; only one end → false; both ends → true; whitespace-only either end → false;
+- `summarizeDocumentEditorProposalAuditFields` contract (6): empty summary for null / undefined / legacy; trimmed values for fully-populated; whitespace-only collapses to null; non-array proposedChanges → changesCount 0; immutability.
+
+**Validation.** Document Studio + Execution Module Standard suite **679/679 green** (+23 from E15.4.edit). tsc clean for the modified files. ESLint clean for all modified files after `--fix`.
+
+**Closes gaps.** §15.4 of the gap-vs-target report (spec §8.4 DocumentEdit contract) — SUBSTRATE DELIVERED. Service-layer wiring (proposal creation paths populate `editType` + optionally `proposedChanges`; snapshot service wires `versionBeforeId` + `versionAfterId` at execute-time) is scheduled as a follow-up slice on top of this substrate.
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export
