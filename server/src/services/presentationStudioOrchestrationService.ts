@@ -19,12 +19,17 @@
  * mutating endpoints.
  */
 
-import type { DeckSetup } from './presentationGeneratorService.js';
+import type { DeckSetup, OutlineItem } from './presentationGeneratorService.js';
+import type { PresentationNarrativePlan } from './presentationNarrativePlannerService.js';
+import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import type {
   PresentationSourcePack,
   PresentationSourcePackPreflight,
 } from './presentationSourcePackService.js';
-import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
+import {
+  buildPresentationSourcePack,
+  preflightPresentationSourcePack,
+} from './presentationSourcePackService.js';
 
 export interface PresentationStudioSourcePackPreviewInput {
   setup: DeckSetup;
@@ -80,5 +85,71 @@ export function previewPresentationStudioSourcePack(
     missingInputs: preflight.missingInputs,
     warnings: preflight.warnings,
     previewId: makePreviewId(input.organizationId, preflight.sourcePack.builtAt),
+  };
+}
+
+export interface PresentationStudioNarrativePlanPreviewInput {
+  setup: DeckSetup;
+  organizationId: string;
+  /**
+   * Caller-supplied outline. Optional: when omitted the narrative planner
+   * receives an empty outline and the result is best-effort (status will
+   * usually be `needs_sources`). The Studio UI normally passes the outline
+   * returned from `generateOutline` or a draft outline maintained client-side.
+   */
+  outline?: OutlineItem[];
+  /**
+   * Caller-supplied source pack. Optional: when omitted we build a fresh one
+   * from `setup.sourceArtifacts`. The narrative plan is sensitive to source
+   * pack content, so the UI typically reuses the source pack from the
+   * preceding `previewSourcePack` call to keep the preview deterministic.
+   */
+  sourcePack?: PresentationSourcePack;
+  /** Optional clock injection for deterministic tests. */
+  now?: Date;
+}
+
+export interface PresentationStudioNarrativePlanPreviewResult {
+  narrativePlan: PresentationNarrativePlan;
+  sourcePack: PresentationSourcePack;
+  missingInputs: string[];
+  warnings: string[];
+  /** Stable, request-scoped id surfaced to the UI for telemetry/log correlation. */
+  previewId: string;
+}
+
+/**
+ * Build a tenant-scoped narrative plan preview WITHOUT triggering generation.
+ * Mirrors `previewPresentationStudioSourcePack` invariants: read-only,
+ * tenant-scoped, no DB writes, no audit events.
+ *
+ * The narrative planner is deterministic and source-grounded:
+ *   - Empty source pack -> `status='needs_sources'`, draft hypothesis tone.
+ *   - Source pack present -> per-slide narrative role + required evidence.
+ */
+export function previewPresentationStudioNarrativePlan(
+  input: PresentationStudioNarrativePlanPreviewInput
+): PresentationStudioNarrativePlanPreviewResult {
+  const sourcePack =
+    input.sourcePack ||
+    buildPresentationSourcePack({
+      setup: input.setup,
+      organizationId: input.organizationId,
+      now: input.now,
+    });
+  const outline: OutlineItem[] = Array.isArray(input.outline) ? input.outline : [];
+  const narrativePlan = buildPresentationNarrativePlan({
+    setup: input.setup,
+    outline,
+    sourcePack,
+    now: input.now,
+  });
+  const warnings = [...sourcePack.warnings, ...narrativePlan.warnings];
+  return {
+    narrativePlan,
+    sourcePack,
+    missingInputs: sourcePack.missingInputs,
+    warnings,
+    previewId: makePreviewId(input.organizationId, narrativePlan.createdAt),
   };
 }

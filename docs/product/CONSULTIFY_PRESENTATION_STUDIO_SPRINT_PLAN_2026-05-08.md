@@ -404,3 +404,65 @@ Files explicitly untouched:
 ### Next sprint plan
 
 - Sprint S2 starts Narrative Plan Preview Route: add `POST /api/presentation-studio/narrative-plan/preview` to `presentationStudioOrchestrationService.ts` and `presentationStudio.routes.ts`. Wraps adopted `buildPresentationNarrativePlan`. Same auth + tenant + RBAC pattern. No DB migration.
+
+## Sprint S2 Gate Report — Narrative Plan Preview Route (2026-05-08)
+
+Status: `PASS_WITH_P2`
+Branch: `main`
+Scope: Backend-only. No DB migration. No UI in this sprint (Q3 default = backend + minimal UI later).
+
+### Changes made
+
+- Extended `consultify/server/src/services/presentationStudioOrchestrationService.ts` with a new function `previewPresentationStudioNarrativePlan({ setup, organizationId, outline?, sourcePack?, now? })` which:
+  - Reuses adopted `buildPresentationNarrativePlan` and `buildPresentationSourcePack` (Sprint S0 baseline).
+  - Defaults outline to `[]` and rebuilds the source pack from `setup.sourceArtifacts` when not provided.
+  - Surfaces a request-scoped `previewId` derived from the resolved tenant id (auth, never body).
+  - Aggregates warnings from both source pack and narrative plan into a single envelope.
+  - Is read-only: no DB writes, no audit events, no telemetry side-effects.
+
+- Extended `consultify/server/src/routes/presentationStudio.routes.ts` with `POST /api/presentation-studio/narrative-plan/preview`:
+  - Same auth/tenant/RBAC pattern as `/source-pack/preview` (verifyToken + `presentation_create` capability).
+  - Body: `{ setup?, outline?, sourcePack? }`. Body-supplied `organizationId` is ignored; tenant comes from `req.user.organizationId`.
+  - Refactored body parsing into `parseDeckSetupFromBody` and `parseOutlineFromBody` helpers; the source-pack route now uses the shared helper.
+  - Updated route docstring to list both endpoints and reaffirm proposal -> approval -> execution -> audit invariant for any future mutating endpoint.
+
+- Extended `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts` with 5 integration tests for the new endpoint:
+  - 200 ready narrative plan with outline + source artifact (status=ready, slidePlan length matches outline).
+  - 200 needs_sources status when no artifacts (warnings non-empty, requiredEvidence empty).
+  - 403 PERMISSION_DENIED for VIEWER role (capability gate).
+  - 401 when verifyToken rejects (no authenticated user).
+  - Tenant integrity: body-supplied `organizationId` is ignored; `previewId` is bound to authenticated tenant.
+
+### Validation performed
+
+- Vitest (`presentationStudio.routes.test.ts`) — 11/11 PASS (S1 5 + S2 5 + 1 shared regression).
+- Vitest regression on adopted services — `presentationNarrativePlannerService.test.ts` + `presentationGeneratorGolden.test.ts` — 7/7 PASS. No drift in golden outputs.
+- ESLint --fix on the three S2 files — 0 errors. 24 pre-existing P3 `no-explicit-any` warnings in the same files; deferred per S0 baseline policy.
+- Focused `tsc --noEmit` over `presentationStudioOrchestrationService.ts`, `presentationStudio.routes.ts`, `presentationSourcePackService.ts`, `presentationNarrativePlannerService.ts` with `--strict --target es2022 --module nodenext --moduleResolution nodenext` — 0 errors.
+- `ReadLints` on the three modified files — clean.
+
+### Gate result: `PASS_WITH_P2`
+
+P0/P1: none.
+
+P2 (deferred, non-blocking):
+- P2-S2-1: 24 pre-existing `no-explicit-any` warnings in S2 files; tracked under the S0 baseline P3 deferral.
+- P2-S2-2: Anygravity manual retest still deferred from S0/S1; will run a single consolidated probe after S5 frontend lands so we test all preview endpoints together rather than per-route.
+
+### Acceptance criteria (from contract) covered by S2
+
+- AC-1 (tenant safety on preview endpoints): `previewId` and source pack/narrative plan are derived from authenticated `organizationId` only; body-supplied `organizationId` is ignored. Verified by integration test.
+- AC-2 (RBAC on preview endpoints): VIEWER receives 403 PERMISSION_DENIED with `requiredCapability=presentation_create`. Verified.
+- AC-4 (no DB migrations in Phase 2): no schema changes. The route and orchestrator wrap in-memory adopted services only.
+- AC-5 (read-only preview semantics): the endpoint returns plan + warnings + missingInputs; never writes, never emits audit events.
+- AC-6 (degraded UI honesty): `status: 'needs_sources'` is propagated upstream so the future Studio UI can render an honest degraded state instead of fabricating a thesis.
+
+### Risks / next-step notes
+
+- R-S2-1: Outline fields not yet provided by callers in production will produce `status='needs_sources'` decks with hypothesis-only narrative. This is intentional but UX must explain it once Studio UI lands (S5).
+- R-S2-2: `parseOutlineFromBody` silently strips entries without a `title`. If a future client sends drafts with empty titles, those slides disappear. This is consistent with the source pack parser and is acceptable for read-only preview, but needs an explicit warning channel before any write endpoint.
+
+### Next sprint plan
+
+- Sprint S3 starts Template Architect Preview Route: add `POST /api/presentation-studio/template-architect/preview` that wraps adopted `presentationTemplateArchitectService.ts`. Read-only, tenant-scoped, capability `presentation_create`. Returns a draft template plan envelope; explicit "approval required" flag preserved (proposal -> approval -> execution -> audit). No DB migration (template registry mutations land in S4 inside an existing JSON column or in-memory store).
+

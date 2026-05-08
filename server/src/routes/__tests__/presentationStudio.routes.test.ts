@@ -280,3 +280,146 @@ describe('presentationStudio.routes — POST /source-pack/preview', () => {
     expect(res.body.data.missingInputs.length).toBeGreaterThan(0);
   });
 });
+
+describe('presentationStudio.routes — POST /narrative-plan/preview', () => {
+  beforeEach(() => {
+    setAuth({
+      user: { id: 'user-1', organizationId: 'org-A', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+  });
+
+  it('returns 200 with a ready narrative plan when outline + source pack are provided', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/narrative-plan/preview',
+      path: '/narrative-plan/preview',
+      body: {
+        setup: {
+          title: 'VTS Steering Committee',
+          audience: 'executive',
+          goal: 'decide',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'VTS readiness',
+              confidence: 0.8,
+              readiness: 'ready',
+            },
+          ],
+        },
+        outline: [
+          { intent: 'cover', title: 'Cover', enabled: true },
+          { intent: 'executive_summary', title: 'Executive thesis', enabled: true },
+          { intent: 'risk_management', title: 'Risks', enabled: true },
+          { intent: 'next_steps', title: 'Decisions', enabled: true },
+        ],
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/narrative-plan/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({
+      success: true,
+      data: {
+        narrativePlan: {
+          status: 'ready',
+          goal: 'decide',
+        },
+      },
+    });
+    expect(res.body.data.narrativePlan.slidePlan.length).toBe(4);
+    expect(res.body.data.narrativePlan.decisionContext).toBeTruthy();
+    expect(res.body.data.previewId).toMatch(/^pssp_org-A_/);
+  });
+
+  it('returns needs_sources status when no source artifacts are provided', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/narrative-plan/preview',
+      path: '/narrative-plan/preview',
+      body: {
+        setup: {
+          title: 'Prompt-only deck',
+          audience: 'executive',
+          goal: 'inform',
+          sourceArtifacts: [],
+        },
+        outline: [
+          { intent: 'cover', title: 'Cover', enabled: true },
+          { intent: 'key_messages', title: 'Hypotheses', enabled: true },
+        ],
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/narrative-plan/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.narrativePlan.status).toBe('needs_sources');
+    expect(res.body.data.warnings.length).toBeGreaterThan(0);
+    for (const slide of res.body.data.narrativePlan.slidePlan) {
+      expect(slide.requiredEvidence).toEqual([]);
+    }
+  });
+
+  it('returns 403 PERMISSION_DENIED for VIEWER on narrative-plan/preview', async () => {
+    setAuth({
+      user: { id: 'user-2', organizationId: 'org-A', role: 'VIEWER' },
+      userRole: 'VIEWER',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/narrative-plan/preview',
+      path: '/narrative-plan/preview',
+      body: { setup: { title: 't', audience: 'executive', goal: 'inform' } },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/narrative-plan/preview', req, res);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toMatchObject({
+      success: false,
+      code: 'PERMISSION_DENIED',
+      requiredCapability: 'presentation_create',
+    });
+  });
+
+  it('returns 401 when verifyToken rejects on narrative-plan/preview', async () => {
+    setAuth(null);
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/narrative-plan/preview',
+      path: '/narrative-plan/preview',
+      body: {},
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/narrative-plan/preview', req, res);
+
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('ignores body-supplied organizationId on narrative-plan/preview', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/narrative-plan/preview',
+      path: '/narrative-plan/preview',
+      body: {
+        organizationId: 'org-B',
+        setup: {
+          title: 'Spoof attempt',
+          audience: 'executive',
+          goal: 'inform',
+          organizationId: 'org-B',
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/narrative-plan/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.previewId).toMatch(/^pssp_org-A_/);
+    expect(res.body.data.previewId).not.toContain('org-B');
+  });
+});
