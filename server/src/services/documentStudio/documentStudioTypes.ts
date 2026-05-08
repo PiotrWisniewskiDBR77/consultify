@@ -1021,6 +1021,212 @@ export interface DocumentVariant {
   provenance: DocumentVariantProvenance;
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Epic E10 — Enterprise Collaboration: Approval workflow
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lifecycle state of a single ApprovalRequest.
+ *
+ *   - `'pending'`           — awaiting decisions from required reviewers.
+ *   - `'approved'`          — quorum policy satisfied; document may move
+ *                             to `DocumentStatus === 'approved'`.
+ *   - `'rejected'`          — at least one required reviewer rejected
+ *                             under the active quorum policy.
+ *   - `'changes_requested'` — at least one reviewer requested changes;
+ *                             the request is closed and the consultant
+ *                             must address feedback + open a new approval.
+ *   - `'cancelled'`         — author cancelled the approval request
+ *                             (e.g. document withdrawn from review).
+ *
+ * Terminal states: approved, rejected, changes_requested, cancelled.
+ */
+export type DocumentApprovalStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'changes_requested'
+  | 'cancelled';
+
+/** A single reviewer's verdict on an open approval request. */
+export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';
+
+/**
+ * Quorum policy controlling when the request auto-resolves to `approved`.
+ *
+ *   - `'unanimous'`       — every required participant must `'approve'`.
+ *   - `'majority'`        — strictly more than half of required
+ *                           participants must `'approve'`.
+ *   - `'single_approval'` — any required participant approving resolves
+ *                           the request immediately.
+ *
+ * Rejection / changes-requested semantics are policy-independent: any
+ * required reviewer's `'reject'` flips the request to `'rejected'`, and
+ * any `'request_changes'` flips it to `'changes_requested'`.
+ */
+export type DocumentApprovalQuorumPolicy = 'unanimous' | 'majority' | 'single_approval';
+
+/**
+ * Reviewer slot on an approval request.
+ *
+ * `required` reviewers count toward the quorum. Optional reviewers may
+ * still record decisions for visibility but are excluded from the quorum
+ * arithmetic so a "FYI" stakeholder does not block approval.
+ */
+export interface DocumentApprovalParticipant {
+  userId: string;
+  role?: string;
+  required: boolean;
+}
+
+/** A single reviewer decision attached to an approval request. */
+export interface DocumentApprovalDecision {
+  decisionId: string;
+  approvalId: string;
+  reviewerId: string;
+  kind: DocumentApprovalDecisionKind;
+  comment?: string;
+  occurredAt: string;
+}
+
+/**
+ * Multi-reviewer approval ticket attached to a document artifact.
+ *
+ * Lifecycle: `'pending'` → terminal (`'approved'` / `'rejected'` /
+ * `'changes_requested'` / `'cancelled'`). At most one non-terminal
+ * approval per `(organization, artifact)` pair — the service rejects
+ * a second open request with `approval_already_open` so two parallel
+ * tracks cannot drift.
+ *
+ * Decisions are append-only; `recordApprovalDecision` rejects a second
+ * decision from the same reviewer with `decision_already_recorded` to
+ * keep the audit trail honest.
+ */
+export interface DocumentApprovalRequest {
+  approvalId: string;
+  organizationId: string;
+  artifactId: string;
+  requestedBy: string;
+  participants: DocumentApprovalParticipant[];
+  quorumPolicy: DocumentApprovalQuorumPolicy;
+  status: DocumentApprovalStatus;
+  decisions: DocumentApprovalDecision[];
+  reason?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  resolutionReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DocumentApprovalAuditAction =
+  | 'approval_requested'
+  | 'approval_decision_recorded'
+  | 'approval_resolved'
+  | 'approval_cancelled';
+
+export interface DocumentApprovalAuditEntry {
+  auditId: string;
+  approvalId: string;
+  organizationId: string;
+  artifactId: string;
+  action: DocumentApprovalAuditAction;
+  actorId: string;
+  occurredAt: string;
+  details?: Record<string, unknown>;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Epic E10 — Enterprise Collaboration: Reusable Content Block library
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lifecycle status for a Content Block library entry. Mirrors the
+ * BrandVoiceProfile / AudienceProfile lifecycle: `draft → active →
+ * archived`. Archived entries stay queryable for audit but cannot be
+ * inserted into new documents.
+ */
+export type DocumentContentBlockStatus = 'draft' | 'active' | 'archived';
+
+/**
+ * Reusable, named content snippet stored in the tenant's library so a
+ * consultant can re-use boilerplate language (standard intros,
+ * compliance disclaimers, methodology blurbs, …) across documents
+ * without copy/pasting from older artifacts.
+ *
+ * The `block` is a payload-only `DocumentBlock` — the same shape used
+ * inside a `DocumentSection.blocks` array. Inserting a content block
+ * into a document allocates a fresh `blockId` so two copies of the
+ * same library entry never share an id.
+ *
+ * Multiple `'active'` content blocks are allowed (different blocks
+ * serve different purposes). The library is tenant-scoped; system
+ * seeds may ship in a future slice.
+ */
+export interface DocumentContentBlockTemplate {
+  contentBlockId: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  status: DocumentContentBlockStatus;
+  /** Monotonic version string per content-block id; bumped on every update. */
+  version: string;
+  /** Optional free-form tags (e.g. 'compliance', 'standard_intro'). */
+  tags: string[];
+  /** Document types the snippet is intended for; empty array → applicable to all types. */
+  documentTypes: DocumentTypeKey[];
+  /** Language scope (`'all'` matches every language, otherwise a specific one). */
+  languageScope: 'pl' | 'en' | 'all';
+  /** Payload — the same shape as a `DocumentBlock` inside a section. */
+  block: Omit<DocumentBlock, 'blockId'>;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  activatedBy?: string;
+  activatedAt?: string;
+  archivedBy?: string;
+  archivedAt?: string;
+}
+
+export interface DocumentContentBlockDraftInput {
+  name: string;
+  description?: string;
+  tags?: string[];
+  documentTypes?: DocumentTypeKey[];
+  languageScope?: 'pl' | 'en' | 'all';
+  block: Omit<DocumentBlock, 'blockId'>;
+  notes?: string;
+}
+
+export interface DocumentContentBlockUpdateInput {
+  name?: string;
+  description?: string | null;
+  tags?: string[];
+  documentTypes?: DocumentTypeKey[];
+  languageScope?: 'pl' | 'en' | 'all';
+  block?: Omit<DocumentBlock, 'blockId'>;
+  notes?: string | null;
+}
+
+export type DocumentContentBlockAuditAction =
+  | 'content_block_drafted'
+  | 'content_block_updated'
+  | 'content_block_activated'
+  | 'content_block_archived';
+
+export interface DocumentContentBlockAuditEntry {
+  auditId: string;
+  contentBlockId: string;
+  organizationId: string;
+  action: DocumentContentBlockAuditAction;
+  actorId: string;
+  occurredAt: string;
+  details?: Record<string, unknown>;
+}
+
 /** Canonical default consulting formatting schema for Mode 1 (no template). */
 export const DEFAULT_CONSULTING_FORMATTING_SCHEMA: FormattingSchema = {
   fonts: { body: 'Aptos 11', heading: 'Aptos Display' },
