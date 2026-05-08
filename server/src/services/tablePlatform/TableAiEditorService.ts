@@ -192,6 +192,8 @@ const tableAiEditorService = {
       prompt: input.prompt,
       context: input.context ?? {},
       organizationId: input.organizationId,
+      workspaceId: input.workspaceId,
+      actorUserId: input.actorUserId,
     });
 
     // Step 3: persist proposal row.

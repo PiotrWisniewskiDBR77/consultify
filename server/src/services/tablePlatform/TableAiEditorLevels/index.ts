@@ -1,16 +1,17 @@
 /**
- * Table AI Editor Levels — dispatcher (Block C · EPIC-T10 · Sprint C-S1)
+ * Table AI Editor Levels — dispatcher (Block C · EPIC-T10 · C-S1 + C-S2).
  *
- * Routes a `proposeEdit` call to the level-specific handler. C-S1 ships
- * stub handlers that return a static "no-op" envelope so the orchestrator,
- * audit, and budget pipelines can be wired and tested end-to-end before
- * real LLM logic lands in C-S2 (levels 1–4) and C-S3 (levels 5–8).
+ * Routes a `proposeEdit` call to the level-specific handler.
+ *
+ *   - Levels 1–4 (cell/record/column/structure): real handlers (C-S2).
+ *   - Levels 5–8 (view/relational/methodological/source): stubs land in C-S3.
  *
  * Every handler shares the same input/output contract so swapping a stub
  * for a real implementation is a one-line change in this file.
  */
 
 import type { AiEditorLevel } from '../AiUsageService.js';
+import type { LlmProvider } from './llmProvider.js';
 
 import { proposeCellEdit } from './cellLevel.js';
 import { proposeColumnEdit } from './columnLevel.js';
@@ -27,6 +28,10 @@ export interface LevelStubInput {
   prompt: string;
   context: Record<string, unknown>;
   organizationId: string;
+  workspaceId: string;
+  actorUserId: string;
+  /** Test-only injection point. Production routes do not pass this. */
+  llmProvider?: LlmProvider;
 }
 
 export interface LevelStubOutput {
