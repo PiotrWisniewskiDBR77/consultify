@@ -875,3 +875,81 @@ Mode: Frontend-only. Backend from S6 unchanged. Approval flow contract unchanged
   - Backend: a new read-only `GET /api/presentation-studio/source-artifacts` endpoint that re-uses the existing source pack service. No mutating endpoints; no DB migration.
   - Honest UI states: empty list, loading, ready chip, missing-input chip, error (e.g. tenant context dropped). The picker remains tenant-scoped via the authenticated session.
 
+## Sprint S9 Gate Report — Source Artifact Picker (2026-05-08)
+
+Sprint owner: Engineering
+Phase: 2 (implementation)
+Mode: Backend (read-only) + Frontend. Approval flow contract unchanged.
+
+### Changes made
+
+- `consultify/server/src/services/presentationStudioSourceArtifactsService.ts` (new)
+  - Read-only, tenant-scoped enumeration of Studio source artifacts. S9 ships the `assessment` source type only; other types (`interview_study`, `tool_session`, `report`, etc.) are documented as P2 follow-up sprints.
+  - `listPresentationStudioSourceArtifacts({ organizationId, limit?, now? })` queries `assessments WHERE organization_id = ?` ordered by `updated_at DESC` and maps each row to a unified `PresentationStudioSourceArtifactItem` shape.
+  - Honest readiness derivation: `ready` (status indicates completion OR `overall_score` exists), `partial_ready` (answers exist but no completion / score), `insufficient_evidence` (no answers).
+  - Honest degraded UI: when the underlying query fails the function STILL returns 200 with an empty `artifacts` array AND a typed warning (`assessments_query_failed: <message>`); the route surfaces the warning so the picker can render an honest degraded banner instead of a generic 5xx.
+  - Dependency-injected `queryAssessments` so unit tests swap out the DB without touching `dbAll`. Production uses `utils/DbPromise.run`.
+- `consultify/server/src/services/__tests__/presentationStudioSourceArtifactsService.test.ts` (new)
+  - 6 unit tests covering: ready mapping (status COMPLETED + score), partial_ready (answers, no score), insufficient_evidence (no answers), limit clamping `[1..200]`, honest-degraded warnings on rejection, tenant id pass-through.
+- `consultify/server/src/routes/presentationStudio.routes.ts`
+  - Added `GET /api/presentation-studio/source-artifacts`. Auth + `presentation_create` + tenant-scoped. Returns 200 with the artifact list (and any backend warnings) on the happy path; 403 PERMISSION_DENIED for VIEWER; 403 NO_ORG_CONTEXT when no tenant. Body / query overrides of `organizationId` are ignored.
+  - `limit` query param is parsed as a number; service-side clamping handles out-of-range values.
+- `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts`
+  - 5 new integration tests: happy path with mocked DB returning a `ready` assessment, query-string `organizationId` override is ignored (tenant pulled from session), `limit` query param forwarded, honest degraded 200 with warnings on DB failure, VIEWER gets 403 PERMISSION_DENIED.
+- `consultify/src/services/api/presentationStudio.api.ts`
+  - Added `PresentationStudioSourceArtifactReadiness`, `PresentationStudioSourceArtifactItem`, and `PresentationStudioSourceArtifactList` types (matching the server contract).
+  - Added a `studioGet` helper for read-only Studio endpoints; existing helpers untouched.
+  - Added `PresentationStudioApi.listSourceArtifacts({ limit? })` which forwards `?limit=` when supplied.
+- `consultify/src/components/PresentationStudio/PresentationStudioSourceArtifactPicker.tsx` (new)
+  - Pure presentational picker. Owns no fetches; the parent injects `list`, `loading`, `error`, `selectedIds`, `onSelectionChange`, `onReload`, and `disabled`.
+  - Renders five honest UI states: loading, error banner, honest-degraded warnings banner (server warnings), explicit empty state (no artifacts AND no warnings), populated list with checkboxes + readiness chips + per-type type chip + selection counter.
+  - Readiness chips use the canonical color tokens (slate / blue / amber / emerald / rose); no local custom map.
+- `consultify/src/components/PresentationStudio/PresentationStudioPage.tsx`
+  - Removed the hard-coded `demo-assessment-1` placeholder. `SETUP_NON_FORM_EXTRAS` now ONLY carries `theme` + `confidentiality`. Source artifacts come from the user's selection.
+  - Added `SourceArtifactsState` (loading, error, list, selectedIds). `useEffect` fetches the list on mount; the picker's reload button refetches on demand.
+  - Added `handleSourceSelectionChange` that mirrors the approval-fingerprint invariant: editing the selection invalidates the in-flight ticket eagerly, the user can re-mint immediately if the preview still reports `canProceed=true`.
+  - `buildSetupFromForm` projects only the user-selected artifacts into the API setup payload. Empty selection results in an empty `sourceArtifacts` array — the source pack preview will then render an honest empty / degraded state instead of a synthetic "ready".
+  - When the artifact list is reloaded, any selected ids that no longer exist are dropped from the selection automatically (the picker never claims to "select" a missing artifact).
+- `consultify/src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`
+  - Updated the API mock factory + `beforeEach` to default `listSourceArtifacts` to an empty list. Tests that need a populated list override the mock locally.
+  - Added 7 new S9 tests:
+    1. Mount fetch — picker renders the artifact list returned by the API.
+    2. Empty state — populated when the tenant has no artifacts AND no warnings.
+    3. Honest degraded warning banner — when the backend returns warnings.
+    4. Honest error banner — when `listSourceArtifacts` rejects.
+    5. Selected artifacts forwarded into the preview API call (verified via the actual `previewSourcePack` mock argument).
+    6. Selection change clears the in-flight approval ticket (Confirm-generate disappears) — mirrors the form-change invariant from S8.
+    7. Reload button refetches the artifact list.
+
+### Validation performed
+
+- `npx vitest run src/components/PresentationStudio server/src/services/__tests__/presentationStudioApprovalTicketService.test.ts server/src/services/__tests__/presentationStudioSourceArtifactsService.test.ts server/src/routes/__tests__/presentationStudio.routes.test.ts --no-coverage` — 74/74 passed across the full Studio surface (8 ticket service + 6 source artifacts service + 37 route integration + 23 component).
+- `npx eslint` on eight in-scope files — 0 errors, 50 warnings. All warnings match the pre-existing P3 baseline (`no-explicit-any` on test mocks, `no-empty-object-type` on a single S5 alias, react-refresh HMR hints from S8). No new warning class introduced.
+- `npx tsc --noEmit -p consultify/tsconfig.json` filtered to `presentationStudio*` — 0 frontend type errors. `npx tsc --noEmit -p consultify/server/tsconfig.json` filtered to `presentationStudio*` — 0 backend type errors.
+- Tenant safety: every read of `organizationId` in the route comes from the authenticated session (`getOrgId(req)`); body / query overrides are unit-tested as ignored. The service propagates only `(organizationId, limit)` to the underlying query.
+
+### Gate result: `PASS_WITH_P2`
+
+- 0 P0, 0 P1, 0 P2.
+- P3 deferred: pre-existing `no-explicit-any`, `no-empty-object-type`, react-refresh warnings (S0 baseline + S8 carry-overs). No new deferred items.
+
+### Acceptance criteria (from contract) covered by S9
+
+- The Studio surface no longer attaches a synthetic "demo readiness assessment" to every preview. The user explicitly picks artifacts from a tenant-scoped, read-only list.
+- Honest UI states fully covered for the picker: loading, ready / partial_ready / insufficient_evidence / missing / policy chips, empty list, server-warning degraded banner, fetch-error banner.
+- The proposal -> approval -> execution -> audit invariant is preserved and now also enforced on the source-selection axis: editing the selection invalidates the in-flight ticket eagerly, mirroring the server fingerprint contract.
+- Tenant safety: server reads `organizationId` from the session only; route integration tests assert that body / query overrides do NOT change the queried tenant.
+
+### Risks / next-step notes
+
+- R-S9-1: Only the `assessment` source type is enumerated. Other types in the `SourceArtifact` universe (`interview_study`, `tool_session`, `report`, `valuation`, `financial_analysis`, `insight_pack`, `decision_pack`, `workspace`) are not yet listed. The picker's wire shape is generic so extending the service per type is additive — a P2 follow-up can ship them one at a time without changing the public contract.
+- R-S9-2: The `assessments` table query uses `ORDER BY updated_at DESC NULLS LAST`. On databases that don't support `NULLS LAST` (older MySQL) the ordering may differ; PostgreSQL behavior is intentional. If we ship to a non-PG runtime we'll degrade to a portable sort and re-test.
+- R-S9-3: Confidence is normalized from `overall_score` heuristically (treats values > 1 as a percentage). If a future framework emits confidence on a different scale we'll add a per-framework mapper.
+
+### Next sprint plan
+
+- Sprint S10 starts Visual Layout Engine Hardening (cross-references master sprint map WP-06 / MT-PRES-037 / MT-PRES-038). Scope:
+  - Audit the deterministic business layouts emitted by `presentationGeneratorService.generateOutline` for overflow detection (text density vs slot capacity), missing-source placeholder discipline, and PDF/PPTX export parity.
+  - Add a layout pre-check function that flags slides that would overflow at the canonical PPTX render size and surfaces the flags in the existing `validationWarnings[]` channel.
+  - Backend-only sprint: no UI surface area touched. Existing approval flow and source picker contracts unchanged.
+

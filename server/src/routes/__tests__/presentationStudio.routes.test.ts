@@ -1058,3 +1058,127 @@ describe('presentationStudio.routes — POST /generate', () => {
     expect(generateOutlineMock).not.toHaveBeenCalled();
   });
 });
+
+import { _setSourceArtifactsDependenciesForTests } from '../../services/presentationStudioSourceArtifactsService';
+
+describe('presentationStudio.routes — GET /source-artifacts', () => {
+  beforeEach(() => {
+    _setSourceArtifactsDependenciesForTests(null);
+    setAuth({
+      user: { id: 'user-1', organizationId: 'org-A', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+  });
+
+  it('returns 200 with the tenant-scoped artifact list for a user with presentation_create', async () => {
+    _setSourceArtifactsDependenciesForTests({
+      queryAssessments: vi.fn().mockResolvedValue([
+        {
+          id: 'a-1',
+          organization_id: 'org-A',
+          status: 'COMPLETED',
+          framework: 'SIRI',
+          assessment_type: 'maturity',
+          overall_score: 0.91,
+          updated_at: '2026-05-01T10:00:00Z',
+          created_at: null,
+          title: 'Q3 readiness review',
+          project_id: 'proj-1',
+          score_summary: null,
+          answers_json: '{}',
+        },
+      ]),
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/source-artifacts',
+      path: '/source-artifacts',
+      query: {},
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/source-artifacts', req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.artifacts).toHaveLength(1);
+    expect(res.body.data.artifacts[0]).toMatchObject({
+      type: 'assessment',
+      id: 'a-1',
+      readiness: 'ready',
+    });
+    expect(res.body.data.byType.assessment).toBe(1);
+    expect(res.body.data.warnings).toEqual([]);
+  });
+
+  it('forwards organizationId from the session and ignores query overrides', async () => {
+    const queryAssessments = vi.fn().mockResolvedValue([]);
+    _setSourceArtifactsDependenciesForTests({ queryAssessments });
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/source-artifacts',
+      path: '/source-artifacts',
+      query: { organizationId: 'org-EVIL' },
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/source-artifacts', req, res);
+    expect(res.statusCode).toBe(200);
+    expect(queryAssessments).toHaveBeenCalledWith('org-A', 50);
+  });
+
+  it('respects the limit query param within bounds', async () => {
+    const queryAssessments = vi.fn().mockResolvedValue([]);
+    _setSourceArtifactsDependenciesForTests({ queryAssessments });
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/source-artifacts',
+      path: '/source-artifacts',
+      query: { limit: '12' },
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/source-artifacts', req, res);
+    expect(queryAssessments).toHaveBeenCalledWith('org-A', 12);
+  });
+
+  it('returns 200 with honest degraded warning when the underlying query fails', async () => {
+    _setSourceArtifactsDependenciesForTests({
+      queryAssessments: vi.fn().mockRejectedValue(new Error('connection lost')),
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/source-artifacts',
+      path: '/source-artifacts',
+      query: {},
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/source-artifacts', req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.artifacts).toEqual([]);
+    expect(res.body.data.warnings[0]).toContain('assessments_query_failed');
+  });
+
+  it('returns 403 PERMISSION_DENIED for a VIEWER', async () => {
+    setAuth({
+      user: { id: 'user-2', organizationId: 'org-A', role: 'VIEWER' },
+      userRole: 'VIEWER',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/source-artifacts',
+      path: '/source-artifacts',
+      query: {},
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/source-artifacts', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PERMISSION_DENIED');
+  });
+});

@@ -231,6 +231,35 @@ export interface GeneratePreviewRequest {
 }
 
 // ---------------------------------------------------------------------------
+// S9: source artifact picker
+// ---------------------------------------------------------------------------
+
+export type PresentationStudioSourceArtifactReadiness =
+  | 'ready'
+  | 'partial_ready'
+  | 'missing_sales_data'
+  | 'policy_blocked'
+  | 'insufficient_evidence';
+
+export interface PresentationStudioSourceArtifactItem {
+  type: string;
+  id: string;
+  label: string;
+  readiness: PresentationStudioSourceArtifactReadiness;
+  confidence: number | null;
+  updatedAt: string | null;
+  hint: string | null;
+}
+
+export interface PresentationStudioSourceArtifactList {
+  artifacts: PresentationStudioSourceArtifactItem[];
+  total: number;
+  byType: Record<string, number>;
+  generatedAt: string;
+  warnings: string[];
+}
+
+// ---------------------------------------------------------------------------
 // S7: approval / execute typed surfaces
 // ---------------------------------------------------------------------------
 
@@ -308,6 +337,22 @@ export class PresentationStudioApiError extends Error {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+async function studioGet<T>(path: string): Promise<T> {
+  const res = await fetchWithRetry(`${STUDIO_BASE}${path}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ success: boolean; data: T; error?: string; code?: string }>(
+    res,
+    `Presentation Studio GET ${path}`
+  );
+  if (!json || !json.success || !json.data) {
+    const message = json?.error || `Presentation Studio GET ${path} returned no data`;
+    throw new Error(message);
+  }
+  return json.data;
+}
 
 async function studioPost<T>(path: string, body: unknown): Promise<T> {
   const res = await fetchWithRetry(`${STUDIO_BASE}${path}`, {
@@ -407,6 +452,19 @@ export const PresentationStudioApi = {
    */
   executeGenerate: (input: ExecuteGenerateRequest) =>
     studioPostTyped<ExecuteGenerateResponse>('/generate', input),
+
+  /**
+   * S9 — Tenant-scoped enumeration of source artifacts the user can attach
+   * to a Studio deck. Read-only. Honest degraded UI: the server returns 200
+   * with `warnings[]` populated when the underlying query fails; the client
+   * surfaces those warnings in the picker rather than throwing.
+   */
+  listSourceArtifacts: (params?: { limit?: number }) => {
+    const limit = params?.limit;
+    const query =
+      limit && Number.isFinite(limit) ? `?limit=${encodeURIComponent(String(limit))}` : '';
+    return studioGet<PresentationStudioSourceArtifactList>(`/source-artifacts${query}`);
+  },
 };
 
 export type PresentationStudioApiType = typeof PresentationStudioApi;

@@ -56,6 +56,7 @@ vi.mock('@/services/api/presentationStudio.api', async () => {
       previewGenerate: vi.fn(),
       requestApproval: vi.fn(),
       executeGenerate: vi.fn(),
+      listSourceArtifacts: vi.fn(),
     },
   };
 });
@@ -67,6 +68,7 @@ const mockedApi = PresentationStudioApi as unknown as {
   previewGenerate: ReturnType<typeof vi.fn>;
   requestApproval: ReturnType<typeof vi.fn>;
   executeGenerate: ReturnType<typeof vi.fn>;
+  listSourceArtifacts: ReturnType<typeof vi.fn>;
 };
 
 function makeHappySourcePack() {
@@ -189,6 +191,16 @@ describe('PresentationStudioPage', () => {
     mockedApi.previewGenerate.mockReset();
     mockedApi.requestApproval.mockReset();
     mockedApi.executeGenerate.mockReset();
+    mockedApi.listSourceArtifacts.mockReset();
+    // Default for all tests: an empty source artifact list. Tests that need
+    // populated artifacts override the mock locally.
+    mockedApi.listSourceArtifacts.mockResolvedValue({
+      artifacts: [],
+      total: 0,
+      byType: {},
+      generatedAt: '2026-05-08T20:00:00.000Z',
+      warnings: [],
+    });
   });
 
   afterEach(() => {
@@ -583,5 +595,164 @@ describe('PresentationStudioPage', () => {
     // preview run, so the user can request a fresh ticket bound to the new
     // setup. The CTA reappears in the Menu 3 right slot.
     expect(screen.getByTestId('presentation-studio-request-approval')).toBeTruthy();
+  });
+
+  // ---------------------------------------------------------------------
+  // S9 — source artifact picker
+  // ---------------------------------------------------------------------
+
+  function makeArtifactList(
+    overrides: Partial<{
+      artifacts: Array<{
+        type: string;
+        id: string;
+        label: string;
+        readiness: string;
+        confidence: number | null;
+        updatedAt: string | null;
+        hint: string | null;
+      }>;
+      warnings: string[];
+    }> = {}
+  ) {
+    const artifacts = overrides.artifacts ?? [
+      {
+        type: 'assessment',
+        id: 'a-1',
+        label: 'Q3 readiness review',
+        readiness: 'ready',
+        confidence: 0.91,
+        updatedAt: '2026-05-01T10:00:00Z',
+        hint: 'framework=SIRI',
+      },
+      {
+        type: 'assessment',
+        id: 'a-2',
+        label: 'ADMA assessment',
+        readiness: 'partial_ready',
+        confidence: null,
+        updatedAt: '2026-04-20T09:00:00Z',
+        hint: null,
+      },
+    ];
+    const byType: Record<string, number> = {};
+    for (const a of artifacts) byType[a.type] = (byType[a.type] ?? 0) + 1;
+    return {
+      artifacts,
+      total: artifacts.length,
+      byType,
+      generatedAt: '2026-05-08T20:00:00.000Z',
+      warnings: overrides.warnings ?? [],
+    };
+  }
+
+  it('fetches and renders the source artifact list on mount', async () => {
+    mockedApi.listSourceArtifacts.mockResolvedValue(makeArtifactList());
+    render(<PresentationStudioPage />);
+    await waitFor(() => {
+      expect(mockedApi.listSourceArtifacts).toHaveBeenCalledTimes(1);
+    });
+    const picker = await screen.findByTestId('presentation-studio-source-picker');
+    expect(picker).toBeTruthy();
+    expect(screen.getByTestId('psstudio-artifact-row-a-1')).toBeTruthy();
+    expect(screen.getByTestId('psstudio-artifact-row-a-2')).toBeTruthy();
+    expect(screen.queryByTestId('psstudio-source-picker-empty')).toBeNull();
+    expect(screen.queryByTestId('psstudio-source-picker-error')).toBeNull();
+  });
+
+  it('renders the empty state when no source artifacts exist for the tenant', async () => {
+    mockedApi.listSourceArtifacts.mockResolvedValue(makeArtifactList({ artifacts: [] }));
+    render(<PresentationStudioPage />);
+    expect(await screen.findByTestId('psstudio-source-picker-empty')).toBeTruthy();
+    expect(screen.queryByTestId('psstudio-artifact-row-a-1')).toBeNull();
+  });
+
+  it('renders the honest degraded warning banner when the backend reports warnings', async () => {
+    mockedApi.listSourceArtifacts.mockResolvedValue(
+      makeArtifactList({
+        artifacts: [],
+        warnings: ['assessments_query_failed: connection lost'],
+      })
+    );
+    render(<PresentationStudioPage />);
+    const banner = await screen.findByTestId('psstudio-source-picker-warnings');
+    expect(banner.textContent || '').toContain('assessments_query_failed');
+    expect(screen.queryByTestId('psstudio-source-picker-empty')).toBeNull();
+  });
+
+  it('renders an honest error banner when the API call rejects', async () => {
+    mockedApi.listSourceArtifacts.mockRejectedValue(new Error('Tenant context required'));
+    render(<PresentationStudioPage />);
+    const error = await screen.findByTestId('psstudio-source-picker-error');
+    expect(error.textContent || '').toContain('Tenant context required');
+  });
+
+  it('forwards the user-selected artifacts into the preview API call', async () => {
+    mockedApi.listSourceArtifacts.mockResolvedValue(makeArtifactList());
+    mockedApi.previewSourcePack.mockResolvedValue(makeHappySourcePack());
+    mockedApi.previewNarrativePlan.mockResolvedValue(makeHappyNarrativePlan());
+    mockedApi.previewTemplatePlan.mockResolvedValue(makeHappyTemplatePlan());
+    mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(true));
+
+    render(<PresentationStudioPage />);
+    await screen.findByTestId('psstudio-artifact-row-a-1');
+
+    fillRequiredFields();
+    // Select the first artifact via its checkbox.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('psstudio-artifact-checkbox-a-1'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
+    });
+    await waitFor(() => {
+      expect(mockedApi.previewSourcePack).toHaveBeenCalledTimes(1);
+    });
+    const setupArg = mockedApi.previewSourcePack.mock.calls[0][0];
+    expect(setupArg.sourceArtifacts).toHaveLength(1);
+    expect(setupArg.sourceArtifacts[0]).toMatchObject({
+      type: 'assessment',
+      id: 'a-1',
+      readiness: 'ready',
+      confidence: 0.91,
+    });
+  });
+
+  it('clears the in-flight approval ticket when the source selection changes', async () => {
+    mockedApi.listSourceArtifacts.mockResolvedValue(makeArtifactList());
+    render(<PresentationStudioPage />);
+    await screen.findByTestId('psstudio-artifact-row-a-1');
+
+    await runHealthyPreview();
+    const ticket = makeApprovalTicket();
+    mockedApi.requestApproval.mockResolvedValue({
+      ticket,
+      generatePreview: makeGeneratePreview(true),
+      payloadFingerprint: ticket.payloadFingerprint,
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-request-approval'));
+    });
+    await screen.findByTestId('presentation-studio-confirm-generate');
+
+    // User toggles a source artifact — ticket invalidates eagerly.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('psstudio-artifact-checkbox-a-1'));
+    });
+    expect(screen.queryByTestId('presentation-studio-confirm-generate')).toBeNull();
+  });
+
+  it('reload button refetches the artifact list', async () => {
+    mockedApi.listSourceArtifacts.mockResolvedValue(makeArtifactList());
+    render(<PresentationStudioPage />);
+    await screen.findByTestId('psstudio-artifact-row-a-1');
+    expect(mockedApi.listSourceArtifacts).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('psstudio-source-picker-reload'));
+    });
+    await waitFor(() => {
+      expect(mockedApi.listSourceArtifacts).toHaveBeenCalledTimes(2);
+    });
   });
 });

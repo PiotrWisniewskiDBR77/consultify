@@ -13,6 +13,7 @@
  *   - S4: POST /generate/preview            (read-only generate dispatcher preview)
  *   - S6: POST /generate/request-approval   (mints a single-use approval ticket)
  *   - S6: POST /generate                    (mutating; redeems ticket; persists deck; emits audit)
+ *   - S9: GET  /source-artifacts            (read-only; enumerates available source artifacts)
  *
  * Read-only endpoints (S1..S4) are tenant-scoped and gated by the existing
  * `presentation_create` capability. They never write to the database.
@@ -47,6 +48,7 @@ import {
   previewPresentationStudioTemplatePlan,
   requestPresentationStudioGenerateApproval,
 } from '../services/presentationStudioOrchestrationService.js';
+import { listPresentationStudioSourceArtifacts } from '../services/presentationStudioSourceArtifactsService.js';
 
 const router = Router();
 
@@ -624,6 +626,50 @@ router.post(
       return;
     }
     res.json({ success: true, data: result.result });
+  })
+);
+
+/**
+ * GET /api/presentation-studio/source-artifacts
+ *
+ * Read-only, tenant-scoped enumeration of source artifacts the user can
+ * attach to a Studio deck via the Setup form's source picker. Auth +
+ * `presentation_create` capability + tenant context required.
+ *
+ * Supported query params:
+ *   - limit (number, default 50, max 200) — soft cap on returned items.
+ *
+ * Tenant safety: `organizationId` comes from the authenticated session.
+ * Body / query overrides are ignored.
+ *
+ * Honest degraded UI: when the underlying database query fails the route
+ * STILL returns 200 with an empty `artifacts` array AND a typed warning so
+ * the picker can render an honest degraded state instead of a generic 5xx.
+ *
+ * Response shape:
+ *   - 200 `{ success: true, data: { artifacts, total, byType, generatedAt, warnings } }`
+ *   - 401 / 403 from auth + RBAC + tenant guards (PERMISSION_DENIED, NO_ORG_CONTEXT).
+ */
+router.get(
+  '/source-artifacts',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(403).json({
+        success: false,
+        error: 'Organization context required',
+        code: 'NO_ORG_CONTEXT',
+      });
+      return;
+    }
+    const rawLimit = Number(req.query?.limit);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : undefined;
+    const result = await listPresentationStudioSourceArtifacts({
+      organizationId: orgId,
+      limit,
+    });
+    res.json({ success: true, data: result });
   })
 );
 

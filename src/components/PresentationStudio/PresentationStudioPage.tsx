@@ -53,6 +53,8 @@ import {
   PresentationStudioApiError,
   PresentationStudioApprovalTicket,
   PresentationStudioSetupInput,
+  PresentationStudioSourceArtifactItem,
+  PresentationStudioSourceArtifactList,
   SourcePackPreviewResponse,
   TemplatePlanPreviewResponse,
 } from '@/services/api/presentationStudio.api';
@@ -63,6 +65,7 @@ import {
   PresentationStudioSetupFormValue,
   validatePresentationStudioSetupForm,
 } from './PresentationStudioSetupForm';
+import { PresentationStudioSourceArtifactPicker } from './PresentationStudioSourceArtifactPicker';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,6 +79,20 @@ interface PreviewState {
   templatePlan: TemplatePlanPreviewResponse | null;
   generate: GeneratePreviewResponse | null;
 }
+
+interface SourceArtifactsState {
+  loading: boolean;
+  error: string | null;
+  list: PresentationStudioSourceArtifactList | null;
+  selectedIds: string[];
+}
+
+const INITIAL_SOURCE_ARTIFACTS_STATE: SourceArtifactsState = {
+  loading: false,
+  error: null,
+  list: null,
+  selectedIds: [],
+};
 
 interface ApprovalState {
   /** Currently held single-use ticket. Null when none has been minted (or after redemption / expiry / rejection). */
@@ -129,29 +146,38 @@ function formatTicketRejection(reason: string | null | undefined): string {
 
 /**
  * Static, governance-aware extras the form does NOT yet expose. Audited as
- * intentionally constant for Sprint S8: source artifact picker and theme/
- * confidentiality controls land in a future sprint without touching the
- * approval flow contract.
+ * intentionally constant for the Studio surface; theme and confidentiality
+ * controls land in a future sprint without touching the approval flow
+ * contract. (S9 replaced the demo source artifact with the real
+ * tenant-scoped picker, so `sourceArtifacts` is no longer hard-coded here.)
  */
-const SETUP_NON_FORM_EXTRAS: Pick<
-  PresentationStudioSetupInput,
-  'theme' | 'confidentiality' | 'sourceArtifacts'
-> = {
+const SETUP_NON_FORM_EXTRAS: Pick<PresentationStudioSetupInput, 'theme' | 'confidentiality'> = {
   theme: 'corporate',
   confidentiality: 'internal',
-  sourceArtifacts: [
-    {
-      type: 'assessment',
-      id: 'demo-assessment-1',
-      label: 'Demo readiness assessment',
-      confidence: 0.7,
-      readiness: 'ready',
-    },
-  ],
 };
 
-/** Project the form value plus the static extras into the API setup shape. */
-function buildSetupFromForm(form: PresentationStudioSetupFormValue): PresentationStudioSetupInput {
+/**
+ * Project the form value plus the user-selected source artifacts into the
+ * API setup shape. We intentionally do NOT inject any default artifact
+ * when the user has selected nothing — the source pack preview will then
+ * render an honest empty / degraded state instead of a synthetic "ready".
+ */
+function buildSetupFromForm(
+  form: PresentationStudioSetupFormValue,
+  selectedArtifacts: PresentationStudioSourceArtifactItem[]
+): PresentationStudioSetupInput {
+  const sourceArtifacts = selectedArtifacts.map((artifact) => {
+    const projected: Record<string, unknown> = {
+      type: artifact.type,
+      id: artifact.id,
+      label: artifact.label,
+      readiness: artifact.readiness,
+    };
+    if (artifact.confidence != null) {
+      projected.confidence = artifact.confidence;
+    }
+    return projected;
+  });
   return {
     title: form.title.trim(),
     audience: form.audience,
@@ -159,6 +185,7 @@ function buildSetupFromForm(form: PresentationStudioSetupFormValue): Presentatio
     language: form.language,
     deckType: form.deckType,
     ...SETUP_NON_FORM_EXTRAS,
+    sourceArtifacts,
   };
 }
 
@@ -263,6 +290,9 @@ export const PresentationStudioPage: React.FC = () => {
   const [showFormErrors, setShowFormErrors] = useState<boolean>(false);
   const [state, setState] = useState<PreviewState>(INITIAL_STATE);
   const [approval, setApproval] = useState<ApprovalState>(INITIAL_APPROVAL_STATE);
+  const [sourceArtifactsState, setSourceArtifactsState] = useState<SourceArtifactsState>(
+    INITIAL_SOURCE_ARTIFACTS_STATE
+  );
   // Tick state used purely to drive the ticket TTL countdown re-render.
   // The numeric value is intentionally read by the countdown memos below so
   // the linter sees a real dependency, not a hidden `Date.now()` side effect.
@@ -270,7 +300,17 @@ export const PresentationStudioPage: React.FC = () => {
 
   const formErrors = useMemo(() => validatePresentationStudioSetupForm(formValue), [formValue]);
   const formIsValid = Object.keys(formErrors).length === 0;
-  const setup = useMemo(() => buildSetupFromForm(formValue), [formValue]);
+
+  const selectedArtifacts = useMemo<PresentationStudioSourceArtifactItem[]>(() => {
+    const all = sourceArtifactsState.list?.artifacts ?? [];
+    const selected = new Set(sourceArtifactsState.selectedIds);
+    return all.filter((a) => selected.has(a.id));
+  }, [sourceArtifactsState.list, sourceArtifactsState.selectedIds]);
+
+  const setup = useMemo(
+    () => buildSetupFromForm(formValue, selectedArtifacts),
+    [formValue, selectedArtifacts]
+  );
 
   /**
    * Setup form changes invalidate any in-flight approval flow because the
@@ -284,6 +324,44 @@ export const PresentationStudioPage: React.FC = () => {
     setFormValue(next);
     setApproval(INITIAL_APPROVAL_STATE);
   }, []);
+
+  /**
+   * Source picker selection changes also invalidate any in-flight ticket —
+   * `sourceArtifacts` is part of the canonical fingerprint payload, so a
+   * fresh selection requires a fresh ticket. We do NOT auto-rerun the
+   * preview; the user clicks Run preview again to refresh source / narrative
+   * / template / generate cards against the new selection.
+   */
+  const handleSourceSelectionChange = useCallback((nextIds: string[]) => {
+    setSourceArtifactsState((prev) => ({ ...prev, selectedIds: nextIds }));
+    setApproval(INITIAL_APPROVAL_STATE);
+  }, []);
+
+  const reloadSourceArtifacts = useCallback(async () => {
+    setSourceArtifactsState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const list = await PresentationStudioApi.listSourceArtifacts();
+      setSourceArtifactsState((prev) => {
+        // Drop any selected ids that are no longer in the freshly-loaded
+        // list so the picker never claims to "select" a missing artifact.
+        const validIds = new Set(list.artifacts.map((a) => a.id));
+        const selectedIds = prev.selectedIds.filter((id) => validIds.has(id));
+        return { loading: false, error: null, list, selectedIds };
+      });
+    } catch (error) {
+      setSourceArtifactsState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Unknown error loading source artifacts.',
+      }));
+    }
+  }, []);
+
+  // Initial fetch on mount. Subsequent reloads are user-driven via the
+  // picker's reload button.
+  useEffect(() => {
+    void reloadSourceArtifacts();
+  }, [reloadSourceArtifacts]);
 
   const runPreview = useCallback(async () => {
     if (!formIsValid) {
@@ -528,6 +606,16 @@ export const PresentationStudioPage: React.FC = () => {
           value={formValue}
           onChange={handleFormChange}
           showErrors={showFormErrors}
+          disabled={state.loading || approval.pending !== null}
+        />
+
+        <PresentationStudioSourceArtifactPicker
+          list={sourceArtifactsState.list}
+          loading={sourceArtifactsState.loading}
+          error={sourceArtifactsState.error}
+          selectedIds={sourceArtifactsState.selectedIds}
+          onSelectionChange={handleSourceSelectionChange}
+          onReload={reloadSourceArtifacts}
           disabled={state.loading || approval.pending !== null}
         />
 
