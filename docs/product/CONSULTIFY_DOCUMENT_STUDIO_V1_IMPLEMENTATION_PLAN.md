@@ -1116,6 +1116,43 @@ Without these fields, the audit trail cannot answer "did this proposal expand a 
 
 **Closes gaps.** §15.4 of the gap-vs-target report (spec §8.4 DocumentEdit contract) — SUBSTRATE DELIVERED. Service-layer wiring (proposal creation paths populate `editType` + optionally `proposedChanges`; snapshot service wires `versionBeforeId` + `versionAfterId` at execute-time) is scheduled as a follow-up slice on top of this substrate.
 
+### 6.15.9 Slice E15.5.formatting — Spec §8.5 FormattingSchema substrate
+
+**Why.** §15.5 of the gap-vs-target report flagged that `FormattingSchema` carries flat / binary fields where spec §8.5 demands richer structures:
+- `headingStyles` is a flat string descriptor (`{ h1: '16pt bold' }`) where spec demands per-level structured (`fontSizePt + bold + spacingBeforePt + spacingAfterPt`);
+- `coverPage` is a `boolean` where spec demands `{ enabled, includeLogo, includeStatus, includeConfidentiality }`;
+- `toc` is a `boolean` where spec demands `{ enabled, maxDepth }`;
+- `headers.content` (e.g. "Client Confidential | Consultify") is missing entirely;
+- `footers.pageNumberingFormat` (e.g. "Page X of Y") is hard-coded in the renderer rather than configurable.
+
+The cost of these gaps shows up most acutely in the DOCX renderer (cannot apply spec-grade Word styles per heading level), in regulated-tenant cover pages (cannot toggle confidentiality watermark independently of logo), and in multi-language deployments (cannot localize the "Page X of Y" format).
+
+**Substrate-only scope (no consumer wiring in this slice).** This slice is the riskiest of the §15 substrate batch because `FormattingSchema` is consumed by ~10 files (DOCX renderer, PDF renderer, materialize, QA pipeline, seed templates, draftTemplate). To eliminate consumer-side break risk, this slice ships ONLY new optional fields side-by-side with the existing flat fields — the legacy fields stay and keep their current semantics. Renderers that have not been upgraded continue to consume the flat fields; upgraded renderers branch on the structured fields and fall back to the flat ones otherwise. No service code is touched.
+
+**What ships in this slice.**
+- `documentStudioTypes.ts` — extend `FormattingSchema` with **5** backwards-compatible optional surfaces:
+    - `headingStylesDetailed?: { h1: HeadingStyleDescriptor; h2: ...; h3: ... }` where each descriptor carries `fontSizePt + bold + spacingBeforePt + spacingAfterPt`;
+    - `headers.content?: string` (extension of the existing `headers` object — adding optional fields to the inline shape stays backwards-compatible);
+    - `footers.pageNumberingFormat?: string` (same shape extension on the `footers` object);
+    - `tocConfig?: { enabled: boolean; maxDepth?: 1 | 2 | 3 }` (coexists with flat `toc: boolean`);
+    - `coverPageDetailed?: { enabled: boolean; includeLogo?: boolean; includeStatus?: boolean; includeConfidentiality?: boolean }` (coexists with flat `coverPage: boolean`).
+- New nested type: `HeadingStyleDescriptor`.
+- Two new public helpers exported from `documentStudioTypes.ts`:
+    - `formattingSchemaHasStructuredHeadings(schema)` — true iff all three descriptors (h1/h2/h3) are present and every required field is finite-numeric / boolean. Defensive against partial / NaN / non-boolean inputs.
+    - `summarizeFormattingSchemaSpecExtensions(schema)` — collapses the 5 substrate surfaces into a stable plain-object summary `{ hasStructuredHeadings, tocEnabled, tocMaxDepth, coverPageEnabled, coverPageIncludesLogo, coverPageIncludesStatus, coverPageIncludesConfidentiality, headerContent, footerPageNumberingFormat }`. Each field reports the *effective* value the renderer should use: structured wins when present, flat legacy field's value otherwise. `null` means "no signal yet". Stable shape, never throws, never mutates.
+
+**Backwards compatibility.** Pre-E15.5.formatting schemas continue to work unchanged. The DOCX + PDF renderers, the materialize service, the QA pipeline, draftTemplate, and the seed-template generator all consume the legacy flat fields (`headingStyles`, `toc`, `coverPage`, `headers.enabled`, `footers.*`); none are touched in this slice. The `headers` and `footers` shape extensions add optional fields that pre-E15.5.formatting code paths simply do not read — backwards-compatible by JavaScript contract. No FE mirror is needed because the frontend currently does not consume `FormattingSchema` directly (it only displays it as opaque metadata).
+
+**Coverage.** New `documentFormattingSchemaSpecFields.test.ts` with **19** specs:
+- legacy backwards-compat (2): all 5 new substrate surfaces undefined; flat fields keep semantics;
+- new fields acceptance (6): each substrate surface accepts independent assignment; all-five coexistence;
+- `formattingSchemaHasStructuredHeadings` contract (4): null / undefined / legacy → false; fully populated → true; non-finite (NaN) descriptor field → false; non-boolean `bold` → false (defensive);
+- `summarizeFormattingSchemaSpecExtensions` contract (7): empty summary for null / undefined; legacy schema reports flat fallback values; detailed config overrides flat fallback for toc + coverPage; header / footer extensions are trimmed; whitespace-only collapses to null; `hasStructuredHeadings` wired through; immutability; out-of-range `maxDepth` collapses to null.
+
+**Validation.** Document Studio + Execution Module Standard suite **698/698 green** (+19 from E15.5.formatting). tsc clean for the modified files. ESLint clean for all modified files after `--fix`.
+
+**Closes gaps.** §15.5 of the gap-vs-target report (spec §8.5 FormattingSchema contract) — SUBSTRATE DELIVERED. Renderer wiring (DOCX renderer branches on `headingStylesDetailed`; PDF renderer follows; cover-page renderer consumes `coverPageDetailed`; TOC renderer consumes `tocConfig.maxDepth`; header / footer renderers consume `headers.content` and `footers.pageNumberingFormat`) is scheduled as a follow-up slice on top of this substrate. **With this slice, §15 data-model coverage is now 5/5 substrate-complete** (§15.1 → §15.5 all delivered).
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export

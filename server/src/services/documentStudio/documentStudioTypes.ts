@@ -170,6 +170,43 @@ export function documentSourceRefHasVersionPin(ref: DocumentSourceRef | undefine
   return versionPinned || snapshotPinned;
 }
 
+/**
+ * Slice E15.5.formatting (§15.5 of the gap-vs-target report) —
+ * spec §8.5 substrate. Closes the structural-formatting contract
+ * gaps without breaking any of the existing flat fields:
+ *   - structured `headingStyles` per level (font_size + bold +
+ *     spacing_before/after) — the current `headingStyles: { h1:
+ *     string; h2: string; h3: string }` flat string descriptor
+ *     stays in place for legacy renderers, but the new
+ *     `headingStylesDetailed` carries the structured shape that
+ *     spec §8.5 demands;
+ *   - `headers.content` (e.g. "Client Confidential | Consultify");
+ *   - `footers.pageNumberingFormat` (e.g. "Page X of Y");
+ *   - `coverPage` as an object with `includeLogo / includeStatus /
+ *     includeConfidentiality` flags vs. today's binary `coverPage:
+ *     boolean`;
+ *   - `toc.maxDepth` vs. today's binary `toc: boolean`.
+ *
+ * Substrate-only: the existing flat fields STAY because the DOCX
+ * + PDF renderers, the QA pipeline, and the materialize service
+ * all consume them today. Adding the structured fields side-by-
+ * side gives renderers a forward-compatible upgrade path: when a
+ * renderer becomes aware of `headingStylesDetailed`, it can
+ * branch on its presence and fall back to the flat descriptor
+ * otherwise. This slice does NOT touch any consumer; the upgrade
+ * is delegated to follow-up slices in the renderer / QA / FE-E2
+ * Properties tab.
+ */
+export interface HeadingStyleDescriptor {
+  /** Point size matching `formattingSchema.fonts.heading`. */
+  fontSizePt: number;
+  bold: boolean;
+  /** Vertical space before the heading paragraph (points). */
+  spacingBeforePt: number;
+  /** Vertical space after the heading paragraph (points). */
+  spacingAfterPt: number;
+}
+
 export interface FormattingSchema {
   fonts: { body: string; heading: string; mono?: string };
   headingStyles: { h1: string; h2: string; h3: string };
@@ -179,12 +216,181 @@ export interface FormattingSchema {
     size: 'A4' | 'Letter';
     marginsCm: { top: number; bottom: number; left: number; right: number };
   };
-  headers: { enabled: boolean };
-  footers: { enabled: boolean; pageNumbering: boolean; confidentialityLabel: boolean };
+  headers: {
+    enabled: boolean;
+    /**
+     * Slice E15.5.formatting — header content (e.g. "Client
+     * Confidential | Consultify"). Optional / backwards-compatible.
+     * Renderers may ignore this field until they explicitly
+     * upgrade to consume it.
+     */
+    content?: string;
+  };
+  footers: {
+    enabled: boolean;
+    pageNumbering: boolean;
+    confidentialityLabel: boolean;
+    /**
+     * Slice E15.5.formatting — page-numbering format string (e.g.
+     * "Page X of Y", "X / Y", "Strona X z Y"). Optional /
+     * backwards-compatible. Renderers may ignore this field until
+     * they explicitly upgrade to consume it.
+     */
+    pageNumberingFormat?: string;
+  };
   toc: boolean;
   coverPage: boolean;
   appendixStyle: 'lettered' | 'numbered' | 'none';
   citationStyle: 'inline_marker' | 'footnote' | 'endnote';
+
+  // ---------------------------------------------------------------------
+  // Slice E15.5.formatting (§15.5) — spec §8.5 substrate. All optional /
+  // backwards-compatible. Renderers / QA / FE-E2 stay forward-compatible
+  // because the legacy flat fields above (`headingStyles`, `toc`,
+  // `coverPage`, `headers.enabled`, `footers.*`) keep their existing
+  // semantics. Consumer wiring is delegated to follow-up slices.
+  // ---------------------------------------------------------------------
+  /**
+   * Per-level structured heading style descriptors. When present,
+   * upgraded renderers consume this (with `headingStyles` as a
+   * fallback hint). Legacy renderers ignore this field entirely.
+   */
+  headingStylesDetailed?: {
+    h1: HeadingStyleDescriptor;
+    h2: HeadingStyleDescriptor;
+    h3: HeadingStyleDescriptor;
+  };
+  /**
+   * TOC configuration object. When present, upgraded renderers
+   * consume `enabled` (overrides `toc`) and `maxDepth` (caps the
+   * depth of generated TOC entries). Legacy renderers ignore this
+   * field and continue to honour the binary `toc: boolean`.
+   */
+  tocConfig?: {
+    enabled: boolean;
+    maxDepth?: 1 | 2 | 3;
+  };
+  /**
+   * Cover-page configuration object. When present, upgraded
+   * renderers consume `enabled` (overrides `coverPage`) plus the
+   * three `include*` flags. Legacy renderers ignore this field
+   * and continue to honour the binary `coverPage: boolean`.
+   */
+  coverPageDetailed?: {
+    enabled: boolean;
+    includeLogo?: boolean;
+    includeStatus?: boolean;
+    includeConfidentiality?: boolean;
+  };
+}
+
+/**
+ * Slice E15.5.formatting helper — true if the schema carries the
+ * full per-level structured heading descriptors. Consumers branch
+ * on this to decide whether to apply the rich H1/H2/H3 style
+ * recipe or fall back to the flat `headingStyles` strings.
+ * Defensive: returns false if any of h1/h2/h3 is missing or if
+ * any required field on a descriptor is missing.
+ */
+export function formattingSchemaHasStructuredHeadings(
+  schema: FormattingSchema | undefined | null
+): boolean {
+  if (!schema || !schema.headingStylesDetailed) return false;
+  const { h1, h2, h3 } = schema.headingStylesDetailed;
+  for (const d of [h1, h2, h3]) {
+    if (!d) return false;
+    if (typeof d.fontSizePt !== 'number' || !Number.isFinite(d.fontSizePt)) return false;
+    if (typeof d.bold !== 'boolean') return false;
+    if (typeof d.spacingBeforePt !== 'number' || !Number.isFinite(d.spacingBeforePt)) return false;
+    if (typeof d.spacingAfterPt !== 'number' || !Number.isFinite(d.spacingAfterPt)) return false;
+  }
+  return true;
+}
+
+/**
+ * Slice E15.5.formatting helper — collapses the §15.5 substrate
+ * fields into a stable plain-object summary suitable for log
+ * lines, audit entries, and the FE-E2 Properties tab "Formatting"
+ * row. Stable shape, never throws, never mutates input.
+ *
+ * Each field reports the *effective* value the renderer should
+ * use: when the structured field is present, it wins; otherwise
+ * the flat legacy field's value is reported. `null` means the
+ * schema does not carry meaningful info for that surface yet.
+ */
+export function summarizeFormattingSchemaSpecExtensions(
+  schema: FormattingSchema | undefined | null
+): {
+  hasStructuredHeadings: boolean;
+  tocEnabled: boolean | null;
+  tocMaxDepth: 1 | 2 | 3 | null;
+  coverPageEnabled: boolean | null;
+  coverPageIncludesLogo: boolean | null;
+  coverPageIncludesStatus: boolean | null;
+  coverPageIncludesConfidentiality: boolean | null;
+  headerContent: string | null;
+  footerPageNumberingFormat: string | null;
+} {
+  if (!schema) {
+    return {
+      hasStructuredHeadings: false,
+      tocEnabled: null,
+      tocMaxDepth: null,
+      coverPageEnabled: null,
+      coverPageIncludesLogo: null,
+      coverPageIncludesStatus: null,
+      coverPageIncludesConfidentiality: null,
+      headerContent: null,
+      footerPageNumberingFormat: null,
+    };
+  }
+  const trimOrNull = (v: unknown): string | null => {
+    if (typeof v !== 'string') return null;
+    const trimmed = v.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  };
+  const tocEnabled =
+    schema.tocConfig && typeof schema.tocConfig.enabled === 'boolean'
+      ? schema.tocConfig.enabled
+      : typeof schema.toc === 'boolean'
+        ? schema.toc
+        : null;
+  const tocMaxDepth =
+    schema.tocConfig &&
+    (schema.tocConfig.maxDepth === 1 ||
+      schema.tocConfig.maxDepth === 2 ||
+      schema.tocConfig.maxDepth === 3)
+      ? schema.tocConfig.maxDepth
+      : null;
+  const coverPageEnabled =
+    schema.coverPageDetailed && typeof schema.coverPageDetailed.enabled === 'boolean'
+      ? schema.coverPageDetailed.enabled
+      : typeof schema.coverPage === 'boolean'
+        ? schema.coverPage
+        : null;
+  return {
+    hasStructuredHeadings: formattingSchemaHasStructuredHeadings(schema),
+    tocEnabled,
+    tocMaxDepth,
+    coverPageEnabled,
+    coverPageIncludesLogo:
+      schema.coverPageDetailed && typeof schema.coverPageDetailed.includeLogo === 'boolean'
+        ? schema.coverPageDetailed.includeLogo
+        : null,
+    coverPageIncludesStatus:
+      schema.coverPageDetailed && typeof schema.coverPageDetailed.includeStatus === 'boolean'
+        ? schema.coverPageDetailed.includeStatus
+        : null,
+    coverPageIncludesConfidentiality:
+      schema.coverPageDetailed &&
+      typeof schema.coverPageDetailed.includeConfidentiality === 'boolean'
+        ? schema.coverPageDetailed.includeConfidentiality
+        : null,
+    headerContent: schema.headers ? trimOrNull(schema.headers.content) : null,
+    footerPageNumberingFormat: schema.footers
+      ? trimOrNull(schema.footers.pageNumberingFormat)
+      : null,
+  };
 }
 
 /**
