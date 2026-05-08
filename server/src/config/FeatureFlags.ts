@@ -24,6 +24,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(false),
   ENABLE_RECORD_PROVENANCE: z.boolean().default(false),
   ENABLE_TABLE_AI_EDITOR: z.boolean().default(false),
+  ENABLE_TABLE_QA_ENGINE: z.boolean().default(false),
   ENABLE_V8_GLOBAL: z.boolean().default(false),
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
 });
@@ -71,6 +72,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // Disabled by default until C-S2 lands real handlers; route layer still
     // honours the budget gate + audit pipeline so QA can exercise the wiring.
     ENABLE_TABLE_AI_EDITOR: process.env.ENABLE_TABLE_AI_EDITOR === 'true',
+
+    // Block C (Table QA Engine): deterministic 5-axis health scoring +
+    // suggestion synthesis on top of TableQaService. Disabled by default until
+    // C-S5 ships TabeleQaPanel; routes still honour cross-tenant defenses so
+    // backend QA can exercise the pipeline before the UI lands.
+    ENABLE_TABLE_QA_ENGINE: process.env.ENABLE_TABLE_QA_ENGINE === 'true',
 
     // V8: global kill switch for all V8 features
     ENABLE_V8_GLOBAL: process.env.ENABLE_V8_GLOBAL === 'true',

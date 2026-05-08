@@ -85,6 +85,20 @@ export {
 } from './SpecializedFieldTypes.js';
 export { SSOService, ssoService } from './SSOService.js';
 export { default as TableContextService } from './TableContextService.js';
+export {
+  AXIS_WEIGHTS as TABLE_QA_AXIS_WEIGHTS,
+  type ComputeReportInput as QaComputeReportInput,
+  type MarkInapplicableInput as QaMarkInapplicableInput,
+  type QaAxisDetail,
+  type QaAxisName,
+  type QaBand,
+  type QaReport,
+  type QaSuggestion,
+  type QaSuggestionLevel,
+  type QaTriggerKind,
+  TableQaError,
+  default as TableQaService,
+} from './TableQaService.js';
 export type {
   ApprovalHistoryEntry,
   LifecycleMutationOptions,
