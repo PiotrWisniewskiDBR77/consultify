@@ -266,3 +266,6 @@ knowledge/**/*.docx
 
 # Duplicate lib artifacts
 /lib/
+
+# Local IDE/sync backup folder (auto-managed, never tracked)
+.drive-sync-backup/
