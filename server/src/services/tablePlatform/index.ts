@@ -83,6 +83,16 @@ export {
   type SpecializedFieldType,
   validateSpecializedField,
 } from './SpecializedFieldTypes.js';
+export {
+  type CreatePackInput as SourcePackCreateInput,
+  type FindCandidatesInput as SourcePackFindCandidatesInput,
+  type ListPacksInput as SourcePackListInput,
+  type SourcePack,
+  type SourcePackCandidate,
+  SourcePackError,
+  type SourcePackSnapshot,
+  default as SourcePackBuilderService,
+} from './SourcePackBuilderService.js';
 export { SSOService, ssoService } from './SSOService.js';
 export { default as TableContextService } from './TableContextService.js';
 export {

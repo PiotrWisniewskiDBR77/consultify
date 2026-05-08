@@ -23,13 +23,16 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type {
   AiEditorLevel,
   QaSuggestion,
+  SourcePack,
 } from '@/services/api/tablePlatform.api';
 import { isTabeleAiEditorEnabled } from '@/utils/tabeleAiEditorFlag';
 import { isTabeleQaEnabled } from '@/utils/tabeleQaFlag';
+import { isTabeleSourcePackEnabled } from '@/utils/tabeleSourcePackFlag';
 
 import type { TabeleRightRailPanelRenderers } from './TabeleRightRail';
 import { TabeleAiEditorPanel } from './aiEditor/TabeleAiEditorPanel';
 import { TabeleQaPanel } from './qa/TabeleQaPanel';
+import { TabeleSourcePackPanel } from './sourcePack/TabeleSourcePackPanel';
 
 export interface UseTabeleRightRailPanelsArgs {
   tableId: string | null | undefined;
@@ -71,6 +74,17 @@ function presetFromSuggestion(s: QaSuggestion, nonce: number): AiEditorPreset {
   };
 }
 
+function presetFromPack(pack: SourcePack, nonce: number): AiEditorPreset {
+  // Default the AI Editor to column-fill since that's the most common reason
+  // a curator hands a pack to AI; the user can switch level inside the panel.
+  return {
+    level: 'column',
+    prompt: `Use source pack "${pack.name}" to fill missing values.`,
+    context: { sourcePackId: pack.id, packName: pack.name },
+    nonce,
+  };
+}
+
 export function useTabeleRightRailPanels(
   args: UseTabeleRightRailPanelsArgs
 ): UseTabeleRightRailPanelsResult {
@@ -81,10 +95,17 @@ export function useTabeleRightRailPanels(
   const aiEditorEnabled =
     forceEnableForTesting === true || isTabeleAiEditorEnabled();
   const qaEnabled = forceEnableForTesting === true || isTabeleQaEnabled();
+  const sourcePackEnabled =
+    forceEnableForTesting === true || isTabeleSourcePackEnabled();
 
   const handleOpenInAiEditor = useCallback((s: QaSuggestion) => {
     presetCounter.current += 1;
     setPreset(presetFromSuggestion(s, presetCounter.current));
+  }, []);
+
+  const handleUsePackInAiEditor = useCallback((pack: SourcePack) => {
+    presetCounter.current += 1;
+    setPreset(presetFromPack(pack, presetCounter.current));
   }, []);
 
   const rightRailPanels = useMemo<TabeleRightRailPanelRenderers>(() => {
@@ -94,6 +115,15 @@ export function useTabeleRightRailPanels(
     if (qaEnabled) {
       panels.qaReport = (
         <TabeleQaPanel tableId={tableId} onOpenInAiEditor={handleOpenInAiEditor} />
+      );
+    }
+    if (sourcePackEnabled && workspaceId) {
+      panels.sourcePack = (
+        <TabeleSourcePackPanel
+          tableId={tableId}
+          workspaceId={workspaceId}
+          onUseInAiEditor={handleUsePackInAiEditor}
+        />
       );
     }
     if (aiEditorEnabled && workspaceId) {
@@ -120,13 +150,17 @@ export function useTabeleRightRailPanels(
     workspaceId,
     qaEnabled,
     aiEditorEnabled,
+    sourcePackEnabled,
     isSuperAdmin,
     handleOpenInAiEditor,
+    handleUsePackInAiEditor,
     preset,
   ]);
 
   return {
     rightRailPanels,
-    panelsActive: Boolean(rightRailPanels.qaReport || rightRailPanels.aiEditor),
+    panelsActive: Boolean(
+      rightRailPanels.qaReport || rightRailPanels.aiEditor || rightRailPanels.sourcePack
+    ),
   };
 }

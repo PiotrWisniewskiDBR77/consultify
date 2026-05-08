@@ -31,6 +31,11 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
   recomputeQaReport: vi.fn(),
   getLatestQaReport: vi.fn().mockResolvedValue(null),
   dismissQaSuggestion: vi.fn(),
+  findSourcePackCandidates: vi.fn().mockResolvedValue([]),
+  createSourcePack: vi.fn(),
+  listSourcePacksForTable: vi.fn().mockResolvedValue([]),
+  listSourcePacksForWorkspace: vi.fn().mockResolvedValue([]),
+  markSourcePackUsed: vi.fn(),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -54,6 +59,7 @@ const Probe: React.FC<{
       <span data-testid="panels-active">{String(panelsActive)}</span>
       <div data-testid="qa-slot">{rightRailPanels.qaReport ?? null}</div>
       <div data-testid="ai-slot">{rightRailPanels.aiEditor ?? null}</div>
+      <div data-testid="source-pack-slot">{rightRailPanels.sourcePack ?? null}</div>
     </div>
   );
 };
@@ -69,16 +75,18 @@ describe('useTabeleRightRailPanels', () => {
     expect(screen.getByTestId('panels-active')).toHaveTextContent('false');
   });
 
-  it('renders both panels when forced enabled with tableId and workspaceId', () => {
+  it('renders all three panels when forced enabled with tableId and workspaceId', () => {
     render(<Probe tableId="tbl-1" workspaceId="ws-1" forced />);
     expect(screen.getByTestId('panels-active')).toHaveTextContent('true');
     expect(screen.getByTestId('tabele-qa-panel')).toBeInTheDocument();
     expect(screen.getByTestId('tabele-ai-editor-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('tabele-source-pack-panel')).toBeInTheDocument();
   });
 
-  it('omits AI Editor panel when workspaceId is missing', () => {
+  it('omits AI Editor and Source Pack panels when workspaceId is missing', () => {
     render(<Probe tableId="tbl-1" workspaceId={null} forced />);
     expect(screen.queryByTestId('tabele-ai-editor-panel')).toBeNull();
+    expect(screen.queryByTestId('tabele-source-pack-panel')).toBeNull();
     // QA still renders since it only needs a tableId.
     expect(screen.getByTestId('tabele-qa-panel')).toBeInTheDocument();
   });

@@ -25,6 +25,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_RECORD_PROVENANCE: z.boolean().default(false),
   ENABLE_TABLE_AI_EDITOR: z.boolean().default(false),
   ENABLE_TABLE_QA_ENGINE: z.boolean().default(false),
+  ENABLE_TABLE_SOURCE_PACK: z.boolean().default(false),
   ENABLE_V8_GLOBAL: z.boolean().default(false),
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
 });
@@ -78,6 +79,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // C-S5 ships TabeleQaPanel; routes still honour cross-tenant defenses so
     // backend QA can exercise the pipeline before the UI lands.
     ENABLE_TABLE_QA_ENGINE: process.env.ENABLE_TABLE_QA_ENGINE === 'true',
+
+    // Block C (Source Pack Builder): curator-driven bundle of records that the
+    // AI Editor can later consume (`payload.sourcePackId`). Disabled by default
+    // until C-S6 frontend lands; the route layer still applies cross-tenant
+    // defenses so backend QA can exercise the pipeline.
+    ENABLE_TABLE_SOURCE_PACK: process.env.ENABLE_TABLE_SOURCE_PACK === 'true',
 
     // V8: global kill switch for all V8 features
     ENABLE_V8_GLOBAL: process.env.ENABLE_V8_GLOBAL === 'true',

@@ -1842,3 +1842,150 @@ export async function dismissQaSuggestion(
   const data = await handleResponse<any>(res, 'Failed to dismiss QA suggestion');
   return unwrapDataEnvelope(data);
 }
+
+// ============================================================================
+// SOURCE PACK API (Block C · EPIC-T12 · Sprint C-S6 frontend client)
+// ============================================================================
+
+export interface SourcePackCandidate {
+  recordId: string;
+  tableId: string;
+  title: string;
+  preview: string;
+  updatedAt: string;
+  confidenceScore: number | null;
+  hasVerifiedSource: boolean;
+  validationStatus: string;
+  rankScore: number;
+  rankSignals: {
+    lexical: number;
+    recency: number;
+    confidence: number;
+    verifiedSource: number;
+  };
+}
+
+export interface SourcePackSnapshot {
+  records: Array<{
+    id: string;
+    data: Record<string, unknown>;
+    confidenceScore: number | null;
+    validationStatus: string;
+    updatedAt: string;
+  }>;
+  fields: Array<{ id: string; name: string; fieldType: string }>;
+  capturedAt: string;
+  captureSource: 'source_pack_create';
+}
+
+export interface SourcePack {
+  id: string;
+  organizationId: string;
+  workspaceId: string;
+  ownerUserId: string;
+  tableId: string | null;
+  name: string;
+  description: string | null;
+  candidateRecordIds: string[];
+  v8Snapshot: SourcePackSnapshot;
+  createdAt: string;
+  updatedAt: string;
+  usedCount: number;
+  archivedAt: string | null;
+}
+
+export interface FindCandidatesOptions {
+  query?: string;
+  verifiedOnly?: boolean;
+  recencyDays?: number | null;
+  limit?: number;
+}
+
+export async function findSourcePackCandidates(
+  tableId: string,
+  options: FindCandidatesOptions = {}
+): Promise<SourcePackCandidate[]> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/source-pack/find-candidates`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(options),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to find source pack candidates');
+  return unwrapDataEnvelope<SourcePackCandidate[]>(data) ?? [];
+}
+
+export async function createSourcePack(input: {
+  tableId: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  candidateRecordIds: string[];
+}): Promise<SourcePack> {
+  const { tableId, ...body } = input;
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/source-pack/create`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to create source pack');
+  return unwrapDataEnvelope<SourcePack>(data);
+}
+
+export async function getSourcePack(packId: string): Promise<SourcePack | null> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/source-packs/${encodeURIComponent(packId)}`,
+    { headers: getHeaders() }
+  );
+  if (res.status === 404) return null;
+  const data = await handleResponse<any>(res, 'Failed to fetch source pack');
+  return unwrapDataEnvelope<SourcePack>(data);
+}
+
+export async function listSourcePacksForTable(
+  tableId: string,
+  options: { includeArchived?: boolean; limit?: number } = {}
+): Promise<SourcePack[]> {
+  const params = new URLSearchParams();
+  if (options.includeArchived) params.set('includeArchived', 'true');
+  if (options.limit) params.set('limit', String(options.limit));
+  const qs = params.toString();
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/source-packs${qs ? `?${qs}` : ''}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to list source packs');
+  return unwrapDataEnvelope<SourcePack[]>(data) ?? [];
+}
+
+export async function listSourcePacksForWorkspace(
+  workspaceId: string,
+  options: { includeArchived?: boolean; limit?: number } = {}
+): Promise<SourcePack[]> {
+  const params = new URLSearchParams();
+  if (options.includeArchived) params.set('includeArchived', 'true');
+  if (options.limit) params.set('limit', String(options.limit));
+  const qs = params.toString();
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/workspaces/${encodeURIComponent(workspaceId)}/source-packs${qs ? `?${qs}` : ''}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to list source packs');
+  return unwrapDataEnvelope<SourcePack[]>(data) ?? [];
+}
+
+export async function markSourcePackUsed(
+  packId: string
+): Promise<{ packId: string; usedCount: number }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/source-packs/${encodeURIComponent(packId)}/used`,
+    { method: 'POST', headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to mark source pack used');
+  return unwrapDataEnvelope(data);
+}

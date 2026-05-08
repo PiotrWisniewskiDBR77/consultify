@@ -246,6 +246,7 @@ import tablePlatformAiEditorRoutes from './routes/table-platform.ai-editor.route
 import tablePlatformQaRoutes from './routes/table-platform.qa.routes.js';
 import tablePlatformRelationsExplainRoutes from './routes/table-platform.relations-explain.routes.js';
 import tablePlatformRoutes, { publicFormRouter } from './routes/table-platform.routes.js';
+import tablePlatformSourcePackRoutes from './routes/table-platform.source-pack.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import testSupportRoutes from './routes/testSupport.routes.js';
 import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
@@ -798,6 +799,7 @@ export class ApiGateway {
       app.use('/api/table-platform', tablePlatformRecordSourcesRoutes);
       app.use('/api/table-platform', tablePlatformAiEditorRoutes);
       app.use('/api/table-platform', tablePlatformQaRoutes);
+      app.use('/api/table-platform', tablePlatformSourcePackRoutes);
       app.use('/api/table-platform', publicFormRouter);
       app.use('/api/table-platform', dataCollectionRoutes);
       app.use('/api/studio', studioRoutes);
