@@ -250,6 +250,50 @@ A fifth MVP-3 slice has shipped, focused on closing the security gap around the 
 
 ---
 
+## 6.5 MVP-3 deferred items — recovery sprints 1 → 4
+
+The following batches close the four largest items the original MVP-3 plan deferred to a "follow-up slice" (template registry persistence, the seven missing QA categories, and AI Editor methodology + source scopes) plus a Teresa-side chat intent auto-detector that removes the manual scope picker from the UI. All four sprints are landed on `staging` of the `consultify` submodule and validated by the Document Studio test suite (220 / 220 vitest specs across 26 files green; full server `tsc --noEmit` clean).
+
+### 6.5.1 Sprint 1 — Template registry persistence + 22 system seeded templates
+
+- **DAO**: `documentTemplateRegistryDao.ts` — `loadTemplatesForOrg`, `loadTemplateById`, `persistTemplate`, `loadAuditForTemplate`, `persistAuditEntry`, plus `__resetTemplateRegistryDaoForTests`. Tenant boundary keyed on `${organizationId}::${templateId}`; the synthetic `SYSTEM_ORG_ID = '__system__'` namespace hosts the curated catalogue without leaking into tenant queries.
+- **Migration**: `server/migrations/769_document_studio_templates.sql` adds the `document_studio_templates` and `document_studio_template_audit` tables with org-scoped indexes and `ON CONFLICT DO NOTHING` upsert semantics for the seeder path.
+- **Seeder**: `documentTemplateSeeder.ts` — `seedSystemDocumentTemplates()` provisions one PL + one EN approved template for each of the 22 `DocumentTypeKey` values. Idempotent at the DAO level; per-process cached so cold-start hydration is a one-shot O(catalogue) read.
+- **Service hydration + write-through**: `documentTemplateService.ts` exposes `ensureTemplateRegistryHydrated(organizationId)` which runs the seeder once and then loads tenant + system templates into the in-process registry. `draftTemplate`, `draftTemplateAsync`, `approveTemplate`, `deprecateTemplate` and `pushAudit` all write through to the DAO best-effort (failures fall back to in-memory operation, never throw). `getTemplate` falls back to `SYSTEM_ORG_ID` for the curated catalogue; `listTemplates` merges system templates without duplication. `__resetTemplateRegistryAndPersistenceForTests` clears both layers between specs.
+- **Routes**: `document-studio.routes.ts` `await`s `ensureTemplateRegistryHydrated(organizationId)` before list / get / audit reads so a cold-start process always serves the persisted catalogue rather than an empty cache.
+- **Tests**: `documentTemplateRegistryPersistence.test.ts`, `documentTemplateSeeder.test.ts` (covers the 22 × 2 catalogue, idempotency, and tenant isolation).
+
+### 6.5.2 Sprint 2 — Completeness / Methodology / Executive QA
+
+- `runCompletenessQa(schema, template?)` — empty schema, empty section, blueprint-required section missing, blueprint-optional length floor, type-aware Executive Summary requirement (`EXEC_SUMMARY_REQUIRED` set) and Decision section requirement (`DECISION_SECTION_REQUIRED` set). Title fuzzy match: NFD normalize + `ł→l` + token-set inclusion (tolerates "Findings — operational diagnostic" matching the blueprint's "Findings"). `completeness_required_section_missing` and `completeness_empty_section` are `high` severity so two missing sections collapse the score below the 70 blocking threshold.
+- `runMethodologyQa(schema, template?)` — blueprint order trace (monotonic increasing index of fuzzy-matched sections), `methodology_optional_section_missing` (`low`), `methodology_drift_section` (`low`), and type-aware structural requirements: `METHODOLOGY_REQUIRED_TYPES` → `methodology_missing_methodology_section` (`high`), `ASSUMPTIONS_REQUIRED_TYPES` → `methodology_missing_assumptions_section` (`medium`), `RISKS_REQUIRED_TYPES` → `methodology_missing_risks_section` (`medium`).
+- `runExecutiveQa(schema)` — Executive Summary word budget (≤ 220), action-verb gate (PL: `rekomendujemy`/`decydujemy`/…, EN: `recommend`/`approve`/…), thin-decision-section detection, owner attribution (CFO/CIO/PMO/sponsor/etc), and time-anchor regex (Q1–Q4 / months / day counts / 30/60/90). Non-executive types (`workshop_summary`, `generic_document`, …) short-circuit clean.
+- **Tests**: `documentQaCompleteness.test.ts` (10), `documentQaMethodology.test.ts` (10), `documentQaExecutive.test.ts` (10) — 30/30 green.
+
+### 6.5.3 Sprint 3 — Risk / Data / Format / Export QA (Full QA Engine 10/10)
+
+- `runRiskQa(schema)` — section-presence on `RISK_BEARING_TYPES`, severity / mitigation / owner heuristics (PL + EN) on populated narrative blocks, structural `risk_table` row count, "section exists but no narrative AND no populated risk_table" → high empty-section finding stacked with a blocking-export finding for `RISK_CRITICAL_TYPES` (`risk_register_report`, `ai_audit_report`).
+- `runDataQa(schema)` — multi-currency mixing without an FX phrase, conflicting KPI percentage values keyed by the last two normalized tokens of the KPI label (per-block regex avoids cross-line bleed), placeholder values (`TBD` / `N/A` / `XXX` / `do uzupełnienia`) with severity escalating from `low` to `medium` once a hard placeholder shows up, empty `kpi_strip` block detection, and ≥ 3 distinct date-format detection.
+- `runFormatQa(schema)` — heading-level skip across sections, in-section heading skip inside the block stream, empty / single-item lists, table without header row, and consecutive-empty-paragraph whitespace artifact.
+- `runExportQa(schema)` — `export_missing_formatting_schema` (`high` × 2 stacked → blocking), `export_formatting_schema_keys_missing` (page.size / fonts / headingStyles), `export_cover_page_without_title`, `export_toc_without_level_one`, `export_appendix_style_without_sections` (`low`), `export_confidentiality_footer_without_value` (`low`), `export_zero_content_after_walk` (`high` × 2 stacked → blocking).
+- **Engine envelope**: `runDocumentQa(schema, options?)` accepts `RunDocumentQaOptions` with the optional `template`. Categories run in stable order: `brand → language → completeness → sources → methodology → executive → risk → data → format → export`. `anyBlocking` aggregates as before. `documentQaService.test.ts` and `documentStudioExportQaGate.test.ts` are updated to assert the 10-category ordering.
+- **Tests**: `documentQaRisk.test.ts` (10), `documentQaData.test.ts` (11), `documentQaFormat.test.ts` (10), `documentQaExport.test.ts` (10) — 41/41 green.
+
+### 6.5.4 Sprint 4 — AI Editor methodology + source scopes + Teresa chat intent auto-detect
+
+- **Type extension**: `DocumentEditorScope` in `documentStudioTypes.ts` is extended from `local | section | global` to `local | section | global | methodology | source`. Methodology rewrites refresh prose anchored on the document's methodology / approach sections; source rewrites tighten language while preserving every citation marker, every number and every named entity verbatim.
+- **Refiner guardrails**: `documentEditorRefiner.ts` adds scope-specific clauses to `buildSystemPrompt` so the LLM cannot invent new methodology steps (`MUST NOT invent new methodology steps, reorder existing steps, or paraphrase the methodology contract`) and cannot change citation markers or quantitative facts on a `source` rewrite. A post-rewrite preservation guard `preservesSourceFactsAndCitations(before, after)` enforces multiset equality of `[#n]` / `[i]` markers and decimal numbers; failed guards reject the rewrite and fall back to the deterministic baseline.
+- **Service slices**: `documentStudioService.ts` adds `createMethodologyEditProposal` and `createSourceEditProposal`. `applyProposalToSchema` is refactored to honour the new scopes — methodology proposals are scoped to sections matched by `isMethodologyAlignedSection` (PL `Metodologia` / `Założenia` / EN `Methodology` / `Approach` / `Scope`); source proposals only mutate blocks that carry `block.sourceRef`. Audit trail entries record the new scope plus the section / block targets used.
+- **Teresa chat intent classifier**: `documentTeresaIntent.ts` exposes `detectTeresaEditorIntent(input): TeresaEditorIntent | null`. PL+EN lexicons (`SOURCE_PHRASES`, `METHODOLOGY_PHRASES`, `GLOBAL_PHRASES`, `SECTION_PHRASES`, `LOCAL_PHRASES`) drive a precedence pipeline: source > methodology > global > local > section > cursor-fallback > null. Polish character normalization includes the explicit `ł → l` substitution after `NFD` because the standard Unicode normalizer leaves `ł` un-decomposed. The chat panel calls this classifier before invoking the refiner so the user never has to pick a scope manually.
+- **Tests**: `documentEditorRefinerScopes.test.ts` (5), `documentStudioEditorMethodologyScope.test.ts` (5), `documentStudioEditorSourceScope.test.ts` (5), `documentTeresaIntent.test.ts` (14) — 29/29 green.
+
+### 6.5.5 Recovery posture and validation
+
+- Two intra-session workspace folder resets wiped everything not yet committed in the `consultify` submodule. The first commit (`0990f6c13`) checkpointed Sprint 4 plus all surviving Sprint 1 / 2 / 3 / 4 untracked files; the second (`ef80ff483`) re-applied the lost Sprint 1 hydration and the lost Sprint 2 / 3 QA categories on top.
+- Suite at the end of recovery: 26 vitest files / 220 specs in `src/services/documentStudio/__tests__/`. `tsc --noEmit -p .` clean. ESLint clean. The recovery establishes a "commit early, commit narrow" discipline going forward — no sprint surface waits for closeout to land in git.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
