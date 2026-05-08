@@ -808,6 +808,37 @@ The reconciliation is internal-API only (the manifests are not yet consumed by a
 
 ---
 
+## 6.14 Frontend Document Studio epic family (FE-E1..FE-E5) — kickoff
+
+The server-side Epic E11 + reconciliation E11.5 unblock a Frontend Document Studio epic family that brings the consultant-facing UI under `src/components/DocumentStudio/` into compliance with `DOC_BUILDER_MANIFEST` and adds the deferred frontend surfaces from E5..E10.
+
+Epic outline (each epic ~3-5 slices):
+
+- **FE-E1** — Manifest loader + 3-zone shell + Menu 2 chips + collapse contract. New `DocumentStudioWorkspace` consumes the existing shared `ExecutiveModuleShell` (MELS) under `src/components/shared/ExecutiveModuleShell/` and replaces the flat `DocumentStudioDocumentPanel` for the `document` phase. Right-panel collapse uses the existing `useRailState` (already MELS-canonical: 32px collapsed, 280..360 expanded, localStorage persistence per `mels.rail.{moduleKey}`).
+- **FE-E2** — Right panel tabs MVP: Sources / Properties / QA. Reuses existing `DocumentStudioQaPanel`.
+- **FE-E3** — Menu 2 chip wiring (History / Governance / Audit / Theme/Brand-voice). Consumes existing endpoints from E5 (snapshots + rollback + status transitions), audit events, and E7 (brand voice picker).
+- **FE-E4** — Comments + Approvals + Library (E6 + E10 surfaces). Block-level comment markers in canvas, right-panel Comments + Approvals tabs, Reviewer Inbox view at `/document-studio/inbox`.
+- **FE-E5** — Audience Variant picker + Teresa drawer + closeout. Menu 3 `ai.render_audience_variant` action (E9), Teresa-only chat drawer, final manifest conformance check via `POST /api/execution-modules/manifests/doc-builder/validate`.
+
+### 6.14.1 Slice FE-E1.1 — Manifest loader hook + API client (commit `8967420fc`, mis-attributed)
+
+- New `src/services/executionModuleStandard/`:
+    - `types.ts` — frontend mirror of the server-side `executionModuleStandardTypes.ts` (the monorepo does not currently expose a shared types package). Mirrors every type the manifest surface needs: `ExecutionModuleManifest`, `ExecutionModuleStandard` envelope, `ExecutionModuleValidationResult`, plus the chip / right-panel / agent / AI-actions sub-types. MELS-aligned chip ids.
+    - `api.ts` — fetch wrappers around the four governance endpoints from Slice E11.3: `fetchExecutionModuleStandard`, `fetchExecutionModuleManifests`, `fetchExecutionModuleManifest(moduleId)` (throws `ExecutionModuleNotFoundError` on 404 with the moduleId attached), `validateExecutionModuleManifest(moduleId, candidate)`. All four reuse the shared `baseClient` retry / auth / response-handling.
+    - `useExecutionModuleManifest.ts` — React hook returning `{ manifest, isLoading, error, refetch }`. Module-level cache keyed by moduleId so subsequent mounts of the same id are served from cache. `forceRefetch` + `refetch()` bypass the cache. `abortOnUnmount=true` cancels state updates when the fetch resolves after unmount. 404 sets `error` to `ExecutionModuleNotFoundError` and leaves `manifest=null` so consumers render a graceful empty state instead of crashing.
+- 13 frontend specs in `__tests__/useExecutionModuleManifest.test.tsx` (`@vitest-environment jsdom`):
+    - API client (6): standard / manifests / manifest happy paths, 404 throws `ExecutionModuleNotFoundError` with the moduleId, validate returns the result envelope, `encodeURIComponent` on moduleId path segments.
+    - Hook (7): first mount triggers fetch + resolves; cache hit on second mount; `forceRefetch=true` bypasses cache; `refetch()` bypasses cache; 404 → `ExecutionModuleNotFoundError` + `manifest` stays null; other errors set `error` + `manifest` stays null; unmount cancels in-flight state updates.
+- Validation: 13 frontend specs green; 58 specs total across the 3 `executionModuleStandard` test files (45 server + 13 frontend); ESLint clean for the new modules; `tsc --noEmit` clean for the new modules.
+
+**Attribution caveat (third occurrence of the parallel sync agent issue):** the four FE-E1.1 files (`types.ts`, `api.ts`, `useExecutionModuleManifest.ts`, `__tests__/useExecutionModuleManifest.test.tsx`) were authored as Slice FE-E1.1 but were mistakenly bundled into the parallel `feat(presentation-studio,s2)` commit `8967420fc` by a concurrent workflow that ran `git add .` from a different working directory. Earlier in the session the same kind of mis-attribution affected:
+- E11.2 manifest files → bundled into `chore(tabele): C-S0 preflight` commit `62420b17b`;
+- mid FE-E1.1 the parallel agent transiently deleted the `__tests__/` folder between the lint pass and the next test run (re-created and the test file re-written verbatim before commit, no data loss).
+
+The file content in `8967420fc` is correct (verified via `git show`); only the commit attribution is wrong. FE-E1 work is paused after FE-E1.1 until the parallel-sync coordination issue is resolved at the workspace level (e.g. dedicated worktrees per agent, or a lockfile around `git add .`).
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
