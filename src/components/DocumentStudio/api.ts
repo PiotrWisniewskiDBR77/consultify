@@ -321,6 +321,56 @@ export async function createDocumentStudioGlobalProposal(
   return json.proposal;
 }
 
+// Slice E3.5 — methodology scope client. Operates on every editable
+// block in methodology-aligned sections (e.g. methodology, approach,
+// research_design). Backend returns 400 `no_methodology_sections` when
+// the document type does not surface any such section. Used by the
+// Teresa intent-classifier flow and (future) by the FE-E2 5-scope
+// editor UI.
+export async function createDocumentStudioMethodologyProposal(
+  artifactId: string,
+  payload: { instruction: string },
+  options: CreateProposalOptions = {}
+): Promise<DocumentEditorProposal> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/editor/proposals/methodology`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ ...payload, useLlm: options.useLlm === true }),
+    }
+  );
+  const json = await handleResponse<{ proposal: DocumentEditorProposal }>(
+    res,
+    'DocumentStudio create methodology proposal'
+  );
+  return json.proposal;
+}
+
+// Slice E3.5 — source scope client. Operates on blocks anchored to a
+// `sourceRef`, preserving the citation multiset (E3.2 refiner guard).
+// Backend returns 400 `no_source_anchored_blocks` when no source-
+// backed blocks exist; UI should surface a remediation hint.
+export async function createDocumentStudioSourceProposal(
+  artifactId: string,
+  payload: { instruction: string },
+  options: CreateProposalOptions = {}
+): Promise<DocumentEditorProposal> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/editor/proposals/source`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ ...payload, useLlm: options.useLlm === true }),
+    }
+  );
+  const json = await handleResponse<{ proposal: DocumentEditorProposal }>(
+    res,
+    'DocumentStudio create source proposal'
+  );
+  return json.proposal;
+}
+
 export async function getDocumentStudioAuditTrail(
   artifactId: string
 ): Promise<DocumentAuditEntry[]> {

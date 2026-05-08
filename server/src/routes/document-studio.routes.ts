@@ -227,7 +227,9 @@ import {
   createDocumentSnapshot,
   createGlobalEditProposal,
   createLocalEditProposal,
+  createMethodologyEditProposal,
   createSectionEditProposal,
+  createSourceEditProposal,
   deleteDocumentComment,
   DocumentCommentError,
   DocumentLifecycleTransitionError,
@@ -3193,6 +3195,88 @@ router.post(
     }
     try {
       const proposal = await createGlobalEditProposal({
+        artifactId,
+        organizationId,
+        userId,
+        instruction,
+        useLlm: req.body?.useLlm === true,
+      });
+      res.json({ proposal });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'proposal_failed';
+      const status = message === 'artifact_not_found' ? 404 : 400;
+      res.status(status).json({ error: message });
+    }
+  })
+);
+
+// Slice E3.5 — methodology scope. Service-side existed since E3.1;
+// HTTP surface added here so the frontend's `DocumentEditorScope`
+// can grow from 3 → 5 values and the Teresa intent classifier's
+// methodology branch becomes invokable end-to-end.
+router.post(
+  '/:artifactId/editor/proposals/methodology',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const instruction = typeof req.body?.instruction === 'string' ? req.body.instruction : '';
+    if (!instruction) {
+      res.status(400).json({ error: 'instruction is required' });
+      return;
+    }
+    try {
+      const proposal = await createMethodologyEditProposal({
+        artifactId,
+        organizationId,
+        userId,
+        instruction,
+        useLlm: req.body?.useLlm === true,
+      });
+      res.json({ proposal });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'proposal_failed';
+      // `no_methodology_sections` is a 400 — the artifact exists but
+      // the document type does not surface methodology-aligned sections
+      // (e.g. a pure executive_memo with no methodology kind blocks).
+      const status = message === 'artifact_not_found' ? 404 : 400;
+      res.status(status).json({ error: message });
+    }
+  })
+);
+
+// Slice E3.5 — source scope. Operates on blocks that carry a
+// `sourceRef`, preserving the citation multiset (refiner guard from
+// E3.2). Returns 400 `no_source_anchored_blocks` when no source-
+// backed blocks exist so the UI can surface a remediation hint
+// (e.g. "attach sources before invoking source scope").
+router.post(
+  '/:artifactId/editor/proposals/source',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const instruction = typeof req.body?.instruction === 'string' ? req.body.instruction : '';
+    if (!instruction) {
+      res.status(400).json({ error: 'instruction is required' });
+      return;
+    }
+    try {
+      const proposal = await createSourceEditProposal({
         artifactId,
         organizationId,
         userId,

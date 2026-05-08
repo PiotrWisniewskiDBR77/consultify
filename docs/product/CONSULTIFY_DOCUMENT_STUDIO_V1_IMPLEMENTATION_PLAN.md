@@ -839,6 +839,34 @@ The file content in `8967420fc` is correct (verified via `git show`); only the c
 
 ---
 
+## 6.15 Backend gap-closing slices (post-FE pause) — E3.5 → E3.6 → E5.6 → E14
+
+While the frontend work is parked on the parallel-sync coordination issue, the backend track keeps moving. Source-of-truth driver: `CONSULTIFY_DOCUMENT_STUDIO_V1_GAP_VS_TARGET_2026-05-08.md` §10 (Top-10 gaps) and §16 (recommended backlog). Sequence is chosen for highest impact / lowest blast-radius — every slice is BE-only and touches files that do not collide with the active parallel agents (presentation-studio, table-platform).
+
+### 6.15.1 Slice E3.5 — Methodology + Source editor HTTP routes (5-scope doctrine closure)
+
+**Why.** SSOT §6 mandates a 5-scope edit doctrine (`local / section / global / methodology / source`). The methodology + source services have existed since slices E3.1 + E3.2 (`createMethodologyEditProposal`, `createSourceEditProposal` in `documentStudioService.ts`) but were never exposed over HTTP. As a result the Teresa intent classifier's methodology / source branches could not be invoked end-to-end and the frontend `DocumentEditorScope` union was capped at 3 values. Slice E3.5 closes the doctrine breach.
+
+**Scope.**
+
+- `server/src/routes/document-studio.routes.ts` — add `POST /:artifactId/editor/proposals/methodology` and `POST /:artifactId/editor/proposals/source` mirroring the existing `/local`, `/section`, `/global` route shape: `instruction: string` + optional `useLlm: boolean`, returns `{ proposal: DocumentEditorProposal }`.
+- Error mapping:
+    - `artifact_not_found` → 404.
+    - `instruction is required` → 400.
+    - `no_methodology_sections` (methodology only) → 400 (artifact exists but no methodology-aligned section is surfaced; UI surfaces a remediation hint).
+    - `no_source_anchored_blocks` (source only) → 400 (artifact exists but no block carries a `sourceRef`; UI surfaces an "attach sources" remediation hint).
+- `src/components/DocumentStudio/types.ts` — widen `DocumentEditorScope` from `'local' | 'section' | 'global'` to also include `'methodology' | 'source'`. The 6th scope (`'transformative'`) lands in slice E3.6.
+- `src/components/DocumentStudio/api.ts` — add `createDocumentStudioMethodologyProposal(artifactId, { instruction }, options)` and `createDocumentStudioSourceProposal(artifactId, { instruction }, options)` mirroring the existing `createDocumentStudioGlobalProposal` shape.
+- `src/components/DocumentStudio/DocumentStudioEditorPanel.tsx` — defensively handle the widened union. The manual editor panel still exposes only the 3 chips (`local`, `section`, `global`) — methodology + source UI lands in FE-E2/E3. The `else` fall-through to `createDocumentStudioGlobalProposal` is replaced with an explicit `else if (scope === 'global')` + a guarded `else` that throws `documentStudio.editor.unsupportedScope`, so a stray scope value cannot silently be re-routed to global semantics.
+
+**Coverage.** Service-level coverage already exists from slices E3.1 (`documentStudioEditorMethodologyScope.test.ts`, 5 specs) + E3.2 (`documentStudioEditorSourceScope.test.ts`, 5 specs). Route-level integration tests follow the existing pattern from E5/E6/E7/E8/E9/E10 routes (no per-route integration tests; service-level coverage + tsc + lint).
+
+**Validation.** Document Studio + Execution Module Standard suite **571/571 green**; tsc clean for `documentStudio` + `executionModuleStandard` scope (pre-existing tablePlatform errors are out of scope); ESLint clean for the modified files (pre-existing warnings on legacy `any` usage in unrelated route handlers untouched).
+
+**Closes gaps.** §10.1 of the gap-vs-target report (5-scope HTTP exposure) — DONE. The 6-scope (`transformative`) closure is delegated to slice E3.6.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

@@ -148,13 +148,25 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           },
           { useLlm }
         );
-      } else {
+      } else if (scope === 'global') {
         proposal = await createDocumentStudioGlobalProposal(
           artifactId,
           {
             instruction: instruction.trim(),
           },
           { useLlm }
+        );
+      } else {
+        // E3.5 widened DocumentEditorScope to include 'methodology' and
+        // 'source'. This manual editor panel exposes only 3 chips today
+        // (the 5-scope UI lands in FE-E2/E3). Guard against the union
+        // expansion explicitly so a stray scope value cannot silently
+        // fall through to global-rewrite semantics.
+        throw new Error(
+          t(
+            'documentStudio.editor.unsupportedScope',
+            'This editor panel only supports local, section and global scopes. Use the AI assistant for methodology and source scopes.'
+          )
         );
       }
       setPendingProposal(proposal);
