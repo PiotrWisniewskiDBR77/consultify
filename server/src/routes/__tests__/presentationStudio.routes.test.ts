@@ -760,3 +760,301 @@ describe('presentationStudio.routes — POST /generate/preview', () => {
     expect(res.body.data.previewId).not.toContain('org-B');
   });
 });
+
+import {
+  _approvalTicketStoreSizeForTests,
+  _clearApprovalTicketStoreForTests,
+} from '../../services/presentationStudioApprovalTicketService';
+import { _setStudioGenerateDependenciesForTests } from '../../services/presentationStudioOrchestrationService';
+
+describe('presentationStudio.routes — POST /generate/request-approval', () => {
+  beforeEach(() => {
+    _clearApprovalTicketStoreForTests();
+    _setStudioGenerateDependenciesForTests(null);
+    setAuth({
+      user: { id: 'user-1', organizationId: 'org-A', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+  });
+
+  it('returns 200 with a fresh approval ticket for a healthy decision deck', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/request-approval',
+      path: '/generate/request-approval',
+      body: {
+        setup: {
+          title: 'Steering Approval',
+          audience: 'executive',
+          goal: 'decide',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'Readiness',
+              confidence: 0.8,
+              readiness: 'ready',
+            },
+          ],
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/request-approval', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.ticket.ticketId).toMatch(/^pssa_/);
+    expect(res.body.data.ticket.organizationId).toBe('org-A');
+    expect(res.body.data.ticket.userId).toBe('user-1');
+    expect(res.body.data.ticket.consumedAt).toBeNull();
+    expect(typeof res.body.data.payloadFingerprint).toBe('string');
+    expect(_approvalTicketStoreSizeForTests()).toBe(1);
+  });
+
+  it('returns 412 PRECONDITION_NOT_MET for a decision deck with empty source pack', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/request-approval',
+      path: '/generate/request-approval',
+      body: {
+        setup: {
+          title: 'Empty decision deck',
+          audience: 'executive',
+          goal: 'decide',
+          sourceArtifacts: [],
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/request-approval', req, res);
+
+    expect(res.statusCode).toBe(412);
+    expect(res.body.success).toBe(false);
+    expect(res.body.code).toBe('PRECONDITION_NOT_MET');
+    expect(res.body.preview.wouldGenerate.canProceed).toBe(false);
+    expect(_approvalTicketStoreSizeForTests()).toBe(0);
+  });
+
+  it('returns 403 for a VIEWER on /generate/request-approval', async () => {
+    setAuth({
+      user: { id: 'user-2', organizationId: 'org-A', role: 'VIEWER' },
+      userRole: 'VIEWER',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/request-approval',
+      path: '/generate/request-approval',
+      body: { setup: { title: 't', audience: 'executive', goal: 'inform' } },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/request-approval', req, res);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PERMISSION_DENIED');
+  });
+});
+
+describe('presentationStudio.routes — POST /generate', () => {
+  const generateOutlineMock = vi.fn();
+  const recordAuditMock = vi.fn();
+
+  beforeEach(() => {
+    _clearApprovalTicketStoreForTests();
+    generateOutlineMock.mockReset();
+    recordAuditMock.mockReset();
+    generateOutlineMock.mockResolvedValue({
+      outline: [
+        { intent: 'cover', title: 'Cover', enabled: true },
+        { intent: 'executive_summary', title: 'Executive thesis', enabled: true },
+      ],
+      deckId: 'deck-deadbeef',
+      validationWarnings: [],
+    });
+    recordAuditMock.mockResolvedValue(undefined);
+    _setStudioGenerateDependenciesForTests({
+      generateOutline: generateOutlineMock as any,
+      recordAudit: recordAuditMock as any,
+    });
+    setAuth({
+      user: { id: 'user-1', organizationId: 'org-A', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+  });
+
+  function buildHealthyBody() {
+    return {
+      setup: {
+        title: 'Steering Approval',
+        audience: 'executive',
+        goal: 'decide',
+        deckType: 'steering_committee',
+        sourceArtifacts: [
+          {
+            type: 'assessment',
+            id: 'art-1',
+            label: 'Readiness',
+            confidence: 0.8,
+            readiness: 'ready',
+          },
+        ],
+      },
+    };
+  }
+
+  async function mintTicket(router: any, body: Record<string, unknown>): Promise<string> {
+    const req = createMockReq({
+      url: '/generate/request-approval',
+      path: '/generate/request-approval',
+      body,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/request-approval', req, res);
+    expect(res.statusCode).toBe(200);
+    return res.body.data.ticket.ticketId as string;
+  }
+
+  it('returns 403 PRECONDITION_REQUIRED when no ticket id is supplied', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: buildHealthyBody(),
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PRECONDITION_REQUIRED');
+    expect(generateOutlineMock).not.toHaveBeenCalled();
+    expect(recordAuditMock).not.toHaveBeenCalled();
+  });
+
+  it('redeems a valid ticket, invokes generator, and emits audit', async () => {
+    const router = await importRouter();
+    const body = buildHealthyBody();
+    const ticketId = await mintTicket(router, body);
+
+    const req = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: { ...body, approvalTicket: ticketId },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({
+      success: true,
+      data: {
+        deckId: 'deck-deadbeef',
+        slideCount: 2,
+        ticketId,
+        auditEvent: 'presentation_generated_via_studio',
+      },
+    });
+    expect(generateOutlineMock).toHaveBeenCalledTimes(1);
+    expect(recordAuditMock).toHaveBeenCalledTimes(1);
+    const auditPayload = recordAuditMock.mock.calls[0][0];
+    expect(auditPayload).toMatchObject({
+      userId: 'user-1',
+      organizationId: 'org-A',
+      actionType: 'presentation_generated_via_studio',
+      resourceType: 'presentation_deck',
+      resourceId: 'deck-deadbeef',
+    });
+    expect(auditPayload.details.ticketId).toBe(ticketId);
+  });
+
+  it('rejects a re-redemption of the same ticket with INVALID_APPROVAL_TICKET (consumed)', async () => {
+    const router = await importRouter();
+    const body = buildHealthyBody();
+    const ticketId = await mintTicket(router, body);
+
+    const firstReq = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: { ...body, approvalTicket: ticketId },
+    });
+    const firstRes = createMockRes();
+    await runRouter(router, 'POST', '/generate', firstReq, firstRes);
+    expect(firstRes.statusCode).toBe(200);
+
+    const secondReq = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: { ...body, approvalTicket: ticketId },
+    });
+    const secondRes = createMockRes();
+    await runRouter(router, 'POST', '/generate', secondReq, secondRes);
+    expect(secondRes.statusCode).toBe(403);
+    expect(secondRes.body.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(secondRes.body.reason).toBe('consumed');
+    expect(generateOutlineMock).toHaveBeenCalledTimes(1);
+    expect(recordAuditMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a ticket whose payload was swapped after minting (payload_mismatch)', async () => {
+    const router = await importRouter();
+    const body = buildHealthyBody();
+    const ticketId = await mintTicket(router, body);
+
+    const tamperedBody = {
+      setup: { ...body.setup, title: 'Different title — should NOT generate' },
+      approvalTicket: ticketId,
+    };
+    const req = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: tamperedBody,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(res.body.reason).toBe('payload_mismatch');
+    expect(generateOutlineMock).not.toHaveBeenCalled();
+    expect(recordAuditMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a cross-tenant redemption with INVALID_APPROVAL_TICKET (tenant_mismatch)', async () => {
+    const router = await importRouter();
+    const body = buildHealthyBody();
+    const ticketId = await mintTicket(router, body);
+
+    setAuth({
+      user: { id: 'user-1', organizationId: 'org-B', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+    const req = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: { ...body, approvalTicket: ticketId },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(res.body.reason).toBe('tenant_mismatch');
+    expect(generateOutlineMock).not.toHaveBeenCalled();
+    expect(recordAuditMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 for a VIEWER on /generate', async () => {
+    setAuth({
+      user: { id: 'user-2', organizationId: 'org-A', role: 'VIEWER' },
+      userRole: 'VIEWER',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: { approvalTicket: 'pssa_does-not-exist', ...buildHealthyBody() },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PERMISSION_DENIED');
+    expect(generateOutlineMock).not.toHaveBeenCalled();
+  });
+});

@@ -11,19 +11,24 @@
  *   - S2: POST /narrative-plan/preview      (read-only narrative plan preview)
  *   - S3: POST /template-architect/preview  (read-only template plan preview)
  *   - S4: POST /generate/preview            (read-only generate dispatcher preview)
+ *   - S6: POST /generate/request-approval   (mints a single-use approval ticket)
+ *   - S6: POST /generate                    (mutating; redeems ticket; persists deck; emits audit)
  *
- * All endpoints are tenant-scoped, gated by the existing `presentation_create`
- * capability, and never write to the database. They reuse the orchestration
- * service which wraps the adopted source pack, narrative planner, template
- * architect, and template runtime services.
+ * Read-only endpoints (S1..S4) are tenant-scoped and gated by the existing
+ * `presentation_create` capability. They never write to the database.
  *
- * The template architect preview always returns `approvalRequired: true` and
- * `templatePlan.governance.initialStatus = 'draft'`. The generate preview
- * always returns a `wouldGenerate` summary and never persists anything.
- * Promoting a template into the registry or persisting a real deck will land
- * in a future sprint behind an explicit approval endpoint, preserving the
- * proposal -> approval -> execution -> audit invariant for any mutating
- * operation.
+ * Mutating endpoints (S6) preserve the proposal -> approval -> execution ->
+ * audit invariant:
+ *   1. Client calls `previewSourcePack` / `previewGenerate` (read-only).
+ *   2. Client calls `request-approval` to mint a single-use ticket bound to
+ *      (organizationId, userId, payload fingerprint) for ~10 minutes.
+ *   3. Client calls `generate` with the ticket id; server redeems atomically,
+ *      invokes the real generator, persists the deck, emits the audit event
+ *      `presentation_generated_via_studio`, and returns the deck id.
+ *
+ * The ticket is never reusable: a swapped payload, a different user, a
+ * different tenant, or a re-redeem of the same ticket all return
+ * `INVALID_APPROVAL_TICKET`.
  */
 
 import { type NextFunction, type Request, type Response, Router } from 'express';
@@ -35,10 +40,12 @@ import {
 } from '../services/presentationAccessPolicyService.js';
 import type { DeckSetup, OutlineItem } from '../services/presentationGeneratorService.js';
 import {
+  executePresentationStudioGenerate,
   previewPresentationStudioGenerate,
   previewPresentationStudioNarrativePlan,
   previewPresentationStudioSourcePack,
   previewPresentationStudioTemplatePlan,
+  requestPresentationStudioGenerateApproval,
 } from '../services/presentationStudioOrchestrationService.js';
 
 const router = Router();
@@ -410,6 +417,213 @@ router.post(
     });
 
     res.json({ success: true, data: result });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/generate/request-approval
+ *
+ * Phase A of the mutating generate flow. Validates that generation would
+ * succeed (`wouldGenerate.canProceed`) and mints a SINGLE-USE approval ticket
+ * bound to the authenticated `(organizationId, userId, payload fingerprint)`
+ * tuple. Does NOT invoke `generateOutline` and does NOT persist a deck.
+ *
+ * Body shape: same as `/generate/preview` (`{ setup?, outline?, sourcePack?,
+ * narrativePlan?, strict? }`).
+ *
+ * Tenant safety:
+ *   - `organizationId` and `userId` come from the authenticated session.
+ *   - Body-supplied org/user ids are ignored.
+ *
+ * Response:
+ *   - 200 `{ success: true, data: { ticket, generatePreview, payloadFingerprint } }`
+ *     when the preview's `wouldGenerate.canProceed` is true.
+ *   - 412 `{ success: false, code: 'PRECONDITION_NOT_MET', reason, preview }`
+ *     when the preview blocks generation. The UI should surface the reason
+ *     and the blocking-reasons list from the embedded preview, not retry.
+ */
+router.post(
+  '/generate/request-approval',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
+    const orgId = getOrgId(req);
+    const userId = (req as any).user?.id || (req as any).userId || null;
+    if (!orgId) {
+      res.status(403).json({
+        success: false,
+        error: 'Organization context required',
+        code: 'NO_ORG_CONTEXT',
+      });
+      return;
+    }
+    if (!userId) {
+      res.status(403).json({
+        success: false,
+        error: 'User context required',
+        code: 'NO_USER_CONTEXT',
+      });
+      return;
+    }
+
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      setup?: unknown;
+      outline?: unknown;
+      sourcePack?: unknown;
+      narrativePlan?: unknown;
+      strict?: unknown;
+    };
+    const setup = parseDeckSetupFromBody(body.setup);
+    const outline = parseOutlineFromBody(body.outline);
+    const providedSourcePack =
+      body.sourcePack &&
+      typeof body.sourcePack === 'object' &&
+      Array.isArray((body.sourcePack as any).sources)
+        ? (body.sourcePack as any)
+        : undefined;
+    const providedNarrativePlan =
+      body.narrativePlan &&
+      typeof body.narrativePlan === 'object' &&
+      Array.isArray((body.narrativePlan as any).slidePlan)
+        ? (body.narrativePlan as any)
+        : undefined;
+    const strict = typeof body.strict === 'boolean' ? body.strict : undefined;
+
+    const result = requestPresentationStudioGenerateApproval({
+      setup,
+      organizationId: orgId,
+      userId,
+      outline,
+      sourcePack: providedSourcePack,
+      narrativePlan: providedNarrativePlan,
+      strict,
+    });
+
+    if (!result.ok) {
+      res.status(412).json({
+        success: false,
+        code: result.code,
+        error: result.reason,
+        preview: result.preview,
+      });
+      return;
+    }
+    res.json({
+      success: true,
+      data: {
+        ticket: result.ticket,
+        generatePreview: result.generatePreview,
+        payloadFingerprint: result.payloadFingerprint,
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/generate
+ *
+ * Phase B of the mutating generate flow. Atomically redeems a single-use
+ * approval ticket and invokes the real `generateOutline`, which:
+ *   - Persists a draft deck row in `presentation_decks` (tenant-scoped).
+ *   - Returns the generated outline + deck id + validation warnings.
+ *
+ * On success the route emits the canonical
+ * `presentation_generated_via_studio` audit log entry and returns the deck
+ * info. On any ticket validation failure NO deck is persisted and NO audit
+ * event is emitted (the orchestrator short-circuits before invoking the
+ * generator).
+ *
+ * Body shape:
+ *   - approvalTicket: string (REQUIRED — id of the ticket from /request-approval)
+ *   - setup, outline?, sourcePack?, narrativePlan?, strict? — must match the
+ *     payload fingerprinted at request-approval time, otherwise the ticket
+ *     redemption fails with `payload_mismatch`.
+ *
+ * Responses:
+ *   - 200 `{ success: true, data: { deckId, slideCount, outline, validationWarnings, ticketId, auditEvent } }`
+ *   - 403 `{ success: false, code: 'PRECONDITION_REQUIRED', error: 'Approval ticket required.' }`
+ *     when no ticket id is supplied.
+ *   - 403 `{ success: false, code: 'INVALID_APPROVAL_TICKET', reason }`
+ *     when ticket validation fails (not_found, expired, consumed,
+ *     tenant_mismatch, user_mismatch, payload_mismatch).
+ */
+router.post(
+  '/generate',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
+    const orgId = getOrgId(req);
+    const userId = (req as any).user?.id || (req as any).userId || null;
+    if (!orgId) {
+      res.status(403).json({
+        success: false,
+        error: 'Organization context required',
+        code: 'NO_ORG_CONTEXT',
+      });
+      return;
+    }
+    if (!userId) {
+      res.status(403).json({
+        success: false,
+        error: 'User context required',
+        code: 'NO_USER_CONTEXT',
+      });
+      return;
+    }
+
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      approvalTicket?: unknown;
+      setup?: unknown;
+      outline?: unknown;
+      sourcePack?: unknown;
+      narrativePlan?: unknown;
+      strict?: unknown;
+    };
+    const ticketId = typeof body.approvalTicket === 'string' ? body.approvalTicket.trim() : '';
+    if (!ticketId) {
+      res.status(403).json({
+        success: false,
+        code: 'PRECONDITION_REQUIRED',
+        error: 'Approval ticket required.',
+      });
+      return;
+    }
+    const setup = parseDeckSetupFromBody(body.setup);
+    const outline = parseOutlineFromBody(body.outline);
+    const providedSourcePack =
+      body.sourcePack &&
+      typeof body.sourcePack === 'object' &&
+      Array.isArray((body.sourcePack as any).sources)
+        ? (body.sourcePack as any)
+        : undefined;
+    const providedNarrativePlan =
+      body.narrativePlan &&
+      typeof body.narrativePlan === 'object' &&
+      Array.isArray((body.narrativePlan as any).slidePlan)
+        ? (body.narrativePlan as any)
+        : undefined;
+    const strict = typeof body.strict === 'boolean' ? body.strict : undefined;
+
+    const result = await executePresentationStudioGenerate({
+      setup,
+      organizationId: orgId,
+      userId,
+      ticketId,
+      outline,
+      sourcePack: providedSourcePack,
+      narrativePlan: providedNarrativePlan,
+      strict,
+      ipAddress: req.ip || null,
+      userAgent: typeof req.headers?.['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
+
+    if (!result.ok) {
+      res.status(403).json({
+        success: false,
+        code: result.code,
+        reason: result.reason,
+      });
+      return;
+    }
+    res.json({ success: true, data: result.result });
   })
 );
 

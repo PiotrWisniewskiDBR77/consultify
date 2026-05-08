@@ -30,6 +30,15 @@ import {
   buildPresentationSourcePack,
   preflightPresentationSourcePack,
 } from './presentationSourcePackService.js';
+import type {
+  ApprovalTicketRejectionReason,
+  PresentationStudioApprovalTicket,
+} from './presentationStudioApprovalTicketService.js';
+import {
+  computePayloadFingerprint,
+  consumeApprovalTicket,
+  mintApprovalTicket,
+} from './presentationStudioApprovalTicketService.js';
 import type { TemplateArchitectPlan } from './presentationTemplateArchitectService.js';
 import { buildPresentationTemplateArchitectPlan } from './presentationTemplateArchitectService.js';
 import type {
@@ -470,5 +479,321 @@ export function previewPresentationStudioGenerate(
       strict,
     },
     previewId: makePreviewId(input.organizationId, narrativePlan.createdAt),
+  };
+}
+
+// ===========================================================================
+// S6 — Approval-gated Generate
+//
+// First mutating Studio surface. Honors the proposal -> approval -> execution
+// -> audit invariant: callers MUST first request a ticket via
+// `requestPresentationStudioGenerateApproval`, then redeem it via
+// `executePresentationStudioGenerate`. The ticket binds the (org, user,
+// payload fingerprint) tuple and is single-use.
+//
+// Both functions are designed for dependency injection so tests can swap out
+// the real `generateOutline` (which writes to `presentation_decks`) and the
+// real audit writer without going through the database.
+// ===========================================================================
+
+export interface PresentationStudioGenerateRequestApprovalInput {
+  setup: DeckSetup;
+  organizationId: string;
+  userId: string;
+  /** Optional caller-supplied outline / source pack / narrative plan reused from the preview surface. */
+  outline?: OutlineItem[];
+  sourcePack?: PresentationSourcePack;
+  narrativePlan?: PresentationNarrativePlan;
+  /** Mirrors the `strict` param of `previewPresentationStudioGenerate`. */
+  strict?: boolean;
+  /** Optional clock injection for deterministic tests. */
+  now?: Date;
+  /** Override TTL in milliseconds. Defaults to the ticket service default (10 minutes). */
+  ttlMs?: number;
+}
+
+export interface PresentationStudioGenerateRequestApprovalResult {
+  ticket: PresentationStudioApprovalTicket;
+  generatePreview: PresentationStudioGeneratePreviewResult;
+  /**
+   * Stable fingerprint over the canonical setup payload. Surfaced so the UI
+   * can debug "why was my ticket rejected" by re-computing it client-side.
+   */
+  payloadFingerprint: string;
+}
+
+export type PresentationStudioGenerateApprovalRejection = {
+  ok: false;
+  code: 'PRECONDITION_NOT_MET';
+  reason: string;
+  preview: PresentationStudioGeneratePreviewResult;
+};
+
+export type PresentationStudioGenerateApprovalResponse =
+  | ({ ok: true } & PresentationStudioGenerateRequestApprovalResult)
+  | PresentationStudioGenerateApprovalRejection;
+
+/**
+ * Build the canonical payload fingerprinted by the approval ticket. The
+ * fingerprint MUST round-trip across the request-approval and execute calls
+ * — any field included here must be present and equal on both sides.
+ *
+ * We intentionally pin the (organizationId, setup, outline, sourcePack,
+ * narrativePlan, strict) tuple. The userId is NOT part of the fingerprint
+ * because the ticket is already user-scoped.
+ */
+function buildGeneratePayloadFingerprint(input: {
+  organizationId: string;
+  setup: DeckSetup;
+  outline?: OutlineItem[];
+  sourcePack?: PresentationSourcePack;
+  narrativePlan?: PresentationNarrativePlan;
+  strict?: boolean;
+}): string {
+  return computePayloadFingerprint({
+    organizationId: input.organizationId,
+    setup: input.setup,
+    outline: input.outline ?? null,
+    sourcePack: input.sourcePack ?? null,
+    narrativePlan: input.narrativePlan ?? null,
+    strict: input.strict ?? null,
+  });
+}
+
+/**
+ * Phase A of the mutating flow: validate that generation would succeed and
+ * mint a single-use approval ticket. Does NOT invoke `generateOutline` and
+ * never writes to `presentation_decks`.
+ */
+export function requestPresentationStudioGenerateApproval(
+  input: PresentationStudioGenerateRequestApprovalInput
+): PresentationStudioGenerateApprovalResponse {
+  const generatePreview = previewPresentationStudioGenerate({
+    setup: input.setup,
+    organizationId: input.organizationId,
+    outline: input.outline,
+    sourcePack: input.sourcePack,
+    narrativePlan: input.narrativePlan,
+    strict: input.strict,
+    now: input.now,
+  });
+  if (!generatePreview.wouldGenerate.canProceed) {
+    return {
+      ok: false,
+      code: 'PRECONDITION_NOT_MET',
+      reason:
+        generatePreview.wouldGenerate.blockingReasons[0] ||
+        'Generation preview blocks this request.',
+      preview: generatePreview,
+    };
+  }
+  const payloadFingerprint = buildGeneratePayloadFingerprint({
+    organizationId: input.organizationId,
+    setup: input.setup,
+    outline: input.outline,
+    sourcePack: input.sourcePack,
+    narrativePlan: input.narrativePlan,
+    strict: input.strict,
+  });
+  const ticket = mintApprovalTicket({
+    organizationId: input.organizationId,
+    userId: input.userId,
+    payloadFingerprint,
+    ttlMs: input.ttlMs,
+    now: input.now,
+  });
+  return {
+    ok: true,
+    ticket,
+    generatePreview,
+    payloadFingerprint,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Phase B: execute (mutating). Dependency-injected so tests can swap out
+// `generateOutline` and the audit writer without touching the database.
+// ---------------------------------------------------------------------------
+
+export interface PresentationStudioGenerateExecuteInput {
+  setup: DeckSetup;
+  organizationId: string;
+  userId: string;
+  ticketId: string;
+  outline?: OutlineItem[];
+  sourcePack?: PresentationSourcePack;
+  narrativePlan?: PresentationNarrativePlan;
+  strict?: boolean;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  now?: Date;
+}
+
+export interface PresentationStudioGenerateExecuteResult {
+  deckId: string;
+  slideCount: number;
+  outline: OutlineItem[];
+  validationWarnings: string[];
+  ticketId: string;
+  auditEvent: 'presentation_generated_via_studio';
+}
+
+export type PresentationStudioGenerateExecuteResponse =
+  | { ok: true; result: PresentationStudioGenerateExecuteResult }
+  | { ok: false; code: 'INVALID_APPROVAL_TICKET'; reason: ApprovalTicketRejectionReason };
+
+/**
+ * Audit record emitted on successful generation. Module-internal; the route
+ * handler does not import this type.
+ */
+export interface PresentationStudioGenerateAuditPayload {
+  userId: string;
+  organizationId: string;
+  actionType: 'presentation_generated_via_studio';
+  resourceType: 'presentation_deck';
+  resourceId: string;
+  details: {
+    ticketId: string;
+    payloadFingerprint: string;
+    slideCount: number;
+    deckTitle: string;
+    deckGoal: string;
+    deckAudience: string;
+  };
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+/** Real generator dependency type. Match the signature of `generateOutline`. */
+export type PresentationStudioGenerateOutlineFn = (
+  setup: DeckSetup,
+  organizationId: string
+) => Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }>;
+
+export type PresentationStudioAuditFn = (
+  payload: PresentationStudioGenerateAuditPayload
+) => Promise<void>;
+
+/**
+ * Mutable dependency registry. Tests use `setStudioGenerateDependencies` to
+ * swap out the real generator and audit writer. Production code never calls
+ * the setter and the defaults below are used.
+ */
+interface StudioGenerateDependencies {
+  generateOutline: PresentationStudioGenerateOutlineFn;
+  recordAudit: PresentationStudioAuditFn;
+}
+
+let _studioGenerateDeps: StudioGenerateDependencies | null = null;
+
+async function defaultGenerateOutline(
+  setup: DeckSetup,
+  organizationId: string
+): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
+  // Lazy import to keep the hot orchestration path free of generator
+  // dependencies and to make dependency injection in tests trivial.
+  const mod = await import('./presentationGeneratorService.js');
+  return mod.generateOutline(setup, organizationId);
+}
+
+async function defaultRecordAudit(payload: PresentationStudioGenerateAuditPayload): Promise<void> {
+  const { run: dbRun } = await import('../utils/DbPromise.js');
+  await dbRun(
+    `INSERT INTO audit_logs (id, timestamp, user_id, action_type, resource_type, resource_id, organization_id, details, ip_address, user_agent, created_at)
+     VALUES (gen_random_uuid()::TEXT, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+    [
+      payload.userId,
+      payload.actionType,
+      payload.resourceType,
+      payload.resourceId,
+      payload.organizationId,
+      JSON.stringify(payload.details ?? {}),
+      payload.ipAddress || null,
+      payload.userAgent || null,
+    ]
+  );
+}
+
+function getStudioGenerateDeps(): StudioGenerateDependencies {
+  return (
+    _studioGenerateDeps ?? {
+      generateOutline: defaultGenerateOutline,
+      recordAudit: defaultRecordAudit,
+    }
+  );
+}
+
+/**
+ * Test-only helper: swap out the generator and audit writer for the duration
+ * of a test. Production code MUST NOT call this. Pass `null` to reset to the
+ * real defaults.
+ */
+export function _setStudioGenerateDependenciesForTests(
+  deps: StudioGenerateDependencies | null
+): void {
+  _studioGenerateDeps = deps;
+}
+
+/**
+ * Phase B of the mutating flow: redeem the approval ticket and invoke the
+ * real generator. On success emits the canonical
+ * `presentation_generated_via_studio` audit event. On any failure (invalid
+ * ticket, generator error) NO audit event is emitted and the deck is not
+ * persisted (the underlying `generateOutline` is responsible for
+ * transaction-like semantics on its own writes).
+ */
+export async function executePresentationStudioGenerate(
+  input: PresentationStudioGenerateExecuteInput
+): Promise<PresentationStudioGenerateExecuteResponse> {
+  const expectedFingerprint = buildGeneratePayloadFingerprint({
+    organizationId: input.organizationId,
+    setup: input.setup,
+    outline: input.outline,
+    sourcePack: input.sourcePack,
+    narrativePlan: input.narrativePlan,
+    strict: input.strict,
+  });
+  const consume = consumeApprovalTicket({
+    ticketId: input.ticketId,
+    organizationId: input.organizationId,
+    userId: input.userId,
+    expectedFingerprint,
+    now: input.now,
+  });
+  if (!consume.ok) {
+    return { ok: false, code: 'INVALID_APPROVAL_TICKET', reason: consume.reason };
+  }
+
+  const deps = getStudioGenerateDeps();
+  const generated = await deps.generateOutline(input.setup, input.organizationId);
+
+  await deps.recordAudit({
+    userId: input.userId,
+    organizationId: input.organizationId,
+    actionType: 'presentation_generated_via_studio',
+    resourceType: 'presentation_deck',
+    resourceId: generated.deckId,
+    details: {
+      ticketId: input.ticketId,
+      payloadFingerprint: expectedFingerprint,
+      slideCount: generated.outline.length,
+      deckTitle: input.setup.title,
+      deckGoal: String(input.setup.goal),
+      deckAudience: String(input.setup.audience),
+    },
+    ipAddress: input.ipAddress ?? null,
+    userAgent: input.userAgent ?? null,
+  });
+
+  return {
+    ok: true,
+    result: {
+      deckId: generated.deckId,
+      slideCount: generated.outline.length,
+      outline: generated.outline,
+      validationWarnings: generated.validationWarnings,
+      ticketId: consume.ticket.ticketId,
+      auditEvent: 'presentation_generated_via_studio',
+    },
   };
 }

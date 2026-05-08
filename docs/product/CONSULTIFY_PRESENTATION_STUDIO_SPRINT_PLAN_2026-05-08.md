@@ -676,3 +676,69 @@ P2 (deferred, non-blocking):
   - Persistence is delegated to the existing `presentation_decks` table (no migration). Audit event `presentation_generated_via_studio` is emitted.
   - UI: extend `PresentationStudioPage` with a disabled-by-default "Request approval" CTA in the Menu 3 right slot. The CTA only appears once `wouldGenerate.canProceed === true` and behaves as a request, not a write — the server still requires explicit approval.
 
+## Sprint S6 Gate Report — Approval-gated Generate (mutating) (2026-05-08)
+
+Sprint owner: Engineering
+Phase: 2 (implementation)
+Mode: Backend-only this sprint. UI for the approval/execute CTAs is moved to S7 to keep S6 a single auditable backend slice.
+
+### Changes made
+
+- `consultify/server/src/services/presentationStudioApprovalTicketService.ts` (new)
+  - First-class single-use approval ticket primitive used by Studio mutating endpoints.
+  - `mintApprovalTicket({ organizationId, userId, payloadFingerprint, ttlMs?, now? })` mints a ticket whose id is `pssa_<uuid>`. Default TTL is 10 minutes.
+  - `consumeApprovalTicket(...)` redeems atomically and returns a typed rejection union: `{ ok: true, ticket }` or `{ ok: false, reason: 'not_found' | 'expired' | 'consumed' | 'tenant_mismatch' | 'user_mismatch' | 'payload_mismatch' }`. The ticket is marked consumed BEFORE returning so re-redemption is impossible.
+  - `computePayloadFingerprint(payload)` produces a stable SHA-256 hex digest over a sorted-key JSON serialization. This binds a ticket to the exact (org, setup, outline, sourcePack, narrativePlan, strict) tuple proposed at request-approval time.
+  - In-memory `Map` storage. Tenant-scoped, user-scoped, time-bounded, payload-bound. No DB migration (Q2=A respected). Future sprints can swap the store for Redis without changing the public surface.
+- `consultify/server/src/services/__tests__/presentationStudioApprovalTicketService.test.ts` (new)
+  - 8 unit tests covering: mint shape, single-use semantics, `not_found`, `tenant_mismatch`, `user_mismatch`, `expired`, `payload_mismatch`, and stable fingerprint key-order independence.
+- `consultify/server/src/services/presentationStudioOrchestrationService.ts`
+  - Added Sprint S6 section preserving the proposal -> approval -> execution -> audit invariant for the first mutating Studio surface.
+  - New `requestPresentationStudioGenerateApproval(...)`: calls the existing `previewPresentationStudioGenerate`; if `wouldGenerate.canProceed === false`, returns `{ ok: false, code: 'PRECONDITION_NOT_MET', reason, preview }`; otherwise mints an approval ticket bound to the canonical payload fingerprint and returns `{ ok: true, ticket, generatePreview, payloadFingerprint }`. Read-only.
+  - New `executePresentationStudioGenerate(...)`: redeems the ticket atomically (tenant + user + payload + expiry + single-use), then invokes the real generator and emits the canonical `presentation_generated_via_studio` audit event. Returns `{ ok: true, result: { deckId, slideCount, outline, validationWarnings, ticketId, auditEvent } }` or `{ ok: false, code: 'INVALID_APPROVAL_TICKET', reason }`. On any ticket failure NO generator call is made and NO audit event is emitted.
+  - Both functions use a tiny dependency registry: `_studioGenerateDeps`. Default-loaded production dependencies are `presentationGeneratorService.generateOutline` and a `dbRun` audit writer (via `utils/DbPromise.run`). Tests swap them via `_setStudioGenerateDependenciesForTests({ generateOutline, recordAudit })` to assert orchestration plumbing without touching the database.
+- `consultify/server/src/routes/presentationStudio.routes.ts`
+  - Added `POST /api/presentation-studio/generate/request-approval`. Auth + `presentation_create` + tenant-scoped. Mints a ticket on the healthy path; returns `412 PRECONDITION_NOT_MET` with the embedded preview when generation would not proceed.
+  - Added `POST /api/presentation-studio/generate`. Auth + `presentation_create` + tenant-scoped. Returns `403 PRECONDITION_REQUIRED` when the body does not include `approvalTicket`. Otherwise redeems the ticket through the orchestrator and either returns the deck info (200) or surfaces the typed rejection (`403 INVALID_APPROVAL_TICKET` with the underlying reason).
+  - Tenant integrity: `organizationId` is read from the authenticated session only. Body-supplied org/user ids are ignored. The audit log writes the session user id and session org id, never the body values.
+- `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts`
+  - 9 new integration tests covering: healthy `request-approval` mints a ticket; `412 PRECONDITION_NOT_MET` for empty source pack on a decision deck; `403 PERMISSION_DENIED` for VIEWER on `request-approval`; `403 PRECONDITION_REQUIRED` when `/generate` has no ticket; happy-path generate invokes generator + audit; re-redemption of the same ticket returns `consumed`; tampered payload returns `payload_mismatch`; cross-tenant redemption returns `tenant_mismatch`; VIEWER blocked on `/generate`.
+  - Tests use `_setStudioGenerateDependenciesForTests` to swap in mocked generator / audit writer; the in-memory ticket store is cleared in every `beforeEach`.
+
+### Validation performed
+
+- `npx vitest run server/src/services/__tests__/presentationStudioApprovalTicketService.test.ts` — 8/8 passed.
+- `npx vitest run server/src/routes/__tests__/presentationStudio.routes.test.ts` — 32/32 passed (full S0..S5 regression + 9 new S6 tests).
+- `npx eslint` on the five in-scope files — 0 errors, 51 warnings. All warnings are `@typescript-eslint/no-explicit-any` matching the S0 baseline policy (mock casts in routes test + pre-existing setup-extra cast in orchestrator helper). No new error classes introduced.
+- `npx tsc --noEmit -p server/tsconfig.json` filtered to `presentationStudio*` — 0 type errors. Out-of-scope `tablePlatform/*` errors remain, unchanged from S5.
+- `git diff --stat` confirms exactly five files changed in scope (1 doc + 4 backend code + 1 test scaffold extension).
+
+### Gate result: `PASS_WITH_P2`
+
+- 0 P0, 0 P1, 0 P2.
+- P3 deferred: pre-existing `no-explicit-any` warnings (S0 baseline). No new lint regressions.
+
+### Acceptance criteria (from contract) covered by S6
+
+- The first mutating Studio surface is delivered behind a single-use, tenant-bound, user-bound, payload-bound approval ticket.
+- Without a ticket, generation returns `403 PRECONDITION_REQUIRED` and the route never invokes the generator.
+- With a valid ticket, the route invokes the existing `generateOutline` (which persists to `presentation_decks`) and emits the canonical `presentation_generated_via_studio` audit event with `(userId, organizationId, deckId, ticketId, payloadFingerprint, slideCount, deckTitle, deckGoal, deckAudience)` details.
+- Tenant safety holds: `organizationId` and `userId` are sourced from the authenticated session; body-supplied identifiers are ignored. A ticket minted for org A is rejected with `tenant_mismatch` when the session reports org B.
+- The proposal -> approval -> execution -> audit invariant is enforced end-to-end with regression tests asserting all five typed rejection reasons.
+
+### Risks / next-step notes
+
+- R-S6-1: The ticket store is in-memory. A server restart between request-approval and generate invalidates outstanding tickets. The 10-minute TTL and the deliberate "approve immediately before execute" UX make this acceptable for Phase 2; a Redis-backed store is a P2 follow-up.
+- R-S6-2: The audit writer is invoked AFTER the generator succeeds. If the audit insert fails, the deck still exists. We accept this for Phase 2 because the failure mode is detectable post-hoc and the alternative (compensating delete) introduces a bigger correctness risk than it removes. A P2 follow-up will add either a tx-wrapped path or an "audit dead letter" lane.
+- R-S6-3: There is no UI for the new endpoints yet. The Studio page introduced in S5 still calls only the four read-only previews. S7 will add the request-approval / confirm-generate CTAs in the Menu 3 right slot, with explicit honest-state rendering for `PRECONDITION_NOT_MET`, `PRECONDITION_REQUIRED`, and `INVALID_APPROVAL_TICKET`.
+
+### Next sprint plan
+
+- Sprint S7 starts Studio Surface — Approval CTA flow (UI). Scope:
+  - Extend `src/services/api/presentationStudio.api.ts` with `requestApproval` and `executeGenerate` typed clients.
+  - Extend `PresentationStudioPage` with two CTAs in the Menu 3 right slot:
+    1. `Request approval` — visible only when `generatePreview.wouldGenerate.canProceed === true`. On click, calls `/generate/request-approval`. On 200 stores the returned ticket in component state with a TTL countdown badge and surfaces a "Confirm generate" CTA. On 412 surfaces an honest banner with the embedded preview's blocking reasons.
+    2. `Confirm generate` — visible only with a fresh, unconsumed ticket. On click, calls `/generate` with the ticket id. On 200 surfaces the deck id, slide count, and a "View deck" link to the existing builder. On 403 INVALID_APPROVAL_TICKET clears the ticket and surfaces an honest banner naming the rejection reason; the Request-approval CTA reappears.
+  - Component tests cover: hidden CTA when canProceed=false; visible CTA on healthy preview; ticket countdown rendering; 412 banner; 403 INVALID_APPROVAL_TICKET banner; deck-id reveal on success.
+  - No backend changes in S7.
+
