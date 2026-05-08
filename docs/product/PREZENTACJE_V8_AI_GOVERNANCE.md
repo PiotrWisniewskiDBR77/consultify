@@ -3,6 +3,10 @@
 > Status: Draft v8
 > Cel: Zdefiniowac zasady wykorzystania AI w module prezentacji, tak aby AI wzmacnial szybkosc i jakosc deckow bez naruszania zaufania, traceability i kontroli usera.
 
+> [!IMPORTANT] Conversation surface bramka.
+> Powierzchnia konwersacyjna prezentacji jest zarządzana centralnie w `DRD/consultify/docs/product/UNIFIED_CONVERSATION_SURFACE_TERESA_SSOT.md`.
+> W `/prezentacje` i w `DeckBuilder` nie wolno utrzymywać własnego pola czatu / "Agent AI" panelu z inputem. Operacje `propose -> review -> accept/reject` opisane niżej są w pełni honorowane, ale wejście użytkownika idzie przez Teresę (`UnifiedChatPanel` + `useTeresaModuleBinding`). `AgentPanel` w DeckBuilder pozostaje wyłącznie jako *passive AI history view* (bez inputu).
+
 ---
 
 ## 1. Core rule

@@ -556,10 +556,12 @@ function ArtifactsList({
       {artifacts.map((item) => {
         const id = item.originRecordId || item.artifactId;
         const d = new Date(item.updatedAt);
+        if (!id) return null;
+        const safeId = id;
         return (
           <button
-            key={id}
-            onClick={() => onArtifactClick(id)}
+            key={safeId}
+            onClick={() => onArtifactClick(safeId)}
             className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
           >
             <div className="min-w-0 flex-1">

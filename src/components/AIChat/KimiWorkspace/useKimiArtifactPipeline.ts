@@ -762,6 +762,14 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
   const startGeneration = useCallback(
     async (goal: string, templateArtifactId?: string) => {
+      console.info('[KIMI Pipeline] startGeneration invoked', {
+        lane,
+        goalLength: goal.length,
+        hasConversationId: !!conversationId,
+        hasOrgId: !!currentOrganization?.id,
+        hasCurrentUser: !!currentUser,
+        hasTemplate: !!templateArtifactId,
+      });
       setIsStartingPipeline(true);
       setStartupError(null);
       setLastGoal(goal);
@@ -844,9 +852,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             snapshotId = (snap as { snapshotId?: string })?.snapshotId;
           } catch (snapErr: any) {
             const details = snapErr?.data?.details ?? snapErr?.response?.data?.details;
-            setStartupError(
-              snapErr instanceof Error ? snapErr.message : 'Failed to capture context snapshot.'
-            );
+            const message =
+              snapErr instanceof Error ? snapErr.message : 'Failed to capture context snapshot.';
+            setStartupError(message);
+            toast.error(`Snapshot: ${message}`);
             console.error('[KIMI Pipeline] Snapshot capture failed:', {
               error: snapErr?.message,
               details: JSON.stringify(details, null, 2),
@@ -876,8 +885,17 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           const preflighted = await preflightRun.mutateAsync(result.run.runId);
           setCurrentRun(preflighted);
           setCurrentPlan(preflighted.plan);
-        } catch {
-          // preflight failures surface via state
+        } catch (preflightErr: any) {
+          const details = preflightErr?.data?.details ?? preflightErr?.response?.data?.details;
+          const message =
+            preflightErr instanceof Error ? preflightErr.message : 'Preflight check failed.';
+          setStartupError(message);
+          toast.error(`Preflight: ${message}`);
+          console.error('[KIMI Pipeline] Preflight failed:', {
+            runId: result.run.runId,
+            error: preflightErr?.message,
+            details: JSON.stringify(details, null, 2),
+          });
         }
 
         try {
@@ -888,8 +906,12 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           if (accepted.executionRunId) {
             try {
               await submitReview.mutateAsync(accepted.executionRunId);
-            } catch {
-              // fallback to interval-driven advance
+            } catch (submitErr: any) {
+              console.error('[KIMI Pipeline] submitReview failed (non-fatal):', {
+                executionRunId: accepted.executionRunId,
+                error: submitErr?.message,
+                details: submitErr?.data?.details ?? submitErr?.response?.data?.details,
+              });
             }
 
             try {
@@ -897,8 +919,12 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                 runId: accepted.executionRunId,
                 reason: 'KIMI auto-approval for governed artifact generation',
               });
-            } catch {
-              // fallback to interval-driven advance
+            } catch (approveErr: any) {
+              console.error('[KIMI Pipeline] approveRun failed (non-fatal):', {
+                executionRunId: accepted.executionRunId,
+                error: approveErr?.message,
+                details: approveErr?.data?.details ?? approveErr?.response?.data?.details,
+              });
             }
           }
 
@@ -912,11 +938,29 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             });
             setCurrentRun(materialized);
             setCurrentPlan(materialized.plan);
-          } catch {
-            // fallback to interval-driven advance
+          } catch (materializeErr: any) {
+            const details =
+              materializeErr?.data?.details ?? materializeErr?.response?.data?.details;
+            const message =
+              materializeErr instanceof Error ? materializeErr.message : 'Materialization failed.';
+            setStartupError(message);
+            toast.error(`Materialize: ${message}`);
+            console.error('[KIMI Pipeline] materializeRun failed:', {
+              runId: accepted.runId,
+              error: materializeErr?.message,
+              details: JSON.stringify(details, null, 2),
+            });
           }
-        } catch {
-          // accept failures surface via state
+        } catch (acceptErr: any) {
+          const details = acceptErr?.data?.details ?? acceptErr?.response?.data?.details;
+          const message = acceptErr instanceof Error ? acceptErr.message : 'Accept plan failed.';
+          setStartupError(message);
+          toast.error(`Accept plan: ${message}`);
+          console.error('[KIMI Pipeline] acceptPlan failed:', {
+            runId: result.run.runId,
+            error: acceptErr?.message,
+            details: JSON.stringify(details, null, 2),
+          });
         }
       } catch (error) {
         setStartupError(
@@ -942,7 +986,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       outputType,
       currentOrganization?.id,
       currentProjectId,
-      currentUser?.role,
+      currentUser,
     ]
   );
 

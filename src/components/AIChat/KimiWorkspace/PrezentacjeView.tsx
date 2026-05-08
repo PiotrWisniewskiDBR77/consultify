@@ -110,6 +110,7 @@ async function loadPresentationDeck(
 }
 
 export const PrezentacjeView: React.FC = () => {
+  const { t } = useTranslation();
   const pipeline = useKimiArtifactPipeline('prezentacje');
   const activeMessages = useConversationStore((s) => s.activeMessages);
   const [searchParams] = useSearchParams();
@@ -180,7 +181,7 @@ export const PrezentacjeView: React.FC = () => {
 
         let statusLabel = deriveDeckLifecycleBadge(null, null);
         try {
-          const originRes = (await Api.get(`/artifacts/orig/presentation/${deckId}`)) as any;
+          const originRes = (await Api.get(`/artifacts/origin/presentation/${deckId}`)) as any;
           const artId = originRes?.data?.artifactId || originRes?.artifactId;
           if (artId) {
             const trustRes = (await Api.get(`/artifacts/${artId}/trust-state`)) as any;
@@ -269,7 +270,6 @@ export const PrezentacjeView: React.FC = () => {
 
   // Post-generation chat intent routing (P20 audit §1.1)
   const lastRoutedMsgRef = useRef<string | null>(null);
-  const { t } = useTranslation();
   useEffect(() => {
     const deckTarget = pipeline.currentRun?.materializationOrigin?.originRecordId || reopenDeckId;
     if (!deckTarget || !pipeline.isCompleted) return;
