@@ -997,6 +997,45 @@ Until E14, the registry only carried structural metadata (category, status, blue
 
 **Closes gaps.** §10.8 of the gap-vs-target report (NFR-17 / source drift) — ADVISORY LAYER DELIVERED. The hard-drift comparator (compare pinned `sourceVersion` against the live source registry's latest version) is scheduled as a follow-up that depends on the source registry exposing a per-source latest-version lookup; that work is registry-bound and out of scope here.
 
+### 6.15.6 Slice E14.blueprint — Per-section spec §8.3 fields on `TemplateSectionBlueprint`
+
+**Why.** §15.3 of the gap-vs-target report flagged a concrete gap: `TemplateSectionBlueprint` only carries the 5-field shape (`title`, `level`, `purpose`, `required`, `expectedLengthHint`), while the spec §8.3 contract demands 4 additional per-section fields:
+- `required_data[]` — inputs the Template Architect demands inside this section,
+- `optional_data[]` — inputs that enrich but do not block the section,
+- `formatting_style` — per-section formatting recipe override on top of the document-level `formattingSchema`,
+- `approval_required` — per-section approval gate independent of document-level approvals (E10).
+
+Without these fields, Template Architects cannot fully express SOP / governance / regulatory templates that need granular per-section input checklists or sensitive-section approval gates.
+
+**Substrate-only scope (no consumer logic in this slice).** Like E5.6 and E14, this slice ships ONLY the type contract + 2 helper functions. Consumers (Mode-3 generation review UI, Source Pack matrix, per-section approval gate in E10) are deferred to follow-up slices on top of this substrate. This keeps the diff surgical, eliminates collision risk with parallel agents in the seeder / refiner / route layers, and locks in the shape before any code starts depending on it.
+
+**What ships in this slice.**
+- `documentStudioTypes.ts` — extend `TemplateSectionBlueprint` with **4** backwards-compatible optional fields (see semantics in the doc-comment on the interface).
+- Two new service helpers exported from `documentStudioTypes.ts`:
+    - `templateHasPerSectionApprovalRequirements(blueprint)` — true if any blueprint in the template demands per-section approval. Returns `false` for empty / null / undefined / legacy blueprints.
+    - `collectTemplateRequiredDataLabels(blueprint)` — deduplicated, insertion-order-preserving union of all `requiredData` labels across the template's blueprints. Drops whitespace-only and non-string entries; trims surrounding whitespace before deduplication.
+- `src/components/DocumentStudio/types.ts` — frontend mirror of the 4 optional fields.
+
+**Backwards compatibility.** Pre-E14.blueprint blueprints (every existing seed, every existing tenant template, every existing test fixture) carry the 5-field shape; the new fields stay `undefined` everywhere. Spread-based mutation in `documentTemplateRefiner.ts` (`{ ...original, purpose: refinedPurpose }`) and in `documentTemplateService.draftTemplate` (`{ ...blueprint, ... }`) preserves the new fields automatically — no changes needed in the seeder, the refiner, hydration, persistence, draft / approve / deprecate flows, or the materialize pipeline.
+
+**Coverage.** New `documentTemplateBlueprintSpecFields.test.ts` with **17** specs:
+- legacy 5-field blueprint leaves all 4 new fields `undefined`;
+- spread of a legacy blueprint preserves the 5-field shape (refiner / seeder safety);
+- each new field accepts independent assignment;
+- all four new fields can coexist on a single blueprint;
+- `templateHasPerSectionApprovalRequirements` returns false for empty / null / undefined / legacy blueprints;
+- `templateHasPerSectionApprovalRequirements` returns false when every blueprint has `approvalRequired = false`;
+- `templateHasPerSectionApprovalRequirements` returns true if at least one blueprint has `approvalRequired = true`;
+- `collectTemplateRequiredDataLabels` returns empty array for empty / null / undefined / legacy blueprints;
+- `collectTemplateRequiredDataLabels` collects labels from a single blueprint preserving insertion order;
+- `collectTemplateRequiredDataLabels` deduplicates labels across blueprints (insertion-order preserved);
+- `collectTemplateRequiredDataLabels` drops whitespace-only and non-string entries;
+- `collectTemplateRequiredDataLabels` trims surrounding whitespace before deduplication.
+
+**Validation.** Document Studio + Execution Module Standard suite **637/637 green** (+17 from E14.blueprint). tsc clean for the modified files. ESLint clean for all modified files after `--fix`.
+
+**Closes gaps.** §15.3 of the gap-vs-target report (spec §8.3 SectionBlueprint contract) — SUBSTRATE DELIVERED. Consumer integrations (Mode-3 generation review UI, Source Pack matrix, per-section approval gate) are scheduled as follow-ups on top of this substrate.
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export

@@ -623,12 +623,109 @@ export type TemplateCategory =
 
 export type TemplateStatus = 'draft' | 'approved' | 'deprecated';
 
+/**
+ * Per-section blueprint inside a `DocumentTemplate`. Slice E14.blueprint
+ * (§15.3 of the gap-vs-target report) extends the original 5-field
+ * shape with **4** backwards-compatible optional fields so the
+ * Template Architect can express the missing spec §8.3 contract
+ * (`required_data[]`, `optional_data[]`, `formatting_style`,
+ * `approval_required` per blueprint). Pre-E14.blueprint templates
+ * omit these fields and continue to work without any changes to
+ * seeders, refiners, hydration, persistence, draft / approve /
+ * deprecate flows, or the materialize pipeline.
+ *
+ * Field semantics:
+ * - `requiredData` — short, free-form labels naming the inputs a
+ *   Template Architect demands inside this section (e.g. "client
+ *   revenue 2024", "Q3 board minutes timestamp"). Mode-3 generation
+ *   surfaces this as the per-section input checklist; missing items
+ *   become QA findings on the source-coverage category. Empty array
+ *   = "no specific data demanded for this section" (different from
+ *   `undefined`, which means "the template author has not classified
+ *   this section yet" → the Template Architect prompts to fill it
+ *   in).
+ * - `optionalData` — labels for inputs that ENRICH but do not block
+ *   the section. The recommender uses these to suggest enrichment
+ *   opportunities to the consultant; never blocking.
+ * - `formattingStyle` — short identifier (e.g.
+ *   `"h1_with_intro_and_table"`, `"bullet_list_decisions"`,
+ *   `"narrative_two_column"`) that the renderer can map to a
+ *   per-section formatting recipe override on top of the
+ *   document-level `formattingSchema`. Free-form string so
+ *   tenants can extend the catalogue without changing types.
+ * - `approvalRequired` — when true, the section MUST clear an
+ *   approval decision INDEPENDENTLY of the document-level approval
+ *   gate. Document-level approvals (E10) continue to gate the
+ *   whole artifact; this flag adds an extra requirement per
+ *   section, used by sensitive blueprints (e.g. legal-language
+ *   sections, confidentiality clauses, regulatory disclosures).
+ *   Default `undefined` is treated as "no per-section approval
+ *   gate" — only the document-level gate applies.
+ *
+ * No mutations to existing fields. Seeders, refiners, the
+ * materialize pipeline, and persistence stay forward-compatible
+ * because the new fields default to `undefined` everywhere.
+ */
 export interface TemplateSectionBlueprint {
   title: string;
   level: 1 | 2 | 3;
   purpose: string;
   required: boolean;
   expectedLengthHint: 'short' | 'medium' | 'long';
+  // -------------------------------------------------------------------------
+  // Slice E14.blueprint (gap-vs-target §15.3) — closes spec §8.3 gap.
+  // All four are optional / backwards-compatible.
+  // -------------------------------------------------------------------------
+  requiredData?: string[];
+  optionalData?: string[];
+  formattingStyle?: string;
+  approvalRequired?: boolean;
+}
+
+/**
+ * Slice E14.blueprint helper — true if any blueprint inside the
+ * template demands per-section approval beyond the document-level
+ * gate. Powers a future approvals UI affordance ("this template
+ * requires N additional per-section approvals before export").
+ *
+ * Returns `false` for templates whose every blueprint omits
+ * `approvalRequired` (legacy behaviour).
+ */
+export function templateHasPerSectionApprovalRequirements(
+  blueprint: TemplateSectionBlueprint[] | undefined | null
+): boolean {
+  if (!Array.isArray(blueprint) || blueprint.length === 0) return false;
+  return blueprint.some((b) => b?.approvalRequired === true);
+}
+
+/**
+ * Slice E14.blueprint helper — returns the union (deduplicated, in
+ * insertion order) of all `requiredData` entries across the
+ * template's blueprints. Used by Mode-3 generation to build a
+ * top-level "inputs we still need" checklist that also feeds the
+ * per-section Source Pack matrix (R13).
+ *
+ * Empty / unset blueprints contribute nothing; whitespace-only
+ * entries are dropped because they are user-input noise.
+ */
+export function collectTemplateRequiredDataLabels(
+  blueprint: TemplateSectionBlueprint[] | undefined | null
+): string[] {
+  if (!Array.isArray(blueprint) || blueprint.length === 0) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const section of blueprint) {
+    if (!section || !Array.isArray(section.requiredData)) continue;
+    for (const label of section.requiredData) {
+      if (typeof label !== 'string') continue;
+      const trimmed = label.trim();
+      if (trimmed.length === 0) continue;
+      if (seen.has(trimmed)) continue;
+      seen.add(trimmed);
+      out.push(trimmed);
+    }
+  }
+  return out;
 }
 
 export interface TemplateExportRules {

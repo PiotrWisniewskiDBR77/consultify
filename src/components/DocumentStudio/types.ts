@@ -242,12 +242,28 @@ export type TemplateCategory =
 
 export type TemplateStatus = 'draft' | 'approved' | 'deprecated';
 
+/**
+ * Slice E14.blueprint (gap-vs-target §15.3) — frontend mirror of the
+ * extended blueprint contract. Adds 4 backwards-compatible optional
+ * fields so the Template Architect FE surface (and the Mode-3
+ * generation review UI) can render per-section input checklists,
+ * formatting style hints, and per-section approval requirements.
+ * See `documentStudioTypes.ts` (server) for the full contract.
+ *
+ * Pre-E14.blueprint templates omit all four fields; the FE MUST
+ * tolerate them being `undefined` and render the legacy 5-field
+ * shape unchanged.
+ */
 export interface TemplateSectionBlueprint {
   title: string;
   level: 1 | 2 | 3;
   purpose: string;
   required: boolean;
   expectedLengthHint: 'short' | 'medium' | 'long';
+  requiredData?: string[];
+  optionalData?: string[];
+  formattingStyle?: string;
+  approvalRequired?: boolean;
 }
 
 export interface TemplateExportRules {
