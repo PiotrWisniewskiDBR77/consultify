@@ -22,6 +22,7 @@ import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
 import { TabeleMelsView } from './tabeleShell/TabeleMelsView';
+import { useTabeleRightRailPanels } from './tabeleShell/useTabeleRightRailPanels';
 import { TABELE_SYSTEM_PROMPT } from './tabeleSystemPrompt';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 
@@ -123,6 +124,31 @@ function buildTabelePreview(
     },
   };
 }
+
+/**
+ * Internal wrapper: composes the MELS view with right-rail AI Editor + QA
+ * panels so the connector hook can render only when needed.
+ */
+const TabeleMelsViewWithPanels: React.FC<{
+  preview: (ArtifactPreview & { type: 'tabele' }) | null;
+  tableId: string | null | undefined;
+  workspaceId: string | null | undefined;
+  onShare: () => void;
+  onRunPrimary: () => void;
+}> = ({ preview, tableId, workspaceId, onShare, onRunPrimary }) => {
+  const { rightRailPanels } = useTabeleRightRailPanels({
+    tableId: tableId ?? null,
+    workspaceId: workspaceId ?? null,
+  });
+  return (
+    <TabeleMelsView
+      preview={preview}
+      topBarHandlers={{ onShare, onRun: onRunPrimary }}
+      onRunPrimary={onRunPrimary}
+      rightRailPanels={rightRailPanels}
+    />
+  );
+};
 
 export const TabeleView: React.FC = () => {
   const pipeline = useKimiArtifactPipeline('tabele');
@@ -430,12 +456,11 @@ export const TabeleView: React.FC = () => {
         ? (effectivePreview as ArtifactPreview & { type: 'tabele' })
         : null;
     return (
-      <TabeleMelsView
+      <TabeleMelsViewWithPanels
         preview={tabelePreview}
-        topBarHandlers={{
-          onShare: handleAllFiles,
-          onRun: handlePreviewFile,
-        }}
+        tableId={effectiveTableId}
+        workspaceId={workspaceIdForIntents}
+        onShare={handleAllFiles}
         onRunPrimary={handlePreviewFile}
       />
     );

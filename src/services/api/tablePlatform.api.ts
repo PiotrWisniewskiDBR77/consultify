@@ -1649,3 +1649,196 @@ export async function updateBaseShareSettings(
   });
   return handleResponse(res, 'Failed to update share settings');
 }
+
+// ============================================================================
+// AI EDITOR API (Block C · EPIC-T10 · Sprint C-S5 frontend client)
+// ============================================================================
+
+export type AiEditorLevel =
+  | 'cell'
+  | 'record'
+  | 'column'
+  | 'structure'
+  | 'view'
+  | 'relational'
+  | 'methodological'
+  | 'source';
+
+export interface AiEditorProposeInput {
+  level: AiEditorLevel;
+  prompt: string;
+  context?: Record<string, unknown>;
+  estimatedTokensInput?: number;
+  estimatedTokensOutput?: number;
+  model?: string;
+}
+
+export interface AiEditorProposeResponse {
+  proposalId: string;
+  level: AiEditorLevel;
+  softWarn: boolean;
+  handlerStatus: 'stub' | 'live';
+}
+
+export interface AiBudgetSnapshot {
+  workspaceId: string;
+  budget: number;
+  tokensUsedToday: number;
+  lastResetAt: string;
+  remaining: number;
+  softWarnThreshold: number;
+  softWarnTripped: boolean;
+}
+
+export async function proposeAiEdit(
+  tableId: string,
+  payload: AiEditorProposeInput
+): Promise<AiEditorProposeResponse> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/ai-editor/propose`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    }
+  );
+  const data = await handleResponse<
+    AiEditorProposeResponse | { data: AiEditorProposeResponse }
+  >(res, 'Failed to propose AI edit');
+  return unwrapDataEnvelope<AiEditorProposeResponse>(data);
+}
+
+export async function applyAiProposal(
+  proposalId: string,
+  workspaceId: string,
+  options?: { idempotent?: boolean }
+): Promise<{ proposalId: string; applied: boolean; reason?: string }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/ai-editor/proposals/${encodeURIComponent(proposalId)}/apply`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ workspaceId, idempotent: options?.idempotent ?? false }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to apply proposal');
+  return unwrapDataEnvelope(data);
+}
+
+export async function rejectAiProposal(
+  proposalId: string,
+  workspaceId: string,
+  note?: string
+): Promise<{ proposalId: string; rejected: true }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/ai-editor/proposals/${encodeURIComponent(proposalId)}/reject`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ workspaceId, note }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to reject proposal');
+  return unwrapDataEnvelope(data);
+}
+
+export async function getAiBudget(workspaceId: string): Promise<AiBudgetSnapshot> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/ai-editor/budget?workspaceId=${encodeURIComponent(workspaceId)}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to fetch AI budget');
+  return unwrapDataEnvelope<AiBudgetSnapshot>(data);
+}
+
+// ============================================================================
+// QA ENGINE API (Block C · EPIC-T11 · Sprint C-S5 frontend client)
+// ============================================================================
+
+export type QaTriggerKind = 'on_demand' | 'scheduled' | 'record_write';
+
+export type QaAxisName =
+  | 'completeness'
+  | 'freshness'
+  | 'sourceCoverage'
+  | 'methodology'
+  | 'formulaConsistency';
+
+export type QaBand = 'red' | 'amber' | 'green';
+
+export interface QaAxisDetail {
+  score: number;
+  band: QaBand;
+  details: Array<{ metric: string; value: unknown }>;
+}
+
+export interface QaSuggestion {
+  id: string;
+  fingerprint: string;
+  axis: QaAxisName;
+  description: string;
+  recommendedAction: {
+    kind: 'open_ai_editor';
+    level: AiEditorLevel;
+    payload: Record<string, unknown>;
+  };
+  severity: 'low' | 'medium' | 'high';
+}
+
+export interface QaReport {
+  id: string;
+  tableId: string;
+  organizationId: string;
+  workspaceId: string;
+  computedAt: string;
+  computedBy: string;
+  triggerKind: QaTriggerKind | 'migration';
+  overallScore: number;
+  axes: Record<QaAxisName, QaAxisDetail>;
+  suggestions: QaSuggestion[];
+  computationMs?: number;
+}
+
+export async function recomputeQaReport(
+  tableId: string,
+  triggerKind: QaTriggerKind = 'on_demand'
+): Promise<QaReport> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/recompute`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ triggerKind }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to recompute QA report');
+  return unwrapDataEnvelope<QaReport>(data);
+}
+
+export async function getLatestQaReport(tableId: string): Promise<QaReport | null> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/latest`,
+    { headers: getHeaders() }
+  );
+  if (res.status === 204) return null;
+  const data = await handleResponse<any>(res, 'Failed to fetch QA report');
+  return unwrapDataEnvelope<QaReport>(data);
+}
+
+export async function dismissQaSuggestion(
+  tableId: string,
+  suggestionId: string,
+  fingerprint: string,
+  reason?: string
+): Promise<{ tableId: string; fingerprint: string; dismissed: true }> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/qa/suggestions/${encodeURIComponent(suggestionId)}/inapplicable`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ fingerprint, reason }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to dismiss QA suggestion');
+  return unwrapDataEnvelope(data);
+}
