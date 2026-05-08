@@ -52,8 +52,7 @@ export const EXECUTION_MODULE_ZONES: ReadonlyArray<ExecutionModuleZoneSpec> = Ob
   Object.freeze({
     zoneId: 'canvas',
     label: 'Środek — Kanwa',
-    responsibility:
-      'Jedna jednostka logiczna w pełnym widoku WYSIWYG.',
+    responsibility: 'Jedna jednostka logiczna w pełnym widoku WYSIWYG.',
     constraints: Object.freeze([
       'MUST NOT render a toolbar under document metadata.',
       'MUST NOT render a second column of floating action buttons.',
@@ -157,7 +156,7 @@ export function makeViolation(
   severity: ExecutionModuleViolation['severity'],
   dimension: ExecutionModuleViolation['dimension'],
   message: string,
-  details?: Record<string, unknown>,
+  details?: Record<string, unknown>
 ): ExecutionModuleViolation {
   return { ruleId, severity, dimension, message, details };
 }
@@ -172,7 +171,7 @@ export function makeViolation(
  * unusable so callers always receive a result envelope.
  */
 export function validateExecutionModuleManifest(
-  manifest: ExecutionModuleManifest,
+  manifest: ExecutionModuleManifest
 ): ExecutionModuleValidationResult {
   const mustViolations: ExecutionModuleViolation[] = [];
   const shouldViolations: ExecutionModuleViolation[] = [];
@@ -216,7 +215,7 @@ export function validateExecutionModuleManifest(
 
 function validateZones(
   manifest: ExecutionModuleManifest,
-  mustViolations: ExecutionModuleViolation[],
+  mustViolations: ExecutionModuleViolation[]
 ): void {
   const zones = Array.isArray(manifest.zones) ? manifest.zones : [];
   if (zones.length !== EXECUTION_MODULE_ZONE_ORDER.length) {
@@ -226,8 +225,8 @@ function validateZones(
         'must',
         'layout',
         `manifest must declare exactly ${EXECUTION_MODULE_ZONE_ORDER.length} zones (left nav / canvas / right panel)`,
-        { observed: zones.length, expected: EXECUTION_MODULE_ZONE_ORDER.length },
-      ),
+        { observed: zones.length, expected: EXECUTION_MODULE_ZONE_ORDER.length }
+      )
     );
     return;
   }
@@ -241,8 +240,8 @@ function validateZones(
           'must',
           'layout',
           `zone slot ${i} must be ${expected}; observed ${declared?.zoneId ?? '<missing>'}`,
-          { slot: i, expected, observed: declared?.zoneId ?? null },
-        ),
+          { slot: i, expected, observed: declared?.zoneId ?? null }
+        )
       );
     }
   }
@@ -251,7 +250,7 @@ function validateZones(
 function validateMenu2(
   manifest: ExecutionModuleManifest,
   mustViolations: ExecutionModuleViolation[],
-  shouldViolations: ExecutionModuleViolation[],
+  shouldViolations: ExecutionModuleViolation[]
 ): void {
   const chips = Array.isArray(manifest.menu2Chips) ? manifest.menu2Chips : [];
   // The chip set MAY be smaller, but every declared id MUST be a
@@ -266,13 +265,9 @@ function validateMenu2(
     const idx = canonicalIndex.get(chip.chipId);
     if (idx === undefined) {
       mustViolations.push(
-        makeViolation(
-          'menu2_unknown_chip',
-          'must',
-          'menu2',
-          `unknown chip id: ${chip.chipId}`,
-          { chipId: chip.chipId },
-        ),
+        makeViolation('menu2_unknown_chip', 'must', 'menu2', `unknown chip id: ${chip.chipId}`, {
+          chipId: chip.chipId,
+        })
       );
       continue;
     }
@@ -283,8 +278,8 @@ function validateMenu2(
           'must',
           'menu2',
           `chip declared twice: ${chip.chipId}`,
-          { chipId: chip.chipId },
-        ),
+          { chipId: chip.chipId }
+        )
       );
       continue;
     }
@@ -296,8 +291,8 @@ function validateMenu2(
           'must',
           'menu2',
           `chip ${chip.chipId} appears out of canonical order`,
-          { chipId: chip.chipId, canonicalIndex: idx },
-        ),
+          { chipId: chip.chipId, canonicalIndex: idx }
+        )
       );
     }
     lastIdx = idx;
@@ -311,8 +306,8 @@ function validateMenu2(
         'menu2_cta_label_missing',
         'must',
         'menu2',
-        'cta_primary chip is present but ctaLabel is missing (Prezentuj | Eksportuj)',
-      ),
+        'cta_primary chip is present but ctaLabel is missing (Prezentuj | Eksportuj)'
+      )
     );
   }
 
@@ -328,8 +323,8 @@ function validateMenu2(
           'should',
           'menu2',
           `chip ${id} is hidden in this module`,
-          { chipId: id },
-        ),
+          { chipId: id }
+        )
       );
     }
   }
@@ -337,24 +332,31 @@ function validateMenu2(
 
 function validateRightPanel(
   manifest: ExecutionModuleManifest,
-  mustViolations: ExecutionModuleViolation[],
+  mustViolations: ExecutionModuleViolation[]
 ): void {
   const panel = manifest.rightPanel as ExecutionModuleRightPanelDeclaration | undefined;
   if (!panel) {
     mustViolations.push(
-      makeViolation('right_panel_missing', 'must', 'rightPanel', 'rightPanel declaration is missing'),
+      makeViolation(
+        'right_panel_missing',
+        'must',
+        'rightPanel',
+        'rightPanel declaration is missing'
+      )
     );
     return;
   }
-  if (panel.collapseTriggerPosition !== EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.triggerPosition) {
+  if (
+    panel.collapseTriggerPosition !== EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.triggerPosition
+  ) {
     mustViolations.push(
       makeViolation(
         'right_panel_collapse_trigger_position',
         'must',
         'rightPanel',
         `collapseTriggerPosition must be '${EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.triggerPosition}'`,
-        { observed: panel.collapseTriggerPosition },
-      ),
+        { observed: panel.collapseTriggerPosition }
+      )
     );
   }
   if (panel.collapseTriggerStyle !== EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.triggerStyle) {
@@ -364,8 +366,8 @@ function validateRightPanel(
         'must',
         'rightPanel',
         `collapseTriggerStyle must be '${EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.triggerStyle}'`,
-        { observed: panel.collapseTriggerStyle },
-      ),
+        { observed: panel.collapseTriggerStyle }
+      )
     );
   }
   if (panel.collapsedWidthPx !== EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.collapsedWidthPx) {
@@ -375,13 +377,15 @@ function validateRightPanel(
         'must',
         'rightPanel',
         `collapsedWidthPx must be ${EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.collapsedWidthPx}`,
-        { observed: panel.collapsedWidthPx },
-      ),
+        { observed: panel.collapsedWidthPx }
+      )
     );
   }
   if (
-    panel.expandedWidthMinPx < EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.min ||
-    panel.expandedWidthMaxPx > EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.max
+    panel.expandedWidthMinPx <
+      EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.min ||
+    panel.expandedWidthMaxPx >
+      EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.max
   ) {
     mustViolations.push(
       makeViolation(
@@ -389,8 +393,8 @@ function validateRightPanel(
         'must',
         'rightPanel',
         `expanded panel width must fall within [${EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.min}px, ${EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.max}px]`,
-        { observedMin: panel.expandedWidthMinPx, observedMax: panel.expandedWidthMaxPx },
-      ),
+        { observedMin: panel.expandedWidthMinPx, observedMax: panel.expandedWidthMaxPx }
+      )
     );
   }
   if (panel.persistence !== EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.persistence) {
@@ -400,8 +404,8 @@ function validateRightPanel(
         'must',
         'rightPanel',
         `persistence must be '${EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.persistence}'`,
-        { observed: panel.persistence },
-      ),
+        { observed: panel.persistence }
+      )
     );
   }
   if (panel.parallelPanelsAllowed !== false) {
@@ -410,27 +414,27 @@ function validateRightPanel(
         'right_panel_parallel_disallowed',
         'must',
         'rightPanel',
-        'parallelPanelsAllowed must be false (the standard mandates exactly one panel visible)',
-      ),
+        'parallelPanelsAllowed must be false (the standard mandates exactly one panel visible)'
+      )
     );
   }
 }
 
 function validateAgent(
   manifest: ExecutionModuleManifest,
-  mustViolations: ExecutionModuleViolation[],
+  mustViolations: ExecutionModuleViolation[]
 ): void {
   const agent = manifest.agent as ExecutionModuleAgentDeclaration | undefined;
   if (!agent) {
     mustViolations.push(
-      makeViolation('agent_missing', 'must', 'agent', 'agent declaration is missing'),
+      makeViolation('agent_missing', 'must', 'agent', 'agent declaration is missing')
     );
     return;
   }
   const exposed = Array.isArray(agent.exposedAgentIds) ? agent.exposedAgentIds : [];
   if (exposed.length === 0) {
     mustViolations.push(
-      makeViolation('agent_empty', 'must', 'agent', 'exposedAgentIds must include teresa'),
+      makeViolation('agent_empty', 'must', 'agent', 'exposedAgentIds must include teresa')
     );
   }
   for (const id of exposed) {
@@ -441,8 +445,8 @@ function validateAgent(
           'must',
           'agent',
           `agent id '${id}' is not allowed in execution modules; only Teresa is permitted`,
-          { agentId: id },
-        ),
+          { agentId: id }
+        )
       );
     }
   }
@@ -452,8 +456,8 @@ function validateAgent(
         'agent_teresa_required',
         'must',
         'agent',
-        'exposedAgentIds must include "teresa"',
-      ),
+        'exposedAgentIds must include "teresa"'
+      )
     );
   }
   if (
@@ -467,9 +471,9 @@ function validateAgent(
         'must',
         'agent',
         `teresaSurface must be one of popover|drawer|side_panel; observed ${String(
-          agent.teresaSurface,
-        )}`,
-      ),
+          agent.teresaSurface
+        )}`
+      )
     );
   }
 }
@@ -477,12 +481,12 @@ function validateAgent(
 function validateAiActions(
   manifest: ExecutionModuleManifest,
   mustViolations: ExecutionModuleViolation[],
-  shouldViolations: ExecutionModuleViolation[],
+  shouldViolations: ExecutionModuleViolation[]
 ): void {
   const ai = manifest.aiActions as ExecutionModuleAiActionsDeclaration | undefined;
   if (!ai) {
     mustViolations.push(
-      makeViolation('ai_actions_missing', 'must', 'aiActions', 'aiActions declaration is missing'),
+      makeViolation('ai_actions_missing', 'must', 'aiActions', 'aiActions declaration is missing')
     );
     return;
   }
@@ -494,8 +498,8 @@ function validateAiActions(
             'ai_actions_slot_pending_unjustified',
             'must',
             'aiActions',
-            'slot=pending_migration requires slotJustification',
-          ),
+            'slot=pending_migration requires slotJustification'
+          )
         );
       } else {
         shouldViolations.push(
@@ -504,8 +508,8 @@ function validateAiActions(
             'should',
             'aiActions',
             'slot=pending_migration is a temporary escape; migrate to canonical Menu 3 slot',
-            { slotJustification: ai.slotJustification },
-          ),
+            { slotJustification: ai.slotJustification }
+          )
         );
       }
     } else {
@@ -515,8 +519,8 @@ function validateAiActions(
           'must',
           'aiActions',
           `slot must be one of ${EXECUTION_MODULE_ALLOWED_AI_ACTION_SLOTS.join(' | ')}`,
-          { observed: ai.slot },
-        ),
+          { observed: ai.slot }
+        )
       );
     }
   }
@@ -526,8 +530,8 @@ function validateAiActions(
         'ai_actions_duplicated_in_canvas',
         'must',
         'aiActions',
-        'AI actions MUST NOT be duplicated inside the canvas',
-      ),
+        'AI actions MUST NOT be duplicated inside the canvas'
+      )
     );
   }
   const actionIds = Array.isArray(ai.actionIds) ? ai.actionIds : [];
@@ -539,8 +543,8 @@ function validateAiActions(
           'ai_actions_invalid_id',
           'must',
           'aiActions',
-          `actionIds must be non-empty strings; observed ${String(id)}`,
-        ),
+          `actionIds must be non-empty strings; observed ${String(id)}`
+        )
       );
       continue;
     }
@@ -551,8 +555,8 @@ function validateAiActions(
           'must',
           'aiActions',
           `actionId duplicated: ${id}`,
-          { actionId: id },
-        ),
+          { actionId: id }
+        )
       );
     }
     seen.add(id);
@@ -575,7 +579,7 @@ export interface ValidateAllResult {
  * change.
  */
 export function validateAllManifests(
-  manifests: ReadonlyArray<ExecutionModuleManifest>,
+  manifests: ReadonlyArray<ExecutionModuleManifest>
 ): ValidateAllResult {
   const results = manifests.map((manifest) => validateExecutionModuleManifest(manifest));
   return { ok: results.every((r) => r.ok), results };

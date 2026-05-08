@@ -33,7 +33,7 @@ import {
 import type { ExecutionModuleManifest } from '../executionModuleStandardTypes.js';
 
 function makeBaselineManifest(
-  overrides: Partial<ExecutionModuleManifest> = {},
+  overrides: Partial<ExecutionModuleManifest> = {}
 ): ExecutionModuleManifest {
   const baseline: ExecutionModuleManifest = {
     moduleId: 'doc-builder',
@@ -109,9 +109,7 @@ describe('canonical constants', () => {
     expect(EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.collapsedWidthPx).toBe(32);
     expect(EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.min).toBe(280);
     expect(EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.expandedWidthRangePx.max).toBe(360);
-    expect(EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.persistence).toBe(
-      'per_user_per_module',
-    );
+    expect(EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT.persistence).toBe('per_user_per_module');
   });
 
   it('Teresa is the only allowed agent id', () => {
@@ -154,7 +152,7 @@ describe('layout zones', () => {
     const result = validateExecutionModuleManifest(
       makeBaselineManifest({
         zones: [{ zoneId: 'canvas', unitKindLabel: 'X' }],
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('layout_zone_count');
   });
@@ -167,7 +165,7 @@ describe('layout zones', () => {
           { zoneId: 'leftNav', unitKindLabel: 'X' },
           { zoneId: 'rightPanel', unitKindLabel: 'X' },
         ],
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('layout_zone_order');
   });
@@ -178,10 +176,7 @@ describe('Menu 2 chips', () => {
     const baseline = makeBaselineManifest();
     const result = validateExecutionModuleManifest({
       ...baseline,
-      menu2Chips: [
-        ...baseline.menu2Chips,
-        { chipId: 'imaginary' as never, present: true },
-      ],
+      menu2Chips: [...baseline.menu2Chips, { chipId: 'imaginary' as never, present: true }],
     });
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('menu2_unknown_chip');
   });
@@ -190,10 +185,7 @@ describe('Menu 2 chips', () => {
     const baseline = makeBaselineManifest();
     const result = validateExecutionModuleManifest({
       ...baseline,
-      menu2Chips: [
-        ...baseline.menu2Chips,
-        { chipId: 'agent', present: true },
-      ],
+      menu2Chips: [...baseline.menu2Chips, { chipId: 'agent', present: true }],
     });
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('menu2_chip_duplicate');
   });
@@ -205,7 +197,7 @@ describe('Menu 2 chips', () => {
           { chipId: 'agent', present: true },
           { chipId: 'internal', present: true },
         ],
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('menu2_chip_order');
   });
@@ -215,7 +207,7 @@ describe('Menu 2 chips', () => {
     const result = validateExecutionModuleManifest({
       ...baseline,
       menu2Chips: baseline.menu2Chips.map((chip) =>
-        chip.chipId === 'cta_primary' ? { ...chip, ctaLabel: undefined } : chip,
+        chip.chipId === 'cta_primary' ? { ...chip, ctaLabel: undefined } : chip
       ),
     });
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('menu2_cta_label_missing');
@@ -235,7 +227,7 @@ describe('Menu 2 chips', () => {
 describe('right panel', () => {
   it('flags missing rightPanel block', () => {
     const result = validateExecutionModuleManifest(
-      makeBaselineManifest({ rightPanel: undefined as never }),
+      makeBaselineManifest({ rightPanel: undefined as never })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('right_panel_missing');
   });
@@ -263,7 +255,7 @@ describe('right panel', () => {
         'right_panel_expanded_width_range',
         'right_panel_persistence',
         'right_panel_parallel_disallowed',
-      ]),
+      ])
     );
   });
 });
@@ -271,7 +263,7 @@ describe('right panel', () => {
 describe('agent constraints', () => {
   it('flags missing agent declaration', () => {
     const result = validateExecutionModuleManifest(
-      makeBaselineManifest({ agent: undefined as never }),
+      makeBaselineManifest({ agent: undefined as never })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('agent_missing');
   });
@@ -284,7 +276,7 @@ describe('agent constraints', () => {
           teresaSurface: 'drawer',
           contextAwareOn: 'section',
         },
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('agent_empty');
   });
@@ -297,7 +289,7 @@ describe('agent constraints', () => {
           teresaSurface: 'drawer',
           contextAwareOn: 'section',
         },
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('agent_disallowed');
   });
@@ -323,7 +315,7 @@ describe('agent constraints', () => {
           teresaSurface: 'modal' as never,
           contextAwareOn: 'section',
         },
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('agent_surface_invalid');
   });
@@ -332,7 +324,7 @@ describe('agent constraints', () => {
 describe('AI actions placement', () => {
   it('flags missing aiActions block', () => {
     const result = validateExecutionModuleManifest(
-      makeBaselineManifest({ aiActions: undefined as never }),
+      makeBaselineManifest({ aiActions: undefined as never })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('ai_actions_missing');
   });
@@ -345,7 +337,7 @@ describe('AI actions placement', () => {
           actionIds: [],
           duplicatedInCanvas: false,
         },
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain('ai_actions_slot_invalid');
   });
@@ -358,10 +350,10 @@ describe('AI actions placement', () => {
           actionIds: [],
           duplicatedInCanvas: false,
         },
-      }),
+      })
     );
     expect(result.mustViolations.map((v) => v.ruleId)).toContain(
-      'ai_actions_slot_pending_unjustified',
+      'ai_actions_slot_pending_unjustified'
     );
   });
 
@@ -374,11 +366,11 @@ describe('AI actions placement', () => {
           actionIds: ['ai.x'],
           duplicatedInCanvas: false,
         },
-      }),
+      })
     );
     expect(result.ok).toBe(true);
     expect(result.shouldViolations.map((v) => v.ruleId)).toContain(
-      'ai_actions_slot_pending_migration',
+      'ai_actions_slot_pending_migration'
     );
   });
 
@@ -390,11 +382,9 @@ describe('AI actions placement', () => {
           actionIds: ['ai.x'],
           duplicatedInCanvas: true,
         },
-      }),
+      })
     );
-    expect(result.mustViolations.map((v) => v.ruleId)).toContain(
-      'ai_actions_duplicated_in_canvas',
-    );
+    expect(result.mustViolations.map((v) => v.ruleId)).toContain('ai_actions_duplicated_in_canvas');
   });
 
   it('flags duplicate + invalid action ids', () => {
@@ -405,7 +395,7 @@ describe('AI actions placement', () => {
           actionIds: ['ai.x', 'ai.x', '', '   '],
           duplicatedInCanvas: false,
         },
-      }),
+      })
     );
     const ruleIds = result.mustViolations.map((v) => v.ruleId);
     expect(ruleIds).toContain('ai_actions_invalid_id');
