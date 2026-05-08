@@ -233,6 +233,21 @@ export interface TablePlatformRecord {
   data: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Block B / EPIC-T8 — AI confidence score in `[0, 1]`. Backend column
+   * is `tp_records.confidence_score` (NUMERIC(3,2) NULL). Optional
+   * because the column is only populated after the first
+   * `ConfidenceScoringService.recompute` and only when
+   * `ENABLE_RECORD_PROVENANCE` is on.
+   */
+  confidence_score?: number | null;
+  /**
+   * Block B / EPIC-T9 — validation status set by reviewers. Backend
+   * column is `tp_records.validation_status` (TEXT NOT NULL DEFAULT
+   * 'unverified'). Optional on the wire because legacy responses may
+   * predate B-S1.
+   */
+  validation_status?: 'unverified' | 'verified' | 'flagged' | null;
 }
 
 /** Attachment file metadata */

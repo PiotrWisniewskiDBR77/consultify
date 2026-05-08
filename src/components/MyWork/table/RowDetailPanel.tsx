@@ -44,12 +44,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { OrganizationApi } from '@/services/api/organizations.api';
+import type { ValidationStatus } from '@/services/api/recordProvenance.api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useAppStore } from '@/store/useAppStore';
 import type { TablePlatformField } from '@/types/tablePlatform';
 
 import { CellRenderer } from './CellRenderer';
 import { MiniCanvas } from './MiniCanvas';
+import { ProvenanceCell } from './provenance/ProvenanceCell';
+import { PROVENANCE_DATA_KEYS } from './tablePlatformMappers';
 import type {
   ColumnDef,
   NodeActivity,
@@ -822,6 +825,37 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
             )}
           </div>
         )}
+
+        {/* ── Provenance banner (Block B / B-S5): only when feature flag is ON ── */}
+        {mode === 'full' &&
+          isPlatform &&
+          node?.id &&
+          (() => {
+            const rawConfidence = node.data?.[PROVENANCE_DATA_KEYS.confidenceScore];
+            const confidence =
+              typeof rawConfidence === 'number'
+                ? rawConfidence
+                : rawConfidence == null
+                  ? null
+                  : Number(rawConfidence);
+            const rawStatus = node.data?.[PROVENANCE_DATA_KEYS.validationStatus];
+            const status =
+              rawStatus === 'verified' || rawStatus === 'flagged' || rawStatus === 'unverified'
+                ? (rawStatus as ValidationStatus)
+                : 'unverified';
+            return (
+              <div className="px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
+                <ProvenanceCell
+                  recordId={node.id}
+                  confidenceScore={Number.isFinite(confidence) ? confidence : null}
+                  validationStatus={status}
+                  variant="full"
+                  isSuperAdmin={Boolean((currentUser as { isSuperAdmin?: boolean })?.isSuperAdmin)}
+                  readOnly={locked}
+                />
+              </div>
+            );
+          })()}
 
         {/* ── Tabs (full mode): platform = HIG pill strip ── */}
         {mode === 'full' && isPlatform && (
