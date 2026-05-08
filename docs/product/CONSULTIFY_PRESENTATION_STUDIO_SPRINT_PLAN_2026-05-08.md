@@ -466,3 +466,70 @@ P2 (deferred, non-blocking):
 
 - Sprint S3 starts Template Architect Preview Route: add `POST /api/presentation-studio/template-architect/preview` that wraps adopted `presentationTemplateArchitectService.ts`. Read-only, tenant-scoped, capability `presentation_create`. Returns a draft template plan envelope; explicit "approval required" flag preserved (proposal -> approval -> execution -> audit). No DB migration (template registry mutations land in S4 inside an existing JSON column or in-memory store).
 
+
+## Sprint S3 Gate Report — Template Architect Preview Route (2026-05-08)
+
+Status: `PASS_WITH_P2`
+Branch: `staging`
+Scope: Backend-only. No DB migration. No UI in this sprint (Q3 default = backend + minimal UI later).
+
+### Changes made
+
+- Extended `consultify/server/src/services/presentationStudioOrchestrationService.ts` with `previewPresentationStudioTemplatePlan({ setup, organizationId, outline?, sourcePack?, narrativePlan?, now? })`:
+  - Reuses adopted `buildPresentationTemplateArchitectPlan`, `buildPresentationNarrativePlan`, `buildPresentationSourcePack` (S0 baseline).
+  - Defaults outline to `[]` and rebuilds source pack + narrative plan from `setup` when not provided. Reusing the source pack / narrative plan from earlier preview calls keeps `requiredInputs` / `missingRequired` deterministic.
+  - Aggregates source-pack + narrative-plan + template-plan warnings into one envelope.
+  - Always returns envelope-level `approvalRequired: true` (mirroring `templatePlan.governance.approvalRequired = true` and `templatePlan.governance.initialStatus = 'draft'`).
+  - Read-only: no DB writes, no audit events, no telemetry side-effects.
+
+- Extended `consultify/server/src/routes/presentationStudio.routes.ts` with `POST /api/presentation-studio/template-architect/preview`:
+  - Same auth/tenant/RBAC pattern as `/source-pack/preview` and `/narrative-plan/preview` (verifyToken + `presentation_create` capability).
+  - Body: `{ setup?, outline?, sourcePack?, narrativePlan? }`. Body-supplied `organizationId` is ignored; tenant comes from `req.user.organizationId`.
+  - Reuses shared `parseDeckSetupFromBody` / `parseOutlineFromBody` helpers from S2.
+  - Updated route docstring to list all three endpoints and reaffirm the proposal -> approval -> execution -> audit invariant for any future mutating endpoint.
+
+- Extended `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts` with 5 integration tests for the new endpoint:
+  - 200 draft template plan with outline + source artifact (envelope `approvalRequired=true`, `governance.initialStatus='draft'`, `governance.auditEvent='template_architect_plan_created'`, sections present).
+  - 200 `needs_sources` status when no artifacts (warnings non-empty, `approvalRequired=true`).
+  - 403 PERMISSION_DENIED for VIEWER role (capability gate).
+  - 401 when verifyToken rejects (no authenticated user).
+  - Tenant integrity: body-supplied `organizationId` is ignored; `previewId` is bound to authenticated tenant.
+
+### Validation performed
+
+- Vitest (`presentationStudio.routes.test.ts`) — 16/16 PASS (5 S1 + 1 strict-mode + 5 S2 + 5 S3).
+- Vitest regression on adopted services — `presentationTemplateArchitectService.test.ts`, `presentationNarrativePlannerService.test.ts`, `presentationSourcePackService.test.ts`, `presentationGeneratorGolden.test.ts` — 13/13 PASS. No drift in golden outputs, no drift in template plan goldens.
+- ESLint --fix on the three S3 files — 0 errors. 28 pre-existing P3 `no-explicit-any` warnings in the same files (was 24 in S2, +4 from S3 narrow `any` body parsers); deferred per S0 baseline policy.
+- Focused `tsc --noEmit` over `presentationStudioOrchestrationService.ts`, `presentationStudio.routes.ts`, `presentationTemplateArchitectService.ts`, `presentationSourcePackService.ts`, `presentationNarrativePlannerService.ts` with `--strict --target es2022 --module nodenext --moduleResolution nodenext` — 0 errors.
+- `ReadLints` on the three modified files — clean.
+
+### Gate result: `PASS_WITH_P2`
+
+P0/P1: none.
+
+P2 (deferred, non-blocking):
+- P2-S3-1: 28 pre-existing `no-explicit-any` warnings in S1+S2+S3 files; tracked under the S0 baseline P3 deferral.
+- P2-S3-2: Anygravity manual retest still deferred from S0/S1/S2; will run a single consolidated probe after S5 frontend lands so all three preview endpoints are exercised together.
+
+### Acceptance criteria (from contract) covered by S3
+
+- AC-1 (tenant safety on preview endpoints): `previewId` and template plan are derived from authenticated `organizationId` only; body-supplied `organizationId` is ignored. Verified by integration test.
+- AC-2 (RBAC on preview endpoints): VIEWER receives 403 PERMISSION_DENIED with `requiredCapability=presentation_create`. Verified.
+- AC-3 (governance invariant for templates): the response always carries `approvalRequired=true` and `governance.initialStatus='draft'`; even ready_for_review status still requires explicit approval before registry write. Verified.
+- AC-4 (no DB migrations in Phase 2): no schema changes. The route and orchestrator wrap in-memory adopted services only.
+- AC-5 (read-only preview semantics): the endpoint returns plan + warnings + missingInputs; never writes, never emits audit events.
+- AC-6 (degraded UI honesty): `status: 'needs_sources'` is propagated upstream so the future Studio UI can render an honest degraded state instead of fabricating template structure without source examples.
+
+### Risks / next-step notes
+
+- R-S3-1: `templatePlan.runtimePreview` exposes the entire system template runtime (slide recipes, source requirements). Surface area is large; the UI must avoid leaking internal recipe ids in user-visible copy. Tracked for the S5 UI sprint.
+- R-S3-2: `parseOutlineFromBody` and the new narrative-plan body parser silently strip malformed entries. Acceptable for read-only preview, but any future mutating endpoint that promotes the template into the registry must surface explicit "rejected entry" warnings.
+- R-S3-3: When the architect upgrades a plan from `draft` to `ready_for_review`, `approvalRequired` stays `true`. The UI must NOT auto-approve on `ready_for_review` — human approval is mandatory. Documented in the route docstring; will be re-asserted in the S4 approval endpoint.
+
+### Next sprint plan
+
+- Sprint S4 starts Generate Dispatcher Preview (read-only). Scope:
+  - Add `POST /api/presentation-studio/generate/preview` that wraps `presentationGeneratorService.generateOutline` + the adopted `preflightPresentationSourcePack` to return what the deck WOULD look like without actually creating a deck.
+  - No DB migration. No mutating endpoint yet — generation persistence + audit events land in S6 behind explicit approval.
+  - Same auth + tenant + RBAC pattern. Capability remains `presentation_create`.
+

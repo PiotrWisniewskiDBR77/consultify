@@ -30,6 +30,8 @@ import {
   buildPresentationSourcePack,
   preflightPresentationSourcePack,
 } from './presentationSourcePackService.js';
+import type { TemplateArchitectPlan } from './presentationTemplateArchitectService.js';
+import { buildPresentationTemplateArchitectPlan } from './presentationTemplateArchitectService.js';
 
 export interface PresentationStudioSourcePackPreviewInput {
   setup: DeckSetup;
@@ -151,5 +153,100 @@ export function previewPresentationStudioNarrativePlan(
     missingInputs: sourcePack.missingInputs,
     warnings,
     previewId: makePreviewId(input.organizationId, narrativePlan.createdAt),
+  };
+}
+
+export interface PresentationStudioTemplatePlanPreviewInput {
+  setup: DeckSetup;
+  organizationId: string;
+  /**
+   * Caller-supplied outline. Optional. Forwarded to the narrative planner so
+   * the resulting template plan can ground per-slide blueprints in the same
+   * narrative the UI just previewed.
+   */
+  outline?: OutlineItem[];
+  /**
+   * Caller-supplied source pack. Optional: when omitted we build a fresh one
+   * from `setup.sourceArtifacts`. Reusing the source pack from the preceding
+   * preview keeps `requiredInputs` / `missingRequired` deterministic.
+   */
+  sourcePack?: PresentationSourcePack;
+  /**
+   * Caller-supplied narrative plan. Optional: when omitted we build a fresh
+   * one from setup + outline + source pack. Passing the plan from
+   * `previewPresentationStudioNarrativePlan` keeps the template plan consistent
+   * with what the UI just rendered.
+   */
+  narrativePlan?: PresentationNarrativePlan;
+  /** Optional clock injection for deterministic tests. */
+  now?: Date;
+}
+
+export interface PresentationStudioTemplatePlanPreviewResult {
+  templatePlan: TemplateArchitectPlan;
+  sourcePack: PresentationSourcePack;
+  narrativePlan: PresentationNarrativePlan;
+  missingInputs: string[];
+  warnings: string[];
+  /**
+   * Aggregate `approvalRequired` flag exposed at the envelope level so the UI
+   * does not need to reach into `templatePlan.governance` to know whether the
+   * proposal -> approval -> execution -> audit flow is required.
+   *
+   * Always `true` for template plans by design: a template only enters the
+   * registry after explicit human approval.
+   */
+  approvalRequired: true;
+  /** Stable, request-scoped id surfaced to the UI for telemetry/log correlation. */
+  previewId: string;
+}
+
+/**
+ * Build a tenant-scoped template architect plan preview WITHOUT triggering
+ * any registry write. Mirrors S1/S2 invariants: read-only, tenant-scoped,
+ * no DB writes, no audit events.
+ *
+ * Governance:
+ *   - The plan is always returned with `governance.initialStatus = 'draft'`
+ *     and `governance.approvalRequired = true`. Even if the underlying source
+ *     pack is fully ready, the template can only become an approved registry
+ *     entry through an explicit approve endpoint (S4+).
+ *   - The envelope-level `approvalRequired: true` flag is the canonical
+ *     read-back for the UI's "Requires approval" badge.
+ */
+export function previewPresentationStudioTemplatePlan(
+  input: PresentationStudioTemplatePlanPreviewInput
+): PresentationStudioTemplatePlanPreviewResult {
+  const sourcePack =
+    input.sourcePack ||
+    buildPresentationSourcePack({
+      setup: input.setup,
+      organizationId: input.organizationId,
+      now: input.now,
+    });
+  const outline: OutlineItem[] = Array.isArray(input.outline) ? input.outline : [];
+  const narrativePlan =
+    input.narrativePlan ||
+    buildPresentationNarrativePlan({
+      setup: input.setup,
+      outline,
+      sourcePack,
+      now: input.now,
+    });
+  const templatePlan = buildPresentationTemplateArchitectPlan({
+    setup: input.setup,
+    sourcePack,
+    narrativePlan,
+    now: input.now,
+  });
+  const warnings = [...sourcePack.warnings, ...narrativePlan.warnings, ...templatePlan.warnings];
+  return {
+    templatePlan,
+    sourcePack,
+    narrativePlan,
+    missingInputs: sourcePack.missingInputs,
+    warnings,
+    approvalRequired: true,
+    previewId: makePreviewId(input.organizationId, templatePlan.createdAt),
   };
 }

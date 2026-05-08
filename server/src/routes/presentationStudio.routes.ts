@@ -7,15 +7,19 @@
  *   - docs/product/CONSULTIFY_PRESENTATION_STUDIO_100_PERCENT_IMPLEMENTATION_CONTRACT_2026-05-08.md
  *
  * Endpoints:
- *   - S1: POST /source-pack/preview     (read-only source pack preview)
- *   - S2: POST /narrative-plan/preview  (read-only narrative plan preview)
+ *   - S1: POST /source-pack/preview         (read-only source pack preview)
+ *   - S2: POST /narrative-plan/preview      (read-only narrative plan preview)
+ *   - S3: POST /template-architect/preview  (read-only template plan preview)
  *
  * All endpoints are tenant-scoped, gated by the existing `presentation_create`
  * capability, and never write to the database. They reuse the orchestration
- * service which wraps the adopted source pack and narrative planner services.
+ * service which wraps the adopted source pack, narrative planner, and
+ * template architect services.
  *
- * Subsequent sprints will add template-architect and generate endpoints to
- * the same router under the proposal -> approval -> execution -> audit
+ * The template architect preview always returns `approvalRequired: true` and
+ * `templatePlan.governance.initialStatus = 'draft'`. Promoting a template into
+ * the registry will land in a future sprint behind an explicit approval
+ * endpoint, preserving the proposal -> approval -> execution -> audit
  * invariant for any mutating operation.
  */
 
@@ -30,6 +34,7 @@ import type { DeckSetup, OutlineItem } from '../services/presentationGeneratorSe
 import {
   previewPresentationStudioNarrativePlan,
   previewPresentationStudioSourcePack,
+  previewPresentationStudioTemplatePlan,
 } from '../services/presentationStudioOrchestrationService.js';
 
 const router = Router();
@@ -231,6 +236,79 @@ router.post(
       organizationId: orgId,
       outline,
       sourcePack: providedSourcePack,
+    });
+
+    res.json({ success: true, data: result });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/template-architect/preview
+ *
+ * Read-only preview of a draft AI template plan (sections, slide blueprints,
+ * required/optional inputs, governance envelope) used by the Studio UI to
+ * confirm "what would the template look like" before it is ever submitted
+ * for approval. NEVER writes to the registry. Always surfaces
+ * `approvalRequired: true`.
+ *
+ * Body shape:
+ *   - setup: subset of `DeckSetup` (same as /source-pack/preview body)
+ *   - outline?: OutlineItem[] (optional; defaults to empty)
+ *   - sourcePack?: PresentationSourcePack (optional; rebuilt from setup if omitted)
+ *   - narrativePlan?: PresentationNarrativePlan (optional; rebuilt if omitted)
+ *
+ * Tenant safety:
+ *   - `organizationId` is taken from the authenticated session, never from
+ *     the request body. Body-supplied org ids are ignored.
+ *   - The endpoint never writes to the DB and never returns cross-tenant data.
+ *
+ * Governance:
+ *   - The response always carries `approvalRequired: true` and
+ *     `templatePlan.governance.initialStatus = 'draft'`. Promoting the plan
+ *     into the registry requires an explicit approval endpoint (later sprint)
+ *     under the proposal -> approval -> execution -> audit invariant.
+ */
+router.post(
+  '/template-architect/preview',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(403).json({
+        success: false,
+        error: 'Organization context required',
+        code: 'NO_ORG_CONTEXT',
+      });
+      return;
+    }
+
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      setup?: unknown;
+      outline?: unknown;
+      sourcePack?: unknown;
+      narrativePlan?: unknown;
+    };
+    const setup = parseDeckSetupFromBody(body.setup);
+    const outline = parseOutlineFromBody(body.outline);
+    const providedSourcePack =
+      body.sourcePack &&
+      typeof body.sourcePack === 'object' &&
+      Array.isArray((body.sourcePack as any).sources)
+        ? (body.sourcePack as any)
+        : undefined;
+    const providedNarrativePlan =
+      body.narrativePlan &&
+      typeof body.narrativePlan === 'object' &&
+      Array.isArray((body.narrativePlan as any).slidePlan)
+        ? (body.narrativePlan as any)
+        : undefined;
+
+    const result = previewPresentationStudioTemplatePlan({
+      setup,
+      organizationId: orgId,
+      outline,
+      sourcePack: providedSourcePack,
+      narrativePlan: providedNarrativePlan,
     });
 
     res.json({ success: true, data: result });
