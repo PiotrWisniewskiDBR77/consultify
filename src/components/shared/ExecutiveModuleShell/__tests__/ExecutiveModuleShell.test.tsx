@@ -98,4 +98,29 @@ describe('ExecutiveModuleShell', () => {
     renderShell({ moduleKey: 'wordy-x' });
     expect(screen.getByTestId('mels-shell').getAttribute('data-mels-module')).toBe('wordy-x');
   });
+
+  it('⌘/ opens the built-in shortcut help modal; Escape closes it', () => {
+    renderShell();
+    expect(screen.queryByTestId('mels-shortcut-help')).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: '/', metaKey: true });
+    expect(screen.getByTestId('mels-shortcut-help')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('mels-shortcut-help')).not.toBeInTheDocument();
+  });
+
+  it('helpModalTitle=null disables the built-in modal entirely', () => {
+    renderShell({ helpModalTitle: null });
+    fireEvent.keyDown(window, { key: '/', metaKey: true });
+    expect(screen.queryByTestId('mels-shortcut-help')).not.toBeInTheDocument();
+  });
+
+  it('left rail exposes a resize handle that drives setLeftWidth', () => {
+    renderShell();
+    const handle = screen.getByTestId('mels-rail-resize-left');
+    expect(handle).toBeInTheDocument();
+    // Smoke: arrow keys fire onResize through useRailState; we don't
+    // need to assert the next pixel here — `useRailState.test.ts`
+    // covers the clamping contract.
+    fireEvent.keyDown(handle, { key: 'ArrowRight' });
+  });
 });

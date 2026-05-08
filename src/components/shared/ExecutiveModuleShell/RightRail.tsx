@@ -19,6 +19,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
+import { RailResizeHandle } from './RailResizeHandle';
+
 export interface RightRailToolDescriptor {
   id: string;
   label: string;
@@ -47,6 +49,12 @@ interface RightRailProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   collapseLabel?: string;
+  /**
+   * Optional resize handler. When supplied AND the panel is open, a
+   * drag handle is rendered on the panel's left edge. Caller forwards
+   * the next width to `useRailState.setRightWidth` (clamping there).
+   */
+  onResize?: (nextWidth: number) => void;
   testId?: string;
 }
 
@@ -112,6 +120,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   collapsed,
   onToggleCollapse,
   collapseLabel,
+  onResize,
   testId,
 }) => {
   const activeTool = activeToolId ? tools.find((t) => t.id === activeToolId) ?? null : null;
@@ -153,11 +162,18 @@ export const RightRail: React.FC<RightRailProps> = ({
     >
       {showPanel ? (
         <div
-          className="border-r border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col"
+          className="relative border-r border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col"
           style={{ width: panelWidth }}
           data-testid="mels-right-rail-panel"
           data-mels-panel-of={activeTool?.id ?? ''}
         >
+          {onResize ? (
+            <RailResizeHandle
+              side="right"
+              currentWidth={panelWidth}
+              onResize={onResize}
+            />
+          ) : null}
           {panelContent}
         </div>
       ) : null}

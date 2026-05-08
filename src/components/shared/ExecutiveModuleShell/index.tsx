@@ -18,10 +18,11 @@
  * belongs to the module-specific wrappers (e.g. `TabeleArtifactView`).
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { LeftRail } from './LeftRail';
 import { RightRail, type RightRailToolDescriptor } from './RightRail';
+import { ShortcutHelpModal } from './ShortcutHelpModal';
 import { TopBar } from './TopBar';
 import { type TopBarChipDescriptor } from './ChipDescriptor';
 import { buildMelsShortcuts, useMelsShortcuts } from './shortcuts';
@@ -58,7 +59,20 @@ export interface ExecutiveModuleShellProps {
   onRunPrimary?: () => void;
   onToggleAgent?: () => void;
   onOpenCommandPalette?: () => void;
-  onOpenShortcutHelp?: () => void;
+  /**
+   * When supplied, the shell calls this BEFORE opening the built-in
+   * shortcut-help modal. Useful for analytics or for hosts that want
+   * to drive their own modal. Returning `false` cancels the built-in
+   * modal.
+   */
+  onOpenShortcutHelp?: () => boolean | void;
+  /**
+   * Localised strings for the shortcut-help modal. Caller may also
+   * pass `null` for `helpModalTitle` to disable the built-in modal
+   * entirely (e.g. when supplying their own via `onOpenShortcutHelp`).
+   */
+  helpModalTitle?: string | null;
+  helpModalDescription?: string;
 
   /** Defaults forwarded to `useRailState`. */
   defaultLeftCollapsed?: boolean;
@@ -95,6 +109,8 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   onToggleAgent,
   onOpenCommandPalette,
   onOpenShortcutHelp,
+  helpModalTitle,
+  helpModalDescription,
   defaultLeftCollapsed,
   defaultRightCollapsed,
   defaultLeftWidth,
@@ -113,19 +129,28 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   });
 
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  const builtInModalEnabled = helpModalTitle !== null;
+
+  const handleOpenHelp = useCallback(() => {
+    const callerVerdict = onOpenShortcutHelp?.();
+    if (callerVerdict === false) return;
+    if (builtInModalEnabled) setHelpOpen(true);
+  }, [onOpenShortcutHelp, builtInModalEnabled]);
 
   const shortcuts = useMemo(
     () =>
       buildMelsShortcuts({
         onToggleLeftRail: rail.toggleLeft,
-        onOpenHelp: onOpenShortcutHelp,
+        onOpenHelp: handleOpenHelp,
         onOpenCommandPalette,
         onRunPrimary,
         onToggleAgent,
       }),
     [
       rail.toggleLeft,
-      onOpenShortcutHelp,
+      handleOpenHelp,
       onOpenCommandPalette,
       onRunPrimary,
       onToggleAgent,
@@ -163,6 +188,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           title={leftRailTitle}
           toolsSlot={leftRailToolsSlot}
           bottomSlot={leftRailBottomSlot}
+          onResize={rail.setLeftWidth}
         >
           {leftRailContent}
         </LeftRail>
@@ -183,8 +209,19 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           panelWidth={rail.rightWidth}
           collapsed={rail.rightCollapsed}
           onToggleCollapse={rail.toggleRight}
+          onResize={rail.setRightWidth}
         />
       </div>
+
+      {builtInModalEnabled ? (
+        <ShortcutHelpModal
+          isOpen={helpOpen}
+          onClose={() => setHelpOpen(false)}
+          shortcuts={shortcuts}
+          title={helpModalTitle ?? undefined}
+          description={helpModalDescription}
+        />
+      ) : null}
     </div>
   );
 };
@@ -192,6 +229,8 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
 export { LeftRail } from './LeftRail';
 export { RightRail } from './RightRail';
 export type { RightRailToolDescriptor } from './RightRail';
+export { ShortcutHelpModal } from './ShortcutHelpModal';
+export { RailResizeHandle } from './RailResizeHandle';
 export { TopBar } from './TopBar';
 export {
   type TopBarChipDescriptor,

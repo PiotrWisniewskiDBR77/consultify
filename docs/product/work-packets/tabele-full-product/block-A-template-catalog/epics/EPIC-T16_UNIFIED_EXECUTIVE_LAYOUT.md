@@ -1,6 +1,6 @@
 # EPIC-T16 — Unified Executive Module Layout (Tabele lane)
 
-**Status:** `IN PROGRESS — D1..D5 + TabeleView swap LANDED + D9 (DBR77 hex scan) PASS 2026-05-08; D6 (help modal), D7 (drag handle), D8 (visual review) + Foundation Block E2E re-run pending`
+**Status:** `IN PROGRESS — D1..D7 + D9 LANDED + DBR77 hex scan PASS 2026-05-08; D8 (visual review) + Foundation Block E2E re-run pending (acceptance gate, no code work)`
 **Block:** A (Template Catalog) of `tabele-full-product` program.
 **Driver:** User-supplied UX directive on 2026-05-08 — converge executive modules (Wordy / Tabele / Prezentacje) on a single layout patterned after `DeckBuilder` (Prezentacje).
 **Standard:** `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md` (MELS).
@@ -327,3 +327,71 @@ Ran a `rg '#[0-9a-fA-F]{3,8}'` scan across the full EPIC-T16 surface:
 Acceptance criterion T16-D9 (§ Acceptance criteria — "DBR77 hex scan clean"): **PASS**.
 
 D6 (help modal), D7 (drag handle UX) and D8 (visual review screenshots vs DeckBuilder reference) remain in S4b. The shell is structurally complete; what's left is UX polish, screenshot evidence, and the Foundation Block E2E re-run.
+
+---
+
+## Update — 2026-05-08 — T16-D6 (help modal) + T16-D7 (drag handle UX) landed
+
+**Sprint:** EPIC-T16-S4b-code (UX polish — code-side acceptance only).
+**Decision (CTO):** Land the code-side S4b deliverables (help modal + width-resize drag handle) now so the shell is materially complete. D8 (visual review screenshots) and Foundation Block E2E re-run remain as infrastructure work for a separate operator pass — they don't require code changes, only environment runs + screenshot capture.
+
+### T16-D6 — Shortcut help modal
+
+- ✅ **`<ShortcutHelpModal>`** — `consultify/src/components/shared/ExecutiveModuleShell/ShortcutHelpModal.tsx`.
+  - DBR77-token modal listing every registered shortcut as `Label` + `<kbd>display</kbd>` row.
+  - Closes on Escape, on backdrop click, and on close-button click.
+  - Auto-focuses the close button on open (a11y per WCAG 2.4.3).
+  - Empty placeholder when no shortcuts are registered.
+  - Custom `title` and `description` slots; passing `helpModalTitle={null}` to the shell disables the built-in modal entirely (for hosts that supply their own).
+
+- ✅ **Wired into `<ExecutiveModuleShell>`**:
+  - Shell owns `helpOpen` state.
+  - `handleOpenHelp` calls the optional caller `onOpenShortcutHelp` first; if it returns `false`, the built-in modal stays closed (caller-driven analytics / custom modal hosting).
+  - The `⌘/` shortcut from `buildMelsShortcuts` now triggers `handleOpenHelp` directly, so users get the modal out of the box.
+
+### T16-D7 — Width-resize drag handle UX
+
+- ✅ **`<RailResizeHandle>`** — `consultify/src/components/shared/ExecutiveModuleShell/RailResizeHandle.tsx`.
+  - 4 px wide hit-target; visual indicator only on `hover` / `active` / `focus-visible` (DBR77 minimal-chrome).
+  - Pointer-driven: `pointerdown` captures the pointer, `pointermove` emits `onResize(nextWidth)` (unclamped — clamping owned by `useRailState`), `pointerup` / `pointercancel` releases.
+  - Keyboard fallback: `ArrowLeft` / `ArrowRight` step 16 px (configurable). Per MELS § 3.4 accessibility.
+  - Direction-aware: `side="left"` grows left rail when pointer moves right; `side="right"` shrinks right rail panel when pointer moves right (panel is on the right edge of viewport).
+  - Non-primary mouse buttons do not start the drag.
+
+- ✅ **Wired into `<LeftRail>` and `<RightRail>`**:
+  - LeftRail: handle on right edge, only when not collapsed.
+  - RightRail: handle on left edge of the panel, only when a tool panel is open.
+  - Both forwarded from `<ExecutiveModuleShell>` via `rail.setLeftWidth` / `rail.setRightWidth` — clamping to `RAIL_WIDTH_BOUNDS` (200..480 px / 320..560 px) is enforced by `useRailState`.
+
+### Tests landed (+19; 84/84 cumulative)
+
+- `ShortcutHelpModal.test.tsx` (8 tests, jsdom):
+  - isOpen=false → null.
+  - isOpen=true → dialog + each shortcut row.
+  - Empty list → placeholder.
+  - Close button calls onClose.
+  - Escape calls onClose.
+  - Backdrop click closes, inside click does not.
+  - Close button focused on open.
+  - Custom title/description honoured.
+- `RailResizeHandle.test.tsx` (8 tests, jsdom):
+  - role=separator + aria-orientation=vertical.
+  - LEFT drag right grows width.
+  - RIGHT drag right shrinks width.
+  - pointerup stops drag (subsequent moves ignored).
+  - ArrowRight increments LEFT, decrements RIGHT.
+  - ArrowLeft mirrors.
+  - Non-primary button does not start drag.
+- `ExecutiveModuleShell.test.tsx` (+3 tests, jsdom):
+  - ⌘/ opens the built-in modal; Escape closes it.
+  - `helpModalTitle={null}` disables the built-in modal.
+  - Left rail exposes the resize handle (smoke).
+
+Cumulative: **84/84 unit tests green**, 0 linter errors, 0 raw hex literals (D9 still PASS).
+
+### What's left in EPIC-T16 (no code; acceptance gate only)
+
+- **T16-D8** — Visual review screenshots vs DeckBuilder reference (≤ 10 % shape deviation per MELS § 6). Requires staging environment with `?ff_melsTabele=1` + screenshot capture.
+- **Foundation Block E2E re-run** — artifact open / Source Pack click-through / governance verdict — both flag-OFF (legacy) and flag-ON (MELS) paths. Requires Playwright run on the staging build.
+
+The shell is structurally + functionally complete; there is no remaining EPIC-T16 code work.

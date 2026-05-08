@@ -16,6 +16,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
 
+import { RailResizeHandle } from './RailResizeHandle';
+
 interface LeftRailProps {
   /** Caller-supplied list / outline content. */
   children: React.ReactNode;
@@ -33,6 +35,13 @@ interface LeftRailProps {
   title?: string;
   /** Localized label for the collapse toggle's aria-label. */
   toggleLabel?: string;
+  /**
+   * Optional resize handler. When supplied, a drag handle is rendered
+   * on the right edge of the rail; the caller is expected to forward
+   * the next width to `useRailState.setLeftWidth` (clamping owned
+   * there).
+   */
+  onResize?: (nextWidth: number) => void;
   /** Optional `data-testid` for the rail container. */
   testId?: string;
 }
@@ -48,6 +57,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
   onToggleCollapse,
   title,
   toggleLabel,
+  onResize,
   testId,
 }) => {
   const effectiveWidth = collapsed ? COLLAPSED_WIDTH : width;
@@ -106,6 +116,10 @@ export const LeftRail: React.FC<LeftRailProps> = ({
         >
           {bottomSlot}
         </div>
+      ) : null}
+
+      {!collapsed && onResize ? (
+        <RailResizeHandle side="left" currentWidth={width} onResize={onResize} />
       ) : null}
     </aside>
   );
