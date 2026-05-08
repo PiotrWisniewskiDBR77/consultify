@@ -456,12 +456,35 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               title: string;
               bulletPoints?: string[];
             }> = [];
+            const mapCardsToSlides = (cards: any[]) =>
+              cards.map((card: any, index: number) => {
+                const blocks = Array.isArray(card?.blocks) ? card.blocks : [];
+                const bulletPoints = blocks
+                  .map((block: any) => {
+                    if (typeof block?.content === 'string') return block.content;
+                    if (typeof block?.content?.text === 'string') return block.content.text;
+                    if (Array.isArray(block?.content?.items)) return block.content.items.join(' ');
+                    return '';
+                  })
+                  .map((value: string) => value.trim())
+                  .filter(Boolean)
+                  .slice(0, 4);
+                return {
+                  slideId: card?.card_id || card?.id || String(index + 1),
+                  intent: card?.intent || 'content',
+                  title: card?.title || card?.key_message || `Slide ${index + 1}`,
+                  bulletPoints,
+                };
+              });
             const unifiedJson =
               typeof deckData?.deck_json === 'string'
                 ? JSON.parse(deckData.deck_json)
                 : deckData?.deck_json || deckData?.unified_json;
             const rawSlides =
               unifiedJson?.slides ||
+              (Array.isArray(unifiedJson?.cards) && unifiedJson.cards.length > 0
+                ? mapCardsToSlides(unifiedJson.cards)
+                : null) ||
               (Array.isArray(deckData?.outline_json)
                 ? deckData.outline_json.map((item: any, index: number) => ({
                     id: item?.slideId || String(index + 1),

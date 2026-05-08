@@ -38,12 +38,36 @@ function parseDeckSlides(deckData: any): {
   slides: Array<{ slideId: string; intent: string; title: string; bulletPoints?: string[] }>;
   status: string;
 } {
+  const mapCardsToSlides = (cards: any[]) =>
+    cards.map((card: any, index: number) => {
+      const blocks = Array.isArray(card?.blocks) ? card.blocks : [];
+      const bulletPoints = blocks
+        .map((block: any) => {
+          if (typeof block?.content === 'string') return block.content;
+          if (typeof block?.content?.text === 'string') return block.content.text;
+          if (Array.isArray(block?.content?.items)) return block.content.items.join(' ');
+          return '';
+        })
+        .map((value: string) => value.trim())
+        .filter(Boolean)
+        .slice(0, 4);
+      return {
+        slideId: card?.card_id || card?.id || String(index + 1),
+        intent: card?.intent || 'content',
+        title: card?.title || card?.key_message || `Slide ${index + 1}`,
+        bulletPoints,
+      };
+    });
+
   const unifiedJson =
     typeof deckData?.deck_json === 'string'
       ? JSON.parse(deckData.deck_json)
       : deckData?.deck_json || deckData?.unified_json;
   const rawSlides =
     unifiedJson?.slides ||
+    (Array.isArray(unifiedJson?.cards) && unifiedJson.cards.length > 0
+      ? mapCardsToSlides(unifiedJson.cards)
+      : null) ||
     (Array.isArray(deckData?.outline_json)
       ? deckData.outline_json.map((item: any, index: number) => ({
           id: item?.slideId || String(index + 1),
@@ -355,6 +379,40 @@ export const PrezentacjeView: React.FC = () => {
     pipeline.currentRun?.materializationOrigin?.originRecordId || reopenDeckId;
   const effectiveCompleted = pipeline.isCompleted || (!!reopenPreview && !pipeline.currentRun);
 
+  const ensureExportAllowed = useCallback(
+    async (deckId: string): Promise<boolean> => {
+      try {
+        const qualityRes = await Api.post(`/presentations/decks/${deckId}/quality-gates`, {});
+        const quality = unwrapApiData<{
+          canExport?: boolean;
+          gates?: Array<{ gateType?: string }>;
+        }>(qualityRes);
+        if (quality?.canExport === false) {
+          const gateTypes = Array.from(
+            new Set(
+              (quality.gates || [])
+                .map((gate) => String(gate?.gateType || '').trim())
+                .filter(Boolean)
+            )
+          );
+          toast.error(
+            gateTypes.length > 0
+              ? t(
+                  'prezentacje.qualityGateBlockedDetailed',
+                  `Export blocked by Quality Gate: ${gateTypes.join(', ')}`
+                )
+              : t('prezentacje.qualityGateBlocked', 'Export blocked by Quality Gate')
+          );
+          return false;
+        }
+      } catch {
+        // Non-blocking: if quality check endpoint is unavailable, keep legacy export path.
+      }
+      return true;
+    },
+    [t]
+  );
+
   const handlePreviewFile = useCallback(() => {
     if (effectiveDeckId) {
       window.open(`/presentations/builder/${effectiveDeckId}`, '_blank');
@@ -367,17 +425,21 @@ export const PrezentacjeView: React.FC = () => {
 
   const handleDownload = useCallback(async () => {
     if (effectiveDeckId) {
+      const allowed = await ensureExportAllowed(effectiveDeckId);
+      if (!allowed) return;
       window.open(`/api/presentations/decks/${effectiveDeckId}/download`, '_blank');
       return;
     }
     await pipeline.handleDownload();
-  }, [effectiveDeckId, pipeline]);
+  }, [effectiveDeckId, ensureExportAllowed, pipeline]);
 
   const handleDownloadPdf = useCallback(() => {
-    if (effectiveDeckId) {
+    if (!effectiveDeckId) return;
+    void ensureExportAllowed(effectiveDeckId).then((allowed) => {
+      if (!allowed) return;
       window.open(`/api/presentations/decks/${effectiveDeckId}/export/pdf`, '_blank');
-    }
-  }, [effectiveDeckId]);
+    });
+  }, [effectiveDeckId, ensureExportAllowed]);
 
   if (showHome) {
     return <ArtifactModuleHome lane="prezentacje" />;
