@@ -50,7 +50,19 @@
  *
  * QA Engine — MVP-3 hardening:
  *   GET  /api/document-studio/:artifactId/qa
- *     Returns: { report: DocumentQaReport } (Brand QA + Language QA)
+ *     Returns: { report: DocumentQaReport } (10/10 QA categories)
+ *
+ * Source Pack registry — Epic E4:
+ *   POST   /api/document-studio/source-packs                       — draft a pack
+ *   GET    /api/document-studio/source-packs                       — list packs (status?, language?, includeArchived?)
+ *   GET    /api/document-studio/source-packs/:packId               — get pack
+ *   GET    /api/document-studio/source-packs/:packId/audit         — list audit
+ *   POST   /api/document-studio/source-packs/:packId/items         — ingest via { connector, input }
+ *                                                                    connectors: text | url | file | v8_artifact | integration
+ *   DELETE /api/document-studio/source-packs/:packId/items/:itemId — remove an item
+ *   POST   /api/document-studio/source-packs/:packId/ready         — mark ready
+ *   POST   /api/document-studio/source-packs/:packId/archive       — irreversible archive
+ *   POST   /api/document-studio/source-packs/:packId/attach        — attach to document, returns { pack, sourceRefs }
  *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
@@ -58,6 +70,26 @@
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  ingestFileSource,
+  ingestIntegrationSource,
+  ingestRawTextSource,
+  ingestUrlSource,
+  ingestV8ArtifactSource,
+  SourcePackConnectorError,
+} from '../services/documentStudio/documentSourcePackConnectors.js';
+import {
+  addSourcePackItem,
+  archiveSourcePack,
+  attachSourcePackToDocument,
+  draftSourcePack,
+  ensureSourcePackRegistryHydrated,
+  getSourcePack,
+  listSourcePackAuditEntries,
+  listSourcePacks,
+  markSourcePackReady,
+  removeSourcePackItem,
+} from '../services/documentStudio/documentSourcePackService.js';
 import { runDocumentQa } from '../services/documentStudio/documentQaService.js';
 import {
   approveEditProposal,
@@ -81,6 +113,7 @@ import type {
   DocumentIntake,
   DocumentOutline,
   DocumentSourceRef,
+  SourcePackStatus,
   TemplateDraftInput,
 } from '../services/documentStudio/documentStudioTypes.js';
 import {
@@ -360,6 +393,364 @@ router.get(
     }
     const auditEntries = listTemplateAuditEntries(templateId, organizationId);
     res.json({ auditEntries });
+  })
+);
+
+// =============================================================================
+// Epic E4 — Source Pack registry routes.
+// MUST be registered BEFORE the `/:artifactId` GET handler so the static
+// `/source-packs/...` prefix wins over the generic artifact-id matcher.
+// All routes are tenant-scoped via the JWT-derived organizationId.
+//
+// Connector ingestion is dispatched via { connector, input } in the
+// POST /:packId/items body so the route stays connector-agnostic and
+// every connector adapter keeps the same SourcePackConnectorError
+// vocabulary (mapped to HTTP statuses below).
+// =============================================================================
+
+interface SourcePackConnectorPayload {
+  connector?: string;
+  input?: Record<string, unknown>;
+}
+
+function mapConnectorErrorToStatus(code: SourcePackConnectorError['code']): number {
+  switch (code) {
+    case 'invalid_input':
+    case 'unsupported_scheme':
+    case 'integration_not_configured':
+      return 400;
+    case 'artifact_not_found':
+      return 404;
+    case 'fetch_failed':
+    case 'fetch_timeout':
+    case 'fetch_too_large':
+    case 'extraction_failed':
+      return 422;
+    default:
+      return 500;
+  }
+}
+
+function mapServiceErrorToStatus(message: string): number {
+  if (message === 'source_pack_not_found' || message === 'source_pack_item_not_found') return 404;
+  if (
+    message === 'source_pack_archived' ||
+    message === 'source_pack_empty' ||
+    message === 'source_pack_not_ready' ||
+    message.startsWith('unsupported source pack item type')
+  ) {
+    return 400;
+  }
+  return 500;
+}
+
+router.post(
+  '/source-packs',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const name = typeof req.body?.name === 'string' ? req.body.name : '';
+    const language = req.body?.language === 'pl' || req.body?.language === 'en' ? req.body.language : 'pl';
+    const description = typeof req.body?.description === 'string' ? req.body.description : undefined;
+    const notes = typeof req.body?.notes === 'string' ? req.body.notes : undefined;
+    if (!name.trim()) {
+      res.status(400).json({ error: 'name is required' });
+      return;
+    }
+    try {
+      const pack = draftSourcePack({
+        organizationId,
+        userId,
+        name,
+        language,
+        description,
+        notes,
+      });
+      res.status(201).json({ pack });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'source_pack_draft_failed';
+      logger.warn('[DocumentStudio] source pack draft failed', { message });
+      res.status(400).json({ error: 'source_pack_draft_failed', message });
+    }
+  })
+);
+
+router.get(
+  '/source-packs',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureSourcePackRegistryHydrated(organizationId);
+    const statusRaw = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const allowedStatus: SourcePackStatus[] = ['draft', 'ready', 'archived'];
+    const status =
+      statusRaw && allowedStatus.includes(statusRaw as SourcePackStatus)
+        ? (statusRaw as SourcePackStatus)
+        : undefined;
+    const language =
+      req.query.language === 'pl' || req.query.language === 'en'
+        ? (req.query.language as 'pl' | 'en')
+        : undefined;
+    const includeArchived = req.query.includeArchived === 'true' || req.query.includeArchived === '1';
+    const packs = listSourcePacks(organizationId, { status, language, includeArchived });
+    res.json({ packs });
+  })
+);
+
+router.get(
+  '/source-packs/:packId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const packId = String(req.params.packId || '');
+    if (!packId) {
+      res.status(400).json({ error: 'packId is required' });
+      return;
+    }
+    await ensureSourcePackRegistryHydrated(organizationId);
+    const pack = getSourcePack(packId, organizationId);
+    if (!pack) {
+      res.status(404).json({ error: 'source_pack_not_found' });
+      return;
+    }
+    res.json({ pack });
+  })
+);
+
+router.get(
+  '/source-packs/:packId/audit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const packId = String(req.params.packId || '');
+    if (!packId) {
+      res.status(400).json({ error: 'packId is required' });
+      return;
+    }
+    await ensureSourcePackRegistryHydrated(organizationId);
+    const pack = getSourcePack(packId, organizationId);
+    if (!pack) {
+      res.status(404).json({ error: 'source_pack_not_found' });
+      return;
+    }
+    const auditEntries = listSourcePackAuditEntries(packId, organizationId);
+    res.json({ auditEntries });
+  })
+);
+
+router.post(
+  '/source-packs/:packId/items',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const packId = String(req.params.packId || '');
+    if (!packId) {
+      res.status(400).json({ error: 'packId is required' });
+      return;
+    }
+    const payload = (req.body ?? {}) as SourcePackConnectorPayload;
+    const connector = typeof payload.connector === 'string' ? payload.connector : '';
+    const input = (payload.input ?? {}) as Record<string, unknown>;
+    if (!connector) {
+      res.status(400).json({ error: 'connector is required' });
+      return;
+    }
+    try {
+      let draft;
+      switch (connector) {
+        case 'text':
+          draft = ingestRawTextSource({
+            title: String(input.title ?? ''),
+            body: String(input.body ?? ''),
+            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            sourceTitle: typeof input.sourceTitle === 'string' ? input.sourceTitle : undefined,
+            notes: typeof input.notes === 'string' ? input.notes : undefined,
+          });
+          break;
+        case 'url':
+          draft = await ingestUrlSource({
+            url: String(input.url ?? ''),
+            title: typeof input.title === 'string' ? input.title : undefined,
+            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            notes: typeof input.notes === 'string' ? input.notes : undefined,
+            timeoutMs: typeof input.timeoutMs === 'number' ? input.timeoutMs : undefined,
+          });
+          break;
+        case 'file':
+          draft = ingestFileSource({
+            filename: String(input.filename ?? ''),
+            mimeType: String(input.mimeType ?? 'text/plain'),
+            body: String(input.body ?? ''),
+            title: typeof input.title === 'string' ? input.title : undefined,
+            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            notes: typeof input.notes === 'string' ? input.notes : undefined,
+          });
+          break;
+        case 'v8_artifact':
+          draft = await ingestV8ArtifactSource({
+            artifactId: String(input.artifactId ?? ''),
+            organizationId,
+            title: typeof input.title === 'string' ? input.title : undefined,
+            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            notes: typeof input.notes === 'string' ? input.notes : undefined,
+          });
+          break;
+        case 'integration':
+          draft = ingestIntegrationSource({
+            integration: input.integration as 'notion' | 'drive' | 'sharepoint' | 'confluence',
+            externalId: String(input.externalId ?? ''),
+            title: String(input.title ?? ''),
+            preview: typeof input.preview === 'string' ? input.preview : undefined,
+            language: input.language === 'pl' || input.language === 'en' ? (input.language as 'pl' | 'en') : undefined,
+            notes: typeof input.notes === 'string' ? input.notes : undefined,
+          });
+          break;
+        default:
+          res.status(400).json({ error: 'unknown_connector', connector });
+          return;
+      }
+      const pack = addSourcePackItem({
+        organizationId,
+        userId,
+        packId,
+        item: draft,
+      });
+      res.status(201).json({ pack });
+    } catch (err) {
+      if (err instanceof SourcePackConnectorError) {
+        const status = mapConnectorErrorToStatus(err.code);
+        res.status(status).json({
+          error: err.code,
+          message: err.message,
+          details: err.details,
+        });
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'source_pack_item_failed';
+      const status = mapServiceErrorToStatus(message);
+      logger.warn('[DocumentStudio] source pack item add failed', { message });
+      res.status(status).json({ error: message, message });
+    }
+  })
+);
+
+router.delete(
+  '/source-packs/:packId/items/:itemId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const packId = String(req.params.packId || '');
+    const itemId = String(req.params.itemId || '');
+    if (!packId || !itemId) {
+      res.status(400).json({ error: 'packId and itemId are required' });
+      return;
+    }
+    try {
+      const pack = removeSourcePackItem({ organizationId, userId, packId, itemId });
+      res.json({ pack });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'source_pack_item_remove_failed';
+      const status = mapServiceErrorToStatus(message);
+      res.status(status).json({ error: message, message });
+    }
+  })
+);
+
+router.post(
+  '/source-packs/:packId/ready',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const packId = String(req.params.packId || '');
+    const notes = typeof req.body?.notes === 'string' ? req.body.notes : undefined;
+    if (!packId) {
+      res.status(400).json({ error: 'packId is required' });
+      return;
+    }
+    try {
+      const pack = markSourcePackReady({ organizationId, userId, packId, notes });
+      res.json({ pack });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'source_pack_ready_failed';
+      const status = mapServiceErrorToStatus(message);
+      res.status(status).json({ error: message, message });
+    }
+  })
+);
+
+router.post(
+  '/source-packs/:packId/archive',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const packId = String(req.params.packId || '');
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    if (!packId) {
+      res.status(400).json({ error: 'packId is required' });
+      return;
+    }
+    try {
+      const pack = archiveSourcePack({ organizationId, userId, packId, reason });
+      res.json({ pack });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'source_pack_archive_failed';
+      const status = mapServiceErrorToStatus(message);
+      res.status(status).json({ error: message, message });
+    }
+  })
+);
+
+router.post(
+  '/source-packs/:packId/attach',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const packId = String(req.params.packId || '');
+    const artifactId = typeof req.body?.artifactId === 'string' ? req.body.artifactId : '';
+    if (!packId || !artifactId) {
+      res.status(400).json({ error: 'packId and artifactId are required' });
+      return;
+    }
+    try {
+      const result = attachSourcePackToDocument({
+        organizationId,
+        userId,
+        packId,
+        artifactId,
+      });
+      res.json({ pack: result.pack, sourceRefs: result.sourceRefs });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'source_pack_attach_failed';
+      const status = mapServiceErrorToStatus(message);
+      res.status(status).json({ error: message, message });
+    }
   })
 );
 
