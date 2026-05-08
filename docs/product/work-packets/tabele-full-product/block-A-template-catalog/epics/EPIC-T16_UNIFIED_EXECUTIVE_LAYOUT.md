@@ -1,6 +1,6 @@
 # EPIC-T16 — Unified Executive Module Layout (Tabele lane)
 
-**Status:** `IN PROGRESS — D1..D5 + TabeleView swap behind isMelsTabeleEnabled LANDED 2026-05-08; D6..D9 (help modal, drag handle, visual review, hex scan) pending`
+**Status:** `IN PROGRESS — D1..D5 + TabeleView swap LANDED + D9 (DBR77 hex scan) PASS 2026-05-08; D6 (help modal), D7 (drag handle), D8 (visual review) + Foundation Block E2E re-run pending`
 **Block:** A (Template Catalog) of `tabele-full-product` program.
 **Driver:** User-supplied UX directive on 2026-05-08 — converge executive modules (Wordy / Tabele / Prezentacje) on a single layout patterned after `DeckBuilder` (Prezentacje).
 **Standard:** `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md` (MELS).
@@ -309,3 +309,21 @@ Cumulative: **63/63 unit tests green**, 0 linter errors, 0 raw hex literals.
 - **Foundation Block E2E re-run** — both flag-OFF (legacy) and flag-ON (MELS) paths must pass artifact open / Source Pack click-through / governance verdict specs.
 
 The flag stays OFF by default until S4b acceptance is signed off; flipping to ON in staging is a single localStorage entry (`ff.mels_tabele=1`) or query string (`?ff_melsTabele=1`).
+
+---
+
+## Update — 2026-05-08 — T16-D9 — DBR77 hex scan PASS
+
+Ran a `rg '#[0-9a-fA-F]{3,8}'` scan across the full EPIC-T16 surface:
+
+| Folder | Hex literals |
+|---|---|
+| `consultify/src/components/shared/ExecutiveModuleShell/` | 0 |
+| `consultify/src/components/AIChat/KimiWorkspace/tabeleShell/` | 0 |
+| `consultify/src/utils/melsTabeleFlag.ts` | 0 |
+
+**Result: 0 / 0** — every coloured surface uses Tailwind tokens (`slate-*`, `navy-*`, `primary-*`, `emerald-*`, `amber-*`, `rose-*`, `sky-*`). The DBR77 monochrome contract for executive modules is satisfied.
+
+Acceptance criterion T16-D9 (§ Acceptance criteria — "DBR77 hex scan clean"): **PASS**.
+
+D6 (help modal), D7 (drag handle UX) and D8 (visual review screenshots vs DeckBuilder reference) remain in S4b. The shell is structurally complete; what's left is UX polish, screenshot evidence, and the Foundation Block E2E re-run.
