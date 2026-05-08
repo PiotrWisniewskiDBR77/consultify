@@ -470,6 +470,68 @@ Error mapping — `mapCommentErrorToStatus`: 400 `invalid_input`; 403 `forbidden
 
 ---
 
+## 6.9 Epic E7 — Per-tenant Brand Voice profile
+
+Lands the per-organization Brand Voice spine: every tenant can ship its own lexicon (banned phrases, escape-hatch for noisy globals, glossary of avoid → prefer pairs, required keywords, register override, language scope) on top of the global banned-phrase catalogue baked into the QA engine. Three narrow slices (7.1 → 7.3) plus this closeout, all landed on `staging` of the `consultify` submodule.
+
+### 6.9.1 Slice 7.1 — Brand voice profile data plane (commit `aa66c37e4`)
+
+- **Types** (`documentStudioTypes.ts`, additive): `BrandVoiceProfileStatus` (`'draft' | 'active' | 'archived'`), `BrandVoiceProfileLanguageScope` (`'pl' | 'en' | 'all'`), `BrandVoiceGlossaryEntry` (`{ avoid, prefer, note? }`), `BrandVoiceProfile` (profileId / organizationId / name / description / status / version / languageScope / bannedPhrases / disabledGlobalBannedPhrases / preferredPhrases / glossaryEntries / requiredKeywords / registerOverride / notes / created+activated+archived audit fields), plus `BrandVoiceProfileDraftInput` / `BrandVoiceProfileUpdateInput` / `BrandVoiceProfileAuditAction` / `BrandVoiceProfileAuditEntry`. Profile audit lives in its own stream (organization-scoped, NOT artifact-scoped) — it is never pushed into the per-document `DocumentAuditEntry` timeline.
+- **DAO** (`documentBrandVoiceRegistryDao.ts`, NEW): mirrors the source-pack DAO 1:1 — in-memory write-through `profileStore` + `auditStore`, keyed `${organizationId}::${profileId}`, every operation failure-tolerant (`{ ok: false }` / `null` / `[]`), `loadBrandVoiceProfilesForOrg` filters by key prefix so cross-tenant rows are invisible.
+- **Service** (`documentBrandVoiceService.ts`, NEW): synchronous in-process Map cache + idempotent per-org hydration (`ensureBrandVoiceRegistryHydrated`) + `BrandVoiceProfileError` with stable code surface (`'invalid_input' | 'profile_not_found' | 'profile_archived' | 'profile_already_active' | 'profile_already_archived' | 'forbidden'`). Public API: `draftBrandVoiceProfile`, `updateBrandVoiceProfile` (bumps `v{n}` version), `activateBrandVoiceProfile` (auto-archives previous active + records `profile_superseded` audit entry on the outgoing profile), `archiveBrandVoiceProfile`, `getBrandVoiceProfile`, `listBrandVoiceProfiles` (status filter + `includeArchived`), `getActiveBrandVoiceProfile` (single tenant-active row), `listBrandVoiceProfileAuditEntries`. Phrase / glossary inputs are normalized on every write (trim, dedupe lowercase, drop empties) so the QA layer can consume them directly.
+- **Tests**: `documentBrandVoiceService.test.ts` — 15/15 green. Covers normalization, language-scope defaulting, register-override validation, version bump, archived-immutability, supersede flow, list filtering, cross-tenant deny, hydration replay.
+
+### 6.9.2 Slice 7.2 — Brand QA profile-aware integration (commit `989d8a5fb`)
+
+- **Engine** (`documentQaService.ts`):
+    - `RunDocumentQaOptions` gains `brandVoiceProfile?: BrandVoiceProfile | null`.
+    - `runBrandQa(schema, profile)` is now profile-aware:
+        - `bannedPhrases` ADD to the global lexicon (additive); hits emit `tenant_banned_phrase` so the audit panel can distinguish org policy from the global baseline.
+        - `disabledGlobalBannedPhrases` SUBTRACT from the global list (escape-hatch, case-insensitive).
+        - `glossaryEntries` (avoid → prefer) emit `glossary_replacement` findings; entries already firing as banned hits are skipped to avoid double-flagging.
+        - `requiredKeywords` produce one `required_keyword_missing` HIGH finding per absent term, anchored to the first section so the UI has a stable scroll target (the requirement is document-level, not block-level).
+        - `registerOverride` pins the casual-marker check stricter than the schema's `communicationRegister` — e.g. activate the executive casual lexicon even when the schema is `professional`.
+        - `languageScope` filters: profile applies only when scope is `'all'` or matches `schema.language`, AND only when `status === 'active'`.
+    - The clean-document summary is profile-aware (mentions the active profile name when no findings emit).
+- **Studio service** (`documentStudioService.ts`):
+    - `exportDocumentArtifact` resolves the active profile via `getActiveBrandVoiceProfile` (idempotent hydration first) and forwards it to `runDocumentQa`.
+    - New public orchestrator `runQaForDocument(artifactId, organizationId)` resolves schema + Mode 3 template (from artifact metadata) + active profile in one call. Stamps `report.organizationId` so callers don't have to.
+- **Routes**: `GET /:artifactId/qa` switched from inline `runDocumentQa(schema)` to `runQaForDocument` so the QA panel automatically surfaces tenant-banned phrases / glossary suggestions / required-keyword warnings without extra route work.
+- **Tests**: `documentQaBrandVoiceProfile.test.ts` — 8/8 green. Covers additive banned phrases, global-disable escape-hatch, glossary replacement (incl. no double-flag with banned), required-keyword missing detection, register override, languageScope filtering (pl / en / all), inactive-profile guard, and the profile-aware clean-document summary.
+
+### 6.9.3 Slice 7.3 — Routes (commit `cd91152b1`)
+
+Eight endpoints scoped under `/api/document-studio/brand-voice/...`, all registered before the generic `/:artifactId` matcher so the static prefix wins. Each read path awaits `ensureBrandVoiceRegistryHydrated` so cold-start workers serve the persisted catalogue rather than an empty cache.
+
+- `GET /brand-voice/active` — currently active profile or 204 No Content.
+- `GET /brand-voice/profiles` — list (`status?`, `includeArchived?`).
+- `POST /brand-voice/profiles` — draft a new profile.
+- `GET /brand-voice/profiles/:profileId` — single profile.
+- `PATCH /brand-voice/profiles/:profileId` — partial update (draft + active rows; archived is immutable).
+- `POST /brand-voice/profiles/:profileId/activate` — promote to active; auto-archives previous active.
+- `POST /brand-voice/profiles/:profileId/archive` — body `{ reason? }`; irreversible.
+- `GET /brand-voice/profiles/:profileId/audit` — list audit entries.
+
+Body parsing is defensive: `parseStringArray`, `parseGlossaryEntries`, `parseLanguageScope`, and `parseRegisterOverride` filter malformed payloads to typed shapes (or undefined / null for the explicit-clear path) BEFORE reaching the service so the service contract stays clean.
+
+Error mapping (`mapBrandVoiceErrorToStatus`): 400 `invalid_input`; 403 `forbidden`; 404 `profile_not_found`; 409 `profile_archived` / `profile_already_active` / `profile_already_archived`.
+
+### 6.9.4 Validation summary
+
+- **Suite**: 38 vitest files / **360 specs** in `src/services/documentStudio/__tests__/` green (was 337 at the end of Epic E6; +23 specs from Epic E7: 15 + 8).
+- **Type-check**: `tsc --noEmit -p .` clean.
+- **Lint**: ESLint clean for every file in the diff. Pre-existing `no-useless-escape` warning at `documentQaService.ts:1548` (Recovery Sprint 6, commit `ef80ff4837`) left untouched per the scope-lock rule.
+- **Commits**: `aa66c37e4` (7.1) → `989d8a5fb` (7.2) → `cd91152b1` (7.3) → this closeout. Each slice landed in its own commit per the recovery-era "commit early, commit narrow" discipline.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - LLM-powered profile drafting (today: profiles are author-driven; a future iteration adds a `POST /brand-voice/profiles/draft` that takes a corpus of past tenant deliverables and proposes a starting lexicon).
+    - `preferredPhrases` scoring (today: stored on the profile but not yet a positive QA signal; the global engine has no positive-finding code path. Lights up cleanly once `runDocumentQa` adds an "encouragement" severity tier).
+    - Per-document profile pinning (today: the active tenant profile applies to every document. Pinning a specific profile to a specific artifact — useful for legal vs marketing docs in the same tenant — is a one-field metadata extension on the artifact + one resolve-time fallback in `runQaForDocument`).
+    - Wave5 Postgres backing for the brand-voice DAO (today: in-memory write-through with the same surface; the DAO swap is mechanical).
+    - Frontend Brand Voice editor (today: backend-only; the chat-first creation entry surfaces tenant findings via the QA panel automatically, but the dedicated edit UI is a separate slice).
+    - Tenant-overridable `canOverrideQa` policy via the brand-voice / governance profile — flagged at MVP-3 boundary (`6.4 MVP-3 deferred`) and still pending; the active brand-voice row is the natural carrier once the role-set field is added.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
