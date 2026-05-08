@@ -418,6 +418,92 @@ export interface TemplateAuditEntry {
   details?: Record<string, unknown>;
 }
 
+// =============================================================================
+// Source Pack — Epic E4 (chat-first creation entry + connector ingestion).
+// =============================================================================
+
+/**
+ * Concrete connector vocabulary. The pack registry is connector-agnostic;
+ * each connector adapter normalizes its native shape into a `SourcePackItem`
+ * that carries enough body text for the LLM and a stable `sourceRef` so the
+ * resulting Document can cite the item via the existing
+ * `DocumentSourceRef` plumbing without any schema migrations elsewhere.
+ *
+ *   - url           public web fetch (head + body, HTML stripped to text).
+ *   - text          consultant-pasted raw text or markdown.
+ *   - file          uploaded file content (text-extractable today; binary
+ *                   handling is a follow-up).
+ *   - integration   third-party connector (Notion / Drive / SharePoint).
+ *                   Only stub validation in MVP; real handlers wire in
+ *                   block by block.
+ *   - v8_artifact   reference to an existing wave5 artifact in the same
+ *                   tenant (e.g. interview transcript, finance pack).
+ */
+export type SourcePackItemType = 'url' | 'text' | 'file' | 'integration' | 'v8_artifact';
+
+export type SourcePackStatus = 'draft' | 'ready' | 'archived';
+
+export interface SourcePackItem {
+  itemId: string;
+  itemType: SourcePackItemType;
+  title: string;
+  /** Normalized text content the LLM can consume. Optional for pure refs. */
+  body?: string;
+  /** True when the connector trimmed `body` to fit a budget. */
+  bodyTruncated?: boolean;
+  /** Pre-truncation length (characters). 0 when no body was captured. */
+  contentLength: number;
+  /** Source URI / file path / integration handle. */
+  uri?: string;
+  /** ISO timestamp when the connector finished ingestion. */
+  ingestedAt: string;
+  ingestedBy: string;
+  language?: 'pl' | 'en';
+  notes?: string;
+  /**
+   * Stable `DocumentSourceRef` projected when the pack is attached to a
+   * document. Built by the connector at ingest time so callers do not have
+   * to re-derive the citation shape.
+   */
+  sourceRef: DocumentSourceRef;
+}
+
+export interface SourcePack {
+  packId: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  language: 'pl' | 'en';
+  items: SourcePackItem[];
+  /** Sum of `contentLength` across all items at the moment of last write. */
+  totalContentLength: number;
+  status: SourcePackStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedBy?: string;
+  archivedAt?: string;
+  notes?: string;
+}
+
+export type SourcePackAuditAction =
+  | 'pack_drafted'
+  | 'pack_item_added'
+  | 'pack_item_removed'
+  | 'pack_marked_ready'
+  | 'pack_archived'
+  | 'pack_attached_to_document';
+
+export interface SourcePackAuditEntry {
+  auditId: string;
+  packId: string;
+  organizationId: string;
+  action: SourcePackAuditAction;
+  actorId: string;
+  occurredAt: string;
+  details?: Record<string, unknown>;
+}
+
 /** Canonical default consulting formatting schema for Mode 1 (no template). */
 export const DEFAULT_CONSULTING_FORMATTING_SCHEMA: FormattingSchema = {
   fonts: { body: 'Aptos 11', heading: 'Aptos Display' },
