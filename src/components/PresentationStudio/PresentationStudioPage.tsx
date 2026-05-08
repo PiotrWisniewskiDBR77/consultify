@@ -57,6 +57,13 @@ import {
   TemplatePlanPreviewResponse,
 } from '@/services/api/presentationStudio.api';
 
+import {
+  PRESENTATION_STUDIO_SETUP_FORM_DEFAULT,
+  PresentationStudioSetupForm,
+  PresentationStudioSetupFormValue,
+  validatePresentationStudioSetupForm,
+} from './PresentationStudioSetupForm';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -120,14 +127,18 @@ function formatTicketRejection(reason: string | null | undefined): string {
   return TICKET_REJECTION_LABELS[reason] || `Approval ticket rejected: ${reason}`;
 }
 
-const DEFAULT_SETUP: PresentationStudioSetupInput = {
-  title: 'Steering Committee Preview',
-  audience: 'executive',
-  goal: 'decide',
-  language: 'en',
+/**
+ * Static, governance-aware extras the form does NOT yet expose. Audited as
+ * intentionally constant for Sprint S8: source artifact picker and theme/
+ * confidentiality controls land in a future sprint without touching the
+ * approval flow contract.
+ */
+const SETUP_NON_FORM_EXTRAS: Pick<
+  PresentationStudioSetupInput,
+  'theme' | 'confidentiality' | 'sourceArtifacts'
+> = {
   theme: 'corporate',
   confidentiality: 'internal',
-  deckType: 'steering_committee',
   sourceArtifacts: [
     {
       type: 'assessment',
@@ -138,6 +149,18 @@ const DEFAULT_SETUP: PresentationStudioSetupInput = {
     },
   ],
 };
+
+/** Project the form value plus the static extras into the API setup shape. */
+function buildSetupFromForm(form: PresentationStudioSetupFormValue): PresentationStudioSetupInput {
+  return {
+    title: form.title.trim(),
+    audience: form.audience,
+    goal: form.goal,
+    language: form.language,
+    deckType: form.deckType,
+    ...SETUP_NON_FORM_EXTRAS,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Reusable status badge using canonical color semantics
@@ -234,7 +257,10 @@ function toneForTemplateStatus(status?: string): StatusTone {
 // ---------------------------------------------------------------------------
 
 export const PresentationStudioPage: React.FC = () => {
-  const [setup] = useState<PresentationStudioSetupInput>(DEFAULT_SETUP);
+  const [formValue, setFormValue] = useState<PresentationStudioSetupFormValue>(
+    PRESENTATION_STUDIO_SETUP_FORM_DEFAULT
+  );
+  const [showFormErrors, setShowFormErrors] = useState<boolean>(false);
   const [state, setState] = useState<PreviewState>(INITIAL_STATE);
   const [approval, setApproval] = useState<ApprovalState>(INITIAL_APPROVAL_STATE);
   // Tick state used purely to drive the ticket TTL countdown re-render.
@@ -242,7 +268,29 @@ export const PresentationStudioPage: React.FC = () => {
   // the linter sees a real dependency, not a hidden `Date.now()` side effect.
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
 
+  const formErrors = useMemo(() => validatePresentationStudioSetupForm(formValue), [formValue]);
+  const formIsValid = Object.keys(formErrors).length === 0;
+  const setup = useMemo(() => buildSetupFromForm(formValue), [formValue]);
+
+  /**
+   * Setup form changes invalidate any in-flight approval flow because the
+   * ticket fingerprint commits to the exact payload at request-approval
+   * time. We clear the ticket eagerly on change so the user does not click
+   * Confirm-generate against a stale ticket and trip a server-side
+   * payload_mismatch round-trip. Banners are also cleared so the canvas
+   * reflects the freshly-edited setup.
+   */
+  const handleFormChange = useCallback((next: PresentationStudioSetupFormValue) => {
+    setFormValue(next);
+    setApproval(INITIAL_APPROVAL_STATE);
+  }, []);
+
   const runPreview = useCallback(async () => {
+    if (!formIsValid) {
+      setShowFormErrors(true);
+      return;
+    }
+    setShowFormErrors(false);
     setState((prev) => ({ ...prev, loading: true, error: null }));
     // Re-running the preview invalidates any in-flight approval flow: the
     // ticket is fingerprinted against the previous payload and a new run may
@@ -270,7 +318,7 @@ export const PresentationStudioPage: React.FC = () => {
         error: error instanceof Error ? error.message : 'Unknown error running Studio preview.',
       }));
     }
-  }, [setup]);
+  }, [formIsValid, setup]);
 
   const requestApproval = useCallback(async () => {
     setApproval((prev) => ({
@@ -476,6 +524,30 @@ export const PresentationStudioPage: React.FC = () => {
       </header>
 
       <main className="mx-auto w-full max-w-6xl space-y-4 px-6 py-6">
+        <PresentationStudioSetupForm
+          value={formValue}
+          onChange={handleFormChange}
+          showErrors={showFormErrors}
+          disabled={state.loading || approval.pending !== null}
+        />
+
+        {showFormErrors && !formIsValid ? (
+          <div
+            className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            role="alert"
+            data-testid="presentation-studio-form-error"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <div>
+              <div className="font-medium">Setup is incomplete</div>
+              <div className="mt-1">
+                Fix the highlighted required fields above before running a Studio preview. No silent
+                defaults are applied.
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {state.error ? (
           <div
             className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"

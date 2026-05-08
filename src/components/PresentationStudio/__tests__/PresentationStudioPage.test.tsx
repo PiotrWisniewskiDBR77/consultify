@@ -142,6 +142,20 @@ function makeHappyTemplatePlan() {
   };
 }
 
+/**
+ * Fill the S8 setup form with valid required fields. Used by every test that
+ * needs a preview to actually run; without this Run preview only triggers
+ * inline validation messages.
+ */
+function fillRequiredFields() {
+  fireEvent.change(screen.getByTestId('psstudio-field-title'), {
+    target: { value: 'Steering Committee Preview' },
+  });
+  fireEvent.change(screen.getByTestId('psstudio-field-deck-type'), {
+    target: { value: 'steering_committee' },
+  });
+}
+
 function makeGeneratePreview(canProceed: boolean) {
   return {
     outlinePreview: [
@@ -207,6 +221,7 @@ describe('PresentationStudioPage', () => {
     mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(true));
 
     render(<PresentationStudioPage />);
+    fillRequiredFields();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
@@ -239,6 +254,7 @@ describe('PresentationStudioPage', () => {
     mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(false));
 
     render(<PresentationStudioPage />);
+    fillRequiredFields();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
@@ -259,6 +275,7 @@ describe('PresentationStudioPage', () => {
     mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(true));
 
     render(<PresentationStudioPage />);
+    fillRequiredFields();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
@@ -293,6 +310,7 @@ describe('PresentationStudioPage', () => {
     mockedApi.previewNarrativePlan.mockResolvedValue(makeHappyNarrativePlan());
     mockedApi.previewTemplatePlan.mockResolvedValue(makeHappyTemplatePlan());
     mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(true));
+    fillRequiredFields();
     await act(async () => {
       fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
     });
@@ -308,6 +326,7 @@ describe('PresentationStudioPage', () => {
     mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(false));
 
     render(<PresentationStudioPage />);
+    fillRequiredFields();
     await act(async () => {
       fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
     });
@@ -456,6 +475,113 @@ describe('PresentationStudioPage', () => {
     // Ticket must be invalidated; Confirm-generate disappears and a fresh
     // Request-approval CTA returns to the right slot.
     expect(screen.queryByTestId('presentation-studio-confirm-generate')).toBeNull();
+    expect(screen.getByTestId('presentation-studio-request-approval')).toBeTruthy();
+  });
+
+  // ---------------------------------------------------------------------
+  // S8 — setup form & deck type selector
+  // ---------------------------------------------------------------------
+
+  it('renders the setup form with empty required fields by default', () => {
+    render(<PresentationStudioPage />);
+    expect(screen.getByTestId('presentation-studio-setup-form')).toBeTruthy();
+    const titleInput = screen.getByTestId('psstudio-field-title') as HTMLInputElement;
+    const deckTypeSelect = screen.getByTestId('psstudio-field-deck-type') as HTMLSelectElement;
+    expect(titleInput.value).toBe('');
+    expect(deckTypeSelect.value).toBe('');
+    // Validation messages are NOT shown until the user has actually clicked
+    // Run preview at least once (honest UX rule).
+    expect(screen.queryByTestId('psstudio-error-title')).toBeNull();
+    expect(screen.queryByTestId('psstudio-error-deck-type')).toBeNull();
+    expect(screen.queryByTestId('presentation-studio-form-error')).toBeNull();
+  });
+
+  it('blocks Run preview when required fields are missing and surfaces inline errors', async () => {
+    render(<PresentationStudioPage />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
+    });
+
+    expect(mockedApi.previewSourcePack).not.toHaveBeenCalled();
+    expect(mockedApi.previewGenerate).not.toHaveBeenCalled();
+    expect(screen.getByTestId('psstudio-error-title')).toBeTruthy();
+    expect(screen.getByTestId('psstudio-error-deck-type')).toBeTruthy();
+    expect(screen.getByTestId('presentation-studio-form-error')).toBeTruthy();
+  });
+
+  it('enables Run preview after both required fields are filled and clears form-error banner', async () => {
+    mockedApi.previewSourcePack.mockResolvedValue(makeHappySourcePack());
+    mockedApi.previewNarrativePlan.mockResolvedValue(makeHappyNarrativePlan());
+    mockedApi.previewTemplatePlan.mockResolvedValue(makeHappyTemplatePlan());
+    mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(true));
+
+    render(<PresentationStudioPage />);
+
+    // First click without filling -> validation error shown.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
+    });
+    expect(screen.getByTestId('presentation-studio-form-error')).toBeTruthy();
+
+    // Fill and re-click -> previews fire, form error banner disappears.
+    fillRequiredFields();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
+    });
+    await waitFor(() => {
+      expect(mockedApi.previewGenerate).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.queryByTestId('presentation-studio-form-error')).toBeNull();
+    // The setup that hit the API must reflect what the user typed.
+    const setupArg = mockedApi.previewSourcePack.mock.calls[0][0];
+    expect(setupArg.title).toBe('Steering Committee Preview');
+    expect(setupArg.deckType).toBe('steering_committee');
+  });
+
+  it('exposes all four governance-aware deck type options', () => {
+    render(<PresentationStudioPage />);
+    const deckTypeSelect = screen.getByTestId('psstudio-field-deck-type') as HTMLSelectElement;
+    const optionValues = Array.from(deckTypeSelect.options).map((o) => o.value);
+    expect(optionValues).toEqual(
+      expect.arrayContaining([
+        '',
+        'steering_committee',
+        'project_pulse',
+        'board_update',
+        'sales_pitch',
+      ])
+    );
+  });
+
+  it('clears the in-flight approval ticket when the setup form changes', async () => {
+    render(<PresentationStudioPage />);
+    await runHealthyPreview();
+
+    const ticket = makeApprovalTicket();
+    mockedApi.requestApproval.mockResolvedValue({
+      ticket,
+      generatePreview: makeGeneratePreview(true),
+      payloadFingerprint: ticket.payloadFingerprint,
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-request-approval'));
+    });
+    await screen.findByTestId('presentation-studio-confirm-generate');
+
+    // User edits the title — the existing ticket would be stale
+    // (payload_mismatch server-side). The UI must invalidate it eagerly.
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('psstudio-field-title'), {
+        target: { value: 'Different title' },
+      });
+    });
+    // Single-use semantics on the client mirror the backend: the previously
+    // minted ticket is dead, so Confirm-generate disappears.
+    expect(screen.queryByTestId('presentation-studio-confirm-generate')).toBeNull();
+    // The preview state still reports canProceed=true from the original
+    // preview run, so the user can request a fresh ticket bound to the new
+    // setup. The CTA reappears in the Menu 3 right slot.
     expect(screen.getByTestId('presentation-studio-request-approval')).toBeTruthy();
   });
 });

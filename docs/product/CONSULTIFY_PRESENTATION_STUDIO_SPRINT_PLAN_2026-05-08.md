@@ -810,3 +810,68 @@ Mode: Frontend-only. Backend from S6 unchanged.
   - Add input validation honest states: "title required", "deck type required". No silent defaults.
   - No backend changes. No mutating contract changes. The approval ticket flow keeps working unchanged.
 
+## Sprint S8 Gate Report — Setup Form & Deck Type Selector (2026-05-08)
+
+Sprint owner: Engineering
+Phase: 2 (implementation)
+Mode: Frontend-only. Backend from S6 unchanged. Approval flow contract unchanged.
+
+### Changes made
+
+- `consultify/src/components/PresentationStudio/PresentationStudioSetupForm.tsx` (new)
+  - Pure presentational form owning the editable subset of the Studio setup payload: `title` (required), `audience`, `goal`, `deckType` (required), `language`.
+  - No silent defaults on REQUIRED fields. `title` and `deckType` start empty; `audience`, `goal`, `language` have explicitly labeled defaults.
+  - Honest UI: validation messages render only after the parent flips `showErrors=true` (i.e. after a submit attempt). No errors shown on a blank first render.
+  - Exports `PRESENTATION_STUDIO_SETUP_FORM_DEFAULT` and `validatePresentationStudioSetupForm` so the parent can compute validity without re-rendering the form.
+  - Four governance-aware deck-type options surfaced: `steering_committee`, `project_pulse`, `board_update`, `sales_pitch`. The empty option is rendered as the explicit "Select deck type…" placeholder, never as a hidden default.
+  - Component never mutates anything; emits a typed `value` upward via `onChange`.
+- `consultify/src/components/PresentationStudio/PresentationStudioPage.tsx`
+  - Replaced the hard-coded `DEFAULT_SETUP` constant with `PRESENTATION_STUDIO_SETUP_FORM_DEFAULT` plus a small `buildSetupFromForm` helper that projects the form value into the `PresentationStudioSetupInput` shape used by the API. Static, non-form extras (`theme`, `confidentiality`, demo `sourceArtifacts`) are documented as intentionally constant for S8; the source artifact picker lands in a future sprint.
+  - Added `formValue`, `showFormErrors`, and a memoized `formIsValid` boolean. `runPreview` now: a) flips `showFormErrors=true` and bails when invalid, b) clears `showFormErrors` and proceeds when valid. No previews fire while the form is invalid.
+  - Added `handleFormChange` which clears `INITIAL_APPROVAL_STATE` on every form mutation. Rationale: the approval ticket fingerprint commits to the exact payload at request-approval time, so editing the form invalidates the existing ticket. The UI mirrors the server invariant eagerly to spare the user a `payload_mismatch` round-trip.
+  - Added a top-level form-error banner shown when `runPreview` is clicked with invalid fields. Echoes the inline validation messages with an aggregate "no silent defaults" reminder.
+  - The setup form is mounted as the first content card in the canvas, above all preview cards. The Menu 3 right slot remains the only home for AI actions per `.cursor/rules/ai-actions-menu3.mdc`.
+- `consultify/src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`
+  - Added `fillRequiredFields()` helper used by every test that needs a successful Run-preview round-trip.
+  - Updated all S5 and S7 tests to call `fillRequiredFields()` before clicking Run preview (form is now empty by default, so previews are blocked otherwise).
+  - Added 5 new S8 tests:
+    1. Empty required fields by default; no validation messages until first submit attempt.
+    2. Run preview is blocked when required fields missing; both inline errors and the aggregate banner appear; no API calls fired.
+    3. Filling fields enables Run preview and clears the form-error banner; the setup that hits `previewSourcePack` reflects the user-typed `title` and `deckType`.
+    4. The deck-type selector exposes all four governance-aware options (`steering_committee`, `project_pulse`, `board_update`, `sales_pitch`) plus the explicit empty placeholder.
+    5. Editing the form after a ticket has been minted clears the ticket (Confirm-generate disappears) while the Request-approval CTA reappears so the user can mint a fresh, fingerprinted ticket bound to the new payload.
+
+### Validation performed
+
+- `npx vitest run src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx --no-coverage` — 16/16 passed (5 S5 + 6 S7 + 5 new S8).
+- `npx vitest run src/components/PresentationStudio server/src/services/__tests__/presentationStudioApprovalTicketService.test.ts server/src/routes/__tests__/presentationStudio.routes.test.ts --no-coverage` — 56/56 passed across the full Studio surface (8 ticket + 32 routes + 16 component).
+- `npx eslint` on three in-scope files — 0 errors, 2 warnings. The warnings (`react-refresh/only-export-components` on `PRESENTATION_STUDIO_SETUP_FORM_DEFAULT` and `validatePresentationStudioSetupForm`) are HMR-only hints; the pattern is consistent with sibling Studio modules and acceptable per S0 baseline. Splitting the constants into a third file would be cosmetic with no runtime benefit.
+- `npx tsc --noEmit -p consultify/tsconfig.json` filtered to `presentationStudio*` — 0 type errors. Out-of-scope `tablePlatform/*` errors remain unchanged.
+- Approval invariant preserved: server-side contract is unchanged; client behaviour around the ticket (single-use, payload-bound, tenant-bound) is unchanged. Setup form changes ONLY clear the local ticket reference; they never call any backend endpoint on their own.
+
+### Gate result: `PASS_WITH_P2`
+
+- 0 P0, 0 P1, 0 P2.
+- P3 deferred: 2 new `react-refresh/only-export-components` warnings (HMR-only); 1 pre-existing `no-empty-object-type` warning from S5/S7 baseline.
+
+### Acceptance criteria (from contract) covered by S8
+
+- The Studio surface no longer hides setup behind a constant. Every preview and every approval round-trip uses the user-typed setup, with the title and deck type required honestly (no silent fallbacks).
+- The deck-type selector exposes the four governance-aware presentation families that the server's template architect dispatcher recognizes.
+- Honest UI states fully covered: empty form (initial), inline + aggregate error states (on submit attempt), valid form (Run preview proceeds), in-flight (form disabled while a preview / approval is running), and post-mutation invalidation (ticket cleared on form change).
+- The proposal -> approval -> execution -> audit invariant is preserved and now visibly enforced on the client: editing the form after minting a ticket invalidates the ticket immediately and forces the user to re-mint.
+
+### Risks / next-step notes
+
+- R-S8-1: The form does not yet expose the source artifact picker. The current page injects a single demo readiness assessment so the source pack preview always returns a non-empty pack. Wiring real source artifacts (interview, research, roadmap, AI audit) is a P2 follow-up driven by S10 of the master sprint map.
+- R-S8-2: Setup form changes invalidate the ticket but do NOT auto-rerun the preview. The user has to click Run preview again to refresh the source pack / narrative / template / generate cards. This is intentional per honest-UX rule (no hidden fetches) and surfaces no stale data: the cards still show the LAST run, plainly labeled.
+- R-S8-3: Audience, goal, and language fields are presented as flat selects. A guided assistant ("if your audience is a board, pick board_update for deck type") is a P3 nice-to-have, not blocking.
+
+### Next sprint plan
+
+- Sprint S9 starts Source Artifact Picker. Scope:
+  - Add a server-driven source-artifact picker that lists the user's tenant-scoped assessments, interview projects, research workspaces, and AI-audit reports, each with a "ready / partial / missing" readiness chip read from the existing source pack service.
+  - Replace the hard-coded demo readiness assessment with the selected artifacts. Selection persists in the form state and survives across previews.
+  - Backend: a new read-only `GET /api/presentation-studio/source-artifacts` endpoint that re-uses the existing source pack service. No mutating endpoints; no DB migration.
+  - Honest UI states: empty list, loading, ready chip, missing-input chip, error (e.g. tenant context dropped). The picker remains tenant-scoped via the authenticated session.
+
