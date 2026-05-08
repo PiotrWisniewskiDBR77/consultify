@@ -892,6 +892,37 @@ While the frontend work is parked on the parallel-sync coordination issue, the b
 
 ---
 
+### 6.15.3 Slice E5.6 — Source-version pinning on `DocumentSourceRef` (NFR-17 substrate)
+
+**Why.** NFR-17 requires that an approval-gated render flow can distinguish between "source v3 at generation time" and "source v5 at render time". Without version pinning, a document could be approved against a snapshot of the underlying transcript / source pack and then silently re-render against a mutated source, drifting the meaning of approved content. The data substrate to detect that drift was missing on `DocumentSourceRef`.
+
+**Scope (substrate-only, no behavior change).**
+- `documentStudioTypes.ts` — extend `DocumentSourceRef` with two backwards-compatible optional fields:
+    - `sourceVersion?: string` — semantic version / hash / monotonic id of the source as it existed when the document was generated.
+    - `sourceSnapshotId?: string` — pointer to a durable snapshot (e.g. a `SourcePackVersion` id, content hash, or artifact registry pin) so the document can be rolled back / re-rendered against the exact bytes the author saw, even after the live source mutates / archives / deletes.
+- `documentSourceRefHasVersionPin(ref)` helper codifies the contract used by the renderer + audit pipeline: a ref is pinned iff EITHER `sourceVersion` OR `sourceSnapshotId` carries a non-empty trimmed string. Whitespace-only values (`"   "`) are NOT pinned — callers cannot bypass the contract by writing junk.
+- `src/components/DocumentStudio/types.ts` — frontend mirror; same two optional fields added with an explanatory comment for the FE-E2 right-panel Sources tab.
+
+**Backwards compatibility.** Pre-E5.6 schemas have neither field and are treated as "version unspecified" — the same shape the registry has always produced. Every existing consumer (renderer, QA pipeline, projector, audit emitter) continues to function unchanged. The QA-side warning that surfaces "source drift detected" runs on top of this substrate in a follow-up slice; E5.6 only delivers the type contract so the follow-up has a stable target.
+
+**Coverage.** New `documentSourceRefVersionPin.test.ts` with 10 specs:
+- pre-E5.6 ref (no version / snapshot) → unpinned;
+- non-empty `sourceVersion` → pinned;
+- non-empty `sourceSnapshotId` → pinned;
+- both fields populated → pinned;
+- whitespace-only `sourceVersion` → unpinned;
+- whitespace-only `sourceSnapshotId` → unpinned;
+- empty-string both → unpinned;
+- `undefined` input → false (no throw);
+- `null` input → false (no throw);
+- `sourceTitle` is unrelated to pinning.
+
+**Validation.** Document Studio + Execution Module Standard suite **595/595 green** (+10 from E5.6). tsc clean for documentStudio + executionModuleStandard scope. ESLint clean for the modified files.
+
+**Closes gaps.** §10.8 of the gap-vs-target report (NFR-17 source-version pinning) — substrate DELIVERED. The QA-side "drift detected" warning + UI affordance ("render against pinned snapshot") are scheduled as a follow-up on top of this substrate.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

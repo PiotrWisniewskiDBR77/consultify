@@ -113,10 +113,61 @@ export interface DocumentSection {
   audienceTags?: string[];
 }
 
+/**
+ * A reference from a document block / section / artifact to one of its
+ * underlying sources. Slice E5.6 adds two backwards-compatible
+ * fields for source-version pinning (NFR-17).
+ *
+ * - `sourceVersion`: semantic version / hash / monotonic id of the
+ *   source as it existed when the document was generated. The renderer
+ *   and QA pipeline use this field to detect drift ("the source has
+ *   advanced beyond the version this document was anchored to") and
+ *   to warn approvers when a document is rendered against a source
+ *   that has since changed.
+ *
+ * - `sourceSnapshotId`: optional pointer to a durable snapshot of the
+ *   source content (e.g. a `SourcePackVersion` id, a content hash, or
+ *   an artifact registry pin). When present, the document can be
+ *   rolled back / re-rendered against the exact bytes the author saw
+ *   even if the live source has been mutated, archived, or removed.
+ *
+ * Both fields are optional. Pre-E5.6 schemas omit them; consumers
+ * MUST treat the omission as "version unspecified" — the same shape
+ * the registry has always produced — and continue to function. Helper
+ * `documentSourceRefHasVersionPin()` codifies that contract so callers
+ * do not hand-roll truthy checks.
+ */
 export interface DocumentSourceRef {
   sourceType: string;
   sourceId: string;
   sourceTitle?: string;
+  sourceVersion?: string;
+  sourceSnapshotId?: string;
+}
+
+/**
+ * Returns true iff the source ref carries enough version metadata to
+ * detect drift. NFR-17 (source-version pinning) requires that any
+ * approval-gated render flow can distinguish between "source v3 at
+ * generation time" and "source v5 at render time"; this helper
+ * encodes the contract used by the renderer + audit pipeline.
+ *
+ * A source ref qualifies as version-pinned when EITHER:
+ *   - `sourceVersion` is a non-empty trimmed string, OR
+ *   - `sourceSnapshotId` is a non-empty trimmed string.
+ *
+ * Refs that have neither field (the legacy default) are treated as
+ * unpinned and surface a soft warning in the version-mismatch QA
+ * (E5.6 codifies the type; the QA-side warning lands in a follow-up
+ * slice on top of this substrate).
+ */
+export function documentSourceRefHasVersionPin(ref: DocumentSourceRef | undefined | null): boolean {
+  if (!ref) return false;
+  const versionPinned =
+    typeof ref.sourceVersion === 'string' && ref.sourceVersion.trim().length > 0;
+  const snapshotPinned =
+    typeof ref.sourceSnapshotId === 'string' && ref.sourceSnapshotId.trim().length > 0;
+  return versionPinned || snapshotPinned;
 }
 
 export interface FormattingSchema {

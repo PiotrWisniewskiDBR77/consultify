@@ -36,10 +36,20 @@ export type DocumentDensity = 'concise' | 'standard' | 'detailed' | 'comprehensi
 export type DocumentGoal = 'inform' | 'decide' | 'approve' | 'recommend' | 'align';
 export type DocumentConfidentiality = 'internal' | 'client_confidential' | 'restricted' | 'public';
 
+// Slice E5.6 — frontend mirror of the server-side DocumentSourceRef
+// with two backwards-compatible source-version-pinning fields
+// (NFR-17). Pre-E5.6 schemas omit `sourceVersion` / `sourceSnapshotId`
+// and consumers MUST treat the omission as "version unspecified".
+// The right-panel Sources tab (FE-E2) renders a "drift detected"
+// chip when a sourceRef carries a `sourceVersion` that diverges from
+// the live source, and exposes the `sourceSnapshotId` as a one-click
+// "render against pinned snapshot" affordance.
 export interface DocumentSourceRef {
   sourceType: string;
   sourceId: string;
   sourceTitle?: string;
+  sourceVersion?: string;
+  sourceSnapshotId?: string;
 }
 
 export interface DocumentIntake {
