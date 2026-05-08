@@ -24,7 +24,10 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { isTemplateLifecycleEnabled } from '@/utils/templateLifecycleFlag';
+
 import type { KimiLane } from './KimiWorkspaceShell';
+import { TabeleTemplatesGrid } from './templateLifecycle/TabeleTemplatesGrid';
 import { useModuleRecentArtifacts } from './useModuleRecentArtifacts';
 import { useModuleTemplates } from './useModuleTemplates';
 
@@ -80,6 +83,11 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
   const { templates, loading: templatesLoading } = useModuleTemplates(lane);
   const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane);
+  // Block A / A-S5b — when ON, lane=tabele swaps to the
+  // `tp_base_templates` lifecycle endpoint via `<TabeleTemplatesGrid>`
+  // and surfaces the lifecycle filter + dot badge + governance drawer.
+  // OFF preserves the legacy Outputs Library behaviour for every lane.
+  const useTabeleLifecycleGrid = lane === 'tabele' && isTemplateLifecycleEnabled();
 
   const heroText = useMemo(() => {
     if (lane === 'wordy')
@@ -176,7 +184,10 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
       {/* Tab content */}
       <div className="px-6 pb-8 flex-1">
-        {activeTab === 'templates' && (
+        {activeTab === 'templates' && useTabeleLifecycleGrid && (
+          <TabeleTemplatesGrid onTemplateClick={(tplId) => handleTemplateClick(tplId)} />
+        )}
+        {activeTab === 'templates' && !useTabeleLifecycleGrid && (
           <TemplatesGrid
             templates={templates}
             loading={templatesLoading}

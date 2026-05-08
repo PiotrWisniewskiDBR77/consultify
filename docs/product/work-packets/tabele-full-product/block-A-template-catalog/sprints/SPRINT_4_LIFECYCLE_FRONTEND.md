@@ -109,6 +109,15 @@ Tracked explicitly so nothing falls through the cracks:
      surface, `enabled` flag). UI wiring inside `ArtifactModuleHome`
      remains pending and is now tracked under A-S5b alongside the
      MELS shell extraction.
+   * **Update 2026-05-08 (A-S5b — host wiring):** `<TabeleTemplatesGrid>`
+     landed (filter + dot badge + governance drawer trigger) and
+     mounts conditionally in `ArtifactModuleHome` lane=tabele behind
+     `isTemplateLifecycleEnabled()` (default OFF). 7 unit tests cover
+     the default filter (A-P1), refetch-on-status-change, badge +
+     governance trigger render, click forwarding, empty + error
+     states, and governance drawer wiring. **MELS shell extraction
+     (EPIC-T16 D1–D4) remains the only deferred item — moved to a
+     dedicated EPIC-T16 sprint.**
 2. **MELS shell extraction (EPIC-T16 D1–D4).**
    * `ExecutiveModuleShell/index.tsx` + `TopBar.tsx` + `LeftRail.tsx` +
      `RightRail.tsx` + `useRailState.ts`.
