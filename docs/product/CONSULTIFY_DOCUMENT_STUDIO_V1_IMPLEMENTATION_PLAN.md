@@ -414,6 +414,62 @@ Type fix: `ALLOWED_TRANSITIONS` now uses explicit `Object.freeze<DocumentStatus[
 
 ---
 
+## 6.8 Epic E6 — Comments + review mode
+
+Lands the reviewer rail: per-document / per-section / per-block comment threads with thread-wide resolve / reopen, per-section unresolved-thread badges, and an HTTP surface that the editor canvas can consume directly. Three narrow slices (6.1 → 6.3) plus this closeout, all landed on `staging` of the `consultify` submodule.
+
+### 6.8.1 Slice 6.1 — Comments data plane (commit `f92efe685`)
+
+- **Types** (`documentStudioTypes.ts`, additive): `DocumentCommentStatus` (`'open' | 'resolved'`, binary by design). `DocumentCommentAnchor` discriminated union over `'document'` / `'section'` (sectionId) / `'block'` (sectionId + blockId). `DocumentComment` carries commentId / threadId / artifactId / organizationId / parentCommentId? / anchor / authorId / body / status / createdAt / updatedAt + resolvedBy/At/Reason + reopenedBy/At + soft-delete fields (deletedBy/At). `DocumentCommentThread` + `DocumentCommentSectionCounts` placeholders for slice 6.2. `DocumentAuditAction` extended with five new values (`comment_added` / `comment_replied` / `comment_resolved` / `comment_reopened` / `comment_deleted`).
+- **Service** (`documentCommentsService.ts`, NEW): synchronous in-process Map cache + in-memory write-through DAO + idempotent hydration per organization (`ensureDocumentCommentsHydrated`). Audit pump injected by the studio service so every mutation lands in the same per-artifact audit timeline as proposals + QA decisions + lifecycle transitions + snapshots. `DocumentCommentError` carries a stable code (`'invalid_input' | 'unknown_comment' | 'unknown_thread' | 'comment_already_resolved' | 'comment_not_resolved' | 'comment_deleted' | 'reply_to_reply_forbidden' | 'forbidden'`). Cross-tenant lookups throw `unknown_comment` so existence is not leaked.
+    - `createDocumentComment` seeds threadId === commentId on the root.
+    - `replyToDocumentComment` inherits parent anchor + threadId, bumps root.updatedAt for activity-sort, rejects replies-to-replies (flat MVP thread model — UI tree exactly two levels deep).
+    - `resolveDocumentComment` is THREAD-WIDE: every comment in the thread (root + replies) flips to status: 'resolved' atomically. Resolving via a reply still resolves the whole thread. Throws `comment_already_resolved` on double-resolve.
+    - `reopenDocumentComment` is the inverse — clears resolved* + stamps reopened* thread-wide. Throws `comment_not_resolved` on already-open.
+    - `deleteDocumentComment` is author-only soft-delete; the row stays in the timeline with body: '' + deletedAt stamp; default listing hides deleted.
+    - `listDocumentComments(artifactId, organizationId, options?)` supports filters: status / hideDeleted / anchorKind / sectionId / blockId. The sectionId filter matches BOTH section AND block anchors so the editor canvas can pull "everything attached to this section" in one call.
+- **Tests**: `documentCommentsService.test.ts` — 17/17 green.
+
+### 6.8.2 Slice 6.2 — Thread aggregation + counts (commit `c45d76c38`)
+
+- **Service additions**:
+    - `listDocumentCommentThreads(artifactId, organizationId, options?)` groups raw comments by threadId and returns `DocumentCommentThread` rows with the root, replies (createdAt asc), thread-level status (mirrors root), anchor (mirrors root), and updatedAt (max across the thread). Sorted most-recent-activity first — works because Slice 6.1 bumps `root.updatedAt` on every reply.
+    - Soft-delete handling: root deleted with replies → thread stays visible; root deleted without replies → orphaned-deleted; hidden by default, opt-in via `hideOrphanedDeleted: false`.
+    - Filter contract: status / anchorKind / sectionId / blockId all apply to the THREAD (root's properties).
+    - `getDocumentCommentSectionCounts(artifactId, organizationId)` returns per-section + per-block buckets for unresolved-thread badges. Document-anchored threads count toward `totalOpen` / `totalResolved` only (omitted from `perSection` / `perBlock` so the rail badges match section / block headings exactly). Block-anchored threads contribute to BOTH the section AND the block bucket so a section-level badge always sums everything attached "below" it.
+- **Tests**: `documentCommentsThreads.test.ts` — 10/10 green.
+
+### 6.8.3 Slice 6.3 — Routes (commit `298f797ba`)
+
+Nine endpoints scoped under `/api/document-studio/:artifactId/comments`, all registered before the generic `/:artifactId` GET so the path matcher hits the most specific route first. Lifecycle gating is intentionally NOT enforced here — review mode must stay usable on any document status; the lifecycle check belongs in a UI / governance layer.
+
+- `GET /:artifactId/comments` — flat list (status / sectionId / blockId / hideDeleted query).
+- `POST /:artifactId/comments` — body `{ body, anchor: { kind, sectionId?, blockId? } }`. Returns 201 `{ comment }`. `parseCommentAnchorFromBody` validates the discriminated union before reaching the service so the route returns 400 invalid_anchor for malformed payloads.
+- `GET /:artifactId/comments/threads` — grouped view (status / sectionId / blockId).
+- `GET /:artifactId/comments/counts` — totals + perSection + perBlock buckets.
+- `GET /:artifactId/comments/:commentId` — single comment, 404 not_found for missing OR mismatched artifact (no existence leak).
+- `POST /:artifactId/comments/:commentId/reply` — body `{ body }`. 201 `{ comment }`.
+- `POST /:artifactId/comments/:commentId/resolve` — body `{ reason? }`. Thread-wide.
+- `POST /:artifactId/comments/:commentId/reopen` — body `{ reason? }`. Thread-wide.
+- `DELETE /:artifactId/comments/:commentId` — author-only soft-delete.
+
+Error mapping — `mapCommentErrorToStatus`: 400 `invalid_input`; 403 `forbidden`; 404 `unknown_comment` / `unknown_thread`; 409 `comment_already_resolved` / `comment_not_resolved` / `reply_to_reply_forbidden` / `comment_deleted`.
+
+### 6.8.4 Validation summary
+
+- **Suite**: 36 vitest files / **337 specs** in `src/services/documentStudio/__tests__/` green (was 310 at the end of Epic E5; +27 specs from Epic E6: 17 + 10).
+- **Type-check**: `tsc --noEmit -p .` clean.
+- **Lint**: ESLint clean for every file in the diff.
+- **Commits**: `f92efe685` (6.1) → `c45d76c38` (6.2) → `298f797ba` (6.3) → this closeout. Each slice landed in its own commit per the recovery-era "commit early, commit narrow" discipline.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - @-mentions + notification fan-out (today: comments are a passive timeline; mention parsing + notification dispatch arrive with the V8 notification gateway integration).
+    - Comment-level edit-history (today: `body` is mutable only via reply / soft-delete; no version trail per comment). The audit timeline already records every mutation, but a dedicated edit-history view requires its own surface.
+    - Lifecycle gates (today: review mode usable on any status). When governance lands in MVP-5, archived documents may need to refuse new threads — that policy is a UI / governance concern, not a data-plane one.
+    - Author-only edit (today: comments are append-only — the only way to "edit" is reply or delete-and-recreate). Adding `editComment(commentId, newBody)` is straightforward but requires a stable diff representation; defer until the audit timeline UI lands.
+    - Wave5 Postgres backing for the comments DAO (today: in-memory write-through with the same surface; the DAO swap is mechanical).
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

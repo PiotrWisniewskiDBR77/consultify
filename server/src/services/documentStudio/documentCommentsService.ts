@@ -93,10 +93,7 @@ async function persistComment(comment: DocumentComment): Promise<{ ok: boolean }
   }
   const k = key(comment.organizationId, comment.artifactId);
   const current = persistedCommentStore.get(k) ?? [];
-  const next = [
-    ...current.filter((c) => c.commentId !== comment.commentId),
-    cloneComment(comment),
-  ];
+  const next = [...current.filter((c) => c.commentId !== comment.commentId), cloneComment(comment)];
   persistedCommentStore.set(k, next);
   return { ok: true };
 }
@@ -262,8 +259,7 @@ export interface CreateDocumentCommentParams {
 export function createDocumentComment(params: CreateDocumentCommentParams): DocumentComment {
   if (!params.organizationId)
     throw new DocumentCommentError('invalid_input', 'organizationId is required');
-  if (!params.artifactId)
-    throw new DocumentCommentError('invalid_input', 'artifactId is required');
+  if (!params.artifactId) throw new DocumentCommentError('invalid_input', 'artifactId is required');
   if (!params.authorId) throw new DocumentCommentError('invalid_input', 'authorId is required');
   validateBody(params.body);
   validateAnchor(params.anchor);
@@ -324,13 +320,10 @@ export interface ReplyToDocumentCommentParams {
  *                                 the params.artifactId (tenant-safe
  *                                 cross-artifact guard).
  */
-export function replyToDocumentComment(
-  params: ReplyToDocumentCommentParams
-): DocumentComment {
+export function replyToDocumentComment(params: ReplyToDocumentCommentParams): DocumentComment {
   if (!params.organizationId)
     throw new DocumentCommentError('invalid_input', 'organizationId is required');
-  if (!params.artifactId)
-    throw new DocumentCommentError('invalid_input', 'artifactId is required');
+  if (!params.artifactId) throw new DocumentCommentError('invalid_input', 'artifactId is required');
   if (!params.authorId) throw new DocumentCommentError('invalid_input', 'authorId is required');
   if (!params.parentCommentId)
     throw new DocumentCommentError('invalid_input', 'parentCommentId is required');
@@ -338,10 +331,7 @@ export function replyToDocumentComment(
 
   const parent = getStoredComment(params.parentCommentId, params.organizationId);
   if (parent.artifactId !== params.artifactId) {
-    throw new DocumentCommentError(
-      'forbidden',
-      `parent comment belongs to a different artifact`
-    );
+    throw new DocumentCommentError('forbidden', `parent comment belongs to a different artifact`);
   }
   if (parent.deletedAt) {
     throw new DocumentCommentError('comment_deleted', `parent comment was deleted`);
@@ -409,16 +399,12 @@ export interface ResolveDocumentCommentParams {
  * `commentId` may target the root or any reply; the service walks
  * to the root via `threadId`.
  */
-export function resolveDocumentComment(
-  params: ResolveDocumentCommentParams
-): DocumentComment {
+export function resolveDocumentComment(params: ResolveDocumentCommentParams): DocumentComment {
   if (!params.organizationId)
     throw new DocumentCommentError('invalid_input', 'organizationId is required');
-  if (!params.artifactId)
-    throw new DocumentCommentError('invalid_input', 'artifactId is required');
+  if (!params.artifactId) throw new DocumentCommentError('invalid_input', 'artifactId is required');
   if (!params.userId) throw new DocumentCommentError('invalid_input', 'userId is required');
-  if (!params.commentId)
-    throw new DocumentCommentError('invalid_input', 'commentId is required');
+  if (!params.commentId) throw new DocumentCommentError('invalid_input', 'commentId is required');
 
   const target = getStoredComment(params.commentId, params.organizationId);
   if (target.artifactId !== params.artifactId) {
@@ -493,16 +479,12 @@ export interface ReopenDocumentCommentParams {
  * comment in the thread. Throws `comment_not_resolved` on already-
  * open threads.
  */
-export function reopenDocumentComment(
-  params: ReopenDocumentCommentParams
-): DocumentComment {
+export function reopenDocumentComment(params: ReopenDocumentCommentParams): DocumentComment {
   if (!params.organizationId)
     throw new DocumentCommentError('invalid_input', 'organizationId is required');
-  if (!params.artifactId)
-    throw new DocumentCommentError('invalid_input', 'artifactId is required');
+  if (!params.artifactId) throw new DocumentCommentError('invalid_input', 'artifactId is required');
   if (!params.userId) throw new DocumentCommentError('invalid_input', 'userId is required');
-  if (!params.commentId)
-    throw new DocumentCommentError('invalid_input', 'commentId is required');
+  if (!params.commentId) throw new DocumentCommentError('invalid_input', 'commentId is required');
 
   const target = getStoredComment(params.commentId, params.organizationId);
   if (target.artifactId !== params.artifactId) {
@@ -576,26 +558,19 @@ export interface DeleteDocumentCommentParams {
  * the listing. This mirrors how Notion / Linear handle deleted root
  * comments.
  */
-export function deleteDocumentComment(
-  params: DeleteDocumentCommentParams
-): DocumentComment {
+export function deleteDocumentComment(params: DeleteDocumentCommentParams): DocumentComment {
   if (!params.organizationId)
     throw new DocumentCommentError('invalid_input', 'organizationId is required');
-  if (!params.artifactId)
-    throw new DocumentCommentError('invalid_input', 'artifactId is required');
+  if (!params.artifactId) throw new DocumentCommentError('invalid_input', 'artifactId is required');
   if (!params.userId) throw new DocumentCommentError('invalid_input', 'userId is required');
-  if (!params.commentId)
-    throw new DocumentCommentError('invalid_input', 'commentId is required');
+  if (!params.commentId) throw new DocumentCommentError('invalid_input', 'commentId is required');
 
   const target = getStoredComment(params.commentId, params.organizationId);
   if (target.artifactId !== params.artifactId) {
     throw new DocumentCommentError('forbidden', `comment belongs to a different artifact`);
   }
   if (target.authorId !== params.userId) {
-    throw new DocumentCommentError(
-      'forbidden',
-      `only the author can delete this comment`
-    );
+    throw new DocumentCommentError('forbidden', `only the author can delete this comment`);
   }
   if (target.deletedAt) {
     // Idempotent: re-deleting returns the existing soft-deleted row.
@@ -744,9 +719,7 @@ export function listDocumentCommentThreads(
   const hideOrphanedDeleted = options.hideOrphanedDeleted !== false;
 
   for (const [threadId, comments] of groups.entries()) {
-    comments.sort((a, b) =>
-      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0
-    );
+    comments.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
     let root = comments.find((c) => c.parentCommentId === undefined);
     if (!root) {
       // Defensive fallback for legacy data — should never happen

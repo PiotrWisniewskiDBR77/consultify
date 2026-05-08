@@ -1215,8 +1215,7 @@ router.get(
       VALID_COMMENT_STATUSES.includes(req.query.status as DocumentCommentStatus)
         ? (req.query.status as DocumentCommentStatus)
         : undefined;
-    const sectionId =
-      typeof req.query.sectionId === 'string' ? req.query.sectionId : undefined;
+    const sectionId = typeof req.query.sectionId === 'string' ? req.query.sectionId : undefined;
     const blockId = typeof req.query.blockId === 'string' ? req.query.blockId : undefined;
     const threads = listDocumentCommentThreads(artifactId, organizationId, {
       status,
@@ -1265,8 +1264,7 @@ router.get(
       VALID_COMMENT_STATUSES.includes(req.query.status as DocumentCommentStatus)
         ? (req.query.status as DocumentCommentStatus)
         : undefined;
-    const sectionId =
-      typeof req.query.sectionId === 'string' ? req.query.sectionId : undefined;
+    const sectionId = typeof req.query.sectionId === 'string' ? req.query.sectionId : undefined;
     const blockId = typeof req.query.blockId === 'string' ? req.query.blockId : undefined;
     const hideDeleted = req.query.hideDeleted !== 'false';
     const comments = listDocumentComments(artifactId, organizationId, {

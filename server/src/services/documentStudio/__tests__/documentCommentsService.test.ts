@@ -517,15 +517,16 @@ describe('listDocumentComments — filters', () => {
     expect(
       listDocumentComments(ARTIFACT, ORG, { anchorKind: 'document' }).map((c) => c.body)
     ).toEqual(['doc-level']);
-    expect(listDocumentComments(ARTIFACT, ORG, { sectionId: 'sec-B' }).map((c) => c.body)).toEqual(
-      ['sec-B-1', 'block-1']
-    );
-    expect(listDocumentComments(ARTIFACT, ORG, { blockId: 'blk-1' }).map((c) => c.commentId)).toEqual([
-      blk.commentId,
+    expect(listDocumentComments(ARTIFACT, ORG, { sectionId: 'sec-B' }).map((c) => c.body)).toEqual([
+      'sec-B-1',
+      'block-1',
     ]);
     expect(
-      listDocumentComments(ARTIFACT, ORG, { status: 'resolved' }).map((c) => c.body)
-    ).toEqual(['sec-B-1']);
+      listDocumentComments(ARTIFACT, ORG, { blockId: 'blk-1' }).map((c) => c.commentId)
+    ).toEqual([blk.commentId]);
+    expect(listDocumentComments(ARTIFACT, ORG, { status: 'resolved' }).map((c) => c.body)).toEqual([
+      'sec-B-1',
+    ]);
     expect(
       listDocumentComments(ARTIFACT, ORG, { status: 'open' }).every((c) => c.status === 'open')
     ).toBe(true);

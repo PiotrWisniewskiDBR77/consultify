@@ -25,6 +25,29 @@ import {
   getWave5Artifact,
   markWave5ArtifactExported,
 } from '../wave5ArtifactRuntimeService.js';
+import type {
+  CreateDocumentCommentParams,
+  DeleteDocumentCommentParams,
+  ListDocumentCommentsOptions,
+  ListDocumentCommentThreadsOptions,
+  ReopenDocumentCommentParams,
+  ReplyToDocumentCommentParams,
+  ResolveDocumentCommentParams,
+} from './documentCommentsService.js';
+import {
+  createDocumentComment as createDocumentCommentInternal,
+  deleteDocumentComment as deleteDocumentCommentInternal,
+  DocumentCommentError,
+  ensureDocumentCommentsHydrated,
+  getDocumentComment,
+  getDocumentCommentSectionCounts,
+  listDocumentComments,
+  listDocumentCommentThreads,
+  registerDocumentCommentsAuditPump,
+  reopenDocumentComment as reopenDocumentCommentInternal,
+  replyToDocumentComment as replyToDocumentCommentInternal,
+  resolveDocumentComment as resolveDocumentCommentInternal,
+} from './documentCommentsService.js';
 import { buildDocumentSchema } from './documentContentGenerator.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
@@ -80,29 +103,6 @@ import {
   listDocumentVersionSnapshots,
   registerDocumentVersionSnapshotAuditPump,
 } from './documentVersionSnapshotService.js';
-import {
-  createDocumentComment as createDocumentCommentInternal,
-  deleteDocumentComment as deleteDocumentCommentInternal,
-  DocumentCommentError,
-  ensureDocumentCommentsHydrated,
-  getDocumentComment,
-  getDocumentCommentSectionCounts,
-  listDocumentComments,
-  listDocumentCommentThreads,
-  registerDocumentCommentsAuditPump,
-  reopenDocumentComment as reopenDocumentCommentInternal,
-  replyToDocumentComment as replyToDocumentCommentInternal,
-  resolveDocumentComment as resolveDocumentCommentInternal,
-} from './documentCommentsService.js';
-import type {
-  CreateDocumentCommentParams,
-  DeleteDocumentCommentParams,
-  ListDocumentCommentsOptions,
-  ListDocumentCommentThreadsOptions,
-  ReopenDocumentCommentParams,
-  ReplyToDocumentCommentParams,
-  ResolveDocumentCommentParams,
-} from './documentCommentsService.js';
 
 const SCHEMA_METADATA_KEY = 'documentStudioSchema';
 const STUDIO_MODE_METADATA_KEY = 'documentStudioMode';

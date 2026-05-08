@@ -150,9 +150,9 @@ describe('listDocumentCommentThreads — orphaned soft-deleted', () => {
       commentId: root.commentId,
     });
     expect(listDocumentCommentThreads(ARTIFACT, ORG)).toHaveLength(0);
-    expect(
-      listDocumentCommentThreads(ARTIFACT, ORG, { hideOrphanedDeleted: false })
-    ).toHaveLength(1);
+    expect(listDocumentCommentThreads(ARTIFACT, ORG, { hideOrphanedDeleted: false })).toHaveLength(
+      1
+    );
   });
 
   it('keeps the thread visible when the root is deleted but replies exist', () => {
@@ -219,9 +219,7 @@ describe('listDocumentCommentThreads — filters', () => {
       userId: REVIEWER,
       commentId: sA.commentId,
     });
-    expect(
-      listDocumentCommentThreads(ARTIFACT, ORG, { anchorKind: 'document' })
-    ).toHaveLength(1);
+    expect(listDocumentCommentThreads(ARTIFACT, ORG, { anchorKind: 'document' })).toHaveLength(1);
     expect(
       listDocumentCommentThreads(ARTIFACT, ORG, { sectionId: 'sec-A' })
         .map((t) => t.threadId)
