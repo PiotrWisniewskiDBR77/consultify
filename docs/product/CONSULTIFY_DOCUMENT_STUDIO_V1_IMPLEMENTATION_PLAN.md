@@ -728,6 +728,69 @@ Epic E10 turns the Document Studio's existing single-author, single-state lifecy
 
 ---
 
+## 6.13 Epic E11 — Execution-module UI/UX standard (Doc 3-strefa + Deck collapse + Teresa-only)
+
+Epic E11 turns the SSOT-codified "Standard Modułów Wykonawczych (Doc / Excel / Deck Builder)" from `DRD/UI_UX_SOURCE_OF_TRUTH.md` (lines 249-304) into a machine-readable contract + validator + reference catalogue + governance API. The Markdown SSOT remains the human-canonical source — the codification work in E11 is a derived projection that:
+
+1. encodes every dimension of the standard (3-zone layout · Menu 2 chip canonical order · right-panel collapse contract · Teresa-only agent constraint · Menu 3 AI actions placement) as frozen TypeScript constants;
+2. exposes a pure validator (`validateExecutionModuleManifest`) that consumes a per-module manifest and returns a structured `{ ok, mustViolations, shouldViolations }` envelope with stable `ruleId`s so CI / governance gates can pin known-deferred violations without losing audit signal;
+3. ships three frozen reference manifests (`doc-builder`, `deck-builder`, `excel-builder`) modeling the canonical implementations the SSOT describes — every reference manifest validates clean (zero must + zero should violations);
+4. surfaces the canonical standard + manifest catalogue + the validator over HTTP via a thin read-only governance API so the frontend, governance docs, and CI pipelines can all consume one source of truth.
+
+### 6.13.1 Slice 11.1 — Standard codification (commit `1e5fe1792`)
+
+- New `services/executionModuleStandard/` folder.
+- New `executionModuleStandardTypes.ts` declares the full type surface:
+    - `ExecutionModuleId`, `ExecutionModuleZoneId` (`'leftNav' | 'canvas' | 'rightPanel'`), `ExecutionModuleZoneSpec`.
+    - `ExecutionModuleMenu2ChipId` (10-id enum: internal · motyw · history · qa · governance · analytics · audit · udostepnij · agent · cta_primary), `ExecutionModuleMenu2CtaLabel` (`'Prezentuj' | 'Eksportuj'`), `ExecutionModuleMenu2ChipDeclaration`.
+    - `ExecutionModuleRightPanelCollapseContract` (collapsedWidthPx=32, expandedWidthRangePx 280..360, persistence='per_user_per_module', triggerPosition='top_left_seam', triggerStyle='soft_chevron') + `ExecutionModuleRightPanelDeclaration` (with `parallelPanelsAllowed: false` invariant).
+    - `ExecutionModuleAgentDeclaration` (`exposedAgentIds`, `teresaSurface: popover|drawer|side_panel`, `contextAwareOn: section|slide|sheet|block`).
+    - `ExecutionModuleAiActionsDeclaration` (`slot: commandRowRightContent | DynamicTabs.rightContent | localCommandRowRight | pending_migration`, `actionIds[]`, `duplicatedInCanvas` invariant).
+    - Composite `ExecutionModuleManifest` + validation envelope (`ExecutionModuleViolation` with stable `ruleId` + severity must|should + dimension layout|menu2|rightPanel|agent|aiActions, `ExecutionModuleValidationResult`).
+- New `executionModuleStandard.ts` exports:
+    - Frozen canonical constants: `EXECUTION_MODULE_ZONE_ORDER`, `EXECUTION_MODULE_ZONES` (with per-zone responsibility + constraint list), `EXECUTION_MODULE_MENU2_CHIP_ORDER`, `EXECUTION_MODULE_CTA_LABELS`, `EXECUTION_MODULE_RIGHT_PANEL_COLLAPSE_CONTRACT`, `EXECUTION_MODULE_ALLOWED_AGENT_IDS=['teresa']`, `EXECUTION_MODULE_ALLOWED_AI_ACTION_SLOTS`.
+    - `validateExecutionModuleManifest(manifest)` — pure validator with five per-dimension validators and stable rule ids: `manifest_invalid`, `layout_zone_count`, `layout_zone_order`, `menu2_unknown_chip`, `menu2_chip_duplicate`, `menu2_chip_order`, `menu2_cta_label_missing`, `menu2_chip_hidden` (soft), `right_panel_missing` + `right_panel_collapse_trigger_position` + `right_panel_collapse_trigger_style` + `right_panel_collapsed_width` + `right_panel_expanded_width_range` + `right_panel_persistence` + `right_panel_parallel_disallowed`, `agent_missing` + `agent_empty` + `agent_disallowed` + `agent_teresa_required` + `agent_surface_invalid`, `ai_actions_missing` + `ai_actions_slot_invalid` + `ai_actions_slot_pending_unjustified` + `ai_actions_slot_pending_migration` (soft) + `ai_actions_duplicated_in_canvas` + `ai_actions_invalid_id` + `ai_actions_duplicate_id`.
+    - `validateAllManifests(manifests)` — aggregate envelope; `ok=true` only when every manifest is `ok`. Used by CI for catalogue conformance.
+    - `makeViolation` exported as a test helper.
+- 30 specs in `executionModuleStandard.test.ts`: canonical constants (6) — zone order, chip order, collapse contract, Teresa-only allowed agents, allowed AI slots, frozen invariants. Happy path (2). Layout (2). Menu 2 (5). Right panel (2). Agent (5). AI actions (6). validateAllManifests (2).
+
+### 6.13.2 Slice 11.2 — Reference manifests (manifests in commit `62420b17b`, attribution + lint touchups in `07040f370`)
+
+- Three frozen, system-owned reference manifests in `executionModuleStandardManifests.ts`:
+    - **`DECK_BUILDER_MANIFEST`** — the canonical reference module the SSOT was originally extracted from. Slide-unit canvas, primary CTA `'Prezentuj'`, `contextAwareOn: 'slide'`. AI actions: `ai.regenerate_slide` / `ai.apply_layout` / `ai.refine_speaker_notes` / `ai.run_qa`.
+    - **`DOC_BUILDER_MANIFEST`** — Document Studio's consultant-facing UI; section-unit canvas, primary CTA `'Eksportuj'` (Markdown / DOCX / PDF), `contextAwareOn: 'section'`. AI actions cover the full E1..E10 surface: `ai.refine_section`, `ai.run_qa`, `ai.suggest_brand_voice`, `ai.render_audience_variant`, `ai.request_approval`, `ai.insert_from_library`.
+    - **`EXCEL_BUILDER_MANIFEST`** — sheet-unit canvas, primary CTA `'Eksportuj'` (XLSX / CSV), `contextAwareOn: 'sheet'`. AI actions: `ai.summarize_sheet`, `ai.suggest_formula`, `ai.detect_anomalies`, `ai.run_qa`.
+- All three share the canonical right-panel collapse contract (`top_left_seam` / `soft_chevron` / 32px collapsed / 280..360 expanded / `per_user_per_module` persistence / `parallelPanelsAllowed=false`), declare every canonical Menu 2 chip as `present` (cta label is module-local copy), expose Teresa as the single chat agent in a drawer surface, and mount AI actions on `commandRowRightContent` with `duplicatedInCanvas=false`.
+- Registry helpers: `SYSTEM_EXECUTION_MODULE_MANIFESTS` (frozen array), `getSystemExecutionModuleManifest(moduleId)` (returns `null` for unknown ids), `isSystemExecutionModuleId(moduleId)`.
+- 15 conformance specs in `executionModuleStandardManifests.test.ts`: structural identity per module (CTA + unit + drawer + 10 chips + collapse contract + AI slot + freeze, 6 specs), validator-clean conformance per manifest (parametrized via `it.each`, 2 specs covering zero-must + zero-should violations and `validateAllManifests` over the registry), registry helpers round-trip + null-on-unknown + thin-id-check (4 specs). Frozen invariants for all three manifests.
+- **Attribution caveat (audit-trail honesty):** the two manifest files (`executionModuleStandardManifests.ts` + the matching test) were authored as part of E11.2 but were mistakenly bundled into a parallel `chore(tabele): C-S0 preflight` commit (`62420b17b`) by a concurrent workflow that ran `git add .` from a different working directory at 21:08:08 UTC+2 — 4 seconds after the E11.1 commit landed. The file content is correct; only the commit attribution is wrong. The follow-up commit `07040f370` documents this for the audit trail and ships the residual ESLint trailing-comma normalisation that the lint pass produced while validating E11.2.
+
+### 6.13.3 Slice 11.3 — Routes (commit `4f991954a`)
+
+- New `server/src/routes/execution-modules.routes.ts` ships 4 read-only governance endpoints, mounted under `/api/execution-modules` adjacent to `/api/document-studio` in `Gateway.ts`:
+    - `GET  /api/execution-modules/standard` — returns the canonical standard envelope: `{ zones, zoneOrder, menu2ChipOrder, ctaLabels, rightPanelCollapseContract, allowedAgentIds, allowedAiActionSlots }`. Used by the frontend to render governance docs / settings panels off the same source the validator consumes.
+    - `GET  /api/execution-modules/manifests` — `{ manifests: ExecutionModuleManifest[] }` with the three system-owned reference modules.
+    - `GET  /api/execution-modules/manifests/:moduleId` — single reference manifest; 404 `module_not_found` on unknown id.
+    - `POST /api/execution-modules/manifests/:moduleId/validate` — body is a candidate `ExecutionModuleManifest`; returns `{ result: ExecutionModuleValidationResult }`. The route forces `moduleId` from the URL path to override any payload value so the audit envelope stays consistent. Pure governance gate — no caching, no persistence; CI / pre-release UI panels can call this on every push.
+- All four endpoints sit behind `verifyToken` via `router.use()` plus a `requireAuthContext()` defensive 401 guard so an upstream misconfiguration does not let an anonymous request through. The standard / manifests / validation surface is governance metadata with no tenant boundary (the standard is the same for every tenant), so no tenant-scoping is applied beyond authentication.
+- Following the E5 / E6 / E7 / E9 / E10 pattern, route-level integration tests are intentionally not added — the data plane is fully covered at the service layer (E11.1: 30 specs, E11.2: 15 specs) and the routes are thin wrappers that surface the validator result envelope directly.
+
+### 6.13.4 Validation summary
+
+- Document Studio + Execution-module-standard scope: **49 vitest files / 571 specs** green (was 47 / 526 at end of Epic E10; +2 files / +45 specs from E11).
+- `npx tsc --noEmit -p .` clean for the execution-module-standard surface (services + routes + Gateway wiring). Pre-existing tsc errors in `src/services/tablePlatform/AiUsageService.ts` (3 errors, lines 287-289, `last_reset_at` on `{}`) are out of scope — they are owned by the parallel "tabele" workflow and predate this epic.
+- ESLint clean for every new file. The same pre-existing baseline warnings as E10 (`no-useless-escape` in `documentQaService.ts:1548` from Recovery Sprint 6 §6.5; non-null-assertion `!` warnings on test fixtures matching the E5..E10 baseline) remain.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - **Frontend Document Studio surface itself.** This epic codifies the contract any execution-module React surface MUST satisfy and ships the validator any pre-release CI gate can call. Building the actual React surface against the existing E1..E10 server APIs (Menu 2 chip row + 3-zone layout + right-panel collapse + Teresa drawer + Menu 3 AI actions for `ai.refine_section` / `ai.run_qa` / `ai.suggest_brand_voice` / `ai.render_audience_variant` / `ai.request_approval` / `ai.insert_from_library`) is a separate frontend-track epic that consumes this manifest to drive its layout decisions.
+    - **CI gate wiring.** `validateAllManifests(SYSTEM_EXECUTION_MODULE_MANIFESTS)` is the canonical CI hook; integrating it into the actual pre-release pipeline (fail the build when `ok=false`, post the violation envelope to a release-readiness dashboard) is shared infrastructure landing alongside the wave5 release-gating work.
+    - **Tenant-custom manifests.** Today only the three system-owned reference manifests ship. A future slice may add a tenant-scoped registry (mirroring brand-voice / audience-profile DAOs from E7 / E9) so a tenant can declare that its custom Excel surface intentionally hides specific chips; the validator would then surface those as `should` violations rather than `must`.
+    - **`pending_migration` slot governance.** The escape-hatch slot is wired in the validator but no module currently uses it. When a legacy module needs a temporary migration runway, the SSOT update + the manifest update happen together; the validator already enforces that `slotJustification` is required.
+    - **Persistence.** The three reference manifests + the standard are shipped as in-process frozen constants (the right shape for system-owned canonical data). When tenant manifests arrive, they land on the same DAO + write-through pattern as E7 / E9 / E10 and the wave5 Postgres migration covers them in lockstep.
+
+This closes Epic E11 and the full V1 Document Studio implementation plan.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
