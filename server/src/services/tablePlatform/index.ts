@@ -38,6 +38,18 @@ export {
 } from './ScheduledAutomationExecutor.js';
 export { default as SchemaValidationService } from './SchemaValidationService.js';
 export { SCIMService, scimService } from './SCIMService.js';
+export {
+  TABELE_CONSULTING_TEMPLATES,
+  type TabeleTemplateField,
+  type TabeleTemplateGovernanceRules,
+  type TabeleTemplateSeed,
+  type TabeleTemplateStatus,
+} from './seeds/tabele_consulting_templates.js';
+export {
+  type SeedTabeleConsultingTemplatesOptions,
+  type SeedTabeleConsultingTemplatesResult,
+  default as tabeleConsultingTemplatesSeeder,
+} from './seeds/tabeleConsultingTemplatesSeeder.js';
 export { ServiceAccountService, serviceAccountService } from './ServiceAccountService.js';
 export { SSOService, ssoService } from './SSOService.js';
 export { default as TableContextService } from './TableContextService.js';

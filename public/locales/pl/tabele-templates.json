@@ -1,0 +1,126 @@
+{
+  "tabele": {
+    "template": {
+      "tab-init-reg": {
+        "title": "Rejestr inicjatyw",
+        "description": "Operacyjny rejestr inicjatyw z właścicielem, scoringiem i statusem."
+      },
+      "tab-risk-reg-ops": {
+        "title": "Rejestr ryzyk (operacyjny)",
+        "description": "Operacyjny rejestr ryzyk z prawdopodobieństwem, wpływem i właścicielem mitygacji."
+      },
+      "tab-action-plan": {
+        "title": "Plan działań",
+        "description": "Działania z właścicielem, terminem, zależnością i statusem."
+      },
+      "tab-stake-map": {
+        "title": "Mapa interesariuszy",
+        "description": "Interesariusze z wpływem, zainteresowaniem, sentymentem i planem zaangażowania."
+      },
+      "tab-decision-log": {
+        "title": "Rejestr decyzji",
+        "description": "Decyzje komitetu sterującego z kontekstem, uzasadnieniem i konsekwencją."
+      },
+      "tab-issue-log": {
+        "title": "Rejestr problemów",
+        "description": "Problemy z istotnością, właścicielem, mitygacją i statusem."
+      },
+      "tab-meddpicc": {
+        "title": "Arkusz kwalifikacji MEDDPICC",
+        "description": "Kwalifikacja okazji sprzedażowej w metodzie MEDDPICC."
+      },
+      "tab-icp-fit": {
+        "title": "Arkusz dopasowania ICP",
+        "description": "Ocena kont względem Idealnego Profilu Klienta."
+      },
+      "tab-map": {
+        "title": "Wspólny plan działań (MAP)",
+        "description": "Wspólny plan klient + sprzedawca prowadzący do podpisania."
+      },
+      "tab-sales-pipe": {
+        "title": "Lejek sprzedażowy",
+        "description": "Lejek otwartych szans z etapem, wartością, datą zamknięcia i prawdopodobieństwem."
+      },
+      "tab-kpi-matrix": {
+        "title": "Macierz KPI",
+        "description": "Definicje KPI z celem, wartością, właścicielem i częstotliwością."
+      },
+      "tab-impl-tracker": {
+        "title": "Tracker wdrożenia",
+        "description": "Śledzenie aktywności wdrożeniowych, blockerów i sygnałów adopcji."
+      },
+      "tab-proj-backlog": {
+        "title": "Backlog projektu",
+        "description": "Backlog zadań projektowych z priorytetem, estymacją i właścicielem."
+      },
+      "tab-interview-tracker": {
+        "title": "Rejestr wywiadów",
+        "description": "Wywiady discovery z respondentem, tematem i kluczowymi wnioskami."
+      },
+      "tab-workshop-output": {
+        "title": "Tabela wyników warsztatów",
+        "description": "Wyniki sesji warsztatowych pogrupowane według ćwiczenia i właściciela decyzji."
+      },
+      "tab-dt-roadmap": {
+        "title": "Mapa drogowa transformacji cyfrowej",
+        "description": "Sekwencja inicjatyw transformacji cyfrowej z horyzontem i budżetem."
+      },
+      "tab-ai-uc-reg": {
+        "title": "Rejestr przypadków użycia AI",
+        "description": "Przypadki użycia AI z wykonalnością, wartością i scoringiem ryzyka."
+      },
+      "tab-auto-opp-reg": {
+        "title": "Rejestr okazji automatyzacji",
+        "description": "Okazje automatyzacji procesów z estymacjami nakładu i oszczędności."
+      },
+      "tab-bizcase": {
+        "title": "Tabela business case",
+        "description": "Wiersze business case z kosztem, korzyścią i NPV."
+      },
+      "tab-vendor-comp": {
+        "title": "Tabela porównania dostawców",
+        "description": "Porównanie dostawców pod kątem ceny, dopasowania funkcji i ryzyka."
+      },
+      "tab-research-source": {
+        "title": "Tabela źródeł badawczych",
+        "description": "Źródła użyte w syntezie badawczej z oceną wiarygodności."
+      },
+      "tab-sop-reg": {
+        "title": "Rejestr SOP",
+        "description": "Standardowe procedury operacyjne z właścicielem i częstotliwością przeglądu."
+      },
+      "tab-change-tracker": {
+        "title": "Tracker zarządzania zmianą",
+        "description": "Inicjatywy zmiany z sygnałami adopcji i scoringiem ryzyka."
+      },
+      "tab-train-plan": {
+        "title": "Tabela planu szkoleń",
+        "description": "Plan szkoleń z audytorium, formatem i ukończeniem."
+      },
+      "tab-gov-reg": {
+        "title": "Rejestr governance",
+        "description": "Elementy governance (polityki, kontrole) z właścicielem i kadencją przeglądu."
+      },
+      "tab-audit-find": {
+        "title": "Tabela wniosków z audytu",
+        "description": "Wnioski z audytu z istotnością, właścicielem i datą remediacji."
+      },
+      "tab-req-table": {
+        "title": "Tabela wymagań",
+        "description": "Wymagania produktowe z typem, priorytetem i kryteriami akceptacji."
+      },
+      "tab-feat-prio": {
+        "title": "Tabela priorytetyzacji funkcji",
+        "description": "Scoring funkcji z użyciem inputów typu RICE."
+      },
+      "tab-roi-calc": {
+        "title": "Tabela kalkulacji ROI",
+        "description": "ROI per inicjatywa z horyzontem i korzyścią netto."
+      },
+      "tab-client-disc": {
+        "title": "Tabela discovery klienta",
+        "description": "Wnioski z discovery per interakcja z klientem."
+      }
+    }
+  }
+}
