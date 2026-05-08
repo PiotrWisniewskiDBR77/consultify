@@ -23,6 +23,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TABLE_PLATFORM_METADATA_FIRST: z.boolean().default(false),
   ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(false),
   ENABLE_RECORD_PROVENANCE: z.boolean().default(false),
+  ENABLE_TABLE_AI_EDITOR: z.boolean().default(false),
   ENABLE_V8_GLOBAL: z.boolean().default(false),
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
 });
@@ -65,6 +66,11 @@ export function loadFeatureFlags(): FeatureFlags {
     // Gate sits inside ConfidenceScoringService.recompute() and the
     // validation-status route, so partial deploys cannot crash record writes.
     ENABLE_RECORD_PROVENANCE: process.env.ENABLE_RECORD_PROVENANCE === 'true',
+
+    // Block C (AI Operator): 8-level AI Editor on top of TableAiEditorService.
+    // Disabled by default until C-S2 lands real handlers; route layer still
+    // honours the budget gate + audit pipeline so QA can exercise the wiring.
+    ENABLE_TABLE_AI_EDITOR: process.env.ENABLE_TABLE_AI_EDITOR === 'true',
 
     // V8: global kill switch for all V8 features
     ENABLE_V8_GLOBAL: process.env.ENABLE_V8_GLOBAL === 'true',
