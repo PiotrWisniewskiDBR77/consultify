@@ -83,14 +83,15 @@ async function persistSnapshot(snapshot: DocumentVersionSnapshot): Promise<{ ok:
   }
   const k = key(snapshot.organizationId, snapshot.artifactId);
   const current = persistedSnapshotStore.get(k) ?? [];
-  const next = [...current.filter((s) => s.versionId !== snapshot.versionId), cloneSnapshot(snapshot)];
+  const next = [
+    ...current.filter((s) => s.versionId !== snapshot.versionId),
+    cloneSnapshot(snapshot),
+  ];
   persistedSnapshotStore.set(k, next);
   return { ok: true };
 }
 
-async function loadSnapshotsForOrg(
-  organizationId: string
-): Promise<DocumentVersionSnapshot[]> {
+async function loadSnapshotsForOrg(organizationId: string): Promise<DocumentVersionSnapshot[]> {
   if (!organizationId) return [];
   const prefix = `${organizationId}::`;
   const out: DocumentVersionSnapshot[] = [];

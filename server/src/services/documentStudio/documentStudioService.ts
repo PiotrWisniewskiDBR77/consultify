@@ -33,8 +33,8 @@ import type {
   TransitionDocumentStatusParams,
 } from './documentLifecycleService.js';
 import {
-  DocumentLifecycleTransitionError,
   __forceTransitionDocumentStatusForRollback,
+  DocumentLifecycleTransitionError,
   ensureDocumentLifecycleHydrated,
   getDocumentLifecycleState,
   getDocumentStatusOrDefault,
@@ -42,14 +42,6 @@ import {
   registerDocumentLifecycleAuditPump,
   transitionDocumentStatus as transitionDocumentStatusInternal,
 } from './documentLifecycleService.js';
-import {
-  createDocumentVersionSnapshot as createDocumentVersionSnapshotInternal,
-  ensureDocumentVersionSnapshotsHydrated,
-  getDocumentVersionSnapshot,
-  getDocumentVersionSnapshotByNumber,
-  listDocumentVersionSnapshots,
-  registerDocumentVersionSnapshotAuditPump,
-} from './documentVersionSnapshotService.js';
 import { planDocumentOutline } from './documentNarrativePlanner.js';
 import { refineOutlineWithLlm } from './documentNarrativeRefiner.js';
 import { renderDocumentSchemaToPdfBuffer } from './documentPdfRenderer.js';
@@ -80,6 +72,14 @@ import {
   getTemplate as getRegisteredTemplate,
   isTemplateUsableForGeneration,
 } from './documentTemplateService.js';
+import {
+  createDocumentVersionSnapshot as createDocumentVersionSnapshotInternal,
+  ensureDocumentVersionSnapshotsHydrated,
+  getDocumentVersionSnapshot,
+  getDocumentVersionSnapshotByNumber,
+  listDocumentVersionSnapshots,
+  registerDocumentVersionSnapshotAuditPump,
+} from './documentVersionSnapshotService.js';
 
 const SCHEMA_METADATA_KEY = 'documentStudioSchema';
 const STUDIO_MODE_METADATA_KEY = 'documentStudioMode';
@@ -1546,11 +1546,7 @@ export async function createDocumentSnapshot(
 // =============================================================================
 
 export class DocumentRollbackError extends Error {
-  readonly code:
-    | 'invalid_input'
-    | 'snapshot_not_found'
-    | 'document_not_found'
-    | 'tenant_mismatch';
+  readonly code: 'invalid_input' | 'snapshot_not_found' | 'document_not_found' | 'tenant_mismatch';
   constructor(
     code: 'invalid_input' | 'snapshot_not_found' | 'document_not_found' | 'tenant_mismatch',
     message: string
@@ -1604,15 +1600,11 @@ export async function rollbackDocumentToVersion(
   if (!params.artifactId)
     throw new DocumentRollbackError('invalid_input', 'artifactId is required');
   if (!params.userId) throw new DocumentRollbackError('invalid_input', 'userId is required');
-  if (!params.versionId)
-    throw new DocumentRollbackError('invalid_input', 'versionId is required');
+  if (!params.versionId) throw new DocumentRollbackError('invalid_input', 'versionId is required');
 
   const target = getDocumentVersionSnapshot(params.versionId, params.organizationId);
   if (!target) {
-    throw new DocumentRollbackError(
-      'snapshot_not_found',
-      `snapshot ${params.versionId} not found`
-    );
+    throw new DocumentRollbackError('snapshot_not_found', `snapshot ${params.versionId} not found`);
   }
   if (target.artifactId !== params.artifactId) {
     throw new DocumentRollbackError(

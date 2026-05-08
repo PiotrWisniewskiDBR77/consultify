@@ -329,10 +329,7 @@ export type DocumentAuditAction =
  *                       current schema, so the operator never loses the
  *                       state they rolled away from.
  */
-export type DocumentVersionSnapshotOrigin =
-  | 'manual'
-  | 'auto_status_change'
-  | 'rollback_revert';
+export type DocumentVersionSnapshotOrigin = 'manual' | 'auto_status_change' | 'rollback_revert';
 
 /**
  * Frozen, addressable copy of a `DocumentSchema` at a point in time.
@@ -370,12 +367,7 @@ export interface DocumentVersionSnapshot {
  *                rolls back to a snapshot or creates a new artifact.
  *   archived     Removed from the active list. Restorable to `draft`.
  */
-export type DocumentStatus =
-  | 'draft'
-  | 'in_review'
-  | 'approved'
-  | 'published'
-  | 'archived';
+export type DocumentStatus = 'draft' | 'in_review' | 'approved' | 'published' | 'archived';
 
 export interface DocumentAuditEntry {
   auditId: string;

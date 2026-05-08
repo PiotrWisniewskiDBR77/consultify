@@ -23,10 +23,7 @@
  * cross-tenant reads return `null` deny-by-default.
  */
 
-import type {
-  DocumentAuditEntry,
-  DocumentStatus,
-} from './documentStudioTypes.js';
+import type { DocumentAuditEntry, DocumentStatus } from './documentStudioTypes.js';
 
 // =============================================================================
 // Lifecycle state shape
@@ -153,9 +150,7 @@ async function persistLifecycleState(state: DocumentLifecycleState): Promise<{ o
   return { ok: true };
 }
 
-async function loadLifecycleStateForOrg(
-  organizationId: string
-): Promise<DocumentLifecycleState[]> {
+async function loadLifecycleStateForOrg(organizationId: string): Promise<DocumentLifecycleState[]> {
   if (!organizationId) return [];
   const prefix = `${organizationId}::`;
   const out: DocumentLifecycleState[] = [];

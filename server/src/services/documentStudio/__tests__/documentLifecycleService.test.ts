@@ -21,10 +21,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  ALLOWED_TRANSITIONS,
-  DocumentLifecycleTransitionError,
   __resetDocumentLifecycleForTests,
+  ALLOWED_TRANSITIONS,
   canTransition,
+  DocumentLifecycleTransitionError,
   getDocumentLifecycleState,
   getDocumentStatusOrDefault,
   initializeDocumentLifecycle,

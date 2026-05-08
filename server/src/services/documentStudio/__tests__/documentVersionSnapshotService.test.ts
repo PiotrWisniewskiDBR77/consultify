@@ -19,6 +19,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { DocumentAuditEntry, DocumentSchema, DocumentStatus } from '../documentStudioTypes.js';
 import {
   __resetDocumentVersionSnapshotsForTests,
   createDocumentVersionSnapshot,
@@ -27,11 +28,6 @@ import {
   listDocumentVersionSnapshots,
   registerDocumentVersionSnapshotAuditPump,
 } from '../documentVersionSnapshotService.js';
-import type {
-  DocumentAuditEntry,
-  DocumentSchema,
-  DocumentStatus,
-} from '../documentStudioTypes.js';
 
 const ORG_A = 'org-A';
 const ORG_B = 'org-B';
@@ -279,12 +275,8 @@ describe('listDocumentVersionSnapshots / getDocumentVersionSnapshot', () => {
       schema: fakeSchema({ title: 'v2' }),
       statusAtCapture: 'in_review',
     });
-    expect(
-      getDocumentVersionSnapshotByNumber('artifact-1', ORG_A, 1)!.schema.title
-    ).toBe('v1');
-    expect(
-      getDocumentVersionSnapshotByNumber('artifact-1', ORG_A, 2)!.schema.title
-    ).toBe('v2');
+    expect(getDocumentVersionSnapshotByNumber('artifact-1', ORG_A, 1)!.schema.title).toBe('v1');
+    expect(getDocumentVersionSnapshotByNumber('artifact-1', ORG_A, 2)!.schema.title).toBe('v2');
     expect(getDocumentVersionSnapshotByNumber('artifact-1', ORG_A, 99)).toBeNull();
   });
 });

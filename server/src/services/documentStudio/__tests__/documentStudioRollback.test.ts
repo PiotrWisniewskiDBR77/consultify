@@ -68,6 +68,10 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => ({
 }));
 
 import {
+  __resetDocumentLifecycleForTests,
+  initializeDocumentLifecycle,
+} from '../documentLifecycleService.js';
+import {
   __resetSchemaOverlayForTests,
   createDocumentSnapshot,
   DocumentRollbackError,
@@ -78,13 +82,7 @@ import {
   rollbackDocumentToVersion,
   transitionDocumentStatus,
 } from '../documentStudioService.js';
-import {
-  __resetDocumentLifecycleForTests,
-  initializeDocumentLifecycle,
-} from '../documentLifecycleService.js';
-import {
-  __resetDocumentVersionSnapshotsForTests,
-} from '../documentVersionSnapshotService.js';
+import { __resetDocumentVersionSnapshotsForTests } from '../documentVersionSnapshotService.js';
 
 const ORG = 'org-rb';
 const ORG_OTHER = 'org-rb-other';
@@ -205,8 +203,8 @@ describe('rollbackDocumentToVersion — happy path', () => {
     const rollbackEntry = audit.find(
       (a) =>
         a.action === 'document_rolled_back' &&
-        (a.details as { restoredFromVersionId?: string } | undefined)
-          ?.restoredFromVersionId === snap.versionId
+        (a.details as { restoredFromVersionId?: string } | undefined)?.restoredFromVersionId ===
+          snap.versionId
     );
     expect(rollbackEntry).toBeDefined();
     const details = rollbackEntry!.details as Record<string, unknown>;
@@ -361,9 +359,7 @@ describe('rollbackDocumentToVersion — error vocabulary', () => {
     // null only for artifactId === 'missing', so the snapshot service
     // can still snapshot freely as long as the orchestrator can read
     // the schema. We bypass the orchestrator and use the raw service:
-    const { createDocumentVersionSnapshot } = await import(
-      '../documentVersionSnapshotService.js'
-    );
+    const { createDocumentVersionSnapshot } = await import('../documentVersionSnapshotService.js');
     const directSnap = createDocumentVersionSnapshot({
       organizationId: ORG,
       artifactId: 'missing',

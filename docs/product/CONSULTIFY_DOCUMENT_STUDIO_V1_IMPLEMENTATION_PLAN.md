@@ -361,6 +361,59 @@ Closes the E4 surface end-to-end.
 
 ---
 
+## 6.7 Epic E5 — Document Lifecycle: status mutation + version snapshot + rollback
+
+Lands the lifecycle spine: every Document Studio artifact walks an explicit `draft → in_review → approved → published → archived` state machine, can be snapshotted at any point in time, and can be rolled back to a previous snapshot transactionally — with a `rollback_revert` snapshot captured first so rollback is itself reversible. Four narrow slices (5.1 → 5.4) plus this closeout, all landed on `staging` of the `consultify` submodule.
+
+### 6.7.1 Slice 5.1 — Document status mutation (commit `0bf7d9f68`)
+
+- **Types** (`documentStudioTypes.ts`, additive): `DocumentStatus` (`'draft' | 'in_review' | 'approved' | 'published' | 'archived'`). `DocumentSchema` gains `documentStatus?` + `statusChangedAt?` + `statusChangedBy?` + `statusReason?`. The status field is OPTIONAL on the type so historical artifacts created before E5 stay readable; the service overlay defaults missing values to `'draft'`. `DocumentAuditAction` extended with three new values: `'document_status_changed' | 'document_version_snapshot_created' | 'document_rolled_back'`.
+- **Service** (`documentLifecycleService.ts`, NEW): `DocumentLifecycleState` (status, history, statusChangedAt/By, statusReason). `ALLOWED_TRANSITIONS` matrix narrowly enumerates reachable states per node so route validation + UI affordances can reason about it. `DocumentLifecycleTransitionError` carries a stable code (`'invalid_transition' | 'unknown_status' | 'unknown_artifact'`) plus from/to context. `transitionDocumentStatus` is idempotent on same-state requests (no audit, no history), real transitions emit one audit entry. `initializeDocumentLifecycle` is idempotent (does NOT reset state). In-memory write-through DAO + idempotent hydration (`ensureDocumentLifecycleHydrated`).
+- **Studio service wiring**: module-load registers `pushAuditEntry` as the audit pump. `materializeDocumentArtifact` seeds lifecycle at draft. `getDocumentArtifact` overlays current lifecycle status onto every schema read — incl. historical artifacts.
+- **Tests**: `documentLifecycleService.test.ts` — 16/16 green.
+
+### 6.7.2 Slice 5.2 — Version snapshot (commit `d7205d032`)
+
+- **Types**: `DocumentVersionSnapshotOrigin` (`'manual' | 'auto_status_change' | 'rollback_revert'`). `DocumentVersionSnapshot` carries `versionId / versionNumber (1-based monotonic per artifact) / capturedAt / capturedBy / label? / reason? / statusAtCapture / schema / origin`.
+- **Service** (`documentVersionSnapshotService.ts`, NEW): append-only registry, deep-clone semantics on insert AND read. `createDocumentVersionSnapshot` increments versionNumber atomically inside the synchronous mutation. `listDocumentVersionSnapshots` returns sorted `versionNumber` asc; `getDocumentVersionSnapshot` is O(1) via versionIndex with tenant guard. `getDocumentVersionSnapshotByNumber` for rollback flows that address by number. In-memory write-through DAO + idempotent hydration mirroring the source-pack pattern.
+- **Studio service**: `createDocumentSnapshot(params)` orchestrator — resolves the live schema via `getDocumentArtifact`, captures the lifecycle status at the time of capture, forwards a deep clone to the snapshot service. Throws `document_not_found` when wave5 returns null.
+- **Tests**: `documentVersionSnapshotService.test.ts` (10) + `documentStudioSnapshotIntegration.test.ts` (6) — 16/16 green.
+
+### 6.7.3 Slice 5.3 — Rollback (commit `dede484bb`)
+
+- **Schema overlay** (`documentStudioService.ts`): per-artifact in-process `schemaOverlayStore` keyed `${artifactId}::${organizationId}`. `getDocumentArtifact` consults the overlay first and falls back to wave5 — so callers see the post-rollback schema even though wave5 still holds the pre-rollback row. Today only the rollback orchestrator writes here; proposal-driven edits keep flowing through wave5.
+- **Lifecycle force-bypass** (`documentLifecycleService.ts`): `__forceTransitionDocumentStatusForRollback` is `@internal` and bypasses `ALLOWED_TRANSITIONS` so rollback can move from any state (incl. `published`) back to `draft`. Records a `document_status_changed` audit row tagged with `details.system: 'rollback'` so reviewers can distinguish system bypasses.
+- **Rollback orchestrator** (`rollbackDocumentToVersion`): transactional flow — resolve snapshot (with tenant guard) → read live schema → capture `rollback_revert` snapshot of current schema → write target snapshot's schema into overlay → force lifecycle to draft → emit `document_rolled_back` audit row. Returns `{ schema, revertSnapshot, restoredFrom, lifecycle }`. `DocumentRollbackError` codes: `'invalid_input' | 'snapshot_not_found' | 'document_not_found' | 'tenant_mismatch'`. `snapshot_not_found` is returned for both unknown and cross-tenant versionIds so existence is not leaked.
+- **Reversibility**: applying the revert snapshot rolls forward again — verified by spec.
+- **Tests**: `documentStudioRollback.test.ts` — 10/10 green.
+
+### 6.7.4 Slice 5.4 — Routes (commit `d5dba326a`)
+
+Six new endpoints under `/api/document-studio/:artifactId`, all registered before the generic `/:artifactId` GET so the path matcher hits the most specific route first. Lifecycle + snapshot registries are hydrated on every read path so cold workers don't silently miss persisted state.
+
+- `GET /:artifactId/lifecycle` — current status + history. 404 not_found.
+- `POST /:artifactId/status` — body `{ to, reason? }`. 400 unknown_status / 409 invalid_transition / 404 unknown_artifact.
+- `GET /:artifactId/snapshots` — list (versionNumber asc).
+- `POST /:artifactId/snapshots` — body `{ label?, reason? }`. 201 with `{ snapshot }`. Origin is forced to `'manual'` from this surface.
+- `GET /:artifactId/snapshots/:versionId` — get a snapshot. 404 for unknown OR mismatched artifact (existence not leaked).
+- `POST /:artifactId/snapshots/:versionId/rollback` — body `{ reason? }`. Returns `{ schema, revertSnapshot, restoredFrom, lifecycle }`. 400 invalid_input / 404 snapshot_not_found / 404 document_not_found / 403 tenant_mismatch.
+
+Type fix: `ALLOWED_TRANSITIONS` now uses explicit `Object.freeze<DocumentStatus[]>([...])` so the inferred element type is `DocumentStatus` instead of `string` — satisfies tsc strictly without an `as const` ladder.
+
+### 6.7.5 Validation summary
+
+- **Suite**: 34 vitest files / **310 specs** in `src/services/documentStudio/__tests__/` green (was 268 at the end of Epic E4; +42 specs from Epic E5: 16 + 16 + 10).
+- **Type-check**: `tsc --noEmit -p .` clean.
+- **Lint**: ESLint clean for every file in the diff.
+- **Commits**: `0bf7d9f68` (5.1) → `d7205d032` (5.2) → `dede484bb` (5.3) → `d5dba326a` (5.4) → this closeout. Each slice landed in its own commit per the recovery-era "commit early, commit narrow" discipline.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - Wave5 Postgres backing for the lifecycle + snapshot DAOs (today: in-memory write-through with the same surface; the DAO swap is mechanical).
+    - Auto-snapshot on lifecycle transitions (e.g. on entry to `approved` capture an `auto_status_change` snapshot so rollback can always reach the cleared version). Origin vocabulary already supports this; the wiring is one route handler away.
+    - Schema-overlay write-through for proposal commits — today only the rollback orchestrator writes the overlay; `approveEditProposal` returns `nextSchema` but does not yet persist back to wave5 nor through the overlay. The overlay is the natural landing path.
+    - Snapshot prune / retention policy (today: snapshots are append-only forever per artifact). Retention is a tenant-policy concern; defer until governance lands in MVP-5.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

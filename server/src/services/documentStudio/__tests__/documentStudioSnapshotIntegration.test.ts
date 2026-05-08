@@ -64,18 +64,16 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => ({
 }));
 
 import {
+  __resetDocumentLifecycleForTests,
+  initializeDocumentLifecycle,
+} from '../documentLifecycleService.js';
+import {
   createDocumentSnapshot,
   listDocumentAuditEntries,
   listDocumentVersionSnapshots,
   transitionDocumentStatus,
 } from '../documentStudioService.js';
-import {
-  __resetDocumentLifecycleForTests,
-  initializeDocumentLifecycle,
-} from '../documentLifecycleService.js';
-import {
-  __resetDocumentVersionSnapshotsForTests,
-} from '../documentVersionSnapshotService.js';
+import { __resetDocumentVersionSnapshotsForTests } from '../documentVersionSnapshotService.js';
 
 const ORG = 'org-snap';
 const USER = 'user-snap';
