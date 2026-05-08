@@ -674,6 +674,131 @@ export interface SourcePackAuditEntry {
   details?: Record<string, unknown>;
 }
 
+// =============================================================================
+// Epic E7 — Per-tenant Brand Voice profile
+// =============================================================================
+
+/**
+ * Lifecycle status of a `BrandVoiceProfile`. Profiles enter as `draft`,
+ * are promoted to `active` (at most one active row per organization at
+ * any time — activation auto-archives the previous active), and end at
+ * `archived`. Archived profiles are immutable but stay queryable for
+ * audit purposes.
+ */
+export type BrandVoiceProfileStatus = 'draft' | 'active' | 'archived';
+
+/**
+ * Which document languages a profile applies to. `'all'` matches every
+ * language; `'pl'` / `'en'` restrict the profile to a single language so
+ * a tenant can run different lexicons on PL vs EN documents.
+ */
+export type BrandVoiceProfileLanguageScope = 'pl' | 'en' | 'all';
+
+/**
+ * Glossary entry — a directed pair (avoid, prefer). Brand QA emits a
+ * finding when the document uses `avoid` and points the consultant at
+ * `prefer` in the suggestion. `note` is optional reviewer guidance.
+ */
+export interface BrandVoiceGlossaryEntry {
+  avoid: string;
+  prefer: string;
+  note?: string;
+}
+
+/**
+ * Per-tenant Brand Voice profile. Layered on top of the global banned-
+ * phrase catalogue baked into `documentQaService.runBrandQa`:
+ *
+ *   - `bannedPhrases` ADD to the global list (tenant-specific terms the
+ *     org wants to ban: competitor names, deprecated product brands,
+ *     internal jargon that leaked into client-facing text, …).
+ *   - `disabledGlobalBannedPhrases` SUBTRACT from the global list — an
+ *     escape-hatch for the small set of orgs whose voice intentionally
+ *     uses one of the global "fluff" words (e.g. an innovation studio
+ *     that genuinely sells "rewolucyjny"). Phrase comparison is
+ *     case-insensitive.
+ *   - `glossaryEntries` are directed (avoid → prefer) and surface a
+ *     suggestion alongside the finding.
+ *   - `requiredKeywords` are terms that MUST appear in the document at
+ *     least once (e.g. company name in client-facing memos). Missing
+ *     terms become a finding.
+ *   - `registerOverride` lets the tenant pin every document to a stricter
+ *     register than the schema requests (e.g. "always score documents
+ *     against `executive` even when the schema says `professional`").
+ *   - `languageScope` filters which language(s) the profile applies to.
+ *
+ * Activation rule: at most one `'active'` profile per organization at a
+ * time. The service enforces this by auto-archiving the previous active
+ * row when a new one is activated.
+ */
+export interface BrandVoiceProfile {
+  profileId: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  status: BrandVoiceProfileStatus;
+  /** Monotonic version string per profile id; bumped on every update. */
+  version: string;
+  languageScope: BrandVoiceProfileLanguageScope;
+  bannedPhrases: string[];
+  disabledGlobalBannedPhrases: string[];
+  preferredPhrases: string[];
+  glossaryEntries: BrandVoiceGlossaryEntry[];
+  requiredKeywords: string[];
+  registerOverride?: CommunicationRegister;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  activatedBy?: string;
+  activatedAt?: string;
+  archivedBy?: string;
+  archivedAt?: string;
+}
+
+export interface BrandVoiceProfileDraftInput {
+  name: string;
+  description?: string;
+  languageScope?: BrandVoiceProfileLanguageScope;
+  bannedPhrases?: string[];
+  disabledGlobalBannedPhrases?: string[];
+  preferredPhrases?: string[];
+  glossaryEntries?: BrandVoiceGlossaryEntry[];
+  requiredKeywords?: string[];
+  registerOverride?: CommunicationRegister;
+  notes?: string;
+}
+
+export interface BrandVoiceProfileUpdateInput {
+  name?: string;
+  description?: string;
+  languageScope?: BrandVoiceProfileLanguageScope;
+  bannedPhrases?: string[];
+  disabledGlobalBannedPhrases?: string[];
+  preferredPhrases?: string[];
+  glossaryEntries?: BrandVoiceGlossaryEntry[];
+  requiredKeywords?: string[];
+  registerOverride?: CommunicationRegister | null;
+  notes?: string | null;
+}
+
+export type BrandVoiceProfileAuditAction =
+  | 'profile_drafted'
+  | 'profile_updated'
+  | 'profile_activated'
+  | 'profile_archived'
+  | 'profile_superseded';
+
+export interface BrandVoiceProfileAuditEntry {
+  auditId: string;
+  profileId: string;
+  organizationId: string;
+  action: BrandVoiceProfileAuditAction;
+  actorId: string;
+  occurredAt: string;
+  details?: Record<string, unknown>;
+}
+
 /** Canonical default consulting formatting schema for Mode 1 (no template). */
 export const DEFAULT_CONSULTING_FORMATTING_SCHEMA: FormattingSchema = {
   fonts: { body: 'Aptos 11', heading: 'Aptos Display' },
