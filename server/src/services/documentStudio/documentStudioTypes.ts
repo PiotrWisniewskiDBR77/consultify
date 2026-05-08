@@ -280,8 +280,24 @@ export interface DocumentExportResult {
  *                  citation markers; polish prose only") + post-rewrite
  *                  preservation guard (digits + bracketed citations must
  *                  match before/after; otherwise deterministic fallback)
+ *  - transformative: every editable block of every section — the user
+ *                  has explicitly opted into a dramatic restructure
+ *                  ("przepisz od nowa", "completely rewrite", "rebuild").
+ *                  Refiner relaxes structural guardrails (may merge /
+ *                  split paragraphs, may shift register fundamentally)
+ *                  but keeps non-empty + 4× growth + 4000 char absolute
+ *                  caps so approval-time surprises stay bounded. NO
+ *                  source-preservation guard: the user has consciously
+ *                  authorized a rebuild. Slice E3.6 — completes the
+ *                  SSOT 6-scope edit doctrine.
  */
-export type DocumentEditorScope = 'local' | 'section' | 'global' | 'methodology' | 'source';
+export type DocumentEditorScope =
+  | 'local'
+  | 'section'
+  | 'global'
+  | 'methodology'
+  | 'source'
+  | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**

@@ -1,11 +1,12 @@
 /**
- * Consultify Document Studio — Teresa intent auto-detect (Epic E3, Slice 4.3).
+ * Consultify Document Studio — Teresa intent auto-detect (Epic E3, Slice
+ * 4.3; Slice E3.6 extends with the 6th `transformative` scope).
  *
  * The user's spoken contract: "Teresa is our only chat agent. Other agents
  * are not needed in this module." This module implements the heuristic
  * classifier that turns a free-form Teresa chat message (plus the user's
  * current cursor anchor) into a structured editor scope plan that the
- * service layer can dispatch to one of the five `createXxxEditProposal`
+ * service layer can dispatch to one of the six `createXxxEditProposal`
  * functions.
  *
  * Design constraints:
@@ -62,6 +63,61 @@ export interface TeresaEditorIntent {
 // every match and pick the most-specific scope. Lowercased + diacritic-free
 // comparisons run against the same-normalized message.
 // -----------------------------------------------------------------------------
+
+// `transformative` is the most explicit user authority — the user is
+// asking for a dramatic rebuild ("from scratch", "completely rewrite",
+// "rebuild"). It outranks every other phrase lexicon because the user
+// has consciously authorized a structural transformation. Phrases here
+// are intentionally narrow: "rewrite this paragraph" stays `local`,
+// "rewrite the document" stays `global`. We only flip to
+// `transformative` when the user signals a rebuild rather than a polish.
+const TRANSFORMATIVE_PHRASES: ReadonlyArray<string> = [
+  'rebuild',
+  'rebuild this',
+  'rebuild it',
+  'rebuild from scratch',
+  'rebuild from the ground up',
+  'restructure',
+  'restructure this',
+  'restructure the document',
+  'completely rewrite',
+  'rewrite from scratch',
+  'rewrite from the ground up',
+  'start over',
+  'start from scratch',
+  'redesign the document',
+  'redesign this document',
+  'transform the document',
+  'transform this document',
+  'reshape the document',
+  'reorganize from scratch',
+  'completely reorganize',
+  'tear it down and rebuild',
+  'overhaul',
+  'overhaul the document',
+  'przebuduj',
+  'przebuduj dokument',
+  'przebuduj cały dokument',
+  'przebuduj caly dokument',
+  'przebuduj od podstaw',
+  'przepisz od nowa',
+  'przepisz od zera',
+  'przepisz od podstaw',
+  'calkowicie przepisz',
+  'calkowicie przebuduj',
+  'zacznij od nowa',
+  'zacznij od zera',
+  'zacznij od poczatku',
+  'przeksztalc dokument',
+  'przeksztalc cały dokument',
+  'przeksztalc caly dokument',
+  'transformuj dokument',
+  'transformuj cały dokument',
+  'transformuj caly dokument',
+  'gruntowna restrukturyzacja',
+  'gruntownie przebuduj',
+  'reorganizacja od podstaw',
+];
 
 const SOURCE_PHRASES: ReadonlyArray<string> = [
   'source',
@@ -229,14 +285,17 @@ function findCursorBlock(
  * (caller / UI MUST then ask the user to disambiguate).
  *
  * Precedence (highest to lowest specificity):
- *   1. SOURCE phrases       → scope = 'source'
- *   2. METHODOLOGY phrases  → scope = 'methodology'
- *   3. GLOBAL phrases       → scope = 'global'
- *   4. LOCAL phrases + cursor block → scope = 'local'
- *   5. SECTION phrases + cursor section → scope = 'section'
- *   6. Cursor block only    → scope = 'local'
- *   7. Cursor section only  → scope = 'section'
- *   8. Nothing actionable   → null (UI clarifies)
+ *   1. TRANSFORMATIVE phrases → scope = 'transformative' (user explicitly
+ *      authorized a dramatic rebuild — outranks every other intent
+ *      because it is the most-deliberate, least-ambiguous user signal)
+ *   2. SOURCE phrases       → scope = 'source'
+ *   3. METHODOLOGY phrases  → scope = 'methodology'
+ *   4. GLOBAL phrases       → scope = 'global'
+ *   5. LOCAL phrases + cursor block → scope = 'local'
+ *   6. SECTION phrases + cursor section → scope = 'section'
+ *   7. Cursor block only    → scope = 'local'
+ *   8. Cursor section only  → scope = 'section'
+ *   9. Nothing actionable   → null (UI clarifies)
  */
 export function detectTeresaEditorIntent(input: TeresaIntentInput): TeresaEditorIntent | null {
   const message = normalize(input.message ?? '');
@@ -263,7 +322,20 @@ export function detectTeresaEditorIntent(input: TeresaIntentInput): TeresaEditor
     return null;
   }
 
-  // 1. Source-anchored intent (most specific).
+  // 1. Transformative intent (highest authority — user explicitly
+  // authorized a dramatic rebuild). Must run before source/methodology
+  // because phrases like "przepisz od nowa" / "completely rewrite from
+  // scratch" beat any incidental mention of cytats or methodology.
+  const transformativeMatch = matchesAnyPhrase(message, TRANSFORMATIVE_PHRASES);
+  if (transformativeMatch.hit) {
+    return {
+      scope: 'transformative',
+      reason: 'phrase',
+      matchedPhrase: transformativeMatch.phrase,
+    };
+  }
+
+  // 2. Source-anchored intent (next-most specific).
   const sourceMatch = matchesAnyPhrase(message, SOURCE_PHRASES);
   if (sourceMatch.hit) {
     return { scope: 'source', reason: 'phrase', matchedPhrase: sourceMatch.phrase };
@@ -331,6 +403,7 @@ export function detectTeresaEditorIntent(input: TeresaIntentInput): TeresaEditor
 
 // Re-export the phrase lexicons for tests / future i18n. Read-only.
 export const TERESA_INTENT_LEXICONS = Object.freeze({
+  transformative: TRANSFORMATIVE_PHRASES,
   source: SOURCE_PHRASES,
   methodology: METHODOLOGY_PHRASES,
   global: GLOBAL_PHRASES,

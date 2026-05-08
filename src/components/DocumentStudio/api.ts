@@ -371,6 +371,34 @@ export async function createDocumentStudioSourceProposal(
   return json.proposal;
 }
 
+// Slice E3.6 — transformative scope client (6th poziom edycji). The
+// user has explicitly authorized a dramatic rebuild. Service-side
+// guardrails relax structural constraints (the model may merge / split
+// paragraphs, shift register fundamentally) but keep absolute safety
+// caps. Audit trail tags the proposal with
+// `authority: 'user_explicit_rebuild'` so reviewers can filter for
+// elevated-authority edits. UI must require explicit user confirmation
+// before invoking — this is the most-aggressive editor scope.
+export async function createDocumentStudioTransformativeProposal(
+  artifactId: string,
+  payload: { instruction: string },
+  options: CreateProposalOptions = {}
+): Promise<DocumentEditorProposal> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/editor/proposals/transformative`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ ...payload, useLlm: options.useLlm === true }),
+    }
+  );
+  const json = await handleResponse<{ proposal: DocumentEditorProposal }>(
+    res,
+    'DocumentStudio create transformative proposal'
+  );
+  return json.proposal;
+}
+
 export async function getDocumentStudioAuditTrail(
   artifactId: string
 ): Promise<DocumentAuditEntry[]> {

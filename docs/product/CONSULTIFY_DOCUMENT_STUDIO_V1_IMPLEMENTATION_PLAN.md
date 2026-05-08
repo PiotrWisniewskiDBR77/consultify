@@ -867,6 +867,31 @@ While the frontend work is parked on the parallel-sync coordination issue, the b
 
 ---
 
+### 6.15.2 Slice E3.6 — Transformative scope (6th poziom edycji, SSOT 6-scope doctrine closure)
+
+**Why.** SSOT §6 mandates a 6-scope edit doctrine ending with `transformative`: an explicitly user-authorized "rebuild from scratch" mode. Until E3.6, the editor stack only supported 5 scopes; users who asked Teresa to "completely rewrite" or "przepisz od nowa" silently fell through to `global`, which preserves the existing structure and only refines prose. This slice adds the 6th scope end-to-end: types, refiner, service, intent classifier, HTTP route, FE types + API client, tests.
+
+**Refiner contract.** Adds `'transformative'` to `EditorRefinerScope`. The system prompt header explicitly authorizes the model to merge / split paragraphs, shift register fundamentally, expand stub bullets into prose, or compress prose into bullets. The model is still bound by the absolute safety net (non-empty + 4× growth + 4000 char absolute cap) and by an anti-fabrication clause ("MUST NOT fabricate new factual claims, KPIs, sources, citations, dates, currencies or proper names that were not in the original"). NO source-preservation guard runs — the user has consciously authorized a rebuild.
+
+**Service.** New `createTransformativeEditProposal(params)` mirrors the global-scope service shape but tags the audit envelope with `details.authority = 'user_explicit_rebuild'` so reviewers can filter for elevated-authority proposals when triaging. Errors: `instruction is required` (400), `artifact_not_found` (404), `document_has_no_sections` (400). Approval / execution / audit flow is unchanged.
+
+**Intent classifier.** New `TRANSFORMATIVE_PHRASES` lexicon (PL+EN, ~45 phrases). Promoted to **highest precedence** in `detectTeresaEditorIntent` — outranks `source` / `methodology` / `global` because explicit rebuild signals trump every other intent. Lexicon is intentionally narrow ("from scratch", "from the ground up", "completely rewrite", "rebuild", "przepisz od nowa", "przebuduj") so garden-variety phrases like "rewrite this paragraph" stay LOCAL and "tighten language across the document" stays GLOBAL. The new `TERESA_INTENT_LEXICONS.transformative` is exposed for tests + future i18n.
+
+**HTTP.** `POST /api/document-studio/:artifactId/editor/proposals/transformative` mirrors the existing `/global` route shape. Single new endpoint.
+
+**Frontend.** `DocumentEditorScope` widened from 5 → 6 values (`'local' | 'section' | 'global' | 'methodology' | 'source' | 'transformative'`). New API client wrapper `createDocumentStudioTransformativeProposal(artifactId, { instruction }, options)` mirrors the existing global wrapper. The defensive `else { throw }` already added in slice E3.5's `DocumentStudioEditorPanel` still prevents stray scope values from re-routing to global semantics — `transformative` cannot be triggered from the manual editor panel today (only via Teresa or programmatically), which is intentional: the rebuild intent should require explicit user confirmation; the proper UI affordance lands in FE-E5 (Teresa drawer).
+
+**Coverage.**
+- `documentEditorRefinerScopes.test.ts`: +3 specs (TRANSFORMATIVE prompt header propagated, no source-preservation guard runs under transformative, 4× growth absolute safety still enforced).
+- `documentTeresaIntent.test.ts`: +6 specs (transformative beats source/methodology/global in PL+EN, narrow-lexicon discipline: "rewrite this paragraph" stays local, "transform passive sentences" stays global).
+- `documentStudioEditorTransformativeScope.test.ts` (new): 5 specs (empty-instruction reject, artifact-not-found reject, no-sections reject, all-sections target, audit `authority: 'user_explicit_rebuild'` tag).
+
+**Validation.** Document Studio + Execution Module Standard suite **585/585 green** (+14 from E3.6). tsc clean for documentStudio + executionModuleStandard scope (pre-existing tablePlatform errors out of scope). ESLint clean for the modified files.
+
+**Closes gaps.** §10.2 of the gap-vs-target report (6-scope `transformative` closure) — DONE. SSOT 6-scope edit doctrine is now fully delivered end-to-end.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

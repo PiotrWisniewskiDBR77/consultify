@@ -199,3 +199,69 @@ describe('Teresa intent auto-detect — precedence order', () => {
     expect(intent?.scope).toBe('global');
   });
 });
+
+describe('Teresa intent auto-detect — transformative scope (Slice E3.6)', () => {
+  it('TRANSFORMATIVE phrases beat SOURCE (English)', () => {
+    // Even though the message mentions "citations", the explicit
+    // "completely rewrite from scratch" rebuild signal must outrank
+    // the source intent. The user has consciously authorized a rebuild.
+    const intent = detectTeresaEditorIntent({
+      message: 'Completely rewrite from scratch and re-anchor the citations.',
+      schema: makeSchema(),
+    });
+    expect(intent?.scope).toBe('transformative');
+    expect(intent?.reason).toBe('phrase');
+  });
+
+  it('TRANSFORMATIVE phrases beat METHODOLOGY (Polish, diacritic-insensitive)', () => {
+    const intent = detectTeresaEditorIntent({
+      message: 'Przepisz od nowa i przebuduj sekcję metodologii.',
+      schema: makeSchema(),
+    });
+    expect(intent?.scope).toBe('transformative');
+  });
+
+  it('TRANSFORMATIVE phrases beat GLOBAL (English)', () => {
+    const intent = detectTeresaEditorIntent({
+      message: 'Restructure the document end to end.',
+      schema: makeSchema(),
+      cursor: { sectionId: 'sec-1', blockId: 'blk-1' },
+    });
+    expect(intent?.scope).toBe('transformative');
+  });
+
+  it('TRANSFORMATIVE phrases beat GLOBAL (Polish)', () => {
+    const intent = detectTeresaEditorIntent({
+      message: 'Przebuduj cały dokument od podstaw.',
+      schema: makeSchema(),
+    });
+    expect(intent?.scope).toBe('transformative');
+  });
+
+  it('does NOT trigger transformative on incidental "rewrite this paragraph" (stays local)', () => {
+    // Lone "rewrite this paragraph" must remain a LOCAL intent — the
+    // transformative lexicon is intentionally narrow ("from scratch",
+    // "from the ground up", "completely rewrite", "rebuild") so that
+    // garden-variety rewrites do not cross the elevated-authority line.
+    const intent = detectTeresaEditorIntent({
+      message: 'Rewrite this paragraph more concisely.',
+      schema: makeSchema(),
+      cursor: { sectionId: 'sec-1', blockId: 'blk-1' },
+    });
+    expect(intent?.scope).toBe('local');
+  });
+
+  it('does NOT trigger transformative on the word "transform" alone in non-rebuild contexts', () => {
+    // "transform" outside of "transform the document" / "transformuj dokument"
+    // is too ambiguous (could be a domain term). The lexicon requires
+    // the document-scope marker.
+    const intent = detectTeresaEditorIntent({
+      message: 'Tighten language across the document and transform passive sentences.',
+      schema: makeSchema(),
+    });
+    // Should resolve to global (the document-wide phrase wins) — NOT
+    // transformative — because "transform passive sentences" is not a
+    // rebuild signal.
+    expect(intent?.scope).toBe('global');
+  });
+});

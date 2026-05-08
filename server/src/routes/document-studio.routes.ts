@@ -230,6 +230,7 @@ import {
   createMethodologyEditProposal,
   createSectionEditProposal,
   createSourceEditProposal,
+  createTransformativeEditProposal,
   deleteDocumentComment,
   DocumentCommentError,
   DocumentLifecycleTransitionError,
@@ -3286,6 +3287,49 @@ router.post(
       res.json({ proposal });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'proposal_failed';
+      const status = message === 'artifact_not_found' ? 404 : 400;
+      res.status(status).json({ error: message });
+    }
+  })
+);
+
+// Slice E3.6 — transformative scope (6th poziom edycji). The user has
+// explicitly authorized a dramatic rebuild. Service-side guardrails
+// relax structural constraints but keep absolute safety caps; audit
+// trail tags the proposal with `authority: 'user_explicit_rebuild'`
+// so reviewers can filter for elevated-authority edits when triaging.
+router.post(
+  '/:artifactId/editor/proposals/transformative',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const instruction = typeof req.body?.instruction === 'string' ? req.body.instruction : '';
+    if (!instruction) {
+      res.status(400).json({ error: 'instruction is required' });
+      return;
+    }
+    try {
+      const proposal = await createTransformativeEditProposal({
+        artifactId,
+        organizationId,
+        userId,
+        instruction,
+        useLlm: req.body?.useLlm === true,
+      });
+      res.json({ proposal });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'proposal_failed';
+      // `document_has_no_sections` mirrors the global-route behavior: a
+      // freshly-skeletoned artifact with zero sections cannot be
+      // transformatively rewritten because there is nothing to rewrite.
       const status = message === 'artifact_not_found' ? 404 : 400;
       res.status(status).json({ error: message });
     }

@@ -105,13 +105,19 @@ export interface DocumentSchema {
   sourceRefs: DocumentSourceRef[];
 }
 
-// Slice E3.5 — widened from 3 → 5 scopes to match the SSOT 5-scope
+// Slice E3.5 widened from 3 → 5 scopes to match the SSOT 5-scope
 // editor doctrine (local / section / global / methodology / source).
-// `methodology` rewrites methodology-aligned sections preserving
-// the template blueprint contract; `source` rewrites source-anchored
-// blocks preserving the citation multiset (E3.1 + E3.2 refiner guards).
-// The 6th scope (`transformative`) lands in slice E3.6.
-export type DocumentEditorScope = 'local' | 'section' | 'global' | 'methodology' | 'source';
+// Slice E3.6 completes the 6-scope doctrine by adding `transformative`:
+// the user has explicitly authorized a dramatic rebuild; the service
+// relaxes structural guardrails but keeps absolute safety caps and
+// tags the audit trail with `authority: 'user_explicit_rebuild'`.
+export type DocumentEditorScope =
+  | 'local'
+  | 'section'
+  | 'global'
+  | 'methodology'
+  | 'source'
+  | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 export interface DocumentEditorProposal {

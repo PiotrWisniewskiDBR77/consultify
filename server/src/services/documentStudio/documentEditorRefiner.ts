@@ -1,11 +1,13 @@
 /**
  * Consultify Document Studio — AI Editor Refiner (MVP-3 hardening; Sprint 4
- * extends with methodology + source scopes).
+ * extends with methodology + source scopes; Slice E3.6 extends with the
+ * 6th `transformative` scope).
  *
  * Optional LLM rewrite step for editor proposals. Used by `local`, `section`,
- * `global`, `methodology` and `source` scopes; the function operates on a
- * single text payload and is called per-block by the caller. The
- * deterministic instruction marker is always available as a fallback.
+ * `global`, `methodology`, `source` and `transformative` scopes; the
+ * function operates on a single text payload and is called per-block by
+ * the caller. The deterministic instruction marker is always available
+ * as a fallback.
  *
  * Refinement contract (intentionally narrow to avoid hallucination):
  *   - Input: original block text + user instruction + minimal context.
@@ -30,6 +32,16 @@
  *     returns null (caller falls back deterministically). This protects
  *     against silent fact-drift in source-anchored passages.
  *
+ * Slice E3.6 extension:
+ *   - `transformative` scope: the user has explicitly authorized a
+ *     dramatic rebuild. The refiner relaxes structural guardrails (the
+ *     model MAY merge / split paragraphs, MAY shift register
+ *     fundamentally, MAY restructure the block) but keeps the absolute
+ *     safety net (non-empty + 4× growth cap + 4000 char absolute cap).
+ *     No source-preservation guard runs — the user has consciously
+ *     opted into a rebuild. Caller still falls back deterministically
+ *     on any AI failure.
+ *
  * This honors `00-core-execution.mdc` (preserve behavior outside agreed
  * scope) and `40-security-tenancy.mdc` (no hidden writes).
  */
@@ -42,7 +54,13 @@ const MAX_OUTPUT_CHARS = 4000;
 const MAX_GROWTH_FACTOR = 4;
 const MIN_INPUT_CHARS_FOR_GROWTH_CAP = 40;
 
-export type EditorRefinerScope = 'local' | 'section' | 'global' | 'methodology' | 'source';
+export type EditorRefinerScope =
+  | 'local'
+  | 'section'
+  | 'global'
+  | 'methodology'
+  | 'source'
+  | 'transformative';
 
 export interface EditorRefinerContext {
   /** Document type used for tone hints; e.g. "executive_memo". */
@@ -104,6 +122,16 @@ function buildSystemPrompt(scope: EditorRefinerScope): string {
       'You MUST NOT modify any proper names of organizations, people, products, jurisdictions or laws.',
       'You MUST PRESERVE every bracketed citation marker exactly (e.g. "[Source: X]", "[Ref: 12]", "[Footnote 3]") in the same positions.',
       'Only refine prose around the protected entities: clarity, register, fluency.'
+    );
+  } else if (scope === 'transformative') {
+    base.push(
+      'TRANSFORMATIVE SCOPE: The user has explicitly authorized a dramatic rebuild of this block.',
+      'You MAY restructure paragraphs, merge or split sentences, and reorganize the internal flow.',
+      'You MAY shift the communication register (e.g. analytical → executive, technical → narrative).',
+      'You MAY expand stub bullets into prose or compress prose into bullets, when that better serves the instruction.',
+      'You MUST still keep the rewrite focused on the same topic and purpose as the original block.',
+      'You MUST NOT fabricate new factual claims, KPIs, sources, citations, dates, currencies or proper names that were not in the original.',
+      'You MUST NOT exceed roughly 4× the original length even though the structure may change significantly.'
     );
   }
 

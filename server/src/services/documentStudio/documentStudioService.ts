@@ -1273,6 +1273,114 @@ export async function createSourceEditProposal(
   return proposal;
 }
 
+// =============================================================================
+// Slice E3.6 — Transformative scope. Completes the SSOT 6-scope edit
+// doctrine. Operates on every editable block of every section just like
+// `global` but the refiner relaxes structural guardrails and the audit
+// payload calls out the elevated authority. No source-preservation
+// guard runs (the user has explicitly opted into a rebuild). The
+// approval / execution / audit envelope is unchanged.
+// =============================================================================
+
+export interface CreateTransformativeEditProposalParams {
+  artifactId: string;
+  organizationId: string;
+  userId: string;
+  instruction: string;
+  /** Opt-in bounded LLM rewrite. Falls back deterministically on any failure. */
+  useLlm?: boolean;
+}
+
+export async function createTransformativeEditProposal(
+  params: CreateTransformativeEditProposalParams
+): Promise<DocumentEditorProposal> {
+  const { artifactId, organizationId, userId, instruction } = params;
+  const trimmed = instruction.trim();
+  if (!trimmed) throw new Error('instruction is required');
+  const schema = await getDocumentArtifact(artifactId, organizationId);
+  if (!schema) throw new Error('artifact_not_found');
+  if (schema.sections.length === 0) {
+    throw new Error('document_has_no_sections');
+  }
+
+  const blockRewrites: Record<string, string> = {};
+  let llmRefined = false;
+  if (params.useLlm) {
+    for (const section of schema.sections) {
+      for (const block of section.blocks) {
+        const blockBefore = blockToEditableText(block.content);
+        if (!blockBefore.trim()) continue;
+        const refined = await refineEditorTextWithLlm(blockBefore, trimmed, {
+          documentType: schema.documentType,
+          scope: 'transformative',
+          communicationRegister: schema.communicationRegister,
+          language: schema.language,
+        });
+        if (refined) {
+          blockRewrites[block.blockId] = refined;
+          llmRefined = true;
+        }
+      }
+    }
+  }
+
+  const projections: SectionMarkdownProjection[] = schema.sections.map((section) => {
+    const before = projectSectionToText(section);
+    const after = llmRefined
+      ? [
+          `## ${section.title}`,
+          ...section.blocks.map(
+            (block) => blockRewrites[block.blockId] ?? blockToEditableText(block.content)
+          ),
+        ]
+          .filter((line) => line.trim().length > 0)
+          .join('\n\n')
+      : `${before}\n\n[Transformative edit at approval: ${trimmed}]`;
+    return {
+      sectionId: section.sectionId,
+      title: section.title,
+      before,
+      after,
+    };
+  });
+
+  const before = projections.map((p) => p.before).join('\n\n---\n\n');
+  const after = projections.map((p) => p.after).join('\n\n---\n\n');
+  const createdAt = nowIso();
+  const proposal: DocumentEditorProposal = {
+    proposalId: makeId('doc-proposal'),
+    artifactId,
+    organizationId,
+    scope: 'transformative',
+    instruction: trimmed,
+    affectedSectionIds: schema.sections.map((s) => s.sectionId),
+    blockRewrites: llmRefined ? blockRewrites : undefined,
+    llmRefined: llmRefined || undefined,
+    status: 'proposed',
+    diff: { before, after },
+    createdBy: userId,
+    createdAt,
+  };
+  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  pushAuditEntry({
+    auditId: makeId('doc-audit'),
+    artifactId,
+    organizationId,
+    proposalId: proposal.proposalId,
+    action: 'proposal_created',
+    actorId: userId,
+    occurredAt: createdAt,
+    details: {
+      scope: 'transformative',
+      affectedSectionCount: proposal.affectedSectionIds.length,
+      // Audit-trail tag so reviewers can filter for the elevated-authority
+      // edit doctrine when triaging proposals.
+      authority: 'user_explicit_rebuild',
+    },
+  });
+  return proposal;
+}
+
 function updateProposalStatus(
   proposal: DocumentEditorProposal,
   status: DocumentProposalStatus

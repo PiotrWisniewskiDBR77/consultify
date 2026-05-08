@@ -179,6 +179,68 @@ describe('Editor Refiner — source scope preservation guard', () => {
   });
 });
 
+describe('Editor Refiner — transformative scope (Slice E3.6)', () => {
+  it('passes the TRANSFORMATIVE SCOPE prompt header through to the system prompt', async () => {
+    mockedGenerate.mockResolvedValueOnce({
+      content: JSON.stringify({
+        text: 'A completely restructured executive narrative that reorganizes the underlying argument from analytical bullets into a tightly-scoped story arc that opens with the decision the leader must make today.',
+      }),
+    });
+    const before =
+      'Initial bullet 1: market growth slowed to 4%. Bullet 2: competitor moves are accelerating. Bullet 3: our share is stable but at risk.';
+    const result = await refineEditorTextWithLlm(
+      before,
+      'Rebuild this as a single executive paragraph',
+      { scope: 'transformative', documentType: 'executive_memo', language: 'en' },
+      { enable: true }
+    );
+    expect(result).not.toBeNull();
+    const callArgs = mockedGenerate.mock.calls[0]?.[0];
+    expect(callArgs?.systemPrompt).toContain('TRANSFORMATIVE SCOPE');
+    expect(callArgs?.systemPrompt).toContain('You MAY restructure paragraphs');
+    expect(callArgs?.systemPrompt).toContain('You MAY shift the communication register');
+    expect(callArgs?.systemPrompt).toContain('You MUST NOT fabricate new factual claims');
+  });
+
+  it('does NOT run the source-preservation guard for transformative (numbers MAY change)', async () => {
+    // Transformative explicitly allows the model to drop a numeric
+    // detail because the user has consciously authorized a rebuild.
+    // For source scope, the same rewrite would have collapsed to null.
+    mockedGenerate.mockResolvedValueOnce({
+      content: JSON.stringify({
+        text: 'Adoption surged this quarter, sustaining the upward trajectory we observed last period.',
+      }),
+    });
+    const before =
+      'Adoption hit 12% in Q2 2026 [Source: McKinsey 2026], up from 7% in the prior period.';
+    const result = await refineEditorTextWithLlm(
+      before,
+      'Rebuild as a forward-looking narrative',
+      { scope: 'transformative', language: 'en' },
+      { enable: true }
+    );
+    expect(result).toBe(
+      'Adoption surged this quarter, sustaining the upward trajectory we observed last period.'
+    );
+  });
+
+  it('still enforces the absolute safety caps (4× growth) under transformative scope', async () => {
+    const before = 'Q2 adoption reached 12% across enterprise customers in the EU region.';
+    // 5× growth rewrite — exceeds the soft cap and must collapse to null
+    // even under transformative scope. The cap is the absolute safety
+    // net: structural freedom does not buy unlimited length.
+    const after = 'A vast and elaborately detailed narrative recasting. '.repeat(40);
+    mockedGenerate.mockResolvedValueOnce({ content: JSON.stringify({ text: after }) });
+    const result = await refineEditorTextWithLlm(
+      before,
+      'Rebuild this as an analytical narrative',
+      { scope: 'transformative', language: 'en' },
+      { enable: true }
+    );
+    expect(result).toBeNull();
+  });
+});
+
 describe('preservesSourceFactsAndCitations helper', () => {
   it('returns true for a no-op rewrite', () => {
     const text = 'Revenue grew to 1.2M [Ref: 12] in 2026.';
