@@ -1,6 +1,6 @@
 # EPIC-T16 — Unified Executive Module Layout (Tabele lane)
 
-**Status:** `IN PROGRESS — D1 + D2 (foundations) LANDED 2026-05-08; D3..D9 follow-up sprints pending`
+**Status:** `IN PROGRESS — D1 + D2 (foundations) + D3..D5 (Tabele lane components) LANDED 2026-05-08; D6..D9 + integration follow-up pending`
 **Block:** A (Template Catalog) of `tabele-full-product` program.
 **Driver:** User-supplied UX directive on 2026-05-08 — converge executive modules (Wordy / Tabele / Prezentacje) on a single layout patterned after `DeckBuilder` (Prezentacje).
 **Standard:** `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md` (MELS).
@@ -163,3 +163,66 @@ Total: **22/22 unit tests green**, 0 linter errors, 0 raw hex literals (DBR77 cl
 | DBR77 raw hex leakage. | Mitigated — manual scan + tests; only Tailwind tokens used. |
 | Persistence race when two shells mount the same moduleKey. | Accepted — last-write-wins; documented in `useRailState` JSDoc. Production rarely mounts two executive modules simultaneously. |
 | Right rail panel state lost on reload. | Accepted — only collapse state persists. Tool selection is ephemeral by design (panels are tool-action surfaces, not workspaces). |
+
+---
+
+## Update — 2026-05-08 — T16-D3 + T16-D4 + T16-D5 (Tabele lane components) landed
+
+**Sprint:** EPIC-T16-S2 (Tabele lane components, presentational layer).
+**Decision (CTO):** Land the Tabele lane component layer as a standalone, presentational, side-effect-free package — `tabeleShell/`. Defer the `TabeleView.tsx` swap (replacing the `KimiWorkspaceShell` mount with `ExecutiveModuleShell`) to EPIC-T16-S3 because that diff also touches the Foundation Block control flow (pipeline / preview / handlers), and we want a clean review surface.
+
+### Deliverables landed
+
+- ✅ **T16-D4 — `TabeleTopBarChips`**:
+  - `consultify/src/components/AIChat/KimiWorkspace/tabeleShell/TabeleTopBarChips.tsx`.
+  - `buildTabeleTopBarChips({ handlers, state, labels })` returns a `TopBarChipDescriptor[]` array honouring the documented MELS canonical chip order: Internal → Theme → History → QA → Governance → Analytics → Audit → Share → Agent → Run.
+  - Confidentiality dot tone tracks `state.confidentiality` (public=success, internal=info, confidential=danger).
+  - Governance dot tone tracks `state.governanceVerdict` (PASS=success, PASS_WITH_P2/BLOCKED_P1=warning, BLOCKED_P0=danger, INCONCLUSIVE=neutral).
+  - Run chip is `kind: 'primary'` and respects `runEnabled=false`.
+  - Agent chip is `kind: 'toggle'`, reflects `state.agentOpen`.
+  - Missing handlers render the matching chip as disabled — lane gating without breaking the strip.
+  - i18n labels can be overridden via `labels` prop (default labels in English).
+
+- ✅ **T16-D3 — `TabeleLeftRail`** (presentational):
+  - `consultify/src/components/AIChat/KimiWorkspace/tabeleShell/TabeleLeftRail.tsx`.
+  - Default outline = Foundation Block sections in canonical order: Cover / KPI / Schema / Records / Relations / Rationale.
+  - Caller may override via `items` prop (e.g. record list, view list, recent records).
+  - `activeItemId` drives the highlighted row (`data-active="true"`).
+  - Optional badge per item (count + tone — neutral/success/warning/danger/info).
+  - Optional `toolsSlot` rendered above the outline (sort/filter/search input goes here).
+  - Empty state with caller-supplied `emptyLabel`.
+
+- ✅ **T16-D5 — `TabeleRightRail`**:
+  - `consultify/src/components/AIChat/KimiWorkspace/tabeleShell/TabeleRightRail.tsx`.
+  - `buildTabeleRightRailTools({ state, labels })` returns a `RightRailToolDescriptor[]` in MELS spec order: Search records → AI Editor (8 levels) → QA Report → Source Pack → Layout → Share → Analytics. Per .cursor/rules/ai-actions-menu3.mdc, AI buttons land here exclusively.
+  - QA tool icon shows badge + warning dot when `qaFindingsCount > 0`.
+  - Source Pack tool shows badge + tone (success/warning/danger) when count + tone supplied.
+  - AI Editor disabled when `aiEditorEnabled === false` (e.g. before artifact materialisation).
+  - `<TabeleRightRailPanel>` mounts the matching panel for the active tool id; falls back to `fallback` for unknown ids.
+
+### Tests landed (27/27 green)
+
+- `__tests__/TabeleTopBarChips.test.ts` (8 tests, node env) — order assertion against `MELS_CHIP_ORDER`, confidentiality + governance dot tone mapping, missing-handler gating, primary kind on Run, toggle kind on Agent, custom labels, analytics gating.
+- `__tests__/TabeleLeftRail.test.tsx` (8 tests, jsdom) — default outline order matches Foundation Block, custom items override, active flag, onSelect with id, disabled item suppresses onSelect, badge rendering with tone, empty state, tools slot mount.
+- `__tests__/TabeleRightRail.test.tsx` (11 tests, jsdom) — tool order matches spec, AI Editor gating, QA badge + tone presence/absence, Source Pack badge + tone, custom labels, panel mounting by id, null active id, unknown id with/without fallback.
+
+Total: **49/49 unit tests green across S1+S2** (22 from foundations + 27 from Tabele lane). 0 linter errors. 0 raw hex literals.
+
+### Why split component layer from `TabeleView.tsx` swap
+
+`TabeleView.tsx` (lines 124–446) wraps `KimiWorkspaceShell` and forwards a tightly-coupled props bag (`taskSteps`, `totalSteps`, `completedSteps`, `isGenerating`, `isCompleted`, `preview`, `onReplay`, `onRemix`, `onDownload`, `onPreviewFile`, `onAllFiles`, `onStartGeneration`, `chatSystemPrompt`). Migrating this to `ExecutiveModuleShell` requires either:
+1. A pure prop translation (adapter), or
+2. A deeper refactor of how `useKimiArtifactPipeline` exposes its state.
+
+Either path produces a single jumbo diff that overlaps with B-S5a host integration and A-S5b TabeleTemplatesGrid wiring. EPIC-T16-S3 (separate sprint) will:
+- Add `isMelsTabeleEnabled()` frontend flag (default OFF).
+- Branch `TabeleView` between the legacy `KimiWorkspaceShell` path and a new `ExecutiveModuleShell` mount that consumes the components landed in this sprint.
+- Verify Foundation Block E2E specs still pass (artifact open → KPI → Schema → Records → Relations → Rationale).
+- Drop the legacy branch only after the flag is graduated.
+
+### Deferred to EPIC-T16-S3 + S4
+
+- **T16-D2 (lane swap)** — replace `KimiWorkspaceShell` mount inside `TabeleView.tsx` with `ExecutiveModuleShell` + `tabeleShell/` adapters, behind `isMelsTabeleEnabled()`.
+- **T16-D6** — Help-modal listing for shortcut display strings (registry already shipped in S1).
+- **T16-D7** — Width-resize drag handle UX (state + clamping shipped in S1).
+- **T16-D8 / D9** — Visual review screenshots + DBR77 hex scan acceptance (after S3 swap so the screenshots reflect the final shape).
