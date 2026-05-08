@@ -658,6 +658,76 @@ Epic E9 lifts the document model from "single canonical schema rendered once" to
 
 ---
 
+## 6.12 Epic E10 — Enterprise Collaboration
+
+Epic E10 turns the Document Studio's existing single-author, single-state lifecycle into an enterprise-grade collaboration substrate. Two orthogonal data planes ship together: a multi-reviewer **approval workflow** that adds the evidentiary trail behind the existing `in_review → approved` lifecycle transition (who requested, who reviewed, what verdict, when resolved, under which quorum policy), and a tenant-scoped **reusable content block library** that lets consultants drop pre-approved boilerplate snippets (standard intros, compliance disclaimers, methodology blurbs) into any document without copy/pasting from older artifacts. Both planes mirror the E5 / E6 / E7 / E9 design contract — DAO + service registry + idempotent hydration + audit trail + write-through persistence — so future moves (Postgres migration, V8 publish-review integration, multi-user concurrent editing) compose without reshaping anything that already shipped.
+
+### 6.12.1 Slice 10.1 — Approval workflow data plane (commit `faec2ecc8`)
+
+- Additive type extensions on `documentStudioTypes.ts`:
+    - `DocumentApprovalStatus` (`pending` / `approved` / `rejected` / `changes_requested` / `cancelled`), `DocumentApprovalDecisionKind` (`approve` / `reject` / `request_changes`), `DocumentApprovalQuorumPolicy` (`unanimous` / `majority` / `single_approval`), `DocumentApprovalParticipant`, `DocumentApprovalDecision`, `DocumentApprovalRequest`, `DocumentApprovalAuditAction` + entry.
+    - `participants[].required` flag drives quorum arithmetic; optional reviewers may record decisions for visibility but don't block approval.
+- New `documentApprovalRegistryDao.ts`: in-memory approval + audit stores keyed by `(organizationId, approvalId)`, failure-tolerant API, Postgres-ready signatures so the wave5 migration is mechanical.
+- New `documentApprovalService.ts`:
+    - `DocumentApprovalError` taxonomy: `invalid_input`, `approval_not_found`, `approval_already_open`, `approval_already_resolved`, `reviewer_not_participant`, `decision_already_recorded`, `forbidden`.
+    - `requestDocumentApproval` enforces single non-terminal approval per `(org, artifact)` (duplicate-open guard via `approval_already_open`), normalizes participants (trim, dedupe, drop empties, default required=true), requires at least one required participant. Default policy is `'unanimous'`.
+    - `recordApprovalDecision` is append-only, rejects duplicate reviewer decisions and decisions from non-participants, auto-resolves on quorum or terminal-flipping verdicts. **Resolution algorithm** (`evaluateApprovalResolution`, exported as a pure helper):
+        - any reviewer (required OR optional) `'request_changes'` → `'changes_requested'`;
+        - any **required** reviewer `'reject'` → `'rejected'`;
+        - then per-policy: `'unanimous'` → all required must approve · `'majority'` → strictly more than half of required must approve · `'single_approval'` → first required approve resolves;
+        - zero-required edge case resolves immediately to `'approved'` (notification-style).
+    - `cancelApproval`: only the original requester may withdraw; resolved approvals throw `approval_already_resolved`.
+    - Reads: `getApproval`, `getActiveApprovalForArtifact` (used by routes / future lifecycle gating), `listDocumentApprovals` (status?, artifactId?), `listDocumentApprovalAuditEntries`. `ensureApprovalRegistryHydrated(org, artifactId)` is idempotent per pair.
+- New `documentApprovalService.test.ts` (33 specs): isTerminal helper, full quorum matrix (7 specs covering unanimous / majority / single_approval lifecycles + required-reject + request_changes + optional-reject + zero-required), request flow (6: normalization, empty-list rejected, no-required rejected, duplicate-open guard, post-resolution re-open allowed, parallel artifacts allowed, write-through), record-decision flow (8: pending under unanimous, auto-resolve under each quorum, reject + request_changes precedence, comment trimming, three guards, unsupported kind), cancel (3), reads + tenant isolation (3), hydration (1), audit trail with full lifecycle action codes (2).
+
+### 6.12.2 Slice 10.2 — Reusable Content Block library (commit `07e671c6f`)
+
+- Additive type extensions on `documentStudioTypes.ts`:
+    - `DocumentContentBlockStatus` (`draft` / `active` / `archived`), `DocumentContentBlockTemplate` (the library entry — wraps a payload-only `Omit<DocumentBlock, 'blockId'>` plus name / description / tags / documentTypes / languageScope / version / lifecycle stamps), `DocumentContentBlockDraftInput`, `DocumentContentBlockUpdateInput`, `DocumentContentBlockAuditAction` + entry.
+    - `documentTypes` empty array → applicable to all 22 document types; `languageScope: 'pl' | 'en' | 'all'` matches list filters where `'all'` always matches.
+- New `documentContentBlockRegistryDao.ts`: in-memory block + audit stores keyed by `(organizationId, contentBlockId)`, identical contract to the approval DAO.
+- New `documentContentBlockService.ts`:
+    - `DocumentContentBlockError` taxonomy: `invalid_input`, `content_block_not_found`, `content_block_archived`, `content_block_already_active`, `content_block_already_archived`, `forbidden`.
+    - Lifecycle: `draft → active → archived`. **Multiple actives ALLOWED per organization** (different snippets serve different purposes; explicitly diverges from the brand-voice single-active rule).
+    - `draftDocumentContentBlock`: normalizes name (trim), tags (trim + case-insensitive dedupe), documentTypes (trim + dedupe), defaults `languageScope='all'`. Validates the embedded `DocumentBlock.type` against the canonical whitelist (heading / paragraph / bullet_list / numbered_list / table / callout / quote / kpi_strip / risk_table / image / footnote / citation).
+    - `updateDocumentContentBlock`: bumps version (`v1 → v2 → …`), supports null-clearing of description / notes, rejects archived entries, re-validates the payload when `block` is supplied.
+    - `activateDocumentContentBlock` / `archiveDocumentContentBlock`: idempotency guards via `content_block_already_active` / `content_block_already_archived`; archiving stamps reason in audit details.
+    - List filters: `status`, `includeArchived`, `documentType` (untargeted entries match), `language` (`'all'` matches), `anyTag` (case-insensitive OR semantics).
+    - **`instantiateDocumentContentBlock`** is the integration seam. Deep-clones the payload, allocates a fresh `blockId` (or accepts an explicit override), refuses archived entries, returns `{ block, template }`. Consultant clicks "Insert from library" → frontend calls the route → server returns a fresh `DocumentBlock` ready to push onto a section's `blocks` array.
+    - `ensureContentBlockRegistryHydrated(organizationId)` idempotent per org.
+- New `documentContentBlockService.test.ts` (25 specs): draft (5: normalization, default languageScope, invalid inputs, unsupported block type, write-through), update (5: version bump, null-clearing, archived blocked, not-found guard, payload re-validation), activate / archive (4: stamps, multiple actives, already-active idempotency, re-archive blocked), list filters (4: includeArchived behavior, documentType, language, anyTag with OR + case-insensitive), instantiate (4: fresh blockId + deep-clone isolation, blockId override, archived refused, not-found guard), tenant isolation + hydration (2), full-lifecycle audit (1).
+
+### 6.12.3 Slice 10.3 — Routes (commit `e8ee36ce1`)
+
+- 15 new endpoints under `/api/document-studio`:
+    - **Approval workflow** (7 endpoints, scoped under `/:artifactId/approvals/...` and registered before the generic `/:artifactId` GET so the path matcher reaches them first):
+        - `GET /:artifactId/approvals` (status?), `POST /:artifactId/approvals` (body: `{ participants[], quorumPolicy?, reason? }` → 201 with `{ approval }`),
+        - `GET /:artifactId/approvals/active` (current non-terminal approval or 204 No Content),
+        - `GET /:artifactId/approvals/:approvalId` (404 if not found OR artifactId mismatch — defensive cross-artifact denial),
+        - `POST /:artifactId/approvals/:approvalId/decisions` (body: `{ kind, comment? }`; reviewerId is the authenticated user → 201 with `{ approval }`),
+        - `POST /:artifactId/approvals/:approvalId/cancel` (body: `{ reason? }`; only the original requester may cancel → 403 forbidden),
+        - `GET /:artifactId/approvals/:approvalId/audit`.
+    - **Content block library** (8 endpoints, top-level under `/content-blocks` so they do not collide with `/:artifactId`):
+        - `GET /content-blocks` (status?, includeArchived?, documentType?, language?, anyTag?), `POST /content-blocks` (400 invalid_input if block payload missing), `GET /content-blocks/:contentBlockId`, `PATCH /content-blocks/:contentBlockId` (400 if block payload supplied but invalid), `POST /content-blocks/:contentBlockId/activate`, `POST /content-blocks/:contentBlockId/archive` (body: `{ reason? }`), `POST /content-blocks/:contentBlockId/instantiate` (body: `{ blockId? }` → returns `{ block, template }`), `GET /content-blocks/:contentBlockId/audit`.
+- HTTP error mapping (`mapApprovalErrorToStatus`, `mapContentBlockErrorToStatus`): 400 invalid_input · 403 forbidden / reviewer_not_participant · 404 approval_not_found / content_block_not_found · 409 approval_already_open / approval_already_resolved / decision_already_recorded / content_block_archived / content_block_already_active / content_block_already_archived.
+- Defensive body parsing: `parseApprovalParticipants` (drops invalid entries, defaults required=true), `parseContentBlockLanguageScope`, `parseDocumentTypeArray`, `parseDocumentBlockPayload`. All reads/writes call the appropriate `ensureXHydrated` hook before touching state, identical to the E5 / E6 / E9 pattern.
+- Following the E5 / E6 / E7 / E9 pattern, route-level integration tests are intentionally not added — the data plane is fully covered at the service layer (E10.1: 33 specs, E10.2: 25 specs) and the error-code → HTTP-status switch is a trivial mapper.
+
+### 6.12.4 Validation summary
+
+- Document Studio scope: **47 files / 526 specs**, all green (was 45 / 468 at end of Epic E9; +2 files / +58 specs from E10).
+- `npx tsc --noEmit -p .` clean across the full server tsconfig.
+- `npx eslint --fix` clean for the new modules + tests; only pre-existing-pattern `any`-coercion warnings inside `getAuthContext` survive (matching the E5 / E6 / E7 / E8 / E9 baseline).
+- Backward-compatible additive types: pre-E10 schemas / route surface continue to function unchanged. Lifecycle service in `documentLifecycleService.ts` is intentionally NOT gated on approval state in this epic — the route layer can introduce a soft gate later by checking `getActiveApprovalForArtifact` before transitioning `in_review → approved`, but enabling the gate is a policy-decision rollout (Phase 1: observe; Phase 2: enforce) that lives outside the data-plane epic.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - **Lifecycle gating integration**. `getActiveApprovalForArtifact` is the integration seam, but the actual hard-stop (refuse `transitionDocumentStatus(... to: 'approved')` when no resolved approval exists) is gated behind an explicit policy switch and a per-tenant feature flag. Lands when the V8 publish-review service exposes its policy hook.
+    - **System-default content block seeds**. The library is fully tenant-scoped today; future slices may ship a small set of `'system'`-org seeds (universal compliance disclaimer, standard methodology preamble) overlaid into reads à la audience profiles. Plumbing supports it (the DAO key prefix already isolates `'system'` from tenant rows); content not yet authored.
+    - **Multi-user concurrent edit detection**. The MVP-5 charter calls out collaboration on the same schema; today the version-snapshot + rollback infrastructure (Epic E5) covers conflict detection but not real-time presence. Real-time presence requires the V8.1 substrate, which the Document Studio MUST NOT modify per §9 of this plan.
+    - **Frontend Approval Center + Library picker**. Server-only today; the consultant UI surface (Menu 3 right-side action: "Request approval…", "Insert from library…") + Reviewer Inbox view are owned by Epic E11.
+    - **Persistence migration**. Both DAOs (approvals + content blocks + audits) sit on the in-memory store consistent with the rest of MVP-2..MVP-5; the wave5 Postgres migration is shared infrastructure landing across all Document Studio modules at once.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
