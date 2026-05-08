@@ -10,17 +10,20 @@
  *   - S1: POST /source-pack/preview         (read-only source pack preview)
  *   - S2: POST /narrative-plan/preview      (read-only narrative plan preview)
  *   - S3: POST /template-architect/preview  (read-only template plan preview)
+ *   - S4: POST /generate/preview            (read-only generate dispatcher preview)
  *
  * All endpoints are tenant-scoped, gated by the existing `presentation_create`
  * capability, and never write to the database. They reuse the orchestration
- * service which wraps the adopted source pack, narrative planner, and
- * template architect services.
+ * service which wraps the adopted source pack, narrative planner, template
+ * architect, and template runtime services.
  *
  * The template architect preview always returns `approvalRequired: true` and
- * `templatePlan.governance.initialStatus = 'draft'`. Promoting a template into
- * the registry will land in a future sprint behind an explicit approval
- * endpoint, preserving the proposal -> approval -> execution -> audit
- * invariant for any mutating operation.
+ * `templatePlan.governance.initialStatus = 'draft'`. The generate preview
+ * always returns a `wouldGenerate` summary and never persists anything.
+ * Promoting a template into the registry or persisting a real deck will land
+ * in a future sprint behind an explicit approval endpoint, preserving the
+ * proposal -> approval -> execution -> audit invariant for any mutating
+ * operation.
  */
 
 import { type NextFunction, type Request, type Response, Router } from 'express';
@@ -32,6 +35,7 @@ import {
 } from '../services/presentationAccessPolicyService.js';
 import type { DeckSetup, OutlineItem } from '../services/presentationGeneratorService.js';
 import {
+  previewPresentationStudioGenerate,
   previewPresentationStudioNarrativePlan,
   previewPresentationStudioSourcePack,
   previewPresentationStudioTemplatePlan,
@@ -73,8 +77,10 @@ function ensurePresentationCapability(
 function parseDeckSetupFromBody(rawBody: unknown): DeckSetup {
   const body = (rawBody && typeof rawBody === 'object' ? rawBody : {}) as Partial<DeckSetup> & {
     sourcePackStrict?: boolean;
+    templateFamily?: string;
+    deckType?: string;
   };
-  return {
+  const setup = {
     title: typeof body.title === 'string' ? body.title : '',
     audience: (typeof body.audience === 'string'
       ? body.audience
@@ -99,7 +105,17 @@ function parseDeckSetupFromBody(rawBody: unknown): DeckSetup {
         ? (body.sourcePack as DeckSetup['sourcePack'])
         : undefined,
     sourcePackStrict: Boolean(body.sourcePackStrict),
-  };
+  } as DeckSetup;
+  // `DeckSetup` formally does not declare templateFamily/deckType, but the
+  // generator + template architect read them via `(setup as any)`. Forward
+  // them as untyped extras so previews respect the same dispatch logic.
+  if (typeof body.templateFamily === 'string' && body.templateFamily.trim()) {
+    (setup as any).templateFamily = body.templateFamily.trim();
+  }
+  if (typeof body.deckType === 'string' && body.deckType.trim()) {
+    (setup as any).deckType = body.deckType.trim();
+  }
+  return setup;
 }
 
 /**
@@ -309,6 +325,88 @@ router.post(
       outline,
       sourcePack: providedSourcePack,
       narrativePlan: providedNarrativePlan,
+    });
+
+    res.json({ success: true, data: result });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/generate/preview
+ *
+ * Read-only preview of what `generateOutline` WOULD produce if invoked NOW
+ * (outline preview, estimated slide count, used template runtime, blocking
+ * reasons). NEVER writes to the DB, never reads from it, never emits audit
+ * events.
+ *
+ * Body shape:
+ *   - setup: subset of `DeckSetup` (same as /source-pack/preview body)
+ *   - outline?: OutlineItem[] (optional; default outline is built from
+ *     templateFamily/deckType in setup or from the narrative plan)
+ *   - sourcePack?: PresentationSourcePack (optional; rebuilt from setup if
+ *     omitted)
+ *   - narrativePlan?: PresentationNarrativePlan (optional; rebuilt if
+ *     omitted)
+ *   - strict?: boolean (optional; defaults to setup.sourcePackStrict)
+ *
+ * Tenant safety:
+ *   - `organizationId` is taken from the authenticated session, never from
+ *     the request body. Body-supplied org ids are ignored.
+ *   - The endpoint never writes to the DB and never returns cross-tenant
+ *     data.
+ *
+ * Governance:
+ *   - This is a preview only. Real generation (`generateOutline`) persists
+ *     a draft deck to the DB and emits audit events; that endpoint will be
+ *     introduced in a later sprint, gated by an explicit approval flow.
+ *   - The response carries `wouldGenerate.canProceed` so the UI can render
+ *     an honest "Generate" button state without itself trying to predict
+ *     blocking conditions.
+ */
+router.post(
+  '/generate/preview',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(403).json({
+        success: false,
+        error: 'Organization context required',
+        code: 'NO_ORG_CONTEXT',
+      });
+      return;
+    }
+
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      setup?: unknown;
+      outline?: unknown;
+      sourcePack?: unknown;
+      narrativePlan?: unknown;
+      strict?: unknown;
+    };
+    const setup = parseDeckSetupFromBody(body.setup);
+    const outline = parseOutlineFromBody(body.outline);
+    const providedSourcePack =
+      body.sourcePack &&
+      typeof body.sourcePack === 'object' &&
+      Array.isArray((body.sourcePack as any).sources)
+        ? (body.sourcePack as any)
+        : undefined;
+    const providedNarrativePlan =
+      body.narrativePlan &&
+      typeof body.narrativePlan === 'object' &&
+      Array.isArray((body.narrativePlan as any).slidePlan)
+        ? (body.narrativePlan as any)
+        : undefined;
+    const strict = typeof body.strict === 'boolean' ? body.strict : undefined;
+
+    const result = previewPresentationStudioGenerate({
+      setup,
+      organizationId: orgId,
+      outline,
+      sourcePack: providedSourcePack,
+      narrativePlan: providedNarrativePlan,
+      strict,
     });
 
     res.json({ success: true, data: result });

@@ -533,3 +533,74 @@ P2 (deferred, non-blocking):
   - No DB migration. No mutating endpoint yet — generation persistence + audit events land in S6 behind explicit approval.
   - Same auth + tenant + RBAC pattern. Capability remains `presentation_create`.
 
+
+## Sprint S4 Gate Report — Generate Dispatcher Preview Route (2026-05-08)
+
+Status: `PASS_WITH_P2`
+Branch: `staging`
+Scope: Backend-only. No DB migration. No DB read. No UI in this sprint (Q3 default = backend + minimal UI later).
+
+### Changes made
+
+- Extended `consultify/server/src/services/presentationStudioOrchestrationService.ts` with `previewPresentationStudioGenerate({ setup, organizationId, outline?, sourcePack?, narrativePlan?, strict?, now? })`:
+  - Builds a best-effort outline using only the public template runtime + narrative planner surface — NEVER hits the DB.
+  - Outline source preference order: caller-supplied outline -> `templateFamily`/`deckType` -> `buildSystemTemplateRuntime` runtime outline -> narrative-plan slidePlan fallback -> minimal `cover` + `key_messages` default.
+  - Passes the resolved outline through `applyTemplateRuntime` to mirror generator-time slot mapping warnings.
+  - Aggregates source-pack + narrative + template warnings into one envelope.
+  - Computes a `wouldGenerate.canProceed` flag with explicit `blockingReasons`:
+    - strict mode + missing source inputs -> blocked.
+    - decision deck (`goal === 'decide'`) with empty source pack -> blocked.
+    - narrative status `needs_sources` under strict mode -> blocked.
+  - Read-only: no DB writes, no DB reads, no audit events, no telemetry side-effects.
+  - Surfaces a request-scoped `previewId` derived from the authenticated tenant.
+
+- Extended `consultify/server/src/routes/presentationStudio.routes.ts` with `POST /api/presentation-studio/generate/preview`:
+  - Same auth/tenant/RBAC pattern as the other previews (`verifyToken` + `presentation_create` capability).
+  - Body: `{ setup?, outline?, sourcePack?, narrativePlan?, strict? }`. Body-supplied `organizationId` is ignored.
+  - Extended shared `parseDeckSetupFromBody` helper to forward `templateFamily` and `deckType` through to the orchestrator (the `DeckSetup` interface does not formally declare these, but the generator and template architect read them via `(setup as any)`; honoring the same fields here keeps preview/generation behavior consistent).
+  - Updated route docstring to list all four endpoints and reaffirm the proposal -> approval -> execution -> audit invariant for any future mutating endpoint.
+
+- Extended `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts` with 7 integration tests for the new endpoint:
+  - 200 healthy decision deck happy path: outline preview present, estimated slide count > 0, `usedTemplate.runtime` resolved from `deckType`, `canProceed=true`, `blockingReasons=[]`.
+  - 200 decision deck with empty source pack: `canProceed=false`, blocking reason mentions decision-deck source requirement.
+  - 200 strict mode + missing inputs: `canProceed=false`, blocking reason mentions strict mode.
+  - 200 free generation (no template family, no outline): `usedTemplate.family=null`, narrative-plan / default outline fallback used.
+  - 403 PERMISSION_DENIED for VIEWER role (capability gate).
+  - 401 when verifyToken rejects (no authenticated user).
+  - Tenant integrity: body-supplied `organizationId` is ignored; `previewId` is bound to the authenticated tenant.
+
+### Validation performed
+
+- Vitest (`presentationStudio.routes.test.ts`) — 23/23 PASS (5 S1 + 1 strict-mode + 5 S2 + 5 S3 + 7 S4).
+- Vitest regression on adopted services — `presentationGeneratorGolden.test.ts`, `presentationTemplateArchitectService.test.ts`, `presentationNarrativePlannerService.test.ts`, `presentationSourcePackService.test.ts` — 13/13 PASS. No drift in golden outputs.
+- ESLint --fix on the three S4 files — 0 errors. 36 pre-existing P3 `no-explicit-any` warnings in the same files (was 28 in S3, +8 from S4 narrow `any` body parsers and template runtime extras); deferred per S0 baseline policy.
+- Focused `tsc --noEmit` over `presentationStudioOrchestrationService.ts`, `presentationStudio.routes.ts`, `presentationTemplateRuntimeService.ts`, `presentationTemplateArchitectService.ts`, `presentationSourcePackService.ts`, `presentationNarrativePlannerService.ts` with `--strict --target es2022 --module nodenext --moduleResolution nodenext` — 0 errors after a one-line `as OutlineItem['intent']` narrowing fix on the narrative-plan fallback (the planner types `intent` as `string` while `OutlineItem.intent` is the `SlideIntent` enum; the cast is safe because the planner only emits intents that round-trip through the shared template runtime).
+- `ReadLints` on the three modified files — clean.
+
+### Gate result: `PASS_WITH_P2`
+
+P0/P1: none.
+
+P2 (deferred, non-blocking):
+- P2-S4-1: 36 pre-existing `no-explicit-any` warnings in S1+S2+S3+S4 files; tracked under the S0 baseline P3 deferral.
+- P2-S4-2: Approved-template DB resolution is intentionally NOT exercised in `/generate/preview`. The real `generateOutline` path resolves an approved template row from `presentation_templates` for `setup.templateId`. The preview only handles the system-runtime + free-generation paths. A future "approved template preview" endpoint will need a tenant-scoped DB read and corresponding test mocks — explicit follow-up risk.
+- P2-S4-3: Anygravity manual retest still deferred from S0/S1/S2/S3; will run a single consolidated probe after S5 frontend lands so all four preview endpoints are exercised together.
+
+### Acceptance criteria (from contract) covered by S4
+
+- AC-1 (tenant safety on preview endpoints): `previewId` and outline preview are derived from authenticated `organizationId` only; body-supplied `organizationId` is ignored. Verified.
+- AC-2 (RBAC on preview endpoints): VIEWER receives 403 PERMISSION_DENIED with `requiredCapability=presentation_create`. Verified.
+- AC-4 (no DB migrations in Phase 2): no schema changes. The route and orchestrator never touch the DB.
+- AC-5 (read-only preview semantics): the endpoint returns outline + warnings + missingInputs + `wouldGenerate` flags; never writes, never emits audit events, never reads from the DB either.
+- AC-6 (degraded UI honesty): `wouldGenerate.canProceed=false` with explicit `blockingReasons` so the UI can render an honest disabled "Generate" button instead of letting the user trigger a guaranteed-to-fail real generation.
+
+### Risks / next-step notes
+
+- R-S4-1: `wouldGenerate.canProceed` is computed against three known blocking conditions (strict + missing inputs, decision + empty pack, strict + needs_sources). Real `generateOutline` may surface additional generator-time errors (e.g. template runtime mismatch, slot mapping failure) that the preview cannot fully predict without invoking the generator. UI must keep treating `canProceed=true` as "best-effort green light", not a guarantee.
+- R-S4-2: When `templateId` is supplied without `templateFamily`/`deckType`, the preview currently silently falls back to the narrative-plan / default outline path because resolving the approved-template row would require a DB read (out of S4 scope). The UI should not let users select an approved template via the Studio preview without surfacing this limitation. Tracked as P2-S4-2.
+- R-S4-3: The preview re-uses the request-scoped `previewId` salt from the narrative plan's `createdAt` timestamp, so two consecutive previews with the same body will produce the same `previewId`. This is intentional for log-correlation determinism but means the UI must not key React state directly off `previewId`.
+
+### Next sprint plan
+
+- Sprint S5 starts Studio Surface UI (minimal): a single read-only Studio screen that consumes the four preview endpoints (`source-pack`, `narrative-plan`, `template-architect`, `generate`) and renders source coverage, narrative thesis, draft template plan, outline preview, and the `wouldGenerate` envelope. UI quality follows the Consultify UI/UX golden standard. No mutating endpoints are wired up. Anygravity manual retest pack runs after S5 lands.
+

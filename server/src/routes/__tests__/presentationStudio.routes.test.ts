@@ -566,3 +566,197 @@ describe('presentationStudio.routes — POST /template-architect/preview', () =>
     expect(res.body.data.previewId).not.toContain('org-B');
   });
 });
+
+describe('presentationStudio.routes — POST /generate/preview', () => {
+  beforeEach(() => {
+    setAuth({
+      user: { id: 'user-1', organizationId: 'org-A', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+  });
+
+  it('returns 200 with outline preview + canProceed=true for a healthy decision deck', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'VTS Steering Committee',
+          audience: 'executive',
+          goal: 'decide',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'VTS readiness',
+              confidence: 0.8,
+              readiness: 'ready',
+            },
+          ],
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data.outlinePreview)).toBe(true);
+    expect(res.body.data.outlinePreview.length).toBeGreaterThan(0);
+    expect(res.body.data.estimatedSlideCount).toBeGreaterThan(0);
+    expect(res.body.data.usedTemplate.family).toBeTruthy();
+    expect(res.body.data.usedTemplate.runtime).toBeTruthy();
+    expect(res.body.data.wouldGenerate.canProceed).toBe(true);
+    expect(res.body.data.wouldGenerate.blockingReasons).toEqual([]);
+    expect(res.body.data.previewId).toMatch(/^pssp_org-A_/);
+  });
+
+  it('returns canProceed=false for a decision deck with empty source pack', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'Empty decision deck',
+          audience: 'executive',
+          goal: 'decide',
+          sourceArtifacts: [],
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.wouldGenerate.canProceed).toBe(false);
+    expect(res.body.data.wouldGenerate.blockingReasons.length).toBeGreaterThan(0);
+    expect(
+      res.body.data.wouldGenerate.blockingReasons.some((reason: string) =>
+        reason.toLowerCase().includes('decision')
+      )
+    ).toBe(true);
+  });
+
+  it('blocks in strict mode when source pack has missing inputs', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'Strict deck',
+          audience: 'executive',
+          goal: 'inform',
+          sourceArtifacts: [],
+          sourcePackStrict: true,
+        },
+        strict: true,
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.wouldGenerate.strict).toBe(true);
+    expect(res.body.data.wouldGenerate.canProceed).toBe(false);
+    expect(
+      res.body.data.wouldGenerate.blockingReasons.some((reason: string) =>
+        reason.toLowerCase().includes('strict')
+      )
+    ).toBe(true);
+  });
+
+  it('uses narrative-plan fallback outline when no template family or outline is provided', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'Free generation',
+          audience: 'executive',
+          goal: 'inform',
+          sourceArtifacts: [
+            {
+              type: 'meeting_note',
+              id: 'm-1',
+              label: 'Stand-up',
+              confidence: 0.6,
+              readiness: 'ready',
+            },
+          ],
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.usedTemplate.family).toBeNull();
+    expect(['narrative_fallback', 'default']).toContain(res.body.data.usedTemplate.source);
+    expect(res.body.data.outlinePreview.length).toBeGreaterThan(0);
+  });
+
+  it('returns 403 PERMISSION_DENIED for VIEWER on generate/preview', async () => {
+    setAuth({
+      user: { id: 'user-2', organizationId: 'org-A', role: 'VIEWER' },
+      userRole: 'VIEWER',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: { setup: { title: 't', audience: 'executive', goal: 'inform' } },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toMatchObject({
+      success: false,
+      code: 'PERMISSION_DENIED',
+      requiredCapability: 'presentation_create',
+    });
+  });
+
+  it('returns 401 when verifyToken rejects on generate/preview', async () => {
+    setAuth(null);
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {},
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('ignores body-supplied organizationId on generate/preview', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        organizationId: 'org-B',
+        setup: {
+          title: 'Spoof attempt',
+          audience: 'executive',
+          goal: 'inform',
+          deckType: 'steering_committee',
+          organizationId: 'org-B',
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.previewId).toMatch(/^pssp_org-A_/);
+    expect(res.body.data.previewId).not.toContain('org-B');
+  });
+});
