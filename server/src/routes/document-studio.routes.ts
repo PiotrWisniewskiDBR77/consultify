@@ -95,12 +95,35 @@
  *   POST   /api/document-studio/:artifactId/comments/:commentId/reopen             — body: { reason? }; thread-wide
  *   DELETE /api/document-studio/:artifactId/comments/:commentId                    — author-only soft-delete
  *
+ * Per-tenant Brand Voice profile — Epic E7:
+ *   GET    /api/document-studio/brand-voice/active                                — currently active profile or 204 No Content
+ *   GET    /api/document-studio/brand-voice/profiles                              — list profiles (status?, includeArchived?)
+ *   POST   /api/document-studio/brand-voice/profiles                              — draft a new profile
+ *   GET    /api/document-studio/brand-voice/profiles/:profileId                   — single profile
+ *   PATCH  /api/document-studio/brand-voice/profiles/:profileId                   — partial update (draft + active only)
+ *   POST   /api/document-studio/brand-voice/profiles/:profileId/activate          — promote to active; auto-archives previous active
+ *   POST   /api/document-studio/brand-voice/profiles/:profileId/archive           — body: { reason? }; irreversible
+ *   GET    /api/document-studio/brand-voice/profiles/:profileId/audit             — list audit entries
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
 
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  activateBrandVoiceProfile,
+  archiveBrandVoiceProfile,
+  BrandVoiceProfileError,
+  type BrandVoiceProfileErrorCode,
+  draftBrandVoiceProfile,
+  ensureBrandVoiceRegistryHydrated,
+  getActiveBrandVoiceProfile,
+  getBrandVoiceProfile,
+  listBrandVoiceProfileAuditEntries,
+  listBrandVoiceProfiles,
+  updateBrandVoiceProfile,
+} from '../services/documentStudio/documentBrandVoiceService.js';
 import {
   ingestFileSource,
   ingestIntegrationSource,
@@ -163,6 +186,10 @@ import {
   transitionDocumentStatus,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
+  BrandVoiceGlossaryEntry,
+  BrandVoiceProfileLanguageScope,
+  BrandVoiceProfileStatus,
+  CommunicationRegister,
   DocumentCommentAnchor,
   DocumentCommentStatus,
   DocumentEditorProposalInput,
@@ -971,6 +998,321 @@ router.post(
       const status = mapServiceErrorToStatus(message);
       res.status(status).json({ error: message, message });
     }
+  })
+);
+
+// =============================================================================
+// Epic E7 — Per-tenant Brand Voice profile.
+//
+// All routes are scoped under `/brand-voice/...` so the static prefix wins
+// over the generic `/:artifactId` matcher (registered later in this file).
+// Lifecycle: draft → active → archived; at most one active row per tenant.
+// =============================================================================
+
+const VALID_BRAND_VOICE_STATUSES: ReadonlyArray<BrandVoiceProfileStatus> = [
+  'draft',
+  'active',
+  'archived',
+];
+
+const VALID_BRAND_VOICE_LANGUAGE_SCOPES: ReadonlyArray<BrandVoiceProfileLanguageScope> = [
+  'pl',
+  'en',
+  'all',
+];
+
+const VALID_REGISTERS: ReadonlyArray<CommunicationRegister> = [
+  'executive',
+  'professional',
+  'narrative',
+];
+
+function mapBrandVoiceErrorToStatus(code: BrandVoiceProfileErrorCode): number {
+  switch (code) {
+    case 'invalid_input':
+      return 400;
+    case 'profile_not_found':
+      return 404;
+    case 'profile_archived':
+    case 'profile_already_active':
+    case 'profile_already_archived':
+      return 409;
+    case 'forbidden':
+      return 403;
+    default:
+      return 400;
+  }
+}
+
+function parseStringArray(raw: unknown): string[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item === 'string') out.push(item);
+  }
+  return out;
+}
+
+function parseGlossaryEntries(raw: unknown): BrandVoiceGlossaryEntry[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw)) return [];
+  const out: BrandVoiceGlossaryEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const candidate = item as Partial<BrandVoiceGlossaryEntry>;
+    if (typeof candidate.avoid !== 'string' || typeof candidate.prefer !== 'string') continue;
+    out.push({
+      avoid: candidate.avoid,
+      prefer: candidate.prefer,
+      note: typeof candidate.note === 'string' ? candidate.note : undefined,
+    });
+  }
+  return out;
+}
+
+function parseLanguageScope(raw: unknown): BrandVoiceProfileLanguageScope | undefined {
+  if (typeof raw !== 'string') return undefined;
+  return VALID_BRAND_VOICE_LANGUAGE_SCOPES.includes(raw as BrandVoiceProfileLanguageScope)
+    ? (raw as BrandVoiceProfileLanguageScope)
+    : undefined;
+}
+
+function parseRegisterOverride(raw: unknown): CommunicationRegister | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  if (typeof raw !== 'string') return undefined;
+  return VALID_REGISTERS.includes(raw as CommunicationRegister)
+    ? (raw as CommunicationRegister)
+    : undefined;
+}
+
+router.get(
+  '/brand-voice/active',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    const profile = getActiveBrandVoiceProfile(organizationId);
+    if (!profile) {
+      res.status(204).end();
+      return;
+    }
+    res.json({ profile });
+  })
+);
+
+router.get(
+  '/brand-voice/profiles',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    const statusRaw = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const status =
+      statusRaw && VALID_BRAND_VOICE_STATUSES.includes(statusRaw as BrandVoiceProfileStatus)
+        ? (statusRaw as BrandVoiceProfileStatus)
+        : undefined;
+    const includeArchived =
+      req.query.includeArchived === 'true' || req.query.includeArchived === '1';
+    const profiles = listBrandVoiceProfiles(organizationId, { status, includeArchived });
+    res.json({ profiles });
+  })
+);
+
+router.post(
+  '/brand-voice/profiles',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const profile = draftBrandVoiceProfile({
+        organizationId,
+        userId,
+        input: {
+          name: typeof body.name === 'string' ? body.name : '',
+          description: typeof body.description === 'string' ? body.description : undefined,
+          languageScope: parseLanguageScope(body.languageScope),
+          bannedPhrases: parseStringArray(body.bannedPhrases),
+          disabledGlobalBannedPhrases: parseStringArray(body.disabledGlobalBannedPhrases),
+          preferredPhrases: parseStringArray(body.preferredPhrases),
+          glossaryEntries: parseGlossaryEntries(body.glossaryEntries),
+          requiredKeywords: parseStringArray(body.requiredKeywords),
+          registerOverride:
+            parseRegisterOverride(body.registerOverride) === null
+              ? undefined
+              : (parseRegisterOverride(body.registerOverride) as CommunicationRegister | undefined),
+          notes: typeof body.notes === 'string' ? body.notes : undefined,
+        },
+      });
+      res.status(201).json({ profile });
+    } catch (err) {
+      if (err instanceof BrandVoiceProfileError) {
+        res
+          .status(mapBrandVoiceErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/brand-voice/profiles/:profileId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    const profile = getBrandVoiceProfile(profileId, organizationId);
+    if (!profile) {
+      res.status(404).json({ error: 'profile_not_found' });
+      return;
+    }
+    res.json({ profile });
+  })
+);
+
+router.patch(
+  '/brand-voice/profiles/:profileId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const profile = updateBrandVoiceProfile({
+        organizationId,
+        userId,
+        profileId,
+        input: {
+          name: typeof body.name === 'string' ? body.name : undefined,
+          description: typeof body.description === 'string' ? body.description : undefined,
+          languageScope: parseLanguageScope(body.languageScope),
+          bannedPhrases: parseStringArray(body.bannedPhrases),
+          disabledGlobalBannedPhrases: parseStringArray(body.disabledGlobalBannedPhrases),
+          preferredPhrases: parseStringArray(body.preferredPhrases),
+          glossaryEntries: parseGlossaryEntries(body.glossaryEntries),
+          requiredKeywords: parseStringArray(body.requiredKeywords),
+          registerOverride: parseRegisterOverride(body.registerOverride),
+          notes:
+            body.notes === null ? null : typeof body.notes === 'string' ? body.notes : undefined,
+        },
+      });
+      res.json({ profile });
+    } catch (err) {
+      if (err instanceof BrandVoiceProfileError) {
+        res
+          .status(mapBrandVoiceErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/brand-voice/profiles/:profileId/activate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    try {
+      const profile = activateBrandVoiceProfile({ organizationId, userId, profileId });
+      res.json({ profile });
+    } catch (err) {
+      if (err instanceof BrandVoiceProfileError) {
+        res
+          .status(mapBrandVoiceErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/brand-voice/profiles/:profileId/archive',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    try {
+      const profile = archiveBrandVoiceProfile({ organizationId, userId, profileId, reason });
+      res.json({ profile });
+    } catch (err) {
+      if (err instanceof BrandVoiceProfileError) {
+        res
+          .status(mapBrandVoiceErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/brand-voice/profiles/:profileId/audit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    const auditEntries = listBrandVoiceProfileAuditEntries(profileId, organizationId);
+    res.json({ auditEntries });
   })
 );
 
