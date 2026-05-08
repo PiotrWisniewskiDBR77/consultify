@@ -62,6 +62,19 @@ export interface DocumentBlock {
   content: unknown;
   sourceRef?: DocumentSourceRef;
   isAssumption?: boolean;
+  /**
+   * Optional audience-tag list — Epic E9 (Audience-driven warianty).
+   *
+   * When present, the audience projector uses these tags to decide whether
+   * the block survives projection for a given AudienceProfile. When omitted,
+   * the block is treated as audience-neutral and surfaces in every variant
+   * (default-include semantics — backwards compatible with pre-E9 schemas).
+   *
+   * Tags are free-form strings ('technical_detail', 'engineering_only',
+   * 'client_only', 'internal_only', …) and only become meaningful in the
+   * presence of an AudienceProfile that filters on them.
+   */
+  audienceTags?: string[];
 }
 
 export type DocumentSectionKind = 'body' | 'appendix';
@@ -89,6 +102,15 @@ export interface DocumentSection {
    * formatting where the author clearly intended it.
    */
   kind?: DocumentSectionKind;
+  /**
+   * Optional audience-tag list — Epic E9 (Audience-driven warianty).
+   *
+   * Same semantics as `DocumentBlock.audienceTags` but section-scoped:
+   * when present, an AudienceProfile may include / exclude the entire
+   * section (and all its blocks) based on these tags. Default-include
+   * when omitted to preserve backwards compatibility.
+   */
+  audienceTags?: string[];
 }
 
 export interface DocumentSourceRef {
@@ -814,6 +836,189 @@ export interface BrandVoiceProfileAuditEntry {
   actorId: string;
   occurredAt: string;
   details?: Record<string, unknown>;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Epic E9 — Audience-driven warianty
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lifecycle status for an AudienceProfile. Mirrors BrandVoiceProfileStatus:
+ * profiles start as `'draft'`, become `'active'` (multiple actives allowed
+ * per organization, unlike Brand Voice — different audiences are not
+ * mutually exclusive), and end as `'archived'` (immutable, queryable).
+ *
+ * `'system'` profiles seeded by Document Studio itself (board / client /
+ * engineering / pmo) are immutable and always `'active'`.
+ */
+export type AudienceProfileStatus = 'draft' | 'active' | 'archived';
+
+/**
+ * Policy for the document's executive summary section under projection.
+ *
+ *   - `'preserve'` (default): keep the executive summary verbatim.
+ *   - `'expand'`: keep + flag for the AI editor to expand later (today
+ *     a structural marker only — no LLM call in E9.1).
+ *   - `'drop'`: remove the executive summary section entirely (e.g. an
+ *     engineering variant that wants to skip the C-level recap).
+ */
+export type AudienceProfileExecutiveSummaryPolicy = 'preserve' | 'expand' | 'drop';
+
+/** Policy for appendix sections under projection — keep them or drop them all. */
+export type AudienceProfileAppendixPolicy = 'preserve' | 'drop';
+
+/**
+ * Policy for jargon substitution. Today purely declarative (the projector
+ * carries the policy onto the variant for downstream tooling); a future
+ * slice may wire this through an AI rewrite pass.
+ */
+export type AudienceProfileJargonPolicy = 'as_is' | 'plain_language';
+
+/**
+ * Section / block tag filter. Both lists are tag-name lists (the same
+ * free-form strings authored on `DocumentSection.audienceTags` and
+ * `DocumentBlock.audienceTags`).
+ *
+ *   - `include`: when non-empty, ONLY tagged elements with at least one
+ *     matching tag survive. Untagged elements still survive (default-include).
+ *   - `exclude`: tagged elements with any matching tag are dropped.
+ *
+ * `exclude` wins over `include` when both match.
+ */
+export interface AudienceProfileTagFilter {
+  include?: string[];
+  exclude?: string[];
+}
+
+/**
+ * Audience-driven projection profile — Epic E9.
+ *
+ * An AudienceProfile is the configuration for a single audience-aware
+ * variant of a document. Given a base `DocumentSchema`, the projector
+ * (`projectDocumentForAudience`) produces a derived schema with:
+ *
+ *   - schema-level scalar overrides (`audience`, `communicationRegister`,
+ *     `density`, `languageStyle`),
+ *   - section / block tag filtering,
+ *   - executive-summary and appendix policies,
+ *   - jargon-policy metadata for downstream rewrite passes.
+ *
+ * The same audience-tag vocabulary is shared across all profiles in an
+ * organization; profiles only differ in which tags they include / exclude
+ * and which scalar overrides they apply.
+ *
+ * Multiple `'active'` AudienceProfiles can coexist per organization (unlike
+ * Brand Voice profiles): a single document is typically projected into
+ * several variants (board + client + engineering) at export time.
+ */
+export interface AudienceProfile {
+  profileId: string;
+  /** Owning organization — `'system'` for built-in seeds. */
+  organizationId: string;
+  name: string;
+  description?: string;
+  status: AudienceProfileStatus;
+  /** Monotonic version string per profile id; bumped on every update. */
+  version: string;
+  /**
+   * Audience labels written into the projected schema's `audience` array.
+   * Empty array → keep the source schema's audience.
+   */
+  audienceLabels: string[];
+  /** Override the source schema's `communicationRegister`. `null`/omitted → inherit. */
+  registerOverride?: CommunicationRegister;
+  /** Override the source schema's `density`. */
+  densityOverride?: DocumentDensity;
+  /** Override the source schema's `languageStyle`. */
+  languageStyleOverride?: DocumentLanguageStyle;
+  /** Section-level audience-tag filter. */
+  sectionFilters: AudienceProfileTagFilter;
+  /** Block-level audience-tag filter (applied within surviving sections). */
+  blockFilters: AudienceProfileTagFilter;
+  executiveSummaryPolicy: AudienceProfileExecutiveSummaryPolicy;
+  appendixPolicy: AudienceProfileAppendixPolicy;
+  jargonPolicy: AudienceProfileJargonPolicy;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  activatedBy?: string;
+  activatedAt?: string;
+  archivedBy?: string;
+  archivedAt?: string;
+}
+
+export interface AudienceProfileDraftInput {
+  name: string;
+  description?: string;
+  audienceLabels?: string[];
+  registerOverride?: CommunicationRegister;
+  densityOverride?: DocumentDensity;
+  languageStyleOverride?: DocumentLanguageStyle;
+  sectionFilters?: AudienceProfileTagFilter;
+  blockFilters?: AudienceProfileTagFilter;
+  executiveSummaryPolicy?: AudienceProfileExecutiveSummaryPolicy;
+  appendixPolicy?: AudienceProfileAppendixPolicy;
+  jargonPolicy?: AudienceProfileJargonPolicy;
+  notes?: string;
+}
+
+export interface AudienceProfileUpdateInput {
+  name?: string;
+  description?: string | null;
+  audienceLabels?: string[];
+  registerOverride?: CommunicationRegister | null;
+  densityOverride?: DocumentDensity | null;
+  languageStyleOverride?: DocumentLanguageStyle | null;
+  sectionFilters?: AudienceProfileTagFilter;
+  blockFilters?: AudienceProfileTagFilter;
+  executiveSummaryPolicy?: AudienceProfileExecutiveSummaryPolicy;
+  appendixPolicy?: AudienceProfileAppendixPolicy;
+  jargonPolicy?: AudienceProfileJargonPolicy;
+  notes?: string | null;
+}
+
+export type AudienceProfileAuditAction =
+  | 'profile_drafted'
+  | 'profile_updated'
+  | 'profile_activated'
+  | 'profile_archived';
+
+export interface AudienceProfileAuditEntry {
+  auditId: string;
+  profileId: string;
+  organizationId: string;
+  action: AudienceProfileAuditAction;
+  actorId: string;
+  occurredAt: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Provenance metadata stamped onto every projected DocumentSchema so a
+ * variant can be traced back to its source artifact and the profile that
+ * produced it. Returned alongside the projected schema by
+ * `projectDocumentForAudience`; not part of the wire-line schema itself
+ * (the projector does not mutate `DocumentSchema` to keep it stable).
+ */
+export interface DocumentVariantProvenance {
+  sourceDocumentId: string;
+  sourceArtifactId: string;
+  profileId: string;
+  profileVersion: string;
+  projectedAt: string;
+  /**
+   * Per-section bookkeeping describing what survived projection. Useful
+   * for explainability ("why is section X missing in the board variant?").
+   */
+  sectionsKept: string[];
+  sectionsDropped: { sectionId: string; reason: string }[];
+  blocksDropped: number;
+}
+
+export interface DocumentVariant {
+  schema: DocumentSchema;
+  provenance: DocumentVariantProvenance;
 }
 
 /** Canonical default consulting formatting schema for Mode 1 (no template). */
