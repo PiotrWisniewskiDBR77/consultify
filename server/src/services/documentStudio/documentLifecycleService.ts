@@ -360,6 +360,79 @@ export function getDocumentLifecycleState(
 }
 
 /**
+ * @internal
+ *
+ * System-driven status mutation that bypasses `ALLOWED_TRANSITIONS`.
+ * Reserved for rollback (Epic E5 Slice 5.3): when an operator rolls a
+ * document back from any state (incl. `published`) to a previous
+ * snapshot, we always reset the live status to `'draft'` so the
+ * editor / reviewer flow restarts cleanly. The audit pump still emits
+ * a `document_status_changed` row, with `details.system: 'rollback'`
+ * so reviewers can distinguish system bypasses from operator-driven
+ * transitions.
+ *
+ * NOT exposed via the studio service public surface; only the
+ * rollback orchestrator imports it.
+ */
+export function __forceTransitionDocumentStatusForRollback(params: {
+  organizationId: string;
+  artifactId: string;
+  userId: string;
+  to: DocumentStatus;
+  reason: string;
+}): DocumentLifecycleState {
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.artifactId) throw new Error('artifactId is required');
+  if (!params.userId) throw new Error('userId is required');
+  if (!isValidDocumentStatus(params.to)) {
+    throw new DocumentLifecycleTransitionError(
+      'unknown_status',
+      `unknown DocumentStatus: ${params.to}`
+    );
+  }
+  const state = lifecycleStore.get(key(params.organizationId, params.artifactId));
+  if (!state) {
+    throw new DocumentLifecycleTransitionError(
+      'unknown_artifact',
+      `no lifecycle state for artifact ${params.artifactId}`
+    );
+  }
+  const now = nowIso();
+  const transition: DocumentLifecycleTransition = {
+    from: state.status,
+    to: params.to,
+    occurredAt: now,
+    actorId: params.userId,
+    reason: params.reason,
+  };
+  const next: DocumentLifecycleState = {
+    ...state,
+    status: params.to,
+    statusChangedAt: now,
+    statusChangedBy: params.userId,
+    statusReason: params.reason,
+    history: [...state.history, transition],
+  };
+  lifecycleStore.set(key(params.organizationId, params.artifactId), next);
+  void persistLifecycleState(next).catch(() => undefined);
+  recordAudit({
+    auditId: makeId('document-audit'),
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    action: 'document_status_changed',
+    actorId: params.userId,
+    occurredAt: now,
+    details: {
+      from: transition.from,
+      to: transition.to,
+      reason: params.reason,
+      system: 'rollback',
+    },
+  });
+  return cloneState(next);
+}
+
+/**
  * Returns the lifecycle status overlay for an artifact, defaulting to
  * `'draft'` when no state exists. Used by `getDocumentArtifact` to
  * project status onto historical schemas that pre-date Epic E5.

@@ -34,6 +34,7 @@ import type {
 } from './documentLifecycleService.js';
 import {
   DocumentLifecycleTransitionError,
+  __forceTransitionDocumentStatusForRollback,
   ensureDocumentLifecycleHydrated,
   getDocumentLifecycleState,
   getDocumentStatusOrDefault,
@@ -87,6 +88,26 @@ const STUDIO_TEMPLATE_ID_METADATA_KEY = 'documentStudioTemplateId';
 const STUDIO_TEMPLATE_VERSION_METADATA_KEY = 'documentStudioTemplateVersion';
 const proposalStore = new Map<string, DocumentEditorProposal>();
 const auditStore = new Map<string, DocumentAuditEntry[]>();
+/**
+ * Per-artifact schema overlay — Epic E5 Slice 5.3.
+ *
+ * Wave5 stores the schema in `artifact.metadata_json` (and a mirror in
+ * `artifact.content_json`), but the wave5 mutation pipeline is
+ * heavyweight (proposal → approval → commit) and not the right shape
+ * for non-content lifecycle operations like rollback. The overlay
+ * holds the live schema in-process; `getDocumentArtifact` consults
+ * the overlay first and falls back to wave5.
+ *
+ * Today only the rollback orchestrator writes here, so existing
+ * proposal-based edits keep flowing through wave5. A follow-up slice
+ * will consolidate proposal commits to also write through here so
+ * subsequent reads reflect the executed proposal.
+ */
+const schemaOverlayStore = new Map<string, DocumentSchema>();
+
+function schemaOverlayKey(artifactId: string, organizationId: string): string {
+  return `${artifactId}::${organizationId}`;
+}
 
 export interface PlanDocumentParams {
   intake: DocumentIntake;
@@ -327,6 +348,23 @@ export async function getDocumentArtifact(
   artifactId: string,
   organizationId: string
 ): Promise<DocumentSchema | null> {
+  // Epic E5 — consult the in-process schema overlay first so callers
+  // see the post-rollback schema even though wave5 still holds the
+  // pre-rollback row. The overlay is tenant-scoped via the composite
+  // key so a cross-tenant request never resolves another tenant's
+  // overlaid schema.
+  const overlay = schemaOverlayStore.get(schemaOverlayKey(artifactId, organizationId));
+  if (overlay) {
+    const lifecycle = getDocumentStatusOrDefault(artifactId, organizationId);
+    return {
+      ...overlay,
+      documentStatus: lifecycle.status,
+      statusChangedAt: lifecycle.statusChangedAt,
+      statusChangedBy: lifecycle.statusChangedBy,
+      statusReason: lifecycle.statusReason,
+    };
+  }
+
   const artifact = await getWave5Artifact(artifactId, organizationId);
   if (!artifact) return null;
 
@@ -1485,6 +1523,188 @@ export async function createDocumentSnapshot(
     reason: params.reason,
     origin: params.origin ?? 'manual',
   });
+}
+
+// =============================================================================
+// Epic E5 — Rollback (slice 5.3). Orchestrates a transactional rollback
+// of a document artifact to a previous snapshot:
+//
+//   1. Resolve the target snapshot (must exist + same tenant).
+//   2. Read the live schema (post-overlay) so the operator never loses
+//      the pre-rollback state.
+//   3. Capture a `rollback_revert` snapshot of the live schema with the
+//      lifecycle status at the time of rollback.
+//   4. Write the target snapshot's schema into the overlay store (the
+//      next `getDocumentArtifact` returns the rolled-back schema).
+//   5. Force lifecycle status to `'draft'` via the rollback bypass so
+//      the editor / reviewer flow restarts cleanly. The matrix is not
+//      consulted — rollback is a system-driven path. The audit row is
+//      tagged with `details.system: 'rollback'`.
+//   6. Record a `document_rolled_back` audit row pointing at the
+//      target versionId, the revert snapshot's versionId, and the
+//      lifecycle status before / after.
+// =============================================================================
+
+export class DocumentRollbackError extends Error {
+  readonly code:
+    | 'invalid_input'
+    | 'snapshot_not_found'
+    | 'document_not_found'
+    | 'tenant_mismatch';
+  constructor(
+    code: 'invalid_input' | 'snapshot_not_found' | 'document_not_found' | 'tenant_mismatch',
+    message: string
+  ) {
+    super(message);
+    this.name = 'DocumentRollbackError';
+    this.code = code;
+  }
+}
+
+export interface RollbackDocumentToVersionParams {
+  organizationId: string;
+  artifactId: string;
+  userId: string;
+  versionId: string;
+  reason?: string;
+}
+
+export interface RollbackDocumentToVersionResult {
+  schema: DocumentSchema;
+  /** Snapshot taken right before the rollback overwrote the live schema. */
+  revertSnapshot: DocumentVersionSnapshot;
+  /** The target snapshot that was restored. */
+  restoredFrom: DocumentVersionSnapshot;
+  /** Lifecycle state after the rollback (status forced to 'draft'). */
+  lifecycle: DocumentLifecycleState;
+}
+
+/**
+ * Restore a previous snapshot as the active schema. Always preserves
+ * the pre-rollback state by writing a `rollback_revert` snapshot
+ * first, so the operator can roll forward again if needed. Forces the
+ * lifecycle status to `'draft'` so the document re-enters the
+ * editor / reviewer flow cleanly.
+ *
+ * Throws `DocumentRollbackError`:
+ *   - 'invalid_input'      — missing required field.
+ *   - 'document_not_found' — wave5 returns null for the artifact.
+ *   - 'snapshot_not_found' — versionId does not resolve to a snapshot
+ *                            (or resolves to a different tenant — same
+ *                            error code so existence is not leaked).
+ *   - 'tenant_mismatch'    — snapshot.artifactId does not match
+ *                            params.artifactId (defense in depth on
+ *                            top of versionIndex tenant scoping).
+ */
+export async function rollbackDocumentToVersion(
+  params: RollbackDocumentToVersionParams
+): Promise<RollbackDocumentToVersionResult> {
+  if (!params.organizationId)
+    throw new DocumentRollbackError('invalid_input', 'organizationId is required');
+  if (!params.artifactId)
+    throw new DocumentRollbackError('invalid_input', 'artifactId is required');
+  if (!params.userId) throw new DocumentRollbackError('invalid_input', 'userId is required');
+  if (!params.versionId)
+    throw new DocumentRollbackError('invalid_input', 'versionId is required');
+
+  const target = getDocumentVersionSnapshot(params.versionId, params.organizationId);
+  if (!target) {
+    throw new DocumentRollbackError(
+      'snapshot_not_found',
+      `snapshot ${params.versionId} not found`
+    );
+  }
+  if (target.artifactId !== params.artifactId) {
+    throw new DocumentRollbackError(
+      'tenant_mismatch',
+      `snapshot ${params.versionId} does not belong to artifact ${params.artifactId}`
+    );
+  }
+
+  const liveSchema = await getDocumentArtifact(params.artifactId, params.organizationId);
+  if (!liveSchema) {
+    throw new DocumentRollbackError(
+      'document_not_found',
+      `document ${params.artifactId} not found`
+    );
+  }
+
+  const lifecycleBefore = getDocumentStatusOrDefault(params.artifactId, params.organizationId);
+
+  // Step 3 — capture pre-rollback state so the rollback is reversible.
+  const revertSnapshot = createDocumentVersionSnapshotInternal({
+    organizationId: params.organizationId,
+    artifactId: params.artifactId,
+    userId: params.userId,
+    schema: liveSchema,
+    statusAtCapture: lifecycleBefore.status,
+    label: `pre-rollback to v${target.versionNumber}`,
+    reason: params.reason,
+    origin: 'rollback_revert',
+  });
+
+  // Step 4 — write the target schema into the overlay so subsequent
+  // reads reflect the rolled-back content. Stamp updatedAt to now so
+  // the UI's last-modified affordance updates correctly.
+  const restoredSchema: DocumentSchema = {
+    ...target.schema,
+    artifactId: params.artifactId,
+    updatedAt: nowIso(),
+  };
+  schemaOverlayStore.set(
+    schemaOverlayKey(params.artifactId, params.organizationId),
+    restoredSchema
+  );
+
+  // Step 5 — force lifecycle to draft via the system bypass. The
+  // bypass emits its own document_status_changed audit entry tagged
+  // with system: 'rollback'.
+  const lifecycle = __forceTransitionDocumentStatusForRollback({
+    organizationId: params.organizationId,
+    artifactId: params.artifactId,
+    userId: params.userId,
+    to: 'draft',
+    reason: `rollback to v${target.versionNumber}`,
+  });
+
+  // Step 6 — high-level rollback audit row. Companion to the system
+  // status change row so reviewers see both the structural rollback
+  // and the lifecycle reset in the timeline.
+  pushAuditEntry({
+    auditId: makeId('doc-audit'),
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    action: 'document_rolled_back',
+    actorId: params.userId,
+    occurredAt: nowIso(),
+    details: {
+      restoredFromVersionId: target.versionId,
+      restoredFromVersionNumber: target.versionNumber,
+      revertSnapshotVersionId: revertSnapshot.versionId,
+      revertSnapshotVersionNumber: revertSnapshot.versionNumber,
+      statusBeforeRollback: lifecycleBefore.status,
+      statusAfterRollback: lifecycle.status,
+      reason: params.reason,
+    },
+  });
+
+  return {
+    schema: {
+      ...restoredSchema,
+      documentStatus: lifecycle.status,
+      statusChangedAt: lifecycle.statusChangedAt,
+      statusChangedBy: lifecycle.statusChangedBy,
+      statusReason: lifecycle.statusReason,
+    },
+    revertSnapshot,
+    restoredFrom: target,
+    lifecycle,
+  };
+}
+
+/** @internal — test helper to clear the schema overlay between specs. */
+export function __resetSchemaOverlayForTests(): void {
+  schemaOverlayStore.clear();
 }
 
 // =============================================================================
