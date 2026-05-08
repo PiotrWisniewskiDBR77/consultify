@@ -116,12 +116,45 @@
  *   GET    /api/document-studio/:artifactId/variants                              — list candidate variants (active profiles + system seeds) with projection plans
  *   GET    /api/document-studio/:artifactId/variants/:profileId                   — projected DocumentSchema + provenance for a single profile
  *
+ * Enterprise Collaboration — Epic E10:
+ *   Approval workflow (multi-reviewer, quorum-driven):
+ *   GET    /api/document-studio/:artifactId/approvals                             — list approvals (status?)
+ *   POST   /api/document-studio/:artifactId/approvals                             — request approval; body: { participants[], quorumPolicy?, reason? }
+ *   GET    /api/document-studio/:artifactId/approvals/active                      — current non-terminal approval or 204 No Content
+ *   GET    /api/document-studio/:artifactId/approvals/:approvalId                 — single approval
+ *   POST   /api/document-studio/:artifactId/approvals/:approvalId/decisions       — record reviewer decision; body: { kind, comment? }
+ *                                                                                    (reviewerId is the authenticated user)
+ *   POST   /api/document-studio/:artifactId/approvals/:approvalId/cancel          — body: { reason? }; only the requester may cancel
+ *   GET    /api/document-studio/:artifactId/approvals/:approvalId/audit           — list audit entries
+ *
+ *   Reusable Content Block library:
+ *   GET    /api/document-studio/content-blocks                                    — list (status?, includeArchived?, documentType?, language?, anyTag?)
+ *   POST   /api/document-studio/content-blocks                                    — draft a new entry
+ *   GET    /api/document-studio/content-blocks/:contentBlockId                    — single entry
+ *   PATCH  /api/document-studio/content-blocks/:contentBlockId                    — partial update (draft + active only)
+ *   POST   /api/document-studio/content-blocks/:contentBlockId/activate           — promote to active (multiple actives allowed)
+ *   POST   /api/document-studio/content-blocks/:contentBlockId/archive            — body: { reason? }; irreversible
+ *   POST   /api/document-studio/content-blocks/:contentBlockId/instantiate        — body: { blockId? }; returns { block, template }
+ *   GET    /api/document-studio/content-blocks/:contentBlockId/audit              — list audit entries
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
 
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  cancelApproval,
+  DocumentApprovalError,
+  type DocumentApprovalErrorCode,
+  ensureApprovalRegistryHydrated,
+  getActiveApprovalForArtifact,
+  getApproval,
+  listDocumentApprovalAuditEntries,
+  listDocumentApprovals,
+  recordApprovalDecision,
+  requestDocumentApproval,
+} from '../services/documentStudio/documentApprovalService.js';
 import {
   activateAudienceProfile,
   archiveAudienceProfile,
@@ -152,6 +185,19 @@ import {
   listBrandVoiceProfiles,
   updateBrandVoiceProfile,
 } from '../services/documentStudio/documentBrandVoiceService.js';
+import {
+  activateDocumentContentBlock,
+  archiveDocumentContentBlock,
+  DocumentContentBlockError,
+  type DocumentContentBlockErrorCode,
+  draftDocumentContentBlock,
+  ensureContentBlockRegistryHydrated,
+  getDocumentContentBlock,
+  instantiateDocumentContentBlock,
+  listDocumentContentBlockAuditEntries,
+  listDocumentContentBlocks,
+  updateDocumentContentBlock,
+} from '../services/documentStudio/documentContentBlockService.js';
 import {
   ingestFileSource,
   ingestIntegrationSource,
@@ -223,8 +269,14 @@ import type {
   BrandVoiceProfileLanguageScope,
   BrandVoiceProfileStatus,
   CommunicationRegister,
+  DocumentApprovalDecisionKind,
+  DocumentApprovalParticipant,
+  DocumentApprovalQuorumPolicy,
+  DocumentApprovalStatus,
+  DocumentBlock,
   DocumentCommentAnchor,
   DocumentCommentStatus,
+  DocumentContentBlockStatus,
   DocumentDensity,
   DocumentEditorProposalInput,
   DocumentIntake,
@@ -232,6 +284,7 @@ import type {
   DocumentOutline,
   DocumentSourceRef,
   DocumentStatus,
+  DocumentTypeKey,
   SourcePackStatus,
   TemplateDraftInput,
 } from '../services/documentStudio/documentStudioTypes.js';
@@ -1710,6 +1763,644 @@ router.get(
     }
     await ensureAudienceProfileRegistryHydrated(organizationId);
     const auditEntries = listAudienceProfileAuditEntries(profileId, organizationId);
+    res.json({ auditEntries });
+  })
+);
+
+// =============================================================================
+// Epic E10 — Reusable Content Block library (CRUD + lifecycle + insert).
+//
+// Top-level under /content-blocks (NOT artifact-scoped) so the route
+// matcher does not collide with /:artifactId. Includes a /instantiate
+// helper that materializes a library entry into a fresh DocumentBlock
+// payload ready to be appended to a section.
+// =============================================================================
+
+const VALID_CONTENT_BLOCK_STATUSES: ReadonlyArray<DocumentContentBlockStatus> = [
+  'draft',
+  'active',
+  'archived',
+];
+
+const VALID_CONTENT_BLOCK_LANGUAGE_SCOPES: ReadonlyArray<'pl' | 'en' | 'all'> = ['pl', 'en', 'all'];
+
+function mapContentBlockErrorToStatus(code: DocumentContentBlockErrorCode): number {
+  switch (code) {
+    case 'invalid_input':
+      return 400;
+    case 'content_block_not_found':
+      return 404;
+    case 'content_block_archived':
+    case 'content_block_already_active':
+    case 'content_block_already_archived':
+      return 409;
+    case 'forbidden':
+      return 403;
+    default:
+      return 400;
+  }
+}
+
+function parseContentBlockLanguageScope(raw: unknown): 'pl' | 'en' | 'all' | undefined {
+  if (typeof raw !== 'string') return undefined;
+  return VALID_CONTENT_BLOCK_LANGUAGE_SCOPES.includes(raw as 'pl' | 'en' | 'all')
+    ? (raw as 'pl' | 'en' | 'all')
+    : undefined;
+}
+
+function parseDocumentTypeArray(raw: unknown): DocumentTypeKey[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw)) return [];
+  const out: DocumentTypeKey[] = [];
+  for (const value of raw) {
+    if (typeof value !== 'string') continue;
+    const trimmed = value.trim();
+    if (trimmed) out.push(trimmed as DocumentTypeKey);
+  }
+  return out;
+}
+
+function parseDocumentBlockPayload(raw: unknown): Omit<DocumentBlock, 'blockId'> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const candidate = raw as { type?: unknown; content?: unknown };
+  if (typeof candidate.type !== 'string') return undefined;
+  return raw as Omit<DocumentBlock, 'blockId'>;
+}
+
+router.get(
+  '/content-blocks',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureContentBlockRegistryHydrated(organizationId);
+    const statusRaw = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const status =
+      statusRaw && VALID_CONTENT_BLOCK_STATUSES.includes(statusRaw as DocumentContentBlockStatus)
+        ? (statusRaw as DocumentContentBlockStatus)
+        : undefined;
+    const includeArchived =
+      req.query.includeArchived === 'true' || req.query.includeArchived === '1';
+    const documentType =
+      typeof req.query.documentType === 'string' && req.query.documentType.trim().length > 0
+        ? (req.query.documentType.trim() as DocumentTypeKey)
+        : undefined;
+    const languageRaw = typeof req.query.language === 'string' ? req.query.language : undefined;
+    const language =
+      languageRaw === 'pl' || languageRaw === 'en' ? (languageRaw as 'pl' | 'en') : undefined;
+    const anyTagRaw = req.query.anyTag;
+    const anyTag = Array.isArray(anyTagRaw)
+      ? anyTagRaw.filter((v): v is string => typeof v === 'string')
+      : typeof anyTagRaw === 'string'
+        ? anyTagRaw
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+        : undefined;
+    const templates = listDocumentContentBlocks(organizationId, {
+      status,
+      includeArchived,
+      documentType,
+      language,
+      anyTag,
+    });
+    res.json({ contentBlocks: templates });
+  })
+);
+
+router.post(
+  '/content-blocks',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const block = parseDocumentBlockPayload(body.block);
+    if (!block) {
+      res.status(400).json({ error: 'invalid_input', message: 'block payload is required' });
+      return;
+    }
+    try {
+      const template = draftDocumentContentBlock({
+        organizationId,
+        userId,
+        input: {
+          name: typeof body.name === 'string' ? body.name : '',
+          description: typeof body.description === 'string' ? body.description : undefined,
+          tags: parseStringArray(body.tags),
+          documentTypes: parseDocumentTypeArray(body.documentTypes),
+          languageScope: parseContentBlockLanguageScope(body.languageScope),
+          block,
+          notes: typeof body.notes === 'string' ? body.notes : undefined,
+        },
+      });
+      res.status(201).json({ contentBlock: template });
+    } catch (err) {
+      if (err instanceof DocumentContentBlockError) {
+        res
+          .status(mapContentBlockErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/content-blocks/:contentBlockId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const contentBlockId = String(req.params.contentBlockId || '');
+    if (!contentBlockId) {
+      res.status(400).json({ error: 'contentBlockId is required' });
+      return;
+    }
+    await ensureContentBlockRegistryHydrated(organizationId);
+    const template = getDocumentContentBlock(contentBlockId, organizationId);
+    if (!template) {
+      res.status(404).json({ error: 'content_block_not_found' });
+      return;
+    }
+    res.json({ contentBlock: template });
+  })
+);
+
+router.patch(
+  '/content-blocks/:contentBlockId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const contentBlockId = String(req.params.contentBlockId || '');
+    if (!contentBlockId) {
+      res.status(400).json({ error: 'contentBlockId is required' });
+      return;
+    }
+    await ensureContentBlockRegistryHydrated(organizationId);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const blockPayload =
+      body.block === undefined ? undefined : parseDocumentBlockPayload(body.block);
+    if (body.block !== undefined && !blockPayload) {
+      res.status(400).json({ error: 'invalid_input', message: 'block payload is invalid' });
+      return;
+    }
+    try {
+      const template = updateDocumentContentBlock({
+        organizationId,
+        userId,
+        contentBlockId,
+        input: {
+          name: typeof body.name === 'string' ? body.name : undefined,
+          description:
+            body.description === null
+              ? null
+              : typeof body.description === 'string'
+                ? body.description
+                : undefined,
+          tags: parseStringArray(body.tags),
+          documentTypes: parseDocumentTypeArray(body.documentTypes),
+          languageScope: parseContentBlockLanguageScope(body.languageScope),
+          block: blockPayload,
+          notes:
+            body.notes === null ? null : typeof body.notes === 'string' ? body.notes : undefined,
+        },
+      });
+      res.json({ contentBlock: template });
+    } catch (err) {
+      if (err instanceof DocumentContentBlockError) {
+        res
+          .status(mapContentBlockErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/content-blocks/:contentBlockId/activate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const contentBlockId = String(req.params.contentBlockId || '');
+    if (!contentBlockId) {
+      res.status(400).json({ error: 'contentBlockId is required' });
+      return;
+    }
+    await ensureContentBlockRegistryHydrated(organizationId);
+    try {
+      const template = activateDocumentContentBlock({
+        organizationId,
+        userId,
+        contentBlockId,
+      });
+      res.json({ contentBlock: template });
+    } catch (err) {
+      if (err instanceof DocumentContentBlockError) {
+        res
+          .status(mapContentBlockErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/content-blocks/:contentBlockId/archive',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const contentBlockId = String(req.params.contentBlockId || '');
+    if (!contentBlockId) {
+      res.status(400).json({ error: 'contentBlockId is required' });
+      return;
+    }
+    await ensureContentBlockRegistryHydrated(organizationId);
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    try {
+      const template = archiveDocumentContentBlock({
+        organizationId,
+        userId,
+        contentBlockId,
+        reason,
+      });
+      res.json({ contentBlock: template });
+    } catch (err) {
+      if (err instanceof DocumentContentBlockError) {
+        res
+          .status(mapContentBlockErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/content-blocks/:contentBlockId/instantiate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const contentBlockId = String(req.params.contentBlockId || '');
+    if (!contentBlockId) {
+      res.status(400).json({ error: 'contentBlockId is required' });
+      return;
+    }
+    await ensureContentBlockRegistryHydrated(organizationId);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const overrideBlockId = typeof body.blockId === 'string' ? body.blockId : undefined;
+    try {
+      const result = instantiateDocumentContentBlock({
+        organizationId,
+        contentBlockId,
+        blockId: overrideBlockId,
+      });
+      res.json(result);
+    } catch (err) {
+      if (err instanceof DocumentContentBlockError) {
+        res
+          .status(mapContentBlockErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/content-blocks/:contentBlockId/audit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const contentBlockId = String(req.params.contentBlockId || '');
+    if (!contentBlockId) {
+      res.status(400).json({ error: 'contentBlockId is required' });
+      return;
+    }
+    await ensureContentBlockRegistryHydrated(organizationId);
+    const auditEntries = listDocumentContentBlockAuditEntries(contentBlockId, organizationId);
+    res.json({ auditEntries });
+  })
+);
+
+// =============================================================================
+// Epic E10 — Approval workflow (multi-reviewer + quorum-driven).
+//
+// All routes are scoped under /:artifactId/approvals/... and registered
+// alongside other /:artifactId/... routes so the path matcher always
+// reaches them BEFORE the generic /:artifactId GET handler near the end
+// of the file.
+// =============================================================================
+
+const VALID_APPROVAL_STATUSES: ReadonlyArray<DocumentApprovalStatus> = [
+  'pending',
+  'approved',
+  'rejected',
+  'changes_requested',
+  'cancelled',
+];
+
+const VALID_APPROVAL_QUORUM_POLICIES: ReadonlyArray<DocumentApprovalQuorumPolicy> = [
+  'unanimous',
+  'majority',
+  'single_approval',
+];
+
+const VALID_APPROVAL_DECISION_KINDS: ReadonlyArray<DocumentApprovalDecisionKind> = [
+  'approve',
+  'reject',
+  'request_changes',
+];
+
+function mapApprovalErrorToStatus(code: DocumentApprovalErrorCode): number {
+  switch (code) {
+    case 'invalid_input':
+      return 400;
+    case 'approval_not_found':
+      return 404;
+    case 'approval_already_open':
+    case 'approval_already_resolved':
+    case 'decision_already_recorded':
+      return 409;
+    case 'reviewer_not_participant':
+    case 'forbidden':
+      return 403;
+    default:
+      return 400;
+  }
+}
+
+function parseApprovalParticipants(raw: unknown): DocumentApprovalParticipant[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DocumentApprovalParticipant[] = [];
+  for (const candidate of raw) {
+    if (!candidate || typeof candidate !== 'object') continue;
+    const c = candidate as { userId?: unknown; role?: unknown; required?: unknown };
+    if (typeof c.userId !== 'string') continue;
+    out.push({
+      userId: c.userId,
+      role: typeof c.role === 'string' ? c.role : undefined,
+      required: c.required !== false,
+    });
+  }
+  return out;
+}
+
+router.get(
+  '/:artifactId/approvals',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const statusRaw = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const status =
+      statusRaw && VALID_APPROVAL_STATUSES.includes(statusRaw as DocumentApprovalStatus)
+        ? (statusRaw as DocumentApprovalStatus)
+        : undefined;
+    const approvals = listDocumentApprovals(organizationId, { artifactId, status });
+    res.json({ approvals });
+  })
+);
+
+router.post(
+  '/:artifactId/approvals',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const participants = parseApprovalParticipants(body.participants);
+    const quorumPolicyRaw = typeof body.quorumPolicy === 'string' ? body.quorumPolicy : undefined;
+    const quorumPolicy =
+      quorumPolicyRaw &&
+      VALID_APPROVAL_QUORUM_POLICIES.includes(quorumPolicyRaw as DocumentApprovalQuorumPolicy)
+        ? (quorumPolicyRaw as DocumentApprovalQuorumPolicy)
+        : undefined;
+    try {
+      const approval = requestDocumentApproval({
+        organizationId,
+        artifactId,
+        userId,
+        participants,
+        quorumPolicy,
+        reason: typeof body.reason === 'string' ? body.reason : undefined,
+      });
+      res.status(201).json({ approval });
+    } catch (err) {
+      if (err instanceof DocumentApprovalError) {
+        res
+          .status(mapApprovalErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/:artifactId/approvals/active',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const active = getActiveApprovalForArtifact(organizationId, artifactId);
+    if (!active) {
+      res.status(204).end();
+      return;
+    }
+    res.json({ approval: active });
+  })
+);
+
+router.get(
+  '/:artifactId/approvals/:approvalId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    const approvalId = String(req.params.approvalId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    if (!approvalId) {
+      res.status(400).json({ error: 'approvalId is required' });
+      return;
+    }
+    await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const approval = getApproval(approvalId, organizationId);
+    if (!approval || approval.artifactId !== artifactId) {
+      res.status(404).json({ error: 'approval_not_found' });
+      return;
+    }
+    res.json({ approval });
+  })
+);
+
+router.post(
+  '/:artifactId/approvals/:approvalId/decisions',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    const approvalId = String(req.params.approvalId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    if (!approvalId) {
+      res.status(400).json({ error: 'approvalId is required' });
+      return;
+    }
+    await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const kindRaw = typeof body.kind === 'string' ? body.kind : '';
+    if (!VALID_APPROVAL_DECISION_KINDS.includes(kindRaw as DocumentApprovalDecisionKind)) {
+      res
+        .status(400)
+        .json({ error: 'invalid_input', message: `unsupported decision kind: ${kindRaw}` });
+      return;
+    }
+    try {
+      const approval = recordApprovalDecision({
+        organizationId,
+        approvalId,
+        reviewerId: userId,
+        kind: kindRaw as DocumentApprovalDecisionKind,
+        comment: typeof body.comment === 'string' ? body.comment : undefined,
+      });
+      res.status(201).json({ approval });
+    } catch (err) {
+      if (err instanceof DocumentApprovalError) {
+        res
+          .status(mapApprovalErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/:artifactId/approvals/:approvalId/cancel',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    const approvalId = String(req.params.approvalId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    if (!approvalId) {
+      res.status(400).json({ error: 'approvalId is required' });
+      return;
+    }
+    await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    try {
+      const approval = cancelApproval({
+        organizationId,
+        approvalId,
+        userId,
+        reason,
+      });
+      res.json({ approval });
+    } catch (err) {
+      if (err instanceof DocumentApprovalError) {
+        res
+          .status(mapApprovalErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/:artifactId/approvals/:approvalId/audit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    const approvalId = String(req.params.approvalId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    if (!approvalId) {
+      res.status(400).json({ error: 'approvalId is required' });
+      return;
+    }
+    await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const auditEntries = listDocumentApprovalAuditEntries(approvalId, organizationId);
     res.json({ auditEntries });
   })
 );
