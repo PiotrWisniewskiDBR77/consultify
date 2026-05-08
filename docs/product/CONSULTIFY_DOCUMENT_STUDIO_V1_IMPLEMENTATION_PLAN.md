@@ -532,6 +532,74 @@ Error mapping (`mapBrandVoiceErrorToStatus`): 400 `invalid_input`; 403 `forbidde
 
 ---
 
+## 6.10 Epic E8 — Advanced DOCX (MVP-4)
+
+Epic E8 lifts the DOCX export from "real .docx file" (MVP-1 finalization) to "consulting-grade Word deliverable that survives open/close in Word + Pages + LibreOffice with the outline, TOC, captions, footnotes, and appendix numbering Word reviewers expect." The PDF renderer follows the same structural contract so the print artifact mirrors the editable artifact.
+
+### 6.10.1 Slice 8.1 — Word styles per formatting class (commit `4516d96da`)
+
+- New `documentDocxStyles.ts` resolves a `FormattingClass` (`executive` / `professional` / `narrative` / `legal`) from the schema's `communicationRegister` × `languageStyle`, and emits a Word-styles config (`paragraphStyles[]`) under stable ids: `DocStudioTitle`, `Subtitle`, `Heading1..3`, `BodyText`, `BlockQuote`, `Caption`, `DocStudioFootnote`, `AssumptionBody`, `Callout`, `SourceList`, `TOCHeading`. `Title` and `FootnoteText` are renamed out of Word's reserved namespace because `docx@9.5.1` merges those built-ins with run-property defaults that strip our font/color/bold.
+- `documentDocxRenderer.ts` threads a `RenderContext` (resolved class + fonts) through every block helper and tags every emitted `Paragraph` with a `style: DOCX_STYLE_IDS.*` id. Headings keep the semantic `heading: HeadingLevel.HEADING_X` annotation alongside the named style so Word's outline level resolves correctly.
+- New tests:
+    - `documentDocxStyles.test.ts` (13 specs): class resolver matrix, font normalization, full style-id surface, exec-vs-legal size ordering, human-readable `describeFormattingDecision` output.
+    - `documentDocxRenderer.test.ts` (6 specs): real .docx round-trip via JSZip; `word/styles.xml` contains every renderer-referenced style id; `word/document.xml` references `BodyText`, `Heading1`, `BlockQuote`, `Callout`, `DocStudioTitle`, `Subtitle`.
+
+### 6.10.2 Slice 8.2 — TOC + cover page break + appendix labelling (commit `80f740682`)
+
+- New optional `DocumentSection.kind?: 'body' | 'appendix'` (additive type; pre-E8 schemas keep working). Renderer auto-detects appendices by EN/PL title prefix when `kind` is absent (`Appendix`, `Annex`, `Załącznik`, `Zalacznik`).
+- New `documentDocxStructure.ts` exposes pure helpers consumed by both renderers:
+    - `isAppendixSection(section)` — explicit kind + title-prefix heuristic.
+    - `partitionSections(sections)` — body + appendix groups, intra-group order preserved, appendices always trail.
+    - `formatBodyHeading(section, idx)` — Arabic numbering.
+    - `formatAppendixHeading(section, idx, formatting)` — lettered (`Appendix A — title`) / numbered (`Appendix 1 — title`) / none, idempotent for already-prefixed titles.
+    - `letterForIndex(n)` — spreadsheet-style sequence beyond Z (AA, AB, …).
+    - `planSectionHeadings(sections, formatting)` — full audit plan used by tests + the PDF TOC renderer.
+- DOCX renderer additions:
+    - Hard `PageBreak` at the end of the cover block so the cover lives on its own page.
+    - Real Word `TableOfContents` field (with `hyperlink: true`, `headingStyleRange: '1-3'`) under a `TOCHeading`-styled paragraph when `formattingSchema.toc === true`, followed by another page break so body content lands on a fresh page.
+    - Body sections rendered with Arabic numbering, appendices under the configured `appendixStyle`, and a forced page break before the FIRST appendix only (subsequent appendices flow naturally so two short appendices do not waste a page each).
+- New tests:
+    - `documentDocxStructure.test.ts` (16 specs): appendix detection (explicit kind + EN/PL prefixes), partitioning order, body numbering, lettered/numbered/none labelling, idempotency, letter beyond Z, plan output.
+    - Extended `documentDocxRenderer.test.ts` with 5 new specs (now 11 total): TOC field present when toc=true, absent when toc=false; hard page break in cover; appendix lettering ordering vs body numbering; Arabic-digit appendix labelling under "numbered" scheme.
+
+### 6.10.3 Slice 8.3 — Captions, footnotes, citation markers (commit `ee985d290`)
+
+- `RenderContext` now carries mutable per-render registries: `tableCounter`, `figureCounter`, `nextFootnoteId`, `footnotes: Map<id, paragraphs>`, and a `sourceRefIndex: Map<key, 1-based-index>` keyed by `${sourceType}::${sourceId}`. The final `Document({ footnotes })` is populated only when the registry has user-supplied entries.
+- `block.sourceRef` on paragraph / quote / table blocks renders a citation marker per `formattingSchema.citationStyle`:
+    - `'inline_marker'` → ` [N]` indexed against `schema.sourceRefs`.
+    - `'footnote'` and `'endnote'` (folded into footnote semantics for MVP-4) → register a Word footnote body (`Source: <type>#<id> — <title>`) and emit a `FootnoteReferenceRun`.
+- Tables auto-emit a `Table N — caption` paragraph in the `Caption` named style; counter is renderer-scoped so two tables across different sections become "Table 1" / "Table 2". Same pattern for `image` blocks → `Figure N — caption` (with a placeholder paragraph preceding the caption while image embedding remains deferred).
+- `block.type === 'footnote'` registers `block.content.text` in the footnote registry and emits an inline `Note <ref>` paragraph so Word's footnote pane links the body to a specific spot. Empty footnote blocks are skipped (no id allocation, no orphan body).
+- New `documentDocxCaptionsFootnotes.test.ts` (9 specs): table caption auto-numbering with + without schema caption, figure captions, inline-marker citations, footnote-style citations, endnote→footnote folding, footnote block round-trip through `word/footnotes.xml`, empty footnote skip, unique id allocation across multiple notes.
+
+### 6.10.4 Slice 8.4 — PDF parity (commit `2863533fd`)
+
+- `documentPdfRenderer.ts` now mirrors the DOCX renderer's structural contract:
+    - `PdfRenderContext` resolves the formatting class via `resolveFormattingClass`, owns per-render caption + footnote counters, and the source-ref citation index. Sizes per class live in `PDF_SIZING_BY_CLASS` (executive 28pt title / professional 24pt / narrative 24pt / legal 20pt).
+    - All `draw*` helpers now take `PdfRenderContext`. Headings honor a per-class size triple; `drawHeading` accepts an optional `pageBreakBefore` so the appendix block opens on a fresh page (first appendix only — subsequent appendices flow naturally, matching the DOCX renderer).
+    - `drawTableOfContents` renders the body+appendix heading list under a `Table of Contents` heading + page break when `formattingSchema.toc === true`; reuses `planSectionHeadings` so DOCX + PDF agree on the listing.
+    - Section rendering uses `partitionSections` + `formatBodyHeading` / `formatAppendixHeading` (shared with DOCX). Body sections receive Arabic numbering; appendices follow `appendixStyle` (lettered / numbered / none).
+    - Captions: tables auto-emit `Table N — caption` lines under the caption font size; images render as `Figure N — caption` placeholders.
+    - Citations: `inline_marker` appends ` [N]` markers; `footnote`/`endnote` append a `^N` anchor and route the source description into a Notes appendix emitted at the end of the document. `block.type === 'footnote'` registers `block.content.text` in the Notes appendix and emits a `Note ^N` anchor in body text.
+    - PDF Subject metadata embeds the resolved formatting class (`<documentType> · <formattingClass>`).
+- New `documentPdfRendererParity.test.ts` (10 specs) using `pdf-parse` to extract page text rather than substring-matching the compressed buffer: valid PDF magic + title; lettered + numbered appendix labelling; TOC presence/absence; Table N / Figure N caption auto-numbering; inline-marker vs footnote-style citations; Notes appendix on footnote blocks; formatting class in PDF metadata.
+
+### 6.10.5 Validation summary
+
+- Document Studio scope: **43 files / 419 specs**, all green.
+- `npx tsc --noEmit -p .` clean across the full server tsconfig.
+- `npx eslint` clean for the renderers + new tests (the single pre-existing `no-useless-escape` warning in `documentQaService.ts` is from Recovery Sprint 6 — out of scope; flagged in `6.5 Recovery Sprints` and unchanged here).
+- Backward-compatible additive type: pre-E8 schemas without `DocumentSection.kind` continue to render correctly; existing `documentStudioExport.test.ts` (DOCX ZIP magic + PDF magic + manifest pendingRendering removal) continues to pass without modification.
+- **Deferred to follow-up slices** (intentional, called out so they do not get re-discovered as gaps):
+    - Word's `compatabilityModeVersion` + `updateFields` features (today the TOC field is functional but Word displays "Update field" the first time the file is opened; setting `features.updateFields` would make Word auto-populate on open at the cost of a noisy diff).
+    - Image asset embedding (today: Figure-N captions stand alone with a `[Figure N placeholder — image asset not yet embedded]` line; embedding via `ImageRun` requires a `block.content.url` resolver against an asset store, which lands when the source-pack image asset connector ships).
+    - Native bottom-of-page footnote positioning in PDF (today: footnotes route to a Notes appendix; native bottom-of-page is a pdfkit-level layout concern requiring two-pass rendering).
+    - Pixel-stable golden DOCX/PDF corpus (today: structural assertions via `JSZip` for DOCX and `pdf-parse` for PDF; visual regressions still require manual review).
+    - Frontend rendering of the new structural decisions in the in-app preview (today: server-only; the preview surface needs to mirror the cover page break + TOC field at a future slice).
+    - Format QA + Export QA hardening for the new appendix/caption/citation surface — covered structurally by the new tests but not yet expressed as new QA category check codes.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
