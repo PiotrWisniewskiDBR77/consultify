@@ -1,6 +1,6 @@
 # EPIC-T16 — Unified Executive Module Layout (Tabele lane)
 
-**Status:** `IN PROGRESS — D1..D5 (foundations + Tabele lane components + adapter behind isMelsTabeleEnabled) LANDED 2026-05-08; D6..D9 (help modal, drag handle, visual review, hex scan, TabeleView swap) pending`
+**Status:** `IN PROGRESS — D1..D5 + TabeleView swap behind isMelsTabeleEnabled LANDED 2026-05-08; D6..D9 (help modal, drag handle, visual review, hex scan) pending`
 **Block:** A (Template Catalog) of `tabele-full-product` program.
 **Driver:** User-supplied UX directive on 2026-05-08 — converge executive modules (Wordy / Tabele / Prezentacje) on a single layout patterned after `DeckBuilder` (Prezentacje).
 **Standard:** `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md` (MELS).
@@ -270,3 +270,42 @@ Cumulative: **63/63 unit tests green**, 0 linter errors, 0 raw hex literals.
 - **T16-D7** — Width-resize drag handle UX.
 - **T16-D8 / D9** — Visual review screenshots + DBR77 hex scan acceptance gate.
 - **Foundation Block E2E re-run** — artifact open / Source Pack click-through / governance verdict — both flag-OFF (legacy) and flag-ON (MELS) paths.
+
+---
+
+## Update — 2026-05-08 — T16-S4a — TabeleView lane swap landed (behind kill-switch)
+
+**Sprint:** EPIC-T16-S4a (TabeleView conditional, < 30 LOC).
+**Decision (CTO):** Land the conditional that branches `<TabeleView>` between the legacy `<KimiWorkspaceShell>` and the new `<TabeleMelsView>`, gated by `isMelsTabeleEnabled()`. Flag default stays OFF, so production traffic keeps the legacy shell. Visual review + DBR77 hex scan + width-resize drag UX remain in S4b for the final acceptance gate.
+
+### Deliverables landed
+
+- ✅ **`TabeleView.tsx` conditional**:
+  - Imported `isMelsTabeleEnabled` and `TabeleMelsView`.
+  - When the flag is ON, narrows `effectivePreview` to the `tabele` discriminated union and mounts `<TabeleMelsView>` with the existing handlers (`handleAllFiles` → Share, `handlePreviewFile` → Run / RunPrimary).
+  - When the flag is OFF, the legacy `<KimiWorkspaceShell lane="tabele">` mount stays untouched, preserving the Foundation Block control flow.
+  - Diff is < 30 LOC (one import block + one early-return branch).
+
+### Tests landed (2/2 green; 65/65 cumulative)
+
+- `src/components/AIChat/KimiWorkspace/__tests__/TabeleView.melsRouting.test.tsx` (2 tests, jsdom):
+  - Flag OFF → legacy `<KimiWorkspaceShell>` mounts.
+  - Flag ON → `<TabeleMelsView>` mounts.
+- Heavy collaborators (`useKimiArtifactPipeline`, stores, API layer, child views) are mocked so the test only exercises the routing logic introduced in this commit.
+- Pipeline regression suite (`useKimiArtifactPipeline.test.ts`, 7 tests) re-run green — the lane swap does NOT touch pipeline state.
+
+### What did NOT change
+
+- Legacy `<KimiWorkspaceShell>` callers (Wordy, Excele, Prezentacje) — unchanged.
+- `useKimiArtifactPipeline` and related stores — unchanged.
+- ArtifactModuleHome (lane=tabele) routing for `showHome=true` — unchanged.
+
+### Deferred to EPIC-T16-S4b (final acceptance gate)
+
+- **T16-D6** — Help-modal listing for shortcut display strings.
+- **T16-D7** — Width-resize drag handle UX (state + clamping shipped in S1; only pointer logic + visual handle remain).
+- **T16-D8** — Visual review screenshots, side-by-side vs DeckBuilder reference (≤ 10 % shape deviation per § 6).
+- **T16-D9** — DBR77 hex scan: 0 raw hex literals across the shell + tabeleShell folders.
+- **Foundation Block E2E re-run** — both flag-OFF (legacy) and flag-ON (MELS) paths must pass artifact open / Source Pack click-through / governance verdict specs.
+
+The flag stays OFF by default until S4b acceptance is signed off; flipping to ON in staging is a single localStorage entry (`ff.mels_tabele=1`) or query string (`?ff_melsTabele=1`).

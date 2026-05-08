@@ -16,9 +16,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { downloadTabeleArtifactCsv, openTableBuilderInNewTab } from '@/utils/tabeleArtifactOpen';
 
+import { isMelsTabeleEnabled } from '@/utils/melsTabeleFlag';
+
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
+import { TabeleMelsView } from './tabeleShell/TabeleMelsView';
 import { TABELE_SYSTEM_PROMPT } from './tabeleSystemPrompt';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 
@@ -419,6 +422,23 @@ export const TabeleView: React.FC = () => {
 
   if (showHome) {
     return <ArtifactModuleHome lane="tabele" />;
+  }
+
+  if (isMelsTabeleEnabled()) {
+    const tabelePreview =
+      effectivePreview && effectivePreview.type === 'tabele'
+        ? (effectivePreview as ArtifactPreview & { type: 'tabele' })
+        : null;
+    return (
+      <TabeleMelsView
+        preview={tabelePreview}
+        topBarHandlers={{
+          onShare: handleAllFiles,
+          onRun: handlePreviewFile,
+        }}
+        onRunPrimary={handlePreviewFile}
+      />
+    );
   }
 
   return (
