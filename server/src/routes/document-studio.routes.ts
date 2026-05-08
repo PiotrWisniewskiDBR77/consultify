@@ -105,12 +105,40 @@
  *   POST   /api/document-studio/brand-voice/profiles/:profileId/archive           — body: { reason? }; irreversible
  *   GET    /api/document-studio/brand-voice/profiles/:profileId/audit             — list audit entries
  *
+ * Audience-driven warianty — Epic E9:
+ *   GET    /api/document-studio/audience-profiles                                 — list profiles (status?, includeArchived?, includeSystem?)
+ *   POST   /api/document-studio/audience-profiles                                 — draft a new profile (forbidden under 'system' org)
+ *   GET    /api/document-studio/audience-profiles/:profileId                      — single profile (tenant + system seeds visible)
+ *   PATCH  /api/document-studio/audience-profiles/:profileId                      — partial update (draft + active only; system seeds immutable)
+ *   POST   /api/document-studio/audience-profiles/:profileId/activate             — promote to active (multiple actives allowed; system seeds rejected)
+ *   POST   /api/document-studio/audience-profiles/:profileId/archive              — body: { reason? }; irreversible (system seeds rejected)
+ *   GET    /api/document-studio/audience-profiles/:profileId/audit                — list audit entries
+ *   GET    /api/document-studio/:artifactId/variants                              — list candidate variants (active profiles + system seeds) with projection plans
+ *   GET    /api/document-studio/:artifactId/variants/:profileId                   — projected DocumentSchema + provenance for a single profile
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
  */
 
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  activateAudienceProfile,
+  archiveAudienceProfile,
+  AudienceProfileError,
+  type AudienceProfileErrorCode,
+  draftAudienceProfile,
+  ensureAudienceProfileRegistryHydrated,
+  getAudienceProfile,
+  listActiveAudienceProfiles,
+  listAudienceProfileAuditEntries,
+  listAudienceProfiles,
+  updateAudienceProfile,
+} from '../services/documentStudio/documentAudienceProfileService.js';
+import {
+  describeAudienceProjectionPlan,
+  projectDocumentForAudience,
+} from '../services/documentStudio/documentAudienceProjector.js';
 import {
   activateBrandVoiceProfile,
   archiveBrandVoiceProfile,
@@ -186,14 +214,21 @@ import {
   transitionDocumentStatus,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
+  AudienceProfileAppendixPolicy,
+  AudienceProfileExecutiveSummaryPolicy,
+  AudienceProfileJargonPolicy,
+  AudienceProfileStatus,
+  AudienceProfileTagFilter,
   BrandVoiceGlossaryEntry,
   BrandVoiceProfileLanguageScope,
   BrandVoiceProfileStatus,
   CommunicationRegister,
   DocumentCommentAnchor,
   DocumentCommentStatus,
+  DocumentDensity,
   DocumentEditorProposalInput,
   DocumentIntake,
+  DocumentLanguageStyle,
   DocumentOutline,
   DocumentSourceRef,
   DocumentStatus,
@@ -1317,6 +1352,369 @@ router.get(
 );
 
 // =============================================================================
+// Epic E9 — Audience-driven warianty.
+//
+// AudienceProfile CRUD + lifecycle routes follow the brand-voice contract.
+// Variant projection routes (/:artifactId/variants/...) are registered in
+// the Epic E5/E6 block below alongside other /:artifactId/... routes so
+// the path matcher always reaches them before the generic /:artifactId.
+// =============================================================================
+
+const VALID_AUDIENCE_PROFILE_STATUSES: ReadonlyArray<AudienceProfileStatus> = [
+  'draft',
+  'active',
+  'archived',
+];
+
+const VALID_AUDIENCE_REGISTERS: ReadonlyArray<CommunicationRegister> = [
+  'executive',
+  'professional',
+  'technical',
+  'narrative',
+];
+
+const VALID_AUDIENCE_DENSITIES: ReadonlyArray<DocumentDensity> = [
+  'concise',
+  'standard',
+  'detailed',
+  'comprehensive',
+];
+
+const VALID_AUDIENCE_LANGUAGE_STYLES: ReadonlyArray<DocumentLanguageStyle> = [
+  'formal',
+  'consulting',
+  'legal',
+  'narrative',
+];
+
+const VALID_AUDIENCE_EXEC_SUMMARY_POLICIES: ReadonlyArray<AudienceProfileExecutiveSummaryPolicy> = [
+  'preserve',
+  'expand',
+  'drop',
+];
+
+const VALID_AUDIENCE_APPENDIX_POLICIES: ReadonlyArray<AudienceProfileAppendixPolicy> = [
+  'preserve',
+  'drop',
+];
+
+const VALID_AUDIENCE_JARGON_POLICIES: ReadonlyArray<AudienceProfileJargonPolicy> = [
+  'as_is',
+  'plain_language',
+];
+
+function mapAudienceProfileErrorToStatus(code: AudienceProfileErrorCode): number {
+  switch (code) {
+    case 'invalid_input':
+      return 400;
+    case 'profile_not_found':
+      return 404;
+    case 'profile_archived':
+    case 'profile_already_active':
+    case 'profile_already_archived':
+      return 409;
+    case 'system_profile_immutable':
+    case 'forbidden':
+      return 403;
+    default:
+      return 400;
+  }
+}
+
+function parseAudienceRegister(raw: unknown): CommunicationRegister | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  if (typeof raw !== 'string') return undefined;
+  return VALID_AUDIENCE_REGISTERS.includes(raw as CommunicationRegister)
+    ? (raw as CommunicationRegister)
+    : undefined;
+}
+
+function parseAudienceDensity(raw: unknown): DocumentDensity | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  if (typeof raw !== 'string') return undefined;
+  return VALID_AUDIENCE_DENSITIES.includes(raw as DocumentDensity)
+    ? (raw as DocumentDensity)
+    : undefined;
+}
+
+function parseAudienceLanguageStyle(raw: unknown): DocumentLanguageStyle | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  if (typeof raw !== 'string') return undefined;
+  return VALID_AUDIENCE_LANGUAGE_STYLES.includes(raw as DocumentLanguageStyle)
+    ? (raw as DocumentLanguageStyle)
+    : undefined;
+}
+
+function parseAudienceExecutiveSummaryPolicy(
+  raw: unknown
+): AudienceProfileExecutiveSummaryPolicy | undefined {
+  if (typeof raw !== 'string') return undefined;
+  return VALID_AUDIENCE_EXEC_SUMMARY_POLICIES.includes(raw as AudienceProfileExecutiveSummaryPolicy)
+    ? (raw as AudienceProfileExecutiveSummaryPolicy)
+    : undefined;
+}
+
+function parseAudienceAppendixPolicy(raw: unknown): AudienceProfileAppendixPolicy | undefined {
+  if (typeof raw !== 'string') return undefined;
+  return VALID_AUDIENCE_APPENDIX_POLICIES.includes(raw as AudienceProfileAppendixPolicy)
+    ? (raw as AudienceProfileAppendixPolicy)
+    : undefined;
+}
+
+function parseAudienceJargonPolicy(raw: unknown): AudienceProfileJargonPolicy | undefined {
+  if (typeof raw !== 'string') return undefined;
+  return VALID_AUDIENCE_JARGON_POLICIES.includes(raw as AudienceProfileJargonPolicy)
+    ? (raw as AudienceProfileJargonPolicy)
+    : undefined;
+}
+
+function parseAudienceTagFilter(raw: unknown): AudienceProfileTagFilter | undefined {
+  if (raw === undefined) return undefined;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const candidate = raw as { include?: unknown; exclude?: unknown };
+  return {
+    include: parseStringArray(candidate.include),
+    exclude: parseStringArray(candidate.exclude),
+  };
+}
+
+router.get(
+  '/audience-profiles',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    const statusRaw = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const status =
+      statusRaw && VALID_AUDIENCE_PROFILE_STATUSES.includes(statusRaw as AudienceProfileStatus)
+        ? (statusRaw as AudienceProfileStatus)
+        : undefined;
+    const includeArchived =
+      req.query.includeArchived === 'true' || req.query.includeArchived === '1';
+    const includeSystem = !(req.query.includeSystem === 'false' || req.query.includeSystem === '0');
+    const profiles = listAudienceProfiles(organizationId, {
+      status,
+      includeArchived,
+      includeSystem,
+    });
+    res.json({ profiles });
+  })
+);
+
+router.post(
+  '/audience-profiles',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const profile = draftAudienceProfile({
+        organizationId,
+        userId,
+        input: {
+          name: typeof body.name === 'string' ? body.name : '',
+          description: typeof body.description === 'string' ? body.description : undefined,
+          audienceLabels: parseStringArray(body.audienceLabels),
+          registerOverride:
+            parseAudienceRegister(body.registerOverride) === null
+              ? undefined
+              : (parseAudienceRegister(body.registerOverride) as CommunicationRegister | undefined),
+          densityOverride:
+            parseAudienceDensity(body.densityOverride) === null
+              ? undefined
+              : (parseAudienceDensity(body.densityOverride) as DocumentDensity | undefined),
+          languageStyleOverride:
+            parseAudienceLanguageStyle(body.languageStyleOverride) === null
+              ? undefined
+              : (parseAudienceLanguageStyle(body.languageStyleOverride) as
+                  | DocumentLanguageStyle
+                  | undefined),
+          sectionFilters: parseAudienceTagFilter(body.sectionFilters),
+          blockFilters: parseAudienceTagFilter(body.blockFilters),
+          executiveSummaryPolicy: parseAudienceExecutiveSummaryPolicy(body.executiveSummaryPolicy),
+          appendixPolicy: parseAudienceAppendixPolicy(body.appendixPolicy),
+          jargonPolicy: parseAudienceJargonPolicy(body.jargonPolicy),
+          notes: typeof body.notes === 'string' ? body.notes : undefined,
+        },
+      });
+      res.status(201).json({ profile });
+    } catch (err) {
+      if (err instanceof AudienceProfileError) {
+        res
+          .status(mapAudienceProfileErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/audience-profiles/:profileId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    const profile = getAudienceProfile(profileId, organizationId);
+    if (!profile) {
+      res.status(404).json({ error: 'profile_not_found' });
+      return;
+    }
+    res.json({ profile });
+  })
+);
+
+router.patch(
+  '/audience-profiles/:profileId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const profile = updateAudienceProfile({
+        organizationId,
+        userId,
+        profileId,
+        input: {
+          name: typeof body.name === 'string' ? body.name : undefined,
+          description:
+            body.description === null
+              ? null
+              : typeof body.description === 'string'
+                ? body.description
+                : undefined,
+          audienceLabels: parseStringArray(body.audienceLabels),
+          registerOverride: parseAudienceRegister(body.registerOverride),
+          densityOverride: parseAudienceDensity(body.densityOverride),
+          languageStyleOverride: parseAudienceLanguageStyle(body.languageStyleOverride),
+          sectionFilters: parseAudienceTagFilter(body.sectionFilters),
+          blockFilters: parseAudienceTagFilter(body.blockFilters),
+          executiveSummaryPolicy: parseAudienceExecutiveSummaryPolicy(body.executiveSummaryPolicy),
+          appendixPolicy: parseAudienceAppendixPolicy(body.appendixPolicy),
+          jargonPolicy: parseAudienceJargonPolicy(body.jargonPolicy),
+          notes:
+            body.notes === null ? null : typeof body.notes === 'string' ? body.notes : undefined,
+        },
+      });
+      res.json({ profile });
+    } catch (err) {
+      if (err instanceof AudienceProfileError) {
+        res
+          .status(mapAudienceProfileErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/audience-profiles/:profileId/activate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    try {
+      const profile = activateAudienceProfile({ organizationId, userId, profileId });
+      res.json({ profile });
+    } catch (err) {
+      if (err instanceof AudienceProfileError) {
+        res
+          .status(mapAudienceProfileErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/audience-profiles/:profileId/archive',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    try {
+      const profile = archiveAudienceProfile({ organizationId, userId, profileId, reason });
+      res.json({ profile });
+    } catch (err) {
+      if (err instanceof AudienceProfileError) {
+        res
+          .status(mapAudienceProfileErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/audience-profiles/:profileId/audit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const profileId = String(req.params.profileId || '');
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    const auditEntries = listAudienceProfileAuditEntries(profileId, organizationId);
+    res.json({ auditEntries });
+  })
+);
+
+// =============================================================================
 // Epic E5 — Document Lifecycle (status mutation + version snapshot +
 // rollback). All routes are scoped under /:artifactId/... and registered
 // before the generic /:artifactId GET handler so the path matcher always
@@ -1824,6 +2222,78 @@ router.delete(
       logger.warn('[DocumentStudio] delete comment failed', { message });
       res.status(500).json({ error: 'delete_comment_failed', message });
     }
+  })
+);
+
+// =============================================================================
+// Epic E9 — Audience-driven warianty: variant projection routes.
+//
+// Registered alongside other /:artifactId/... routes so the path matcher
+// always reaches them BEFORE the generic /:artifactId GET handler below.
+//
+// Both routes are read-only projections of the source DocumentSchema —
+// they do not run QA on the variant nor mutate the underlying artifact.
+// =============================================================================
+
+router.get(
+  '/:artifactId/variants',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
+    const profiles = listActiveAudienceProfiles(organizationId, { includeSystem: true });
+    const variants = profiles.map((profile) => ({
+      profile,
+      plan: describeAudienceProjectionPlan(schema, profile),
+    }));
+    res.json({ variants });
+  })
+);
+
+router.get(
+  '/:artifactId/variants/:profileId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    const profileId = String(req.params.profileId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    if (!profileId) {
+      res.status(400).json({ error: 'profileId is required' });
+      return;
+    }
+    await ensureAudienceProfileRegistryHydrated(organizationId);
+    const profile = getAudienceProfile(profileId, organizationId);
+    if (!profile) {
+      res.status(404).json({ error: 'profile_not_found' });
+      return;
+    }
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
+    const variant = projectDocumentForAudience(schema, profile);
+    res.json({ variant });
   })
 );
 
