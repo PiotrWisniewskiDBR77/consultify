@@ -1,6 +1,6 @@
 # EPIC-T16 — Unified Executive Module Layout (Tabele lane)
 
-**Status:** `PLANNED — added 2026-05-08`
+**Status:** `IN PROGRESS — D1 + D2 (foundations) LANDED 2026-05-08; D3..D9 follow-up sprints pending`
 **Block:** A (Template Catalog) of `tabele-full-product` program.
 **Driver:** User-supplied UX directive on 2026-05-08 — converge executive modules (Wordy / Tabele / Prezentacje) on a single layout patterned after `DeckBuilder` (Prezentacje).
 **Standard:** `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md` (MELS).
@@ -114,3 +114,52 @@ Rationale: A-S4 already touches `TabeleArtifactView`, A-S5 already adds new fiel
 - F-LAYOUT-3: Promote `ExecutiveModuleShell` to design-system package (post-MVP).
 
 These follow-ups are queued for the `executive-layout-unification` follow-up program and are NOT acceptance criteria for the current program.
+
+---
+
+## Update — 2026-05-08 — T16-D1 + T16-D2 (foundations) landed
+
+**Sprint:** EPIC-T16-S1 (foundations).
+**Decision (CTO):** Land the shared shell + state machinery as a standalone, side-effect-free package first, then drive Tabele migration in EPIC-T16-S2 with a minimal-diff `TabeleArtifactView` swap. Wordy / Prezentacje migrations remain out of scope per § Non-goals.
+
+### Deliverables landed
+
+- ✅ **T16-D1 — `ExecutiveModuleShell` package**:
+  - `consultify/src/components/shared/ExecutiveModuleShell/index.tsx` — composed three-zone layout (TopBar + LeftRail + Canvas + RightRail).
+  - `TopBar.tsx` — single 56 px row, MELS-ordered chip strip, presence slot, editable title, back arrow. **No second toolbar row.**
+  - `LeftRail.tsx` — outline / item-list rail with mandatory collapse toggle, optional `toolsSlot` (sort/filter/search), optional Teresa AI `bottomSlot` (96..192 px).
+  - `RightRail.tsx` — 56 px icon strip + 320..560 px expanded panel; mutually exclusive tools; collapsible to 16 px sliver.
+  - `ChipDescriptor.ts` — `TopBarChipDescriptor` shape + `MELS_CHIP_ORDER` constant + `sortChipsByMelsOrder` utility.
+  - `shortcuts.ts` — `buildMelsShortcuts` + `useMelsShortcuts` for `⌘\\`, `⌘/`, `⌘K`, `⌘↵`, `⌘⇧A`. Editable-field guard included.
+- ✅ **T16-D2 — `useRailState` (foundations subset of D7)**:
+  - `useRailState.ts` — collapse + width state; clamps widths to `RAIL_WIDTH_BOUNDS` (left 200..480 px, right 320..560 px); persists to `localStorage` under `mels.rail.{moduleKey}`; SSR-safe; `ephemeral` opt-out for tests / embedded contexts.
+
+### Tests landed (22/22 green)
+
+- `__tests__/useRailState.test.ts` (10 tests) — defaults, toggles, clamping, persistence, restoration, ephemeral, namespacing per moduleKey, resetToDefaults.
+- `__tests__/shortcuts.test.ts` (6 tests) — descriptor emission gates, match predicates per documented combo, listener attach/detach lifecycle, editable-field suppression + modifier override.
+- `__tests__/ExecutiveModuleShell.test.tsx` (6 tests) — four-zone render, MELS chip ordering, left rail collapse, right rail tool toggle, canvas slot, `data-mels-module` attribute.
+
+Total: **22/22 unit tests green**, 0 linter errors, 0 raw hex literals (DBR77 clean — only Tailwind tokens).
+
+### Deferred to EPIC-T16-S2 (next sprint)
+
+- **T16-D3** — `TabeleLeftRail` (record / table / view outline + sort/filter + Teresa AI slot).
+- **T16-D4** — `TabeleTopBarChips` (Internal / Theme / History / QA / Gov / Analytics / Audit / Share / Agent / Run wired to Foundation Block services).
+- **T16-D5** — `TabeleRightRail` tool tabs (AI Editor 8 levels / QA Report / Source Pack / Layout / Share / Analytics).
+- **T16-D6** — Help-modal listing for the keyboard shortcut display strings (registry already in place; needs UI surface).
+- **T16-D7** — Width-resize handles + drag UX (state + clamping already shipped; only the visible drag handle and pointer logic remain).
+- **T16-D8 / T16-D9** — Visual review screenshots + DBR77 hex scan (acceptance gate).
+
+### Why split foundations from Tabele lane
+
+`TabeleArtifactView` is the same surface that hosts B-S5a host-integration work (provenance grid gutter, RowDetailPanel banner) and A-S5b (TabeleTemplatesGrid wiring). Landing the shell as a standalone package first avoids a single jumbo diff that would touch the foundation block and the lifecycle/provenance host integration in one commit. The migration in EPIC-T16-S2 is now a pure "swap KimiWorkspaceShell for ExecutiveModuleShell + supply slot props" operation.
+
+### Risk register (foundations)
+
+| Risk | Status |
+|---|---|
+| `KimiWorkspaceShell` callers regress. | Mitigated — new shell is a sibling; nothing imports it yet. |
+| DBR77 raw hex leakage. | Mitigated — manual scan + tests; only Tailwind tokens used. |
+| Persistence race when two shells mount the same moduleKey. | Accepted — last-write-wins; documented in `useRailState` JSDoc. Production rarely mounts two executive modules simultaneously. |
+| Right rail panel state lost on reload. | Accepted — only collapse state persists. Tool selection is ephemeral by design (panels are tool-action surfaces, not workspaces). |
