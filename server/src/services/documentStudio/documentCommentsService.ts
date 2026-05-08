@@ -25,7 +25,9 @@ import type {
   DocumentAuditEntry,
   DocumentComment,
   DocumentCommentAnchor,
+  DocumentCommentSectionCounts,
   DocumentCommentStatus,
+  DocumentCommentThread,
 } from './documentStudioTypes.js';
 
 // =============================================================================
@@ -678,6 +680,163 @@ export function getDocumentComment(
   if (!c) return null;
   if (c.organizationId !== organizationId) return null;
   return cloneComment(c);
+}
+
+// =============================================================================
+// Slice E6.2 — Thread aggregation + per-section counts
+// =============================================================================
+
+export interface ListDocumentCommentThreadsOptions {
+  /** Filter by thread status. Defaults to listing both. */
+  status?: DocumentCommentStatus;
+  /** Hide threads whose root is soft-deleted AND has no replies.
+   *  Threads where the root is deleted but replies exist stay
+   *  visible so reviewers can still resolve / reopen them. Default true. */
+  hideOrphanedDeleted?: boolean;
+  /** Anchor filters — same semantics as listDocumentComments. */
+  anchorKind?: DocumentCommentAnchor['kind'];
+  sectionId?: string;
+  blockId?: string;
+}
+
+/**
+ * Group raw comments into `DocumentCommentThread` rows for the
+ * editor canvas. Threads are sorted by `updatedAt` desc so the
+ * most-recent activity floats to the top — replies bump `updatedAt`
+ * on the root in slice 6.1 specifically to make this work.
+ *
+ * Behavior contract:
+ *   - One row per `threadId`.
+ *   - `root` is the comment with `parentCommentId === undefined`,
+ *     or — for orphaned threads where the root was hard-removed
+ *     before slice 6.1 landed — the earliest-created comment in
+ *     the thread (defensive fallback only; soft-delete keeps the
+ *     row, so this only fires on legacy data).
+ *   - `replies` is every other comment in the thread, sorted by
+ *     `createdAt` asc.
+ *   - `status` mirrors the root's status (resolution is
+ *     thread-wide; replies always carry the same status as the root).
+ *   - `anchor` mirrors the root's anchor.
+ *   - Soft-deleted comments (root or reply) stay in the
+ *     `replies` list so the audit timeline is faithful — UI hides
+ *     the body via the `deletedAt` flag.
+ *   - Filters apply to the THREAD (i.e. the root's properties);
+ *     a thread anchored on `sec-A` matches `sectionId: 'sec-A'`
+ *     regardless of whether any reply is itself anchored.
+ */
+export function listDocumentCommentThreads(
+  artifactId: string,
+  organizationId: string,
+  options: ListDocumentCommentThreadsOptions = {}
+): DocumentCommentThread[] {
+  if (!artifactId || !organizationId) return [];
+  const list = commentStore.get(key(organizationId, artifactId)) ?? [];
+  if (list.length === 0) return [];
+
+  const groups = new Map<string, DocumentComment[]>();
+  for (const c of list) {
+    const bucket = groups.get(c.threadId) ?? [];
+    bucket.push(c);
+    groups.set(c.threadId, bucket);
+  }
+
+  const out: DocumentCommentThread[] = [];
+  const hideOrphanedDeleted = options.hideOrphanedDeleted !== false;
+
+  for (const [threadId, comments] of groups.entries()) {
+    comments.sort((a, b) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0
+    );
+    let root = comments.find((c) => c.parentCommentId === undefined);
+    if (!root) {
+      // Defensive fallback for legacy data — should never happen
+      // post-slice-6.1 because we never hard-delete the root.
+      root = comments[0]!;
+    }
+    const replies = comments.filter((c) => c.commentId !== root!.commentId);
+
+    if (hideOrphanedDeleted && root.deletedAt && replies.length === 0) continue;
+    if (options.status && root.status !== options.status) continue;
+    if (options.anchorKind && root.anchor.kind !== options.anchorKind) continue;
+    if (options.sectionId) {
+      if (root.anchor.kind === 'document') continue;
+      if ((root.anchor as { sectionId: string }).sectionId !== options.sectionId) continue;
+    }
+    if (options.blockId) {
+      if (root.anchor.kind !== 'block') continue;
+      if (root.anchor.blockId !== options.blockId) continue;
+    }
+
+    // Thread-level updatedAt: max across all comments. The root's
+    // updatedAt is bumped by replies in slice 6.1, so in practice
+    // root.updatedAt is enough — but max() guards against races.
+    let updatedAt = root.updatedAt;
+    for (const c of comments) {
+      if (c.updatedAt > updatedAt) updatedAt = c.updatedAt;
+    }
+
+    out.push({
+      threadId,
+      artifactId,
+      organizationId,
+      anchor: root.anchor,
+      status: root.status,
+      root: cloneComment(root),
+      replies: replies.map((r) => cloneComment(r)),
+      createdAt: root.createdAt,
+      updatedAt,
+    });
+  }
+
+  // Most-recent activity first.
+  out.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+  return out;
+}
+
+/**
+ * Compute per-section / per-block thread counts for the editor
+ * canvas to render unresolved-thread badges. Only `'section'` and
+ * `'block'` anchored threads contribute to `perSection` /
+ * `perBlock` — `'document'` anchored threads are summed into the
+ * top-level totals only. Soft-deleted-only threads (root deleted,
+ * no replies) are excluded so the badge counts match what the user
+ * actually sees in the rail.
+ */
+export function getDocumentCommentSectionCounts(
+  artifactId: string,
+  organizationId: string
+): DocumentCommentSectionCounts {
+  const counts: DocumentCommentSectionCounts = {
+    artifactId,
+    organizationId,
+    totalOpen: 0,
+    totalResolved: 0,
+    perSection: {},
+    perBlock: {},
+  };
+  if (!artifactId || !organizationId) return counts;
+
+  const threads = listDocumentCommentThreads(artifactId, organizationId);
+  for (const t of threads) {
+    const bucket = t.status === 'open' ? 'open' : 'resolved';
+    if (bucket === 'open') counts.totalOpen += 1;
+    else counts.totalResolved += 1;
+
+    if (t.anchor.kind === 'document') continue;
+    const sectionId = (t.anchor as { sectionId: string }).sectionId;
+    const sectionEntry = counts.perSection[sectionId] ?? { open: 0, resolved: 0 };
+    sectionEntry[bucket] += 1;
+    counts.perSection[sectionId] = sectionEntry;
+
+    if (t.anchor.kind === 'block') {
+      const blockId = t.anchor.blockId;
+      const blockEntry = counts.perBlock[blockId] ?? { open: 0, resolved: 0 };
+      blockEntry[bucket] += 1;
+      counts.perBlock[blockId] = blockEntry;
+    }
+  }
+
+  return counts;
 }
 
 // =============================================================================
