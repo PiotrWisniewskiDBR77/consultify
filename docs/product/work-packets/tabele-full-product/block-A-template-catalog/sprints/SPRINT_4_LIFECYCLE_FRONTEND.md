@@ -104,6 +104,11 @@ Tracked explicitly so nothing falls through the cracks:
    on each card, mount `<TemplateGovernanceDrawer>` on a card secondary
    action (e.g. ⋮ menu → Governance). Requires the new
    `useTpBaseTemplates` hook.
+   * **Update 2026-05-08 (A-S4b):** the `useTpBaseTemplates` hook +
+     5 unit tests landed (state machine, request-seq guard, error
+     surface, `enabled` flag). UI wiring inside `ArtifactModuleHome`
+     remains pending and is now tracked under A-S5b alongside the
+     MELS shell extraction.
 2. **MELS shell extraction (EPIC-T16 D1–D4).**
    * `ExecutiveModuleShell/index.tsx` + `TopBar.tsx` + `LeftRail.tsx` +
      `RightRail.tsx` + `useRailState.ts`.
