@@ -64,6 +64,8 @@ export interface DocumentBlock {
   isAssumption?: boolean;
 }
 
+export type DocumentSectionKind = 'body' | 'appendix';
+
 export interface DocumentSection {
   sectionId: string;
   orderIndex: number;
@@ -72,6 +74,21 @@ export interface DocumentSection {
   purpose?: string;
   blocks: DocumentBlock[];
   sourceRefs: DocumentSourceRef[];
+  /**
+   * Optional structural classification — Epic E8 (Advanced DOCX).
+   *
+   *  - `'body'` (default when omitted): part of the main numbered
+   *    section sequence (e.g. "1. Executive Summary", "2. Findings").
+   *  - `'appendix'`: rendered after the body sequence under the
+   *    document's `appendixStyle` numbering scheme (lettered A./B./…,
+   *    numbered 1./2./…, or bare titles when `appendixStyle === 'none'`).
+   *
+   * Schemas authored before E8 do not carry this field. The renderer
+   * falls back to a title-prefix heuristic ("Appendix" / "Annex" /
+   * "Załącznik") so legacy documents still render with appendix
+   * formatting where the author clearly intended it.
+   */
+  kind?: DocumentSectionKind;
 }
 
 export interface DocumentSourceRef {

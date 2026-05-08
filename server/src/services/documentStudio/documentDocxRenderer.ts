@@ -35,6 +35,11 @@
 import * as docxModule from 'docx';
 
 import {
+  formatAppendixHeading,
+  formatBodyHeading,
+  partitionSections,
+} from './documentDocxStructure.js';
+import {
   buildDocxStyleConfig,
   DOCX_STYLE_IDS,
   resolveDocxFonts,
@@ -48,12 +53,14 @@ interface DocxRuntime {
   Footer: new (options: Record<string, unknown>) => unknown;
   Header: new (options: Record<string, unknown>) => unknown;
   HeadingLevel: { HEADING_1: unknown; HEADING_2: unknown; HEADING_3: unknown };
+  PageBreak: new () => DocxTextRun;
   PageNumber: { CURRENT: unknown; TOTAL_PAGES: unknown };
   Packer: { toBuffer: (doc: unknown) => Promise<Buffer> };
   Paragraph: new (options: Record<string, unknown>) => DocxParagraph;
   Table: new (options: Record<string, unknown>) => DocxTable;
   TableCell: new (options: Record<string, unknown>) => unknown;
   TableRow: new (options: Record<string, unknown>) => unknown;
+  TableOfContents: new (alias?: string, options?: Record<string, unknown>) => unknown;
   TextRun: new (options: Record<string, unknown>) => DocxTextRun;
   WidthType: { PERCENTAGE: unknown };
 }
@@ -74,12 +81,14 @@ const {
   Footer,
   Header,
   HeadingLevel,
+  PageBreak,
   PageNumber,
   Packer,
   Paragraph,
   Table,
   TableCell,
   TableRow,
+  TableOfContents,
   TextRun,
   WidthType,
 } = docxModule as unknown as DocxRuntime;
@@ -337,14 +346,15 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
 function renderSection(
   section: DocumentSection,
   ctx: RenderContext,
-  index: number
+  headingText: string,
+  options: { pageBreakBefore?: boolean } = {}
 ): (Paragraph | Table)[] {
-  const headingText = `${index + 1}. ${section.title}`;
   const level = section.level ?? 1;
   const heading = new Paragraph({
     style: styleIdForHeadingLevel(level),
     heading: headingLevelForSection(level),
     children: [new TextRun({ text: headingText, font: ctx.headingFont })],
+    pageBreakBefore: options.pageBreakBefore === true ? true : undefined,
   });
   const purpose = section.purpose
     ? [
@@ -408,10 +418,40 @@ function renderCoverBlock(ctx: RenderContext): Paragraph[] {
           text: `Generated: ${generatedAt}`,
           font: ctx.bodyFont,
         }),
+        // Hard page break — keeps the cover on its own page so the
+        // TOC (or first body section) starts on page 2 just like a
+        // hand-authored consulting deliverable would.
+        new PageBreak(),
       ],
-      spacing: { after: 600 },
     }),
   ];
+}
+
+/**
+ * Insert a real Word TOC field. Word renders the placeholder text on
+ * first open and offers "Update field" to populate the field with
+ * actual heading entries. The renderer honors `formattingSchema.toc`
+ * — when disabled this helper is never called.
+ *
+ * The TOC pulls levels 1–3 from named heading styles (`Heading1`,
+ * `Heading2`, `Heading3`). The terminal page break ensures body
+ * content starts on its own page even on documents without a cover.
+ */
+function renderTocBlock(ctx: RenderContext): unknown[] {
+  const heading = new Paragraph({
+    style: DOCX_STYLE_IDS.TOC_HEADING,
+    heading: HeadingLevel.HEADING_1,
+    children: [new TextRun({ text: 'Table of Contents', font: ctx.headingFont })],
+  });
+  const toc = new TableOfContents('Table of Contents', {
+    hyperlink: true,
+    headingStyleRange: '1-3',
+  });
+  const trailingBreak = new Paragraph({
+    style: DOCX_STYLE_IDS.BODY_TEXT,
+    children: [new PageBreak()],
+  });
+  return [heading, toc, trailingBreak];
 }
 
 function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
@@ -455,11 +495,29 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
   const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;
 
-  const sectionChildren: (Paragraph | Table)[] = [];
+  const sectionChildren: unknown[] = [];
   if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(ctx));
-  schema.sections.forEach((section, index) => {
-    sectionChildren.push(...renderSection(section, ctx, index));
+  if (formatting.toc) sectionChildren.push(...renderTocBlock(ctx));
+
+  // Partition into body + appendix groups so appendices always land
+  // at the end of the document under the configured numbering scheme,
+  // regardless of where the schema author placed them.
+  const partitioned = partitionSections(schema.sections);
+  partitioned.body.forEach((section, index) => {
+    sectionChildren.push(...renderSection(section, ctx, formatBodyHeading(section, index)));
   });
+  partitioned.appendix.forEach((section, index) => {
+    sectionChildren.push(
+      ...renderSection(section, ctx, formatAppendixHeading(section, index, formatting), {
+        // Only the FIRST appendix forces a page break, so the appendix
+        // block visually opens on a fresh page. Subsequent appendices
+        // flow naturally so two short appendices do not waste a page
+        // each on otherwise dense reports.
+        pageBreakBefore: index === 0,
+      })
+    );
+  });
+
   sectionChildren.push(...renderSources(ctx));
 
   const headerEnabled = formatting.headers.enabled;

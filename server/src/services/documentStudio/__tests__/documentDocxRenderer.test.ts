@@ -180,3 +180,148 @@ describe('documentDocxRenderer — named styles', () => {
     expect(coreProps).toContain('narrative');
   });
 });
+
+describe('documentDocxRenderer — TOC + cover page break + appendices (Slice 8.2)', () => {
+  it('embeds a Word TOC field when formattingSchema.toc is true', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ toc: true }),
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const zip = await JSZip.loadAsync(buffer);
+    const document = await zip.file('word/document.xml')?.async('string');
+    expect(document).toBeTruthy();
+    // Word TOC fields embed an instrText element with `TOC \\o "1-3"` (or
+    // similar); the docx package lowercases nothing, so a substring check
+    // for `TOC ` is the most stable assertion across docx upgrades.
+    expect(document).toContain('TOC ');
+    expect(document).toContain(`w:val="${DOCX_STYLE_IDS.TOC_HEADING}"`);
+  });
+
+  it('omits the TOC field when formattingSchema.toc is false', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ toc: false }),
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const zip = await JSZip.loadAsync(buffer);
+    const document = await zip.file('word/document.xml')?.async('string');
+    expect(document).not.toContain('TOC ');
+    expect(document).not.toContain(`w:val="${DOCX_STYLE_IDS.TOC_HEADING}"`);
+  });
+
+  it('emits a hard page break inside the cover block', async () => {
+    const buffer = await renderDocumentSchemaToDocxBuffer(makeSchema());
+    const zip = await JSZip.loadAsync(buffer);
+    const document = await zip.file('word/document.xml')?.async('string');
+    expect(document).toContain('w:type="page"');
+  });
+
+  it('renders body sections with Arabic numbering and appendices under the lettered scheme', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ appendixStyle: 'lettered' }),
+      sections: [
+        {
+          sectionId: 'sec-summary',
+          orderIndex: 0,
+          level: 1,
+          title: 'Executive Summary',
+          blocks: [
+            {
+              blockId: 'b1',
+              type: 'paragraph',
+              content: { text: 'Body paragraph' } as unknown,
+            },
+          ],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 'sec-glossary',
+          orderIndex: 1,
+          level: 1,
+          title: 'Glossary',
+          kind: 'appendix',
+          blocks: [
+            {
+              blockId: 'b2',
+              type: 'paragraph',
+              content: { text: 'Glossary text' } as unknown,
+            },
+          ],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 'sec-findings',
+          orderIndex: 2,
+          level: 1,
+          title: 'Findings',
+          blocks: [
+            {
+              blockId: 'b3',
+              type: 'paragraph',
+              content: { text: 'Findings text' } as unknown,
+            },
+          ],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 'sec-sources',
+          orderIndex: 3,
+          level: 1,
+          title: 'Sources Appendix',
+          kind: 'appendix',
+          blocks: [],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const zip = await JSZip.loadAsync(buffer);
+    const document = (await zip.file('word/document.xml')?.async('string')) ?? '';
+    expect(document).toContain('1. Executive Summary');
+    expect(document).toContain('2. Findings');
+    expect(document).toContain('Appendix A — Glossary');
+    expect(document).toContain('Appendix B — Sources Appendix');
+    // Body sections must precede appendices in document order regardless of
+    // the original schema order (Glossary appeared at index 1 in the source).
+    expect(document.indexOf('2. Findings')).toBeLessThan(document.indexOf('Appendix A — Glossary'));
+  });
+
+  it('numbers appendices with Arabic digits when appendixStyle is "numbered"', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ appendixStyle: 'numbered' }),
+      sections: [
+        {
+          sectionId: 'sec-summary',
+          orderIndex: 0,
+          level: 1,
+          title: 'Summary',
+          blocks: [],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 'sec-app1',
+          orderIndex: 1,
+          level: 1,
+          title: 'Glossary',
+          kind: 'appendix',
+          blocks: [],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 'sec-app2',
+          orderIndex: 2,
+          level: 1,
+          title: 'Sources',
+          kind: 'appendix',
+          blocks: [],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const zip = await JSZip.loadAsync(buffer);
+    const document = (await zip.file('word/document.xml')?.async('string')) ?? '';
+    expect(document).toContain('Appendix 1 — Glossary');
+    expect(document).toContain('Appendix 2 — Sources');
+    expect(document).not.toContain('Appendix A —');
+  });
+});
