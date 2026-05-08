@@ -251,9 +251,7 @@ function rowToRecord(r: any): RecordRow {
           ? safeParseObject(r.data)
           : (r.data as Record<string, unknown>),
     confidenceScore:
-      r.confidence_score == null || r.confidence_score === ''
-        ? null
-        : Number(r.confidence_score),
+      r.confidence_score == null || r.confidence_score === '' ? null : Number(r.confidence_score),
     validationStatus: String(r.validation_status ?? 'unverified'),
     updatedAt:
       r.updated_at instanceof Date
@@ -292,10 +290,7 @@ async function loadCandidatesScan(
   return (rows ?? []).map(rowToRecord);
 }
 
-async function loadVerifiedSet(
-  tableId: string,
-  recordIds: string[]
-): Promise<Set<string>> {
+async function loadVerifiedSet(tableId: string, recordIds: string[]): Promise<Set<string>> {
   if (recordIds.length === 0) return new Set();
   try {
     const db = getDatabase();
@@ -376,15 +371,17 @@ function compositeRank(
   return { score, signals };
 }
 
-function buildPreview(record: RecordRow, fields: FieldRow[]): {
+function buildPreview(
+  record: RecordRow,
+  fields: FieldRow[]
+): {
   title: string;
   preview: string;
 } {
   const primaryField = fields.find((f) => f.primary) ?? fields[0];
   const titleSource =
-    (primaryField &&
-      asString(record.data[primaryField.id]) ||
-      asString(record.data[primaryField?.name ?? ''])) ||
+    (primaryField && asString(record.data[primaryField.id])) ||
+    asString(record.data[primaryField?.name ?? '']) ||
     asFirstString(record.data) ||
     record.id;
   const previewParts: string[] = [];
@@ -427,8 +424,7 @@ const sourcePackBuilderService = {
    * refuses tables not in `organizationId`.
    */
   async findCandidates(input: FindCandidatesInput): Promise<SourcePackCandidate[]> {
-    if (!input.tableId)
-      throw new SourcePackError('TABLE_ID_REQUIRED', 'tableId is required');
+    if (!input.tableId) throw new SourcePackError('TABLE_ID_REQUIRED', 'tableId is required');
     if (!input.organizationId)
       throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
 
@@ -478,9 +474,7 @@ const sourcePackBuilderService = {
 
     // When the user typed a query, drop hits with zero lexical signal so
     // recency alone can't promote irrelevant rows.
-    const filtered = query
-      ? ranked.filter((c) => c.rankSignals.lexical > 0)
-      : ranked;
+    const filtered = query ? ranked.filter((c) => c.rankSignals.lexical > 0) : ranked;
 
     filtered.sort((a, b) => {
       if (b.rankScore !== a.rankScore) return b.rankScore - a.rankScore;
@@ -497,12 +491,10 @@ const sourcePackBuilderService = {
    * different `workspaceId` we override with the resolved tenant.
    */
   async createPack(input: CreatePackInput): Promise<SourcePack> {
-    if (!input.tableId)
-      throw new SourcePackError('TABLE_ID_REQUIRED', 'tableId is required');
+    if (!input.tableId) throw new SourcePackError('TABLE_ID_REQUIRED', 'tableId is required');
     if (!input.organizationId)
       throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
-    if (!input.ownerUserId)
-      throw new SourcePackError('OWNER_REQUIRED', 'ownerUserId is required');
+    if (!input.ownerUserId) throw new SourcePackError('OWNER_REQUIRED', 'ownerUserId is required');
     if (!input.name || input.name.trim().length === 0)
       throw new SourcePackError('NAME_REQUIRED', 'name is required');
     if (input.name.length > MAX_PACK_NAME)
@@ -520,8 +512,7 @@ const sourcePackBuilderService = {
         )
       )
     );
-    if (ids.length === 0)
-      throw new SourcePackError('NO_CANDIDATES', 'candidateRecordIds required');
+    if (ids.length === 0) throw new SourcePackError('NO_CANDIDATES', 'candidateRecordIds required');
     if (ids.length > MAX_PACK_RECORDS)
       throw new SourcePackError(
         'TOO_MANY_CANDIDATES',
@@ -611,8 +602,7 @@ const sourcePackBuilderService = {
    */
   async getPack(packId: string, organizationId: string): Promise<SourcePack | null> {
     if (!packId) throw new SourcePackError('PACK_ID_REQUIRED', 'packId is required');
-    if (!organizationId)
-      throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
+    if (!organizationId) throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
     const db = getDatabase();
     const { rows } = await db.query(
       `SELECT id, organization_id, workspace_id, owner_user_id, table_id,
@@ -683,8 +673,7 @@ const sourcePackBuilderService = {
     organizationId: string
   ): Promise<{ packId: string; usedCount: number }> {
     if (!packId) throw new SourcePackError('PACK_ID_REQUIRED', 'packId is required');
-    if (!organizationId)
-      throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
+    if (!organizationId) throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
     const db = getDatabase();
     const { rows } = await db.query(
       `UPDATE tp_source_packs
@@ -717,13 +706,9 @@ function rowToPack(row: any): SourcePack {
         ? (JSON.parse(row.v8_snapshot) as SourcePackSnapshot)
         : (row.v8_snapshot as SourcePackSnapshot),
     createdAt:
-      row.created_at instanceof Date
-        ? row.created_at.toISOString()
-        : String(row.created_at),
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     updatedAt:
-      row.updated_at instanceof Date
-        ? row.updated_at.toISOString()
-        : String(row.updated_at),
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
     usedCount: Number(row.used_count ?? 0),
     archivedAt:
       row.archived_at == null

@@ -32,9 +32,7 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 
-import sourcePackBuilderService, {
-  SourcePackError,
-} from '../SourcePackBuilderService.js';
+import sourcePackBuilderService, { SourcePackError } from '../SourcePackBuilderService.js';
 
 const TABLE = '11111111-1111-1111-1111-111111111111';
 const TABLE_OTHER = '22222222-2222-2222-2222-222222222222';
@@ -44,9 +42,7 @@ const WS = 'ws-A';
 const USER = 'user-1';
 
 interface MockState {
-  tenant:
-    | { workspace_id: string; organization_id: string }
-    | null;
+  tenant: { workspace_id: string; organization_id: string } | null;
   fields: Array<{
     id: string;
     name: string;
@@ -105,14 +101,9 @@ function configureQueryRouter() {
         rows: state.verifiedRecordIds.map((rid) => ({ record_id: rid })),
       };
     }
-    if (
-      s.includes('SELECT id FROM tp_records') &&
-      s.includes('table_id = $2')
-    ) {
+    if (s.includes('SELECT id FROM tp_records') && s.includes('table_id = $2')) {
       const requested = params?.[0] as string[];
-      const matching = (requested ?? []).filter((id) =>
-        state.ownership.ids.includes(id)
-      );
+      const matching = (requested ?? []).filter((id) => state.ownership.ids.includes(id));
       return { rows: matching.map((id) => ({ id })) };
     }
     if (
@@ -125,8 +116,7 @@ function configureQueryRouter() {
       };
     }
     if (s.includes('INSERT INTO tp_source_packs')) {
-      const [orgId, wsId, ownerId, tableId, name, description, ids, snapshot] =
-        params as any[];
+      const [orgId, wsId, ownerId, tableId, name, description, ids, snapshot] = params as any[];
       const row = {
         id: 'pack-id-1',
         organization_id: orgId,
@@ -547,18 +537,19 @@ describe('SourcePackBuilderService.listPacks', () => {
   });
 
   it('throws on missing org', async () => {
-    await expect(
-      sourcePackBuilderService.listPacks({ organizationId: '' })
-    ).rejects.toBeInstanceOf(SourcePackError);
+    await expect(sourcePackBuilderService.listPacks({ organizationId: '' })).rejects.toBeInstanceOf(
+      SourcePackError
+    );
   });
 });
 
 describe('SourcePackBuilderService.markPackUsed', () => {
   it('throws when pack missing in tenant', async () => {
     state.markUsedRow = null;
-    await expect(
-      sourcePackBuilderService.markPackUsed('p-x', ORG)
-    ).rejects.toMatchObject({ code: 'PACK_NOT_FOUND', status: 404 });
+    await expect(sourcePackBuilderService.markPackUsed('p-x', ORG)).rejects.toMatchObject({
+      code: 'PACK_NOT_FOUND',
+      status: 404,
+    });
   });
 
   it('returns updated counter on success', async () => {

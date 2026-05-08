@@ -20,11 +20,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 
 import {
-  type SourcePack,
-  type SourcePackCandidate,
   createSourcePack,
   findSourcePackCandidates,
   listSourcePacksForTable,
+  type SourcePack,
+  type SourcePackCandidate,
 } from '@/services/api/tablePlatform.api';
 
 import { SourceCandidateCard } from './SourceCandidateCard';
@@ -61,9 +61,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
   const [query, setQuery] = useState('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [recencyDays, setRecencyDays] = useState<number | null>(null);
-  const [candidates, setCandidates] = useState<SourcePackCandidate[]>(
-    testInitialCandidates ?? []
-  );
+  const [candidates, setCandidates] = useState<SourcePackCandidate[]>(testInitialCandidates ?? []);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [packName, setPackName] = useState('');
@@ -187,9 +185,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
       aria-label="Tabele source pack builder"
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Source Pack
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Source Pack</h3>
         <button
           type="button"
           onClick={() => void refreshCandidates()}
@@ -234,9 +230,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
           </label>
           <select
             value={recencyDays === null ? '' : String(recencyDays)}
-            onChange={(e) =>
-              setRecencyDays(e.target.value === '' ? null : Number(e.target.value))
-            }
+            onChange={(e) => setRecencyDays(e.target.value === '' ? null : Number(e.target.value))}
             className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-[11px] text-slate-700 dark:text-slate-300"
             data-testid="source-pack-recency-select"
             aria-label="Recency filter"
@@ -372,7 +366,6 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
           </ul>
         )}
       </div>
-
     </section>
   );
 };

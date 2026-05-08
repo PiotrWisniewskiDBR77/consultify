@@ -147,8 +147,7 @@ router.post(
     const body = (req.body ?? {}) as Record<string, unknown>;
     const name = asString(body.name);
     const description = asString(body.description) ?? undefined;
-    const workspaceId =
-      asString(body.workspaceId) ?? asString((authReq as any).workspaceId) ?? '';
+    const workspaceId = asString(body.workspaceId) ?? asString((authReq as any).workspaceId) ?? '';
 
     const rawIds = body.candidateRecordIds;
     const candidateRecordIds = Array.isArray(rawIds)
@@ -181,29 +180,25 @@ router.post(
   }
 );
 
-router.get(
-  '/source-packs/:packId',
-  requirePackEnabled,
-  async (req: Request, res: Response) => {
-    const authReq = req as AuthRequest;
-    const packId = String(req.params.packId ?? '');
-    const orgId = String(authReq.organizationId ?? '');
-    if (!packId) return res.status(400).json({ error: 'packId is required' });
+router.get('/source-packs/:packId', requirePackEnabled, async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  const packId = String(req.params.packId ?? '');
+  const orgId = String(authReq.organizationId ?? '');
+  if (!packId) return res.status(400).json({ error: 'packId is required' });
 
-    try {
-      const pack = await sourcePackBuilderService.getPack(packId, orgId);
-      if (!pack) return res.status(404).json({ error: 'Pack not found' });
-      return res.status(200).json({ data: pack });
-    } catch (e) {
-      if (mapServiceError(e, res)) return;
-      logger.error('[SourcePackRoutes] get failed', {
-        packId,
-        error: (e as Error)?.message,
-      });
-      return res.status(500).json({ error: 'Internal error' });
-    }
+  try {
+    const pack = await sourcePackBuilderService.getPack(packId, orgId);
+    if (!pack) return res.status(404).json({ error: 'Pack not found' });
+    return res.status(200).json({ data: pack });
+  } catch (e) {
+    if (mapServiceError(e, res)) return;
+    logger.error('[SourcePackRoutes] get failed', {
+      packId,
+      error: (e as Error)?.message,
+    });
+    return res.status(500).json({ error: 'Internal error' });
   }
-);
+});
 
 router.get(
   '/tables/:tableId/source-packs',

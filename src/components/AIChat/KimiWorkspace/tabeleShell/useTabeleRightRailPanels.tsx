@@ -20,19 +20,15 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
-import type {
-  AiEditorLevel,
-  QaSuggestion,
-  SourcePack,
-} from '@/services/api/tablePlatform.api';
+import type { AiEditorLevel, QaSuggestion, SourcePack } from '@/services/api/tablePlatform.api';
 import { isTabeleAiEditorEnabled } from '@/utils/tabeleAiEditorFlag';
 import { isTabeleQaEnabled } from '@/utils/tabeleQaFlag';
 import { isTabeleSourcePackEnabled } from '@/utils/tabeleSourcePackFlag';
 
-import type { TabeleRightRailPanelRenderers } from './TabeleRightRail';
 import { TabeleAiEditorPanel } from './aiEditor/TabeleAiEditorPanel';
 import { TabeleQaPanel } from './qa/TabeleQaPanel';
 import { TabeleSourcePackPanel } from './sourcePack/TabeleSourcePackPanel';
+import type { TabeleRightRailPanelRenderers } from './TabeleRightRail';
 
 export interface UseTabeleRightRailPanelsArgs {
   tableId: string | null | undefined;
@@ -92,11 +88,9 @@ export function useTabeleRightRailPanels(
   const [preset, setPreset] = useState<AiEditorPreset | null>(null);
   const presetCounter = React.useRef(0);
 
-  const aiEditorEnabled =
-    forceEnableForTesting === true || isTabeleAiEditorEnabled();
+  const aiEditorEnabled = forceEnableForTesting === true || isTabeleAiEditorEnabled();
   const qaEnabled = forceEnableForTesting === true || isTabeleQaEnabled();
-  const sourcePackEnabled =
-    forceEnableForTesting === true || isTabeleSourcePackEnabled();
+  const sourcePackEnabled = forceEnableForTesting === true || isTabeleSourcePackEnabled();
 
   const handleOpenInAiEditor = useCallback((s: QaSuggestion) => {
     presetCounter.current += 1;
@@ -113,9 +107,7 @@ export function useTabeleRightRailPanels(
     if (!tableId) return panels;
 
     if (qaEnabled) {
-      panels.qaReport = (
-        <TabeleQaPanel tableId={tableId} onOpenInAiEditor={handleOpenInAiEditor} />
-      );
+      panels.qaReport = <TabeleQaPanel tableId={tableId} onOpenInAiEditor={handleOpenInAiEditor} />;
     }
     if (sourcePackEnabled && workspaceId) {
       panels.sourcePack = (

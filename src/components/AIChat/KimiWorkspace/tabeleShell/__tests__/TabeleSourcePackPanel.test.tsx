@@ -115,10 +115,11 @@ describe('<TabeleSourcePackPanel>', () => {
       />
     );
     const toggles = screen.getAllByTestId('candidate-toggle');
-    expect(toggles[0]).toHaveAttribute('aria-pressed', 'false');
-    fireEvent.click(toggles[0]!);
+    const first = toggles[0] as HTMLElement;
+    expect(first).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(first);
     expect(screen.getByText(/1 \/ 200 selected/i)).toBeInTheDocument();
-    fireEvent.click(toggles[0]!);
+    fireEvent.click(first);
     expect(screen.getByText(/0 \/ 200 selected/i)).toBeInTheDocument();
   });
 
@@ -155,7 +156,8 @@ describe('<TabeleSourcePackPanel>', () => {
         testInitialPacks={[]}
       />
     );
-    fireEvent.click(screen.getAllByTestId('candidate-toggle')[0]!);
+    const firstToggle = screen.getAllByTestId('candidate-toggle')[0] as HTMLElement;
+    fireEvent.click(firstToggle);
     fireEvent.change(screen.getByTestId('source-pack-name-input'), {
       target: { value: 'My Pack' },
     });

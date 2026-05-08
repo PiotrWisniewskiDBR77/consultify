@@ -58,6 +58,16 @@ export {
 } from './seeds/tabeleConsultingTemplatesSeeder.js';
 export { ServiceAccountService, serviceAccountService } from './ServiceAccountService.js';
 export {
+  type SourcePack,
+  default as SourcePackBuilderService,
+  type SourcePackCandidate,
+  type CreatePackInput as SourcePackCreateInput,
+  SourcePackError,
+  type FindCandidatesInput as SourcePackFindCandidatesInput,
+  type ListPacksInput as SourcePackListInput,
+  type SourcePackSnapshot,
+} from './SourcePackBuilderService.js';
+export {
   AI_CLASSIFICATION_MAX_CLASSES,
   AI_CLASSIFICATION_MIN_CLASSES,
   AI_PROMPT_TEMPLATE_MAX_LENGTH,
@@ -83,29 +93,19 @@ export {
   type SpecializedFieldType,
   validateSpecializedField,
 } from './SpecializedFieldTypes.js';
-export {
-  type CreatePackInput as SourcePackCreateInput,
-  type FindCandidatesInput as SourcePackFindCandidatesInput,
-  type ListPacksInput as SourcePackListInput,
-  type SourcePack,
-  type SourcePackCandidate,
-  SourcePackError,
-  type SourcePackSnapshot,
-  default as SourcePackBuilderService,
-} from './SourcePackBuilderService.js';
 export { SSOService, ssoService } from './SSOService.js';
 export { default as TableContextService } from './TableContextService.js';
 export {
-  AXIS_WEIGHTS as TABLE_QA_AXIS_WEIGHTS,
-  type ComputeReportInput as QaComputeReportInput,
-  type MarkInapplicableInput as QaMarkInapplicableInput,
   type QaAxisDetail,
   type QaAxisName,
   type QaBand,
+  type ComputeReportInput as QaComputeReportInput,
+  type MarkInapplicableInput as QaMarkInapplicableInput,
   type QaReport,
   type QaSuggestion,
   type QaSuggestionLevel,
   type QaTriggerKind,
+  AXIS_WEIGHTS as TABLE_QA_AXIS_WEIGHTS,
   TableQaError,
   default as TableQaService,
 } from './TableQaService.js';
