@@ -825,6 +825,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         if (!activeConvId) {
           setStartupError('Could not create a conversation. Please try again.');
           toast.error('Could not create a conversation. Please try again.');
+          setIsStartingPipeline(false);
           return;
         }
       }
@@ -890,6 +891,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         if (!snapshotId) {
           setStartupError('Failed to capture context snapshot. Try sending a message first.');
           toast.error('Failed to capture context snapshot. Try sending a message first.');
+          setIsStartingPipeline(false);
           return;
         }
 
@@ -919,6 +921,8 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             error: preflightErr?.message,
             details: JSON.stringify(details, null, 2),
           });
+          setIsStartingPipeline(false);
+          return;
         }
 
         try {

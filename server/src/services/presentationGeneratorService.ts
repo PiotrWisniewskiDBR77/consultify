@@ -15,10 +15,17 @@ import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
 import {
+  applyApprovedTemplateToOutline,
+  resolveApprovedPresentationTemplate,
+  type TemplateSlotMappingResult,
+} from './presentationApprovedTemplateService.js';
+import {
   applyBrandLayoutSystem,
   buildBrandLayoutSystem,
 } from './presentationBrandLayoutService.js';
 import { deckDocumentFromUnifiedJson } from './presentationDeckDocumentService.js';
+import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
+import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
 import {
   applyTemplateRuntime,
   buildSystemTemplateRuntime,
@@ -71,6 +78,8 @@ export interface DeckSetup {
     /** Controls how many images we attempt to generate per deck. */
     imageDensity?: 'low' | 'medium' | 'high';
   };
+  sourcePack?: Record<string, unknown>;
+  sourcePackStrict?: boolean;
 }
 
 export interface SourceArtifact {
@@ -947,28 +956,32 @@ export async function generateOutline(
   let templateOutlineUsed = false;
   let templateRuntime: PresentationTemplateRuntime | null = null;
   let templateWarnings: string[] = [];
+  let templateSlotMapping: TemplateSlotMappingResult | null = null;
   const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
+  const sourcePackPreflight = preflightPresentationSourcePack({
+    setup,
+    organizationId,
+    strict: Boolean(setup.sourcePackStrict),
+  });
 
   if (setup.templateId) {
     const template = await dbGet(
       `SELECT * FROM presentation_templates WHERE id = ? AND is_active = TRUE AND (organization_id IS NULL OR organization_id = ?)`,
       [setup.templateId, organizationId]
     );
-    if (template) {
-      templateRuntime = buildTemplateRuntimeFromRow(template);
-      const templateOutline = templateRuntime?.outline || [];
-      outline = generateOutlineFromTemplate(templateOutline, sourceArtifacts);
-      const templated = applyTemplateRuntime({
-        outline,
-        runtime: templateRuntime,
-        sources: sourceArtifacts,
-      });
-      outline = templated.outline;
-      templateWarnings = templated.warnings;
-      templateOutlineUsed = true;
-    } else {
-      outline = generateDefaultOutline(setup);
-    }
+    const approvedTemplate = resolveApprovedPresentationTemplate(template);
+    templateRuntime = approvedTemplate.runtime;
+    const templateOutline = templateRuntime?.outline || [];
+    outline = generateOutlineFromTemplate(templateOutline, sourceArtifacts);
+    const templated = applyApprovedTemplateToOutline({
+      outline,
+      runtime: templateRuntime,
+      sources: sourceArtifacts,
+    });
+    outline = templated.outline;
+    templateSlotMapping = templated.slotMapping;
+    templateWarnings = [...approvedTemplate.warnings, ...templated.warnings];
+    templateOutlineUsed = true;
   } else {
     const requestedFamily = (setup as any).templateFamily || (setup as any).deckType;
     if (requestedFamily) {
@@ -989,6 +1002,11 @@ export async function generateOutline(
 
   const planning = planSlides({ setup, outline, templateOutlineUsed });
   outline = planning.outline;
+  const narrativePlan = buildPresentationNarrativePlan({
+    setup,
+    outline,
+    sourcePack: sourcePackPreflight.sourcePack,
+  });
 
   const deckId = uuidv4().replace(/-/g, '');
   const resolvedSourceType =
@@ -1025,11 +1043,20 @@ export async function generateOutline(
               headerFooter: templateRuntime.headerFooter,
             }
           : null,
+        templateSlotMapping,
         outline,
         slideRecipes: planning.slideRecipes,
         sourcePriorityMap: planning.sourcePriorityMap,
         evidenceGaps: planning.evidenceGaps,
-        warnings: [...planning.warnings, ...templateWarnings],
+        sourcePack: sourcePackPreflight.sourcePack,
+        missingInputs: sourcePackPreflight.missingInputs,
+        narrativePlan,
+        warnings: [
+          ...planning.warnings,
+          ...templateWarnings,
+          ...sourcePackPreflight.warnings,
+          ...narrativePlan.warnings,
+        ],
       }),
       null,
       resolvedSourceType,
@@ -1072,6 +1099,8 @@ export async function generateOutline(
     ...validateOutline(outline, setup),
     ...planning.warnings,
     ...templateWarnings,
+    ...sourcePackPreflight.warnings,
+    ...narrativePlan.warnings,
   ];
   if (validationWarnings.length > 0) {
     await dbRun(
@@ -1110,6 +1139,21 @@ export async function generateDeck(
   try {
     // Build structured ContextPack for AI consumption
     const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
+    const sourcePackPreflight = preflightPresentationSourcePack({
+      setup,
+      organizationId,
+      strict: Boolean(setup.sourcePackStrict),
+    });
+    if (!sourcePackPreflight.ok) {
+      throw new Error(
+        `source_pack_preflight_failed: ${sourcePackPreflight.missingInputs.join(', ') || 'blocked sources'}`
+      );
+    }
+    const narrativePlan = buildPresentationNarrativePlan({
+      setup,
+      outline,
+      sourcePack: sourcePackPreflight.sourcePack,
+    });
     const sourceRefs = sourceArtifacts.map((sa) => ({
       artifact_id: sa.artifactId || sa.id || '',
       artifact_type: sa.type,
@@ -1341,11 +1385,14 @@ export async function generateDeck(
         additionalInstructions: (setup as any).additionalInstructions,
         imageSource: setup.visuals?.enabled === false ? 'none' : 'smart',
         transformationReadDeckPack: transformationPack,
+        sourcePack: sourcePackPreflight.sourcePack,
+        sourcePackMissingInputs: sourcePackPreflight.missingInputs,
+        narrativePlan,
       },
       sourceArtifacts,
       sourceRefs,
       status: 'ready',
-      warnings,
+      warnings: [...warnings, ...sourcePackPreflight.warnings, ...narrativePlan.warnings],
       createdBy: 'system',
     });
     deckDocument = applyBrandLayoutSystem(
@@ -1382,7 +1429,12 @@ export async function generateDeck(
       exportPath,
     };
     deckDocument.lifecycle.exportedAt = new Date().toISOString();
-    deckDocument.generation.warnings = [...(result.warnings || []), ...warnings];
+    deckDocument.generation.warnings = [
+      ...(result.warnings || []),
+      ...warnings,
+      ...sourcePackPreflight.warnings,
+      ...narrativePlan.warnings,
+    ];
 
     let outlinePayload: unknown = outline;
     try {
@@ -1399,6 +1451,9 @@ export async function generateDeck(
               ...parsedOutline,
               outline,
               generatedAt: new Date().toISOString(),
+              sourcePack: sourcePackPreflight.sourcePack,
+              missingInputs: sourcePackPreflight.missingInputs,
+              narrativePlan,
             }
           : outline;
     } catch {
@@ -1458,7 +1513,12 @@ export async function generateDeck(
     return {
       deckId,
       slideCount: result.slideCount,
-      warnings: [...(result.warnings || []), ...extraWarnings],
+      warnings: [
+        ...(result.warnings || []),
+        ...extraWarnings,
+        ...sourcePackPreflight.warnings,
+        ...narrativePlan.warnings,
+      ],
       exportPath,
     };
   } catch (err: any) {
