@@ -45,12 +45,12 @@ function main(): void {
   });
 
   checks.push({
-    name: 'Deck AI agent uses backend edits instead of coming soon stub',
+    name: 'Deck AI panel exposes runtime activity feed without local chat stub',
     pass:
       includesAll(agentPanel, [
-        'await onSendMessage?.(message)',
-        'presentations.agent.updated',
-        'presentations.agent.failed',
+        'AgentActivityPanel',
+        'events = []',
+        'degraded = false',
       ]) &&
       !agentPanel.includes('AI deck editing is coming soon. This feature is not yet connected to a backend.'),
   });
