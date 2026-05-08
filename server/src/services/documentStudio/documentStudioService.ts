@@ -25,6 +25,10 @@ import {
   getWave5Artifact,
   markWave5ArtifactExported,
 } from '../wave5ArtifactRuntimeService.js';
+import {
+  ensureBrandVoiceRegistryHydrated,
+  getActiveBrandVoiceProfile,
+} from './documentBrandVoiceService.js';
 import type {
   CreateDocumentCommentParams,
   DeleteDocumentCommentParams,
@@ -84,6 +88,7 @@ import type {
   DocumentIntake,
   DocumentOutline,
   DocumentProposalStatus,
+  DocumentQaReport,
   DocumentRunResult,
   DocumentSchema,
   DocumentSourceRef,
@@ -492,7 +497,14 @@ export async function exportDocumentArtifact(
       throw new QaOverrideUnauthorizedError(options.userRole ?? '');
     }
 
-    const report = runDocumentQa(schema);
+    // Resolve the tenant's active brand voice profile (Epic E7) so QA
+    // can layer tenant lexicon on top of the global catalogue. Hydration
+    // is idempotent + best-effort; persistence outage degrades to the
+    // global baseline silently.
+    await ensureBrandVoiceRegistryHydrated(organizationId);
+    const activeBrandVoiceProfile = getActiveBrandVoiceProfile(organizationId);
+
+    const report = runDocumentQa(schema, { brandVoiceProfile: activeBrandVoiceProfile });
     report.organizationId = organizationId;
 
     // Compact, audit-friendly snapshot of the report. Used both in the
@@ -2023,6 +2035,55 @@ export async function createDocumentFromChatSourcePack(
     packId: pack.packId,
     itemCount: ingestedItems.length,
   };
+}
+
+/**
+ * Run QA against a document artifact end-to-end (Epic E7, Slice 7.2).
+ *
+ * Resolves the inputs the QA engine needs but the route layer should not
+ * have to know about:
+ *   - the artifact's schema (overlay-aware, lifecycle-status-aware),
+ *   - the registered template, when the artifact was generated in Mode 3
+ *     (looked up by id stored in artifact metadata),
+ *   - the tenant's currently active Brand Voice profile (Epic E7).
+ *
+ * Hydrates the brand-voice registry on demand (idempotent + best-effort).
+ * Returns `null` when the artifact does not exist / has no schema; the
+ * route layer maps that to a 404. Stamps `report.organizationId` so
+ * downstream callers (audit pump, render code) don't have to.
+ */
+export async function runQaForDocument(
+  artifactId: string,
+  organizationId: string
+): Promise<DocumentQaReport | null> {
+  if (!artifactId || !organizationId) return null;
+  const schema = await getDocumentArtifact(artifactId, organizationId);
+  if (!schema) return null;
+
+  await ensureBrandVoiceRegistryHydrated(organizationId);
+  const brandVoiceProfile = getActiveBrandVoiceProfile(organizationId);
+
+  // Best-effort template lookup: when the artifact was materialized in
+  // Mode 3 the template id is parked on the wave5 metadata; resolve it
+  // here so Methodology / Completeness can switch into template-aware
+  // mode without leaking the metadata key into the route.
+  let template: DocumentTemplate | null = null;
+  try {
+    const artifact = await getWave5Artifact(artifactId, organizationId);
+    const metadata = artifact ? parseMetadata(artifact.metadata) : null;
+    const templateId = metadata?.[STUDIO_TEMPLATE_ID_METADATA_KEY];
+    if (typeof templateId === 'string' && templateId.length > 0) {
+      template = getRegisteredTemplate(templateId, organizationId);
+    }
+  } catch {
+    // Wave5 lookup failures degrade to template-less QA — the engine
+    // stays useful even when only Brand Voice is active.
+    template = null;
+  }
+
+  const report = runDocumentQa(schema, { template, brandVoiceProfile });
+  report.organizationId = organizationId;
+  return report;
 }
 
 function parseMetadata(raw: unknown): Record<string, unknown> | null {

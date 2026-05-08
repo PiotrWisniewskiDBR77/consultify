@@ -29,6 +29,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type {
+  BrandVoiceProfile,
   DocumentBlock,
   DocumentQaCategory,
   DocumentQaCategoryReport,
@@ -43,14 +44,25 @@ import type {
 } from './documentStudioTypes.js';
 
 /**
- * Options accepted by `runDocumentQa`. The template is optional because the
- * QA engine MUST stay useful for Mode 1 (no template) and for documents
- * authored before MVP-2; when a template is supplied, the Completeness and
- * Methodology categories switch into template-aware mode and check
- * blueprint coverage / order on top of their type-aware baseline.
+ * Options accepted by `runDocumentQa`. Both the template and the brand
+ * voice profile are optional because the QA engine MUST stay useful for
+ * Mode 1 (no template) and for tenants that have not activated a custom
+ * voice profile yet — the global baseline keeps the contract honest.
+ *
+ * - `template`: when supplied, Completeness and Methodology switch into
+ *   template-aware mode and check blueprint coverage / order on top of
+ *   their type-aware baseline.
+ * - `brandVoiceProfile`: when supplied AND its `languageScope` matches
+ *   the schema's language, Brand QA layers tenant-specific banned
+ *   phrases / glossary entries / required keywords on top of the global
+ *   catalogue and applies the optional `registerOverride` to pin the
+ *   register check stricter than the schema requests. The profile is
+ *   resolved by the caller (typically `documentStudioService.runQaForDocument`)
+ *   from the active row in `documentBrandVoiceService`.
  */
 export interface RunDocumentQaOptions {
   template?: DocumentTemplate | null;
+  brandVoiceProfile?: BrandVoiceProfile | null;
 }
 
 /**
@@ -560,12 +572,54 @@ const BLUEPRINT_MIN_WORDS: Record<string, number> = {
 // Brand QA
 // -----------------------------------------------------------------------------
 
-function runBrandQa(schema: DocumentSchema): DocumentQaCategoryReport {
+/**
+ * Decide whether the supplied profile applies to the schema's language.
+ * Returns `null` when the profile is missing OR scoped to a different
+ * language so the rest of `runBrandQa` can short-circuit cleanly.
+ */
+function resolveBrandVoiceProfile(
+  schema: DocumentSchema,
+  profile: BrandVoiceProfile | null | undefined
+): BrandVoiceProfile | null {
+  if (!profile) return null;
+  if (profile.status !== 'active') return null;
+  if (profile.languageScope !== 'all' && profile.languageScope !== schema.language) {
+    return null;
+  }
+  return profile;
+}
+
+function runBrandQa(
+  schema: DocumentSchema,
+  profile: BrandVoiceProfile | null = null
+): DocumentQaCategoryReport {
   const findings: DocumentQaFinding[] = [];
   const language = schema.language;
-  const banned = [...BANNED_PHRASES_GLOBAL, ...(BANNED_PHRASES_BY_LANGUAGE[language] ?? [])];
-  const casualForExecutive =
-    schema.communicationRegister === 'executive' ? EXECUTIVE_BANNED_CASUAL : [];
+  const activeProfile = resolveBrandVoiceProfile(schema, profile);
+
+  // Layer the tenant-specific banned set on top of the global catalogue,
+  // then subtract the tenant's escape-hatch entries (case-insensitive).
+  const disabledLower = new Set<string>(
+    (activeProfile?.disabledGlobalBannedPhrases ?? []).map((p) => p.toLowerCase())
+  );
+  const bannedBase = [
+    ...BANNED_PHRASES_GLOBAL,
+    ...(BANNED_PHRASES_BY_LANGUAGE[language] ?? []),
+  ].filter((phrase) => !disabledLower.has(phrase.toLowerCase()));
+  const tenantBanned = activeProfile?.bannedPhrases ?? [];
+  const tenantBannedLower = new Set<string>(tenantBanned.map((p) => p.toLowerCase()));
+  const banned = [...bannedBase, ...tenantBanned];
+
+  // Register override pins the register check stricter than the schema
+  // requests — e.g. activate the executive casual lexicon even when the
+  // schema is `professional`. Falls back to the schema's register.
+  const effectiveRegister = activeProfile?.registerOverride ?? schema.communicationRegister;
+  const casualForExecutive = effectiveRegister === 'executive' ? EXECUTIVE_BANNED_CASUAL : [];
+
+  // Glossary entries: directed (avoid → prefer). Each `avoid` hit emits a
+  // medium finding pointing at the preferred form. Avoid double-flagging
+  // when the same phrase is also on the tenant banned list.
+  const glossaryEntries = activeProfile?.glossaryEntries ?? [];
 
   for (const section of schema.sections) {
     for (const block of section.blocks) {
@@ -575,14 +629,40 @@ function runBrandQa(schema: DocumentSchema): DocumentQaCategoryReport {
 
       const bannedHits = findPhraseMatches(text, banned);
       for (const phrase of bannedHits) {
+        const phraseLower = phrase.toLowerCase();
+        const isTenantBanned = tenantBannedLower.has(phraseLower);
         findings.push(
           makeFinding(
             'medium',
-            `Brand voice: avoid "${phrase}" — fluff or marketing-speak that weakens consulting tone.`,
-            'banned_phrase',
+            isTenantBanned
+              ? `Brand voice (tenant): avoid "${phrase}" — banned by your organization's brand voice profile.`
+              : `Brand voice: avoid "${phrase}" — fluff or marketing-speak that weakens consulting tone.`,
+            isTenantBanned ? 'tenant_banned_phrase' : 'banned_phrase',
             { sectionId: section.sectionId, blockId: block.blockId }
           )
         );
+      }
+
+      // Glossary suggestions — skip avoids that already fired as banned
+      // hits in the same block to keep the report deduplicated.
+      if (glossaryEntries.length > 0) {
+        const bannedInBlock = new Set(bannedHits.map((p) => p.toLowerCase()));
+        const avoidsToCheck = glossaryEntries
+          .map((entry) => entry.avoid)
+          .filter((avoid) => !bannedInBlock.has(avoid.toLowerCase()));
+        const glossaryHits = findPhraseMatches(text, avoidsToCheck);
+        for (const phrase of glossaryHits) {
+          const entry = glossaryEntries.find((g) => g.avoid.toLowerCase() === phrase.toLowerCase());
+          if (!entry) continue;
+          findings.push(
+            makeFinding(
+              'medium',
+              `Brand voice (glossary): replace "${entry.avoid}" with "${entry.prefer}"${entry.note ? ` — ${entry.note}` : '.'}`,
+              'glossary_replacement',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        }
       }
 
       if (casualForExecutive.length > 0) {
@@ -591,7 +671,7 @@ function runBrandQa(schema: DocumentSchema): DocumentQaCategoryReport {
           findings.push(
             makeFinding(
               'high',
-              `Register mismatch: "${phrase}" is too casual for ${schema.communicationRegister} register.`,
+              `Register mismatch: "${phrase}" is too casual for ${effectiveRegister} register.`,
               'register_mismatch',
               { sectionId: section.sectionId, blockId: block.blockId }
             )
@@ -617,9 +697,40 @@ function runBrandQa(schema: DocumentSchema): DocumentQaCategoryReport {
     }
   }
 
+  // Required keywords — assert each must-appear term is present at least
+  // once anywhere in the document body. Accumulates a single high
+  // finding per missing keyword, attached to the first section so the
+  // UI can scroll to a stable anchor (the keyword is a document-level
+  // requirement, not a per-block one).
+  const requiredKeywords = activeProfile?.requiredKeywords ?? [];
+  if (requiredKeywords.length > 0 && schema.sections.length > 0) {
+    const fullText = schema.sections
+      .flatMap((section) => section.blocks.filter(isEditableBlock).map(blockToText))
+      .join('\n');
+    const fullTextLower = fullText.toLowerCase();
+    const anchorSection = schema.sections[0]!;
+    for (const keyword of requiredKeywords) {
+      const trimmed = keyword.trim();
+      if (!trimmed) continue;
+      const pattern = new RegExp(`\\b${escapeRegex(trimmed.toLowerCase())}\\b`, 'i');
+      if (!pattern.test(fullTextLower)) {
+        findings.push(
+          makeFinding(
+            'high',
+            `Brand voice (required): keyword "${trimmed}" must appear at least once in the document.`,
+            'required_keyword_missing',
+            { sectionId: anchorSection.sectionId }
+          )
+        );
+      }
+    }
+  }
+
   return categoryReport('brand', findings, 70, (score, fs) =>
     fs.length === 0
-      ? 'Brand voice clean: no banned phrases, register holds, no shouty caps.'
+      ? activeProfile
+        ? `Brand voice clean: tenant profile "${activeProfile.name}" applied; no findings.`
+        : 'Brand voice clean: no banned phrases, register holds, no shouty caps.'
       : `Brand voice: ${fs.length} finding(s); score ${score}/100.`
   );
 }
@@ -1838,8 +1949,9 @@ export function runDocumentQa(
   options: RunDocumentQaOptions = {}
 ): DocumentQaReport {
   const template = options.template ?? null;
+  const brandVoiceProfile = options.brandVoiceProfile ?? null;
   const categories: DocumentQaCategoryReport[] = [
-    runBrandQa(schema),
+    runBrandQa(schema, brandVoiceProfile),
     runLanguageQa(schema),
     runCompletenessQa(schema, template),
     runSourceQa(schema),

@@ -101,7 +101,6 @@
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { runDocumentQa } from '../services/documentStudio/documentQaService.js';
 import {
   ingestFileSource,
   ingestIntegrationSource,
@@ -160,6 +159,7 @@ import {
   replyToDocumentComment,
   resolveDocumentComment,
   rollbackDocumentToVersion,
+  runQaForDocument,
   transitionDocumentStatus,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
@@ -1802,13 +1802,11 @@ router.get(
       res.status(400).json({ error: 'artifactId is required' });
       return;
     }
-    const schema = await getDocumentArtifact(artifactId, organizationId);
-    if (!schema) {
+    const report = await runQaForDocument(artifactId, organizationId);
+    if (!report) {
       res.status(404).json({ error: 'artifact_not_found' });
       return;
     }
-    const report = runDocumentQa(schema);
-    report.organizationId = organizationId;
     res.json({ report });
   })
 );
