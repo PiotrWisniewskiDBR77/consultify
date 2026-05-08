@@ -28,6 +28,19 @@ import {
 import { buildDocumentSchema } from './documentContentGenerator.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
+import type {
+  DocumentLifecycleState,
+  TransitionDocumentStatusParams,
+} from './documentLifecycleService.js';
+import {
+  DocumentLifecycleTransitionError,
+  ensureDocumentLifecycleHydrated,
+  getDocumentLifecycleState,
+  getDocumentStatusOrDefault,
+  initializeDocumentLifecycle,
+  registerDocumentLifecycleAuditPump,
+  transitionDocumentStatus as transitionDocumentStatusInternal,
+} from './documentLifecycleService.js';
 import { planDocumentOutline } from './documentNarrativePlanner.js';
 import { refineOutlineWithLlm } from './documentNarrativeRefiner.js';
 import { renderDocumentSchemaToPdfBuffer } from './documentPdfRenderer.js';
@@ -284,6 +297,19 @@ export async function materializeDocumentArtifact(
   const artifactId = String(artifact?.artifactId ?? artifact?.artifact_id ?? provisionalArtifactId);
   const finalSchema: DocumentSchema = { ...provisionalSchema, artifactId };
 
+  // Epic E5 — seed lifecycle state at draft on first materialization.
+  // initializeDocumentLifecycle is idempotent so repeated calls (e.g.
+  // re-tries) do not reset the status of an in-progress document.
+  initializeDocumentLifecycle({
+    organizationId: params.organizationId,
+    artifactId,
+    actorId: params.userId,
+  });
+  const lifecycle = getDocumentStatusOrDefault(artifactId, params.organizationId);
+  finalSchema.documentStatus = lifecycle.status;
+  finalSchema.statusChangedAt = lifecycle.statusChangedAt;
+  finalSchema.statusChangedBy = lifecycle.statusChangedBy;
+
   return { artifactId, schema: finalSchema };
 }
 
@@ -296,13 +322,27 @@ export async function getDocumentArtifact(
 
   const metadata = parseMetadata(artifact.metadata_json ?? artifact.metadata);
   const schemaCandidate = metadata?.[SCHEMA_METADATA_KEY];
+  let schema: DocumentSchema | null = null;
   if (schemaCandidate && typeof schemaCandidate === 'object') {
-    return schemaCandidate as DocumentSchema;
+    schema = schemaCandidate as DocumentSchema;
+  } else {
+    const contentJson = parseMetadata(artifact.content_json);
+    if (contentJson && typeof contentJson === 'object') {
+      schema = contentJson as unknown as DocumentSchema;
+    }
   }
-
-  const contentJson = parseMetadata(artifact.content_json);
-  if (contentJson && typeof contentJson === 'object') {
-    return contentJson as unknown as DocumentSchema;
+  if (schema) {
+    // Overlay current lifecycle state. Historical artifacts that
+    // pre-date Epic E5 do not have lifecycle persisted yet — overlay
+    // returns 'draft' as a safe default.
+    const lifecycle = getDocumentStatusOrDefault(artifactId, organizationId);
+    return {
+      ...schema,
+      documentStatus: lifecycle.status,
+      statusChangedAt: lifecycle.statusChangedAt,
+      statusChangedBy: lifecycle.statusChangedBy,
+      statusReason: lifecycle.statusReason,
+    };
   }
 
   return null;
@@ -528,6 +568,14 @@ function pushAuditEntry(entry: DocumentAuditEntry): void {
   current.push(entry);
   auditStore.set(key, current);
 }
+
+// Wire the lifecycle service's audit emissions into the studio's
+// per-artifact audit store so every status change / snapshot / rollback
+// shows up in `listDocumentAuditEntries(...)` alongside proposals + QA
+// decisions. Registration is module-scope so it runs exactly once per
+// process boot (and is harmless when the studio service is re-imported
+// in isolated test files — the lifecycle module overwrites the pump).
+registerDocumentLifecycleAuditPump(pushAuditEntry);
 
 function blockToEditableText(content: unknown): string {
   if (!content || typeof content !== 'object') return '';
@@ -1340,6 +1388,36 @@ export function listDocumentAuditEntries(
   organizationId: string
 ): DocumentAuditEntry[] {
   return [...(auditStore.get(getAuditKey(artifactId, organizationId)) ?? [])];
+}
+
+// =============================================================================
+// Epic E5 — Document Lifecycle public surface (delegates to the
+// lifecycle service so the studio service stays the single import
+// surface routes / external callers consume).
+// =============================================================================
+
+export {
+  DocumentLifecycleTransitionError,
+  ensureDocumentLifecycleHydrated,
+  getDocumentLifecycleState,
+};
+export type { DocumentLifecycleState, TransitionDocumentStatusParams };
+
+/**
+ * Mutate the lifecycle status of a document. Validates the transition
+ * against the matrix in `documentLifecycleService.ALLOWED_TRANSITIONS`,
+ * appends a transition entry to the lifecycle history, and writes a
+ * `document_status_changed` audit row into the per-artifact audit
+ * store via the registered audit pump.
+ *
+ * Throws `DocumentLifecycleTransitionError` on invalid transitions /
+ * unknown statuses / unknown artifacts so the route layer can map the
+ * error code to an actionable HTTP status.
+ */
+export function transitionDocumentStatus(
+  params: TransitionDocumentStatusParams
+): DocumentLifecycleState {
+  return transitionDocumentStatusInternal(params);
 }
 
 // =============================================================================

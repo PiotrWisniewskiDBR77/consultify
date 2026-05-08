@@ -118,6 +118,15 @@ export interface DocumentSchema {
   sourceRefs: DocumentSourceRef[];
   createdAt: string;
   updatedAt: string;
+  /**
+   * Lifecycle status — Epic E5. Optional on the type to keep historical
+   * artifacts (created before E5 shipped) readable; service overlays a
+   * default `'draft'` when missing so callers can rely on a value.
+   */
+  documentStatus?: DocumentStatus;
+  statusChangedAt?: string;
+  statusChangedBy?: string;
+  statusReason?: string;
 }
 
 export interface DocumentIntake {
@@ -302,7 +311,33 @@ export type DocumentAuditAction =
   | 'proposal_executed'
   | 'qa_blocked_export'
   | 'qa_override_export'
-  | 'qa_override_denied';
+  | 'qa_override_denied'
+  // Epic E5 — Document Lifecycle
+  | 'document_status_changed'
+  | 'document_version_snapshot_created'
+  | 'document_rolled_back';
+
+/**
+ * Document Lifecycle (Epic E5).
+ *
+ *   draft        Working copy; freely mutable. Initial state on creation.
+ *   in_review    Submitted for review; intended-immutable but mutations
+ *                are allowed (no hard lock). Reviewers leave comments
+ *                (Epic E6) and decide approve / send-back.
+ *   approved     Cleared for publication. Auto-creates a "approved"
+ *                version snapshot on entry so rollback can always get
+ *                back to the cleared state.
+ *   published    Externally shared / exported as official deliverable.
+ *                Only path forward is `archived`. To revise, the operator
+ *                rolls back to a snapshot or creates a new artifact.
+ *   archived     Removed from the active list. Restorable to `draft`.
+ */
+export type DocumentStatus =
+  | 'draft'
+  | 'in_review'
+  | 'approved'
+  | 'published'
+  | 'archived';
 
 export interface DocumentAuditEntry {
   auditId: string;
