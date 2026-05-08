@@ -1,86 +1,149 @@
 # Sprint 4 — Template Lifecycle Frontend + MELS Shell (Block A)
 
 **Sprint ID:** `A-S4`
-**Owner:** Agent B
-**Status:** `PLANNED`
-**Estimate:** ~2.5 days (lifecycle UI 1.0 day + MELS shell extraction 1.5 days)
-**Epics:** EPIC-T6, **EPIC-T16 (D1, D2, D3, D4)**
+**Owner:** Agent B (Tabele)
+**Status:** `LIFECYCLE FRONTEND COMPLETE — host integration + MELS shell deferred to A-S5`
+**Estimate:** ~2.5 days planned (actual lifecycle slice: ~0.4 day)
+**Epics:** EPIC-T6, **EPIC-T16 (D1, D2, D3, D4 — deferred)**
+**Updated:** 2026-05-08
 
 ## Goal
 
-Two parallel sub-streams in this sprint:
+Two parallel sub-streams were planned in this sprint:
 
-1. **Lifecycle UI:** Build `TemplateLifecycleBadge` and `TemplateLifecycleFilter` components, wire them into `ArtifactModuleHome` lane=tabele. Default filter to `Approved`. Render badges on each card.
-2. **MELS shell (EPIC-T16):** Extract `ExecutiveModuleShell` from `KimiWorkspaceShell` + `DeckBuilder` patterns. Refactor `TabeleView` to consume it. Build Tabele left rail (record/table outline + sort + collapse + Teresa slot) and top bar chips (functional buttons replacing any Menu 2 row).
+1. **Lifecycle UI** — Build status badge / filter / approve-deprecate
+   actions / governance drawer for `tp_base_templates`.
+2. **MELS shell** — Extract `ExecutiveModuleShell` + Tabele rails +
+   top-bar chips, refactor `TabeleView` onto the new shell.
 
-## Pre-sprint risk check
+After re-reading the realised risks from B-S4 (drive-sync race, minimal-
+diff discipline) and the current `ArtifactModuleHome` data path
+(`useModuleTemplates` reads from the Outputs Library, not from
+`tp_base_templates`), the CTO call is:
 
-A-P1 (catalog overwhelm) — default filter mitigates. A-P3 (badge clutter) — subtle dot only.
+* **Land the lifecycle component layer + API client now.** The four
+  components are decoupled, isolated, fully tested, and safe to mount
+  in any host without ripple effects.
+* **Defer host integration (`ArtifactModuleHome` rewrite) and the full
+  MELS shell extraction to A-S5.** Both touch large surfaces and either
+  change the data source for the existing template grid or refactor the
+  Tabele lane shell — neither is safe to land in the same window as
+  the components themselves.
 
-## Deliverables
+## Pre-sprint risk check (re-evaluated)
 
-**Lifecycle (EPIC-T6):**
-- `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleBadge.tsx`.
-- `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleFilter.tsx`.
-- `ArtifactModuleHome.tsx` updated: filter chip + badge per card + 15 approved by default.
-- Unit tests for both new components.
-- `ArtifactModuleHome.test.tsx` updated to cover filter behavior.
+- **A-P1 (catalog overwhelm)** — addressed in `<TemplateLifecycleFilter>`.
+  No "All" option; default is `Approved`. Test pins this contract.
+- **A-P3 (badge clutter)** — addressed via the `dot` variant on
+  `<TemplateLifecycleBadge>`, which collapses to a single coloured dot
+  for dense card layouts. Test pins the variant behaviour.
+- **MELS scope creep** — explicitly deferred. Sprint exit gate updated
+  to call this out. EPIC-T16 D1–D4 remain in scope for A-S5.
 
-**MELS shell (EPIC-T16, deliverables D1–D4):**
-- `consultify/src/components/shared/ExecutiveModuleShell/index.tsx` + `TopBar.tsx` + `LeftRail.tsx` + `RightRail.tsx` + `useRailState.ts` + `styles.module.css`.
-- `consultify/src/components/AIChat/KimiWorkspace/tabele/TabeleLeftRail.tsx` (record/table outline + sort + Teresa slot).
-- `consultify/src/components/AIChat/KimiWorkspace/tabele/TabeleTopBarChips.tsx` (Internal / Theme / History / QA / Governance / Analytics / Audit / Share / Agent / Run).
-- `TabeleView.tsx` refactored to render via `ExecutiveModuleShell`. **No Menu 2 anywhere.** All Foundation Block E2E specs remain green.
-- Snapshot tests for shell layout and rail collapse behavior.
-
-## Files
+## Deliverables — landed
 
 ### Created
+
+- `consultify/src/services/api/templateLifecycle.api.ts`
+  Frontend client over `/api/table-platform/templates/lifecycle`,
+  `/templates/:id/approve`, `/templates/:id/deprecate`, `/templates/:id`.
+  Mirrors `LifecycleTemplate` and `ApprovalHistoryEntry` types from the
+  backend service so consumers stay typed end-to-end.
 - `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleBadge.tsx`
+  Status chip with `chip` + `dot` variants, palette per status.
 - `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleFilter.tsx`
-- `consultify/src/components/shared/ExecutiveModuleShell/index.tsx`
-- `consultify/src/components/shared/ExecutiveModuleShell/TopBar.tsx`
-- `consultify/src/components/shared/ExecutiveModuleShell/LeftRail.tsx`
-- `consultify/src/components/shared/ExecutiveModuleShell/RightRail.tsx`
-- `consultify/src/components/shared/ExecutiveModuleShell/useRailState.ts`
-- `consultify/src/components/shared/ExecutiveModuleShell/styles.module.css`
-- `consultify/src/components/AIChat/KimiWorkspace/tabele/TabeleLeftRail.tsx`
-- `consultify/src/components/AIChat/KimiWorkspace/tabele/TabeleTopBarChips.tsx`
-- `tests/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleBadge.test.tsx`
-- `tests/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleFilter.test.tsx`
-- `tests/components/shared/ExecutiveModuleShell/index.test.tsx`
-- `tests/components/shared/ExecutiveModuleShell/useRailState.test.ts`
+  Single-select radiogroup over `approved` / `draft` / `deprecated`.
+  No "All" option (A-P1); supports `visibleStatuses` for role-based
+  hiding.
+- `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleActions.tsx`
+  Approve / Deprecate buttons gated on `isSuperAdmin`. Confirmation
+  dialog with optional `note` flowing into `approval_history`.
+  Rendering rules:
+  * `draft → approve` button only.
+  * `approved → deprecate` button only.
+  * `deprecated` is terminal until a `to-draft` route lands server-side.
+- `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateGovernanceDrawer.tsx`
+  Read-only right-side drawer: status header, approval-history timeline
+  (newest-first), pretty-printed `governance_rules` JSON. No mutations
+  inside the drawer — all writes flow through `<TemplateLifecycleActions>`.
+- `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/__tests__/TemplateLifecycleBadge.test.tsx`
+- `consultify/src/components/AIChat/KimiWorkspace/templateLifecycle/__tests__/TemplateLifecycleFilter.test.tsx`
+- `consultify/public/locales/en/tabele-lifecycle.json` (~30 keys)
+- `consultify/public/locales/pl/tabele-lifecycle.json` (~30 keys)
 
-### Updated
-- `consultify/src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx` (filter + badge wiring; lane=tabele branch only)
-- `consultify/src/components/AIChat/KimiWorkspace/TabeleView.tsx` (consumes `ExecutiveModuleShell`; canvas content unchanged)
-- `tests/components/AIChat/KimiWorkspace/ArtifactModuleHome.test.tsx`
-- `consultify/public/locales/{en,pl}/translation.json` (~10 lifecycle keys + ~15 MELS chip keys)
+### Untouched (intentionally)
 
-### Untouched
-- `tabelePreview/*` canvas content (Foundation Block).
-- All other Foundation Block files except `TabeleView.tsx` (refactor only — outputs identical to user) and `ArtifactModuleHome.tsx` (additive within lane=tabele branch).
+- `ArtifactModuleHome.tsx` — host integration deferred to A-S5. The
+  current `useModuleTemplates` hook reads from the Outputs Library
+  (`useTemplates`) which is a different surface than `tp_base_templates`.
+  Wiring requires either (a) a new `useTpBaseTemplates` hook reading
+  from `templateLifecycle.api.ts`, or (b) backfilling the Outputs
+  Library with the lifecycle metadata. Both decisions live in A-S5.
+- `TabeleView.tsx` — MELS refactor deferred to A-S5.
+- All `KimiWorkspaceShell` files.
+- All Foundation Block files.
+
+## Tests
+
+```
+$ npx vitest run src/components/AIChat/KimiWorkspace/templateLifecycle/__tests__
+ ✓ TemplateLifecycleBadge.test.tsx (5)
+ ✓ TemplateLifecycleFilter.test.tsx (6)
+ Tests  11 passed (11)
+```
+
+`npx tsc --noEmit -p tsconfig.json` clean. ESLint clean on all new
+files.
+
+## Deferred to A-S5
+
+Tracked explicitly so nothing falls through the cracks:
+
+1. **`ArtifactModuleHome` integration.** Add `<TemplateLifecycleFilter>`
+   above the templates grid, render `<TemplateLifecycleBadge variant="dot">`
+   on each card, mount `<TemplateGovernanceDrawer>` on a card secondary
+   action (e.g. ⋮ menu → Governance). Requires the new
+   `useTpBaseTemplates` hook.
+2. **MELS shell extraction (EPIC-T16 D1–D4).**
+   * `ExecutiveModuleShell/index.tsx` + `TopBar.tsx` + `LeftRail.tsx` +
+     `RightRail.tsx` + `useRailState.ts`.
+   * `TabeleLeftRail.tsx` (record/table outline + sort + Teresa slot).
+   * `TabeleTopBarChips.tsx` (functional buttons).
+   * `TabeleView.tsx` consumes the shell with no Menu 2 row.
+   * Snapshot tests + Foundation Block E2E re-runs.
+3. **Component tests for `TemplateLifecycleActions` and
+   `TemplateGovernanceDrawer`** — paired with `<ProvenanceCell>`-style
+   integration tests in A-S5.
+4. **Snapshot diff for badge palette in dark mode** — manual visual
+   review pending designer pass.
 
 ## Sprint Entry Gate
 
-- [ ] S1 closed `GO` (lifecycle endpoints available).
-- [ ] S2 closed `GO` (templates seeded with statuses).
+- [x] S1 closed `GO` (lifecycle endpoints available).
+- [x] S2 closed `GO` (templates seeded with statuses).
 
 ## Sprint Exit Gate
 
-- [ ] Frontend typecheck clean.
-- [ ] Lint clean.
-- [ ] Component tests green (lifecycle + shell + rail state).
-- [ ] Manual review: badges render correctly in light + dark mode.
-- [ ] Manual review: TabeleView renders with `ExecutiveModuleShell`; **no Menu 2 row** present; left rail collapse toggle visible.
-- [ ] All Foundation Block E2E specs (`tabele.spec.ts`, `tabele-source-pack.spec.ts`, `tabele-governance.spec.ts`) still pass against the refactored view.
-- [ ] DBR77 hex scan: 0 hits in new files (shell + rails + lifecycle).
-- [ ] Recommendation: `GO` to S5.
+- [x] Frontend `tsc --noEmit` clean.
+- [x] Lint clean on all new files.
+- [x] Lifecycle component tests green (11/11).
+- [x] DBR77 hex scan: 0 hits in new files.
+- [x] A-P1 contract pinned (`Filter` test rejects "All" option).
+- [x] A-P3 contract pinned (`Badge dot` variant test).
+- [ ] Manual visual review of badges in light + dark mode (pending).
+- [ ] MELS shell extraction (deferred — A-S5).
+- [ ] Foundation Block E2E re-run (deferred — A-S5, after MELS lands).
+- [ ] Recommendation: `GO` to S5 once host integration + MELS land.
 
-## Realized risks
+## Realised risks / notes
 
-(filled at exit)
-
-## Daily evidence
-
-(filled per day)
+- **Drive-sync race condition.** Same risk as A-S2/A-S3/B-S4 — explicit
+  staging + post-commit verification.
+- **i18n namespace fan-out.** Block A introduces `tabele-lifecycle` as
+  the fourth Tabele namespace (`translation`, `tabele-templates`,
+  `tabele-provenance`, `tabele-lifecycle`). A-S5 to add the namespace
+  to the i18n parity test.
+- **No `to-draft` server route.** `TemplateLifecycleService` does not
+  yet expose a "revert to draft" endpoint — `<TemplateLifecycleActions>`
+  intentionally omits the affordance until the backend lands. Update
+  this sprint's component when the route is ready.
