@@ -249,6 +249,13 @@ export interface TemplateExportRules {
   approvalRequiredForExport: boolean;
 }
 
+// Slice E14 — frontend mirror of the server-side DocumentTemplate
+// product fields. All fields are OPTIONAL and pre-E14 templates omit
+// them; consumers MUST treat the omission as "no signal yet". The
+// FE-E2 template picker uses these fields to power the FR-06
+// "discover the right template" experience: usage-based sort, quality
+// score with sample-size disclosure, persona / region / brand chip
+// filters, and dependency-gated visibility.
 export interface DocumentTemplate {
   templateId: string;
   organizationId: string;
@@ -275,6 +282,15 @@ export interface DocumentTemplate {
   deprecatedBy?: string;
   deprecatedAt?: string;
   notes?: string;
+  // Slice E14 — product fields (all optional, backwards-compatible).
+  usageCount?: number;
+  lastUsedAt?: string;
+  feedbackQualityScore?: number;
+  feedbackSampleSize?: number;
+  personaTags?: string[];
+  regionTags?: string[];
+  brandTags?: string[];
+  dependencyTags?: string[];
 }
 
 export interface TemplateDraftInput {

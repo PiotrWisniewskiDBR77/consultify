@@ -923,6 +923,53 @@ While the frontend work is parked on the parallel-sync coordination issue, the b
 
 ---
 
+### 6.15.4 Slice E14 — Template registry product fields (FR-06 substrate)
+
+**Why.** FR-06 ("discover the right template") requires registry-side signal that drives sort order + visibility in the FE-E2 template picker. The recommender needs:
+- usage telemetry (how often is this template applied?),
+- quality aggregate (what consultant rating did its outputs receive?),
+- classification tags (persona / region / brand / dependency) so the recommender can scope templates to the active context (audience profile, tenant region, organization industry, source-pack contents).
+
+Until E14, the registry only carried structural metadata (category, status, blueprint, formatting). Recommendation surfaces had nothing to anchor on.
+
+**Substrate-only scope (no DB migration in this slice).** The DAO / migration that persists these fields across process restarts is delegated to a follow-up slice (`E14.persistence`) — keeping this slice substrate-only avoids file collisions with parallel agents currently active in the DAO layer.
+
+- `documentStudioTypes.ts` — extend `DocumentTemplate` with **8** backwards-compatible optional product fields:
+    - `usageCount?: number`
+    - `lastUsedAt?: string`
+    - `feedbackQualityScore?: number` (running 1..5 average)
+    - `feedbackSampleSize?: number` (number of ratings folded into the average — surfaced in the UI to disambiguate "5.0 from 1 rating" vs. "5.0 from 38 ratings")
+    - `personaTags?: string[]`
+    - `regionTags?: string[]`
+    - `brandTags?: string[]`
+    - `dependencyTags?: string[]`
+- `TemplateAuditAction` extended with two new actions: `'template_usage_recorded'` + `'template_feedback_recorded'`.
+- `documentTemplateService.ts` — two new service helpers:
+    - `recordTemplateUsage({ templateId, organizationId, userId, occurredAt?, artifactId? })`: increments `usageCount` (treats `undefined` → 0 → 1 on first call), refreshes `lastUsedAt`, emits a `template_usage_recorded` audit entry with prev/next counts and the optional `artifactId` so the audit trail can drill from registry aggregate to source artifact.
+    - `recordTemplateFeedback({ templateId, organizationId, userId, rating, comment?, occurredAt? })`: O(1) running-average update via `nextScore = (prevScore × prevSize + rating) / (prevSize + 1)`. Validates `rating` is a finite integer in `[1..5]`; out-of-range / NaN / non-integer values return `null` without mutating state. Emits a `template_feedback_recorded` audit entry with rating + prev/next aggregates + optional consultant comment.
+- `src/components/DocumentStudio/types.ts` — frontend mirror of all 8 optional product fields with explanatory comment for the FE-E2 template picker.
+
+**Backwards compatibility.** Pre-E14 templates omit all 8 fields and are treated as "no signal yet". Existing seeders, hydration, persistence, draft / approve / deprecate flows, and the audit pipeline continue to function unchanged. The DAO does not yet persist the new fields — they survive only for the lifetime of the process; on restart, the running counters reset to `undefined`. The follow-up slice `E14.persistence` adds the migration + DAO writes; FE-E2 wiring waits until persistence lands.
+
+**Coverage.** New `documentTemplateProductFields.test.ts` with 13 specs:
+- pre-E14 templates start with all 8 fields `undefined`;
+- usage increments from `undefined` → 1 → 2 → 3;
+- usage emits audit entry with prev/next counts + `artifactId` propagation;
+- usage rejects empty IDs and missing templates;
+- feedback first rating: score = rating, sampleSize = 1;
+- feedback running average converges across multiple ratings (5, 3, 4 → 4.0);
+- feedback emits audit entry with rating + prev/next aggregates + comment;
+- feedback rejects out-of-range ratings (0, 6, -1, 1.5, NaN, Infinity);
+- feedback rejects empty IDs;
+- feedback returns null for unknown template;
+- audit-action union accepts both new E14 actions via the test helper.
+
+**Validation.** Document Studio + Execution Module Standard suite **608/608 green** (+13 from E14). tsc clean for documentStudio + executionModuleStandard scope. ESLint clean for the modified files.
+
+**Closes gaps.** §10.6 of the gap-vs-target report (FR-06 closure / template product fields) — SUBSTRATE DELIVERED. DB persistence of the new fields + FE-E2 picker wiring are scheduled as follow-ups on top of this substrate.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

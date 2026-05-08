@@ -633,6 +633,12 @@ export interface TemplateExportRules {
  * Canonical Document Template — the artifact that governs Mode 2 ("plan a
  * template") and Mode 3 ("generate from approved template"). Templates are
  * versioned and gated by approval before they become usable in Mode 3.
+ *
+ * Slice E14 adds an opt-in product-fields surface (usage telemetry +
+ * feedback aggregate + classification tags) so the registry can power
+ * data-driven recommendations and the FR-06 "discover the right
+ * template" loop. Every product field is OPTIONAL and absent on legacy
+ * templates; the service treats `undefined` as "no signal yet".
  */
 export interface DocumentTemplate {
   templateId: string;
@@ -661,6 +667,67 @@ export interface DocumentTemplate {
   deprecatedBy?: string;
   deprecatedAt?: string;
   notes?: string;
+
+  // ---------------------------------------------------------------------
+  // Slice E14 — product fields. All optional / backwards-compatible.
+  // ---------------------------------------------------------------------
+  /**
+   * Monotonically incremented every time a Mode-3 generation flow
+   * applies this template. Backwards-compatible: legacy templates
+   * (and freshly drafted templates) report `undefined` until the
+   * first `recordTemplateUsage()` call lands.
+   */
+  usageCount?: number;
+  /**
+   * ISO timestamp of the most recent `recordTemplateUsage()`. Powers
+   * the "recently used" sort order in the FE-E2 template picker
+   * without requiring a separate analytics rollup.
+   */
+  lastUsedAt?: string;
+  /**
+   * Running average of consultant-supplied quality ratings on a 1..5
+   * scale. Computed as `feedbackQualityScore * feedbackSampleSize +
+   * newRating` divided by `feedbackSampleSize + 1` on each
+   * `recordTemplateFeedback()` call. `undefined` until the first
+   * rating arrives.
+   */
+  feedbackQualityScore?: number;
+  /**
+   * Number of ratings folded into `feedbackQualityScore`. Surfaced to
+   * the UI so reviewers can distinguish "5.0 from 1 rating" from
+   * "5.0 from 38 ratings". `undefined` until the first rating
+   * arrives.
+   */
+  feedbackSampleSize?: number;
+  /**
+   * Audience-classification tags (e.g. 'cto', 'cfo', 'board',
+   * 'consultant', 'engineering_lead'). Free-form strings; the
+   * recommender uses them to match templates to the active
+   * `AudienceProfile` (Epic E9).
+   */
+  personaTags?: string[];
+  /**
+   * Geography classification (e.g. 'EU', 'US', 'APAC', 'PL', 'DACH').
+   * Free-form strings; the recommender uses them to filter templates
+   * by tenant region preference and to surface region-specific
+   * variants (e.g. GDPR-aware vs. SOX-aware reports).
+   */
+  regionTags?: string[];
+  /**
+   * Industry / brand classification (e.g. 'fintech', 'healthcare',
+   * 'retail', 'public_sector'). Free-form strings; the recommender
+   * scopes templates to the active organization's industry vertical.
+   */
+  brandTags?: string[];
+  /**
+   * Required input dependencies that must be present in the source
+   * pack / intake for the template to render meaningfully (e.g.
+   * 'requires_financial_data', 'requires_transcript',
+   * 'requires_market_sizing'). The recommender hides templates whose
+   * dependencies are not satisfied by the current source pack so the
+   * Mode-3 flow surfaces only viable options.
+   */
+  dependencyTags?: string[];
 }
 
 export interface TemplateDraftInput {
@@ -682,7 +749,9 @@ export type TemplateAuditAction =
   | 'template_drafted'
   | 'template_updated'
   | 'template_approved'
-  | 'template_deprecated';
+  | 'template_deprecated'
+  | 'template_usage_recorded'
+  | 'template_feedback_recorded';
 
 export interface TemplateAuditEntry {
   auditId: string;

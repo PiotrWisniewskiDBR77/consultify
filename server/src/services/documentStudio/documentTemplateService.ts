@@ -509,6 +509,169 @@ export function isTemplateUsableForGeneration(
   return template.status === 'approved';
 }
 
+// =============================================================================
+// Slice E14 — Template product fields (usage telemetry + feedback aggregate).
+//
+// FR-06 closure: "discover the right template" requires registry-side
+// signal that drives sort order + visibility. E14 delivers the SUBSTRATE
+// (in-process accumulators + audit-trail entries + service-side helpers
+// the FE-E2 template picker can consume). The DAO / migration that
+// persists these fields across process restarts is a follow-up slice
+// (E14.persistence) — keeping this slice substrate-only minimizes
+// blast radius and avoids file collisions with parallel agents that
+// are currently active in the DAO layer.
+//
+// All product fields are optional on `DocumentTemplate`; absent values
+// are treated as "no signal yet" and backwards-compatible with every
+// pre-E14 consumer.
+// =============================================================================
+
+export interface RecordTemplateUsageParams {
+  templateId: string;
+  organizationId: string;
+  /** Actor who triggered the Mode-3 generation that consumed the template. */
+  userId: string;
+  /** Optional override for `lastUsedAt` (testing / backfill). Defaults to now. */
+  occurredAt?: string;
+  /** Optional pointer to the artifact produced from this usage (audit trail). */
+  artifactId?: string;
+}
+
+/**
+ * Increment `usageCount` and refresh `lastUsedAt` on the template. Emits a
+ * `template_usage_recorded` audit entry so the registry has a per-event
+ * trail (the running counter is a denormalized projection of the trail).
+ *
+ * Returns the updated template, or `null` when the template is not in
+ * the cache for the given organization (caller decides whether to
+ * surface a 404 or silently skip — the in-process registry is the
+ * source of truth for live tenants).
+ *
+ * Failure modes resolve to `null`. The audit entry is best-effort
+ * write-through-persisted via the existing `pushAudit()` plumbing.
+ */
+export function recordTemplateUsage(params: RecordTemplateUsageParams): DocumentTemplate | null {
+  const { templateId, organizationId, userId } = params;
+  const trimmedTemplateId = (templateId ?? '').trim();
+  const trimmedOrgId = (organizationId ?? '').trim();
+  const trimmedUserId = (userId ?? '').trim();
+  if (!trimmedTemplateId || !trimmedOrgId || !trimmedUserId) {
+    return null;
+  }
+
+  const key = templateKey(trimmedOrgId, trimmedTemplateId);
+  const existing = registryStore.get(key);
+  if (!existing) return null;
+
+  const occurredAt = params.occurredAt ?? nowIso();
+  const previousCount = typeof existing.usageCount === 'number' ? existing.usageCount : 0;
+  const next: DocumentTemplate = {
+    ...existing,
+    usageCount: previousCount + 1,
+    lastUsedAt: occurredAt,
+    updatedAt: occurredAt,
+  };
+  registryStore.set(key, next);
+  void persistTemplate(next).catch(() => undefined);
+
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: trimmedTemplateId,
+    organizationId: trimmedOrgId,
+    action: 'template_usage_recorded',
+    actorId: trimmedUserId,
+    occurredAt,
+    details: {
+      previousUsageCount: previousCount,
+      nextUsageCount: previousCount + 1,
+      ...(params.artifactId ? { artifactId: params.artifactId } : {}),
+    },
+  });
+  return next;
+}
+
+export interface RecordTemplateFeedbackParams {
+  templateId: string;
+  organizationId: string;
+  /** Actor submitting the rating. */
+  userId: string;
+  /** 1..5 inclusive integer rating. Out-of-range values are rejected. */
+  rating: number;
+  /** Optional free-form comment (audit-trail only; not surfaced on the template). */
+  comment?: string;
+  /** Optional override for the audit timestamp; defaults to now. */
+  occurredAt?: string;
+}
+
+/**
+ * Record a 1..5 quality rating on the template, updating the running
+ * average + sample size in O(1):
+ *   nextScore = (prevScore * prevSize + rating) / (prevSize + 1)
+ *   nextSize  = prevSize + 1
+ *
+ * Returns the updated template, or `null` when:
+ *   - template is not in the cache for the given organization;
+ *   - rating is not a finite integer in [1..5];
+ *   - any required string param is empty/whitespace.
+ *
+ * The full rating event is captured as a `template_feedback_recorded`
+ * audit entry so reviewers can drill down from the aggregate to the
+ * underlying ratings (with optional consultant comments).
+ */
+export function recordTemplateFeedback(
+  params: RecordTemplateFeedbackParams
+): DocumentTemplate | null {
+  const { templateId, organizationId, userId, rating } = params;
+  const trimmedTemplateId = (templateId ?? '').trim();
+  const trimmedOrgId = (organizationId ?? '').trim();
+  const trimmedUserId = (userId ?? '').trim();
+  if (!trimmedTemplateId || !trimmedOrgId || !trimmedUserId) {
+    return null;
+  }
+  if (!Number.isFinite(rating) || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return null;
+  }
+
+  const key = templateKey(trimmedOrgId, trimmedTemplateId);
+  const existing = registryStore.get(key);
+  if (!existing) return null;
+
+  const prevScore =
+    typeof existing.feedbackQualityScore === 'number' ? existing.feedbackQualityScore : 0;
+  const prevSize =
+    typeof existing.feedbackSampleSize === 'number' ? existing.feedbackSampleSize : 0;
+  const nextSize = prevSize + 1;
+  const nextScore = (prevScore * prevSize + rating) / nextSize;
+
+  const occurredAt = params.occurredAt ?? nowIso();
+  const next: DocumentTemplate = {
+    ...existing,
+    feedbackQualityScore: nextScore,
+    feedbackSampleSize: nextSize,
+    updatedAt: occurredAt,
+  };
+  registryStore.set(key, next);
+  void persistTemplate(next).catch(() => undefined);
+
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: trimmedTemplateId,
+    organizationId: trimmedOrgId,
+    action: 'template_feedback_recorded',
+    actorId: trimmedUserId,
+    occurredAt,
+    details: {
+      rating,
+      previousScore: prevScore,
+      previousSampleSize: prevSize,
+      nextScore,
+      nextSampleSize: nextSize,
+      ...(params.comment ? { comment: params.comment } : {}),
+    },
+  });
+  return next;
+}
+
 function bumpVersion(version: string, action: 'approve'): string {
   // Promote the patch-level version on first approval; subsequent approvals
   // are no-ops in MVP-2 (deprecate + redraft is the supported flow).
