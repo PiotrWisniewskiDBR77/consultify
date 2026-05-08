@@ -1,6 +1,6 @@
 # EPIC-T16 — Unified Executive Module Layout (Tabele lane)
 
-**Status:** `IN PROGRESS — D1 + D2 (foundations) + D3..D5 (Tabele lane components) LANDED 2026-05-08; D6..D9 + integration follow-up pending`
+**Status:** `IN PROGRESS — D1..D5 (foundations + Tabele lane components + adapter behind isMelsTabeleEnabled) LANDED 2026-05-08; D6..D9 (help modal, drag handle, visual review, hex scan, TabeleView swap) pending`
 **Block:** A (Template Catalog) of `tabele-full-product` program.
 **Driver:** User-supplied UX directive on 2026-05-08 — converge executive modules (Wordy / Tabele / Prezentacje) on a single layout patterned after `DeckBuilder` (Prezentacje).
 **Standard:** `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md` (MELS).
@@ -226,3 +226,47 @@ Either path produces a single jumbo diff that overlaps with B-S5a host integrati
 - **T16-D6** — Help-modal listing for shortcut display strings (registry already shipped in S1).
 - **T16-D7** — Width-resize drag handle UX (state + clamping shipped in S1).
 - **T16-D8 / D9** — Visual review screenshots + DBR77 hex scan acceptance (after S3 swap so the screenshots reflect the final shape).
+
+---
+
+## Update — 2026-05-08 — T16-S3 — TabeleMelsView adapter + isMelsTabeleEnabled flag landed
+
+**Sprint:** EPIC-T16-S3 (lane swap adapter, behind a kill-switch).
+**Decision (CTO):** Land the adapter (`<TabeleMelsView>`) and the kill-switch (`isMelsTabeleEnabled`) without yet wiring them into `TabeleView.tsx`. The adapter is presentational and side-effect-free; once visual review and DBR77 hex scan land in S4 we can flip a single conditional in `TabeleView` and ship.
+
+### Deliverables landed
+
+- ✅ **`isMelsTabeleEnabled` (frontend kill-switch)**:
+  - `consultify/src/utils/melsTabeleFlag.ts` — same shape as `recordProvenanceFlag` (URL query → localStorage → env → default OFF).
+  - Keys exposed via `MELS_TABELE_FLAG_KEYS` for tooling: `ff.mels_tabele` (LS), `ff_melsTabele` (query), `VITE_MELS_TABELE` (env).
+  - Default OFF — flag stays closed until S4 visual review approves the swap.
+
+- ✅ **`<TabeleMelsView>` (adapter)**:
+  - `consultify/src/components/AIChat/KimiWorkspace/tabeleShell/TabeleMelsView.tsx`.
+  - Accepts the same data the legacy `KimiWorkspaceShell lane="tabele"` consumes (`preview`, handlers, confidentiality, governance verdict, agent state, qaFindingsCount, sourcePackCount).
+  - Translates state into `<ExecutiveModuleShell>`:
+    - **TopBar chips** via `buildTabeleTopBarChips` (Internal/Theme/History/QA/Governance/Analytics/Audit/Share/Agent/Run in MELS canonical order).
+    - **Left rail** via `<TabeleLeftRail>` with badges derived from the preview (KPI count, schema fields, record count, relations).
+    - **Right rail** via `buildTabeleRightRailTools` (Search/AI Editor/QA Report/Source Pack/Layout/Share/Analytics) and `<TabeleRightRailPanel>` for caller-supplied panel content.
+    - **Canvas** via `<TabelePreviewLayout>` — the existing Word-document idiom (Cover/KPI/Schema/Records/Relations/Rationale stays).
+    - **Empty state** rendered inside the canvas when `preview === null`.
+  - Hooks the keyboard-shortcut registry (`onRunPrimary`, `onToggleAgent`, `onOpenCommandPalette`, `onOpenShortcutHelp`).
+
+### Tests landed (14/14 green; 63/63 cumulative across S1+S2+S3)
+
+- `src/utils/__tests__/melsTabeleFlag.test.ts` (8 tests, jsdom) — defaults OFF, LS override (1/off), URL query priority, "true" parsing, invalid query falls through to LS, invalid LS falls through to env, stable flag keys.
+- `src/components/AIChat/KimiWorkspace/tabeleShell/__tests__/TabeleMelsView.test.tsx` (6 tests, jsdom) — empty preview path renders empty-state slot, preview path mounts TabelePreviewLayout canvas, top bar carries canonical MELS chip ids, left-rail badges derived from preview (3 records / 2 schema fields / 0 relations), right-rail panel mounts on tool click, confidentiality dot tone reaches the chip strip.
+
+Cumulative: **63/63 unit tests green**, 0 linter errors, 0 raw hex literals.
+
+### Why no `TabeleView.tsx` swap in this commit
+
+`TabeleView.tsx` (lines 124–446) wraps `<KimiWorkspaceShell>` and forwards a tightly-coupled props bag. Branching that file with `isMelsTabeleEnabled()` is < 30 LOC of additional code, but it co-mingles with the active Foundation Block / B-S5a / A-S5b host integration — touching it now would inflate the EPIC-T16 review surface and risk a Foundation Block E2E regression. The swap is a one-conditional change in S4 once visual review screenshots are signed off.
+
+### Deferred to EPIC-T16-S4 (final sprint)
+
+- **T16-D2 (lane swap, last 30 LOC)** — branch `<TabeleView>` between legacy and `<TabeleMelsView>` mounts, gated by `isMelsTabeleEnabled()`.
+- **T16-D6** — Help-modal listing for shortcut display strings.
+- **T16-D7** — Width-resize drag handle UX.
+- **T16-D8 / D9** — Visual review screenshots + DBR77 hex scan acceptance gate.
+- **Foundation Block E2E re-run** — artifact open / Source Pack click-through / governance verdict — both flag-OFF (legacy) and flag-ON (MELS) paths.
