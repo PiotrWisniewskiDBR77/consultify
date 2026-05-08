@@ -604,3 +604,75 @@ P2 (deferred, non-blocking):
 
 - Sprint S5 starts Studio Surface UI (minimal): a single read-only Studio screen that consumes the four preview endpoints (`source-pack`, `narrative-plan`, `template-architect`, `generate`) and renders source coverage, narrative thesis, draft template plan, outline preview, and the `wouldGenerate` envelope. UI quality follows the Consultify UI/UX golden standard. No mutating endpoints are wired up. Anygravity manual retest pack runs after S5 lands.
 
+
+## Sprint S5 Gate Report — Studio Surface UI (minimal, read-only) (2026-05-08)
+
+Status: `PASS_WITH_P2`
+Branch: `staging`
+Scope: Frontend-only minimal surface that consumes the four S1..S4 preview endpoints. No DB migration, no mutating endpoints, no full ModuleHub adoption (deferred — see R-S5-1).
+
+### Changes made
+
+- New `consultify/src/services/api/presentationStudio.api.ts`:
+  - Typed wire interfaces for the four preview envelopes (`SourcePackPreviewResponse`, `NarrativePlanPreviewResponse`, `TemplatePlanPreviewResponse`, `GeneratePreviewResponse`).
+  - `PresentationStudioApi` with four methods (`previewSourcePack`, `previewNarrativePlan`, `previewTemplatePlan`, `previewGenerate`) wrapping the shared `fetchWithRetry` + `handleResponse` pipeline.
+  - `studioPost<T>` helper unwraps the `{ success, data }` envelope and surfaces a typed `T`. Body-supplied `organizationId` is intentionally NOT modeled — the server takes the tenant from auth and ignores any body field.
+
+- New `consultify/src/components/PresentationStudio/PresentationStudioPage.tsx`:
+  - Minimal, read-only Studio surface mounted at `/presentation-studio`.
+  - Top-of-page sticky local Menu 3 / command-row with the contextual AI action ("Run preview") anchored on the right (`presentation-studio-command-row-right`). Per `.cursor/rules/ai-actions-menu3.mdc`, AI actions live in Menu 3 and not inside the canvas. This page does not yet adopt the full `ModuleHub`; the local command row stands in until `ModuleHub` adoption (tracked R-S5-1).
+  - Four section cards (`section-source-pack`, `section-narrative-plan`, `section-template-plan`, `section-generate`) render envelope summaries plus warnings. Status badges use the canonical color palette (slate/blue/amber/emerald/rose; primary reserved for the CTA).
+  - Honest states: empty state pre-run, loading state on the CTA, error banner on API failure, degraded badge on `wouldGenerate.canProceed=false` with explicit blocking-reasons list. The template card always shows "Approval required before this template enters the registry" banner (S3 governance invariant rendered on the surface).
+  - All four endpoints fetched in parallel via `Promise.all` to keep latency honest.
+  - No mutating endpoints are wired up. No "Generate" or "Approve" CTAs.
+
+- New `consultify/src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`:
+  - 5 component tests exercising the canonical UI/UX gates:
+    1. Menu 3 right-slot placement: AI action lives in `presentation-studio-command-row-right`, not in the canvas.
+    2. Empty state pre-run; no error banner.
+    3. Successful run fires all four endpoints in parallel and renders all four section cards plus the template approval banner.
+    4. Degraded `canProceed=false` honestly renders blocking-reasons list.
+    5. API error renders an honest error banner (no fake success).
+
+- `consultify/src/routes/routeConfig.ts`: add `PRESENTATION_STUDIO: '/presentation-studio'` route constant.
+- `consultify/src/routes/AppRoutes.tsx`: register the lazy `PresentationStudioPage` and mount it on `ROUTES.PRESENTATION_STUDIO` inside `MainLayout` + `ProductionModuleGate('Presentation Studio')` + `RouteErrorBoundary`. Page is gated behind the same `hideNonCoreModulesOnPublicProduction` flag as other non-core modules.
+
+### Validation performed
+
+- Vitest component test (`PresentationStudioPage.test.tsx`): 5/5 PASS.
+- Vitest backend regression (`presentationStudio.routes.test.ts`): 23/23 PASS — confirms the FE wiring did not break the four preview endpoints.
+- ESLint --fix on the five S5 files: 0 errors, 44 P3 warnings (pre-existing 36 + 4 `no-console` + 4 P3 polish warnings in shared modules touched indirectly + 1 empty-interface in our typed `SourcePackPreviewRequest` extension; deferred per S0 baseline policy).
+- Project-wide `tsc --noEmit -p tsconfig.json`: 0 errors filtered to `presentation-studio|PresentationStudio|presentationStudio`. The wider Table Platform errors that pre-exist on `staging` are out-of-scope for S5.
+- `ReadLints` on the five S5 files: clean.
+
+### Gate result: `PASS_WITH_P2`
+
+P0/P1: none.
+
+P2 (deferred, non-blocking):
+- P2-S5-1: Page does not yet adopt the full `ModuleHub`/`ModuleNavBar` shell. The local sticky command row mimics the Menu 3 right-slot semantics but is not the canonical primitive. Migration to `ModuleHub` is tracked as a UI-only follow-up; will land before any mutating endpoints are wired up.
+- P2-S5-2: Setup form is hard-coded to a `DEFAULT_SETUP` constant. Inline editing (title, audience, goal, deck type, source artifacts) is intentionally deferred until the next UI sprint. Acceptable for S5 because the goal is to prove the four preview endpoints work end-to-end against a stable input.
+- P2-S5-3: `PresentationStudioApi` does not yet emit funnel telemetry (e.g. `trackFunnelEvent`). Will land alongside the mutating endpoints when telemetry parity matters.
+- P2-S5-4: Anygravity manual retest pack still pending. Now that S5 lands, the consolidated probe will run after the next deploy.
+
+### Acceptance criteria (from contract) covered by S5
+
+- AC-7 (UI/UX honesty): empty / loading / success / error / degraded states are all rendered explicitly. No fake success; the CTA is disabled while loading; errors surface a banner. Verified by integration test.
+- AC-8 (UI/UX governance — Menu 3 placement): the contextual AI action ("Run preview") is rendered in the local Menu 3 right slot. Verified by component test asserting `commandRow.contains(rightSlot)` and `rightSlot.contains(runButton)`.
+- AC-9 (UI/UX governance — color semantics): status badges use the canonical color tokens (slate/blue/amber/emerald/rose); primary is reserved for the CTA. Verified by visual review of the source.
+- AC-10 (read-only contract on UI): no mutating action is reachable from this page. There is no "Generate", "Approve", "Save" or "Persist" button. Verified by code review.
+- AC-3 (governance invariant for templates) on the UI: template card always shows the approval banner when populated. Verified by component test.
+
+### Risks / next-step notes
+
+- R-S5-1: Local command row vs full `ModuleHub` shell. The current placement matches the Menu 3 rule semantically but doesn't reuse the canonical primitive. Acceptable for an S5 minimal slice (the rule allows adding a right-side command-row slot when the module hasn't yet adopted the shell), but follow-up adoption is non-negotiable before we ship a mutating endpoint.
+- R-S5-2: All four endpoints fire on every "Run preview" click. There is no caching or stale-while-revalidate. For the minimal surface this is acceptable; the orchestrator on the server is read-only and cheap, but a real Studio UI should debounce + memoize.
+- R-S5-3: The page assumes the user has the `presentation_create` capability. Any 403 from the server surfaces as a generic error banner. A capability-aware empty state (with the same banner pattern as the rest of the app) is a P2 follow-up.
+
+### Next sprint plan
+
+- Sprint S6 starts Approval-gated Generate (mutating). Scope:
+  - Add `POST /api/presentation-studio/generate` that actually invokes `presentationGeneratorService.generateOutline` BEHIND an explicit "approval ticket" surfaced by the existing audit/approval flow. The endpoint will require both `presentation_create` AND a fresh approval token; without the token it returns 403 PRECONDITION_REQUIRED.
+  - Persistence is delegated to the existing `presentation_decks` table (no migration). Audit event `presentation_generated_via_studio` is emitted.
+  - UI: extend `PresentationStudioPage` with a disabled-by-default "Request approval" CTA in the Menu 3 right slot. The CTA only appears once `wouldGenerate.canProceed === true` and behaves as a request, not a write — the server still requires explicit approval.
+

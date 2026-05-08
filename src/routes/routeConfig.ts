@@ -106,6 +106,7 @@ export const ROUTES = {
     MANAGEMENT: '/reports/management',
   },
   PRESENTATIONS: '/presentations',
+  PRESENTATION_STUDIO: '/presentation-studio',
   MEETING: '/meeting',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',

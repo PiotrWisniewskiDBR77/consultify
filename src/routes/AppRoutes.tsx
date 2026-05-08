@@ -134,6 +134,13 @@ const ReportsAndPresentationsHub = React.lazy(() =>
     default: m.ReportsAndPresentationsHub,
   }))
 );
+// Consultify Presentation Studio (Module Delivery Contract S5) — read-only
+// surface that consumes the four /api/presentation-studio/*/preview endpoints.
+const PresentationStudioPage = React.lazy(() =>
+  import('@/components/PresentationStudio/PresentationStudioPage').then((m) => ({
+    default: m.PresentationStudioPage,
+  }))
+);
 // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
 // above the V8.1 substrate.
 // See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md.
@@ -1961,6 +1968,21 @@ export const AppRoutes: React.FC = () => {
               >
                 <RouteErrorBoundary>
                   <ReportsAndPresentationsHub />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.PRESENTATION_STUDIO}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Presentation Studio']} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Presentation Studio"
+              >
+                <RouteErrorBoundary>
+                  <PresentationStudioPage />
                 </RouteErrorBoundary>
               </ProductionModuleGate>
             </MainLayout>
