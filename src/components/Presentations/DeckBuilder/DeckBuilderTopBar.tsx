@@ -318,7 +318,9 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         }`}
       >
         <MessageSquare size={14} />
-        <span className="hidden md:inline">{t('presentations.builder.topBar.agent', 'Agent')}</span>
+        <span className="hidden md:inline">
+          {t('presentations.builder.topBar.teresa', 'Teresa')}
+        </span>
       </button>
 
       <button

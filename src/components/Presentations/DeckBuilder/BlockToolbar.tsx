@@ -1,14 +1,4 @@
-import {
-  BarChart3,
-  FileText,
-  Image,
-  LayoutGrid,
-  Pencil,
-  Search,
-  Share2,
-  Type,
-  Video,
-} from 'lucide-react';
+import { BarChart3, FileText, Image, LayoutGrid, Search, Share2, Type, Video } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,7 +11,6 @@ type ToolbarPanel =
   | 'charts'
   | 'media'
   | 'artifacts'
-  | 'aiEdit'
   | null;
 
 interface BlockToolbarProps {
@@ -38,7 +27,6 @@ const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labe
   { id: 'charts', icon: BarChart3, labelKey: 'presentations.builder.toolbar.chartsData' },
   { id: 'media', icon: Video, labelKey: 'presentations.builder.toolbar.media' },
   { id: 'artifacts', icon: FileText, labelKey: 'presentations.builder.toolbar.artifacts' },
-  { id: 'aiEdit', icon: Pencil, labelKey: 'presentations.builder.toolbar.aiEdit' },
 ];
 
 export const BlockToolbar: React.FC<BlockToolbarProps> = ({
@@ -92,7 +80,6 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
             {activePanel === 'search' && <SearchPanel />}
             {activePanel === 'media' && <MediaPanel />}
             {activePanel === 'artifacts' && <ArtifactsPanel />}
-            {activePanel === 'aiEdit' && <AIEditPanel />}
           </div>
         </div>
       )}
@@ -275,23 +262,5 @@ const ArtifactsPanel: React.FC = () => (
     />
     <PanelButton label="Financial snapshot" description="Key metrics" disabled onClick={() => {}} />
     <PanelButton label="Insight card" description="Single insight" disabled onClick={() => {}} />
-  </div>
-);
-
-const AIEditPanel: React.FC = () => (
-  <div className="space-y-3">
-    <textarea
-      placeholder="Describe what to change across all cards..."
-      rows={3}
-      disabled
-      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm resize-none opacity-50"
-    />
-    <p className="text-[10px] text-slate-400 text-center">AI editing — coming soon</p>
-    <div className="space-y-0.5">
-      <PanelButton label="Improve writing" disabled onClick={() => {}} />
-      <PanelButton label="Fix spelling" disabled onClick={() => {}} />
-      <PanelButton label="Translate" disabled onClick={() => {}} />
-      <PanelButton label="Make shorter" disabled onClick={() => {}} />
-    </div>
   </div>
 );

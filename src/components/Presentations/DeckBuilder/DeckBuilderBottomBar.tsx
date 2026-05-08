@@ -37,7 +37,7 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
       >
         <Sparkles size={12} />
-        {t('presentations.builder.bottomBar.quickEdits', 'Quick edits')}
+        {t('presentations.builder.bottomBar.quickEdits', 'Ask Teresa')}
       </button>
 
       <button

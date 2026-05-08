@@ -1,16 +1,14 @@
 /**
  * CommandPalette — Cmd+K command bar for power-user access to all builder actions.
- * Features: fuzzy search, categorized commands, keyboard navigation, AI agent integration.
+ * Features: fuzzy search, categorized commands, keyboard navigation, Teresa integration.
  */
 
 import {
   BarChart3,
-  BookOpen,
   Download,
   Image,
   LayoutGrid,
   List,
-  MessageSquare,
   Palette,
   Play,
   Plus,
@@ -42,7 +40,6 @@ interface CommandPaletteProps {
   onToggleAgent: () => void;
   onOpenTheme: () => void;
   onAddCard: () => void;
-  onAiPrompt: (prompt: string) => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -54,7 +51,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onToggleAgent,
   onOpenTheme,
   onAddCard,
-  onAiPrompt,
 }) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -182,52 +178,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
       // AI
       {
-        id: 'ai_agent',
-        label: 'Open AI Agent',
-        description: 'Ask AI for help',
+        id: 'ask_teresa',
+        label: 'Ask Teresa',
+        description: 'Open the unified conversation surface',
         category: 'ai',
         icon: <Sparkles size={14} />,
         shortcut: '⌘J',
         action: onToggleAgent,
       },
-      {
-        id: 'ai_improve',
-        label: 'AI: Improve this slide',
-        category: 'ai',
-        icon: <Sparkles size={14} />,
-        action: () => onAiPrompt('Improve the current slide content and visual layout'),
-      },
-      {
-        id: 'ai_translate_pl',
-        label: 'AI: Translate to Polish',
-        category: 'ai',
-        icon: <BookOpen size={14} />,
-        action: () => onAiPrompt('Translate all content on this slide to Polish'),
-      },
-      {
-        id: 'ai_translate_en',
-        label: 'AI: Translate to English',
-        category: 'ai',
-        icon: <BookOpen size={14} />,
-        action: () => onAiPrompt('Translate all content on this slide to English'),
-      },
-      {
-        id: 'ai_summarize',
-        label: 'AI: Summarize slide',
-        category: 'ai',
-        icon: <MessageSquare size={14} />,
-        action: () => onAiPrompt('Create a concise summary of this slide'),
-      },
-      {
-        id: 'ai_add_data',
-        label: 'AI: Add supporting data',
-        category: 'ai',
-        icon: <BarChart3 size={14} />,
-        action: () =>
-          onAiPrompt('Add relevant data, metrics, or charts to support the key message'),
-      },
     ],
-    [onInsertBlock, onPresent, onExport, onToggleAgent, onOpenTheme, onAddCard, onAiPrompt]
+    [onInsertBlock, onPresent, onExport, onToggleAgent, onOpenTheme, onAddCard]
   );
 
   const filtered = useMemo(() => {
@@ -264,7 +224,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             filtered[selectedIndex].action();
             onClose();
           } else if (query.trim()) {
-            onAiPrompt(query.trim());
+            onToggleAgent();
             onClose();
           }
           break;
@@ -273,7 +233,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           break;
       }
     },
-    [filtered, selectedIndex, onClose, query, onAiPrompt]
+    [filtered, selectedIndex, onClose, query, onToggleAgent]
   );
 
   // Scroll selected item into view
@@ -308,10 +268,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t(
-              'presentations.builder.commandPalette.placeholder',
-              'Type a command or ask AI...'
-            )}
+            placeholder={t('presentations.builder.commandPalette.placeholder', 'Type a command...')}
             className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-white placeholder-slate-400"
           />
           <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 border border-slate-200 dark:border-navy-700">
@@ -324,7 +281,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {filtered.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <Sparkles size={16} className="mx-auto text-primary-400 mb-2" />
-              <p className="text-xs text-slate-500">Press Enter to ask AI: &quot;{query}&quot;</p>
+              <p className="text-xs text-slate-500">
+                Press Enter to open Teresa and continue the conversation.
+              </p>
             </div>
           ) : (
             Object.entries(grouped).map(([cat, cmds]) => (
@@ -377,7 +336,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           <span>↑↓ Navigate</span>
           <span>↵ Select</span>
           <span>ESC Close</span>
-          <span className="ml-auto">Type anything to ask AI</span>
+          <span className="ml-auto">Use Teresa for conversational AI</span>
         </div>
       </div>
     </div>

@@ -434,6 +434,14 @@ interface UnifiedChatPanelProps {
   /** Callback when user sends a message */
   onMessageSent?: (content: string) => void;
 
+  /** Optional active-module handler. When handled, Teresa owns the visible turn. */
+  onModuleIntent?: (
+    content: string
+  ) =>
+    | Promise<boolean | { handled: boolean; reply?: string }>
+    | boolean
+    | { handled: boolean; reply?: string };
+
   /** Callback when user clicks "View All Actions" */
   onNavigateToActions?: () => void;
 
@@ -478,6 +486,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   disabled = false,
   maxHeight,
   onMessageSent,
+  onModuleIntent,
   onNavigateToActions,
   systemPrompt,
   roleName,
@@ -2410,6 +2419,69 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       };
       addChatMessage(userMessage);
 
+      if (onModuleIntent) {
+        try {
+          const moduleIntentResult = await onModuleIntent(effectivePrompt);
+          const handledByModule =
+            typeof moduleIntentResult === 'object'
+              ? moduleIntentResult.handled
+              : Boolean(moduleIntentResult);
+          if (handledByModule) {
+            const moduleReply =
+              typeof moduleIntentResult === 'object'
+                ? String(moduleIntentResult.reply || '').trim()
+                : '';
+            if (moduleReply) {
+              addChatMessage({
+                id: `module-intent-${Date.now()}`,
+                role: 'ai',
+                content: moduleReply,
+                timestamp: new Date(),
+              });
+              if (conversationId) {
+                try {
+                  await addMessageToConversation({
+                    conversationId,
+                    role: 'ai',
+                    content: moduleReply,
+                    messageType: 'text',
+                  });
+                } catch {
+                  /* best-effort persist */
+                }
+              }
+            }
+            onMessageSent?.(content);
+            return;
+          }
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Module intent handler failed:', err);
+          const errorContent = i18n.language?.startsWith('pl')
+            ? 'Nie udało się wykonać tej akcji w aktywnym module.'
+            : 'I could not complete that action in the active module.';
+          addChatMessage({
+            id: `module-intent-error-${Date.now()}`,
+            role: 'ai',
+            content: errorContent,
+            timestamp: new Date(),
+          });
+          if (conversationId) {
+            try {
+              await addMessageToConversation({
+                conversationId,
+                role: 'ai',
+                content: errorContent,
+                messageType: 'text',
+              });
+            } catch {
+              /* best-effort persist */
+            }
+          }
+          onMessageSent?.(content);
+          return;
+        }
+      }
+
       // Build context for AI — include file metadata so the model can cite/reference attachments (C4.1)
       const context = {
         focusMode,
@@ -2692,6 +2764,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       aiInteractionsLimit,
       consumeAIInteraction,
       onMessageSent,
+      onModuleIntent,
       aiConfig,
       dtConfirmBusy,
       addMessageToConversation,

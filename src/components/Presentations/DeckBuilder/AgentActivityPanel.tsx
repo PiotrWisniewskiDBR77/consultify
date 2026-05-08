@@ -32,12 +32,12 @@ function formatTimestamp(iso: string): string {
 
 const PanelShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <aside
-    aria-label="Agent Activity"
+    aria-label="AI Activity"
     className="w-72 flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col"
   >
     <div className="m-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-sm flex flex-col overflow-hidden">
       <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-800">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Agent Activity</h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-white">AI Activity</h3>
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-2">{children}</div>
     </div>
@@ -70,7 +70,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
   if (!events || events.length === 0) {
     return (
       <PanelShell>
-        <p className="text-xs text-slate-500 dark:text-slate-400 italic">No agent activity yet.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 italic">No AI activity yet.</p>
       </PanelShell>
     );
   }

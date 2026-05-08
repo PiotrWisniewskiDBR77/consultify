@@ -1,7 +1,7 @@
 /**
  * Deck Builder V3 — Gamma-like WYSIWYG Presentation Editor
  * Three-panel layout: Slide Sorter | Card Canvas | Block Toolbar
- * Features: AI Agent, Command Palette, Theme Switcher, Version History,
+ * Features: Teresa, Command Palette, Theme Switcher, Version History,
  * animations, collaboration, data refresh, source traceability, media library.
  */
 
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
+import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
@@ -24,10 +25,11 @@ import {
   type PresentationRuntimeEvent,
 } from '@/services/presentationRuntimeEvents';
 import { useAppStore } from '@/store/useAppStore';
+import { AppView } from '@/types';
+import type { WorkspaceContext } from '@/types/workspace';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
-import { AgentPanel } from './AgentPanel';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
@@ -292,7 +294,7 @@ export const DeckBuilder: React.FC = () => {
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
 
-  const [agentOpen, setAgentOpen] = useState(false);
+  const [teresaOpen, setTeresaOpen] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
   const [presentMode, setPresentMode] = useState<'off' | 'fullscreen' | 'presenter'>('off');
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -788,6 +790,42 @@ export const DeckBuilder: React.FC = () => {
     [deck, isPolish]
   );
 
+  const deckWorkspaceContext = useMemo<WorkspaceContext | null>(() => {
+    if (!deck) return null;
+    return {
+      view: AppView.PREZENTACJE_GEN,
+      type: 'presentation',
+      entityId: deck.deck_id,
+      entityName: deck.title || (isPolish ? 'Deck prezentacji' : 'Presentation deck'),
+      entityData: {
+        moduleKey: 'deckBuilder',
+        artifactKind: 'deck',
+        artifactId: deck.deck_id,
+        activeCardId: activeCard?.card_id || null,
+        activeCardTitle: activeCard?.title || null,
+        slideCount: deck.cards.length,
+      },
+      timestamp: new Date(),
+    };
+  }, [activeCard?.card_id, activeCard?.title, deck, isPolish]);
+
+  const handleTeresaDeckIntent = useCallback(
+    async (prompt: string) => {
+      if (!deck) return false;
+      const response = await handleAiPrompt(prompt);
+      const reply =
+        response && typeof response === 'object' && 'reply' in response
+          ? String((response as { reply?: unknown }).reply || '')
+          : '';
+      const fallbackReply = isPolish
+        ? 'Teresa przygotowała propozycję zmian w decku. Sprawdź pasek propozycji i zaakceptuj albo odrzuć zmianę.'
+        : 'Teresa prepared a deck change proposal. Review the proposal banner and accept or reject the change.';
+      toast.success(reply || fallbackReply);
+      return { handled: true, reply: reply || fallbackReply };
+    },
+    [deck, handleAiPrompt, isPolish]
+  );
+
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
       return (
@@ -845,8 +883,8 @@ export const DeckBuilder: React.FC = () => {
             onRedo={redo}
             canUndo={canUndo}
             canRedo={canRedo}
-            onToggleAgent={() => setAgentOpen((v) => !v)}
-            agentOpen={agentOpen}
+            onToggleAgent={() => setTeresaOpen((v) => !v)}
+            agentOpen={teresaOpen}
             onPresent={() => setPresentMode('fullscreen')}
             onTheme={() => setThemeSwitcherOpen(true)}
             onShare={() => setShareModalOpen(true)}
@@ -947,6 +985,21 @@ export const DeckBuilder: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative">
+          {teresaOpen && (
+            <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+              <UnifiedChatPanel
+                mode="split"
+                title={t('presentations.builder.teresa.title', 'Teresa')}
+                workspaceContext={deckWorkspaceContext}
+                onModuleIntent={handleTeresaDeckIntent}
+                showModeToggle={false}
+                showHistoryTrigger
+                showFocusMode
+                maxHeight="100%"
+              />
+            </aside>
+          )}
+
           {/* Left: Slide Sorter */}
           <SlideSorter
             cards={deck.cards}
@@ -979,29 +1032,8 @@ export const DeckBuilder: React.FC = () => {
             onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
           />
 
-          {/* Agent Panel (conditional) — bridged to conversation store */}
-          {agentOpen && (
-            <AgentPanel
-              onClose={() => setAgentOpen(false)}
-              sourceNames={deck.source_refs.map((s) => s.artifact_name)}
-              onSendMessage={handleAiPrompt}
-              conversationId={deckId}
-              {...(deck?.deck_id ? { deckId: deck.deck_id } : {})}
-              onProposalAccepted={async () => {
-                try {
-                  await refetchRuntimeEvents();
-                } catch {}
-              }}
-              onProposalRejected={async () => {
-                try {
-                  await refetchRuntimeEvents();
-                } catch {}
-              }}
-            />
-          )}
-
-          {/* Agent Activity Panel — runtime telemetry feed */}
-          {agentOpen && (
+          {/* Passive AI Activity Panel — runtime telemetry feed */}
+          {teresaOpen && (
             <AgentActivityPanel
               events={runtimeEvents.events}
               degraded={runtimeEvents.degraded}
@@ -1066,7 +1098,7 @@ export const DeckBuilder: React.FC = () => {
           currentIndex={activeCardIndex}
           totalCards={deck.cards.length}
           cardTitle={activeCard?.title || ''}
-          onQuickEdits={() => {}}
+          onQuickEdits={() => setTeresaOpen(true)}
           onToggleNotes={() => setShowNotes((v) => !v)}
           notesOpen={showNotes}
         />
@@ -1087,10 +1119,9 @@ export const DeckBuilder: React.FC = () => {
           onInsertBlock={handleInsertBlock}
           onPresent={() => setPresentMode('fullscreen')}
           onExport={handleExport}
-          onToggleAgent={() => setAgentOpen((v) => !v)}
+          onToggleAgent={() => setTeresaOpen((v) => !v)}
           onOpenTheme={() => setThemeSwitcherOpen(true)}
           onAddCard={() => handleAddBlankCard()}
-          onAiPrompt={handleAiPrompt}
         />
       </div>
     </DeckThemeProvider>
