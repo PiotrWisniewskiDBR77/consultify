@@ -1,5 +1,5 @@
 /**
- * Consultify Document Studio — DOCX renderer (MVP-1 finalization).
+ * Consultify Document Studio — DOCX renderer.
  *
  * Pure schema-aware renderer: consumes a `DocumentSchema` and produces a real
  * editable .docx buffer using the `docx` package. Honors the document's
@@ -7,8 +7,7 @@
  * confidentiality label) so the output looks like a consulting deliverable
  * rather than markdown pasted into Word.
  *
- * Scope (per CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md, MVP-1
- * finalization slice):
+ * MVP-1 finalization scope:
  *   - cover-style title block, document metadata strip
  *   - sections with H1/H2/H3 numbered headings, paragraphs, lists, callouts,
  *     quotes, basic tables
@@ -16,10 +15,14 @@
  *   - sources appendix (or "no sources attached" notice)
  *   - confidentiality footer + page numbering
  *
- * Out of scope for MVP-1 finalization (deferred to MVP-4 advanced DOCX export):
- *   - automatic Word TOC field instructions, track changes, comments
- *   - custom heading numbering schemes beyond "1.", "1.1", "1.1.1"
- *   - chart embedding, image embedding, custom theme colors
+ * Epic E8 (Advanced DOCX) — Slice 8.1:
+ *   - real Word styles per formatting class via {@link buildDocxStyleConfig}
+ *   - paragraph runs use *named* paragraph styles (`Heading1`, `BodyText`,
+ *     `BlockQuote`, …) so Word's outline / TOC / a11y trees pick the
+ *     document up the way they would for a hand-authored deliverable.
+ *
+ * Still deferred to later E8 slices: automatic TOC field, captions,
+ * footnotes, citation styles, lettered/numbered appendices.
  */
 
 // `docx@9.5.1` ships a single bundled `.d.ts` whose classes (Table, TableCell,
@@ -31,12 +34,13 @@
 // types.
 import * as docxModule from 'docx';
 
-import type {
-  DocumentBlock,
-  DocumentSchema,
-  DocumentSection,
-  FormattingSchema,
-} from './documentStudioTypes.js';
+import {
+  buildDocxStyleConfig,
+  DOCX_STYLE_IDS,
+  resolveDocxFonts,
+  resolveFormattingClass,
+} from './documentDocxStyles.js';
+import type { DocumentBlock, DocumentSchema, DocumentSection } from './documentStudioTypes.js';
 
 interface DocxRuntime {
   AlignmentType: { CENTER: unknown; LEFT: unknown; RIGHT: unknown };
@@ -88,8 +92,6 @@ type Paragraph = DocxParagraph;
 type Table = DocxTable;
 type TextRun = DocxTextRun;
 
-const DEFAULT_BODY_FONT = 'Aptos';
-const DEFAULT_HEADING_FONT = 'Aptos Display';
 const TWIPS_PER_CM = 567; // 1 cm = 567 twips at 1440 dpi
 
 interface BlockTextContent {
@@ -111,15 +113,22 @@ interface BlockCalloutContent {
   text?: string;
 }
 
-function fontFromSchema(schema: FormattingSchema, kind: 'body' | 'heading'): string {
-  // FormattingSchema stores fonts like "Aptos 11" (family + default size). We
-  // strip the trailing size hint so docx accepts it as a font family.
-  const raw = kind === 'body' ? schema.fonts.body : schema.fonts.heading;
-  const stripped = String(raw || '')
-    .replace(/\s+\d+(\.\d+)?\s*$/, '')
-    .trim();
-  if (stripped.length > 0) return stripped;
-  return kind === 'body' ? DEFAULT_BODY_FONT : DEFAULT_HEADING_FONT;
+/**
+ * Render-context the renderer threads through every block helper. Holds
+ * the resolved formatting class + fonts so each helper avoids re-running
+ * the resolver for every paragraph (and so future slices, e.g. captions,
+ * can pull the body font without re-importing the styles module).
+ */
+interface RenderContext {
+  schema: DocumentSchema;
+  bodyFont: string;
+  headingFont: string;
+}
+
+function buildRenderContext(schema: DocumentSchema): RenderContext {
+  const formattingClass = resolveFormattingClass(schema);
+  const fonts = resolveDocxFonts(schema, formattingClass);
+  return { schema, bodyFont: fonts.body, headingFont: fonts.heading };
 }
 
 function asString(value: unknown): string {
@@ -151,95 +160,102 @@ function buildAssumptionMarker(font: string): TextRun {
   });
 }
 
-function renderHeadingBlock(block: DocumentBlock, schema: DocumentSchema): Paragraph {
-  const headingFont = fontFromSchema(schema.formattingSchema, 'heading');
+/**
+ * Resolve the named-style id for a heading level so block-level and
+ * section-level headings share the same path through the styles map.
+ */
+function styleIdForHeadingLevel(level: 1 | 2 | 3): string {
+  if (level === 1) return DOCX_STYLE_IDS.HEADING1;
+  if (level === 2) return DOCX_STYLE_IDS.HEADING2;
+  return DOCX_STYLE_IDS.HEADING3;
+}
+
+function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as { text?: string; level?: 1 | 2 | 3 };
   const text = asString(value.text ?? '');
+  const level = value.level ?? 2;
   return new Paragraph({
-    heading: headingLevelForSection(value.level ?? 2),
-    children: [new TextRun({ text, font: headingFont })],
+    style: styleIdForHeadingLevel(level),
+    heading: headingLevelForSection(level),
+    children: [new TextRun({ text, font: ctx.headingFont })],
   });
 }
 
-function renderParagraphBlock(block: DocumentBlock, schema: DocumentSchema): Paragraph {
-  const bodyFont = fontFromSchema(schema.formattingSchema, 'body');
+function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as BlockTextContent;
   const text = asString(value.text ?? '');
   const children: TextRun[] = [
     new TextRun({
       text,
-      font: bodyFont,
-      italics: Boolean(block.isAssumption),
-      color: block.isAssumption ? '92400E' : undefined,
+      font: ctx.bodyFont,
     }),
   ];
-  if (block.isAssumption) children.push(buildAssumptionMarker(bodyFont));
-  return new Paragraph({ children, spacing: { after: 120 } });
+  if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont));
+  return new Paragraph({
+    style: block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
+    children,
+  });
 }
 
-function renderListBlocks(block: DocumentBlock, schema: DocumentSchema): Paragraph[] {
-  const bodyFont = fontFromSchema(schema.formattingSchema, 'body');
+function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
   const value = (block.content ?? {}) as BlockListContent;
   const items = Array.isArray(value.items) ? value.items : [];
   const numbered = value.style === 'numbered' || block.type === 'numbered_list';
   return items.map((raw, index) => {
     const itemText = asString(raw);
     const prefix = numbered ? `${index + 1}. ` : '• ';
-    const children: TextRun[] = [new TextRun({ text: `${prefix}${itemText}`, font: bodyFont })];
+    const children: TextRun[] = [new TextRun({ text: `${prefix}${itemText}`, font: ctx.bodyFont })];
     if (block.isAssumption && index === items.length - 1) {
-      children.push(buildAssumptionMarker(bodyFont));
+      children.push(buildAssumptionMarker(ctx.bodyFont));
     }
-    return new Paragraph({ children, spacing: { after: 60 } });
+    return new Paragraph({
+      style: DOCX_STYLE_IDS.BODY_TEXT,
+      children,
+      spacing: { after: 60 },
+    });
   });
 }
 
-function renderCalloutBlock(block: DocumentBlock, schema: DocumentSchema): Paragraph {
-  const bodyFont = fontFromSchema(schema.formattingSchema, 'body');
+function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as BlockCalloutContent;
   const text = asString(value.text ?? '');
   const label = value.variant ? `[${String(value.variant).toUpperCase()}] ` : '[Key message] ';
   return new Paragraph({
+    style: DOCX_STYLE_IDS.CALLOUT,
     children: [
-      new TextRun({ text: label, bold: true, color: '4338CA', font: bodyFont }),
-      new TextRun({ text, italics: true, font: bodyFont }),
+      new TextRun({ text: label, bold: true, color: '4338CA', font: ctx.bodyFont }),
+      new TextRun({ text, italics: true, font: ctx.bodyFont }),
     ],
-    spacing: { before: 80, after: 120 },
   });
 }
 
-function renderQuoteBlock(block: DocumentBlock, schema: DocumentSchema): Paragraph {
-  const bodyFont = fontFromSchema(schema.formattingSchema, 'body');
+function renderQuoteBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as BlockTextContent & { attribution?: string };
   const text = asString(value.text ?? '');
   const attribution = value.attribution ? ` — ${asString(value.attribution)}` : '';
   return new Paragraph({
-    indent: { left: 360 },
+    style: DOCX_STYLE_IDS.BLOCK_QUOTE,
     children: [
       new TextRun({
         text: `“${text}”${attribution}`,
-        italics: true,
-        font: bodyFont,
-        color: '475569',
+        font: ctx.bodyFont,
       }),
     ],
-    spacing: { before: 80, after: 120 },
   });
 }
 
-function renderTableBlock(block: DocumentBlock, schema: DocumentSchema): Table | Paragraph {
-  const bodyFont = fontFromSchema(schema.formattingSchema, 'body');
+function renderTableBlock(block: DocumentBlock, ctx: RenderContext): Table | Paragraph {
   const value = (block.content ?? {}) as BlockTableContent;
   const headers = Array.isArray(value.headers) ? value.headers : [];
   const rows = Array.isArray(value.rows) ? value.rows : [];
 
   if (headers.length === 0 && rows.length === 0) {
     return new Paragraph({
+      style: DOCX_STYLE_IDS.CAPTION,
       children: [
         new TextRun({
           text: '[Table placeholder — populate with structured data once sources are attached.]',
-          italics: true,
-          color: '64748B',
-          font: bodyFont,
+          font: ctx.bodyFont,
         }),
       ],
     });
@@ -255,8 +271,9 @@ function renderTableBlock(block: DocumentBlock, schema: DocumentSchema): Table |
             new TableCell({
               children: [
                 new Paragraph({
+                  style: DOCX_STYLE_IDS.BODY_TEXT,
                   children: [
-                    new TextRun({ text: asString(cell), bold: true, font: bodyFont, size: 20 }),
+                    new TextRun({ text: asString(cell), bold: true, font: ctx.bodyFont, size: 20 }),
                   ],
                 }),
               ],
@@ -274,7 +291,8 @@ function renderTableBlock(block: DocumentBlock, schema: DocumentSchema): Table |
             new TableCell({
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: asString(cell), font: bodyFont, size: 20 })],
+                  style: DOCX_STYLE_IDS.BODY_TEXT,
+                  children: [new TextRun({ text: asString(cell), font: ctx.bodyFont, size: 20 })],
                 }),
               ],
             })
@@ -289,72 +307,68 @@ function renderTableBlock(block: DocumentBlock, schema: DocumentSchema): Table |
   });
 }
 
-function renderBlock(block: DocumentBlock, schema: DocumentSchema): (Paragraph | Table)[] {
+function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Table)[] {
   switch (block.type) {
     case 'heading':
-      return [renderHeadingBlock(block, schema)];
+      return [renderHeadingBlock(block, ctx)];
     case 'paragraph':
-      return [renderParagraphBlock(block, schema)];
+      return [renderParagraphBlock(block, ctx)];
     case 'bullet_list':
     case 'numbered_list':
-      return renderListBlocks(block, schema);
+      return renderListBlocks(block, ctx);
     case 'callout':
-      return [renderCalloutBlock(block, schema)];
+      return [renderCalloutBlock(block, ctx)];
     case 'quote':
-      return [renderQuoteBlock(block, schema)];
+      return [renderQuoteBlock(block, ctx)];
     case 'table':
     case 'risk_table':
     case 'kpi_strip':
-      return [renderTableBlock(block, schema)];
+      return [renderTableBlock(block, ctx)];
     case 'image':
     case 'footnote':
     case 'citation':
     default:
       // Fall back to paragraph text rendering for block types not covered by
       // the MVP-1 finalization renderer.
-      return [renderParagraphBlock(block, schema)];
+      return [renderParagraphBlock(block, ctx)];
   }
 }
 
 function renderSection(
   section: DocumentSection,
-  schema: DocumentSchema,
+  ctx: RenderContext,
   index: number
 ): (Paragraph | Table)[] {
-  const headingFont = fontFromSchema(schema.formattingSchema, 'heading');
   const headingText = `${index + 1}. ${section.title}`;
+  const level = section.level ?? 1;
   const heading = new Paragraph({
-    heading: headingLevelForSection(section.level ?? 1),
-    children: [new TextRun({ text: headingText, font: headingFont })],
-    spacing: { before: 240, after: 120 },
+    style: styleIdForHeadingLevel(level),
+    heading: headingLevelForSection(level),
+    children: [new TextRun({ text: headingText, font: ctx.headingFont })],
   });
   const purpose = section.purpose
     ? [
         new Paragraph({
+          style: DOCX_STYLE_IDS.CAPTION,
           children: [
             new TextRun({
               text: section.purpose,
-              italics: true,
-              color: '64748B',
-              size: 18,
-              font: fontFromSchema(schema.formattingSchema, 'body'),
+              font: ctx.bodyFont,
             }),
           ],
-          spacing: { after: 120 },
         }),
       ]
     : [];
 
   const blockOutputs: (Paragraph | Table)[] = [];
   for (const block of section.blocks) {
-    blockOutputs.push(...renderBlock(block, schema));
+    blockOutputs.push(...renderBlock(block, ctx));
   }
   return [heading, ...purpose, ...blockOutputs];
 }
 
-function renderCoverBlock(schema: DocumentSchema): Paragraph[] {
-  const headingFont = fontFromSchema(schema.formattingSchema, 'heading');
-  const bodyFont = fontFromSchema(schema.formattingSchema, 'body');
+function renderCoverBlock(ctx: RenderContext): Paragraph[] {
+  const schema = ctx.schema;
   const subtitle = `${schema.documentType.replace(/_/g, ' ')} · ${schema.language.toUpperCase()} · ${schema.density} · ${schema.confidentiality}`;
   const audience = schema.audience.length > 0 ? schema.audience.join(', ') : 'Internal';
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
@@ -362,45 +376,37 @@ function renderCoverBlock(schema: DocumentSchema): Paragraph[] {
     .slice(0, 10);
   return [
     new Paragraph({
+      style: DOCX_STYLE_IDS.TITLE,
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
           text: schema.title,
-          bold: true,
-          size: 48,
-          font: headingFont,
-          color: '0F172A',
+          font: ctx.headingFont,
         }),
       ],
-      spacing: { before: 600, after: 200 },
     }),
     new Paragraph({
+      style: DOCX_STYLE_IDS.SUBTITLE,
       alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({ text: subtitle, italics: true, color: '475569', font: bodyFont, size: 22 }),
-      ],
-      spacing: { after: 80 },
+      children: [new TextRun({ text: subtitle, font: ctx.bodyFont })],
     }),
     new Paragraph({
+      style: DOCX_STYLE_IDS.SUBTITLE,
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
           text: `Audience: ${audience}`,
-          color: '64748B',
-          font: bodyFont,
-          size: 20,
+          font: ctx.bodyFont,
         }),
       ],
-      spacing: { after: 40 },
     }),
     new Paragraph({
+      style: DOCX_STYLE_IDS.SUBTITLE,
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
           text: `Generated: ${generatedAt}`,
-          color: '94A3B8',
-          font: bodyFont,
-          size: 18,
+          font: ctx.bodyFont,
         }),
       ],
       spacing: { after: 600 },
@@ -408,24 +414,22 @@ function renderCoverBlock(schema: DocumentSchema): Paragraph[] {
   ];
 }
 
-function renderSources(schema: DocumentSchema): (Paragraph | Table)[] {
-  const headingFont = fontFromSchema(schema.formattingSchema, 'heading');
-  const bodyFont = fontFromSchema(schema.formattingSchema, 'body');
+function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
+  const schema = ctx.schema;
   const heading = new Paragraph({
+    style: DOCX_STYLE_IDS.HEADING1,
     heading: HeadingLevel.HEADING_1,
-    children: [new TextRun({ text: 'Sources & traceability', font: headingFont })],
-    spacing: { before: 240, after: 120 },
+    children: [new TextRun({ text: 'Sources & traceability', font: ctx.headingFont })],
   });
   if (schema.sourceRefs.length === 0) {
     return [
       heading,
       new Paragraph({
+        style: DOCX_STYLE_IDS.ASSUMPTION_BODY,
         children: [
           new TextRun({
             text: 'No sources attached. Substantive content blocks are flagged as assumptions and require a source pack before client distribution.',
-            italics: true,
-            color: '92400E',
-            font: bodyFont,
+            font: ctx.bodyFont,
           }),
         ],
       }),
@@ -434,11 +438,11 @@ function renderSources(schema: DocumentSchema): (Paragraph | Table)[] {
   const items = schema.sourceRefs.map((ref, i) => {
     const title = ref.sourceTitle ? ` — ${ref.sourceTitle}` : '';
     return new Paragraph({
+      style: DOCX_STYLE_IDS.SOURCE_LIST,
       children: [
-        new TextRun({ text: `${i + 1}. `, bold: true, font: bodyFont }),
-        new TextRun({ text: `${ref.sourceType}#${ref.sourceId}${title}`, font: bodyFont }),
+        new TextRun({ text: `${i + 1}. `, bold: true, font: ctx.bodyFont }),
+        new TextRun({ text: `${ref.sourceType}#${ref.sourceId}${title}`, font: ctx.bodyFont }),
       ],
-      spacing: { after: 60 },
     });
   });
   return [heading, ...items];
@@ -446,16 +450,17 @@ function renderSources(schema: DocumentSchema): (Paragraph | Table)[] {
 
 export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): Promise<Buffer> {
   const formatting = schema.formattingSchema;
-  const headingFont = fontFromSchema(formatting, 'heading');
-  const bodyFont = fontFromSchema(formatting, 'body');
+  const ctx = buildRenderContext(schema);
+  const formattingClass = resolveFormattingClass(schema);
+  const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;
 
   const sectionChildren: (Paragraph | Table)[] = [];
-  if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(schema));
+  if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(ctx));
   schema.sections.forEach((section, index) => {
-    sectionChildren.push(...renderSection(section, schema, index));
+    sectionChildren.push(...renderSection(section, ctx, index));
   });
-  sectionChildren.push(...renderSources(schema));
+  sectionChildren.push(...renderSources(ctx));
 
   const headerEnabled = formatting.headers.enabled;
   const footerEnabled = formatting.footers.enabled;
@@ -469,7 +474,7 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
               text: schema.title,
               size: 18,
               color: '64748B',
-              font: bodyFont,
+              font: ctx.bodyFont,
             }),
           ],
         }),
@@ -482,17 +487,27 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
         text: schema.confidentiality.replace(/_/g, ' '),
         size: 16,
         color: '94A3B8',
-        font: bodyFont,
+        font: ctx.bodyFont,
       })
     );
   }
   if (formatting.footers.pageNumbering) {
     footerRuns.push(
-      new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: bodyFont }),
-      new TextRun({ text: 'Page ', size: 16, color: '94A3B8', font: bodyFont }),
-      new TextRun({ children: [PageNumber.CURRENT], size: 16, color: '94A3B8', font: bodyFont }),
-      new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: bodyFont }),
-      new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: '94A3B8', font: bodyFont })
+      new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+      new TextRun({ text: 'Page ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+      new TextRun({
+        children: [PageNumber.CURRENT],
+        size: 16,
+        color: '94A3B8',
+        font: ctx.bodyFont,
+      }),
+      new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+      new TextRun({
+        children: [PageNumber.TOTAL_PAGES],
+        size: 16,
+        color: '94A3B8',
+        font: ctx.bodyFont,
+      })
     );
   }
   const footerChildren =
@@ -508,26 +523,8 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
   const doc = new Document({
     creator: 'Consultify Document Studio',
     title: schema.title,
-    description: `Consultify Document Studio · ${schema.documentType}`,
-    styles: {
-      default: {
-        document: {
-          run: { font: bodyFont, size: 22 },
-        },
-        heading1: {
-          run: { font: headingFont, size: 32, bold: true, color: '0F172A' },
-          paragraph: { spacing: { before: 240, after: 120 } },
-        },
-        heading2: {
-          run: { font: headingFont, size: 26, bold: true, color: '1E293B' },
-          paragraph: { spacing: { before: 200, after: 100 } },
-        },
-        heading3: {
-          run: { font: headingFont, size: 22, bold: true, color: '334155' },
-          paragraph: { spacing: { before: 160, after: 80 } },
-        },
-      },
-    },
+    description: `Consultify Document Studio · ${schema.documentType} · ${formattingClass}`,
+    styles,
     sections: [
       {
         properties: {
