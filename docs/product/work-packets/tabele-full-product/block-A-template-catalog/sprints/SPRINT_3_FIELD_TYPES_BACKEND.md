@@ -132,6 +132,16 @@ are tracked in the baseline-quality block backlog. **0 new regressions.**
 
 - 2026-05-08 — Implementation, tests, lint clean. 72/72 new tests green;
   baseline regression unchanged. Tsc clean.
+- 2026-05-08 — Commit attribution note: A-S3 files landed in commit
+  `e2943118a` ("docs(document-studio): closeout 6.6 — Epic E4 Source
+  Pack Connectors + chat-first creation"). The drive-sync overlay merged
+  the A-S3 staged changes into the in-flight document-studio commit
+  during the same `git commit` invocation. Functional content is
+  identical to the planned A-S3 patch (`SpecializedFieldTypes.ts`,
+  `SchemaValidationService.ts` extension, both test files, sprint card,
+  `index.ts` re-exports). Audit trail is preserved via this card and the
+  file-level diff in `e2943118a`; future B-S3-style isolation commits
+  should occur outside the drive-sync window.
 
 ## Follow-up (S4+)
 
