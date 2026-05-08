@@ -259,12 +259,16 @@ describe('Export QA gate — approval-gated types', () => {
       | { categories?: Array<{ category: string; score: number; blocking: boolean }> }
       | undefined;
     expect(Array.isArray(snapshot?.categories)).toBe(true);
-    // Must include all three categories for forensic replay.
+    // Must include every canonical QA category for forensic replay.
+    // Slice E5.6.qa added `source_drift` as the 11th category twinned
+    // with `sources`; it is non-blocking and tracks NFR-17 advisory
+    // findings (unpinned source refs).
     expect(snapshot?.categories?.map((c) => c.category)).toEqual([
       'brand',
       'language',
       'completeness',
       'sources',
+      'source_drift',
       'methodology',
       'executive',
       'risk',

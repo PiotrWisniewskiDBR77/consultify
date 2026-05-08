@@ -37,11 +37,13 @@ import type {
   DocumentQaReport,
   DocumentQaSeverity,
   DocumentSchema,
+  DocumentSourceRef,
   DocumentTemplate,
   DocumentTypeKey,
   FormattingSchema,
   TemplateSectionBlueprint,
 } from './documentStudioTypes.js';
+import { documentSourceRefHasVersionPin } from './documentStudioTypes.js';
 
 /**
  * Options accepted by `runDocumentQa`. Both the template and the brand
@@ -915,6 +917,102 @@ function runSourceQa(schema: DocumentSchema): DocumentQaCategoryReport {
       ? 'Source coverage clean: every substantive section has at least one source reference.'
       : `Source QA: ${fs.length} finding(s); score ${score}/100.`
   );
+}
+
+// -----------------------------------------------------------------------------
+// Source-drift QA (Slice E5.6.qa — NFR-17 follow-up).
+//
+// Builds on the substrate added in slice E5.6: every `DocumentSourceRef`
+// may now carry a `sourceVersion` and / or `sourceSnapshotId`. Refs
+// without either field are "unpinned" — the document cannot detect
+// whether the underlying source has advanced beyond the version the
+// author saw at generation time, so an approver cannot confidently
+// re-render against an authoritative snapshot.
+//
+// The category is intentionally NON-BLOCKING (threshold 0) because
+// pre-E5.6 schemas legitimately have only unpinned refs and we MUST
+// NOT soft-block their export the moment the QA pipeline learns
+// about pinning. Findings start as `low` severity advisory chips and
+// the FE-E2 right-panel Sources tab uses them to surface a "pin
+// snapshot" affordance per ref.
+//
+// A future follow-up will compare pinned `sourceVersion` against the
+// live source registry to flag HARD drift ("source advanced from v3
+// to v5 while document was approved against v3"). That requires the
+// source registry to expose a per-source latest-version lookup,
+// which is out of scope for this slice; we deliver the unpinned-
+// detection layer first because it is registry-independent and
+// already actionable in the UI.
+// -----------------------------------------------------------------------------
+
+interface SourceRefDriftLocation {
+  scope: 'document' | 'section' | 'block';
+  sectionId?: string;
+  blockId?: string;
+}
+
+function emitDriftFinding(
+  findings: DocumentQaFinding[],
+  ref: DocumentSourceRef,
+  location: SourceRefDriftLocation
+): void {
+  if (documentSourceRefHasVersionPin(ref)) return;
+  const refLabel = ref.sourceTitle?.trim()
+    ? `"${ref.sourceTitle.trim()}"`
+    : `${ref.sourceType}:${ref.sourceId}`;
+  const where =
+    location.scope === 'document'
+      ? 'at the artifact level'
+      : location.scope === 'section'
+        ? 'on a section'
+        : 'on a block';
+  findings.push(
+    makeFinding(
+      'low',
+      `Source reference ${refLabel} is not pinned (no sourceVersion / sourceSnapshotId) ${where}; future re-renders cannot detect drift if the underlying source advances.`,
+      'source_drift_unpinned',
+      { sectionId: location.sectionId, blockId: location.blockId }
+    )
+  );
+}
+
+function runSourceDriftQa(schema: DocumentSchema): DocumentQaCategoryReport {
+  const findings: DocumentQaFinding[] = [];
+
+  // Document-level sourceRefs. May exist without per-section / per-block
+  // anchoring on early-MVP schemas.
+  for (const ref of schema.sourceRefs ?? []) {
+    emitDriftFinding(findings, ref, { scope: 'document' });
+  }
+
+  // Section + block-level refs.
+  for (const section of schema.sections ?? []) {
+    for (const ref of section.sourceRefs ?? []) {
+      emitDriftFinding(findings, ref, {
+        scope: 'section',
+        sectionId: section.sectionId,
+      });
+    }
+    for (const block of section.blocks ?? []) {
+      if (block.sourceRef) {
+        emitDriftFinding(findings, block.sourceRef, {
+          scope: 'block',
+          sectionId: section.sectionId,
+          blockId: block.blockId,
+        });
+      }
+    }
+  }
+
+  // Threshold = 0 → category is NEVER blocking. NFR-17 wants advisory
+  // surfacing, not export gating, until the registry-side hard-drift
+  // comparator lands.
+  return categoryReport('source_drift', findings, 0, (score, fs) => {
+    if (fs.length === 0) {
+      return 'Source-drift QA clean: every source reference carries a version pin (or the document has no source references).';
+    }
+    return `Source-drift QA: ${fs.length} unpinned reference(s) (advisory); score ${score}/100.`;
+  });
 }
 
 // -----------------------------------------------------------------------------
@@ -1955,6 +2053,9 @@ export function runDocumentQa(
     runLanguageQa(schema),
     runCompletenessQa(schema, template),
     runSourceQa(schema),
+    // Slice E5.6.qa — twinned with `sources` and runs immediately
+    // after it so the right-panel QA tab keeps the two cards adjacent.
+    runSourceDriftQa(schema),
     runMethodologyQa(schema, template),
     runExecutiveQa(schema),
     runRiskQa(schema),

@@ -554,11 +554,16 @@ describe('Document QA — engine envelope', () => {
     });
     const report = runDocumentQa(schema);
     expect(report.artifactId).toBe('artifact-qa-1');
+    // Slice E5.6.qa — `source_drift` joins as the 11th canonical
+    // category, positioned immediately after `sources` because the two
+    // are semantically twinned. The category is non-blocking by design;
+    // see runSourceDriftQa() for the threshold rationale.
     expect(report.categories.map((c) => c.category)).toEqual([
       'brand',
       'language',
       'completeness',
       'sources',
+      'source_drift',
       'methodology',
       'executive',
       'risk',

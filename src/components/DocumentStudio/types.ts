@@ -170,11 +170,19 @@ export interface DocumentAuditEntry {
 // QA Engine — MVP-3 hardening (frontend mirror).
 // =============================================================================
 
+// Slice E5.6.qa — `source_drift` joins as the 11th canonical category.
+// It is twinned with `sources` (placed immediately after) and is
+// NON-BLOCKING by design: pre-E5.6 schemas legitimately have only
+// unpinned refs and we MUST NOT soft-block their export the moment
+// the QA pipeline learns about pinning. The FE-E2 right-panel
+// Sources tab uses these advisory findings to surface a "pin
+// snapshot" affordance per ref.
 export type DocumentQaCategory =
   | 'brand'
   | 'language'
   | 'completeness'
   | 'sources'
+  | 'source_drift'
   | 'methodology'
   | 'executive'
   | 'risk'

@@ -260,11 +260,20 @@ export interface DocumentRunRequest {
 // QA Engine — MVP-3 hardening (deterministic Brand QA + Language QA).
 // =============================================================================
 
+// Slice E5.6.qa adds the 11th canonical QA category: `source_drift`.
+// It is positioned right after `sources` because the two are
+// semantically twinned (sources = "do we have citations?",
+// source_drift = "are the citations we have pinned to a known
+// version of the underlying source?"). The category is
+// non-blocking by default — pre-E5.6 schemas legitimately have
+// unpinned refs and we do not want to soft-block their export
+// the moment the QA pipeline learns about pinning.
 export type DocumentQaCategory =
   | 'brand'
   | 'language'
   | 'completeness'
   | 'sources'
+  | 'source_drift'
   | 'methodology'
   | 'executive'
   | 'risk'

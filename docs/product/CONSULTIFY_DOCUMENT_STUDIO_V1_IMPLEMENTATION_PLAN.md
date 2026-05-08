@@ -968,6 +968,35 @@ Until E14, the registry only carried structural metadata (category, status, blue
 
 **Closes gaps.** §10.6 of the gap-vs-target report (FR-06 closure / template product fields) — SUBSTRATE DELIVERED. DB persistence of the new fields + FE-E2 picker wiring are scheduled as follow-ups on top of this substrate.
 
+### 6.15.5 Slice E5.6.qa — Source-drift QA category (NFR-17 advisory layer)
+
+**Why.** Slice E5.6 added the substrate (`sourceVersion` + `sourceSnapshotId` on `DocumentSourceRef` + `documentSourceRefHasVersionPin` helper) but the QA pipeline did not yet consume it. NFR-17 ("documents must detect when an underlying source advances after approval") requires at minimum that approvers can SEE which source references are unpinned — i.e., which references the system cannot diff against an authoritative future snapshot. Without a QA surface, the pinning fields are dormant: an author can keep emitting unpinned refs, FE-E2's Sources tab has nothing to highlight, and the gap report flags the substrate as "delivered but unconsumed".
+
+**What ships in this slice.**
+- `DocumentQaCategory` widened with the **11th** canonical category `'source_drift'`, positioned immediately after `'sources'` (the two are semantically twinned). Both server and frontend type unions updated.
+- `documentQaService.ts` — new `runSourceDriftQa(schema)` consumer of `documentSourceRefHasVersionPin`. Iterates document-level + section-level + block-level source refs and emits one `source_drift_unpinned` finding per unpinned ref at `low` severity, propagating `sectionId` / `blockId` for FE-E2 anchoring.
+- The category is registered in `runDocumentQa(...)` with `blockingThreshold = 0`, making it **never blocking by construction**. NFR-17 stays advisory until the registry-side hard-drift comparator lands; pre-E5.6 schemas with only legacy unpinned refs MUST continue to export.
+- `DocumentStudioQaPanel.tsx` — i18n label for the new category (`documentStudio.qa.sourceDrift` → "Source pinning") so the right-panel QA tab renders it as a readable card instead of a raw enum literal.
+- Two existing tests with hard-coded canonical-order assertions (`documentQaService.test.ts` + `documentStudioExportQaGate.test.ts`) extended to the new 11-category order.
+
+**Coverage.** New `documentQaSourceDrift.test.ts` with **12** specs:
+- clean: zero source refs is silent (no findings, score 100, non-blocking);
+- clean: all refs pinned via `sourceVersion` → no findings;
+- clean: all refs pinned via `sourceSnapshotId` (incl. block-level) → no findings;
+- clean: mixed pinning (version + snapshot) → no findings;
+- detection: unpinned doc-level ref → 1 finding, no sectionId/blockId;
+- detection: unpinned section-level ref → 1 finding, sectionId propagated;
+- detection: unpinned block-level ref → 1 finding, sectionId + blockId propagated;
+- detection: independent counting across all 3 scopes (doc + section + block);
+- detection: whitespace-only `sourceVersion` / `sourceSnapshotId` is treated as unpinned (mirrors helper contract);
+- detection: finding message mentions `sourceTitle` when present, falls back to `sourceType:sourceId`;
+- non-blocking: 20 unpinned refs → category still non-blocking;
+- non-blocking: source_drift findings cannot influence overall `report.anyBlocking`.
+
+**Validation.** Document Studio + Execution Module Standard suite **620/620 green** (+12 from E5.6.qa). tsc clean for documentStudio scope (pre-existing tablePlatform errors are parallel-agent territory and unrelated to this slice). ESLint clean for the modified files (the 2 lint errors in `documentQaService.ts` reported at lines 713 + 1646 are pre-existing in code not touched by this slice).
+
+**Closes gaps.** §10.8 of the gap-vs-target report (NFR-17 / source drift) — ADVISORY LAYER DELIVERED. The hard-drift comparator (compare pinned `sourceVersion` against the live source registry's latest version) is scheduled as a follow-up that depends on the source registry exposing a per-source latest-version lookup; that work is registry-bound and out of scope here.
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export

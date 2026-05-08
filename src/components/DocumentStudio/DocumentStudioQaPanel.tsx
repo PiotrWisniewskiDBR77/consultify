@@ -123,6 +123,9 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
   const labelForCategory = (category: string): string => {
     if (category === 'brand') return t('documentStudio.qa.brand', 'Brand QA');
     if (category === 'language') return t('documentStudio.qa.language', 'Language QA');
+    // Slice E5.6.qa — non-blocking advisory category for unpinned
+    // source refs (NFR-17).
+    if (category === 'source_drift') return t('documentStudio.qa.sourceDrift', 'Source pinning');
     return category;
   };
 
