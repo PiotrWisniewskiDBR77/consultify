@@ -330,6 +330,8 @@ import {
   getTemplate,
   listTemplateAuditEntries,
   listTemplates,
+  recordTemplateFeedback,
+  recordTemplateUsage,
 } from '../services/documentStudio/documentTemplateService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -598,6 +600,74 @@ router.get(
     }
     const auditEntries = listTemplateAuditEntries(templateId, organizationId);
     res.json({ auditEntries });
+  })
+);
+
+// Slice E14.persistence — usage + feedback recorder routes. Both
+// emit a fresh audit row + persist the updated template via the
+// DAO write-through pipeline.
+router.post(
+  '/templates/:templateId/usage',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const templateId = String(req.params.templateId || '');
+    if (!templateId) {
+      res.status(400).json({ error: 'templateId is required' });
+      return;
+    }
+    await ensureTemplateRegistryHydrated(organizationId);
+    const artifactId = typeof req.body?.artifactId === 'string' ? req.body.artifactId : undefined;
+    const template = recordTemplateUsage({
+      templateId,
+      organizationId,
+      userId,
+      artifactId,
+    });
+    if (!template) {
+      res.status(404).json({ error: 'template_not_found' });
+      return;
+    }
+    res.json({ template });
+  })
+);
+
+router.post(
+  '/templates/:templateId/feedback',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const templateId = String(req.params.templateId || '');
+    if (!templateId) {
+      res.status(400).json({ error: 'templateId is required' });
+      return;
+    }
+    const ratingRaw = req.body?.rating;
+    const rating = Number(ratingRaw);
+    if (!Number.isFinite(rating) || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+      res.status(400).json({ error: 'rating_must_be_integer_1_to_5' });
+      return;
+    }
+    const comment = typeof req.body?.comment === 'string' ? req.body.comment : undefined;
+    await ensureTemplateRegistryHydrated(organizationId);
+    const template = recordTemplateFeedback({
+      templateId,
+      organizationId,
+      userId,
+      rating,
+      comment,
+    });
+    if (!template) {
+      res.status(404).json({ error: 'template_not_found' });
+      return;
+    }
+    res.json({ template });
   })
 );
 

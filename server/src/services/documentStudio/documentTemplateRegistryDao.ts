@@ -63,6 +63,15 @@ interface TemplateRow {
   deprecated_at?: string | Date | null;
   notes?: string | null;
   is_system?: boolean | null;
+  // Slice E14.persistence — product fields. All optional / NULL-tolerant.
+  usage_count?: number | null;
+  last_used_at?: string | Date | null;
+  feedback_quality_score?: number | null;
+  feedback_sample_size?: number | null;
+  persona_tags?: unknown;
+  region_tags?: unknown;
+  brand_tags?: unknown;
+  dependency_tags?: unknown;
 }
 
 interface AuditRow {
@@ -138,6 +147,17 @@ function rowToTemplate(row: TemplateRow): DocumentTemplate {
     deprecatedBy: row.deprecated_by ?? undefined,
     deprecatedAt: row.deprecated_at ? toIsoString(row.deprecated_at) : undefined,
     notes: row.notes ?? undefined,
+    // Slice E14.persistence — product fields.
+    usageCount: typeof row.usage_count === 'number' ? row.usage_count : undefined,
+    lastUsedAt: row.last_used_at ? toIsoString(row.last_used_at) : undefined,
+    feedbackQualityScore:
+      typeof row.feedback_quality_score === 'number' ? row.feedback_quality_score : undefined,
+    feedbackSampleSize:
+      typeof row.feedback_sample_size === 'number' ? row.feedback_sample_size : undefined,
+    personaTags: parseJson<string[]>(row.persona_tags, []) ?? undefined,
+    regionTags: parseJson<string[]>(row.region_tags, []) ?? undefined,
+    brandTags: parseJson<string[]>(row.brand_tags, []) ?? undefined,
+    dependencyTags: parseJson<string[]>(row.dependency_tags, []) ?? undefined,
   };
 }
 
@@ -225,14 +245,20 @@ export async function persistTemplate(
          density, confidentiality, required_inputs, section_blueprint,
          formatting_schema, export_rules, status, version, created_by,
          created_at, updated_at, approved_by, approved_at, deprecated_by,
-         deprecated_at, notes, is_system
+         deprecated_at, notes, is_system,
+         usage_count, last_used_at, feedback_quality_score,
+         feedback_sample_size, persona_tags, region_tags,
+         brand_tags, dependency_tags
        ) VALUES (
          $1, $2, $3, $4, $5,
          $6, $7::jsonb, $8, $9, $10,
          $11, $12, $13::jsonb, $14::jsonb,
          $15::jsonb, $16::jsonb, $17, $18, $19,
          $20, $21, $22, $23, $24,
-         $25, $26, $27
+         $25, $26, $27,
+         $28, $29, $30,
+         $31, $32::jsonb, $33::jsonb,
+         $34::jsonb, $35::jsonb
        )
        ON CONFLICT (template_id) DO UPDATE SET
          organization_id = EXCLUDED.organization_id,
@@ -258,7 +284,15 @@ export async function persistTemplate(
          deprecated_by = EXCLUDED.deprecated_by,
          deprecated_at = EXCLUDED.deprecated_at,
          notes = EXCLUDED.notes,
-         is_system = EXCLUDED.is_system`,
+         is_system = EXCLUDED.is_system,
+         usage_count = EXCLUDED.usage_count,
+         last_used_at = EXCLUDED.last_used_at,
+         feedback_quality_score = EXCLUDED.feedback_quality_score,
+         feedback_sample_size = EXCLUDED.feedback_sample_size,
+         persona_tags = EXCLUDED.persona_tags,
+         region_tags = EXCLUDED.region_tags,
+         brand_tags = EXCLUDED.brand_tags,
+         dependency_tags = EXCLUDED.dependency_tags`,
       [
         template.templateId,
         template.organizationId,
@@ -287,6 +321,16 @@ export async function persistTemplate(
         template.deprecatedAt ?? null,
         template.notes ?? null,
         options.isSystem === true,
+        // Slice E14.persistence — product fields. NULL when undefined
+        // so legacy rows continue to read NULL on the way out.
+        typeof template.usageCount === 'number' ? template.usageCount : null,
+        template.lastUsedAt ?? null,
+        typeof template.feedbackQualityScore === 'number' ? template.feedbackQualityScore : null,
+        typeof template.feedbackSampleSize === 'number' ? template.feedbackSampleSize : null,
+        JSON.stringify(template.personaTags ?? []),
+        JSON.stringify(template.regionTags ?? []),
+        JSON.stringify(template.brandTags ?? []),
+        JSON.stringify(template.dependencyTags ?? []),
       ]
     );
     return { ok: result.success === true };
