@@ -37,6 +37,7 @@ import {
 } from './documentDocxStructure.js';
 import { type FormattingClass, resolveFormattingClass } from './documentDocxStyles.js';
 import {
+  type DocumentAsset,
   type DocumentBlock,
   documentChartBlockContent,
   type DocumentSchema,
@@ -44,6 +45,16 @@ import {
   type FormattingSchema,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
+
+/**
+ * Mirror of `DocumentRenderOptions` from the DOCX renderer so PDF
+ * + DOCX share the same caller-side contract. Slice E15.5.coverPageLogo.
+ */
+export interface DocumentPdfRenderOptions {
+  coverLogoAsset?: Pick<DocumentAsset, 'mimeType' | 'dataBase64'> & {
+    widthCm?: number;
+  };
+}
 
 const POINTS_PER_CM = 28.3464567; // 1cm at 72dpi
 
@@ -263,7 +274,11 @@ function marginsInPoints(formatting: FormattingSchema): {
   };
 }
 
-function drawCover(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
+function drawCover(
+  doc: PDFKit.PDFDocument,
+  ctx: PdfRenderContext,
+  options: DocumentPdfRenderOptions = {}
+): void {
   const schema = ctx.schema;
   // Slice E15.5.formatting.render — `coverPageDetailed` lets the
   // template suppress the density / confidentiality lines per
@@ -272,6 +287,13 @@ function drawCover(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
   const coverDetailed = schema.formattingSchema.coverPageDetailed;
   const includeStatus = coverDetailed?.includeStatus ?? true;
   const includeConfidentiality = coverDetailed?.includeConfidentiality ?? true;
+  // Slice E15.5.coverPageLogo — embed when both schema asks for it
+  // AND orchestrator hydrated the asset bytes. Defensive: any decode
+  // failure silently skips the logo so the cover still renders.
+  const includeLogo = coverDetailed?.includeLogo ?? false;
+  if (includeLogo && options.coverLogoAsset) {
+    drawCoverLogo(doc, options.coverLogoAsset);
+  }
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
     .slice(0, 10);
@@ -286,7 +308,7 @@ function drawCover(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
     subtitleParts.push(schema.confidentiality);
   }
   const subtitle = subtitleParts.join(' · ');
-  doc.moveDown(4);
+  if (!options.coverLogoAsset) doc.moveDown(4);
   doc.fontSize(ctx.sizing.title).fillColor('#0F172A').text(schema.title, { align: 'center' });
   doc.moveDown(0.5);
   doc.fontSize(ctx.sizing.subtitle).fillColor('#475569').text(subtitle, { align: 'center' });
@@ -300,6 +322,41 @@ function drawCover(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
     .fillColor('#94A3B8')
     .text(`Generated: ${generatedAt}`, { align: 'center' });
   doc.addPage();
+}
+
+/**
+ * Slice E15.5.coverPageLogo — PDF logo embed. Decodes the base64
+ * asset bytes once and hands them to PDFKit's `image()` API. We
+ * centre the image by computing the page's content width and
+ * passing `align: 'center'`. Any decode/embed failure is swallowed
+ * so the cover still renders.
+ */
+function drawCoverLogo(
+  doc: PDFKit.PDFDocument,
+  asset: NonNullable<DocumentPdfRenderOptions['coverLogoAsset']>
+): void {
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(asset.dataBase64, 'base64');
+  } catch {
+    return;
+  }
+  if (!buffer || buffer.length === 0) return;
+  const widthCm = typeof asset.widthCm === 'number' && asset.widthCm > 0 ? asset.widthCm : 4;
+  // 72 dpi: 1cm ≈ 28.35 points (PDFKit measures in points).
+  const widthPt = widthCm * 28.346456;
+  doc.moveDown(2);
+  try {
+    // PDFKit centres an image when given `width` + `align: 'center'`.
+    // Aspect ratio is preserved by omitting `height`.
+    doc.image(buffer, { width: widthPt, align: 'center' });
+  } catch {
+    // Defensive: bad PNG/JPEG byte sequence → silently skip embed so
+    // the cover keeps rendering. Production registry write-side
+    // validates the bytes; this is a belt-and-braces safety net.
+    return;
+  }
+  doc.moveDown(0.5);
 }
 
 function drawTableOfContents(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
@@ -698,7 +755,10 @@ function drawHeaderFooter(
   }
 }
 
-export async function renderDocumentSchemaToPdfBuffer(schema: DocumentSchema): Promise<Buffer> {
+export async function renderDocumentSchemaToPdfBuffer(
+  schema: DocumentSchema,
+  options: DocumentPdfRenderOptions = {}
+): Promise<Buffer> {
   const formatting = schema.formattingSchema;
   const margins = marginsInPoints(formatting);
   const ctx = buildPdfRenderContext(schema);
@@ -719,7 +779,7 @@ export async function renderDocumentSchemaToPdfBuffer(schema: DocumentSchema): P
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', (err: Error) => reject(err));
 
-      if (formatting.coverPage) drawCover(doc, ctx);
+      if (formatting.coverPage) drawCover(doc, ctx, options);
       if (formatting.toc) drawTableOfContents(doc, ctx);
 
       // Partition into body + appendix groups so the PDF renderer

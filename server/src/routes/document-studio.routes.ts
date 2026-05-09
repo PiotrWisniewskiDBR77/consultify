@@ -209,6 +209,14 @@ import {
   updateDocumentContentBlock,
 } from '../services/documentStudio/documentContentBlockService.js';
 import {
+  archiveAsset,
+  getActiveOrgLogo,
+  getAssetById,
+  listAssetAudit,
+  listAssetsForOrg,
+  registerLogo,
+} from '../services/documentStudio/documentAssetRegistryService.js';
+import {
   consumeShareLink,
   createShareLink,
   ensureShareLinkRegistryHydrated,
@@ -3461,6 +3469,150 @@ router.get(
       return;
     }
     res.json({ report });
+  })
+);
+
+// =============================================================================
+// Asset registry surface — Slice E15.5.coverPageLogo.
+//
+// Tenant-scoped binary assets (currently `'logo'`) the cover-page
+// renderer can embed. Auth required for every route — the asset
+// bytes never leave the authenticated boundary, even though the
+// rendered cover does (via authored exports).
+//
+//   POST   /api/document-studio/assets/logo                 — body { mimeType, dataBase64, filename? }
+//   GET    /api/document-studio/assets/logo/active          — returns { asset } or 404
+//   GET    /api/document-studio/assets                      — list (status?, kind?)
+//   GET    /api/document-studio/assets/:assetId             — get one
+//   POST   /api/document-studio/assets/:assetId/archive     — body { reason? }
+//   GET    /api/document-studio/assets/:assetId/audit       — audit chain
+//
+// Validation errors map to 400 with `error: <asset_invalid_*>` codes;
+// missing / cross-tenant assets return 404 `asset_not_found`.
+// =============================================================================
+
+router.post(
+  '/assets/logo',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const mimeType = typeof req.body?.mimeType === 'string' ? req.body.mimeType : '';
+    const dataBase64 = typeof req.body?.dataBase64 === 'string' ? req.body.dataBase64 : '';
+    const filename = typeof req.body?.filename === 'string' ? req.body.filename : undefined;
+    try {
+      const asset = registerLogo({
+        organizationId,
+        actorId: userId,
+        mimeType,
+        dataBase64,
+        filename,
+      });
+      res.status(201).json({ asset });
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'asset_invalid';
+      res.status(400).json({ error: code });
+    }
+  })
+);
+
+router.get(
+  '/assets/logo/active',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const asset = getActiveOrgLogo(organizationId);
+    if (!asset) {
+      res.status(404).json({ error: 'asset_not_found' });
+      return;
+    }
+    res.json({ asset });
+  })
+);
+
+router.get(
+  '/assets',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const status =
+      req.query.status === 'active' || req.query.status === 'archived'
+        ? (req.query.status as 'active' | 'archived')
+        : undefined;
+    const kind = req.query.kind === 'logo' ? ('logo' as const) : undefined;
+    const assets = listAssetsForOrg(organizationId, { status, kind });
+    res.json({ assets });
+  })
+);
+
+router.get(
+  '/assets/:assetId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const assetId = String(req.params.assetId || '');
+    try {
+      const asset = getAssetById({ assetId, organizationId });
+      res.json({ asset });
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'asset_not_found';
+      res.status(code === 'asset_not_found' ? 404 : 400).json({ error: code });
+    }
+  })
+);
+
+router.post(
+  '/assets/:assetId/archive',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const assetId = String(req.params.assetId || '');
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    try {
+      const asset = archiveAsset({
+        assetId,
+        organizationId,
+        actorId: userId,
+        reason,
+      });
+      res.json({ asset });
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'asset_not_found';
+      res.status(code === 'asset_not_found' ? 404 : 400).json({ error: code });
+    }
+  })
+);
+
+router.get(
+  '/assets/:assetId/audit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const assetId = String(req.params.assetId || '');
+    try {
+      const audit = listAssetAudit(assetId, organizationId);
+      res.json({ audit });
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'asset_not_found';
+      res.status(code === 'asset_not_found' ? 404 : 400).json({ error: code });
+    }
   })
 );
 

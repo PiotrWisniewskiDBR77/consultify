@@ -53,6 +53,7 @@ import {
   resolveDocumentComment as resolveDocumentCommentInternal,
 } from './documentCommentsService.js';
 import { buildDocumentSchema } from './documentContentGenerator.js';
+import { getActiveOrgLogo } from './documentAssetRegistryService.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import type {
@@ -677,11 +678,39 @@ export async function exportDocumentArtifact(
   // Persist the export through the wave5 pipeline by marking the artifact
   // as `exported` once a binary payload has been produced (audit-friendly:
   // matches `markWave5ArtifactExported` semantics used by the V8 runtime).
+  // Slice E15.5.coverPageLogo — when the schema asks the cover page
+  // to include the org logo, hydrate the asset bytes from the asset
+  // registry. Best-effort: if the registry has no active logo for
+  // this tenant, fall through and the cover renders without a logo
+  // (legacy behaviour). Failures here MUST NOT block the export.
+  let coverLogoAsset: { mimeType: 'image/png' | 'image/jpeg'; dataBase64: string } | undefined;
+  try {
+    const wantsLogo =
+      schema.formattingSchema.coverPageDetailed?.includeLogo === true &&
+      schema.formattingSchema.coverPageDetailed?.enabled !== false &&
+      schema.formattingSchema.coverPage === true;
+    if (wantsLogo) {
+      const logoAsset = getActiveOrgLogo(organizationId);
+      if (logoAsset) {
+        coverLogoAsset = {
+          mimeType: logoAsset.mimeType,
+          dataBase64: logoAsset.dataBase64,
+        };
+      }
+    }
+  } catch (err) {
+    // Surface but never block: the export should not fail because the
+    // asset registry is misbehaving. Manifest captures the issue for
+    // post-hoc audit.
+    (manifest as Record<string, unknown>).coverLogoHydrationError =
+      err instanceof Error ? err.message : String(err);
+  }
+
   let binary: Buffer;
   if (format === 'docx') {
-    binary = await renderDocumentSchemaToDocxBuffer(schema);
+    binary = await renderDocumentSchemaToDocxBuffer(schema, { coverLogoAsset });
   } else {
-    binary = await renderDocumentSchemaToPdfBuffer(schema);
+    binary = await renderDocumentSchemaToPdfBuffer(schema, { coverLogoAsset });
   }
 
   try {

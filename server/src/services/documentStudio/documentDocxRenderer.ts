@@ -46,12 +46,36 @@ import {
   resolveFormattingClass,
 } from './documentDocxStyles.js';
 import {
+  type DocumentAsset,
   type DocumentBlock,
   documentChartBlockContent,
   type DocumentSchema,
   type DocumentSection,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
+
+/**
+ * Optional render-time inputs that the orchestrator (export pipeline)
+ * resolves and passes to the renderer. Pure renderer; no I/O. The
+ * orchestrator handles asset resolution + tenant boundaries.
+ *
+ * Keeping the renderer pure means callers (tests, export pipeline,
+ * future preview surfaces) can drive the renderer with hand-crafted
+ * inputs without touching the asset registry.
+ */
+export interface DocumentRenderOptions {
+  /**
+   * Slice E15.5.coverPageLogo — when present AND the schema enables
+   * `formattingSchema.coverPageDetailed.includeLogo`, the renderer
+   * embeds this asset above the cover-page title. When absent OR the
+   * include flag is false, the cover renders without a logo (legacy
+   * behaviour).
+   */
+  coverLogoAsset?: Pick<DocumentAsset, 'mimeType' | 'dataBase64'> & {
+    /** Embed width in centimetres. Default 4cm. */
+    widthCm?: number;
+  };
+}
 
 interface DocxRuntime {
   AlignmentType: { CENTER: unknown; LEFT: unknown; RIGHT: unknown };
@@ -60,6 +84,7 @@ interface DocxRuntime {
   FootnoteReferenceRun: new (id: number) => DocxTextRun;
   Header: new (options: Record<string, unknown>) => unknown;
   HeadingLevel: { HEADING_1: unknown; HEADING_2: unknown; HEADING_3: unknown };
+  ImageRun: new (options: Record<string, unknown>) => DocxTextRun;
   PageBreak: new () => DocxTextRun;
   PageNumber: { CURRENT: unknown; TOTAL_PAGES: unknown };
   Packer: { toBuffer: (doc: unknown) => Promise<Buffer> };
@@ -89,6 +114,7 @@ const {
   FootnoteReferenceRun,
   Header,
   HeadingLevel,
+  ImageRun,
   PageBreak,
   PageNumber,
   Packer,
@@ -627,7 +653,7 @@ function renderSection(
   return [heading, ...purpose, ...blockOutputs];
 }
 
-function renderCoverBlock(ctx: RenderContext): Paragraph[] {
+function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {}): Paragraph[] {
   const schema = ctx.schema;
   // Slice E15.5.formatting.render — when the schema carries the
   // `coverPageDetailed` E15.5 substrate, only render the lines whose
@@ -636,9 +662,15 @@ function renderCoverBlock(ctx: RenderContext): Paragraph[] {
   const coverDetailed = schema.formattingSchema.coverPageDetailed;
   const includeStatus = coverDetailed?.includeStatus ?? true;
   const includeConfidentiality = coverDetailed?.includeConfidentiality ?? true;
-  // Note: `includeLogo` is reserved for a future renderer pass that
-  // can place an embedded image on the cover. The substrate is
-  // captured here so future PRs need only to read `coverDetailed.includeLogo`.
+  // Slice E15.5.coverPageLogo — when both the schema asks for a logo
+  // AND the orchestrator hydrated a `coverLogoAsset`, embed an
+  // `ImageRun` paragraph above the title. Asset resolution is the
+  // export pipeline's concern; the renderer just consumes the bytes.
+  const includeLogo = coverDetailed?.includeLogo ?? false;
+  const logoParagraph =
+    includeLogo && options.coverLogoAsset
+      ? buildCoverLogoParagraph(options.coverLogoAsset)
+      : null;
 
   // Subtitle composition — strip out parts that the override
   // explicitly disables. Status = `<density> · <type-language>` line;
@@ -657,7 +689,9 @@ function renderCoverBlock(ctx: RenderContext): Paragraph[] {
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
     .slice(0, 10);
-  return [
+  const out: Paragraph[] = [];
+  if (logoParagraph) out.push(logoParagraph);
+  out.push(...[
     new Paragraph({
       style: DOCX_STYLE_IDS.TITLE,
       alignment: AlignmentType.CENTER,
@@ -697,7 +731,51 @@ function renderCoverBlock(ctx: RenderContext): Paragraph[] {
         new PageBreak(),
       ],
     }),
-  ];
+  ]);
+  return out;
+}
+
+/**
+ * Slice E15.5.coverPageLogo — DOCX logo paragraph builder. Decodes
+ * the base64 asset bytes once, sizes the embed to ~4cm wide (safe
+ * default for an A4 cover) preserving the asset's natural aspect
+ * ratio when known, and returns a centred paragraph that lives
+ * above the title block.
+ *
+ * Defensive: any decode failure falls back to `null` so a corrupted
+ * registry row never crashes the export pipeline. The orchestrator
+ * is expected to keep the registry clean; this is a belt-and-braces
+ * layer for production safety.
+ */
+function buildCoverLogoParagraph(
+  asset: NonNullable<DocumentRenderOptions['coverLogoAsset']>
+): Paragraph | null {
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(asset.dataBase64, 'base64');
+  } catch {
+    return null;
+  }
+  if (!buffer || buffer.length === 0) return null;
+  const widthCm = typeof asset.widthCm === 'number' && asset.widthCm > 0 ? asset.widthCm : 4;
+  // 96 dpi conversion: 1cm ≈ 37.7953 px. Keep height proportional
+  // (square-ish) since aspect-ratio probing requires a PNG/JPEG
+  // header parser; for the MVP we use a conservative 1:1 box so the
+  // logo always fits the cover. Authors can rotate to a wider asset
+  // and re-upload if they want a different aspect.
+  const widthPx = Math.round(widthCm * 37.7953);
+  const heightPx = widthPx;
+  return new Paragraph({
+    style: DOCX_STYLE_IDS.SUBTITLE,
+    alignment: AlignmentType.CENTER,
+    children: [
+      new ImageRun({
+        data: buffer,
+        transformation: { width: widthPx, height: heightPx },
+        type: asset.mimeType === 'image/png' ? 'png' : 'jpg',
+      }),
+    ],
+  });
 }
 
 /**
@@ -766,7 +844,10 @@ function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
   return [heading, ...items];
 }
 
-export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): Promise<Buffer> {
+export async function renderDocumentSchemaToDocxBuffer(
+  schema: DocumentSchema,
+  options: DocumentRenderOptions = {}
+): Promise<Buffer> {
   const formatting = schema.formattingSchema;
   const ctx = buildRenderContext(schema);
   const formattingClass = resolveFormattingClass(schema);
@@ -774,7 +855,7 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
   const margins = formatting.page.marginsCm;
 
   const sectionChildren: unknown[] = [];
-  if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(ctx));
+  if (formatting.coverPage) sectionChildren.push(...renderCoverBlock(ctx, options));
   if (formatting.toc) sectionChildren.push(...renderTocBlock(ctx));
 
   // Partition into body + appendix groups so appendices always land

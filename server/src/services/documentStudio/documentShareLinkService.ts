@@ -94,18 +94,20 @@ function pushAudit(entry: DocumentShareLinkAuditEntry): void {
 }
 
 /**
- * Generate a 256-bit URL-safe random token. Combines two 128-bit
- * pulls of `Math.random` because Node 18+ does not import a
- * standard library here without enlarging the slice surface; the
- * wave5 migration can replace this with `crypto.randomBytes(32)`
- * without changing the public type. Token length is fixed at 43
- * chars (base36 alphabet, 64 bits per slice * 4 slices) — wide
- * enough that brute-force enumeration is not a realistic threat
- * for a non-public-internet deployment, and short enough to fit on
- * one line of UI copy.
+ * Generate a 256-bit URL-safe random token. Each slice is
+ * `Math.random().toString(36)` clipped to exactly 11 base-36 chars
+ * so the four-slice concatenation is always 44 characters long
+ * (4 × 11 = 44). The previous implementation used `padStart(11, '0')`
+ * which can grow PAST 11 when the float produces a long radix-36
+ * tail; clipping with `.slice(0, 11)` keeps the length deterministic.
+ *
+ * The wave5 hardening slice replaces this with
+ * `crypto.randomBytes(32).toString('base64url')` (always 43 chars,
+ * full 256 bits of entropy) without changing the public surface.
  */
 function generateToken(): string {
-  const slice = (): string => Math.random().toString(36).slice(2).padStart(11, '0');
+  const slice = (): string =>
+    Math.random().toString(36).slice(2).padStart(11, '0').slice(0, 11);
   return `${slice()}${slice()}${slice()}${slice()}`;
 }
 

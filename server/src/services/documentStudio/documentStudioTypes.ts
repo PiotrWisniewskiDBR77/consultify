@@ -2334,6 +2334,60 @@ export interface DocumentContentBlockAuditEntry {
   details?: Record<string, unknown>;
 }
 
+/**
+ * Slice E15.5.coverPageLogo — tenant-scoped binary asset registry.
+ *
+ * Stores small visual assets (currently `'logo'`) so the renderer
+ * can embed them on the cover page when `formattingSchema.coverPageDetailed.includeLogo`
+ * is set. Substrate is intentionally narrow (logos only) so the
+ * abuse story is small; richer media (header banners, watermarks,
+ * cover art) extend the same surface in follow-ups.
+ *
+ * Constraints enforced by the service:
+ *   - PNG / JPEG MIME types only;
+ *   - Hard size cap (`DOCUMENT_ASSET_MAX_BYTES` = 5 MB raw);
+ *   - At most one `'active'` asset per (org, kind) tuple — registering
+ *     a new logo auto-archives the previous one. Audit row records the
+ *     archive event with `auto_archived_by_replacement = true`.
+ */
+export type DocumentAssetKind = 'logo';
+export type DocumentAssetStatus = 'active' | 'archived';
+export type DocumentAssetMimeType = 'image/png' | 'image/jpeg';
+
+export interface DocumentAsset {
+  assetId: string;
+  organizationId: string;
+  kind: DocumentAssetKind;
+  status: DocumentAssetStatus;
+  mimeType: DocumentAssetMimeType;
+  /** Base64-encoded asset bytes. Decode with `Buffer.from(dataBase64, 'base64')`. */
+  dataBase64: string;
+  /** Decoded byte size. Cached so we don't decode just to read length. */
+  byteLength: number;
+  /** Human-friendly file label for UI (e.g. "company-logo-2026.png"). */
+  filename?: string;
+  createdBy: string;
+  createdAt: string;
+  archivedBy?: string;
+  archivedAt?: string;
+  archiveReason?: string;
+}
+
+export type DocumentAssetAuditAction =
+  | 'asset_registered'
+  | 'asset_archived'
+  | 'asset_replaced';
+
+export interface DocumentAssetAuditEntry {
+  auditId: string;
+  assetId: string;
+  organizationId: string;
+  action: DocumentAssetAuditAction;
+  actorId: string;
+  occurredAt: string;
+  details?: Record<string, unknown>;
+}
+
 /** Canonical default consulting formatting schema for Mode 1 (no template). */
 export const DEFAULT_CONSULTING_FORMATTING_SCHEMA: FormattingSchema = {
   fonts: { body: 'Aptos 11', heading: 'Aptos Display' },
