@@ -1997,4 +1997,52 @@ Closed the canvas-side visibility gap for layout audit. Before S24, the Studio c
 
 ### Remaining backlog
 
-- **Operations runbook:** document required HMAC secret, signed schema v2 tenant persistence, `signature_mismatch`, and S21 `io_error` fsync remediation.
+- **Operations runbook:** document required HMAC secret, signed schema v2 tenant persistence, `signature_mismatch`, and S21 `io_error` fsync remediation. Closed by S25.
+
+
+---
+
+## Sprint S25 — operations runbook closeout
+
+**Status:** Completed
+**Date:** 2026-05-09
+**Phase:** 2 (Implementation / documentation)
+**Touched files:** 2 (1 new operations runbook, 1 sprint-plan gate report)
+
+### Scope
+
+Closed the final operations carry-over from S21/S22/S23. The layout-capacity runtime now has durable atomic writes, HMAC-signed persistence, tenant-scoped schema v2 restore, and SuperAdmin `loadWarning` UI. S25 adds the missing operator playbook for configuring, diagnosing, and remediating those states.
+
+### Changes
+
+- **NEW** `docs/operations/PRESENTATION_STUDIO_LAYOUT_CAPACITY_RUNBOOK.md`
+  - Defines the governed lifecycle: `proposal -> approval -> execution -> audit -> signed persistence -> tenant-scoped restore`.
+  - Documents required production secret `CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_HMAC_SECRET`.
+  - Documents optional runtime path env var `CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_PATH`.
+  - Explains signed `schemaVersion=2` shape (`globalOverrides`, `tenantOverridesByOrganizationId`, `signature`) and signed v1 compatibility.
+  - Adds remediation sections for:
+    - `signature_mismatch`,
+    - `io_error`,
+    - `corrupt`,
+    - `unsupported_schema`,
+    - `rejected_by_validator`.
+  - Adds tenant safety checklist and emergency reset workflow.
+  - Defines acceptance evidence for remediation closeout.
+
+### Validation
+
+- Documentation-only change.
+- Content cross-checked against S21 fsync behavior, S22 HMAC signing behavior, S23 tenant-scoped schema v2 behavior, and S20 SuperAdmin loadWarning UI.
+
+### Acceptance
+
+- Operations runbook carry-over closed.
+- HMAC secret is documented.
+- `signature_mismatch` is documented as security/governance relevant with no manual JSON edits allowed.
+- `io_error` fsync/storage remediation is documented.
+- Tenant-scope checklist is documented.
+- Emergency reset/re-apply flow is documented.
+
+### Remaining backlog
+
+- No known high-priority Presentation Studio carry-overs remain from S13-S24. Future enhancements are product polish, not blocking backlog from this delivery track.
