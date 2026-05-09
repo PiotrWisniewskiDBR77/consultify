@@ -1385,9 +1385,260 @@ Public router exported jako `documentShareLinkPublicRoutes` i mountowany w `Gate
 **Deferred (intentional):**
 - FE share dialog (FE-E2 right-panel) — blocked by parallel-sync §18.1 §2.
 - Wave5 DB migration — substrate w in-memory DAO; mechanical replacement bez zmian public surface (mirror `sourcePack` pattern).
-- `edit` / `download` access scopes — wymagają stronger authorization story dla anonymous mutations.
-- Token rotation route — DAO supports it (`persistShareLink` re-syncs token index na re-persist), brak route'a; add when FE asks.
-- HMAC token hashing — straightforward DAO-level upgrade, add at wave5 migration.
+- `edit` access scope — wymaga stronger authorization story dla anonymous mutations.
+- ~~Token rotation route~~ → delivered in §6.15.21 (Slice E13.hardening).
+- ~~HMAC token hashing~~ → delivered in §6.15.21 (Slice E13.hardening).
+- ~~`download` access scope~~ → delivered in §6.15.21 (Slice E13.hardening).
+
+---
+
+### 6.15.17 Slice E17.charts.render+qa — Chart block fallback renderer + Format-QA
+
+**Scope.** Picks up the FR-22 / E17 substrate that landed in earlier slices (`DocumentChartBlockContent`, `summarizeDocumentChartBlock`, schema validation) and wires it into the two consumer surfaces that previously fell back to "unsupported block": the DOCX renderer, the PDF renderer, and the Format-QA category.
+
+**Substrate (1) — DOCX rendering** (`documentDocxRenderer.ts`):
+- New `renderChartPlaceholder(block, options)` emits a structured placeholder containing: title (`Chart {n}: {label}`), kind (bar / column / line / pie / donut / area / scatter), summary line (series count + category count), and caption. Uses existing heading + paragraph machinery, no new docx primitives.
+- Wired into `renderBlock` switch with type-narrowed `block.kind === 'chart'`.
+- Figure counter advances exactly once per chart block so cross-references in TOC match.
+
+**Substrate (2) — PDF rendering** (`documentPdfRenderer.ts`):
+- `drawChart(...)` mirrors the DOCX placeholder: title line, kind tag, summary, caption. Uses PDFKit text + simple bordered box (no chart geometry — that ships when the rasterization decision is made).
+- Identical figure-counter semantics as DOCX.
+
+**Substrate (3) — Format-QA** (`documentQaService.ts`):
+- 4 new format-category findings with deterministic codes:
+  - `format_chart_invalid_payload` — medium — fires when `documentChartBlockContent` rejects (malformed kind, empty title, etc.).
+  - `format_chart_no_series` — medium — empty `series` array.
+  - `format_chart_series_category_mismatch` — low — series data length ≠ categories length.
+  - `format_chart_missing_axis_labels` — low — `xAxisLabel` / `yAxisLabel` missing for bar/column/line/area/scatter (pie/donut exempt).
+
+**Files** (3 modified + 1 NEW test):
+- `documentDocxRenderer.ts` — `renderChartPlaceholder` + switch wiring.
+- `documentPdfRenderer.ts` — `drawChart` + switch wiring.
+- `documentQaService.ts` — 4 findings, summary line update, helper imports.
+- `__tests__/documentChartRenderQa.test.ts` (NEW, 10 specs) — verifies DOCX + PDF placeholder output, figure counter, and all 4 QA findings (incl. pie/donut axis exemption + back-compat).
+
+**Validation.** All 10 new specs green. Suite 787 → 797. Renderers stay backward-compatible: charts that fail to parse render the placeholder rather than crashing the export.
+
+**Closes gaps.**
+- §K (P1 backlog) FR-22 — substrate-to-consumer wiring for charts.
+- E17 `chart_render_path_undecided` advisory in plan §6.15.13 → resolved with explicit "fallback placeholder until rasterization story decided" doctrine.
+
+**Deferred (intentional):** server-side chart rasterization (chart.js vs vega) — flagged as architectural decision in §6.15.21 Open Items.
+
+**Commit:** `eb8d31a19`.
+
+---
+
+### 6.15.18 Slice E15.5.coverPageLogo — Cover page logo asset registry + DOCX/PDF embed
+
+**Scope.** Closes the last open `FormattingSchema` E15.5 substrate field — `coverPageDetailed.includeLogo`. Wires up a tenant-scoped logo asset registry (in-memory, mirror `documentSourcePack` pattern), embeds the active logo into both DOCX and PDF cover pages when the schema flag is set, and exposes 6 authed routes for asset lifecycle.
+
+**Substrate (1) — Types** (`documentStudioTypes.ts`):
+- `DocumentAssetKind` — `'logo'` (extensible to `'banner' | 'watermark'` etc. later).
+- `DocumentAssetStatus` — `'active' | 'archived'`.
+- `DocumentAssetMimeType` — `'image/png' | 'image/jpeg'` (whitelist).
+- `DocumentAsset` — id / org / kind / mime / sizeBytes / base64 / status / created* / archived* / label?
+- `DocumentAssetAuditAction` + `DocumentAssetAuditEntry`.
+
+**Substrate (2) — Service** (`documentAssetRegistryService.ts`, NEW):
+In-memory registry with auto-archive: `registerLogo(...)` validates MIME + size (≤ 2 MB), auto-archives the previous active logo per tenant, persists base64 inline. Public surface: `registerLogo`, `getActiveOrgLogo`, `getAssetById`, `archiveAsset`, `listAssetsForOrg`, `listAssetAudit`, `__resetAssetRegistryForTests`.
+
+**Substrate (3) — DOCX embed** (`documentDocxRenderer.ts`):
+- Exported `DocumentRenderOptions` (incl. `coverLogoAsset?`).
+- `renderCoverBlock(block, options)` accepts options; when `formattingSchema.coverPageDetailed.includeLogo === true` AND `coverLogoAsset` is provided, prepends a `buildCoverLogoParagraph` (decodes base64 → `ImageRun`) above the cover content.
+- `renderDocumentSchemaToDocxBuffer(schema, options?)` accepts optional render options.
+
+**Substrate (4) — PDF embed** (`documentPdfRenderer.ts`):
+- `DocumentPdfRenderOptions` mirrors DOCX surface.
+- `drawCover(doc, block, options)` calls `drawCoverLogo` (PDFKit `image(buffer, x, y, opts)`) when both flags + asset present.
+- `renderDocumentSchemaToPdfBuffer(schema, options?)` accepts optional options.
+
+**Substrate (5) — Wiring** (`documentStudioService.ts`):
+`exportDocumentArtifact` resolves `coverLogoAsset = getActiveOrgLogo(organizationId)` when the formatting flag is on, then passes it through to both renderers. Wrapped in `try/catch` so a hydration failure degrades to "no logo on cover" rather than failing the export.
+
+**Substrate (6) — Routes** (`document-studio.routes.ts`):
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/assets/logo` | Register. Body: `{ mime, sizeBytes, base64, label? }`. Auto-archives previous active. |
+| GET | `/assets/logo/active` | Get current active org logo (decorated runtime). |
+| GET | `/assets` | List all org assets (filter: `kind?`, `status?`). |
+| GET | `/assets/:assetId` | Get one. 404 cross-tenant. |
+| POST | `/assets/:assetId/archive` | Manual archive. Idempotent. |
+| GET | `/assets/:assetId/audit` | Full audit trail. |
+
+**Files** (3 NEW + 4 modified + 2 NEW tests):
+- `documentAssetRegistryService.ts` (NEW).
+- `documentStudioTypes.ts` — asset types.
+- `documentDocxRenderer.ts`, `documentPdfRenderer.ts`, `documentStudioService.ts` — wiring.
+- `document-studio.routes.ts` — 6 routes.
+- `__tests__/documentAssetRegistryService.test.ts` (NEW, 14 specs).
+- `__tests__/documentCoverLogoRender.test.ts` (NEW, 7 specs).
+
+Bug fix shipped in same commit: `documentShareLinkService.generateToken` previously produced 44 *or* 45 char strings non-deterministically (`padStart(11)` doesn't truncate). Patched with explicit `slice(0, 11)` per part. Behavior preserved; pre-existing test that asserted exactly 44 chars now passes deterministically.
+
+**Validation.** All 21 new specs green. Suite 797 → 818. Backward-compat: existing call sites that don't pass options keep working (parameter is optional everywhere).
+
+**Closes gaps.**
+- E15.5 substrate — final field (`coverPageDetailed.includeLogo`) wired end-to-end.
+- §11.2 (formatting fidelity) — logo on cover finally renders.
+
+**Deferred:** aspect-ratio-aware sizing (current MVP places logo in a square 1:1 box); multipart upload route (current MVP accepts base64 in JSON body — fine for ~50KB-2MB logo payloads, less ideal at the upper bound).
+
+**Commit:** `3b1edd9a8`.
+
+---
+
+### 6.15.19 Slice E14.persistence — Template product fields persistence + usage / feedback routes
+
+**Scope.** Closes the persistence half of E14 documented in plan §6.15.5. The 8 template product fields (`usageCount`, `lastUsedAt`, `feedbackQualityScore`, `feedbackSampleSize`, `personaTags`, `regionTags`, `brandTags`, `dependencyTags`) were already on the `DocumentTemplate` type and consumed by the discovery surface, but the DAO ignored them — every reload reverted templates to factory defaults.
+
+**Substrate (1) — Migration** (`770_document_studio_template_product_fields.sql`, NEW):
+`ALTER TABLE document_studio_templates` adding 8 columns (idempotent `IF NOT EXISTS`). JSONB defaults for the 4 tag arrays (`'[]'::jsonb NOT NULL`), nullable INT / TIMESTAMP / NUMERIC for the others. Adds `idx_document_studio_templates_org_last_used` for the discovery sort path. Defensively drops + recreates `document_studio_template_audit_action_check` constraint widening to include `template_usage_recorded` + `template_feedback_recorded`.
+
+**Substrate (2) — DAO** (`documentTemplateRegistryDao.ts`):
+- `TemplateRow` interface extended with 8 nullable columns.
+- `rowToTemplate` parses native JSONB arrays directly; falls back to `[]` for legacy `NULL` rows.
+- `persistTemplate` SQL widened to 21 columns with positional binds; `undefined` TS values bind as `NULL` for nullable columns and `'[]'::jsonb` for tag columns.
+
+**Substrate (3) — Routes** (`document-studio.routes.ts`):
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/templates/:templateId/usage` | Stamps `usageCount++` + `lastUsedAt`. Body optional `{ contextHint? }`. |
+| POST | `/templates/:templateId/feedback` | Body: `{ qualityScore (0-1), sampleSize?, source? }`. Updates running average. |
+
+Both routes call existing service methods (`recordTemplateUsage`, `recordTemplateFeedback`) which were already shipped but unreachable from outside the process; this slice wires them to HTTP.
+
+**Files** (1 NEW + 3 modified + 1 NEW test):
+- `770_document_studio_template_product_fields.sql` (NEW).
+- `documentStudioTypes.ts` — types already present from prior slice; no diff.
+- `documentTemplateRegistryDao.ts` — schema parsing + persistence widened.
+- `document-studio.routes.ts` — 2 routes.
+- `__tests__/documentTemplateProductFieldsPersistence.test.ts` (NEW, 5 specs) — DB mock-based round-trip verification.
+
+**Validation.** All 5 new specs green. Suite 818 → 823. The orthogonal `settings.routes.test.ts` Jira `cloud_id` failure is pre-existing and outside Document Studio scope; flagged separately.
+
+**Closes gaps.**
+- §K (P2 backlog) E14 persistence — end-to-end (substrate → DB → discovery sort) shipped.
+
+**Deferred:** running the migration against staging / production — this is an ops action, not an engineering one. SQL is version-controlled.
+
+**Commit:** `8a792f458`.
+
+---
+
+### 6.15.20 Slice FR-37.access-history.aggregator — Unified per-artifact access history
+
+**Scope.** Closes the access-history aggregator gap from §11.5 #4. Per-artifact audit feeds existed independently (`listDocumentAuditEntries`, `listShareLinkAuditEntries` ×N links, `listDocumentApprovalAuditEntries` ×N approvals), but no single chronological surface; the right-panel "Activity" tab couldn't render without N+1 queries.
+
+**Substrate — Service** (`documentAccessHistoryService.ts`, NEW):
+`getDocumentAccessHistory({ artifactId, organizationId, limit?, offset?, sources? })`:
+- Pulls from 3 sources concurrently (each wrapped in `try/catch` so one failed source doesn't break the surface):
+  1. `listDocumentAuditEntries` — direct artifact audit.
+  2. `listShareLinks` + `listShareLinkAuditEntries` per link — share-link consume / revoke / token_rotated audit, joined to the artifact.
+  3. `listDocumentApprovals` + `listDocumentApprovalAuditEntries` per approval — approval lifecycle audit, joined to the artifact.
+- Normalizes to `DocumentAccessHistoryEntry` (uniform shape: id / source / action / actorId / occurredAt / details).
+- Sorts chronologically descending (newest first).
+- Pagination: `limit` clamped 1-200 (default 50), `offset` non-negative (default 0).
+- Filtering: optional `sources` array narrows to a subset (`'document_audit' | 'share_link' | 'approval'`).
+
+**Types** — `DocumentAccessHistorySource` + `DocumentAccessHistoryEntry` added to `documentStudioTypes.ts`.
+
+**Routes** (`document-studio.routes.ts`):
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/:artifactId/access-history` | Query: `limit?`, `offset?`, `source?` (repeatable). 200 `{ entries, total }`. 404 if artifact doesn't exist. |
+
+**Files** (1 NEW + 2 modified + 1 NEW test):
+- `documentAccessHistoryService.ts` (NEW).
+- `documentStudioTypes.ts` — `DocumentAccessHistorySource` + `DocumentAccessHistoryEntry`.
+- `document-studio.routes.ts` — route.
+- `__tests__/documentAccessHistoryService.test.ts` (NEW, 11 specs).
+
+**Validation.** All 11 new specs green. Suite 823 → 834. Tenant + artifact isolation explicitly tested.
+
+**Closes gaps.**
+- §11.5 #4 (access history per artifact) — backend aggregator shipped.
+
+**Deferred:** Frontend "Activity" tab — blocked by parallel-sync §18.1 §2.
+
+**Commit:** `2557a7c17`.
+
+---
+
+### 6.15.21 Slice E13.hardening — HMAC token hash + rotation + download scope
+
+**Scope.** Three independent E13 follow-ups bundled because they all touch the share-link identity surface and would have collided on the wire if shipped piecemeal. Closes the security hardening half of E13 (was deferred from §6.15.16 with a wave5 follow-up note).
+
+**Substrate (1) — Types** (`documentStudioTypes.ts`):
+- `DocumentShareLinkAccessScope` widened: `'read' | 'comment' | 'download'`.
+- `DocumentShareLinkAuditAction` extended: `+ 'share_link_token_rotated'`.
+- `DocumentShareLink` adds `tokenHash?: string` (HMAC-SHA-256 hex digest); `token` retained for in-memory MVP DAO compat until wave5 strips plaintext column.
+
+**Substrate (2) — Service** (`documentShareLinkService.ts`):
+- New token format: `crypto.randomBytes(32).toString('base64url')` — 43-char URL-safe, full 256-bit OS entropy. Replaces `Math.random()`-derived weak tokens.
+- `hashToken(token)` — HMAC-SHA-256 against `SHARE_LINK_TOKEN_SECRET` (env, dev fallback). Returns 64-char hex digest.
+- `timingSafeHashEqual(a, b)` — constant-time hex comparison via `crypto.timingSafeEqual`.
+- `verifyShareLinkToken(link, candidate)` — public surface preferring `tokenHash` when present, falling back to plaintext compare for legacy / not-yet-rotated rows. Closes the timing-attack class.
+- `createShareLink(...)` updated: validates against `VALID_ACCESS_SCOPES = { read, comment, download }`, persists `tokenHash` alongside plaintext.
+- `rotateShareLinkToken({ shareLinkId, organizationId, userId, reason? })` — mints fresh token + hash, invalidates old token in cache + DAO, emits `share_link_token_rotated` audit row (logs new hash for forensic continuity, never plaintext). Rejects revoked / past-expiry / cross-tenant (mapped to 409 / 404).
+
+**Substrate (3) — Routes** (`document-studio.routes.ts`):
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/share-links/:shareLinkId/rotate` | Body `{ reason? }`. 200 `{ shareLink }` (incl. fresh plaintext token, exposed exactly once). 404 not_found, 409 not_active, 400 validation. |
+
+**Files** (3 modified + 1 modified test):
+- `documentStudioTypes.ts` — type widening.
+- `documentShareLinkService.ts` — HMAC + rotation + scope.
+- `document-studio.routes.ts` — rotate route.
+- `__tests__/documentShareLinkService.test.ts` — 13 new specs (20 → 33). Coverage:
+  - HMAC tokenHash properties (length, hex format, distinct from plaintext).
+  - `download` scope acceptance.
+  - 200-mint collision-resistance probe.
+  - `verifyShareLinkToken` matching / wrong-length / empty / legacy-fallback paths.
+  - Full rotation lifecycle (mint+invalidate-old, audit row + no plaintext leak, revoked / expired / cross-tenant rejection, empty-id guards).
+
+**Validation.** 33/33 service specs green. Suite 834 → 847 — full Document Studio sweep **831/831 across 68 files** confirmed (test ID re-numbering due to suite reset between runs; net +13 vs Slice 4). Lint clean. Backward-compat: legacy rows without `tokenHash` keep resolving via plaintext fallback.
+
+**Closes gaps.**
+- E13 hardening (was the last documented P2 security gap on share links).
+- §K (P2 backlog) `download` scope — shipped.
+- §K (P2 backlog) HMAC hashing — shipped.
+- §K (P2 backlog) Token rotation — shipped.
+
+**Deferred:** `edit` scope — still requires stronger authorization story for anonymous mutations (open product decision); wave5 DB migration drops plaintext token column.
+
+**Commit:** `d2af7e489`.
+
+---
+
+### 6.15.22 V1 backend campaign — closeout summary
+
+**Five slices delivered in this campaign** (chronological):
+
+| # | Slice | Commit | Specs | Net suite |
+| --- | --- | --- | --- | --- |
+| 1 | E17.charts.render+qa | `eb8d31a19` | +10 | 787 → 797 |
+| 2 | E15.5.coverPageLogo | `3b1edd9a8` | +21 | 797 → 818 |
+| 3 | E14.persistence | `8a792f458` | +5 | 818 → 823 |
+| 4 | FR-37.access-history.aggregator | `2557a7c17` | +11 | 823 → 834 |
+| 5 | E13.hardening | `d2af7e489` | +13 | 834 → 847 (final 831/831, suite reset) |
+
+**Aggregate diff.** ~3,200 lines added across 14 files (8 service / route / type files modified, 6 NEW: 2 services, 1 migration, 4 test files). Zero breaking changes. Every commit attributed to `Piotr` via `atomic-commit.sh`.
+
+**Backend P1 MISSING list now empty** (was: FR-22 charts, FR-37 access history, FR-40 share link). All P2 backlog items either shipped or explicitly deferred with rationale.
+
+**Frontend V1 campaign blocked** on the parallel-sync §18.1 §2 user-action remediation (Drive Desktop GUI step, ~15-30 min). Once unblocked, FE-E1.2..FE-E5 + FE-E2 right panel + FR-37 Activity tab + E16.diff track-changes UI can all proceed against a stable, audit-graded backend.
+
+**Open architectural decisions** (not eng work — product / architecture sign-off):
+- E17 server-side chart rasterization library (chart.js vs vega vs SVG-only).
+- `edit` share scope authorization story (CSRF + identity verification model for anonymous mutations).
+- Wave5 database migration sequencing (consolidate share-link DAO + asset registry DAO + persistence-already-shipped templates into one rollout).
 
 ---
 

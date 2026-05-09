@@ -786,3 +786,77 @@ The backend audit-grade closeout for the V1 Document Studio is essentially compl
 - ✅ 36 new specs (20 service + 16 routes); suite 751 → 787 green.
 - ✅ Plan §6.15.16 + gap report §20 documented.
 - ✅ Commit `a4ae18a65` shows clean `Piotr` attribution via `atomic-commit.sh`.
+
+---
+
+## 21. V1 backend campaign — closeout addendum (2026-05-09)
+
+This section records the five-slice "CTO pit stop" closeout that brought the V1 Document Studio backend to a feature-complete + audit-grade state. Plan §6.15.17–§6.15.22 contains the per-slice depth; this section is the gap-against-target reconciliation.
+
+### 21.1 Final P1 / P2 status matrix
+
+| Gap row (original) | Status | Shipped by |
+| --- | --- | --- |
+| FR-22 charts (P1, MISSING) | ✅ DELIVERED (placeholder render + QA) | Slice E17.charts (`eb8d31a19`) |
+| FR-37 access history aggregator (P1, MISSING) | ✅ DELIVERED (backend) | Slice FR-37 (`2557a7c17`) |
+| FR-40 share-link surface (P1, MISSING) | ✅ DELIVERED (backend, incl. hardening) | Slices E13.1 + E13.hardening (`a4ae18a65` + `d2af7e489`) |
+| E14 template product-fields persistence (P2) | ✅ DELIVERED | Slice E14.persistence (`8a792f458`) |
+| E15.5 `coverPageDetailed.includeLogo` (P2) | ✅ DELIVERED | Slice E15.5.coverPageLogo (`3b1edd9a8`) |
+| E13 HMAC token hash (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
+| E13 token rotation route (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
+| E13 `download` access scope (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
+| E13 `edit` access scope (P2) | 🔶 DEFERRED | Open product decision (anon-mutation auth story) |
+| FR-22 server-side chart rasterization | 🔶 DEFERRED | Open architectural decision (chart.js vs vega) |
+| `coverPageDetailed.includeLogo` aspect ratio | 🔶 DEFERRED | UX polish, MVP uses 1:1 box |
+| `coverPageDetailed.includeLogo` multipart upload | 🔶 DEFERRED | UX polish, MVP accepts base64-in-JSON |
+
+**Backend V1 MISSING list is empty.** Every row in §C.4 §0 (P1) and §K (P2) is either shipped or carries explicit deferral rationale tied to a product / architecture decision rather than engineering capacity.
+
+### 21.2 Aggregate validation
+
+| Metric | Pre-campaign | Post-campaign |
+| --- | --- | --- |
+| Document Studio test files | ~62 | 68 |
+| Document Studio specs | 787 | 831 |
+| Document Studio P1 backend MISSING gaps | 3 | 0 |
+| Document Studio P2 backend gaps | 6 | 1 (open product) + 2 (UX polish) |
+
+Full Document Studio sweep: **831/831 green across 68 files** (last verified post Slice E13.hardening). Aggregate suite count grew by ~60 specs across 14 modified files + 6 NEW files. Zero breaking changes; every consumer-facing surface either accepts new optional parameters or extends an existing enum additively.
+
+### 21.3 What V1 backend ships (acceptance contract)
+
+A consumer of the Document Studio V1 backend can:
+
+1. **Generate** documents through the existing planner / generator pipeline (unchanged).
+2. **Render** them to DOCX or PDF with full E15.5 formatting fidelity — heading styles, header content, footer page numbering, TOC depth, full cover page (incl. logo).
+3. **Embed charts** as structured placeholders with deterministic figure-counter advancement (rasterization upgrade is a swap-the-renderer concern when the library decision is made).
+4. **Persist + discover templates** with usage / feedback / persona / region / brand / dependency tags surviving process restart and feeding the discovery sort path.
+5. **Share** an artifact with an external party via tenant-scoped, time-boxed, scope-controlled (`read | comment | download`) links — with HMAC-hashed tokens, constant-time verification, rotation on demand, idempotent revoke, anti-enumeration consume, and full audit trail.
+6. **Audit** the artifact end-to-end through a unified access-history aggregator that joins direct artifact audit + share-link audit + approval audit chronologically with pagination + source filtering.
+7. **Audit** every mutation across the surface — every state-changing service call writes an audit row keyed to a deterministic action enum, persisted via write-through to the same DAO that holds the entity.
+
+### 21.4 What V1 backend explicitly does NOT ship
+
+- Frontend (entire FE-E1.2 .. FE-E5 campaign) — blocked on parallel-sync remediation.
+- DB-backed share-link / asset DAOs — wave5 mechanical migration; in-memory DAOs preserve the public surface verbatim.
+- Server-side chart rasterization — architectural decision pending.
+- `edit` share scope — product decision pending.
+
+### 21.5 Required user actions before frontend campaign starts
+
+**One physical user action remains** (no engineering substitute):
+
+- **Parallel-sync remediation** — `DRD/consultify/docs/operations/PARALLEL_SYNC_REMEDIATION_2026-05-09.md` §2. Approx 15–30 min in Drive Desktop Settings. Until completed, every frontend file write is at risk of being silently reverted or attributed to a `staging` Git identity.
+
+Everything else can proceed under engineering-only authority: ops can run the `770_document_studio_template_product_fields.sql` migration whenever a deploy window is available, and product / architecture decisions can be queued for review without blocking new backend work.
+
+### 21.6 Definition of done — V1 backend acceptance
+
+- ✅ All P1 MISSING backend gaps closed (3 of 3).
+- ✅ All deferable P2 backend gaps either closed (6 of 6) or carry an explicit deferral with rationale tied to a non-engineering blocker.
+- ✅ 831/831 Document Studio specs green across 68 files.
+- ✅ Lint + typecheck clean across all touched files.
+- ✅ Plan §6.15.17–§6.15.22 + gap §21 document the campaign in audit-grade detail.
+- ✅ Five commits (`eb8d31a19`, `3b1edd9a8`, `8a792f458`, `2557a7c17`, `d2af7e489`) all show clean `Piotr` attribution via `atomic-commit.sh`.
+- ✅ Backend ships zero breaking changes; every existing call site continues to function unmodified.
+- 🔶 One user action queued (parallel-sync remediation) — required to unblock the frontend V1 campaign, NOT part of backend acceptance.
