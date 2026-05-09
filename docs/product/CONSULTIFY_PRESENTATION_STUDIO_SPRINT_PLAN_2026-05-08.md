@@ -1280,3 +1280,73 @@ Tests:
   - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down (R-S14-3 surfaces this need from a different angle).
   - Optional: tenant-scoped layout capacity overrides (closes R-S13-1) — non-trivial because it requires a tenant-keyed registry and an `organizationId` parameter on `resolveSlotCapacity`.
 
+## Phase 2 — Sprint S15 gate (Renderer-side honest truncation indicator / 2026-05-09)
+
+Status: `PASS_WITH_P2`
+
+### Scope landed in S15
+
+S15 closes R-S13-4 — the most visible UI/UX governance gap in the Studio. Before S15 the audit could classify a slide as overflowing / missing-source / unsupported-intent (S10 + S11), the Studio canvas could surface that to a reviewer via the layout-audit banner (S11 + S12 high-priority semantics), and the generator could emit per-slot densities the audit reasons against (S14) — but the rendered PPTX could still silently truncate the offending text. A reviewer who only sees the deck (no Studio canvas) would never know the audit fired.
+
+S15 plumbs the audit's per-slide findings all the way through to the renderer. Every PPTX slide whose outline entry triggered any audit flag now carries a small, language-neutral marker in the top-right corner. The marker is amber for advisory flags (the three overflow classes) and rose for high-priority flags (`missing_source_for_evidence_intent`, `unsupported_intent_for_pptx_export`, `unsupported_intent_for_pdf_export`) — semantics deliberately mirror the S12 banner so the reviewer sees the same priority story whether they look at the canvas or the deck.
+
+The change is strictly additive at every layer. Legacy callers / decks ship without `auditFlags`, the renderer treats `undefined`/empty arrays as "no marker", and the marker helper validates flag strings before rendering (defends against future audit-only flags that shouldn't trigger a renderer marker).
+
+### Changes shipped
+
+PPTX renderer:
+
+- `report/pptx/types.ts::UnifiedSlide`: added optional `auditFlags?: string[]` field. Documented why it's typed as `string[]` instead of the audit's `LayoutAuditFlag` union (avoids a circular import between PPTX types ← generator ← audit). Backward-compat — every existing path that doesn't set the field keeps working unchanged.
+- `report/pptx/composites/LayoutTruncationMarker.ts` (new): pure helpers `decideLayoutTruncationMarker(slide)` and `buildLayoutTruncationMarker(slide, tokens)`. Decision returns `{ shouldRender, priority: 'high' | 'advisory' | 'none', recognizedFlagCount, recognizedFlags }` after deduping, filtering to known flags, and sorting for determinism. Build returns `RenderedElement | null` — applies a small rounded-rect badge with `⚠ <count>` centered, amber for advisory, rose for high priority.
+- `PptxPipelineService.generateFromUnifiedJson`: calls `buildLayoutTruncationMarker` AFTER the layout's own elements are applied so the badge sits on top of any overflowing title/body text. Wrapped in try/catch so a marker failure is non-fatal — the slide still renders, the marker just gets logged + a warning is surfaced.
+
+Generator:
+
+- New `presentationStudioSlideAuditDecoratorService.ts`: pure helper `decorateSlidesWithAuditFlags({ outline, slides, audit })` that walks the FULL outline (handles disabled slides correctly — they consume an outline index but no UnifiedSlide), maps audit findings onto the matching enabled UnifiedSlide via `outlineIndex → flags` lookup, dedupes, and preserves caller-set `auditFlags` when the audit produced nothing for that slide. Also returns `{ decoratedCount, skippedDisabledCount }` for telemetry.
+- `presentationGeneratorService.generateOutline`: imports `auditPresentationStudioOutlineLayout` + `decorateSlidesWithAuditFlags` and runs both BEFORE persisting `unifiedJson`. The audit reads `setup.templateFamily` / `setup.deckType` so the same per-family overrides from S11 + the runtime registry from S13 apply. Decoration is wrapped in try/catch — a transient audit failure logs and falls back to undecorated slides; the deck still ships.
+
+Tests:
+
+- `report/pptx/composites/__tests__/LayoutTruncationMarker.test.ts` (new, 19 tests):
+  - `decideLayoutTruncationMarker` returns no-render for missing/empty/all-unrecognized flags; classifies single advisory and single high-priority flags correctly; upgrades to high when ANY high-priority flag is mixed with advisories; dedupes; drops unrecognized; sorts deterministically.
+  - `buildLayoutTruncationMarker` returns null when no marker, builds a `kind: 'shape'` element when needed, applies the right amber/rose colors per priority, shows the recognized-flag count in the label, and positions the marker in the top-right corner of the 16:9 slide.
+  - **Drift guards**: `HIGH_PRIORITY_FLAGS ⊆ KNOWN_FLAGS`; `KNOWN_FLAGS` exactly matches the documented `LayoutAuditFlag` set (a future flag added to the audit without updating this set means the marker silently ignores it — the test fails before that ships).
+- `presentationStudioSlideAuditDecoratorService.test.ts` (new, 7 tests):
+  - Clean audit produces no decoration.
+  - Single flag attaches to the matching enabled slide.
+  - Disabled outline entries shift the slides cursor correctly (a slide audit with `index: 2` decorates the SECOND enabled `UnifiedSlide`, not the third).
+  - Disabled-but-flagged outline entries are reported via `skippedDisabledCount`, never decorate any UnifiedSlide.
+  - Repeated flag ids on a single slide are deduped (defends against accidental upstream duplication).
+  - Caller-set `auditFlags` are preserved when the audit produced none.
+  - Decorator does NOT mutate the input slides array.
+
+### Validation
+
+- `npx vitest run` on the eleven primary Studio-scoped suites + adjacent generator-golden — **180/180 pass** (S14 baseline 149 + 13 marker + 7 decorator + 5 generator-golden + 6 in adjacent suites = 180). No regressions.
+- `npx eslint` on the seven S15 in-scope files (with `--fix` for prettier-only nits) — **0 errors**, 76 pre-existing P3 warnings (all `no-explicit-any` in the existing PPTX module + `presentationGeneratorService.ts` from earlier sprints; not touched per the S0 baseline policy).
+- `npx tsc --noEmit` on the four S15 in-scope source/test files (strict, ESNext, bundler resolution, JSX preserve, skipLibCheck) — **0 errors** after fixing two test-helper redundant-key warnings.
+
+### Acceptance criteria covered by S15
+
+- AC: a slide flagged by the audit (any flag class) carries a visible review marker on the rendered PPTX. **Met.** The pipeline always calls `buildLayoutTruncationMarker` after layout elements; the marker renders for every recognized non-empty flag set.
+- AC: high-priority flag classes get a higher-contrast color than advisory flags. **Met.** Rose for high (matches the S12 banner rose tone); amber for advisory (matches the S12 banner amber tone). Color codes are fixed semantic constants — they override any brand theme so an amber warning still reads as amber on a corporate-blue brand.
+- AC: legacy decks (without `auditFlags`) render unchanged. **Met.** The pipeline calls the marker helper unconditionally; the helper returns `null` for `undefined` / empty / all-unrecognized flags. No marker, no diff vs pre-S15 output.
+- AC: a marker failure must NOT block deck generation. **Met.** Pipeline integration is try/catch-wrapped — on marker error, the slide still renders, a warning is logged, and the warning is appended to the pipeline's `warnings[]` so the caller sees it.
+- AC: drift between audit flag set and renderer's recognized set is caught at test time. **Met.** The `KNOWN_FLAGS exactly matches LayoutAuditFlag` test fails the moment a flag is added/removed in the audit without updating the renderer.
+
+### Risks / open items (deferred)
+
+- R-S15-1 (P2): **PDF parity is NOT shipped**. The current Consultify PDF renderer for presentations (the deck-document → PDF path) does not yet read `slide.auditFlags` and therefore does not render a marker. PDF reviewers see the audit only through the canvas banner, not on the rendered artifact. A follow-up sprint must mirror the PPTX wiring in the PDF renderer — the marker helper itself can be reused (the colors are language-neutral hex codes; the position math is layout-engine agnostic).
+- R-S15-2 (P3): the marker shows a count but not the specific flag classes. A reviewer who sees `⚠ 3` on a slide must still go to the canvas banner to learn WHICH three flags fired. We deliberately kept the marker compact — a wider chip with the flag class shorthand would compete with title space. A follow-up could add a small tooltip layer on hover (PPTX supports `slide.addText` with hyperlink/tooltip, but it's brittle across viewers) or a micro-icon row instead of a single badge.
+- R-S15-3 (P3): the marker renders the `⚠` glyph from the body font's Unicode coverage. If a future brand theme switches to a font without the U+26A0 codepoint the icon will fall back to a tofu glyph. PptxGenJS does not surface a "missing glyph" event so we cannot detect this at render-time. Mitigation: document the requirement; ship a font fallback in the renderer if/when a brand without warning-glyph coverage is onboarded.
+- R-S15-4 (P3): the marker is per-slide. Decks with many flagged slides do not get an aggregate "deck-level" indicator anywhere in the rendered artifact. The deck's review-ready status today lives on the Studio canvas (banner) and in the audit row. Adding a deck-level indicator (e.g. a flag count on the closing slide or a pre-flight summary slide) is a candidate for a future sprint and is intentionally out of scope here.
+- Carry-overs from S13 / S14: R-S13-1 (tenant scoping), R-S13-2 (override persistence), R-S13-3 (admin endpoint), R-S14-1 (deck-type axis on intent defaults), R-S14-3 (UI distinction between user-set vs inferred densities) all remain open.
+
+### Next sprint plan
+
+- Sprint S16 candidates (subject to your approval):
+  - PDF parity for the truncation marker (closes R-S15-1) — single-sprint scope, mirrors the PPTX wiring in the PDF renderer using the same `LayoutTruncationMarker` helper or a thin PDF-flavoured port.
+  - SuperAdmin layout-capacity admin endpoint (closes R-S13-3): authenticated POST that wraps `applyOverrides` with `proposal -> approval -> execution -> audit`.
+  - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down (R-S14-3 + R-S15-2 both nudge this direction).
+  - Optional: tenant-scoped layout capacity overrides (closes R-S13-1) — bigger refactor, probably its own 2-sprint mini-track.
+

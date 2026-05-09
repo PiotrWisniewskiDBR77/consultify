@@ -11,6 +11,7 @@
 import { createRequire } from 'module';
 
 import logger from '../../../utils/Logger.js';
+import { buildLayoutTruncationMarker } from './composites/LayoutTruncationMarker.js';
 import { getDesignTokens } from './designTokens.js';
 import { resolveLayout } from './layouts/index.js';
 import { validateReport } from './RulesEngine.js';
@@ -162,6 +163,22 @@ export class PptxPipelineService {
             );
             warnings.push(`Slide ${i + 1}: element render issue — ${elemErr.message}`);
           }
+        }
+
+        // Sprint S15: render the layout-audit truncation marker AFTER
+        // the layout's own elements so the badge sits on top of any
+        // overflowing title / body text. The marker is a no-op when
+        // `slide.auditFlags` is empty or unset (legacy callers). Closes
+        // R-S13-4 — the rendered artifact now visibly carries the same
+        // audit flags the Studio canvas banner shows.
+        try {
+          const marker = buildLayoutTruncationMarker(slideData, tokens);
+          if (marker) marker.apply(slide);
+        } catch (markerErr: any) {
+          logger.warn(
+            `[PptxPipeline] Layout-audit marker warning on slide ${i + 1}: ${markerErr.message}`
+          );
+          warnings.push(`Slide ${i + 1}: layout-audit marker skipped — ${markerErr.message}`);
         }
 
         this.addHeaderFooter(slide, report.meta, tokens, i + 1, report.slides.length);

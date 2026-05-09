@@ -27,6 +27,8 @@ import { deckDocumentFromUnifiedJson } from './presentationDeckDocumentService.j
 import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
 import { applyIntentDensityDefaults } from './presentationStudioIntentDensityDefaultsService.js';
+import { auditPresentationStudioOutlineLayout } from './presentationStudioLayoutAuditService.js';
+import { decorateSlidesWithAuditFlags } from './presentationStudioSlideAuditDecoratorService.js';
 import {
   applyTemplateRuntime,
   buildSystemTemplateRuntime,
@@ -1384,7 +1386,46 @@ export async function generateDeck(
       }
     }
 
-    const unifiedJson: UnifiedReportJSON = { meta, slides };
+    // ------------------------------------------------------------
+    // Sprint S15: layout-audit pass on the assembled outline +
+    // decorate the matching UnifiedSlides with their audit flags.
+    // The PPTX renderer reads these flags and adds an inline review
+    // marker, closing R-S13-4 — the rendered artifact now visibly
+    // carries the same warnings the Studio canvas banner shows.
+    //
+    // Failure-mode safety: the audit is pure and dependency-free, but
+    // we still wrap the call in try/catch so a transient logic error
+    // never blocks deck generation. If the audit throws, we log and
+    // continue with the un-decorated slides — the deck still ships,
+    // it just lacks the review marker on this run.
+    // ------------------------------------------------------------
+    let auditedSlides: UnifiedSlide[] = slides;
+    try {
+      const templateFamily =
+        ((setup as any).templateFamily as string | undefined) ||
+        ((setup as any).deckType as string | undefined) ||
+        null;
+      const layoutAudit = auditPresentationStudioOutlineLayout(outline, {
+        templateFamily,
+      });
+      const decorated = decorateSlidesWithAuditFlags({
+        outline,
+        slides,
+        audit: layoutAudit,
+      });
+      auditedSlides = decorated.slides;
+      if (decorated.decoratedCount > 0) {
+        logger.info(
+          `[PresentationGen] Layout audit decorated ${decorated.decoratedCount} slide(s) with review markers`
+        );
+      }
+    } catch (auditErr) {
+      logger.warn(`[PresentationGen] Layout audit decoration failed (non-fatal)`, {
+        auditErr,
+      });
+    }
+
+    const unifiedJson: UnifiedReportJSON = { meta, slides: auditedSlides };
     const warnings = [...extraWarnings];
     let deckDocument = deckDocumentFromUnifiedJson({
       deckId,
