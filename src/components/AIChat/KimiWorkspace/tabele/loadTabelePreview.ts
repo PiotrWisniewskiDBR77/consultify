@@ -59,38 +59,63 @@ function normalizeColumns(tableInfo: any, rows: Array<Record<string, unknown>>):
   return Object.keys(firstRow).filter((key) => !['id', 'created_at', 'updated_at'].includes(key));
 }
 
-export async function resolveAccessibleTableId(candidateId: string): Promise<string | null> {
+export interface ResolveAccessibleTableIdOptions {
+  /**
+   * URL params named `artifactId` should be resolved through the registry first.
+   * This avoids a misleading `/table-platform/tables/{artifactId}` 404 before
+   * the real artifact -> table mapping is checked.
+   */
+  preferArtifactRegistry?: boolean;
+}
+
+async function resolveTableIdFromArtifactRegistry(candidateId: string): Promise<string | null> {
   const normalized = String(candidateId || '').trim();
   if (!normalized) return null;
 
   try {
+    const actionTargetRaw = await Api.get(
+      `/artifacts/${encodeURIComponent(normalized)}/action-target`
+    );
+    const actionTarget = unwrapData<any>(actionTargetRaw);
+    const originRuntime = String(actionTarget?.originRuntime || '')
+      .trim()
+      .toLowerCase();
+    const originRecordId = String(actionTarget?.originRecordId || '').trim();
+    return originRuntime === 'sheet' && originRecordId ? originRecordId : null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveDirectTableId(candidateId: string): Promise<string | null> {
+  const normalized = String(candidateId || '').trim();
+  if (!normalized) return null;
+  try {
     await TablePlatformApi.getTable(normalized);
     return normalized;
   } catch {
-    let fromArtifact: string | null = null;
-    try {
-      const actionTargetRaw = await Api.get(
-        `/artifacts/${encodeURIComponent(normalized)}/action-target`
-      );
-      const actionTarget = unwrapData<any>(actionTargetRaw);
-      const originRuntime = String(actionTarget?.originRuntime || '')
-        .trim()
-        .toLowerCase();
-      const originRecordId = String(actionTarget?.originRecordId || '').trim();
-      if (originRuntime === 'sheet' && originRecordId) {
-        fromArtifact = originRecordId;
-      }
-    } catch {
-      fromArtifact = null;
-    }
-    if (!fromArtifact || fromArtifact === normalized) return null;
-    try {
-      await TablePlatformApi.getTable(fromArtifact);
-      return fromArtifact;
-    } catch {
-      return null;
-    }
+    return null;
   }
+}
+
+export async function resolveAccessibleTableId(
+  candidateId: string,
+  options: ResolveAccessibleTableIdOptions = {}
+): Promise<string | null> {
+  const normalized = String(candidateId || '').trim();
+  if (!normalized) return null;
+
+  const first = options.preferArtifactRegistry
+    ? await resolveTableIdFromArtifactRegistry(normalized)
+    : await resolveDirectTableId(normalized);
+  if (first) return first;
+
+  const fallback = options.preferArtifactRegistry
+    ? await resolveDirectTableId(normalized)
+    : await resolveTableIdFromArtifactRegistry(normalized);
+  if (!fallback || fallback === normalized) return fallback;
+
+  return resolveDirectTableId(fallback);
 }
 
 export interface LoadTabelePreviewOptions {

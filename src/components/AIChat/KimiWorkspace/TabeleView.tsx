@@ -141,7 +141,9 @@ export const TabeleView: React.FC = () => {
     }
 
     const loadReopenPreview = async () => {
-      const resolvedTableId = await resolveAccessibleTableId(artifactId);
+      const resolvedTableId = await resolveAccessibleTableId(artifactId, {
+        preferArtifactRegistry: true,
+      });
       if (cancelled) return;
 
       if (!resolvedTableId) {
