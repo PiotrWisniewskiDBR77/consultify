@@ -40,6 +40,8 @@
  *     does not flood the audit log.
  */
 
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+
 import {
   __resetShareLinkRegistryDaoForTests,
   bumpShareLinkConsumeCount,
@@ -94,21 +96,56 @@ function pushAudit(entry: DocumentShareLinkAuditEntry): void {
 }
 
 /**
- * Generate a 256-bit URL-safe random token. Each slice is
- * `Math.random().toString(36)` clipped to exactly 11 base-36 chars
- * so the four-slice concatenation is always 44 characters long
- * (4 × 11 = 44). The previous implementation used `padStart(11, '0')`
- * which can grow PAST 11 when the float produces a long radix-36
- * tail; clipping with `.slice(0, 11)` keeps the length deterministic.
+ * Slice E13.hardening — secret used as the HMAC key when hashing
+ * share-link tokens for persistence. Read from the environment so
+ * production deployments rotate per-tenant; in tests / dev we fall
+ * back to a fixed default so the hash is deterministic across
+ * process restarts (which makes the in-memory DAO `loadShareLinkByToken`
+ * fast path resolve consistently after a hot reload).
  *
- * The wave5 hardening slice replaces this with
- * `crypto.randomBytes(32).toString('base64url')` (always 43 chars,
- * full 256 bits of entropy) without changing the public surface.
+ * Production deployments MUST set `SHARE_LINK_TOKEN_SECRET` to a
+ * 256-bit random string (e.g. `openssl rand -base64 48`).
+ */
+const SHARE_LINK_TOKEN_SECRET =
+  process.env.SHARE_LINK_TOKEN_SECRET ??
+  'consultify-document-studio-share-link-default-dev-secret';
+
+/**
+ * Generate a 256-bit URL-safe random token using
+ * `crypto.randomBytes(32).toString('base64url')`. Always 43
+ * characters long and carries the full 256 bits of entropy from
+ * the OS random pool — significantly stronger than the previous
+ * `Math.random()`-derived token (which was the substrate used in
+ * Slice E13.1 with a wave5 follow-up note).
  */
 function generateToken(): string {
-  const slice = (): string =>
-    Math.random().toString(36).slice(2).padStart(11, '0').slice(0, 11);
-  return `${slice()}${slice()}${slice()}${slice()}`;
+  return randomBytes(32).toString('base64url');
+}
+
+/**
+ * Compute the HMAC-SHA-256 hash of a plaintext token using the
+ * per-process `SHARE_LINK_TOKEN_SECRET`. The hash is what we
+ * persist + index by; the plaintext token is returned to the
+ * caller exactly ONCE (at create / rotate) and lives in the
+ * in-memory cache for the lifetime of the process.
+ */
+function hashToken(token: string): string {
+  return createHmac('sha256', SHARE_LINK_TOKEN_SECRET).update(token).digest('hex');
+}
+
+/**
+ * Constant-time comparison of two hex-encoded HMAC digests.
+ * Required to avoid the timing-attack class where an attacker can
+ * iteratively guess token bytes by measuring response latency.
+ */
+function timingSafeHashEqual(a: string, b: string): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -210,11 +247,17 @@ export interface CreateShareLinkParams {
   label?: string;
 }
 
+const VALID_ACCESS_SCOPES: ReadonlySet<DocumentShareLinkAccessScope> = new Set([
+  'read',
+  'comment',
+  'download',
+]);
+
 export function createShareLink(params: CreateShareLinkParams): DocumentShareLink {
   if (!params.artifactId) throw new Error('artifactId is required');
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
-  if (params.accessScope !== 'read' && params.accessScope !== 'comment') {
+  if (!VALID_ACCESS_SCOPES.has(params.accessScope)) {
     throw new Error(`unsupported share-link accessScope: ${params.accessScope}`);
   }
   if (params.expiresAt) {
@@ -224,11 +267,13 @@ export function createShareLink(params: CreateShareLinkParams): DocumentShareLin
   }
 
   const now = nowIso();
+  const token = generateToken();
   const link: DocumentShareLink = {
     shareLinkId: makeId('share-link'),
     artifactId: params.artifactId,
     organizationId: params.organizationId,
-    token: generateToken(),
+    token,
+    tokenHash: hashToken(token),
     accessScope: params.accessScope,
     status: 'active',
     expiresAt: params.expiresAt,
@@ -315,6 +360,133 @@ export function revokeShareLink(params: RevokeShareLinkParams): DocumentShareLin
   });
 
   return { ...next };
+}
+
+// =============================================================================
+// Rotate token (Slice E13.hardening)
+// =============================================================================
+
+export interface RotateShareLinkTokenParams {
+  shareLinkId: string;
+  organizationId: string;
+  userId: string;
+  reason?: string;
+}
+
+/**
+ * Mint a fresh token + hash for an existing active share link. Use
+ * cases:
+ *   - the link was inadvertently leaked outside its intended audience;
+ *   - periodic rotation policy (e.g. every 90 days);
+ *   - reset after a near-miss security incident.
+ *
+ * Constraints:
+ *   - `shareLinkId` MUST exist within the supplied organization.
+ *   - The link MUST currently be `active` (revoked / expired links
+ *     cannot be rotated — revoke + re-create instead).
+ *   - The previous token is INVALIDATED immediately. Any consumer
+ *     holding the old token receives a 404 on the next consume.
+ *
+ * Audit row: `share_link_token_rotated` with `details.reason`.
+ * The new plaintext token is exposed on the return row exactly
+ * once; the route MUST surface it inline so the creator can re-
+ * distribute. Subsequent reads of the link via `getShareLink` /
+ * `listShareLinks` continue to expose the current `token` field
+ * because the in-memory MVP DAO carries the plaintext. The wave5
+ * migration drops the plaintext column; from there `rotateShareLinkToken`
+ * is the only path that exposes plaintext post-creation.
+ */
+export function rotateShareLinkToken(params: RotateShareLinkTokenParams): DocumentShareLink {
+  if (!params.shareLinkId) throw new Error('shareLinkId is required');
+  if (!params.organizationId) throw new Error('organizationId is required');
+  if (!params.userId) throw new Error('userId is required');
+
+  const key = linkKey(params.organizationId, params.shareLinkId);
+  const existing = registryStore.get(key);
+  if (!existing) throw new Error('share_link_not_found');
+  if (existing.status !== 'active') {
+    throw new Error('share_link_not_active');
+  }
+  // Reject rotation on already-expired links — the consumer would
+  // need a fresh expiresAt anyway, which means a new link is the
+  // right answer. Surface a structured error so the route can map
+  // it to a 409 conflict.
+  const runtime = getShareLinkRuntimeStatus(existing);
+  if (!runtime.isUsable) {
+    throw new Error('share_link_not_active');
+  }
+
+  const newToken = generateToken();
+  const newTokenHash = hashToken(newToken);
+  const next: DocumentShareLink = {
+    ...existing,
+    token: newToken,
+    tokenHash: newTokenHash,
+  };
+  registryStore.set(key, next);
+  // Invalidate the old token in the in-process index immediately;
+  // the new token gets indexed in its place.
+  if (existing.token) tokenIndex.delete(existing.token);
+  tokenIndex.set(newToken, key);
+  void persistShareLink(next).catch(() => undefined);
+
+  pushAudit({
+    auditId: makeId('share-link-audit'),
+    shareLinkId: next.shareLinkId,
+    artifactId: next.artifactId,
+    organizationId: next.organizationId,
+    action: 'share_link_token_rotated',
+    actorId: params.userId,
+    occurredAt: nowIso(),
+    details: {
+      reason: params.reason?.trim() || null,
+      // We never log the plaintext token. The hash provides forensic
+      // continuity (auditors can verify that "this consume row used
+      // the token that was rotated at this audit row") without
+      // exposing the actual secret.
+      newTokenHash: newTokenHash,
+    },
+  });
+
+  return { ...next };
+}
+
+// =============================================================================
+// Token verification (Slice E13.hardening)
+// =============================================================================
+
+/**
+ * Constant-time check whether `candidateToken` corresponds to the
+ * persisted `tokenHash` (or, for legacy rows, the persisted
+ * plaintext `token`). Used by the consume path so an attacker
+ * cannot bisect tokens via timing analysis.
+ *
+ * Returns `true` only when:
+ *   - the link carries a `tokenHash` AND `hashToken(candidateToken)`
+ *     matches it via timing-safe comparison; OR
+ *   - the link carries no `tokenHash` (legacy / not-yet-rotated row)
+ *     AND `candidateToken === link.token`.
+ */
+export function verifyShareLinkToken(
+  link: Pick<DocumentShareLink, 'token' | 'tokenHash'>,
+  candidateToken: string
+): boolean {
+  if (typeof candidateToken !== 'string' || candidateToken.length === 0) return false;
+  if (link.tokenHash) {
+    const candidateHash = hashToken(candidateToken);
+    return timingSafeHashEqual(candidateHash, link.tokenHash);
+  }
+  // Legacy / not-yet-rotated rows have no hash; compare plaintext
+  // in constant time by lexicographic length-equal byte buffer.
+  if (typeof link.token !== 'string' || link.token.length !== candidateToken.length) return false;
+  try {
+    return timingSafeEqual(
+      Buffer.from(link.token, 'utf8'),
+      Buffer.from(candidateToken, 'utf8')
+    );
+  } catch {
+    return false;
+  }
 }
 
 // =============================================================================

@@ -1698,7 +1698,7 @@ export type DocumentShareLinkStatus = 'active' | 'revoked' | 'expired';
  *   - `download` — restrict to render only, no export. Currently
  *     `read` includes export; a follow-up can split that.
  */
-export type DocumentShareLinkAccessScope = 'read' | 'comment';
+export type DocumentShareLinkAccessScope = 'read' | 'comment' | 'download';
 
 /**
  * Audit verbs for `DocumentShareLinkAuditEntry`. Mirrors the
@@ -1720,7 +1720,8 @@ export type DocumentShareLinkAuditAction =
   | 'share_link_created'
   | 'share_link_consumed'
   | 'share_link_revoked'
-  | 'share_link_expired_observed';
+  | 'share_link_expired_observed'
+  | 'share_link_token_rotated';
 
 /**
  * A share link grants scoped, optionally time-boxed access to a
@@ -1757,8 +1758,26 @@ export interface DocumentShareLink {
   shareLinkId: string;
   artifactId: string;
   organizationId: string;
-  /** Opaque URL-safe token (>= 32 chars, server-generated). */
+  /**
+   * Opaque URL-safe token (>= 32 chars, server-generated).
+   *
+   * Slice E13.hardening: in the in-memory MVP DAO this carries the
+   * plaintext token for fast resolve + test ergonomics. The wave5
+   * migration retires this field and stores ONLY `tokenHash`; the
+   * service exposes the plaintext only on the create + rotate
+   * responses. Until that migration lands, the persisted row stores
+   * both `token` and `tokenHash` so the public surface can swap in
+   * a single drop.
+   */
   token: string;
+  /**
+   * Slice E13.hardening — HMAC-SHA-256 hash of the plaintext token,
+   * computed with the per-process `SHARE_LINK_TOKEN_SECRET`. The
+   * persistence layer stores this column so a DB dump or read-only
+   * peer never sees the plaintext token after creation. `undefined`
+   * for legacy rows that pre-date the hardening slice.
+   */
+  tokenHash?: string;
   accessScope: DocumentShareLinkAccessScope;
   status: DocumentShareLinkStatus;
   /**

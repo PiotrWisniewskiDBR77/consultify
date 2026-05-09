@@ -226,6 +226,7 @@ import {
   listShareLinkAuditEntries,
   listShareLinks,
   revokeShareLink,
+  rotateShareLinkToken,
 } from '../services/documentStudio/documentShareLinkService.js';
 import {
   ingestFileSource,
@@ -3912,6 +3913,49 @@ router.get(
     }
     const auditEntries = listShareLinkAuditEntries(shareLinkId, organizationId);
     res.json({ auditEntries });
+  })
+);
+
+// Slice E13.hardening — token rotation route. Mints a new token +
+// HMAC hash; the previous token is invalidated immediately. Common
+// use cases: leaked link, periodic rotation policy, near-miss
+// security incident.
+router.post(
+  '/share-links/:shareLinkId/rotate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const shareLinkId = String(req.params.shareLinkId || '');
+    if (!shareLinkId) {
+      res.status(400).json({ error: 'shareLinkId is required' });
+      return;
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    await ensureShareLinkRegistryHydrated(organizationId);
+    try {
+      const rotated = rotateShareLinkToken({
+        shareLinkId,
+        organizationId,
+        userId,
+        reason,
+      });
+      res.json({ shareLink: rotated });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'share_link_rotate_failed';
+      if (message === 'share_link_not_found') {
+        res.status(404).json({ error: message });
+        return;
+      }
+      if (message === 'share_link_not_active') {
+        res.status(409).json({ error: message });
+        return;
+      }
+      logger.warn('[DocumentStudio] share-link rotate failed', { message });
+      res.status(400).json({ error: 'share_link_rotate_failed', message });
+    }
   })
 );
 

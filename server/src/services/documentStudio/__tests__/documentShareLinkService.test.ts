@@ -28,6 +28,8 @@ import {
   listShareLinkAuditEntries,
   listShareLinks,
   revokeShareLink,
+  rotateShareLinkToken,
+  verifyShareLinkToken,
 } from '../documentShareLinkService.js';
 
 beforeEach(async () => {
@@ -48,8 +50,10 @@ describe('createShareLink', () => {
       label: '  Q1 client review  ',
     });
     expect(link.shareLinkId).toMatch(/^share-link-/);
-    expect(link.token).toHaveLength(44);
-    expect(/^[a-z0-9]+$/.test(link.token)).toBe(true);
+    expect(link.token).toHaveLength(43);
+    expect(/^[A-Za-z0-9_-]+$/.test(link.token)).toBe(true);
+    expect(link.tokenHash).toBeTruthy();
+    expect(link.tokenHash).not.toBe(link.token);
     expect(link.status).toBe('active');
     expect(link.accessScope).toBe('read');
     expect(link.label).toBe('Q1 client review');
@@ -430,5 +434,230 @@ describe('getActiveShareLinkCount', () => {
     expect(await getActiveShareLinkCount('art-2', 'org-A')).toBe(0);
     // Future expiry doesn't disqualify — `expired` only when past.
     expect(expired.expiresAt).toBeTruthy();
+  });
+});
+
+// =============================================================================
+// Slice E13.hardening — HMAC token hash + rotation + download scope.
+// =============================================================================
+
+describe('createShareLink — E13.hardening — HMAC token hash + download scope', () => {
+  it('persists a tokenHash that is distinct from the plaintext token', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    expect(link.token).toHaveLength(43);
+    expect(link.tokenHash).toBeTruthy();
+    expect(link.tokenHash).toHaveLength(64); // sha256 hex digest
+    expect(link.tokenHash).not.toBe(link.token);
+    expect(/^[a-f0-9]+$/.test(String(link.tokenHash))).toBe(true);
+  });
+
+  it('accepts the new `download` access scope', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'download',
+    });
+    expect(link.accessScope).toBe('download');
+    expect(link.status).toBe('active');
+  });
+
+  it('mints unique tokens across many invocations (no collisions)', () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 200; i += 1) {
+      const link = createShareLink({
+        artifactId: 'art-1',
+        organizationId: 'org-A',
+        userId: 'user-1',
+        accessScope: 'read',
+      });
+      expect(seen.has(link.token)).toBe(false);
+      seen.add(link.token);
+    }
+  });
+});
+
+describe('verifyShareLinkToken', () => {
+  it('returns true for a matching plaintext + tokenHash pair', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    expect(verifyShareLinkToken(link, link.token)).toBe(true);
+  });
+
+  it('returns false for a wrong-length token (constant-time guard)', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    expect(verifyShareLinkToken(link, 'too-short')).toBe(false);
+    expect(verifyShareLinkToken(link, link.token + 'x')).toBe(false);
+  });
+
+  it('returns false for an empty / non-string candidate', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    expect(verifyShareLinkToken(link, '')).toBe(false);
+    // @ts-expect-error — guard against runtime mistakes.
+    expect(verifyShareLinkToken(link, undefined)).toBe(false);
+  });
+
+  it('falls back to plaintext compare for legacy rows without tokenHash', () => {
+    const legacy = { token: 'legacy-token-123', tokenHash: undefined };
+    expect(verifyShareLinkToken(legacy, 'legacy-token-123')).toBe(true);
+    expect(verifyShareLinkToken(legacy, 'legacy-token-X')).toBe(false);
+  });
+});
+
+describe('rotateShareLinkToken', () => {
+  it('mints a fresh token + hash and invalidates the previous one', async () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    const oldToken = link.token;
+    const oldHash = link.tokenHash;
+
+    const rotated = rotateShareLinkToken({
+      shareLinkId: link.shareLinkId,
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'leaked-on-slack',
+    });
+
+    expect(rotated.shareLinkId).toBe(link.shareLinkId);
+    expect(rotated.token).not.toBe(oldToken);
+    expect(rotated.tokenHash).not.toBe(oldHash);
+    expect(rotated.token).toHaveLength(43);
+    expect(rotated.tokenHash).toHaveLength(64);
+    expect(rotated.status).toBe('active');
+
+    // Old token: rejected.
+    expect(await consumeShareLink({ token: oldToken })).toBeNull();
+    // New token: accepted.
+    const ok = await consumeShareLink({ token: rotated.token });
+    expect(ok).not.toBeNull();
+    expect(ok?.shareLinkId).toBe(link.shareLinkId);
+  });
+
+  it('emits a `share_link_token_rotated` audit row with reason but no plaintext', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    const rotated = rotateShareLinkToken({
+      shareLinkId: link.shareLinkId,
+      organizationId: 'org-A',
+      userId: 'user-2',
+      reason: 'leaked-on-slack',
+    });
+    const audit = listShareLinkAuditEntries(link.shareLinkId, 'org-A');
+    const rotateRow = audit.find((e) => e.action === 'share_link_token_rotated');
+    expect(rotateRow).toBeTruthy();
+    expect(rotateRow?.actorId).toBe('user-2');
+    expect(rotateRow?.details?.reason).toBe('leaked-on-slack');
+    expect(rotateRow?.details?.newTokenHash).toBe(rotated.tokenHash);
+    // Forensic continuity: the hash is logged, plaintext never is.
+    const auditDump = JSON.stringify(audit);
+    expect(auditDump.includes(rotated.token)).toBe(false);
+  });
+
+  it('rejects rotation on revoked links (409 mapping)', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    revokeShareLink({
+      shareLinkId: link.shareLinkId,
+      organizationId: 'org-A',
+      userId: 'user-9',
+    });
+    expect(() =>
+      rotateShareLinkToken({
+        shareLinkId: link.shareLinkId,
+        organizationId: 'org-A',
+        userId: 'user-1',
+      })
+    ).toThrowError(/share_link_not_active/);
+  });
+
+  it('rejects rotation on past-expiry links', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+      expiresAt: '2026-01-01T00:01:00.000Z',
+    });
+    vi.setSystemTime(new Date('2026-01-01T00:02:00.000Z'));
+    expect(() =>
+      rotateShareLinkToken({
+        shareLinkId: link.shareLinkId,
+        organizationId: 'org-A',
+        userId: 'user-1',
+      })
+    ).toThrowError(/share_link_not_active/);
+  });
+
+  it('rejects rotation cross-tenant (deny-by-default)', () => {
+    const link = createShareLink({
+      artifactId: 'art-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'read',
+    });
+    expect(() =>
+      rotateShareLinkToken({
+        shareLinkId: link.shareLinkId,
+        organizationId: 'org-B',
+        userId: 'user-1',
+      })
+    ).toThrowError(/share_link_not_found/);
+  });
+
+  it('rejects empty-id inputs', () => {
+    expect(() =>
+      rotateShareLinkToken({
+        shareLinkId: '',
+        organizationId: 'org-A',
+        userId: 'user-1',
+      })
+    ).toThrowError(/shareLinkId is required/);
+    expect(() =>
+      rotateShareLinkToken({
+        shareLinkId: 'share-link-1',
+        organizationId: '',
+        userId: 'user-1',
+      })
+    ).toThrowError(/organizationId is required/);
+    expect(() =>
+      rotateShareLinkToken({
+        shareLinkId: 'share-link-1',
+        organizationId: 'org-A',
+        userId: '',
+      })
+    ).toThrowError(/userId is required/);
   });
 });
