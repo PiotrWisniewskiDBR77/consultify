@@ -53,6 +53,7 @@ import {
   type DocumentSection,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
+import { renderChartBlockToPng } from './documentChartRasterizer.js';
 
 /**
  * Optional render-time inputs that the orchestrator (export pipeline)
@@ -179,9 +180,14 @@ interface RenderContext {
   footnotes: Map<number, DocxParagraph[]>;
   /** Stable 1-based marker index per source ref (`{type}::{id}`). */
   sourceRefIndex: Map<string, number>;
+  /** Optional chart raster bytes keyed by `blockId`. */
+  chartPngByBlockId: Map<string, Buffer>;
 }
 
-function buildRenderContext(schema: DocumentSchema): RenderContext {
+function buildRenderContext(
+  schema: DocumentSchema,
+  chartPngByBlockId: Map<string, Buffer>
+): RenderContext {
   const formattingClass = resolveFormattingClass(schema);
   const fonts = resolveDocxFonts(schema, formattingClass);
   const sourceRefIndex = new Map<string, number>();
@@ -198,7 +204,22 @@ function buildRenderContext(schema: DocumentSchema): RenderContext {
     nextFootnoteId: { value: 1 },
     footnotes: new Map(),
     sourceRefIndex,
+    chartPngByBlockId,
   };
+}
+
+async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<string, Buffer>> {
+  const out = new Map<string, Buffer>();
+  for (const section of schema.sections) {
+    for (const block of section.blocks) {
+      if (block.type !== 'chart') continue;
+      const png = await renderChartBlockToPng(block);
+      if (png && png.length > 0) {
+        out.set(block.blockId, png);
+      }
+    }
+  }
+  return out;
 }
 
 /**
@@ -505,33 +526,39 @@ function renderImagePlaceholder(block: DocumentBlock, ctx: RenderContext): Parag
   return [placeholder, caption];
 }
 
-function renderChartPlaceholder(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
-  // Slice E17.charts.render — fallback (substrate-first) renderer for
-  // `chart` blocks. The actual chart.js → PNG rasterizer lands in a
-  // follow-up swap; until then we surface a structured placeholder
-  // so the visual flow + figure counter stay correct, the author can
-  // still see WHICH chart belongs WHERE in the document, and the
-  // export consumer (client / PDF reader) gets a meaningful caption
-  // instead of an empty paragraph.
+function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
   ctx.figureCounter.value += 1;
   const captionLabel = `Figure ${ctx.figureCounter.value}`;
   const summary = summarizeDocumentChartBlock(block);
   const titleText = summary.title ?? '(untitled chart)';
-  const kindText = summary.kind ?? 'unknown';
-  // Compose a one-line "what's in this chart" summary so the
-  // placeholder is informative even before rasterization lands.
-  const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
-  const valuesText =
-    summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
-  const placeholder = new Paragraph({
-    style: DOCX_STYLE_IDS.CAPTION,
-    children: [
-      new TextRun({
-        text: `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization pending]`,
-        font: ctx.bodyFont,
-      }),
-    ],
-  });
+  const chartImage = ctx.chartPngByBlockId.get(block.blockId);
+  const visualParagraph = chartImage
+    ? new Paragraph({
+        style: DOCX_STYLE_IDS.CAPTION,
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            data: chartImage,
+            transformation: { width: 640, height: 360 },
+            type: 'png',
+          }),
+        ],
+      })
+    : (() => {
+        const kindText = summary.kind ?? 'unknown';
+        const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
+        const valuesText =
+          summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
+        return new Paragraph({
+          style: DOCX_STYLE_IDS.CAPTION,
+          children: [
+            new TextRun({
+              text: `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization fallback]`,
+              font: ctx.bodyFont,
+            }),
+          ],
+        });
+      })();
   const captionText = `${captionLabel} — ${titleText}`;
   const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
   if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
@@ -541,7 +568,7 @@ function renderChartPlaceholder(block: DocumentBlock, ctx: RenderContext): Parag
   });
   // Optional descriptive caption from the schema gets its own
   // paragraph so it is visually distinct from the figure caption.
-  const out: Paragraph[] = [placeholder, caption];
+  const out: Paragraph[] = [visualParagraph, caption];
   const content = documentChartBlockContent(block);
   if (content?.caption && content.caption.trim().length > 0) {
     out.push(
@@ -606,7 +633,7 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
     case 'image':
       return renderImagePlaceholder(block, ctx);
     case 'chart':
-      return renderChartPlaceholder(block, ctx);
+      return renderChartBlock(block, ctx);
     case 'footnote':
       return renderFootnoteBlock(block, ctx);
     case 'citation':
@@ -849,7 +876,8 @@ export async function renderDocumentSchemaToDocxBuffer(
   options: DocumentRenderOptions = {}
 ): Promise<Buffer> {
   const formatting = schema.formattingSchema;
-  const ctx = buildRenderContext(schema);
+  const chartPngByBlockId = await buildChartPngByBlockId(schema);
+  const ctx = buildRenderContext(schema, chartPngByBlockId);
   const formattingClass = resolveFormattingClass(schema);
   const styles = buildDocxStyleConfig(schema, formattingClass);
   const margins = formatting.page.marginsCm;

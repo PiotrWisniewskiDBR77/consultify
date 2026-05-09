@@ -1,18 +1,16 @@
 /**
  * Document Studio — Slice E17.charts.render + E17.charts.qa.
  *
- * Verifies the renderer fallback + Format-QA wiring for `chart`
- * blocks. Substrate-first: the actual chart.js → PNG rasterizer is a
- * follow-up swap; this slice ensures chart blocks already produce
- * meaningful, visible output in DOCX / PDF + are validated by the
- * Format-QA category.
+ * Verifies chart rasterization + fallback behavior + Format-QA wiring
+ * for `chart` blocks.
  *
  * Coverage:
- *   - DOCX: chart placeholder + figure caption + optional caption
- *     all land in `word/document.xml`; figure counter increments
- *     correctly when a chart and an image share a section.
- *   - PDF: chart placeholder text appears in the extracted PDF text;
- *     figure caption + optional caption survive the pipeline.
+ *   - DOCX: chart bytes embed as media image parts when rasterization
+ *     succeeds; figure caption + optional caption still render in text;
+ *     figure counter increments correctly when a chart and an image
+ *     share a section.
+ *   - PDF: figure caption + optional caption survive the pipeline;
+ *     raster fallback text appears only when image rendering fails.
  *   - QA: empty `series[]` → `format_chart_no_series` (medium).
  *     Malformed payload (non-finite values) → `format_chart_invalid_payload`
  *     (medium). Series/category mismatch → `format_chart_series_category_mismatch`
@@ -111,15 +109,18 @@ async function extractDocxBodyXml(buffer: Buffer): Promise<string> {
   return file.async('string');
 }
 
+async function listDocxMediaParts(buffer: Buffer): Promise<string[]> {
+  const zip = await JSZip.loadAsync(buffer);
+  return Object.keys(zip.files).filter((name) => name.startsWith('word/media/'));
+}
+
 describe('Slice E17.charts.render — DOCX fallback renderer', () => {
-  it('emits a placeholder paragraph + figure caption + optional caption for a valid chart', async () => {
+  it('embeds a rasterized chart image and keeps caption text for a valid chart', async () => {
     const schema = makeSchema([chartBlock('blk-chart-1')]);
     const buffer = await renderDocumentSchemaToDocxBuffer(schema);
     const body = await extractDocxBodyXml(buffer);
-    expect(body).toContain('chart placeholder');
-    expect(body).toContain('bar chart');
-    expect(body).toContain('1 series');
-    expect(body).toContain('3 values');
+    const media = await listDocxMediaParts(buffer);
+    expect(media.length).toBeGreaterThan(0);
     expect(body).toContain('Figure 1');
     expect(body).toContain('Q1 Revenue');
     expect(body).toContain('Year-over-year increase across Q1.');
@@ -144,12 +145,10 @@ describe('Slice E17.charts.render — DOCX fallback renderer', () => {
 });
 
 describe('Slice E17.charts.render — PDF fallback renderer', () => {
-  it('renders chart placeholder + caption text into the PDF buffer', async () => {
+  it('renders chart caption text into the PDF buffer', async () => {
     const schema = makeSchema([chartBlock('blk-chart-pdf')]);
     const buffer = await renderDocumentSchemaToPdfBuffer(schema);
     const text = await pdfText(buffer);
-    expect(text).toContain('chart placeholder');
-    expect(text).toContain('bar chart');
     expect(text).toContain('Figure 1');
     expect(text).toContain('Q1 Revenue');
     expect(text).toContain('Year-over-year');

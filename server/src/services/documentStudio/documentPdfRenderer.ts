@@ -23,8 +23,9 @@
  *     `'inline_marker'` appends `[N]` markers; `'footnote'`/`'endnote'`
  *     accumulate a Notes appendix at the end of the document.
  *
- * Still deferred: native bottom-of-page footnote positioning, image
- * embedding, charts, custom fonts beyond the system stack.
+ * Still deferred: native bottom-of-page footnote positioning, generic
+ * image-asset embedding beyond chart blocks, custom fonts beyond the
+ * system stack.
  */
 
 import PDFDocument from 'pdfkit';
@@ -45,6 +46,7 @@ import {
   type FormattingSchema,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
+import { renderChartBlockToPng } from './documentChartRasterizer.js';
 
 /**
  * Mirror of `DocumentRenderOptions` from the DOCX renderer so PDF
@@ -154,9 +156,14 @@ interface PdfRenderContext {
   nextFootnoteId: { value: number };
   /** 1-based citation index per `${type}::${id}` source ref. */
   sourceRefIndex: Map<string, number>;
+  /** Optional chart raster bytes keyed by `blockId`. */
+  chartPngByBlockId: Map<string, Buffer>;
 }
 
-function buildPdfRenderContext(schema: DocumentSchema): PdfRenderContext {
+function buildPdfRenderContext(
+  schema: DocumentSchema,
+  chartPngByBlockId: Map<string, Buffer>
+): PdfRenderContext {
   const formattingClass = resolveFormattingClass(schema);
   const baseSizing = PDF_SIZING_BY_CLASS[formattingClass];
   // Slice E15.5.formatting.render — when the schema carries
@@ -188,7 +195,22 @@ function buildPdfRenderContext(schema: DocumentSchema): PdfRenderContext {
     footnoteBodies: [],
     nextFootnoteId: { value: 1 },
     sourceRefIndex,
+    chartPngByBlockId,
   };
+}
+
+async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<string, Buffer>> {
+  const out = new Map<string, Buffer>();
+  for (const section of schema.sections) {
+    for (const block of section.blocks) {
+      if (block.type !== 'chart') continue;
+      const png = await renderChartBlockToPng(block);
+      if (png && png.length > 0) {
+        out.set(block.blockId, png);
+      }
+    }
+  }
+  return out;
 }
 
 function registerFootnoteBody(ctx: PdfRenderContext, body: string): number {
@@ -537,27 +559,34 @@ function drawImage(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
 }
 
 function drawChart(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
-  // Slice E17.charts.render — fallback (substrate-first) renderer for
-  // `chart` blocks. PDF parity with `renderChartPlaceholder` in the
-  // DOCX renderer: emit a structured placeholder + figure caption so
-  // the visual flow + counter stay correct until the chart.js → PNG
-  // rasterizer follow-up swap lands.
   ctx.figureCounter.value += 1;
   const captionLabel = `Figure ${ctx.figureCounter.value}`;
   const summary = summarizeDocumentChartBlock(block);
   const titleText = summary.title ?? '(untitled chart)';
-  const kindText = summary.kind ?? 'unknown';
-  const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
-  const valuesText =
-    summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
   const citationSuffix = block.sourceRef ? buildCitationSuffix(ctx, block.sourceRef) : '';
-  doc
-    .fontSize(ctx.sizing.caption)
-    .fillColor('#64748B')
-    .font('Helvetica-Oblique')
-    .text(
-      `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization pending]`
-    );
+  const chartImage = ctx.chartPngByBlockId.get(block.blockId);
+  if (chartImage) {
+    const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const maxWidth = Math.min(usableWidth, 480);
+    doc.image(chartImage, {
+      fit: [maxWidth, 280],
+      align: 'center',
+      valign: 'center',
+    });
+    doc.moveDown(0.2);
+  } else {
+    const kindText = summary.kind ?? 'unknown';
+    const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
+    const valuesText =
+      summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
+    doc
+      .fontSize(ctx.sizing.caption)
+      .fillColor('#64748B')
+      .font('Helvetica-Oblique')
+      .text(
+        `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization fallback]`
+      );
+  }
   doc.text(`${captionLabel} — ${titleText}${citationSuffix}`);
   const content = documentChartBlockContent(block);
   if (content?.caption && content.caption.trim().length > 0) {
@@ -761,7 +790,8 @@ export async function renderDocumentSchemaToPdfBuffer(
 ): Promise<Buffer> {
   const formatting = schema.formattingSchema;
   const margins = marginsInPoints(formatting);
-  const ctx = buildPdfRenderContext(schema);
+  const chartPngByBlockId = await buildChartPngByBlockId(schema);
+  const ctx = buildPdfRenderContext(schema, chartPngByBlockId);
   return new Promise<Buffer>((resolve, reject) => {
     try {
       const doc = new PDFDocument({
