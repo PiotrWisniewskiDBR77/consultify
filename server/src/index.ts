@@ -141,6 +141,29 @@ app.use('/api/health', dbHealthRoutes);
 // app.use('/api/metrics', dbMetricsRoutes); // DISABLED: Conflicts with Gateway metrics routes
 app.use('/api/system', systemHealthRoutes);
 
+const CANONICAL_DEMO_HOST = 'demo.consultify.ai';
+const STAGE_REDIRECT_HOSTS = new Set(['stage.consultinity.ai', 'stage.consultify.ai']);
+const getRequestHost = (req: Request): string =>
+  String(req.get('host') || '')
+    .split(',')[0]
+    .trim()
+    .toLowerCase()
+    .split(':')[0];
+
+const isStageRedirectHost = (req: Request): boolean => STAGE_REDIRECT_HOSTS.has(getRequestHost(req));
+
+// Keep staging hostname as a dead-end entrypoint and always send traffic to demo.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (!isStageRedirectHost(req)) return next();
+  const target = `https://${CANONICAL_DEMO_HOST}${req.originalUrl || req.url || '/'}`;
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Consultify-Stage-Redirect', CANONICAL_DEMO_HOST);
+  return res.redirect(308, target);
+});
+
 // Initialize Sentry (must be before other middleware)
 const sentryHandlers = await initSentry(app);
 
@@ -1227,10 +1250,21 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
     ...jsFiles.filter((assetPath) => assetPath !== entryPublicPath),
   ];
 
+  const nodeByPath = new Map<
+    string,
+    { path: string; imports: string[]; importedEntry: string | null; exists: boolean }
+  >();
+
   for (const assetPath of ordered) {
     const fsPath = path.resolve(frontendDistPath, assetPath.replace(/^\//, ''));
     if (!fs.existsSync(fsPath)) {
       graphNodes.push({
+        path: assetPath,
+        imports: [],
+        importedEntry: null,
+        exists: false,
+      });
+      nodeByPath.set(assetPath, {
         path: assetPath,
         imports: [],
         importedEntry: null,
@@ -1252,31 +1286,55 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
         });
       }
 
-      graphNodes.push({
+      const node = {
         path: assetPath,
         imports,
         importedEntry,
         exists: true,
-      });
+      };
+      graphNodes.push(node);
+      nodeByPath.set(assetPath, node);
     } catch (error: any) {
-      graphNodes.push({
+      const node = {
         path: assetPath,
         imports: [],
         importedEntry: null,
         exists: false,
-      });
+      };
+      graphNodes.push(node);
+      nodeByPath.set(assetPath, node);
       logger.warn(
         `[Server] Failed reading asset for build graph ${assetPath}: ${error?.message || error}`
       );
     }
   }
 
+  // Reachable subgraph from the current entry (includes lazy chunks because
+  // Vite keeps chunk URLs as string literals in parent chunks).
+  const reachable = new Set<string>();
+  const queue: string[] = [entryPublicPath];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || reachable.has(current)) continue;
+    reachable.add(current);
+    const node = nodeByPath.get(current);
+    if (!node) continue;
+    for (const imported of node.imports) {
+      if (!reachable.has(imported)) queue.push(imported);
+    }
+  }
+
+  const reachableMismatches = mismatches.filter((mismatch) => reachable.has(mismatch.path));
+
   return res.json({
-    ok: mismatches.length === 0,
+    ok: reachableMismatches.length === 0,
     frontendDistPath,
     indexPath,
     entryPublicPath,
     assetsCount: ordered.length,
+    reachableAssetsCount: reachable.size,
+    reachableMismatchCount: reachableMismatches.length,
+    reachableMismatches,
     mismatches,
     graphNodes,
     generatedAt: new Date().toISOString(),
@@ -1290,14 +1348,8 @@ const isStaticAssetRequest = (requestPath: string): boolean =>
   requestPath.startsWith('/locales/') ||
   requestPath.startsWith('/manifest');
 
-const isStagingOrDemoHost = (req: Request): boolean => {
-  const hostHeader = String(req.get('host') || '')
-    .split(',')[0]
-    .trim()
-    .toLowerCase()
-    .split(':')[0];
-  return hostHeader === 'demo.consultify.ai' || hostHeader === 'stage.consultinity.ai';
-};
+const isStagingOrDemoHost = (req: Request): boolean =>
+  getRequestHost(req) === CANONICAL_DEMO_HOST || isStageRedirectHost(req);
 
 const resolveCurrentIndexBundlePath = (): { publicPath: string; fsPath: string } | null => {
   const htmlPath = path.resolve(frontendDistPath, 'index.html');
