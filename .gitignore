@@ -187,9 +187,15 @@ coverage/.tmp
 
 # Export artifacts
 server/exports/
+/exports/presentations/
+
+# Local test runner output
+vitest.out
 
 # Local backups
 _backup/
+.drive-sync-backup/
+docs/_recovery/
 
 # Personal tooling
 Piotr_Tools/
