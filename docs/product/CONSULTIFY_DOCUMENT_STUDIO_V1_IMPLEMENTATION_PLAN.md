@@ -1187,6 +1187,29 @@ The cost of these gaps shows up most acutely in the DOCX renderer (cannot apply 
 
 **Closes gaps.** §10.7 of the gap-vs-target report (FR-22 / Charts) — SUBSTRATE DELIVERED. Renderer wiring (DOCX chart.js → PNG, PDF parity), Format-QA chart category, and FE-E2 chart preview are scheduled as the follow-up slice `E17.charts.render` on top of this substrate.
 
+### 6.15.11 Slice E16.diff — Structural diff substrate (FR-15 track-changes)
+
+**Scope.** Pure-logic structural-diff service for the `DocumentSchema` type. Closes the §10.9 substrate gap from the gap-vs-target report (FR-15 — Track-changes UI / approval review). Ships:
+- new file `consultify/server/src/services/documentStudio/documentSchemaDiffService.ts`;
+- public API `computeDocumentSchemaDiff(before, after) → DocumentSchemaDiff` that surfaces section-level kinds (`added` / `removed` / `modified` / `reordered` / `unchanged`) and block-level kinds (`added` / `removed` / `modified` / `unchanged`);
+- canonical text projection helper `blockToDiffText(block) → string` covering all 13 canonical block types (`heading`, `paragraph`, `bullet_list`, `numbered_list`, `callout`, `quote`, `kpi_strip`, `risk_table`, `table`, `image`, `chart`, `footnote`, `citation`) with deterministic JSON fallback for unknown future types;
+- aggregate stats (`addedSectionCount`, `removedSectionCount`, `modifiedSectionCount`, `reorderedSectionCount`, `unchangedSectionCount`, `addedBlockCount`, `removedBlockCount`, `modifiedBlockCount`, `unchangedBlockCount`);
+- human-readable summary `summarizeDocumentSchemaDiff(diff) → string` for log lines and the FE-E2 track-changes header;
+- 27 unit specs in `__tests__/documentSchemaDiffService.test.ts` covering both-null / only-before / only-after / identical edge cases, every section-level and block-level kind, position-index propagation, ordering convention (after-first then removed-appended), purity / immutability, determinism, summary pluralisation, and the canonical projection of every block type.
+
+**Substrate-only scope (no consumer wiring).** This slice ships ONLY the pure logic + types + helpers + specs. The FE-E2 track-changes surface, the audit-pipeline integration, and the editor-proposal review UI are all follow-up slices on top of this substrate. No service / route / persistence layer is touched.
+
+**Anti-goals (scheduled as follow-ups).**
+- Character / word-level prose diff — needs `diff-match-patch` or similar; layered on top of structural diff in a future slice.
+- Semantic diff (tone / sentiment) — that lives in the QA pipeline, not here.
+- 3-way / merge-aware diff — defer until E20 (real-time multiplayer / NFR-10).
+
+**Backwards compatibility.** No type changes, no consumer changes — pure new file. Zero collision risk.
+
+**Validation.** Document Studio + Execution Module Standard suite **748/748 green** (+27 from E16.diff). tsc clean for the modified files. ESLint clean (0 errors / 0 warnings) for all modified files after non-null-assertion refactor.
+
+**Closes gaps.** §10.9 of the gap-vs-target report (FR-15 / track-changes substrate) — SUBSTRATE DELIVERED. The FE-E2 track-changes UI (highlighted side-by-side rendering, per-block accept / reject), audit log enrichment (e.g. "approval modified 3 sections / added 7 blocks"), and editor-proposal review surface are scheduled as follow-up slices on top of this substrate (`E16.diff.frontend`, `E16.diff.audit`, `E16.diff.proposal`).
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export
