@@ -79,6 +79,10 @@ import {
   requiresApprovalForExport,
   runDocumentQa,
 } from './documentQaService.js';
+import {
+  computeDocumentSchemaDiff,
+  summarizeDocumentSchemaDiff,
+} from './documentSchemaDiffService.js';
 import { renderSchemaToMarkdown } from './documentSchemaRenderer.js';
 import type {
   DocumentAuditEntry,
@@ -1598,6 +1602,26 @@ export async function approveEditProposal(params: {
     throw new Error('artifact_not_found');
   }
   const nextSchema = applyProposalToSchema(schema, proposal);
+
+  // Slice E16.diff.proposal — compute the structural diff between
+  // the schema before and after the proposal applied. The result
+  // surfaces in the `proposal_executed` audit row so an approver
+  // (and downstream automation) can see exactly what shape change
+  // landed without re-deriving it from the proposal payload. The
+  // computation is wrapped in `try { … } catch { … }` so a
+  // diff-service hiccup can never abort an approval that already
+  // succeeded structurally.
+  let structuralDiffSummary: string | undefined;
+  let structuralDiffStats: ReturnType<typeof computeDocumentSchemaDiff>['stats'] | undefined;
+  try {
+    const diff = computeDocumentSchemaDiff(schema, nextSchema);
+    structuralDiffSummary = summarizeDocumentSchemaDiff(diff);
+    structuralDiffStats = diff.stats;
+  } catch {
+    structuralDiffSummary = undefined;
+    structuralDiffStats = undefined;
+  }
+
   const approvedAt = nowIso();
   let nextProposal = updateProposalStatus(proposal, 'approved');
   nextProposal = {
@@ -1636,6 +1660,12 @@ export async function approveEditProposal(params: {
       blockId: proposal.blockId,
       llmRefined: proposal.llmRefined === true,
       blockRewritesCount: proposal.blockRewrites ? Object.keys(proposal.blockRewrites).length : 0,
+      // Slice E16.diff.proposal — structural diff fields land alongside
+      // the existing scope/section/block metadata so an audit consumer
+      // can render "what shape change landed" without rehydrating the
+      // before/after schemas. `undefined` when computation failed.
+      structuralDiffSummary,
+      structuralDiffStats,
     },
   });
   return { proposal: nextProposal, schema: nextSchema };
