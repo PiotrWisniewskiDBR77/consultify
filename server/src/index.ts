@@ -1143,6 +1143,146 @@ app.get(['/__build-info', '/api/build-info'], (_req: Request, res: Response) => 
   });
 });
 
+app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  const indexPath = path.resolve(frontendDistPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_NOT_FOUND',
+      indexPath,
+    });
+  }
+
+  let html = '';
+  try {
+    html = fs.readFileSync(indexPath, 'utf-8');
+  } catch (error: any) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_READ_FAILED',
+      message: error?.message || String(error),
+      indexPath,
+    });
+  }
+
+  const entryMatch = html.match(/\/assets\/index-[^"']+\.js/);
+  const entryPublicPath = entryMatch?.[0] || null;
+  if (!entryPublicPath) {
+    return res.status(500).json({
+      ok: false,
+      error: 'ENTRY_NOT_FOUND',
+      message: 'Could not resolve entry index-*.js in index.html',
+      indexPath,
+    });
+  }
+
+  const assetsPath = path.resolve(frontendDistPath, 'assets');
+  const entryFsPath = path.resolve(frontendDistPath, entryPublicPath.replace(/^\//, ''));
+  if (!fs.existsSync(entryFsPath)) {
+    return res.status(500).json({
+      ok: false,
+      error: 'ENTRY_FILE_NOT_FOUND',
+      entryPublicPath,
+      entryFsPath,
+    });
+  }
+
+  const graphNodes: Array<{
+    path: string;
+    imports: string[];
+    importedEntry: string | null;
+    exists: boolean;
+  }> = [];
+  const mismatches: Array<{
+    path: string;
+    importedEntry: string;
+    currentEntry: string;
+  }> = [];
+
+  const jsFiles: string[] = [];
+  try {
+    if (fs.existsSync(assetsPath)) {
+      for (const name of fs.readdirSync(assetsPath)) {
+        if (name.endsWith('.js')) {
+          jsFiles.push(`/assets/${name}`);
+        }
+      }
+    }
+  } catch (error: any) {
+    return res.status(500).json({
+      ok: false,
+      error: 'ASSETS_SCAN_FAILED',
+      message: error?.message || String(error),
+      assetsPath,
+    });
+  }
+
+  // Always include entry first for readability.
+  const ordered = [
+    entryPublicPath,
+    ...jsFiles.filter((assetPath) => assetPath !== entryPublicPath),
+  ];
+
+  for (const assetPath of ordered) {
+    const fsPath = path.resolve(frontendDistPath, assetPath.replace(/^\//, ''));
+    if (!fs.existsSync(fsPath)) {
+      graphNodes.push({
+        path: assetPath,
+        imports: [],
+        importedEntry: null,
+        exists: false,
+      });
+      continue;
+    }
+
+    try {
+      const source = fs.readFileSync(fsPath, 'utf-8');
+      const imports = extractRelativeJsImports(source);
+      const importedEntry = extractImportedIndexBundlePublicPath(source);
+
+      if (importedEntry && importedEntry !== entryPublicPath) {
+        mismatches.push({
+          path: assetPath,
+          importedEntry,
+          currentEntry: entryPublicPath,
+        });
+      }
+
+      graphNodes.push({
+        path: assetPath,
+        imports,
+        importedEntry,
+        exists: true,
+      });
+    } catch (error: any) {
+      graphNodes.push({
+        path: assetPath,
+        imports: [],
+        importedEntry: null,
+        exists: false,
+      });
+      logger.warn(
+        `[Server] Failed reading asset for build graph ${assetPath}: ${error?.message || error}`
+      );
+    }
+  }
+
+  return res.json({
+    ok: mismatches.length === 0,
+    frontendDistPath,
+    indexPath,
+    entryPublicPath,
+    assetsCount: ordered.length,
+    mismatches,
+    graphNodes,
+    generatedAt: new Date().toISOString(),
+  });
+});
+
 const isStaticAssetRequest = (requestPath: string): boolean =>
   /\.[a-z0-9]+$/i.test(requestPath) ||
   requestPath.startsWith('/assets/') ||
@@ -1387,6 +1527,18 @@ const extractImportedIndexBundlePublicPath = (jsSource: string): string | null =
   const importMatch = jsSource.match(/['"]\.\/(index-[^'"]+\.js)['"]/);
   if (!importMatch?.[1]) return null;
   return `/assets/${importMatch[1]}`;
+};
+
+const extractRelativeJsImports = (jsSource: string): string[] => {
+  if (!jsSource) return [];
+  const matches = jsSource.matchAll(/['"]\.\/([^'"]+\.js)['"]/g);
+  const out = new Set<string>();
+  for (const match of matches) {
+    const imported = String(match?.[1] || '').trim();
+    if (!imported) continue;
+    out.add(`/assets/${imported}`);
+  }
+  return Array.from(out);
 };
 
 const sendStaleChunkReloadScript = (req: Request, res: Response): void => {
