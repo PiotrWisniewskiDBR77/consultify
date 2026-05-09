@@ -59,10 +59,18 @@ export interface PersistenceFileSystemDriver {
 }
 
 /**
- * Sprint S19 — minimal structural surface of `node:fs` used by
- * `atomicWriteFile`. Letting tests pass a mock fs without spinning up
- * a real temp dir keeps the helper pure and lets us assert the exact
- * sequence of operations (write tmp -> rename -> success-or-cleanup).
+ * Minimal structural surface of `node:fs` used by `atomicWriteFile`.
+ * Letting tests pass a mock fs without spinning up a real temp dir
+ * keeps the helper pure and lets us assert the exact sequence of
+ * operations.
+ *
+ * Sprint S19 introduced the file-system surface (R-S18-3 atomic
+ * write). Sprint S21 adds `openSync` / `fsyncSync` / `closeSync` to
+ * close R-S19-1: the atomic rename is consistent across crashes, but
+ * not durable — a power-loss between `rename(2)` and the next
+ * directory cache flush can lose the rename and leave the OLD file
+ * on disk despite our caller observing a successful write. Adding
+ * fsync on both the file and its parent directory closes that gap.
  */
 export interface AtomicWriteFileSystem {
   existsSync(path: string): boolean;
@@ -70,6 +78,23 @@ export interface AtomicWriteFileSystem {
   writeFileSync(path: string, contents: string, encoding: 'utf-8'): void;
   renameSync(oldPath: string, newPath: string): void;
   unlinkSync(path: string): void;
+  /**
+   * Opens a file or directory and returns a numeric file descriptor.
+   * Used by the fsync hardening pass to obtain a handle that can be
+   * passed to `fsyncSync`. The flag string accepts `'r'` (read-only)
+   * which is sufficient for both file and directory fsync paths.
+   * (Sprint S21, R-S19-1.)
+   */
+  openSync(path: string, flags: 'r'): number;
+  /**
+   * Flushes any kernel-buffered writes for the supplied fd to the
+   * underlying storage device. After this call returns, the contents
+   * (for a file fd) or the directory entry change (for a directory
+   * fd) are durable across a power-loss. (Sprint S21, R-S19-1.)
+   */
+  fsyncSync(fd: number): void;
+  /** Releases the fd. Always called from a `try/finally` after open. */
+  closeSync(fd: number): void;
 }
 
 export interface AtomicWritePathOps {
@@ -77,32 +102,50 @@ export interface AtomicWritePathOps {
 }
 
 /**
- * Sprint S19 — atomic write helper (closes R-S18-3).
+ * Atomic write helper.
  *
- * Writes `<path>` via the canonical tmp-file + rename dance:
+ * S19 (R-S18-3) introduced the canonical tmp-file + rename dance so
+ * a crash mid-write cannot leave the target file in a corrupted
+ * state. S21 (R-S19-1) hardens that dance with the canonical
+ * Postgres / SQLite / lmdb durability sequence:
+ *
  *   1. Ensure the parent dir exists.
- *   2. Write the FULL contents to `<path>.tmp.<unique>`.
- *   3. Atomically `rename` the tmp file onto the target path.
- *   4. On any failure during steps 2 or 3, attempt to `unlink` the tmp
- *      file so it does not linger as garbage on disk. The unlink
- *      failure itself is swallowed (we cannot meaningfully recover).
+ *   2. Write the FULL contents to `<path>.<pid>.<n>.tmp`.
+ *   3. fsync the tmp file's contents to disk so a power-loss after
+ *      this point preserves the new bytes (not just the directory
+ *      entry that points at unflushed pages).
+ *   4. Atomically `rename` the tmp file onto the target path.
+ *   5. fsync the parent directory so the rename itself is durable —
+ *      without this, a power-loss after the rename(2) syscall but
+ *      before the directory cache flush could lose the new entry and
+ *      leave the OLD file (or no file) on disk despite the caller
+ *      observing a successful return.
+ *   6. On any failure during 2..5, attempt to `unlink` the tmp file
+ *      so it does not linger as garbage on disk. The unlink failure
+ *      itself is swallowed — we cannot meaningfully recover.
  *
- * Why atomic?
- *   - On POSIX `rename(2)` is atomic with respect to readers — they
- *     either see the OLD contents or the NEW contents, never a partial
- *     write. A crash mid-write therefore cannot leave the persisted
- *     file in a corrupted state. (The honest fallback in
- *     `loadPersistedOverrides` would catch a corrupted file, but the
- *     SuperAdmin would lose the entire prior tuning. Atomic writes
- *     reduce the failure mode to "the previous good copy is still
- *     there" instead of "you lost everything because we crashed mid
- *     `writeFileSync`".)
- *   - The tmp file name embeds `process.pid` + a per-call counter so
- *     two concurrent writers (e.g. the registry hook + a manual
- *     SuperAdmin debug script) never collide on the same tmp path.
+ * Why both fsyncs?
+ *   - File fsync (step 3) makes the NEW contents durable. Without it,
+ *     a crash between `writeFileSync` and `rename` can leave the
+ *     directory entry pointing at unflushed pages — the rename then
+ *     "succeeds" in cache but the post-crash state has the directory
+ *     entry but garbage / zero-length contents.
+ *   - Directory fsync (step 5) makes the rename itself durable.
+ *     Without it, a crash AFTER `rename(2)` returns can lose the
+ *     rename — the kernel acknowledged the rename in its in-memory
+ *     directory cache but had not yet flushed the directory inode
+ *     when the power dropped. The post-crash state then reverts to
+ *     the OLD file (or no file at all if the OLD file was new).
  *
- * Throws on any unrecoverable I/O failure. Caller (`savePersistedOverrides`)
- * already wraps in try/catch and converts to a structured result.
+ * Tmp file naming embeds `process.pid` + a per-call counter so two
+ * concurrent writers (e.g. the registry hook + a manual SuperAdmin
+ * debug script in a sibling process) never collide on the same tmp
+ * path.
+ *
+ * Throws on any unrecoverable I/O failure. Caller
+ * (`savePersistedOverrides`) already wraps in try/catch and converts
+ * to a structured result so the registry can surface the failure as
+ * a `loadWarning` instead of crashing.
  */
 let _tmpCounter = 0;
 export function atomicWriteFile(
@@ -122,11 +165,25 @@ export function atomicWriteFile(
   const tmpPath = `${targetPath}.${process.pid}.${_tmpCounter}.tmp`;
   try {
     fsDriver.writeFileSync(tmpPath, contents, 'utf-8');
+    // Step 3 (S21, R-S19-1): fsync the tmp file BEFORE rename so the
+    // NEW contents are durable. The try/finally guarantees the fd is
+    // released even if fsync throws — leaking an fd here would
+    // eventually trip Node's per-process fd limit on a long-running
+    // server with frequent override applies.
+    fsyncPathThenClose(fsDriver, tmpPath);
     fsDriver.renameSync(tmpPath, targetPath);
+    // Step 5 (S21, R-S19-1): fsync the parent directory AFTER rename
+    // so the rename itself is durable. We open the dir read-only —
+    // POSIX requires no additional permissions for an inode fsync.
+    // On Linux + macOS this is the canonical durability sequence; on
+    // Windows directory fsync may fail with EPERM, in which case the
+    // error propagates up to the caller (we'd rather surface an
+    // honest "could not persist durably" than silently degrade).
+    fsyncPathThenClose(fsDriver, dir);
   } catch (err: unknown) {
     // Best-effort cleanup of the tmp file. We deliberately do NOT
-    // surface the cleanup error — the original write/rename error is
-    // the meaningful one for the caller.
+    // surface the cleanup error — the original write/fsync/rename
+    // error is the meaningful one for the caller.
     try {
       if (fsDriver.existsSync(tmpPath)) fsDriver.unlinkSync(tmpPath);
     } catch {
@@ -134,6 +191,44 @@ export function atomicWriteFile(
     }
     throw err;
   }
+}
+
+/**
+ * Internal helper: open `<path>` read-only, fsync the resulting fd,
+ * and close the fd in a `try/finally` so the descriptor is always
+ * released even if fsync throws. The close error is propagated only
+ * when fsync itself succeeded — otherwise we re-throw the original
+ * fsync error to keep the failure mode unambiguous.
+ *
+ * Used by `atomicWriteFile` for both the file path (durability of
+ * NEW contents) and the parent dir path (durability of the rename).
+ */
+function fsyncPathThenClose(fsDriver: AtomicWriteFileSystem, path: string): void {
+  const fd = fsDriver.openSync(path, 'r');
+  let fsyncError: unknown = null;
+  let closeError: unknown = null;
+  try {
+    fsDriver.fsyncSync(fd);
+  } catch (err: unknown) {
+    fsyncError = err;
+  }
+  // Always attempt to release the fd. We deliberately do NOT throw
+  // from a `finally` block (eslint `no-unsafe-finally`) because that
+  // would shadow any error already in flight. Instead we record both
+  // errors and decide which one to propagate after the close attempt
+  // returns (whether by success or by throw).
+  try {
+    fsDriver.closeSync(fd);
+  } catch (err: unknown) {
+    closeError = err;
+  }
+  // Resolution order:
+  //   1. fsync error wins — it is the meaningful durability failure.
+  //   2. close error after a successful fsync surfaces unchanged —
+  //      it usually indicates fd-table corruption / EBADF and should
+  //      not be hidden.
+  if (fsyncError !== null) throw fsyncError;
+  if (closeError !== null) throw closeError;
 }
 
 let _driver: PersistenceFileSystemDriver | null = null;
@@ -157,9 +252,13 @@ function defaultDriver(): PersistenceFileSystemDriver {
       return fs.readFileSync(p, 'utf-8');
     },
     writeFile(p: string, contents: string): void {
-      // Sprint S19 — atomic write (tmp-file + rename) closes R-S18-3.
-      // A crash mid-write now leaves the previous good copy intact
-      // instead of producing a corrupt file.
+      // Sprint S19 (R-S18-3): tmp-file + rename so a crash mid-write
+      // leaves the previous good copy intact instead of producing a
+      // corrupt file.
+      // Sprint S21 (R-S19-1): plus fsync on the file fd (durability
+      // of NEW contents) and fsync on the parent directory fd
+      // (durability of the rename) so a power-loss after this call
+      // returns cannot lose the write.
       atomicWriteFile(
         p,
         contents,
@@ -173,6 +272,9 @@ function defaultDriver(): PersistenceFileSystemDriver {
           },
           renameSync: fs.renameSync.bind(fs),
           unlinkSync: fs.unlinkSync.bind(fs),
+          openSync: (filePath: string, flags: 'r') => fs.openSync(filePath, flags),
+          fsyncSync: fs.fsyncSync.bind(fs),
+          closeSync: fs.closeSync.bind(fs),
         },
         { dirname: path.dirname.bind(path) }
       );

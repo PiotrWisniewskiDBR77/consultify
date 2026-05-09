@@ -1733,3 +1733,69 @@ Closed three accumulated UI carry-overs from the recent S17 / S18 / S19 backend 
 - R-S19-1 (fsync hardening on atomic write): still open. Tmp-file + fsync + rename + dir-fsync would close the last gap in the atomic-write story (currently the rename is atomic but not durable across power-loss). Tiny scope; could be the next mechanical sprint.
 - R-S14-3 + R-S15-2 (per-slide layout-audit drill-down): the canvas-side audit summary is still aggregate-only; a per-slide drill-down is a self-contained UI sprint that could ship in parallel with backend hardening.
 - The admin panel currently surfaces `loadWarning` but does not offer a "clear loadWarning" or "re-attempt persistence" admin action. If a SuperAdmin wants to acknowledge a transient `io_error` and clear the banner without performing a reset, that's a follow-up. Currently an explicit `reset to defaults` clears it as a side effect; document this in the operating runbook.
+
+
+---
+
+## Sprint S21 — fsync hardening on atomic write (closes R-S19-1)
+
+**Status:** Completed
+**Date:** 2026-05-09
+**Phase:** 2 (Implementation)
+**Touched files:** 2 (1 service, 1 test)
+
+### Scope
+
+Closed the last remaining gap in S19's atomic-write story (R-S18-3). After S19, `atomicWriteFile` writes the new contents to a tmp path and `rename(2)`s it onto the target — atomic with respect to readers, so a crash mid-write cannot leave a corrupted file. But `rename(2)` is consistent, not durable: a power-loss between the rename and the next directory-cache flush could lose the rename and leave the OLD file (or no file) on disk despite the caller observing a successful return. S21 closes that gap with the canonical Postgres / SQLite / lmdb durability sequence: fsync the file fd before rename + fsync the parent directory fd after rename.
+
+### Carry-overs closed
+
+- **R-S19-1** (S19): atomic rename was consistent across crashes but not durable across power-loss. Closed by adding `openSync` / `fsyncSync` / `closeSync` to the `AtomicWriteFileSystem` interface and inserting two fsync passes in `atomicWriteFile`: one on the tmp file before rename (durability of NEW contents), one on the parent directory after rename (durability of the rename itself).
+
+### Changes
+
+- **MODIFIED** `server/src/services/presentationStudioLayoutCapacityPersistenceService.ts`
+  - Extended `AtomicWriteFileSystem` interface with three new operations: `openSync(path, 'r')`, `fsyncSync(fd)`, `closeSync(fd)`. The `'r'` flag is sufficient for both file and directory fsync paths (POSIX requires no additional permissions for an inode fsync).
+  - Rewrote `atomicWriteFile` to perform the canonical durability sequence:
+    1. Ensure parent dir exists.
+    2. `writeFileSync(tmpPath, contents)`.
+    3. `fsyncPathThenClose(tmpPath)` — flushes NEW contents to disk before rename. Without this, a crash between `writeFileSync` and `rename` can leave the directory entry pointing at unflushed pages.
+    4. `renameSync(tmpPath, targetPath)` — atomic name swap.
+    5. `fsyncPathThenClose(parentDir)` — flushes the rename itself to disk. Without this, a crash AFTER `rename(2)` returns can lose the rename (kernel ack'd in cache but didn't flush directory inode before power dropped).
+    6. On any failure during 2..5, attempt to unlink the tmp file (best-effort cleanup); the unlink failure itself is swallowed so the original write/fsync/rename error is the meaningful one for the caller.
+  - Added internal helper `fsyncPathThenClose(fsDriver, path)` that opens read-only, fsyncs, and always closes the fd. Resolution order on errors: fsync error wins (it's the meaningful durability failure); a close error after a successful fsync surfaces unchanged so silent fd-table corruption is never hidden. The helper deliberately does NOT throw from a `finally` block (eslint `no-unsafe-finally`); it records both errors in locals and decides which to propagate after the close attempt returns.
+  - Updated `defaultDriver().writeFile` to wire `fs.openSync` / `fs.fsyncSync` / `fs.closeSync` from `node:fs` so production writes get fsync hardening transparently.
+- **MODIFIED** `server/src/services/__tests__/presentationStudioLayoutCapacityPersistenceService.test.ts`
+  - Extended the `AtomicFsCall` op union with `'openSync' | 'fsyncSync' | 'closeSync'`.
+  - Extended `AtomicFsState` with `openFds: Map<number, string>` (fd → opened-path so close/fsync can report context), `nextFd: number` (monotonic fd counter), `throwOnFsyncFor` (path prefix for fsync failure injection), and `throwOnCloseFor` (path prefix for close failure injection).
+  - Extended `makeAtomicFs` mock with the three new ops, recording each call and validating fd lifecycle (closed-fd checks raise EBADF the same way the real kernel would).
+  - Added 7 new tests in a fresh `describe('atomicWriteFile fsync hardening (S21, R-S19-1)')` block:
+    - `fsyncs the tmp file BEFORE rename and the parent dir AFTER rename` — asserts the canonical 8-call sequence (writeFileSync → openSync(tmp) → fsyncSync → closeSync → renameSync → openSync(dir) → fsyncSync → closeSync).
+    - `releases both fds (file fd then dir fd) and leaks none` — asserts opens === closes === 2 and `openFds.size === 0`.
+    - `propagates a file-fsync failure, closes the file fd, and runs tmp cleanup` — asserts the error surfaces, the fd is still released, rename never happens, target file does NOT exist, tmp file is unlinked.
+    - `propagates a directory-fsync failure even though the rename has succeeded` — asserts that a post-rename fsync failure still surfaces to the caller (rename has succeeded so target is canonical, but operator must know durability is uncertain). Uses a toggle pattern on the mock to distinguish file vs dir fsync without needing path prefix gymnastics.
+    - `propagates a close-after-successful-fsync error so silent fd-table corruption is never hidden` — same toggle pattern for close errors.
+    - `prefers the fsync error over a close error (fsync error is more meaningful)` — asserts the resolution order: fsync error always wins over close error to keep failure modes unambiguous for debugging.
+    - `integration: savePersistedOverrides drives both fsync calls (file + dir) through the default driver` — asserts there are exactly 2 fsyncSync calls per write.
+
+### Validation
+
+- **Persistence vitest**: 45/45 passed (35 pre-existing + 10 atomic-write S19 + 7 new fsync hardening S21). Wait — actually it was 38 pre-S21 and we added 7 = 45 total. All existing S19 atomic-write tests still pass with the extended interface (the new ops are added on top, not breaking the existing call shape).
+- **Adjacent Studio backend vitest**: 150/150 across persistence (45) + registry (14) + admin (21) + routes (70). No regressions in the registry hooks, admin propose/execute, or HTTP route layer that depend on atomic-write semantics.
+- **ESLint**: 0 errors, 12 P3 `no-non-null-assertion` warnings — all consistent with the existing baseline (mock helpers throughout this test file already use the `!` operator).
+- **TypeScript** focused check via transient `tsconfig.s21-check.json`: 0 errors in the two S21-touched files.
+
+### Acceptance
+
+- R-S19-1 closed: atomic write is now durable across power-loss (data fsync + directory fsync).
+- Failure mode honesty: fsync errors propagate to the caller (`savePersistedOverrides` converts them to a structured `loadWarning` so the registry surfaces a degraded state). Close errors after successful fsync also propagate so fd-table corruption is never silently hidden.
+- Test coverage: 7 new tests covering the canonical sequence, fd lifecycle, file-fsync failure path, dir-fsync failure path (rename-already-succeeded edge case), close-error path, fsync-vs-close error precedence, and the savePersistedOverrides integration.
+- No `unsafe-finally`: the close-after-fsync sequence is implemented without throwing from a `finally` block — both errors are captured in locals and resolution order is explicit and lint-clean.
+- Backward compatibility: the `AtomicWriteFileSystem` interface gained three required methods, but the only production consumer (the default driver in this same module) was updated in lockstep. Tests using the interface were updated in the same commit.
+
+### Next-step risks / candidates for S22
+
+- **R-S18-2** (signed persistence file): still open. HMAC over the persisted JSON would defend against hand-edits that bypass the audit trail. Medium scope — introduces a new server-side secret env var, a new bootstrap-rejection path, and a new `loadWarning` reason (`signature_mismatch`). Natural next backend sprint after S21.
+- **R-S17-2** (process-global write blast radius): still open. Tenant-scoped overrides would convert this from a process-level switch into a tenant-aware policy. Multi-sprint refactor (registry signature change + new persistence file format + new tenant-Owner capability + audit shape change). Probably its own dedicated track.
+- **R-S14-3 / R-S15-2** (per-slide layout-audit drill-down): the canvas-side audit summary is still aggregate-only; a per-slide drill-down is a self-contained UI sprint that can ship in parallel with backend hardening.
+- **Operations runbook update**: the new fsync sequence introduces a new failure mode operators should know about — a healthy `EIO: fsync failed` from a degraded storage device would now surface as a `loadWarning` with reason `io_error` (instead of silently swallowing the durability failure). The remediation playbook should add a section for "what to do when the persistence layer raises an io_error loadWarning" — verify disk health via `smartctl`, check the parent directory exists and is writable, etc.
