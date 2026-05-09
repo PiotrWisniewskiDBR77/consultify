@@ -39,6 +39,8 @@ import {
   consumeApprovalTicket,
   mintApprovalTicket,
 } from './presentationStudioApprovalTicketService.js';
+import type { PresentationStudioOutlineLayoutAudit } from './presentationStudioLayoutAuditService.js';
+import { auditPresentationStudioOutlineLayout } from './presentationStudioLayoutAuditService.js';
 import type { TemplateArchitectPlan } from './presentationTemplateArchitectService.js';
 import { buildPresentationTemplateArchitectPlan } from './presentationTemplateArchitectService.js';
 import type {
@@ -343,6 +345,15 @@ export interface PresentationStudioGeneratePreviewResult {
     blockingReasons: string[];
     strict: boolean;
   };
+  /**
+   * Sprint S10 layout audit pass over `outlinePreview`. Surfaces overflow,
+   * missing-source, and PPTX export-parity findings as warning strings (also
+   * merged into the top-level `warnings` array) plus a per-slide finding
+   * map and an aggregate flag counter. Findings never block generation —
+   * they are advisory and the UI is expected to render the count next to
+   * the "Generate" CTA.
+   */
+  layoutAudit: PresentationStudioOutlineLayoutAudit;
   /** Stable, request-scoped id surfaced to the UI for telemetry/log correlation. */
   previewId: string;
 }
@@ -459,7 +470,14 @@ export function previewPresentationStudioGenerate(
     );
   }
 
-  const warnings = [...sourcePack.warnings, ...narrativePlan.warnings, ...templateWarnings];
+  const layoutAudit = auditPresentationStudioOutlineLayout(outlinePreview);
+
+  const warnings = [
+    ...sourcePack.warnings,
+    ...narrativePlan.warnings,
+    ...templateWarnings,
+    ...layoutAudit.warnings,
+  ];
 
   return {
     outlinePreview,
@@ -478,6 +496,7 @@ export function previewPresentationStudioGenerate(
       blockingReasons,
       strict,
     },
+    layoutAudit,
     previewId: makePreviewId(input.organizationId, narrativePlan.createdAt),
   };
 }
@@ -767,6 +786,16 @@ export async function executePresentationStudioGenerate(
   const deps = getStudioGenerateDeps();
   const generated = await deps.generateOutline(input.setup, input.organizationId);
 
+  // Sprint S10: run the layout audit on the actual generator output (not
+  // the preview). Findings merge into `validationWarnings` so the API
+  // response, the audit row, and any consumer logging all see the same
+  // honest set of layout flags.
+  const layoutAudit = auditPresentationStudioOutlineLayout(generated.outline);
+  const mergedValidationWarnings = [
+    ...(generated.validationWarnings || []),
+    ...layoutAudit.warnings,
+  ];
+
   await deps.recordAudit({
     userId: input.userId,
     organizationId: input.organizationId,
@@ -780,6 +809,7 @@ export async function executePresentationStudioGenerate(
       deckTitle: input.setup.title,
       deckGoal: String(input.setup.goal),
       deckAudience: String(input.setup.audience),
+      layoutAuditFlagCounts: layoutAudit.flagCounts,
     },
     ipAddress: input.ipAddress ?? null,
     userAgent: input.userAgent ?? null,
@@ -791,7 +821,7 @@ export async function executePresentationStudioGenerate(
       deckId: generated.deckId,
       slideCount: generated.outline.length,
       outline: generated.outline,
-      validationWarnings: generated.validationWarnings,
+      validationWarnings: mergedValidationWarnings,
       ticketId: consume.ticket.ticketId,
       auditEvent: 'presentation_generated_via_studio',
     },

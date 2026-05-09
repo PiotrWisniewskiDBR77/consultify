@@ -759,6 +759,141 @@ describe('presentationStudio.routes — POST /generate/preview', () => {
     expect(res.body.data.previewId).toMatch(/^pssp_org-A_/);
     expect(res.body.data.previewId).not.toContain('org-B');
   });
+
+  // ---------------------------------------------------------------------
+  // Sprint S10 — Visual layout audit surfaces in /generate/preview
+  // ---------------------------------------------------------------------
+
+  it('exposes layoutAudit shape on /generate/preview responses (S10)', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'Healthy steering deck',
+          audience: 'executive',
+          goal: 'decide',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'VTS readiness',
+              confidence: 0.8,
+              readiness: 'ready',
+            },
+          ],
+        },
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.layoutAudit).toBeTruthy();
+    expect(Array.isArray(res.body.data.layoutAudit.warnings)).toBe(true);
+    expect(Array.isArray(res.body.data.layoutAudit.slideAudits)).toBe(true);
+    expect(res.body.data.layoutAudit.flagCounts).toEqual(
+      expect.objectContaining({
+        layout_overflow_title: expect.any(Number),
+        layout_overflow_key_message: expect.any(Number),
+        layout_overflow_blocks: expect.any(Number),
+        missing_source_for_evidence_intent: expect.any(Number),
+        unsupported_intent_for_pptx_export: expect.any(Number),
+      })
+    );
+    expect(res.body.data.layoutAudit.slideAudits.length).toBe(res.body.data.outlinePreview.length);
+  });
+
+  it('flags caller-supplied outline overflows in layoutAudit and merges warnings (S10)', async () => {
+    const router = await importRouter();
+    const longTitle = 'Steering committee preview — very long banner '.repeat(5);
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'overflow probe',
+          audience: 'executive',
+          goal: 'inform',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'a',
+              confidence: 0.7,
+              readiness: 'ready',
+            },
+          ],
+        },
+        outline: [
+          {
+            intent: 'recommendation_single',
+            title: longTitle,
+            enabled: true,
+            density: 'visual',
+          },
+        ],
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    const audit = res.body.data.layoutAudit;
+    expect(audit.flagCounts.layout_overflow_title).toBeGreaterThanOrEqual(1);
+    expect(audit.flagCounts.missing_source_for_evidence_intent).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.warnings.some((w: string) => w.includes('[layout_overflow_title]'))).toBe(
+      true
+    );
+    expect(
+      res.body.data.warnings.some((w: string) => w.includes('[missing_source_for_evidence_intent]'))
+    ).toBe(true);
+  });
+
+  it('flags an unsupported PPTX intent on caller-supplied outline (S10)', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'unsupported intent probe',
+          audience: 'executive',
+          goal: 'inform',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'a',
+              confidence: 0.7,
+              readiness: 'ready',
+            },
+          ],
+        },
+        outline: [
+          {
+            intent: 'mystery_intent',
+            title: 'Mystery slide',
+            enabled: true,
+            density: 'balanced',
+          },
+        ],
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    const audit = res.body.data.layoutAudit;
+    expect(audit.flagCounts.unsupported_intent_for_pptx_export).toBeGreaterThanOrEqual(1);
+    expect(
+      res.body.data.warnings.some((w: string) => w.includes('[unsupported_intent_for_pptx_export]'))
+    ).toBe(true);
+  });
 });
 
 import {
@@ -1056,6 +1191,54 @@ describe('presentationStudio.routes — POST /generate', () => {
     expect(res.statusCode).toBe(403);
     expect(res.body.code).toBe('PERMISSION_DENIED');
     expect(generateOutlineMock).not.toHaveBeenCalled();
+  });
+
+  // ---------------------------------------------------------------------
+  // Sprint S10 — layout audit warnings merge into validationWarnings on
+  // the mutating /generate path and are recorded into the audit row.
+  // ---------------------------------------------------------------------
+
+  it('merges layout audit warnings into validationWarnings and audit details (S10)', async () => {
+    generateOutlineMock.mockResolvedValueOnce({
+      outline: [
+        { intent: 'cover', title: 'Cover', enabled: true },
+        // Evidence-required intent with no source ref + a long title -> two flags.
+        {
+          intent: 'recommendation_single',
+          title: 'X'.repeat(220),
+          enabled: true,
+          density: 'visual',
+        },
+      ],
+      deckId: 'deck-with-flags',
+      validationWarnings: ['baseline_generator_warning'],
+    });
+    const router = await importRouter();
+    const body = buildHealthyBody();
+    const ticketId = await mintTicket(router, body);
+
+    const req = createMockReq({
+      url: '/generate',
+      path: '/generate',
+      body: { ...body, approvalTicket: ticketId },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate', req, res);
+
+    expect(res.statusCode).toBe(200);
+    const warnings = res.body.data.validationWarnings as string[];
+    expect(warnings).toContain('baseline_generator_warning');
+    expect(warnings.some((w) => w.startsWith('[layout_overflow_title]'))).toBe(true);
+    expect(warnings.some((w) => w.startsWith('[missing_source_for_evidence_intent]'))).toBe(true);
+
+    expect(recordAuditMock).toHaveBeenCalledTimes(1);
+    const auditDetails = recordAuditMock.mock.calls[0][0].details;
+    expect(auditDetails.layoutAuditFlagCounts).toEqual(
+      expect.objectContaining({
+        layout_overflow_title: 1,
+        missing_source_for_evidence_intent: 1,
+      })
+    );
   });
 });
 

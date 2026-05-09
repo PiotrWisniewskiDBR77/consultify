@@ -953,3 +953,73 @@ Mode: Backend (read-only) + Frontend. Approval flow contract unchanged.
   - Add a layout pre-check function that flags slides that would overflow at the canonical PPTX render size and surfaces the flags in the existing `validationWarnings[]` channel.
   - Backend-only sprint: no UI surface area touched. Existing approval flow and source picker contracts unchanged.
 
+## Phase 2 — Sprint S10 gate (Visual Layout Engine Hardening / 2026-05-09)
+
+**Gate**: closed → committed under `27cc4934b..HEAD` on `main`.
+
+### Scope landed in S10
+
+Backend-only sprint. Cross-reference: master sprint map WP-06 / MT-PRES-037 / MT-PRES-038. No UI surface area touched. Approval flow + source picker contracts unchanged. No DB migrations.
+
+S10 introduces a **deterministic, pure-function layout audit pass** that is run on every Studio outline emitted by either the read-only preview pipeline (`previewPresentationStudioGenerate`) or the mutating execute pipeline (`executePresentationStudioGenerate`). Findings are advisory — they NEVER block generation; they surface on the existing `validationWarnings[]` channel and on a new structured `layoutAudit` payload returned by `/generate/preview`. The audit pass closes a real-world integrity gap: prior to S10 the renderer could silently truncate, fall back, or omit slide content; the user only saw the symptom in the exported deck.
+
+### Changes
+
+- `consultify/server/src/services/presentationStudioLayoutAuditService.ts` (new)
+  - Pure, dependency-free audit. Inputs: `OutlineItem[]`. Output: `{ warnings, slideAudits, flagCounts }`.
+  - Flag set:
+    1. `layout_overflow_title` — title exceeds the per-density title cap.
+    2. `layout_overflow_key_message` — key message exceeds the per-density body cap.
+    3. `layout_overflow_blocks` — `suggestedBlocks.length` exceeds the per-density block cap.
+    4. `missing_source_for_evidence_intent` — outline item has an evidence-required intent (`assessment`, `root_cause`, `recommendation_single`, `recommendation_portfolio`, `initiative_portfolio`, `performance_overview`, `risk_management`, `roadmap`, `prioritization_matrix`, `comparison`) but neither `sourceRef` nor `sourceRefs` is populated.
+    5. `unsupported_intent_for_pptx_export` — intent is not in the canonical `SlideIntent` union the PPTX pipeline supports; renderer fallback would otherwise be silent.
+  - Density-aware budgets (visual / balanced / document) calibrated against the existing `presentationBrandLayoutService` + `report/pptx` masters at canonical 16:9 (13.333" × 7.5"). Conservative caps; raise per renderer when a slot is extended.
+  - Disabled slides (`enabled === false`) are skipped entirely (they will not be exported, so flagging them is noise).
+  - Each warning is prefixed with `[<flag_id>]` so log aggregations stay greppable per flag without re-parsing prose.
+- `consultify/server/src/services/__tests__/presentationStudioLayoutAuditService.test.ts` (new)
+  - 10 unit tests covering: clean outline → empty audit; overflow title (visual cap); overflow key message (balanced cap); overflow blocks (visual cap); missing-source on `recommendation_single`; missing-source NOT raised when `sourceRefs` is non-empty; unsupported intent flag; disabled slides skipped; multiple flags aggregated on the same slide; canonical SlideIntent ↔ audit-supported-set drift guard (asserts both lists match exactly).
+- `consultify/server/src/services/presentationStudioOrchestrationService.ts`
+  - `previewPresentationStudioGenerate` now runs the audit on `outlinePreview` and merges its warnings into the top-level `warnings[]`, plus exposes a new `layoutAudit` field on the preview result so the UI can render flag counts without parsing prose.
+  - `executePresentationStudioGenerate` now runs the audit on the **actual generator output** (not the preview) and merges its warnings into `validationWarnings[]` returned to the client. The aggregate `flagCounts` are also written into `recordAudit(...)` `details.layoutAuditFlagCounts`, so audit rows carry the same observable signal.
+  - The preview result type now declares `layoutAudit: PresentationStudioOutlineLayoutAudit`.
+- `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts`
+  - Added 4 new S10 regressions (3 on `/generate/preview`, 1 on `/generate`):
+    1. `/generate/preview` — `layoutAudit` shape is present and parallel-indexed against `outlinePreview`.
+    2. `/generate/preview` — caller-supplied outline with an overlong title + missing source surfaces both flags in `flagCounts` AND in the merged `warnings[]` array.
+    3. `/generate/preview` — caller-supplied outline with an unknown intent string raises `unsupported_intent_for_pptx_export`.
+    4. `/generate` — generator returns a baseline warning + a flag-triggering outline; the response's `validationWarnings[]` contains BOTH the baseline warning and the audit warnings, AND the audit row's `details.layoutAuditFlagCounts` matches.
+
+### Validation performed
+
+- `npx vitest run server/src/services/__tests__/presentationStudioApprovalTicketService.test.ts server/src/services/__tests__/presentationStudioLayoutAuditService.test.ts server/src/services/__tests__/presentationStudioSourceArtifactsService.test.ts server/src/routes/__tests__/presentationStudio.routes.test.ts src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx --no-coverage` — **88/88 passed** across the full Studio surface (10 layout audit + 8 ticket + 6 source artifacts + 41 route integration + 23 component).
+- `npx eslint` on the four S10 in-scope files — **0 errors**. Remaining 24 warnings are pre-existing P3 (`no-explicit-any` on test mocks + a single S0-baseline `(setup as any)` cast in the orchestrator, both already deferred).
+- `npx tsc --noEmit` on the new layout audit service in isolation — clean. The orchestrator change is verified through the route integration test suite (which compiles + runs the live route handlers).
+- Tenant / approval invariants unchanged: the audit reads only the outline; it does not see organizationId, userId, or any session state. It cannot leak data across tenants by construction.
+
+### Gate result: `PASS_WITH_P2`
+
+- 0 P0, 0 P1, 0 P2.
+- P3 deferred: pre-existing `no-explicit-any` warnings in test mocks (S0 baseline carry). No new deferred items introduced.
+
+### Acceptance criteria (from contract) covered by S10
+
+- Visual Layout Engine Hardening (WP-06): the deterministic outline path now self-reports overflow risks instead of relying on the renderer to silently truncate. The signal is visible at `/generate/preview` time (so the UI can show "N layout warnings" next to the Generate CTA) AND at execute time (so the audit row + the response both carry the flag counts).
+- Honest degraded UI: warnings are advisory and never block. The user retains agency. The flag id prefix makes the warning machine-readable for downstream log/alerts.
+- Approval invariant preserved: the audit runs **after** ticket consumption on the execute path (so a tampered outline still cannot bypass approval), and **before** the audit row is written (so the audit row reflects what was actually generated, not what was previewed).
+- Tenant + ACL safety unchanged: the audit is pure and dependency-free; no DB, no session, no clock. It cannot regress tenant isolation.
+
+### Risks / next-step notes
+
+- R-S10-1: Slot capacity numbers are calibrated against the **current** masters in `presentationBrandLayoutService` + `report/pptx`. If a future template family extends a slot, the audit cap must be raised in tandem or it will produce false-positive overflow warnings. Mitigation: a per-template override is the right shape; it is intentionally NOT shipped in S10 because no current template needs it. This becomes a P2 follow-up the moment a renderer extends a slot.
+- R-S10-2: The audit treats `density` as a single dimension. Real layouts mix densities within a slide (e.g. dense bullets + sparse hero). The cap model approximates by routing the entire slide through one density. We accept the false-positive risk — the warning is advisory, and a stricter per-slot model is deferred to S11+ if reviewers complain.
+- R-S10-3: The PPTX-supported intent set is duplicated into the audit module to keep the audit decoupled from the renderer's import graph. Drift is caught by the unit test that walks the canonical `SlideIntent` union and asserts both sets match. Adding a new `SlideIntent` will fail the test until the audit set is updated.
+- R-S10-4: The audit runs on the actual generator output on the execute path, but `recordAudit(...)` already runs even if the audit count is zero. We considered routing the audit invocation through a feature flag; we did not, because the marginal cost is sub-millisecond and the operational signal is high-value. Revisit if profiling ever shows the audit on the hot path.
+
+### Next sprint plan
+
+- Sprint S11 starts the next layout-engine hardening loop (WP-06 carry / MT-PRES-039 / MT-PRES-040). Candidate scope (subject to approval):
+  - Per-template-family slot capacity overrides (closes R-S10-1).
+  - Per-slot density mode (closes R-S10-2): the audit walks individual slots inside a slide rather than treating each slide as monolithic.
+  - Surface `layoutAudit.flagCounts` in the Studio Surface UI as a non-blocking pre-flight banner adjacent to the Generate CTA.
+  - PDF export parity: extend `unsupported_intent_for_pptx_export` to also flag intents not in the PDF pipeline's supported set (currently both pipelines align, but the audit should enforce this independently).
+
