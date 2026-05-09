@@ -1153,6 +1153,40 @@ The cost of these gaps shows up most acutely in the DOCX renderer (cannot apply 
 
 **Closes gaps.** §15.5 of the gap-vs-target report (spec §8.5 FormattingSchema contract) — SUBSTRATE DELIVERED. Renderer wiring (DOCX renderer branches on `headingStylesDetailed`; PDF renderer follows; cover-page renderer consumes `coverPageDetailed`; TOC renderer consumes `tocConfig.maxDepth`; header / footer renderers consume `headers.content` and `footers.pageNumberingFormat`) is scheduled as a follow-up slice on top of this substrate. **With this slice, §15 data-model coverage is now 5/5 substrate-complete** (§15.1 → §15.5 all delivered).
 
+### 6.15.10 Slice E17.charts — `chart` block kind + payload contract (FR-22 substrate)
+
+**Why.** §10.7 of the gap-vs-target report flagged that FR-22 (Charts) is a P2 spec gap with zero coverage: there is no `chart` block kind in `DocumentBlockType`, no canonical payload shape for chart data, and no chart pipeline in the DOCX / PDF renderers. Consultants embedding data visualisations have had to either rasterise an external chart and use the `image` block (loses semantic meaning, breaks audit) or skip charts entirely.
+
+**Substrate-only scope (no renderer wiring in this slice).** This slice ships ONLY the type-level substrate: enum extension + canonical payload shape + 3 helpers + 23 specs. The DOCX + PDF + markdown renderers all fall through to `default: return ''` for unknown block types (verified by inspection of `documentSchemaRenderer.ts` line ~64-71), so chart blocks silently render as empty until renderer upgrades wire them in. The follow-up slice `E17.charts.render` ships:
+- chart.js → PNG conversion in the DOCX renderer (chart.js server-side render → image bytes embedded inline);
+- PDF parity using the same pipeline;
+- Format-QA category extension: chart blocks must declare ≥1 series, kind, and (recommended) axis labels;
+- FE-E2 chart preview using a client-side chart library.
+
+**What ships in this slice.**
+- `documentStudioTypes.ts` — extend `DocumentBlockType` union with `'chart'` (becomes the **12th** canonical block kind, positioned between `image` and `footnote` to keep visual blocks adjacent).
+- New canonical types:
+    - `DocumentChartKind` — 6-value enum `'bar' | 'line' | 'pie' | 'donut' | 'scatter' | 'area'` covering ~95% of consulting-deck patterns;
+    - `DocumentChartSeries` — `{ label: string; values: number[]; color?: string }`;
+    - `DocumentChartBlockContent` — `{ kind, title, series[], categories?, xAxisLabel?, yAxisLabel?, caption? }`. Required: `kind`, `title`, `series[]`. Optional everything else.
+- Three new public helpers exported from `documentStudioTypes.ts`:
+    - `isDocumentChartBlock(block)` — type-guard predicate that narrows to `DocumentBlock & { type: 'chart'; content: DocumentChartBlockContent }`. Defensive against null / undefined / non-object content / invalid kind / empty title / non-array series / non-finite values / missing label or values entries. Empty series array IS structurally valid (zero-series QA finding is a follow-up concern).
+    - `documentChartBlockContent(block)` — extracts the typed payload, returns null when block is not a valid chart. Wraps `isDocumentChartBlock` for ergonomic narrowing in renderer / QA code paths.
+    - `summarizeDocumentChartBlock(block)` — readiness summary: `{ kind, title, seriesCount, totalValueCount, hasCaption, hasAxisLabels }`. `seriesCount` only counts well-formed series (drops malformed). The Format-QA follow-up uses this metric for the "chart has at least one valid series" finding.
+- `src/components/DocumentStudio/types.ts` — frontend mirror of `DocumentChartKind`, `DocumentChartSeries`, and `DocumentChartBlockContent` so the FE-E2 chart preview can narrow `block.content` to the structured shape before handing it to the chart library. The frontend `DocumentBlock.type` is already typed `string` (wide), so adding `'chart'` requires no enum change there.
+
+**Backwards compatibility.** Pre-E17.charts schemas carry no chart blocks and continue to work unchanged. The DOCX + PDF + markdown renderers (verified in `documentSchemaRenderer.ts`) fall through `default: return ''` for unknown block types, so adding `'chart'` to the enum is non-breaking — chart blocks silently render as empty until the renderer upgrades wire them in. The audience projector (E9) treats unknown block types pass-through; the QA pipeline (10 categories pre-E5.6.qa, 11 post-) does not gate on type union exhaustivity.
+
+**Coverage.** New `documentChartBlock.test.ts` with **23** specs:
+- `DocumentBlockType` extension (3): chart block structurally valid; all 6 chart kinds accepted; legacy non-chart blocks unchanged;
+- `isDocumentChartBlock` contract (10): null / undefined → false; non-chart types → false; fully-populated → true; missing / non-object content → false; missing / invalid kind → false; empty / whitespace / non-string title → false; non-array series → false; non-finite values (NaN / Infinity) → false; missing label / values entries → false; empty series array IS valid (structural shape passes; semantic check is QA's job); optional fields (categories / axis labels / caption / color) all accepted;
+- `documentChartBlockContent` contract (2): null for invalid; typed content for valid;
+- `summarizeDocumentChartBlock` contract (8): empty summary for non-chart / null / undefined / malformed; series + value counting; defensive drop of malformed series; kind / title / caption / axis presence reporting; whitespace-only fields collapse; invalid kind → null; immutability.
+
+**Validation.** Document Studio + Execution Module Standard suite **721/721 green** (+23 from E17.charts). tsc clean for the modified files. ESLint clean for all modified files after `--fix`.
+
+**Closes gaps.** §10.7 of the gap-vs-target report (FR-22 / Charts) — SUBSTRATE DELIVERED. Renderer wiring (DOCX chart.js → PNG, PDF parity), Format-QA chart category, and FE-E2 chart preview are scheduled as the follow-up slice `E17.charts.render` on top of this substrate.
+
 ---
 
 ## 7. MVP-4 — Advanced DOCX export

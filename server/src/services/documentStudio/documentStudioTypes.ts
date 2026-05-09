@@ -42,6 +42,28 @@ export type DocumentDensity = 'concise' | 'standard' | 'detailed' | 'comprehensi
 export type DocumentGoal = 'inform' | 'decide' | 'approve' | 'recommend' | 'align';
 export type DocumentConfidentiality = 'internal' | 'client_confidential' | 'restricted' | 'public';
 
+/**
+ * Slice E17.charts (FR-22 — Charts substrate). Adds the `'chart'`
+ * block kind to the canonical block-type enum so consultants can
+ * embed data visualisations directly inside the document body
+ * (bar / line / pie / donut / scatter / area). The block carries
+ * a structured `DocumentChartBlockContent` payload (see below)
+ * with chart kind, axis labels, series, and optional caption /
+ * source binding.
+ *
+ * Substrate-only scope. The DOCX + PDF renderers, the audience
+ * projector, the markdown renderer, and the QA pipeline currently
+ * fall through to `default: return ''` for unknown block types,
+ * so adding the enum value is non-breaking — chart blocks
+ * silently render as empty until renderer upgrades wire them in.
+ * The follow-up slice `E17.charts.render` ships:
+ *   - chart.js → PNG conversion in the DOCX renderer (chart.js
+ *     server-side render → image bytes embedded inline);
+ *   - PDF parity using the same pipeline;
+ *   - Format QA category: chart blocks must declare ≥1 series
+ *     and an x-axis label, etc.;
+ *   - FE-E2 chart preview using a client-side chart library.
+ */
 export type DocumentBlockType =
   | 'heading'
   | 'paragraph'
@@ -53,8 +75,63 @@ export type DocumentBlockType =
   | 'kpi_strip'
   | 'risk_table'
   | 'image'
+  | 'chart'
   | 'footnote'
   | 'citation';
+
+/**
+ * Slice E17.charts — canonical chart kind enum. `bar`, `line`,
+ * `pie`, `donut`, `scatter`, `area` cover ~95% of consulting-deck
+ * patterns. The renderer follow-up slice maps these to chart.js
+ * configurations.
+ */
+export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | 'area';
+
+/**
+ * Slice E17.charts — single chart series: a label + an array of
+ * numeric values aligned positionally to the chart's category
+ * axis. The renderer follow-up slice maps `values[i]` to the i-th
+ * category on the x-axis (or the i-th slice of the pie).
+ */
+export interface DocumentChartSeries {
+  label: string;
+  values: number[];
+  /**
+   * Optional series colour hint (any CSS-compatible string the
+   * renderer can map to its chart library). Renderers may ignore
+   * this and fall back to a deterministic palette when absent.
+   */
+  color?: string;
+}
+
+/**
+ * Slice E17.charts — canonical chart block payload. Stored on
+ * `DocumentBlock.content` when `DocumentBlock.type === 'chart'`.
+ *
+ * Required fields (`kind`, `title`, `series[]`) make the block
+ * meaningful for any renderer. Optional fields cover richer
+ * publishing surfaces (caption, axis labels, categories) without
+ * forcing every author to populate them.
+ */
+export interface DocumentChartBlockContent {
+  kind: DocumentChartKind;
+  /** Chart title — displayed above the chart by all renderers. */
+  title: string;
+  /**
+   * Categorical x-axis labels (or pie-slice labels for
+   * `kind === 'pie' | 'donut'`). When omitted, renderers fall back
+   * to "1, 2, 3, …".
+   */
+  categories?: string[];
+  /** X-axis label (semantic name of the categorical dimension). */
+  xAxisLabel?: string;
+  /** Y-axis label (semantic name of the numeric dimension). */
+  yAxisLabel?: string;
+  /** One or more data series. Empty array is a Format-QA finding. */
+  series: DocumentChartSeries[];
+  /** Optional caption rendered below the chart. */
+  caption?: string;
+}
 
 export interface DocumentBlock {
   blockId: string;
@@ -390,6 +467,130 @@ export function summarizeFormattingSchemaSpecExtensions(
     footerPageNumberingFormat: schema.footers
       ? trimOrNull(schema.footers.pageNumberingFormat)
       : null,
+  };
+}
+
+// =============================================================================
+// Slice E17.charts (FR-22) — chart-block helpers.
+// =============================================================================
+
+/**
+ * Slice E17.charts helper — type guard that narrows a
+ * `DocumentBlock` to the chart variant. Returns true iff
+ * `block.type === 'chart'` AND `block.content` looks like a
+ * structurally-valid `DocumentChartBlockContent` (kind + title +
+ * series array). Defensive: returns false for any malformed
+ * payload so consumers can branch safely without risking runtime
+ * type errors.
+ */
+export function isDocumentChartBlock(
+  block: DocumentBlock | undefined | null
+): block is DocumentBlock & { type: 'chart'; content: DocumentChartBlockContent } {
+  if (!block || block.type !== 'chart') return false;
+  const content = block.content as Partial<DocumentChartBlockContent> | undefined | null;
+  if (!content || typeof content !== 'object') return false;
+  if (!isValidChartKind(content.kind)) return false;
+  if (typeof content.title !== 'string' || content.title.trim().length === 0) return false;
+  if (!Array.isArray(content.series)) return false;
+  for (const s of content.series) {
+    if (!s || typeof s !== 'object') return false;
+    if (typeof s.label !== 'string') return false;
+    if (!Array.isArray(s.values)) return false;
+    for (const v of s.values) {
+      if (typeof v !== 'number' || !Number.isFinite(v)) return false;
+    }
+  }
+  return true;
+}
+
+function isValidChartKind(value: unknown): value is DocumentChartKind {
+  return (
+    value === 'bar' ||
+    value === 'line' ||
+    value === 'pie' ||
+    value === 'donut' ||
+    value === 'scatter' ||
+    value === 'area'
+  );
+}
+
+/**
+ * Slice E17.charts helper — extract the typed chart payload
+ * from a block, returning `null` when the block is not a chart
+ * or carries a malformed payload. Wraps `isDocumentChartBlock`
+ * for ergonomic narrowing in renderer / QA code paths.
+ */
+export function documentChartBlockContent(
+  block: DocumentBlock | undefined | null
+): DocumentChartBlockContent | null {
+  if (!isDocumentChartBlock(block)) return null;
+  return block.content;
+}
+
+/**
+ * Slice E17.charts helper — canonical readiness summary the
+ * renderer / FE-E2 chart preview / Format-QA category will
+ * consume. Returns a stable plain-object summary for any block;
+ * for non-chart blocks, the summary reports `kind = null` and
+ * `seriesCount = 0`. Never throws, never mutates.
+ *
+ * `seriesCount` is the number of well-formed series that survived
+ * validation — a chart with 3 declared series but only 2 valid
+ * (e.g. one series carries a non-finite value) reports 2. This is
+ * the metric the Format-QA follow-up uses for the "chart has at
+ * least one valid series" finding.
+ */
+export function summarizeDocumentChartBlock(block: DocumentBlock | undefined | null): {
+  kind: DocumentChartKind | null;
+  title: string | null;
+  seriesCount: number;
+  totalValueCount: number;
+  hasCaption: boolean;
+  hasAxisLabels: boolean;
+} {
+  const empty = {
+    kind: null as DocumentChartKind | null,
+    title: null as string | null,
+    seriesCount: 0,
+    totalValueCount: 0,
+    hasCaption: false,
+    hasAxisLabels: false,
+  };
+  if (!block || block.type !== 'chart') return empty;
+  const content = block.content as Partial<DocumentChartBlockContent> | undefined | null;
+  if (!content || typeof content !== 'object') return empty;
+  const kind = isValidChartKind(content.kind) ? content.kind : null;
+  const titleRaw = typeof content.title === 'string' ? content.title.trim() : '';
+  const title = titleRaw.length > 0 ? titleRaw : null;
+  let seriesCount = 0;
+  let totalValueCount = 0;
+  if (Array.isArray(content.series)) {
+    for (const s of content.series) {
+      if (!s || typeof s !== 'object') continue;
+      if (typeof s.label !== 'string') continue;
+      if (!Array.isArray(s.values)) continue;
+      let valid = true;
+      for (const v of s.values) {
+        if (typeof v !== 'number' || !Number.isFinite(v)) {
+          valid = false;
+          break;
+        }
+      }
+      if (!valid) continue;
+      seriesCount += 1;
+      totalValueCount += s.values.length;
+    }
+  }
+  const captionRaw = typeof content.caption === 'string' ? content.caption.trim() : '';
+  const xRaw = typeof content.xAxisLabel === 'string' ? content.xAxisLabel.trim() : '';
+  const yRaw = typeof content.yAxisLabel === 'string' ? content.yAxisLabel.trim() : '';
+  return {
+    kind,
+    title,
+    seriesCount,
+    totalValueCount,
+    hasCaption: captionRaw.length > 0,
+    hasAxisLabels: xRaw.length > 0 || yRaw.length > 0,
   };
 }
 

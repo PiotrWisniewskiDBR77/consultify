@@ -89,6 +89,31 @@ export interface DocumentBlock {
   isAssumption?: boolean;
 }
 
+/**
+ * Slice E17.charts (FR-22) — frontend mirror of the canonical
+ * chart payload. The FE-E2 chart preview consumes this when
+ * `block.type === 'chart'`. Server-side full validation lives in
+ * `documentStudioTypes.ts`; the FE narrows opaque `block.content`
+ * to this shape before handing it to the chart library.
+ */
+export type DocumentChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'scatter' | 'area';
+
+export interface DocumentChartSeries {
+  label: string;
+  values: number[];
+  color?: string;
+}
+
+export interface DocumentChartBlockContent {
+  kind: DocumentChartKind;
+  title: string;
+  categories?: string[];
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+  series: DocumentChartSeries[];
+  caption?: string;
+}
+
 export interface DocumentSection {
   sectionId: string;
   orderIndex: number;
