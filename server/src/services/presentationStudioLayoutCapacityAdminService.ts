@@ -31,12 +31,11 @@
  *      the payload diff, reason, and ticket id.
  *
  * Tenant safety note:
- *   - The registry is currently PROCESS-GLOBAL (R-S13-1 still open).
- *     A SuperAdmin override applied via this service therefore
- *     affects every tenant served by this Node process. The SuperAdmin
- *     RBAC capability `presentation_admin_layout_capacity` is the
- *     deliberate gate. The audit row records the SuperAdmin's org for
- *     traceability but the change itself is NOT scoped to that org.
+ *   - Since S23 the registry supports organization-scoped runtime
+ *     overrides. The SuperAdmin/admin routes pass their authenticated
+ *     `organizationId` into this service, so override/reset actions
+ *     affect only that tenant's live registry view. Global/default
+ *     helper calls remain available for tests and canonical defaults.
  *
  * The service is pure and side-effect-free outside the (mockable)
  * audit writer. All clock and ticket interactions go through the same
@@ -244,8 +243,8 @@ export type ProposeLayoutCapacityOverridesResult =
 export function proposeLayoutCapacityOverrides(
   input: ProposeLayoutCapacityOverridesInput
 ): ProposeLayoutCapacityOverridesResult {
-  const before = getCurrentRegistrySnapshot();
-  const apply = applyOverrides(input.overrides);
+  const before = getCurrentRegistrySnapshot(input.organizationId);
+  const apply = applyOverrides(input.overrides, input.organizationId);
   if (!apply.ok) {
     return {
       ok: false,
@@ -260,7 +259,7 @@ export function proposeLayoutCapacityOverrides(
   // overrides payload that exhaustively replays it. We round-trip
   // through `applyOverrides` to keep the only state-mutation path
   // funneled through the registry's validator.
-  rollbackRegistryTo(before);
+  rollbackRegistryTo(before, input.organizationId);
 
   const fingerprint = computePayloadFingerprint({
     overrides: input.overrides,
@@ -295,7 +294,10 @@ export function proposeLayoutCapacityOverrides(
  * `proposeLayoutCapacityOverrides` so the dry-run + roll-back pair
  * stays atomic with respect to a single proposal call.
  */
-function rollbackRegistryTo(snapshot: LayoutCapacityRegistrySnapshot): void {
+function rollbackRegistryTo(
+  snapshot: LayoutCapacityRegistrySnapshot,
+  organizationId?: string | null
+): void {
   // The BEFORE snapshot may already include earlier admin overrides
   // beyond the canonical defaults. To make the replay exact, we first
   // reset to defaults (drops every prior override) and then re-apply
@@ -309,8 +311,8 @@ function rollbackRegistryTo(snapshot: LayoutCapacityRegistrySnapshot): void {
     templateFamilyOverrides: snapshot.templateFamilyOverrides,
     familyAliasByDeckType: snapshot.familyAliasByDeckType,
   };
-  resetToDefaults();
-  applyOverrides(replay);
+  resetToDefaults(organizationId);
+  applyOverrides(replay, organizationId);
 }
 
 // ---------------------------------------------------------------------------
@@ -383,7 +385,7 @@ export async function executeLayoutCapacityOverrides(
     };
   }
 
-  const apply = applyOverrides(input.overrides);
+  const apply = applyOverrides(input.overrides, input.organizationId);
   if (!apply.ok) {
     // Defense-in-depth: ticket was redeemed (single-use), so we cannot
     // un-redeem. We surface the validation error to the caller so they
@@ -396,7 +398,7 @@ export async function executeLayoutCapacityOverrides(
     };
   }
 
-  const snapshotAfter = getCurrentRegistrySnapshot();
+  const snapshotAfter = getCurrentRegistrySnapshot(input.organizationId);
   const deps = getAdminDeps();
   await deps.recordAudit({
     userId: input.userId,
@@ -569,9 +571,9 @@ export async function executeLayoutCapacityReset(
   // Snapshot BEFORE the reset so we can record what was lost. The
   // registry is process-global + synchronous so this read is atomic
   // with respect to the subsequent `resetToDefaults`.
-  const snapshotBefore = getCurrentRegistrySnapshot();
-  resetToDefaults();
-  const snapshotAfter = getCurrentRegistrySnapshot();
+  const snapshotBefore = getCurrentRegistrySnapshot(input.organizationId);
+  resetToDefaults(input.organizationId);
+  const snapshotAfter = getCurrentRegistrySnapshot(input.organizationId);
 
   const deps = getAdminDeps();
   await deps.recordAudit({

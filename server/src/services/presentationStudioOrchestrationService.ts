@@ -476,6 +476,7 @@ export function previewPresentationStudioGenerate(
 
   const layoutAudit = auditPresentationStudioOutlineLayout(outlinePreview, {
     templateFamily: family ?? null,
+    organizationId: input.organizationId,
   });
 
   const warnings = [
@@ -684,6 +685,7 @@ export interface PresentationStudioGenerateAuditPayload {
     deckTitle: string;
     deckGoal: string;
     deckAudience: string;
+    layoutAuditFlagCounts?: PresentationStudioOutlineLayoutAudit['flagCounts'];
   };
   ipAddress?: string | null;
   userAgent?: string | null;
@@ -801,6 +803,7 @@ export async function executePresentationStudioGenerate(
   const executeFamily = resolveTemplateFamilyFromSetup(input.setup);
   const layoutAudit = auditPresentationStudioOutlineLayout(generated.outline, {
     templateFamily: executeFamily ?? null,
+    organizationId: input.organizationId,
   });
   const mergedValidationWarnings = [
     ...(generated.validationWarnings || []),

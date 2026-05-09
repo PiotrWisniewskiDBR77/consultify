@@ -779,9 +779,9 @@ router.get(
     res.json({
       success: true,
       data: {
-        current: getCurrentRegistrySnapshot(),
+        current: getCurrentRegistrySnapshot(orgId),
         defaults: getDefaultRegistrySnapshot(),
-        scope: 'process_global',
+        scope: 'tenant',
         // Sprint S18 — surface degraded-load conditions so the
         // SuperAdmin sees an honest "we fell back to defaults
         // because <reason>" instead of a clean snapshot that hides

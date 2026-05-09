@@ -227,8 +227,9 @@ describe('savePersistedOverrides', () => {
     const raw = driverState.files.get(TEST_PATH);
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw!);
-    expect(parsed.schemaVersion).toBe(1);
-    expect(parsed.overrides.densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(parsed.schemaVersion).toBe(2);
+    expect(parsed.globalOverrides.densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(parsed.tenantOverridesByOrganizationId).toEqual({});
     expect(parsed.signature).toMatch(/^[a-f0-9]{64}$/);
   });
 
@@ -423,8 +424,8 @@ describe('initializeLayoutCapacityPersistence', () => {
     applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 137 } } });
     expect(driverState.files.has(TEST_PATH)).toBe(true);
     const parsed = JSON.parse(driverState.files.get(TEST_PATH)!);
-    expect(parsed.schemaVersion).toBe(1);
-    expect(parsed.overrides.densityBudgets.balanced.titleMaxChars).toBe(137);
+    expect(parsed.schemaVersion).toBe(2);
+    expect(parsed.globalOverrides.densityBudgets.balanced.titleMaxChars).toBe(137);
     expect(parsed.signature).toMatch(/^[a-f0-9]{64}$/);
   });
 
@@ -482,9 +483,35 @@ describe('initializeLayoutCapacityPersistence', () => {
     // new merged state.
     applyOverrides({ densityBudgets: { visual: { blocksMax: 9 } } });
     const parsed = JSON.parse(driverState.files.get(TEST_PATH)!);
-    expect(parsed.overrides.densityBudgets.balanced.titleMaxChars).toBe(137);
-    expect(parsed.overrides.densityBudgets.visual.blocksMax).toBe(9);
+    expect(parsed.globalOverrides.densityBudgets.balanced.titleMaxChars).toBe(137);
+    expect(parsed.globalOverrides.densityBudgets.visual.blocksMax).toBe(9);
     expect(parsed.signature).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('persists and restores tenant-scoped snapshots independently (S23)', () => {
+    initializeLayoutCapacityPersistence();
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 123 } } }, 'org-A');
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 140 } } }, 'org-B');
+    const raw = driverState.files.get(TEST_PATH);
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.schemaVersion).toBe(2);
+    expect(
+      parsed.tenantOverridesByOrganizationId['org-A'].densityBudgets.balanced.titleMaxChars
+    ).toBe(123);
+    expect(
+      parsed.tenantOverridesByOrganizationId['org-B'].densityBudgets.balanced.titleMaxChars
+    ).toBe(140);
+
+    resetToDefaults();
+    setRegistryHooks(null);
+    driverState.files.set(TEST_PATH, raw!);
+
+    const restored = restorePersistedOverrides();
+    expect(restored.status).toBe('restored');
+    expect(getCurrentRegistrySnapshot('org-A').densityBudgets.balanced.titleMaxChars).toBe(123);
+    expect(getCurrentRegistrySnapshot('org-B').densityBudgets.balanced.titleMaxChars).toBe(140);
+    expect(getCurrentRegistrySnapshot().densityBudgets.balanced.titleMaxChars).toBe(90);
   });
 });
 
@@ -735,8 +762,8 @@ describe('atomicWriteFile (S19, R-S18-3)', () => {
     const raw = driverState.files.get(TEST_PATH);
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw!);
-    expect(parsed.schemaVersion).toBe(1);
-    expect(parsed.overrides.densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(parsed.schemaVersion).toBe(2);
+    expect(parsed.globalOverrides.densityBudgets.balanced.titleMaxChars).toBe(100);
   });
 });
 

@@ -159,6 +159,46 @@ function deepCloneFamilyOverrides(o: LayoutFamilyOverrides): LayoutFamilyOverrid
 }
 
 let state: RegistryState = cloneDefaults();
+const tenantStates = new Map<string, RegistryState>();
+
+function normalizeOrganizationId(organizationId?: string | null): string | null {
+  if (typeof organizationId !== 'string') return null;
+  const trimmed = organizationId.trim();
+  return trimmed || null;
+}
+
+function cloneSnapshot(snapshot: LayoutCapacityRegistrySnapshot): RegistryState {
+  return {
+    densityBudgets: {
+      visual: { ...snapshot.densityBudgets.visual },
+      balanced: { ...snapshot.densityBudgets.balanced },
+      document: { ...snapshot.densityBudgets.document },
+    },
+    templateFamilyOverrides: Object.fromEntries(
+      Object.entries(snapshot.templateFamilyOverrides).map(([family, overrides]) => [
+        family,
+        deepCloneFamilyOverrides(overrides),
+      ])
+    ),
+    familyAliasByDeckType: { ...snapshot.familyAliasByDeckType },
+  };
+}
+
+function getMutableState(organizationId?: string | null): RegistryState {
+  const orgId = normalizeOrganizationId(organizationId);
+  if (!orgId) return state;
+  const existing = tenantStates.get(orgId);
+  if (existing) return existing;
+  const created = cloneDefaults();
+  tenantStates.set(orgId, created);
+  return created;
+}
+
+function getReadableState(organizationId?: string | null): RegistryState {
+  const orgId = normalizeOrganizationId(organizationId);
+  if (!orgId) return state;
+  return tenantStates.get(orgId) ?? cloneDefaults();
+}
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -320,12 +360,12 @@ export interface LayoutCapacityRegistryHooks {
    * merged FULL snapshot (not a delta) so the persistence layer can
    * write a self-contained file.
    */
-  onApply?: (snapshot: LayoutCapacityRegistrySnapshot) => void;
+  onApply?: (snapshot: LayoutCapacityRegistrySnapshot, organizationId?: string | null) => void;
   /**
    * Called after a successful `resetToDefaults`. Receives nothing —
    * the persistence layer clears its file in response.
    */
-  onReset?: () => void;
+  onReset?: (organizationId?: string | null) => void;
 }
 
 let _hooks: LayoutCapacityRegistryHooks | null = null;
@@ -386,12 +426,14 @@ export function setRegistryLoadWarning(warning: LayoutCapacityRegistryLoadWarnin
  */
 export function resolveSlotCapacity(
   density: LayoutCapacityDensityKey,
-  templateFamily: string | null | undefined
+  templateFamily: string | null | undefined,
+  organizationId?: string | null
 ): LayoutSlotCapacity {
-  const baseline = state.densityBudgets[density];
-  const normalized = normalizeTemplateFamily(templateFamily);
+  const source = getReadableState(organizationId);
+  const baseline = source.densityBudgets[density];
+  const normalized = normalizeTemplateFamily(templateFamily, organizationId);
   if (!normalized) return { ...baseline };
-  const familyOverride = state.templateFamilyOverrides[normalized];
+  const familyOverride = source.templateFamilyOverrides[normalized];
   if (!familyOverride) return { ...baseline };
   const slot = familyOverride[density];
   if (!slot) return { ...baseline };
@@ -408,14 +450,18 @@ export function resolveSlotCapacity(
  * through unchanged so that future families work even before they are
  * registered (the audit then falls back to the canonical density caps).
  */
-export function normalizeTemplateFamily(family: string | null | undefined): string | null {
+export function normalizeTemplateFamily(
+  family: string | null | undefined,
+  organizationId?: string | null
+): string | null {
+  const source = getReadableState(organizationId);
   if (!family) return null;
   const trimmed = String(family).trim();
   if (!trimmed) return null;
-  if (Object.prototype.hasOwnProperty.call(state.templateFamilyOverrides, trimmed)) {
+  if (Object.prototype.hasOwnProperty.call(source.templateFamilyOverrides, trimmed)) {
     return trimmed;
   }
-  return state.familyAliasByDeckType[trimmed] ?? trimmed;
+  return source.familyAliasByDeckType[trimmed] ?? trimmed;
 }
 
 /**
@@ -424,7 +470,10 @@ export function normalizeTemplateFamily(family: string | null | undefined): stri
  * config can never half-update the registry. Returns a result object
  * the caller can render to the user.
  */
-export function applyOverrides(payload: LayoutCapacityOverridesPayload): LayoutCapacityApplyResult {
+export function applyOverrides(
+  payload: LayoutCapacityOverridesPayload,
+  organizationId?: string | null
+): LayoutCapacityApplyResult {
   const errors: LayoutCapacityValidationError[] = [];
   let parsedDensityBudgets: ReturnType<typeof validateDensityBudgets> = null;
   let parsedFamilyOverrides: ReturnType<typeof validateTemplateFamilyOverrides> = null;
@@ -447,33 +496,35 @@ export function applyOverrides(payload: LayoutCapacityOverridesPayload): LayoutC
     return { ok: false, applied: false, errors };
   }
 
+  const target = getMutableState(organizationId);
+
   // All-or-nothing merge.
   if (parsedDensityBudgets) {
     for (const density of Object.keys(parsedDensityBudgets) as LayoutCapacityDensityKey[]) {
       const slot = parsedDensityBudgets[density];
       if (!slot) continue;
-      state.densityBudgets[density] = {
-        titleMaxChars: slot.titleMaxChars ?? state.densityBudgets[density].titleMaxChars,
+      target.densityBudgets[density] = {
+        titleMaxChars: slot.titleMaxChars ?? target.densityBudgets[density].titleMaxChars,
         keyMessageMaxChars:
-          slot.keyMessageMaxChars ?? state.densityBudgets[density].keyMessageMaxChars,
-        blocksMax: slot.blocksMax ?? state.densityBudgets[density].blocksMax,
+          slot.keyMessageMaxChars ?? target.densityBudgets[density].keyMessageMaxChars,
+        blocksMax: slot.blocksMax ?? target.densityBudgets[density].blocksMax,
       };
     }
   }
   if (parsedFamilyOverrides) {
     for (const family of Object.keys(parsedFamilyOverrides)) {
       const incoming = parsedFamilyOverrides[family];
-      const existing = state.templateFamilyOverrides[family] ?? {};
+      const existing = target.templateFamilyOverrides[family] ?? {};
       const merged: LayoutFamilyOverrides = { ...existing };
       for (const density of Object.keys(incoming) as LayoutCapacityDensityKey[]) {
         merged[density] = { ...existing[density], ...incoming[density] };
       }
-      state.templateFamilyOverrides[family] = merged;
+      target.templateFamilyOverrides[family] = merged;
     }
   }
   if (parsedAliases) {
     for (const deckType of Object.keys(parsedAliases)) {
-      state.familyAliasByDeckType[deckType] = parsedAliases[deckType];
+      target.familyAliasByDeckType[deckType] = parsedAliases[deckType];
     }
   }
 
@@ -486,7 +537,10 @@ export function applyOverrides(payload: LayoutCapacityOverridesPayload): LayoutC
   // a stale persisted file is the lesser harm).
   if (_hooks?.onApply) {
     try {
-      _hooks.onApply(getCurrentRegistrySnapshot());
+      _hooks.onApply(
+        getCurrentRegistrySnapshot(organizationId),
+        normalizeOrganizationId(organizationId)
+      );
     } catch {
       // Swallow; wiring layer logs on its own write failures.
     }
@@ -506,11 +560,17 @@ export function applyOverrides(payload: LayoutCapacityOverridesPayload): LayoutC
  * to match. The hook failure is non-fatal (logged by the wiring layer)
  * because resetting state must not be blocked by a transient I/O error.
  */
-export function resetToDefaults(): void {
-  state = cloneDefaults();
+export function resetToDefaults(organizationId?: string | null): void {
+  const orgId = normalizeOrganizationId(organizationId);
+  if (orgId) {
+    tenantStates.delete(orgId);
+  } else {
+    state = cloneDefaults();
+    tenantStates.clear();
+  }
   if (_hooks?.onReset) {
     try {
-      _hooks.onReset();
+      _hooks.onReset(orgId);
     } catch {
       // Swallow; the wiring layer already logs on its own write failures.
     }
@@ -542,8 +602,14 @@ export function getDefaultRegistrySnapshot(): RegistryState {
  * (not test-only); the test helper is kept as a backward-compatible
  * alias so the S13 tests do not need to be rewritten.
  */
-export function getCurrentRegistrySnapshot(): RegistryState {
-  return JSON.parse(JSON.stringify(state)) as RegistryState;
+export function getCurrentRegistrySnapshot(organizationId?: string | null): RegistryState {
+  return cloneSnapshot(getReadableState(organizationId));
+}
+
+export function getAllTenantRegistrySnapshots(): Record<string, LayoutCapacityRegistrySnapshot> {
+  return Object.fromEntries(
+    Array.from(tenantStates.entries()).map(([orgId, snapshot]) => [orgId, cloneSnapshot(snapshot)])
+  );
 }
 
 /**

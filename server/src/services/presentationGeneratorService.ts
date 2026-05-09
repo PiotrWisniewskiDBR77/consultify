@@ -1407,6 +1407,7 @@ export async function generateDeck(
         null;
       const layoutAudit = auditPresentationStudioOutlineLayout(outline, {
         templateFamily,
+        organizationId,
       });
       const decorated = decorateSlidesWithAuditFlags({
         outline,

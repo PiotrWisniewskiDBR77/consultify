@@ -35,9 +35,12 @@
 
 import {
   applyOverrides,
+  getAllTenantRegistrySnapshots,
+  getCurrentRegistrySnapshot,
   type LayoutCapacityApplyResult,
   type LayoutCapacityOverridesPayload,
   type LayoutCapacityRegistryHooks,
+  type LayoutCapacityRegistrySnapshot,
   resetToDefaults,
   setRegistryHooks,
   setRegistryLoadWarning,
@@ -370,6 +373,19 @@ export interface PersistedOverridesFileV1 {
   signature: string;
 }
 
+export interface PersistedOverridesFileV2 {
+  schemaVersion: 2;
+  writtenAt: string;
+  /** Legacy/global snapshot used by test helpers and any non-tenant future admin flow. */
+  globalOverrides: LayoutCapacityOverridesPayload;
+  /** Tenant-scoped snapshots keyed by authenticated organizationId. */
+  tenantOverridesByOrganizationId: Record<string, LayoutCapacityRegistrySnapshot>;
+  /** HMAC-SHA256 over `{ schemaVersion, writtenAt, globalOverrides, tenantOverridesByOrganizationId }`. */
+  signature: string;
+}
+
+type PersistedOverridesFile = PersistedOverridesFileV1 | PersistedOverridesFileV2;
+
 const PERSISTENCE_HMAC_SECRET_ENV = 'CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_HMAC_SECRET';
 
 function resolvePersistenceSigningSecret(): string | null {
@@ -382,17 +398,35 @@ function resolvePersistenceSigningSecret(): string | null {
 }
 
 function canonicalSigningPayload(
-  file: Pick<PersistedOverridesFileV1, 'schemaVersion' | 'writtenAt' | 'overrides'>
+  file:
+    | Pick<PersistedOverridesFileV1, 'schemaVersion' | 'writtenAt' | 'overrides'>
+    | Pick<
+        PersistedOverridesFileV2,
+        'schemaVersion' | 'writtenAt' | 'globalOverrides' | 'tenantOverridesByOrganizationId'
+      >
 ): string {
+  if (file.schemaVersion === 1) {
+    return JSON.stringify({
+      schemaVersion: file.schemaVersion,
+      writtenAt: file.writtenAt,
+      overrides: file.overrides,
+    });
+  }
   return JSON.stringify({
     schemaVersion: file.schemaVersion,
     writtenAt: file.writtenAt,
-    overrides: file.overrides,
+    globalOverrides: file.globalOverrides,
+    tenantOverridesByOrganizationId: file.tenantOverridesByOrganizationId,
   });
 }
 
 function signPersistedOverridesFile(
-  file: Pick<PersistedOverridesFileV1, 'schemaVersion' | 'writtenAt' | 'overrides'>,
+  file:
+    | Pick<PersistedOverridesFileV1, 'schemaVersion' | 'writtenAt' | 'overrides'>
+    | Pick<
+        PersistedOverridesFileV2,
+        'schemaVersion' | 'writtenAt' | 'globalOverrides' | 'tenantOverridesByOrganizationId'
+      >,
   secret: string
 ): string {
   // Lazy require keeps import-time behavior unchanged for tests that
@@ -405,7 +439,7 @@ function signPersistedOverridesFile(
     .digest('hex');
 }
 
-function verifyPersistedOverridesSignature(file: Partial<PersistedOverridesFileV1>): {
+function verifyPersistedOverridesSignature(file: Partial<PersistedOverridesFile>): {
   ok: boolean;
   details?: string;
 } {
@@ -419,14 +453,28 @@ function verifyPersistedOverridesSignature(file: Partial<PersistedOverridesFileV
       details: `${PERSISTENCE_HMAC_SECRET_ENV} is not configured; refusing to trust persisted overrides`,
     };
   }
-  const expected = signPersistedOverridesFile(
-    {
-      schemaVersion: 1,
-      writtenAt: typeof file.writtenAt === 'string' ? file.writtenAt : '',
-      overrides: file.overrides as LayoutCapacityOverridesPayload,
-    },
-    secret
-  );
+  const expected =
+    file.schemaVersion === 2
+      ? signPersistedOverridesFile(
+          {
+            schemaVersion: 2,
+            writtenAt: typeof file.writtenAt === 'string' ? file.writtenAt : '',
+            globalOverrides: (file as Partial<PersistedOverridesFileV2>)
+              .globalOverrides as LayoutCapacityOverridesPayload,
+            tenantOverridesByOrganizationId: (file as Partial<PersistedOverridesFileV2>)
+              .tenantOverridesByOrganizationId as Record<string, LayoutCapacityRegistrySnapshot>,
+          },
+          secret
+        )
+      : signPersistedOverridesFile(
+          {
+            schemaVersion: 1,
+            writtenAt: typeof file.writtenAt === 'string' ? file.writtenAt : '',
+            overrides: (file as Partial<PersistedOverridesFileV1>)
+              .overrides as LayoutCapacityOverridesPayload,
+          },
+          secret
+        );
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require('crypto') as typeof import('crypto');
   const actualBuffer = Buffer.from(file.signature, 'hex');
@@ -445,7 +493,13 @@ function verifyPersistedOverridesSignature(file: Partial<PersistedOverridesFileV
 // ---------------------------------------------------------------------------
 
 export type LoadPersistedOverridesResult =
-  | { ok: true; payload: LayoutCapacityOverridesPayload; writtenAt: string; sourcePath: string }
+  | {
+      ok: true;
+      payload: LayoutCapacityOverridesPayload;
+      tenantPayloadsByOrganizationId: Record<string, LayoutCapacityRegistrySnapshot>;
+      writtenAt: string;
+      sourcePath: string;
+    }
   | {
       ok: false;
       reason: 'missing' | 'corrupt' | 'unsupported_schema' | 'io_error' | 'signature_mismatch';
@@ -501,22 +555,48 @@ export function loadPersistedOverrides(): LoadPersistedOverridesResult {
       details: 'top-level value is not an object',
     };
   }
-  const obj = parsed as Partial<PersistedOverridesFileV1>;
-  if (obj.schemaVersion !== 1) {
+  const obj = parsed as Partial<PersistedOverridesFile>;
+  if (obj.schemaVersion !== 1 && obj.schemaVersion !== 2) {
     return {
       ok: false,
       reason: 'unsupported_schema',
       sourcePath,
-      details: `expected schemaVersion=1, got ${String(obj.schemaVersion)}`,
+      details: `expected schemaVersion=1 or 2, got ${String(obj.schemaVersion)}`,
     };
   }
-  if (!obj.overrides || typeof obj.overrides !== 'object') {
+  if (
+    obj.schemaVersion === 1 &&
+    (!(obj as Partial<PersistedOverridesFileV1>).overrides ||
+      typeof (obj as Partial<PersistedOverridesFileV1>).overrides !== 'object')
+  ) {
     return {
       ok: false,
       reason: 'corrupt',
       sourcePath,
       details: 'overrides field missing or not an object',
     };
+  }
+  if (obj.schemaVersion === 2) {
+    const v2 = obj as Partial<PersistedOverridesFileV2>;
+    if (!v2.globalOverrides || typeof v2.globalOverrides !== 'object') {
+      return {
+        ok: false,
+        reason: 'corrupt',
+        sourcePath,
+        details: 'globalOverrides field missing or not an object',
+      };
+    }
+    if (
+      !v2.tenantOverridesByOrganizationId ||
+      typeof v2.tenantOverridesByOrganizationId !== 'object'
+    ) {
+      return {
+        ok: false,
+        reason: 'corrupt',
+        sourcePath,
+        details: 'tenantOverridesByOrganizationId field missing or not an object',
+      };
+    }
   }
   const signature = verifyPersistedOverridesSignature(obj);
   if (!signature.ok) {
@@ -528,9 +608,22 @@ export function loadPersistedOverrides(): LoadPersistedOverridesResult {
     };
   }
   const writtenAt = typeof obj.writtenAt === 'string' ? obj.writtenAt : '';
+  const payload =
+    obj.schemaVersion === 2
+      ? ((obj as Partial<PersistedOverridesFileV2>)
+          .globalOverrides as LayoutCapacityOverridesPayload)
+      : ((obj as Partial<PersistedOverridesFileV1>).overrides as LayoutCapacityOverridesPayload);
+  const tenantPayloadsByOrganizationId =
+    obj.schemaVersion === 2
+      ? ((obj as Partial<PersistedOverridesFileV2>).tenantOverridesByOrganizationId as Record<
+          string,
+          LayoutCapacityRegistrySnapshot
+        >)
+      : {};
   return {
     ok: true,
-    payload: obj.overrides as LayoutCapacityOverridesPayload,
+    payload,
+    tenantPayloadsByOrganizationId,
     writtenAt,
     sourcePath,
   };
@@ -559,10 +652,11 @@ export function savePersistedOverrides(
 ): SavePersistedOverridesResult {
   const sourcePath = resolvePersistencePath();
   const writtenAt = (now ?? new Date()).toISOString();
-  const file: PersistedOverridesFileV1 = {
-    schemaVersion: 1,
+  const file: PersistedOverridesFileV2 = {
+    schemaVersion: 2,
     writtenAt,
-    overrides: payload,
+    globalOverrides: payload,
+    tenantOverridesByOrganizationId: getAllTenantRegistrySnapshots(),
     signature: '',
   };
   const driver = getDriver();
@@ -671,6 +765,18 @@ export function restorePersistedOverrides(): RestoreLoadOutcome {
       errors: applyResult.errors,
     };
   }
+  for (const [organizationId, snapshot] of Object.entries(load.tenantPayloadsByOrganizationId)) {
+    const tenantApply = applyOverrides(snapshot, organizationId);
+    if (!tenantApply.ok) {
+      resetToDefaults();
+      return {
+        status: 'rejected_by_validator',
+        sourcePath: load.sourcePath,
+        writtenAt: load.writtenAt,
+        errors: tenantApply.errors,
+      };
+    }
+  }
   return {
     status: 'restored',
     sourcePath: load.sourcePath,
@@ -725,16 +831,16 @@ export function initializeLayoutCapacityPersistence(): RestoreLoadOutcome {
   }
 
   const hooks: LayoutCapacityRegistryHooks = {
-    onApply(snapshot) {
+    onApply() {
       // Persist the FULL snapshot. We cannot just persist the delta
       // because a future restart needs to replay the whole thing.
       // Note: we round-trip through `LayoutCapacityOverridesPayload`
       // shape (the snapshot already matches the payload shape's
       // overlap), so the file is self-contained.
       const payload: LayoutCapacityOverridesPayload = {
-        densityBudgets: snapshot.densityBudgets,
-        templateFamilyOverrides: snapshot.templateFamilyOverrides,
-        familyAliasByDeckType: snapshot.familyAliasByDeckType,
+        densityBudgets: getCurrentRegistrySnapshot().densityBudgets,
+        templateFamilyOverrides: getCurrentRegistrySnapshot().templateFamilyOverrides,
+        familyAliasByDeckType: getCurrentRegistrySnapshot().familyAliasByDeckType,
       };
       const result = savePersistedOverrides(payload);
       if (!result.ok) {
@@ -753,8 +859,14 @@ export function initializeLayoutCapacityPersistence(): RestoreLoadOutcome {
         setRegistryLoadWarning(null);
       }
     },
-    onReset() {
-      const cleared = clearPersistedOverrides();
+    onReset(organizationId) {
+      const cleared = organizationId
+        ? savePersistedOverrides({
+            densityBudgets: getCurrentRegistrySnapshot().densityBudgets,
+            templateFamilyOverrides: getCurrentRegistrySnapshot().templateFamilyOverrides,
+            familyAliasByDeckType: getCurrentRegistrySnapshot().familyAliasByDeckType,
+          })
+        : clearPersistedOverrides();
       if (!cleared.ok) {
         setRegistryLoadWarning({
           reason: 'io_error',

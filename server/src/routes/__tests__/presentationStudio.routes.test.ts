@@ -1539,7 +1539,7 @@ describe('presentationStudio.routes — GET /admin/layout-capacity (S17)', () =>
 
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.scope).toBe('process_global');
+    expect(res.body.data.scope).toBe('tenant');
     expect(res.body.data.current.densityBudgets.balanced).toBeDefined();
     expect(res.body.data.defaults.densityBudgets.balanced).toEqual(
       res.body.data.current.densityBudgets.balanced
@@ -1547,9 +1547,12 @@ describe('presentationStudio.routes — GET /admin/layout-capacity (S17)', () =>
   });
 
   it('reflects an applied override in the current snapshot but not in defaults', async () => {
-    applyLayoutCapacityOverrides({
-      densityBudgets: { balanced: { titleMaxChars: 137 } },
-    });
+    applyLayoutCapacityOverrides(
+      {
+        densityBudgets: { balanced: { titleMaxChars: 137 } },
+      },
+      'org-Sys'
+    );
     const router = await importRouter();
     const req = createMockReq({
       method: 'GET',
@@ -1562,6 +1565,28 @@ describe('presentationStudio.routes — GET /admin/layout-capacity (S17)', () =>
 
     expect(res.body.data.current.densityBudgets.balanced.titleMaxChars).toBe(137);
     expect(res.body.data.defaults.densityBudgets.balanced.titleMaxChars).not.toBe(137);
+  });
+
+  it('returns the authenticated tenant snapshot, not another tenant override (S23)', async () => {
+    applyLayoutCapacityOverrides(
+      {
+        densityBudgets: { balanced: { titleMaxChars: 137 } },
+      },
+      'org-Other'
+    );
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/admin/layout-capacity',
+      path: '/admin/layout-capacity',
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/admin/layout-capacity', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.current.densityBudgets.balanced.titleMaxChars).toBe(90);
+    expect(res.body.data.scope).toBe('tenant');
   });
 
   it('returns 403 PERMISSION_DENIED for OWNER (process-global registry is SUPERADMIN-only)', async () => {
@@ -1687,7 +1712,7 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/propose (S17
   });
 
   it('does NOT mutate the registry when proposal is accepted (dry-run + roll-back)', async () => {
-    const before = getLayoutCapacitySnapshot();
+    const before = getLayoutCapacitySnapshot('org-Sys');
     const router = await importRouter();
     const req = createMockReq({
       url: '/admin/layout-capacity/propose',
@@ -1700,7 +1725,7 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/propose (S17
     const res = createMockRes();
     await runRouter(router, 'POST', '/admin/layout-capacity/propose', req, res);
     expect(res.statusCode).toBe(200);
-    expect(getLayoutCapacitySnapshot()).toEqual(before);
+    expect(getLayoutCapacitySnapshot('org-Sys')).toEqual(before);
   });
 });
 
@@ -1759,7 +1784,8 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/execute (S17
     expect(res.body.data.registrySnapshotAfter.densityBudgets.balanced.titleMaxChars).toBe(100);
 
     expect(audit).toHaveBeenCalledTimes(1);
-    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(getLayoutCapacitySnapshot('org-Sys').densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(getLayoutCapacitySnapshot('org-Other').densityBudgets.balanced.titleMaxChars).toBe(90);
   });
 
   it('returns 403 PRECONDITION_REQUIRED when no ticket id is supplied', async () => {
@@ -1823,7 +1849,9 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/execute (S17
     expect(res.body.reason).toBe('payload_mismatch');
     expect(audit).not.toHaveBeenCalled();
     // Registry state untouched.
-    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).not.toBe(999);
+    expect(getLayoutCapacitySnapshot('org-Sys').densityBudgets.balanced.titleMaxChars).not.toBe(
+      999
+    );
   });
 
   it('returns 403 PERMISSION_DENIED for OWNER trying to execute', async () => {
@@ -1959,8 +1987,11 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/reset/propos
   });
 
   it('does NOT mutate the registry on a successful proposal', async () => {
-    applyLayoutCapacityOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
-    const before = getLayoutCapacitySnapshot();
+    applyLayoutCapacityOverrides(
+      { densityBudgets: { balanced: { titleMaxChars: 100 } } },
+      'org-Sys'
+    );
+    const before = getLayoutCapacitySnapshot('org-Sys');
     const router = await importRouter();
     const req = createMockReq({
       url: '/admin/layout-capacity/reset/propose',
@@ -1970,7 +2001,7 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/reset/propos
     const res = createMockRes();
     await runRouter(router, 'POST', '/admin/layout-capacity/reset/propose', req, res);
     expect(res.statusCode).toBe(200);
-    expect(getLayoutCapacitySnapshot()).toEqual(before);
+    expect(getLayoutCapacitySnapshot('org-Sys')).toEqual(before);
   });
 
   it('returns 403 PERMISSION_DENIED for OWNER trying to propose a reset', async () => {
@@ -2044,8 +2075,15 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/reset/execut
     _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
 
     // Apply an override so the reset has work to do.
-    applyLayoutCapacityOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
-    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).toBe(100);
+    applyLayoutCapacityOverrides(
+      { densityBudgets: { balanced: { titleMaxChars: 100 } } },
+      'org-Sys'
+    );
+    applyLayoutCapacityOverrides(
+      { densityBudgets: { balanced: { titleMaxChars: 140 } } },
+      'org-Other'
+    );
+    expect(getLayoutCapacitySnapshot('org-Sys').densityBudgets.balanced.titleMaxChars).toBe(100);
 
     const router = await importRouter();
     const reason = 'returning to defaults after S17 experiment';
@@ -2068,7 +2106,10 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/reset/execut
     expect(res.body.data.registrySnapshotAfter.densityBudgets.balanced.titleMaxChars).not.toBe(100);
 
     expect(audit).toHaveBeenCalledTimes(1);
-    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).not.toBe(100);
+    expect(getLayoutCapacitySnapshot('org-Sys').densityBudgets.balanced.titleMaxChars).not.toBe(
+      100
+    );
+    expect(getLayoutCapacitySnapshot('org-Other').densityBudgets.balanced.titleMaxChars).toBe(140);
   });
 
   it('returns 403 PRECONDITION_REQUIRED when no ticket id is supplied', async () => {
@@ -2104,7 +2145,10 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/reset/execut
   it('returns 403 payload_mismatch when reason changes between propose and execute', async () => {
     const audit = vi.fn().mockResolvedValue(undefined);
     _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
-    applyLayoutCapacityOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
+    applyLayoutCapacityOverrides(
+      { densityBudgets: { balanced: { titleMaxChars: 100 } } },
+      'org-Sys'
+    );
     const router = await importRouter();
     const { ticketId } = await proposeResetViaRoute(router, { reason: 'rationale A' });
     const req = createMockReq({
@@ -2119,7 +2163,7 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/reset/execut
     expect(res.body.reason).toBe('payload_mismatch');
     expect(audit).not.toHaveBeenCalled();
     // Registry was NOT reset.
-    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(getLayoutCapacitySnapshot('org-Sys').densityBudgets.balanced.titleMaxChars).toBe(100);
   });
 
   it('returns 403 PERMISSION_DENIED for OWNER trying to execute a reset', async () => {

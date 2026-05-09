@@ -529,4 +529,26 @@ describe('presentationStudioLayoutAuditService', () => {
       }).flagCounts.layout_overflow_title
     ).toBe(0);
   });
+
+  it('honours tenant-scoped capacity overrides when organizationId is supplied (S23)', () => {
+    applyCapacityOverrides({ densityBudgets: { balanced: { titleMaxChars: 20 } } }, 'org-A');
+    const outline = [
+      slide({
+        intent: 'executive_summary',
+        title: 'This title is intentionally longer than twenty chars',
+        density: 'balanced',
+        sourceRef: 'assessment:a-1',
+      }),
+    ];
+
+    const tenantAudit = auditPresentationStudioOutlineLayout(outline, {
+      organizationId: 'org-A',
+    });
+    const otherTenantAudit = auditPresentationStudioOutlineLayout(outline, {
+      organizationId: 'org-B',
+    });
+
+    expect(tenantAudit.flagCounts.layout_overflow_title).toBe(1);
+    expect(otherTenantAudit.flagCounts.layout_overflow_title).toBe(0);
+  });
 });

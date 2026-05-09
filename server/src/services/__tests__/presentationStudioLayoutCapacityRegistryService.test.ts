@@ -23,6 +23,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   _snapshotRegistryForTests,
   applyOverrides,
+  getCurrentRegistrySnapshot,
   normalizeTemplateFamily,
   resetToDefaults,
   resolveSlotCapacity,
@@ -190,5 +191,25 @@ describe('presentationStudioLayoutCapacityRegistryService', () => {
     expect(resolveSlotCapacity('visual', null).titleMaxChars).toBe(200);
     resetToDefaults();
     expect(resolveSlotCapacity('visual', null).titleMaxChars).toBe(80);
+  });
+
+  it('keeps tenant-scoped overrides isolated from global defaults and other tenants (S23)', () => {
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 123 } } }, 'org-A');
+
+    expect(resolveSlotCapacity('balanced', null, 'org-A').titleMaxChars).toBe(123);
+    expect(resolveSlotCapacity('balanced', null, 'org-B').titleMaxChars).toBe(90);
+    expect(resolveSlotCapacity('balanced', null).titleMaxChars).toBe(90);
+    expect(getCurrentRegistrySnapshot('org-A').densityBudgets.balanced.titleMaxChars).toBe(123);
+    expect(getCurrentRegistrySnapshot('org-B').densityBudgets.balanced.titleMaxChars).toBe(90);
+  });
+
+  it('resetToDefaults(organizationId) drops only that tenant override (S23)', () => {
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 123 } } }, 'org-A');
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 140 } } }, 'org-B');
+
+    resetToDefaults('org-A');
+
+    expect(resolveSlotCapacity('balanced', null, 'org-A').titleMaxChars).toBe(90);
+    expect(resolveSlotCapacity('balanced', null, 'org-B').titleMaxChars).toBe(140);
   });
 });

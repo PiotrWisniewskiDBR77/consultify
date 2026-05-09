@@ -238,6 +238,8 @@ export interface PresentationStudioOutlineLayoutAuditOptions {
    * `DENSITY_BUDGETS` apply.
    */
   templateFamily?: string | null;
+  /** Organization whose tenant-scoped runtime capacity overrides should apply. */
+  organizationId?: string | null;
 }
 
 /**
@@ -257,6 +259,7 @@ export function auditPresentationStudioOutlineLayout(
   const slideAudits: PresentationStudioSlideLayoutAudit[] = [];
   const warnings: string[] = [];
   const templateFamily = opts.templateFamily ?? null;
+  const organizationId = opts.organizationId ?? null;
 
   outline.forEach((item, index) => {
     const intent = String(item?.intent || '').trim();
@@ -273,12 +276,21 @@ export function auditPresentationStudioOutlineLayout(
     // otherwise we fall back to the slide-level `density`. The
     // template-family override applies inside `resolveSlotCapacity` so
     // S11 + S12 compose cleanly.
-    const titleBudget = resolveSlotCapacity(densityForSlot(item, 'title'), templateFamily);
+    const titleBudget = resolveSlotCapacity(
+      densityForSlot(item, 'title'),
+      templateFamily,
+      organizationId
+    );
     const keyMessageBudget = resolveSlotCapacity(
       densityForSlot(item, 'keyMessage'),
-      templateFamily
+      templateFamily,
+      organizationId
     );
-    const blocksBudget = resolveSlotCapacity(densityForSlot(item, 'blocks'), templateFamily);
+    const blocksBudget = resolveSlotCapacity(
+      densityForSlot(item, 'blocks'),
+      templateFamily,
+      organizationId
+    );
 
     // 1. Slot capacity
     if (typeof item?.title === 'string' && item.title.length > titleBudget.titleMaxChars) {

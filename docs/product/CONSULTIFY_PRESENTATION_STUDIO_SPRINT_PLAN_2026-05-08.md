@@ -1864,3 +1864,78 @@ Closed R-S18-2: the persisted layout-capacity override file is now authenticated
 - **R-S17-2 / R-S13-1 / R-S18-1:** tenant-scoped layout-capacity overrides and persistence. Larger refactor across registry signatures, persistence file format, admin API, audit payload, and UI.
 - **R-S14-3 / R-S15-2 / R-S16 follow-ups:** per-slide layout-audit drill-down in the Studio canvas.
 - **Operations runbook:** document required `CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_HMAC_SECRET`, `signature_mismatch` remediation, and `io_error` remediation from S21 fsync failures.
+
+
+---
+
+## Sprint S23 — tenant-scoped layout-capacity overrides (closes R-S13-1 + R-S18-1 + R-S17-2)
+
+**Status:** Completed
+**Date:** 2026-05-09
+**Phase:** 2 (Implementation)
+**Touched files:** 13 (7 production backend files, 4 backend service test files, 1 route test file, 1 sprint-plan gate report)
+
+### Scope
+
+Closed the process-global write blast radius for layout-capacity overrides. Before S23, a SuperAdmin override applied through `/admin/layout-capacity/*` mutated the single process-global registry used by every tenant on the Node process. After S23, admin reads/writes/resets are scoped to the authenticated `organizationId`, persistence stores tenant snapshots separately, and layout audit/generate paths pass the tenant context into capacity resolution so runtime behavior actually uses the tenant-specific caps.
+
+### Changes
+
+- **MODIFIED** `server/src/services/presentationStudioLayoutCapacityRegistryService.ts`
+  - Added tenant state map keyed by normalized `organizationId`.
+  - Kept legacy/global helper calls available for defaults/tests/backward compatibility.
+  - `applyOverrides(payload, organizationId?)`, `resetToDefaults(organizationId?)`, `getCurrentRegistrySnapshot(organizationId?)`, `resolveSlotCapacity(..., organizationId?)`, and `normalizeTemplateFamily(..., organizationId?)` now support tenant-scoped behavior.
+  - Added `getAllTenantRegistrySnapshots()` for persistence.
+  - Registry hooks now receive `organizationId` so persistence can write the correct full state.
+- **MODIFIED** `server/src/services/presentationStudioLayoutCapacityAdminService.ts`
+  - Propose dry-run, execute, rollback, reset, and audit snapshots now operate on the caller's `organizationId`.
+  - Audit payloads remain self-contained, but their before/after snapshots are now tenant snapshots rather than process-global state.
+- **MODIFIED** `server/src/routes/presentationStudio.routes.ts`
+  - `GET /admin/layout-capacity` returns the authenticated tenant snapshot and `scope: 'tenant'`.
+  - Existing proposal/execute/reset routes already pass `orgId`; S23 makes that org binding meaningful at the registry layer.
+- **MODIFIED** `server/src/services/presentationStudioLayoutCapacityPersistenceService.ts`
+  - Added signed `schemaVersion=2` persistence format:
+    - `globalOverrides`
+    - `tenantOverridesByOrganizationId`
+    - `signature`
+  - Signed `schemaVersion=1` files remain restorable as global-only snapshots.
+  - Restore replays global first, then each tenant snapshot; validator rejection rolls back to defaults.
+  - Tenant reset rewrites the signed file with remaining tenants instead of deleting the whole file.
+- **MODIFIED** runtime audit/generation plumbing:
+  - `presentationStudioLayoutAuditService.ts` accepts `organizationId` and passes it into `resolveSlotCapacity`.
+  - `presentationStudioOrchestrationService.ts` passes `organizationId` for preview and execute layout audit.
+  - `presentationGeneratorService.ts` passes `organizationId` into the final layout-audit decoration path.
+  - Fixed the existing generate audit payload type to include `layoutAuditFlagCounts`, matching runtime behavior.
+
+### Test Coverage
+
+- **Registry tests:** added tenant isolation + tenant-only reset coverage.
+- **Persistence tests:** added signed schema v2 tenant persistence + restore coverage.
+- **Admin service tests:** added tenant-scoped execute coverage and updated reset assertions to use the authenticated tenant.
+- **Layout audit tests:** added proof that org-A capacity overrides affect org-A audit and do not affect org-B.
+- **Route tests:** added tenant-scoped admin GET coverage and updated execute/reset assertions to use the authenticated tenant snapshot.
+
+### Validation
+
+- **S23 backend + route vitest:** 187/187 passed.
+  - registry 16
+  - persistence 50
+  - admin service 22
+  - layout audit 28
+  - routes 71
+- **ESLint on S23-touched files:** 0 errors; existing warnings remain in legacy files (`no-explicit-any` in generator/orchestration, `no-non-null-assertion` in mock-heavy tests).
+- **IDE lints:** no linter errors on S23 production files.
+- **Focused TypeScript:** no S23-touched-file errors after adding `layoutAuditFlagCounts` to the generate audit payload type. The focused run still reports the pre-existing unrelated `ContextDocumentService.ts` `Express.Multer` baseline (5 errors), unchanged by S23.
+
+### Acceptance
+
+- R-S13-1 closed: layout-capacity overrides are no longer process-global for admin mutations.
+- R-S18-1 closed: persistence stores tenant-scoped runtime snapshots and restores them after restart.
+- R-S17-2 closed: admin audit before/after snapshots are scoped to the authenticated tenant.
+- Tenant safety: org-A overrides do not affect org-B, global/default registry reads, admin GET for another tenant, or layout audit for another tenant.
+- Backward compatibility: signed S22 `schemaVersion=1` files still restore as global-only snapshots; new writes use signed `schemaVersion=2`.
+
+### Remaining backlog
+
+- **R-S14-3 / R-S15-2 / R-S16 follow-ups:** per-slide layout-audit drill-down on the Studio canvas.
+- **Operations runbook:** document the required HMAC secret, schema v2 tenant persistence, `signature_mismatch`, and `io_error` remediation.

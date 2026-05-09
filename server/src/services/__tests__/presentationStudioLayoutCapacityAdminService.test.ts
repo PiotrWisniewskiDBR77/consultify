@@ -71,14 +71,14 @@ describe('proposeLayoutCapacityOverrides', () => {
   });
 
   it('does NOT mutate the registry on a successful proposal (dry-run + roll-back)', () => {
-    const before = getCurrentRegistrySnapshot();
+    const before = getCurrentRegistrySnapshot('org-A');
     proposeLayoutCapacityOverrides({
       organizationId: 'org-A',
       userId: 'user-1',
       overrides: { densityBudgets: { balanced: { titleMaxChars: 100 } } },
       reason: 'test',
     });
-    const after = getCurrentRegistrySnapshot();
+    const after = getCurrentRegistrySnapshot('org-A');
     expect(after).toEqual(before);
   });
 
@@ -172,7 +172,7 @@ describe('executeLayoutCapacityOverrides', () => {
   it('applies overrides + records audit on a clean propose -> execute round-trip', async () => {
     const audit = vi.fn().mockResolvedValue(undefined);
     _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
-    const before = getCurrentRegistrySnapshot();
+    const before = getCurrentRegistrySnapshot('org-A');
 
     const propose = proposeLayoutCapacityOverrides({
       organizationId: 'org-A',
@@ -195,7 +195,7 @@ describe('executeLayoutCapacityOverrides', () => {
     if (!result.ok) return;
 
     // Registry was actually mutated.
-    const after = getCurrentRegistrySnapshot();
+    const after = getCurrentRegistrySnapshot('org-A');
     expect(after.densityBudgets.balanced.titleMaxChars).toBe(100);
     expect(before.densityBudgets.balanced.titleMaxChars).not.toBe(100);
 
@@ -215,6 +215,32 @@ describe('executeLayoutCapacityOverrides', () => {
     expect(auditArg.details.registrySnapshotAfter.densityBudgets.balanced.titleMaxChars).toBe(100);
     expect(auditArg.ipAddress).toBe('127.0.0.1');
     expect(auditArg.userAgent).toBe('test-agent');
+  });
+
+  it('applies overrides only to the authenticated organization scope (S23)', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+
+    const propose = proposeLayoutCapacityOverrides({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      overrides: { densityBudgets: { balanced: { titleMaxChars: 123 } } },
+      reason: 'tenant-specific executive deck cap',
+    });
+    if (!propose.ok) throw new Error('propose failed unexpectedly');
+
+    const result = await executeLayoutCapacityOverrides({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      overrides: { densityBudgets: { balanced: { titleMaxChars: 123 } } },
+      reason: 'tenant-specific executive deck cap',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(getCurrentRegistrySnapshot('org-A').densityBudgets.balanced.titleMaxChars).toBe(123);
+    expect(getCurrentRegistrySnapshot('org-B').densityBudgets.balanced.titleMaxChars).toBe(90);
+    expect(getCurrentRegistrySnapshot().densityBudgets.balanced.titleMaxChars).toBe(90);
   });
 
   it('a redeemed ticket cannot be redeemed a second time (single-use semantics)', async () => {
@@ -443,11 +469,14 @@ describe('executeLayoutCapacityReset', () => {
     _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
 
     // Apply a non-default override so the reset has something to drop.
-    applyOverrides({
-      densityBudgets: { balanced: { titleMaxChars: 100 } },
-      familyAliasByDeckType: { synthetic: 'Universal' },
-    });
-    const before = getCurrentRegistrySnapshot();
+    applyOverrides(
+      {
+        densityBudgets: { balanced: { titleMaxChars: 100 } },
+        familyAliasByDeckType: { synthetic: 'Universal' },
+      },
+      'org-A'
+    );
+    const before = getCurrentRegistrySnapshot('org-A');
     expect(before.densityBudgets.balanced.titleMaxChars).toBe(100);
     expect(before.familyAliasByDeckType.synthetic).toBe('Universal');
 
@@ -469,7 +498,7 @@ describe('executeLayoutCapacityReset', () => {
     if (!result.ok) return;
 
     // Registry was actually reset to canonical defaults.
-    const after = getCurrentRegistrySnapshot();
+    const after = getCurrentRegistrySnapshot('org-A');
     const defaults = getDefaultRegistrySnapshot();
     expect(after).toEqual(defaults);
     expect(after.densityBudgets.balanced.titleMaxChars).not.toBe(100);
@@ -497,7 +526,7 @@ describe('executeLayoutCapacityReset', () => {
   it('emits audit AFTER the reset (snapshotAfter equals defaults, not the pre-state)', async () => {
     const audit = vi.fn().mockResolvedValue(undefined);
     _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
-    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } }, 'org-A');
 
     const propose = proposeLayoutCapacityReset({
       organizationId: 'org-A',
