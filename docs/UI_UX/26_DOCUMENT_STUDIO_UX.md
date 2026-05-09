@@ -32,12 +32,20 @@ Zdefiniować docelowy UX dla `Consultify Document Studio`: produkcja profesjonal
 - **MUST**: `Request Intake` nie jest “samym promptem”:
   - UI zbiera intencję i parametry (typ, odbiorca, cel, język, formalność, template, termin, confidentiality…),
   - potrafi startować z wielu miejsc (chat/projekt/research/interview/artifact/CRM).
+- **MUST**: Intake nie może być “formularzem-wall-of-fields”:
+  - startuje od **5–7 najważniejszych pytań**,
+  - reszta jest wywnioskowana albo dopytywana tylko, gdy brakuje danych lub występuje konflikt.
 - **MUST**: `Source Pack Builder` jest widoczny dla użytkownika przed generacją i podczas review:
   - co użyto / co pominięto,
   - braki danych,
   - statusy źródeł (approved/working/blocked/partial),
+  - `missing_inputs[]` jako jawna lista,
+  - confidence/assumption posture: twierdzenia bez źródeł są oznaczane (a nie “wygładzane”),
   - ścieżka “kliknij źródło” (traceability).
 - **MUST**: `Narrative Planner` pokazuje strukturę dokumentu **przed** wygenerowaniem treści (user akceptuje plan).
+- **MUST**: Template nie jest plikiem `.docx` jako źródło prawdy:
+  - template to `schema + formatting schema + export rules + governance metadata`,
+  - template ma statusy i wersjonowanie (draft/review/approved/deprecated).
 - **MUST**: AI edit loop jest kontrolowany:
   - AI proponuje zmianę,
   - UI pokazuje diff (minimum sekcja/akapit),
@@ -48,10 +56,17 @@ Zdefiniować docelowy UX dla `Consultify Document Studio`: produkcja profesjonal
   - zgodność z template’em/brandem,
   - źródła/citations,
   - sprzeczności i braki.
+- **MUST**: `QA Engine` ma czytelny verdict UI oraz mapowanie do kanonu testowego aplikacji:
+  - `PASS` → `PASS`
+  - `PASS WITH WARNINGS` / `NEEDS REVIEW` → `PASS_WITH_P2`
+  - `BLOCKED` → `BLOCKED_P1`
 - **MUST**: Export:
   - DOCX musi mieć prawdziwe style (H1/H2/H3, TOC, header/footer, page breaks) — inaczej traci enterprise credibility,
   - PDF musi być stabilny paginacyjnie,
   - błąd eksportu nie niszczy artifactu (fallback: internal artifact + preview).
+- **MUST**: Export może (w zależności od template i poufności) obejmować paczki:
+  - `appendix package` (załączniki/appendixy),
+  - `source package` (kontrolowany pakiet źródeł / evidence), jeśli polityka na to pozwala.
 - **MUST**: “No silent writes”: żadna istotna mutacja (AI ani user) nie zachodzi bez jawnego potwierdzenia i bez śladu audytu.
 - **MUST**: Integracja z Teresą:
   - komendy edycyjne usera idą przez Teresę (jedna powierzchnia rozmowy),
@@ -67,7 +82,10 @@ Zdefiniować docelowy UX dla `Consultify Document Studio`: produkcja profesjonal
 
 - **SHOULD**: Wspierać edycję sekcyjną i chunking (długie dokumenty 50–150 stron) bez regenerowania całości.
 - **SHOULD**: Wspierać warianty persony/audience (CEO/client/internal/board) jako transformacje wersji dokumentu.
+- **SHOULD**: Wspierać poziomy edycji AI (jako operacje na strukturze): lokalna / sekcyjna / globalna / metodologiczna / źródłowa / transformacyjna.
 - **SHOULD**: Template Registry ma pełne metadane: wersja, status (draft/review/approved/deprecated), owner, audience, region/language/brand, required inputs, export rules, history.
+- **SHOULD**: Integracje z Word/Google Docs są kanałem wyjściowym lub opcjonalnym “edit-later path”, ale nie przejmują: sources/provenance, approvals, audit i lifecycle.
+- **SHOULD**: Document Studio jest “Presentation Studio dla Word/PDF” w sensie pętli pracy: plan → approval → generation → AI editor → versions/QA/export (spójna mental model dla usera).
 
 ## Acceptance Criteria
 
@@ -86,4 +104,6 @@ Zdefiniować docelowy UX dla `Consultify Document Studio`: produkcja profesjonal
 - `DRD/consultify/docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md`
 - `DRD/consultify/docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md`
 - `DRD/consultify/docs/UI_UX/92_RAW_DOCUMENT_STUDIO_RESEARCH_2026-05-08.md`
+- `DRD/consultify/docs/UI_UX/93_RAW_DOCUMENT_STUDIO_ANALYSIS_2026-05-09.md`
+- `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
 

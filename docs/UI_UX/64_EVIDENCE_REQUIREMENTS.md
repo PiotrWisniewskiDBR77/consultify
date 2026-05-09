@@ -28,6 +28,8 @@ Nowe funkcje, przebudowy, naprawy P0/P1 oraz “enterprise readiness” claims.
 
 - **MUST**: Dowód `Source Pack Builder`:
   - screen/lista źródeł + statusy + “co pominięto” + wskazane braki danych.
+- **MUST**: Dowód “source posture”:
+  - fragment dokumentu z oznaczeniem: `has source` vs `assumption / missing source` (bez wygładzania).
 - **MUST**: Dowód `AI edit loop`:
   - proposal → diff (sekcja/akapit) → approve/reject → nowa wersja + audit entry.
 - **MUST**: Dowód exportu:
@@ -35,6 +37,21 @@ Nowe funkcje, przebudowy, naprawy P0/P1 oraz “enterprise readiness” claims.
   - PDF stabilny (pagination) **albo** jawny degraded/fallback jeśli PDF pipeline niedostępny.
 - **MUST**: Dowód “no fake success”:
   - export fail pokazany jawnie, artifact bezpieczny, użytkownik ma recovery path.
+
+## Presentation Studio (minimal evidence pack)
+
+- **MUST**: Dowód “plan before generate”:
+  - outline/plan decku widoczny przed generacją slajdów.
+- **MUST**: Dowód source posture:
+  - slajd/claim z `SourceReference` oraz jawny warning dla claimu bez źródła.
+- **MUST**: Dowód `AI edit loop`:
+  - proposal → diff (co najmniej treść + źródła) → approve/reject → nowa wersja + audit entry.
+- **MUST**: Dowód rozróżnienia deck intent:
+  - “do czytania” vs “do prezentowania” widoczne w UI i wpływa na output.
+- **MUST**: Dowód exportu:
+  - PPTX otwieralny i edytowalny w PowerPoint,
+  - PDF gotowy do wysłania,
+  - jawny degraded/fallback jeśli któryś pipeline niedostępny.
 
 ## Must Not
 

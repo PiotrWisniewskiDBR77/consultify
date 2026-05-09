@@ -75,3 +75,24 @@ P0
 ### Rationale
 Bez schema-first + source pack + governance Document Studio degraduje się do “generatora tekstu” i traci enterprise credibility (szczególnie przez słaby DOCX i brak audytu).
 
+## 2026-05-09 — Presentation Studio as Gamma-class governed artifact (not “PowerPoint with AI”)
+
+### Decision
+`Consultify Presentation Studio` jest `Presentation Artifact Engine`: deck to **żywy artifact** z wersjami, diffem, źródłami per claim, approval i audytem. Gamma jest benchmarkiem płynności i jakości wizualnej, ale nie jest blueprintem — przewaga Consultify to enterprise governance + consulting execution + integracja z danymi (Docs/Tables/Tasks/CRM/KPI/Risk).
+
+PPTX export jest funkcją krytyczną (enterprise standard), a system rozróżnia deck “do prezentowania” vs “do czytania”.
+
+### Applies to
+Presentation Studio / deck builder + template registry + export UX + AI edit loop
+
+### Severity
+P0
+
+### Files updated
+- `27_PRESENTATION_STUDIO_UX.md`
+- `99_RAW_INPUT.md`
+- `96_RAW_PRESENTATION_STUDIO_GAMMA_CLASS_2026-05-09.md`
+
+### Rationale
+Bez źródeł/diff/approval i PPTX-quality Presentation Studio degraduje się do “ładnego generatora slajdów”, co jest commodity i nie przechodzi enterprise trust gate.
+

@@ -1,30 +1,38 @@
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import type { ChartConfiguration, ChartDataset, ScatterDataPoint } from 'chart.js';
 
 import {
-  documentChartBlockContent,
   type DocumentBlock,
+  documentChartBlockContent,
   type DocumentChartKind,
 } from './documentStudioTypes.js';
 
 const DEFAULT_WIDTH = 960;
 const DEFAULT_HEIGHT = 540;
 
-const PALETTE = [
-  '#2563EB',
-  '#0D9488',
-  '#7C3AED',
-  '#DC2626',
-  '#EA580C',
-  '#0891B2',
-  '#65A30D',
-];
+const PALETTE = ['#2563EB', '#0D9488', '#7C3AED', '#DC2626', '#EA580C', '#0891B2', '#65A30D'];
 
-const chartCanvas = new ChartJSNodeCanvas({
-  width: DEFAULT_WIDTH,
-  height: DEFAULT_HEIGHT,
-  backgroundColour: 'white',
-});
+type ChartCanvasCtor = {
+  new (options: { width: number; height: number; backgroundColour: string }): {
+    renderToBuffer: (configuration: ChartConfiguration, mimeType?: string) => Promise<Buffer>;
+  };
+};
+
+let chartCanvasCtor: ChartCanvasCtor | null | undefined;
+let defaultChartCanvas: {
+  renderToBuffer: (configuration: ChartConfiguration, mimeType?: string) => Promise<Buffer>;
+} | null = null;
+
+async function getChartCanvasCtor(): Promise<ChartCanvasCtor | null> {
+  if (chartCanvasCtor !== undefined) return chartCanvasCtor;
+  try {
+    const mod = await import('chartjs-node-canvas');
+    chartCanvasCtor = mod.ChartJSNodeCanvas as unknown as ChartCanvasCtor;
+    return chartCanvasCtor;
+  } catch {
+    chartCanvasCtor = null;
+    return null;
+  }
+}
 
 function paletteColor(index: number): string {
   return PALETTE[index % PALETTE.length];
@@ -45,7 +53,9 @@ function chartTypeForKind(kind: DocumentChartKind): ChartConfiguration['type'] {
   return kind;
 }
 
-function labelsFromContent(content: NonNullable<ReturnType<typeof documentChartBlockContent>>): string[] {
+function labelsFromContent(
+  content: NonNullable<ReturnType<typeof documentChartBlockContent>>
+): string[] {
   if (Array.isArray(content.categories) && content.categories.length > 0) {
     return content.categories.map((value) => String(value));
   }
@@ -96,6 +106,9 @@ export async function renderChartBlockToPng(
   block: DocumentBlock,
   options: { width?: number; height?: number } = {}
 ): Promise<Buffer | null> {
+  const CanvasCtor = await getChartCanvasCtor();
+  if (!CanvasCtor) return null;
+
   const content = documentChartBlockContent(block);
   if (!content) return null;
   if (!Array.isArray(content.series) || content.series.length === 0) return null;
@@ -105,14 +118,22 @@ export async function renderChartBlockToPng(
   if (datasets.length === 0) return null;
 
   const chartType = chartTypeForKind(content.kind);
-  const width = Number.isFinite(options.width) && (options.width ?? 0) > 0 ? options.width! : 960;
-  const height =
-    Number.isFinite(options.height) && (options.height ?? 0) > 0 ? options.height! : 540;
+  const widthCandidate = Number(options.width);
+  const heightCandidate = Number(options.height);
+  const width = Number.isFinite(widthCandidate) && widthCandidate > 0 ? widthCandidate : 960;
+  const height = Number.isFinite(heightCandidate) && heightCandidate > 0 ? heightCandidate : 540;
 
+  if (!defaultChartCanvas) {
+    defaultChartCanvas = new CanvasCtor({
+      width: DEFAULT_WIDTH,
+      height: DEFAULT_HEIGHT,
+      backgroundColour: 'white',
+    });
+  }
   const localCanvas =
     width === DEFAULT_WIDTH && height === DEFAULT_HEIGHT
-      ? chartCanvas
-      : new ChartJSNodeCanvas({ width, height, backgroundColour: 'white' });
+      ? defaultChartCanvas
+      : new CanvasCtor({ width, height, backgroundColour: 'white' });
 
   const configuration: ChartConfiguration = {
     type: chartType,

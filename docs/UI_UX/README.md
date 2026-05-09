@@ -80,6 +80,8 @@ Jeśli dokument niższego poziomu jest sprzeczny z tym katalogiem, należy go tr
   - standard hubów modułowych: listy, taby, filtry, dynamic tabs, preview pane
 - `26_DOCUMENT_STUDIO_UX.md`
   - docelowy UX kontrakt dla `Document Studio` (schema-first artifact + source pack + diff/approval + export)
+- `27_PRESENTATION_STUDIO_UX.md`
+  - docelowy UX kontrakt dla `Presentation Studio` (Gamma-class artifact engine + sources + diff/approval + PPTX/PDF export)
 - `22_EXECUTIVE_ARTIFACT_LAYOUT.md`
   - Wordy / Tabele / Prezentacje: lewy rail, canvas, prawy rail, top actions
   - link do MELS: `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md`
