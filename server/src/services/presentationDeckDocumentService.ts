@@ -52,6 +52,17 @@ export interface DeckDocumentCard {
   background: { type: 'theme' | 'color' | 'gradient' | 'image'; value?: string };
   animations: { entrance: 'fade' | 'slide_up' | 'none'; block_stagger: boolean };
   is_locked: boolean;
+  /**
+   * Sprint S16 — Layout audit flags carried forward from the
+   * `UnifiedSlide.auditFlags` channel established in S15. Persists into
+   * the deck document so downstream renderers (PDF — closing R-S15-1,
+   * future deck viewers, audit logs) can render an inline review marker
+   * without re-running the audit. Values are the audit's stable
+   * `LayoutAuditFlag` ids — see `report/audit/layoutAuditFlagPriority`
+   * for the canonical set. Backward compatible: legacy decks omit the
+   * field; renderers treat `undefined` / empty arrays as "no marker".
+   */
+  audit_flags?: string[];
 }
 
 export interface DeckDocument {
@@ -390,6 +401,15 @@ export function deckDocumentFromUnifiedJson(params: {
     const cardId =
       (slide as any).slide_id || (slide as any).card_id || `card-${params.deckId}-${index}`;
     const blocks = blocksFromUnifiedSlide(params.deckId, cardId, slide, index, slideRefs);
+    // Sprint S16 — carry layout audit flags forward into the deck
+    // document so downstream renderers (PDF and future deck viewers)
+    // can render the truncation marker without re-running the audit.
+    // Filter to non-empty string entries to defend against accidental
+    // upstream `null` / object values.
+    const rawFlags = Array.isArray((slide as any).auditFlags)
+      ? ((slide as any).auditFlags as unknown[])
+      : [];
+    const auditFlags = rawFlags.filter((f): f is string => typeof f === 'string' && f.length > 0);
     return {
       card_id: cardId,
       deck_id: params.deckId,
@@ -416,6 +436,7 @@ export function deckDocumentFromUnifiedJson(params: {
       },
       animations: { entrance: 'fade', block_stagger: false },
       is_locked: false,
+      ...(auditFlags.length > 0 ? { audit_flags: auditFlags } : {}),
     } satisfies DeckDocumentCard;
   });
   const sourceRefs = uniqueSourceRefs([

@@ -1350,3 +1350,67 @@ Tests:
   - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down (R-S14-3 + R-S15-2 both nudge this direction).
   - Optional: tenant-scoped layout capacity overrides (closes R-S13-1) — bigger refactor, probably its own 2-sprint mini-track.
 
+## Phase 2 — Sprint S16 gate (PDF parity for the truncation marker / 2026-05-09)
+
+Status: `PASS_WITH_P2`
+
+### Scope landed in S16
+
+S16 closes R-S15-1 — the highest-priority risk left after S15. Before S16 the PPTX export of a deck with audit findings shipped a visible review marker on every flagged slide (S15), but the PDF export of the SAME deck rendered no marker. A reviewer who only saw the PDF artifact had no signal that the audit fired — exactly the asymmetry that motivated the renderer-side honesty work in the first place.
+
+S16 closes that gap by extending the data path: `UnifiedSlide.auditFlags` (S15) is now persisted onto `DeckDocumentCard.audit_flags` during the unified→card conversion, so the PDF route can read flags off the card without re-running the audit. The PDF route then renders an equivalent marker — same priority tiering (rose for high-priority, amber for advisory), same `⚠ <count>` label semantics, same drift-guarded recognized-flag set. The decision logic itself is now shared with the PPTX marker through a new `report/audit/layoutAuditFlagPriority` module, so a future audit-flag addition cannot silently slip past one renderer port.
+
+Strictly additive at every layer. Legacy decks ship without `audit_flags` on cards; the PDF route's marker call is a no-op when the field is absent or empty; marker failures are non-fatal (logged, page still renders).
+
+### Changes shipped
+
+Shared decision module (new):
+
+- `report/audit/layoutAuditFlagPriority.ts` (new): exports `KNOWN_FLAGS`, `HIGH_PRIORITY_FLAGS`, and `decideLayoutAuditMarker(flags)`. Pure — no I/O, no clock, no globals. Returns `{ shouldRender, priority: 'high' | 'advisory' | 'none', recognizedFlagCount, recognizedFlags }` after deduping, filtering to known flags, and sorting for determinism. Single source of truth that both renderer ports consume.
+- `report/pptx/composites/LayoutTruncationMarker.ts`: refactored to consume the shared module. The S15 entry points `decideLayoutTruncationMarker(slide)` and `LayoutTruncationMarkerDecision` are kept as backward-compat shims; the test surface (`_highPriorityFlagsForTests` / `_knownFlagsForTests`) is preserved and now re-exports the shared sets so existing drift-guard tests keep passing without rewrites.
+
+Deck document (data path):
+
+- `presentationDeckDocumentService.DeckDocumentCard`: added optional `audit_flags?: string[]` field with documentation pointing at the `LayoutAuditFlag` set as the canonical source.
+- `deckDocumentFromUnifiedJson`: copies `slide.auditFlags` from the UnifiedSlide onto `card.audit_flags` during the conversion. Filters non-string and empty entries defensively. Omits the field entirely when there are no recognized flags so legacy / clean decks roundtrip with zero shape change.
+
+PDF renderer (new + wired):
+
+- `report/pdf/PdfLayoutTruncationMarker.ts` (new): pure helpers `buildPdfLayoutTruncationMarker(flags, page)` and `applyPdfLayoutTruncationMarker(doc, instruction)`. Build returns a `PdfMarkerInstruction | null` describing the geometry, fill / text colors (amber `#D97706` advisory, rose `#BE123C` high-priority), and label string. Apply consumes the instruction against a structural `PdfDocumentLike` interface (subset of pdfkit's `PDFDocument`) so tests can pass a mock without wiring a live binding. `save()` / `restore()` is wrapped in `try/finally` so a `text()` failure can never leak fill colors back into caller code.
+- `routes/presentations.routes.ts::GET /decks/:deckId/export/pdf`: imports the helper and calls it BEFORE the page title is drawn (so the badge sits above any title that wraps to multiple lines). The marker call is wrapped in try/catch — a marker failure logs a warning and the page still renders without it.
+
+Tests:
+
+- `report/audit/__tests__/layoutAuditFlagPriority.test.ts` (new, 17 tests): null / undefined / empty / unrecognized-only inputs return no-render; advisories vs high-priority classification; high-priority upgrade when mixed with advisories; deduping; filtering of unrecognized strings; deterministic sort; defensive rejection of non-string entries. Two **drift guards**: `HIGH_PRIORITY_FLAGS ⊆ KNOWN_FLAGS`, and `KNOWN_FLAGS` size + membership exactly match the canonical `LayoutAuditFlag` set (any future flag that's added to the audit without updating the shared module fails CI before it ships).
+- `report/pdf/__tests__/PdfLayoutTruncationMarker.test.ts` (new, 11 tests): null / empty / unrecognized-only flags return null; advisory flags produce amber colors + `⚠ <count>`; high-priority flags upgrade to rose; marker positions in the top-right inside the page margin; landscape vs portrait pages produce different x but same width formula; single-digit counts use the base width (real-world cap = 6 known flags); applier emits `save → roundedRect → fill → text → restore` in order with the right colors and label; `restore()` always runs even when `text()` throws (graphics state never leaks).
+- `__tests__/presentationDeckDocumentService.test.ts` (new, 5 tests): clean slides produce cards without `audit_flags`; recognized flags propagate verbatim; non-string / empty / null entries are dropped defensively; empty-array `auditFlags` is treated as "no flags"; mixed slides only get the field on slides that actually had recognized flags.
+
+### Validation
+
+- `npx vitest run` on twelve Studio-scoped suites including the three new S16 suites + adjacent generator-golden + the S15 PPTX marker (refactor-sensitive) + decorator + orchestration + audit + capacity registry + intent-density-defaults + approval ticket + Studio routes — **168/168 pass**. No regressions; the S15 PPTX marker tests pass identically post-refactor (the shared module is a strict extraction, not a behavior change).
+- `npx eslint --fix` on the eight S16 in-scope files — **0 errors**, 188 pre-existing P3 warnings (all `no-explicit-any` / `no-non-null-assertion` / `require()` style imports / empty blocks in pre-S16 code or test scaffolding; not touched per the S0 baseline policy). The new files contributed zero new error-level findings.
+- `npx tsc --noEmit -p tsconfig.json` filtered to S16 in-scope files — **0 errors** in any file S16 touched. Pre-existing TS noise outside S16 scope (`presentationStudioOrchestrationService` audit-details shape from S15, `tablePlatform` type drift) is documented as out-of-scope baseline carry-over and tracked separately; the test suite passes despite it because the runtime shapes are correct, only the inline type declarations have drifted.
+
+### Acceptance criteria covered by S16
+
+- AC: a deck whose Studio canvas surfaces an audit banner now also carries a visible review marker on its EXPORTED PDF (not just the PPTX). **Met.** PDF route reads `card.audit_flags` and renders the marker for every recognized non-empty flag set, mirroring the PPTX wiring.
+- AC: PDF marker priority semantics match the PPTX marker AND the canvas banner. **Met.** Same priority tiers, same flag classification (via the shared `decideLayoutAuditMarker`), rose vs amber color tones chosen to read as `serious` vs `advisory` against a white PDF background while remaining recognizable to a reviewer who has previously seen the banner or PPTX.
+- AC: legacy decks (without `audit_flags` on cards) export unchanged. **Met.** The marker call is a no-op when the field is absent or empty; the rest of the PDF rendering pipeline is unchanged.
+- AC: a marker failure on one card must NOT break the rest of the export. **Met.** Per-card try/catch — a single bad page logs a warning and continues with the unmarked card; subsequent cards render normally.
+- AC: drift between audit flag classes and renderer-recognized flags must fail before merge. **Met.** The shared `KNOWN_FLAGS` drift guard test covers BOTH PPTX and PDF since both ports now consume the same module — adding a new flag to the audit without updating the shared module fails CI before either port can silently ignore it.
+
+### Risks / open items (deferred)
+
+- R-S16-1 (P3): the PDF marker uses fixed pixel positioning (`page.width - margin - markerWidth, margin / 2`). If a future deck adopts a non-A4 page (e.g. US Letter, custom widescreen) the position math still works — `page.width` is read from the live `PDFDocument` — but the marker font size is fixed at 10pt regardless of page dimensions. A 4K-print custom page would see a relatively small badge. Mitigation: scale the marker proportionally to page width when a non-A4 page is requested. Out of scope for this sprint.
+- R-S16-2 (P3): the PDF marker's `⚠` glyph relies on the document's default font having Unicode coverage for U+26A0. PDFKit's default `Helvetica` does, but a future brand theme that switches to a font without warning-glyph coverage will render a tofu / fallback glyph. Same mitigation note as R-S15-3 applies — document the requirement and ship a font-fallback path if a brand without that coverage is onboarded.
+- R-S16-3 (P3): the badge sits above the page title at a fixed y-offset. A page with an extremely long title that wraps to 3+ lines could visually crowd the badge. The current placement (top-right of the page margin band) is the same compromise the PPTX marker makes — the audit signal stays visible without competing for the title's reading flow. A follow-up could move it to the page-footer or pre-page-summary card instead of overlaying the title area; this is a design call and intentionally out of scope here.
+- Carry-overs from S13 / S14 / S15: R-S13-1 (tenant scoping), R-S13-2 (override persistence), R-S13-3 (admin endpoint), R-S14-1 (deck-type axis on intent defaults), R-S14-3 (UI distinction between user-set vs inferred densities), R-S15-2 (marker shows count but not flag classes), R-S15-3 (marker glyph fallback), R-S15-4 (deck-level aggregate indicator) all remain open.
+
+### Next sprint plan
+
+- Sprint S17 candidates (subject to your approval):
+  - SuperAdmin layout-capacity admin endpoint (closes R-S13-3): authenticated POST that wraps `applyOverrides` with `proposal -> approval -> execution -> audit`. Highest open governance gap now that the renderer honesty story is closed across both export formats.
+  - Dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down (R-S14-3 + R-S15-2 + R-S16 user-pull all converge here).
+  - Tenant-scoped layout capacity overrides (closes R-S13-1) — the bigger refactor; probably its own 2-sprint mini-track because it touches the registry signature, the audit signature, and persistence.
+  - Optional: deck-level aggregate indicator (closes R-S15-4) — a small pre-page summary card or end-of-deck flag count, mirroring the canvas banner aggregate.
+

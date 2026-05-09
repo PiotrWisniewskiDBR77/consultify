@@ -136,6 +136,10 @@ import {
   listSavedSearches as listWatchlistSavedSearches,
   markUsed as markWatchlistSavedSearchUsed,
 } from '../services/presentationWatchlistSavedSearchService.js';
+import {
+  applyPdfLayoutTruncationMarker,
+  buildPdfLayoutTruncationMarker,
+} from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -1630,11 +1634,35 @@ router.get(
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
     try {
-      const doc = new PDFDocument({ margin: 48, size: 'A4' });
+      const pdfMargin = 48;
+      const doc = new PDFDocument({ margin: pdfMargin, size: 'A4' });
       doc.pipe(res);
 
       cards.forEach((card: any, index: number) => {
         if (index > 0) doc.addPage();
+
+        // Sprint S16 — render the layout-audit truncation marker BEFORE
+        // the page title so the badge sits above any title that wraps
+        // to multiple lines. The marker is a no-op when `card.audit_flags`
+        // is empty/missing (legacy decks). Closes R-S15-1: PDF parity for
+        // the renderer-side honest truncation indicator.
+        try {
+          const flags: string[] | undefined = Array.isArray(card?.audit_flags)
+            ? (card.audit_flags as string[])
+            : undefined;
+          const instruction = buildPdfLayoutTruncationMarker(flags, {
+            width: doc.page.width,
+            height: doc.page.height,
+            margin: pdfMargin,
+          });
+          if (instruction) applyPdfLayoutTruncationMarker(doc as any, instruction);
+        } catch (markerErr: any) {
+          // Non-fatal: log, continue rendering the page without a marker.
+          logger.warn(
+            `[Presentations][PDF] Layout-audit marker skipped for slide ${index + 1}: ${markerErr?.message || markerErr}`
+          );
+        }
+
         doc.fontSize(22).text(String(card.title || card.key_message || `Slide ${index + 1}`));
         doc.moveDown(0.5);
         doc

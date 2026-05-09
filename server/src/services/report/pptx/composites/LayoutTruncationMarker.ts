@@ -33,39 +33,23 @@
  * with a mocked `UnifiedSlide` and assert the returned shape.
  */
 
+import {
+  decideLayoutAuditMarker,
+  HIGH_PRIORITY_FLAGS,
+  KNOWN_FLAGS,
+  type LayoutAuditMarkerDecision,
+} from '../../audit/layoutAuditFlagPriority.js';
 import type { DesignTokens, RenderedElement, UnifiedSlide } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Constants
+//
+// Sprint S16: the priority constants + decision function now live in
+// `report/audit/layoutAuditFlagPriority` so the PDF marker consults the
+// SAME logic. The local re-exports below preserve the S15 test surface
+// (`_highPriorityFlagsForTests` / `_knownFlagsForTests`) so existing
+// drift-guard tests keep passing without rewrites.
 // ---------------------------------------------------------------------------
-
-/**
- * Audit flags that the S12 banner classifies as high-priority. Mirrored
- * here so the renderer marker uses the same semantics. If a future flag
- * class is added, update both `HIGH_PRIORITY_FLAGS` here AND in
- * `PresentationStudioLayoutAuditBanner.tsx` to keep the priority story
- * consistent across canvas and rendered artifact.
- */
-const HIGH_PRIORITY_FLAGS: ReadonlySet<string> = new Set([
-  'missing_source_for_evidence_intent',
-  'unsupported_intent_for_pptx_export',
-  'unsupported_intent_for_pdf_export',
-]);
-
-/**
- * Audit flags the marker recognizes. Anything outside this set is
- * ignored — defensive guard against future audit-only flags that
- * shouldn't trigger a renderer marker. Keep in sync with
- * `LayoutAuditFlag` in `presentationStudioLayoutAuditService`.
- */
-const KNOWN_FLAGS: ReadonlySet<string> = new Set([
-  'layout_overflow_title',
-  'layout_overflow_key_message',
-  'layout_overflow_blocks',
-  'missing_source_for_evidence_intent',
-  'unsupported_intent_for_pptx_export',
-  'unsupported_intent_for_pdf_export',
-]);
 
 // 16:9 slide is 10in x 5.625in (LAYOUT_16x9). Marker sits in the
 // top-right corner, vertically aligned with the slide title band but
@@ -92,60 +76,21 @@ const MARKER_COLORS = {
 // Public API
 // ---------------------------------------------------------------------------
 
-export interface LayoutTruncationMarkerDecision {
-  /** Whether the marker should render. */
-  shouldRender: boolean;
-  /** Resolved priority tier; only meaningful when `shouldRender` is true. */
-  priority: 'high' | 'advisory' | 'none';
-  /** Number of recognized flags driving the marker. */
-  recognizedFlagCount: number;
-  /** Recognized flags, deduped + sorted for stable test output. */
-  recognizedFlags: string[];
-}
+/**
+ * Re-exported decision type — kept as a local alias so consumers
+ * importing from this module continue to work after the S16 refactor
+ * extracted the decision logic into `report/audit/layoutAuditFlagPriority`.
+ */
+export type LayoutTruncationMarkerDecision = LayoutAuditMarkerDecision;
 
 /**
  * Decide whether a slide warrants a marker, and at what priority.
- * Pure: returns the decision so callers (including tests) can reason
- * about the marker without going through the renderer.
- *
- * Behaviour:
- *   - returns `{ shouldRender: false, priority: 'none', ... }` when
- *     `slide.auditFlags` is undefined, empty, or contains only
- *     unrecognized strings.
- *   - returns `priority: 'high'` when ANY recognized flag is in
- *     `HIGH_PRIORITY_FLAGS`.
- *   - returns `priority: 'advisory'` for the remaining flags (the
- *     three overflow classes).
+ * Sprint S15 entry point — delegates to the shared
+ * `decideLayoutAuditMarker` (Sprint S16) so the PPTX and PDF markers
+ * always agree on which flags warrant a marker and which priority.
  */
 export function decideLayoutTruncationMarker(slide: UnifiedSlide): LayoutTruncationMarkerDecision {
-  const raw = slide.auditFlags;
-  if (!raw || raw.length === 0) {
-    return {
-      shouldRender: false,
-      priority: 'none',
-      recognizedFlagCount: 0,
-      recognizedFlags: [],
-    };
-  }
-  // Dedupe + filter to recognized + sort for determinism.
-  const recognized = Array.from(
-    new Set(raw.filter((f): f is string => typeof f === 'string' && KNOWN_FLAGS.has(f)))
-  ).sort();
-  if (recognized.length === 0) {
-    return {
-      shouldRender: false,
-      priority: 'none',
-      recognizedFlagCount: 0,
-      recognizedFlags: [],
-    };
-  }
-  const isHigh = recognized.some((f) => HIGH_PRIORITY_FLAGS.has(f));
-  return {
-    shouldRender: true,
-    priority: isHigh ? 'high' : 'advisory',
-    recognizedFlagCount: recognized.length,
-    recognizedFlags: recognized,
-  };
+  return decideLayoutAuditMarker(slide.auditFlags);
 }
 
 /**
