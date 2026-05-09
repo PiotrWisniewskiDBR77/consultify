@@ -1222,3 +1222,61 @@ Backend tests:
   - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down (still on the table; deferred from S13 scope cap).
   - Optional: generator-side `slotDensities` emission for known mixed-density layouts (closes R-S12-1).
 
+## Phase 2 — Sprint S14 gate (Generator emits slotDensities / 2026-05-09)
+
+Status: `PASS_WITH_P2`
+
+### Scope landed in S14
+
+S14 closes the consumer side of R-S12-1 (the long-standing carry from S12). Before S14 the generators emitted `OutlineItem` objects without `density` or `slotDensities`, which meant the audit's per-slot capacity logic (S12) and the per-family overrides (S11/S13) were technically capable but practically inert: every emitted slide routed through the audit's slide-level `'balanced'` fallback. S14 wires three generator entry points to attach intent-driven density defaults, including per-slot overrides for layouts that demonstrably mix densities (comparison hero + dense bullet cells, recommendation_single hero, prioritization matrix, executive summary KPI band, etc.).
+
+The S14 change is strictly additive and backward-compatible: the new `applyIntentDensityDefaults` helper NEVER overrides caller-provided values. If a template author or a downstream service has already set `density` or any `slotDensities.{title,keyMessage,blocks}` field, that value passes through untouched. The defaults only fill gaps.
+
+### Changes shipped
+
+Backend (services):
+
+- Added `consultify/server/src/services/presentationStudioIntentDensityDefaultsService.ts` (new). Defines `IntentDensityDefaults`, the canonical `INTENT_DENSITY_DEFAULTS` table covering all 17 PPTX-supported `SlideIntent` values, and the public helpers `intentDensityDefaultsFor(intent)` (returns a deep-cloned entry; never returns the registered reference) and `applyIntentDensityDefaults(item)` (returns a new `OutlineItem` with defaults filled in for any unset density / per-slot density fields).
+- `presentationGeneratorService.generateDefaultOutline`: pipes the assembled outline through `applyIntentDensityDefaults` before returning. Closes R-S12-1 for the source-driven generator path.
+- `presentationGeneratorService.generateOutlineFromTemplate`: same enrichment after the existing template-vs-source enable/disable pass. Template-author-provided densities still win because the helper preserves caller fields.
+- `presentationStudioOrchestrationService.outlineFromNarrativePlan`: pipes each item through `applyIntentDensityDefaults`. Closes R-S12-1 for the narrative-plan path used by the Studio preview / generate flow.
+
+Tests:
+
+- New `presentationStudioIntentDensityDefaultsService.test.ts` (13 tests):
+  - **Drift guard** (the most important new test): every PPTX-supported intent reported by the audit MUST have a registered density default. If a new intent ships without an entry, this test fails — preventing the "audit-capable but generator-silent" regression S14 just fixed.
+  - Canonical defaults round-trip for `cover` (visual), `comparison` (balanced + visual title + document blocks), `recommendation_single` (balanced + visual title + document blocks), `next_steps` (balanced, no `slotDensities`).
+  - `intentDensityDefaultsFor` returns deep-cloned entries — caller mutation does NOT leak into the registered map (verified by mutating a returned entry and re-reading the registry).
+  - Unknown intents return `undefined` (no fabricated defaults).
+  - `applyIntentDensityDefaults` fills missing slide-level density, preserves caller-set slide-level density, merges per-slot overrides (caller wins per slot), preserves caller-set slots when no default exists for that slot, and omits `slotDensities` entirely when neither caller nor default has any.
+  - Purity: calling the helper twice on the same input produces equivalent objects, not the same reference.
+
+### Validation
+
+- `npx vitest run` on the eight primary Studio-scoped suites — **149/149 pass** (S13 baseline 136 + 13 new defaults service = 149). No regressions.
+- `npx vitest run` on adjacent generator-golden + narrative-planner + approved-template + template-architect + source-pack suites — **16/16 pass** (the generator's output shape changed only by adding optional fields; existing assertions untouched).
+- `npx eslint` on the four S14 in-scope files — **0 errors**, 62 pre-existing P3 carry-over warnings (`no-explicit-any` in `presentationGeneratorService.ts` from earlier sprints; not touched per the S0 baseline policy).
+- `npx tsc --noEmit` on the two new S14 files (strict, ESNext, bundler resolution, JSX preserve, skipLibCheck) — **0 errors**.
+
+### Acceptance criteria covered by S14
+
+- AC: every PPTX-supported intent has a documented slide-level density. **Met.** The drift guard test enforces this; the registered table covers all 17 intents.
+- AC: every intent whose canonical layout demonstrably mixes densities emits `slotDensities`. **Met.** `comparison`, `recommendation_single`, `prioritization_matrix` emit `{title: 'visual', blocks: 'document'}`; `executive_summary`, `key_messages`, `performance_overview`, `root_cause`, `recommendation_portfolio`, `initiative_portfolio`, `roadmap`, `risk_management` emit `{blocks: 'document'}`; sparse intents (`cover`, `section_intro`, `single_insight`, `appendix`, `next_steps`) intentionally emit no per-slot overrides.
+- AC: generator changes are backward-compatible. **Met.** `applyIntentDensityDefaults` only fills in unset fields; caller-set densities and per-slot overrides win unconditionally. The 16 generator-golden + adjacent tests pass without modification, confirming the externally observable generator surface is unchanged for inputs that already declare densities.
+- AC: the audit picks up the new densities and applies the right caps. **Met implicitly.** S12's audit logic (`densityForSlot`, `resolveSlotCapacity` per-slot) was unchanged in S14; the 24 S10/S11/S12/S13 audit tests continue to pass and exercise the per-slot capacity path with the now-emitted densities.
+
+### Risks / open items (deferred)
+
+- R-S14-1 (P2): the registered density per intent is a static table. Different deck-types (e.g. an investor deck vs a steering deck) may want different densities for the same intent. S14 deliberately does not introduce a deck-type axis to the defaults — that would entangle the defaults service with the family registry. A future sprint could either (a) extend the table to be `Record<SlideIntent, Partial<Record<TemplateFamily, IntentDensityDefaults>>>`, or (b) keep a flat table and let the audit's family-override registry do the family-specific work. Option (b) is the current path.
+- R-S14-2 (P3): the drift guard tests against the audit's PPTX-supported intent set, NOT directly against the canonical `SlideIntent` union from `report/pptx/types`. If a new intent is added to that union but never registered in the audit's set, the guard would silently pass. The audit's S10 drift guard already cross-checks PPTX intent vs canonical union, so this is a transitive guarantee, but a direct cross-check could be added if the audit guard ever becomes optional.
+- R-S14-3 (P3): no UI surface yet. The user-visible effect of S14 is only that a future-shipped layout-audit "high priority" warning will surface fewer false negatives (e.g. a comparison slide with 200-char title now correctly trips the `visual` cap, where before it routed through `balanced`). There is no in-app indication that "this density was inferred by the generator vs declared by the user." A future "Layout audit" section card (still on the deferred list) could optionally surface that distinction.
+- Carry-overs from S13: R-S13-1 (tenant scoping), R-S13-2 (override persistence), R-S13-3 (admin endpoint), R-S13-4 (renderer truncation indicator) all remain open. S14 did not move any of those.
+
+### Next sprint plan
+
+- Sprint S15 candidates (subject to your approval):
+  - Renderer-side honest truncation indicator (closes R-S13-4): when a slide carries an overflow flag from the audit, the PPTX/PDF master surfaces an inline marker so the rendered artifact is honest about the warning.
+  - SuperAdmin layout-capacity admin endpoint (closes R-S13-3): authenticated POST that wraps `applyOverrides` with `proposal -> approval -> execution -> audit`.
+  - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down (R-S14-3 surfaces this need from a different angle).
+  - Optional: tenant-scoped layout capacity overrides (closes R-S13-1) — non-trivial because it requires a tenant-keyed registry and an `organizationId` parameter on `resolveSlotCapacity`.
+

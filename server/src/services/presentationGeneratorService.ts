@@ -26,6 +26,7 @@ import {
 import { deckDocumentFromUnifiedJson } from './presentationDeckDocumentService.js';
 import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
+import { applyIntentDensityDefaults } from './presentationStudioIntentDensityDefaultsService.js';
 import {
   applyTemplateRuntime,
   buildSystemTemplateRuntime,
@@ -181,7 +182,10 @@ function generateOutlineFromTemplate(
     });
   }
 
-  return outline;
+  // Sprint S14: fill in slide-level density + per-slot density defaults
+  // for any item that didn't already declare them. Caller-provided
+  // values are preserved verbatim. Closes the consumer side of R-S12-1.
+  return outline.map(applyIntentDensityDefaults);
 }
 
 function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
@@ -272,7 +276,11 @@ function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
     });
   }
 
-  return items;
+  // Sprint S14: enrich with intent-driven density defaults so the layout
+  // audit can reason about per-slot capacities (e.g. comparison hero
+  // titles vs dense bullet cells) without forcing every caller to set
+  // the densities explicitly. See `presentationStudioIntentDensityDefaultsService`.
+  return items.map(applyIntentDensityDefaults);
 }
 
 function getSourceKey(source: SourceArtifact): string {

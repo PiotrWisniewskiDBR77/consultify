@@ -39,6 +39,7 @@ import {
   consumeApprovalTicket,
   mintApprovalTicket,
 } from './presentationStudioApprovalTicketService.js';
+import { applyIntentDensityDefaults } from './presentationStudioIntentDensityDefaultsService.js';
 import type { PresentationStudioOutlineLayoutAudit } from './presentationStudioLayoutAuditService.js';
 import { auditPresentationStudioOutlineLayout } from './presentationStudioLayoutAuditService.js';
 import type { TemplateArchitectPlan } from './presentationTemplateArchitectService.js';
@@ -369,13 +370,16 @@ function outlineFromNarrativePlan(narrativePlan: PresentationNarrativePlan): Out
   // is safe because the planner only emits intents that round-trip through
   // the shared template runtime; the cast avoids a wider type widening at
   // the orchestrator boundary.
-  return narrativePlan.slidePlan.map(
-    (slide) =>
-      ({
-        intent: slide.intent as OutlineItem['intent'],
-        title: slide.title,
-        enabled: true,
-      }) satisfies OutlineItem
+  // Sprint S14: pipe each item through `applyIntentDensityDefaults` so
+  // the narrative-plan path emits the same slide-level + per-slot
+  // density defaults as the source-driven generator path. Closes the
+  // consumer side of R-S12-1.
+  return narrativePlan.slidePlan.map((slide) =>
+    applyIntentDensityDefaults({
+      intent: slide.intent as OutlineItem['intent'],
+      title: slide.title,
+      enabled: true,
+    })
   );
 }
 
