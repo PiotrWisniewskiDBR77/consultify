@@ -41,6 +41,15 @@ import {
 } from '../services/presentationAccessPolicyService.js';
 import type { DeckSetup, OutlineItem } from '../services/presentationGeneratorService.js';
 import {
+  executeLayoutCapacityOverrides,
+  proposeLayoutCapacityOverrides,
+} from '../services/presentationStudioLayoutCapacityAdminService.js';
+import {
+  getCurrentRegistrySnapshot,
+  getDefaultRegistrySnapshot,
+  type LayoutCapacityOverridesPayload,
+} from '../services/presentationStudioLayoutCapacityRegistryService.js';
+import {
   executePresentationStudioGenerate,
   previewPresentationStudioGenerate,
   previewPresentationStudioNarrativePlan,
@@ -696,6 +705,241 @@ router.get(
       limit,
     });
     res.json({ success: true, data: result });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Sprint S17 — SuperAdmin layout-capacity admin surface (closes R-S13-3)
+//
+// Three endpoints under `/admin/layout-capacity` gated by the new
+// `presentation_admin_layout_capacity` capability (SUPERADMIN-only — the
+// underlying registry is process-global, R-S13-1 still open).
+//
+//   - GET    /admin/layout-capacity              read-only snapshot
+//   - POST   /admin/layout-capacity/propose      mint single-use approval ticket
+//   - POST   /admin/layout-capacity/execute      consume ticket -> apply -> audit
+//
+// The propose/execute pair preserves the canonical `proposal -> approval ->
+// execution -> audit` invariant the rest of Studio uses for mutating
+// surfaces. The ticket is single-use, tenant-bound to the SuperAdmin's
+// org, user-bound to the SuperAdmin id, and payload-bound to the override
+// fingerprint + reason text.
+// ---------------------------------------------------------------------------
+
+/**
+ * Sanitize an unknown body into a `LayoutCapacityOverridesPayload`. We
+ * intentionally trust the registry's strict validator for SHAPE
+ * checks — this helper only normalizes the top-level keys so the
+ * service's dry-run apply receives the canonical shape.
+ */
+function parseLayoutCapacityOverrides(rawBody: unknown): LayoutCapacityOverridesPayload {
+  if (!rawBody || typeof rawBody !== 'object') return {};
+  const body = rawBody as Record<string, unknown>;
+  const payload: LayoutCapacityOverridesPayload = {};
+  if (body.densityBudgets && typeof body.densityBudgets === 'object') {
+    payload.densityBudgets =
+      body.densityBudgets as LayoutCapacityOverridesPayload['densityBudgets'];
+  }
+  if (body.templateFamilyOverrides && typeof body.templateFamilyOverrides === 'object') {
+    payload.templateFamilyOverrides =
+      body.templateFamilyOverrides as LayoutCapacityOverridesPayload['templateFamilyOverrides'];
+  }
+  if (body.familyAliasByDeckType && typeof body.familyAliasByDeckType === 'object') {
+    payload.familyAliasByDeckType =
+      body.familyAliasByDeckType as LayoutCapacityOverridesPayload['familyAliasByDeckType'];
+  }
+  return payload;
+}
+
+/**
+ * GET /api/presentation-studio/admin/layout-capacity
+ *
+ * Read-only snapshot of the live layout-capacity registry plus the
+ * canonical defaults baked into the deployed code-baseline. SuperAdmin
+ * surface uses both to render a "current vs default" diff.
+ *
+ * Tenant safety: registry is process-global, no tenant filtering
+ * applies. We still emit `organizationId` from the auth context for
+ * audit-trail consistency in upstream logs.
+ */
+router.get(
+  '/admin/layout-capacity',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_admin_layout_capacity')) return;
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'Organization context required', code: 'NO_ORG_CONTEXT' });
+      return;
+    }
+    res.json({
+      success: true,
+      data: {
+        current: getCurrentRegistrySnapshot(),
+        defaults: getDefaultRegistrySnapshot(),
+        scope: 'process_global',
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/admin/layout-capacity/propose
+ *
+ * Phase A of the SuperAdmin override flow. Validates the payload via
+ * the registry's strict validator (dry-run + roll-back) and mints a
+ * single-use approval ticket bound to (orgId, userId, payload+reason
+ * fingerprint).
+ *
+ * Body shape:
+ *   - overrides: LayoutCapacityOverridesPayload (REQUIRED)
+ *   - reason?: string (optional but strongly encouraged for audit clarity)
+ *
+ * Responses:
+ *   - 200 `{ success: true, data: { ticket, payloadFingerprint, overrides } }`
+ *   - 412 `{ success: false, code: 'INVALID_OVERRIDES_PAYLOAD', errors: [...] }`
+ *     when the registry validator rejects the payload.
+ */
+router.post(
+  '/admin/layout-capacity/propose',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_admin_layout_capacity')) return;
+    const orgId = getOrgId(req);
+    const userId = (req as any).user?.id || (req as any).userId || null;
+    if (!orgId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'Organization context required', code: 'NO_ORG_CONTEXT' });
+      return;
+    }
+    if (!userId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'User context required', code: 'NO_USER_CONTEXT' });
+      return;
+    }
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      overrides?: unknown;
+      reason?: unknown;
+    };
+    const overrides = parseLayoutCapacityOverrides(body.overrides);
+    const reason = typeof body.reason === 'string' ? body.reason : null;
+
+    const result = proposeLayoutCapacityOverrides({
+      organizationId: orgId,
+      userId,
+      overrides,
+      reason,
+    });
+    if (!result.ok) {
+      res.status(412).json({
+        success: false,
+        code: result.code,
+        reason: result.reason,
+        errors: result.errors,
+      });
+      return;
+    }
+    res.json({
+      success: true,
+      data: {
+        ticket: result.ticket,
+        payloadFingerprint: result.payloadFingerprint,
+        overrides: result.overrides,
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/admin/layout-capacity/execute
+ *
+ * Phase B of the SuperAdmin override flow. Atomically redeems an
+ * approval ticket and applies the overrides through the registry,
+ * then records `presentation_studio_layout_capacity_overrides_applied`
+ * in audit_logs. On any ticket failure NO override is applied and NO
+ * audit event is emitted.
+ *
+ * Body shape:
+ *   - approvalTicket: string (REQUIRED — id from /propose)
+ *   - overrides: LayoutCapacityOverridesPayload (REQUIRED — must
+ *     match the payload fingerprinted at propose time)
+ *   - reason?: string (must match the proposal's reason)
+ *
+ * Responses:
+ *   - 200 `{ success: true, data: { ticketId, registrySnapshotAfter, auditEvent } }`
+ *   - 403 `{ success: false, code: 'PRECONDITION_REQUIRED', error: 'Approval ticket required.' }`
+ *     when ticket id missing.
+ *   - 403 `{ success: false, code: 'INVALID_APPROVAL_TICKET', reason }`
+ *     when ticket validation fails.
+ *   - 412 `{ success: false, code: 'INVALID_OVERRIDES_PAYLOAD', errors }`
+ *     when the post-redeem revalidation rejects the payload (defense
+ *     in depth — the ticket is gone but no override landed).
+ */
+router.post(
+  '/admin/layout-capacity/execute',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_admin_layout_capacity')) return;
+    const orgId = getOrgId(req);
+    const userId = (req as any).user?.id || (req as any).userId || null;
+    if (!orgId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'Organization context required', code: 'NO_ORG_CONTEXT' });
+      return;
+    }
+    if (!userId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'User context required', code: 'NO_USER_CONTEXT' });
+      return;
+    }
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      approvalTicket?: unknown;
+      overrides?: unknown;
+      reason?: unknown;
+    };
+    const ticketId = typeof body.approvalTicket === 'string' ? body.approvalTicket.trim() : '';
+    if (!ticketId) {
+      res.status(403).json({
+        success: false,
+        code: 'PRECONDITION_REQUIRED',
+        error: 'Approval ticket required.',
+      });
+      return;
+    }
+    const overrides = parseLayoutCapacityOverrides(body.overrides);
+    const reason = typeof body.reason === 'string' ? body.reason : null;
+
+    const result = await executeLayoutCapacityOverrides({
+      organizationId: orgId,
+      userId,
+      ticketId,
+      overrides,
+      reason,
+      ipAddress: req.ip || null,
+      userAgent: typeof req.headers?.['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
+
+    if (!result.ok) {
+      if (result.code === 'INVALID_OVERRIDES_PAYLOAD') {
+        res.status(412).json({
+          success: false,
+          code: result.code,
+          reason: result.reason,
+          errors: result.errors,
+        });
+        return;
+      }
+      res.status(403).json({
+        success: false,
+        code: result.code,
+        reason: result.reason,
+      });
+      return;
+    }
+    res.json({ success: true, data: result.result });
   })
 );
 

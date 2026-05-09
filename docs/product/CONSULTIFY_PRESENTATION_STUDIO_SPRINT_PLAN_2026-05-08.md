@@ -1414,3 +1414,78 @@ Tests:
   - Tenant-scoped layout capacity overrides (closes R-S13-1) — the bigger refactor; probably its own 2-sprint mini-track because it touches the registry signature, the audit signature, and persistence.
   - Optional: deck-level aggregate indicator (closes R-S15-4) — a small pre-page summary card or end-of-deck flag count, mirroring the canvas banner aggregate.
 
+## Phase 2 — Sprint S17 gate (SuperAdmin layout-capacity admin surface / 2026-05-09)
+
+Status: `PASS_WITH_P2`
+
+### Scope landed in S17
+
+S17 closes R-S13-3 — the highest-priority open governance gap left after S16. Before S17 the layout-capacity registry built in S13 had everything an operator needed: hot-reloadable storage, strict validator, snapshot, defaults reset. What it did NOT have was an authenticated, audited entry point — every override was effectively code-only, and a SuperAdmin who wanted to nudge a per-template-family cap had to ship a deploy.
+
+S17 wraps the registry in the canonical `proposal -> approval -> execution -> audit` invariant the Studio already uses for the S6 generate flow. A new `presentationStudioLayoutCapacityAdminService` mints single-use approval tickets bound to (orgId, userId, payload+reason fingerprint) on `propose`, then atomically redeems and applies on `execute`, recording the canonical `presentation_studio_layout_capacity_overrides_applied` audit event with the exact override payload + the post-merge registry snapshot. Three new routes under `/api/presentation-studio/admin/layout-capacity` expose it, all gated by a NEW SUPERADMIN-only capability.
+
+The registry is currently process-global (R-S13-1 still open) — a SuperAdmin override therefore affects every tenant served by this Node process. The deliberate gate is the SUPERADMIN-only capability + the audit trail. When R-S13-1 lands and the registry becomes tenant-scoped, we will introduce a separate `presentation_admin_layout_capacity_tenant` capability for tenant Owner / Admin holders; the SuperAdmin surface will continue to manage process-global concerns.
+
+### Changes shipped
+
+Capability matrix:
+
+- `presentationAccessPolicyService.PresentationCapability`: added `presentation_admin_layout_capacity`. Documented why it is SUPERADMIN-only (process-global registry, R-S13-1 dependency on tenant scoping). Only `SUPERADMIN` holds it; OWNER / ADMIN do NOT (asserted by route tests).
+
+Registry public surface:
+
+- `presentationStudioLayoutCapacityRegistryService`: exported `LayoutCapacityRegistrySnapshot` type + `getCurrentRegistrySnapshot()` + `getDefaultRegistrySnapshot()` so the admin surface can render a "current vs default" diff without reaching into internal state. The S13 `_snapshotRegistryForTests` helper is preserved as an alias on top of `getCurrentRegistrySnapshot` so existing tests keep passing.
+
+Admin service (new):
+
+- `presentationStudioLayoutCapacityAdminService.ts` (new): exports `proposeLayoutCapacityOverrides` and `executeLayoutCapacityOverrides`. Both are pure with respect to the audit writer (mockable via `_setLayoutCapacityAdminDependenciesForTests`). Propose runs a dry-run apply through the registry's strict validator and rolls back via a snapshot-replay if validation succeeds; this preserves "validate without mutate" semantics without duplicating the validator. Execute redeems the ticket atomically (single-use, tenant-bound, user-bound, payload+reason-bound), re-validates the payload as defense-in-depth, applies via the registry, and emits the canonical audit row with the post-merge snapshot baked in.
+
+Routes (new):
+
+- `GET /api/presentation-studio/admin/layout-capacity` — read-only snapshot of the live registry + canonical defaults + scope label (`process_global`).
+- `POST /api/presentation-studio/admin/layout-capacity/propose` — body `{ overrides: LayoutCapacityOverridesPayload, reason?: string }`. Returns `{ ticket, payloadFingerprint, overrides }` on 200, `{ code: 'INVALID_OVERRIDES_PAYLOAD', errors }` on 412.
+- `POST /api/presentation-studio/admin/layout-capacity/execute` — body `{ approvalTicket, overrides, reason? }`. Returns `{ ticketId, registrySnapshotAfter, auditEvent }` on 200; `INVALID_APPROVAL_TICKET` 403 on ticket failures (not_found, expired, consumed, tenant_mismatch, user_mismatch, payload_mismatch); `INVALID_OVERRIDES_PAYLOAD` 412 on the post-redeem revalidation path.
+
+All three routes go through the same `verifyToken` + `presentation_admin_layout_capacity` RBAC gate. Tenant-context guard remains for audit-trail consistency even though the registry itself is process-global.
+
+### Tests
+
+- `presentationStudioLayoutCapacityAdminService.test.ts` (new, 9 tests):
+  - propose: validator rejection -> `INVALID_OVERRIDES_PAYLOAD`; valid payload mints a ticket bound to the correct (org, user); registry is NOT mutated by a successful proposal (dry-run + roll-back); different reasons produce different fingerprints.
+  - execute: unknown ticket -> `INVALID_APPROVAL_TICKET / not_found`; payload swap between propose and execute -> `payload_mismatch`; cross-tenant redeem attempt -> `tenant_mismatch`; clean round-trip applies the override AND records the audit with the canonical action_type + resource_type + payload + post-merge snapshot; second redemption of the same ticket -> `consumed` (single-use); negative-only path -> audit is NEVER fired before ticket redemption.
+- `presentationStudio.routes.test.ts` (S17 block, 14 new tests):
+  - GET /admin/layout-capacity: 200 with current+defaults+scope for SUPERADMIN; reflects an applied override in current but not in defaults; 403 PERMISSION_DENIED for OWNER / ADMIN; 401 when no auth.
+  - POST /admin/layout-capacity/propose: 200 + ticket for valid payload; 412 INVALID_OVERRIDES_PAYLOAD with errors for invalid; 403 PERMISSION_DENIED for OWNER; registry is NOT mutated by a successful proposal.
+  - POST /admin/layout-capacity/execute: end-to-end propose-then-execute with audit verification; 403 PRECONDITION_REQUIRED when ticket id missing; 403 INVALID_APPROVAL_TICKET / not_found for unknown ticket; 403 payload_mismatch when overrides change between propose and execute (registry untouched, audit NOT fired); 403 PERMISSION_DENIED for OWNER trying to execute.
+
+### Validation
+
+- `npx vitest run` on the twelve Studio-scoped suites + adjacent generator-golden + S15 PPTX marker + S16 PDF marker + S16 deck-document propagation + this sprint's two new suites — **192/192 pass** (S16 baseline 168 + 9 admin service + 14 admin routes + 1 source-artifacts noise = 192). No regressions; the S15 / S16 marker tests pass identically and the ticket-lifecycle invariants exercised here are byte-for-byte the same as the S6 generate flow.
+- `npx eslint --fix` on the six S17 in-scope files — **0 errors**, 54 pre-existing P3 warnings (all `no-explicit-any` / `no-non-null-assertion` baseline; not touched per the S0 baseline policy). The new files contributed zero new error-level findings.
+- `npx tsc --noEmit -p tsconfig.json` filtered to S17 in-scope files — **0 errors** in any file S17 touched. The 39 pre-existing TS errors in 7 unrelated files (orchestration audit-details shape from S15, six tablePlatform files) carry over identically from S16; documented as out-of-scope baseline carry-over and tracked separately.
+
+### Acceptance criteria covered by S17
+
+- AC: a SuperAdmin can adjust layout-capacity numbers AT RUNTIME without a code deploy. **Met.** The `propose -> execute` round-trip applies the override against the live registry, reflected in `getCurrentRegistrySnapshot` immediately after `execute` returns 200.
+- AC: every override mutation is gated by an explicit, single-use approval ticket. **Met.** The S6 ticket service is reused verbatim — same TTL, same single-use semantics, same tenant-bind, same user-bind, plus payload+reason fingerprinting (so a swapped reason text fails redemption).
+- AC: every successful override is recorded in `audit_logs` with enough context to reconstruct the change. **Met.** The audit row carries the exact override payload, the reason text, the ticket id (for telemetry correlation), and a post-merge registry snapshot. An auditor can replay the change without re-executing the request.
+- AC: a non-SUPERADMIN cannot see, propose, or execute against the admin surface. **Met.** All three routes return 403 PERMISSION_DENIED for OWNER / ADMIN / lower; the capability matrix only lists SUPERADMIN as the holder.
+- AC: a failed validation must NOT consume a ticket OR persist any state. **Met.** Propose validation runs BEFORE the ticket is minted; rejection returns 412 with the registry's structured error list. The post-redeem revalidation path is the only edge where a ticket is consumed without state change — it returns 412 with a clear "ticket gone, no override landed" envelope so the client retries with a fresh proposal.
+
+### Risks / open items (deferred)
+
+- R-S17-1 (P3): the propose-time dry-run + roll-back uses `resetToDefaults` + replay. If a parallel `applyOverrides` call lands BETWEEN our dry-run apply and our roll-back snapshot replay (rare in a single-process Node server, but theoretically possible via concurrent requests), the parallel override could be lost. Mitigation paths: (a) a registry-level mutex around `applyOverrides`; (b) a true "validate-only" registry method that doesn't touch state. This is out of scope for S17 because the registry is sync + in-process; we documented the race so a future sprint can pick the cleaner mitigation.
+- R-S17-2 (P3): the audit row records the post-merge snapshot but NOT the pre-change snapshot. An auditor reconstructing "what changed" would need a previous audit row to diff against, OR they could re-derive it from the override payload. We deliberately kept the audit compact; emitting before+after on every change would inflate audit_logs without giving an auditor information they cannot derive otherwise. A future sprint could add a deck-level "what changed" pre-flight that emits a structured diff in the same audit row; this is part of the broader R-S17 carry-over below.
+- R-S17-3 (P3): there is no UI surface yet — the admin routes are backend-only. A SuperAdmin must call them via curl / API tooling. A future sprint should add a SuperAdmin section on the Studio canvas (or the existing Admin panel) to render `current vs defaults` + a propose / execute form. The route shapes are deliberately UI-friendly (snapshots are JSON-serializable, ticket carries everything the UI needs).
+- R-S17-4 (P3): there is no `reset-to-defaults` admin action exposed via routes. If a SuperAdmin lands a regrettable override, today they would need to ship another override that re-sets the values manually. A simple `POST /admin/layout-capacity/reset-defaults` (gated by a ticket too) is a natural follow-up.
+- Carry-overs from S13 / S14 / S15 / S16: R-S13-1 (tenant scoping), R-S13-2 (override persistence across restarts), R-S14-1, R-S14-3, R-S15-2, R-S15-3, R-S15-4, R-S16-1, R-S16-2, R-S16-3 all remain open.
+
+### Next sprint plan
+
+- Sprint S18 candidates (subject to your approval):
+  - Layout-capacity admin UI: SuperAdmin section on the Studio canvas rendering `current vs defaults` + propose / execute form (closes R-S17-3, gives the S17 backend a usable surface).
+  - Override persistence across restarts (closes R-S13-2): the registry currently lives in-memory; persist the latest applied override payload to a JSON file or a small DB table so a Node restart does not silently lose runtime tuning.
+  - Tenant-scoped layout capacity overrides (closes R-S13-1) — bigger refactor, probably its own 2-sprint mini-track.
+  - Layout-audit section card on the Studio canvas with per-slide drill-down (R-S14-3 + R-S15-2 + R-S16 user-pull all converge here).
+  - Reset-to-defaults admin action with its own ticket (closes R-S17-4).
+

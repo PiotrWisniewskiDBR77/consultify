@@ -114,11 +114,23 @@ const DEFAULT_FAMILY_ALIAS_BY_DECK_TYPE: Readonly<Record<string, string>> = {
 // Registry state
 // ---------------------------------------------------------------------------
 
-interface RegistryState {
+/**
+ * Snapshot shape returned by `getDefaultRegistrySnapshot` /
+ * `getCurrentRegistrySnapshot` (Sprint S17 admin surface). Exported so
+ * callers can type-annotate against the snapshot without re-declaring
+ * the shape.
+ */
+export interface LayoutCapacityRegistrySnapshot {
   densityBudgets: Record<LayoutCapacityDensityKey, LayoutSlotCapacity>;
   templateFamilyOverrides: Record<string, LayoutFamilyOverrides>;
   familyAliasByDeckType: Record<string, string>;
 }
+
+/**
+ * Internal alias kept for backward-compat with S13 internals. New code
+ * should prefer the exported `LayoutCapacityRegistrySnapshot`.
+ */
+type RegistryState = LayoutCapacityRegistrySnapshot;
 
 function cloneDefaults(): RegistryState {
   return {
@@ -403,10 +415,43 @@ export function resetToDefaults(): void {
 }
 
 /**
+ * Public snapshot of the canonical defaults baked into this code base.
+ * The SuperAdmin admin surface (Sprint S17) reads this to render a
+ * "current vs default" diff in the registry inspection view, and to
+ * power the explicit `resetToDefaults` admin action without leaking the
+ * internal `RegistryState` shape.
+ *
+ * Returns a deep-cloned object so callers can mutate it without
+ * affecting subsequent reads. Pure: never reads `state`.
+ */
+export function getDefaultRegistrySnapshot(): RegistryState {
+  return cloneDefaults();
+}
+
+/**
+ * Public snapshot of the LIVE registry (defaults merged with any
+ * runtime overrides applied via `applyOverrides`). Used by the
+ * SuperAdmin admin surface (Sprint S17) to render the current state
+ * and by future tenants of the registry that need a stable read.
+ *
+ * Returns a deep-cloned object so the caller cannot mutate the
+ * internal store. Sister of `_snapshotRegistryForTests` but stable
+ * (not test-only); the test helper is kept as a backward-compatible
+ * alias so the S13 tests do not need to be rewritten.
+ */
+export function getCurrentRegistrySnapshot(): RegistryState {
+  return JSON.parse(JSON.stringify(state)) as RegistryState;
+}
+
+/**
  * Test-only helper. Returns a deep-cloned snapshot of the current
  * registry. Tests assert against the snapshot to verify merge
  * semantics without leaking internal references.
+ *
+ * Sprint S17 note: kept as a thin alias on top of
+ * `getCurrentRegistrySnapshot` so the S13 tests keep passing while
+ * the public surface gains the stable, non-test alias.
  */
 export function _snapshotRegistryForTests(): RegistryState {
-  return JSON.parse(JSON.stringify(state)) as RegistryState;
+  return getCurrentRegistrySnapshot();
 }

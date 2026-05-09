@@ -6,7 +6,19 @@ export type PresentationCapability =
   | 'presentation_export'
   | 'presentation_share'
   | 'template_approve'
-  | 'brand_change';
+  | 'brand_change'
+  /**
+   * Sprint S17 — gates the SuperAdmin presentation-studio layout-capacity
+   * admin surface. The registry behind it is currently PROCESS-GLOBAL
+   * (R-S13-1 tenant scoping is still open), so a single override
+   * payload affects every tenant served by this Node process. We
+   * therefore intentionally restrict this capability to SUPERADMIN
+   * only — neither tenant Owner nor tenant Admin gets it. When R-S13-1
+   * lands and the registry becomes tenant-scoped, we will introduce a
+   * separate `presentation_admin_layout_capacity_tenant` capability
+   * that tenant Owner / Admin can hold for their own tenant.
+   */
+  | 'presentation_admin_layout_capacity';
 
 type NormalizedRole = 'SUPERADMIN' | 'OWNER' | 'ADMIN' | 'PROJECT_MANAGER' | 'USER' | 'VIEWER';
 
@@ -32,6 +44,7 @@ const CAPABILITY_MATRIX: Record<NormalizedRole, ReadonlySet<PresentationCapabili
     'presentation_share',
     'template_approve',
     'brand_change',
+    'presentation_admin_layout_capacity',
   ]),
   OWNER: new Set<PresentationCapability>([
     'presentation_create',
