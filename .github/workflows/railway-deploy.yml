@@ -124,6 +124,12 @@ jobs:
             fetch_url "$FRONTEND_URL"
           fi
 
+      - name: Dump staging runtime logs on failure
+        if: failure()
+        run: |
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --lines 300 --json || true
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --build --lines 200 --json || true
+
   deploy-production:
     name: Deploy Production
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production' && github.event.inputs.confirm_production == 'yes'
@@ -225,3 +231,9 @@ jobs:
           if [ -n "${FRONTEND_URL:-}" ]; then
             fetch_url "$FRONTEND_URL"
           fi
+
+      - name: Dump production runtime logs on failure
+        if: failure()
+        run: |
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --lines 300 --json || true
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --build --lines 200 --json || true
