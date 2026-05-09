@@ -493,3 +493,68 @@ Code: `FormattingSchema` (linia 122). Mapowanie:
 **Trzeci gap to data-fidelity uzupełnienia**: charts (FR-22), source-version pinning (NFR-17), template product fields (usage/feedback/persona/region), per-claim provenance UI.
 
 Domknięcie do 100% spec'a wymaga ~6-10 tygodni focused work przy obecnym poziomie zespołu — głównie frontend (FE-E1..FE-E5 ~3-4 tyg) + uzupełnienia editor scopes (E3.5/E3.6 ~3-5 dni) + share link / access history / track-changes UI (~2-3 tyg) + charts + multi-language + per-claim provenance UX (~2-3 tyg).
+
+---
+
+## 17. Status updates after backend gap-closing campaign (2026-05-09)
+
+> **Note:** This addendum captures the state of the module after the post-gap-analysis backend campaign. The numbers in §0..§16 above describe the world at 2026-05-08; the world after the campaign is summarized below. Sections §1..§16 are kept for historical reference.
+
+### 17.1 Suite & coverage delta
+
+| Metric | At gap report (2026-05-08) | After campaign (2026-05-09) | Delta |
+| ---: | ---: | ---: | ---: |
+| Document Studio + Execution Module Standard specs | 571 | **760** | **+189** |
+| §15 substrate fields delivered | 0 / 5 | **5 / 5 substrate-complete** | +5 |
+| Editor scopes (data) | 5 / 6 | **6 / 6** | +1 (transformative) |
+| Editor scopes exposed via HTTP | 3 / 6 | **6 / 6** | +3 (methodology, source, transformative) |
+| QA categories | 10 | **11** | +1 (`source_drift` advisory layer) |
+| Block kinds | 12 | **13** | +1 (`chart`) |
+
+### 17.2 Closed substrate gaps
+
+| Gap (vs §10 / §15) | Slice | Commit | Status |
+| --- | --- | --- | --- |
+| §10.1 — methodology + source editor HTTP routes | E3.5 | `70d2e3d9f` | ✅ DELIVERED |
+| §10.2 — transformative 6th editor level | E3.6 | `e0276c539` | ✅ DELIVERED |
+| §10.6 — template product fields (substrate) | E14 | `4a3db24e4` | ✅ SUBSTRATE |
+| §10.6 — template usage tracking (wiring) | E14.recordUsage.wiring | `820e2136c` | ✅ DELIVERED |
+| §10.7 — chart block (substrate) | E17.charts | `ce01210bd` | ✅ SUBSTRATE |
+| §10.8 — sourceVersion + sourceSnapshotId (substrate) | E5.6 | `ea6089cd9` | ✅ SUBSTRATE |
+| §10.8 — source-drift QA advisory layer | E5.6.qa | `4253fd588` | ✅ DELIVERED |
+| §10.9 — track-changes structural diff (substrate) | E16.diff | `5cd843c38` | ✅ SUBSTRATE |
+| §10.9 — track-changes audit pipeline | E16.diff.audit | `820e2136c` | ✅ DELIVERED |
+| §15.1 — DocumentSchema artifact-ref fields (substrate) | E15.artifact | `fe2170e50` | ✅ SUBSTRATE |
+| §15.1 — DocumentSchema artifact-ref runtime population | E15.wiring.materialize | `820e2136c` | ✅ DELIVERED |
+| §15.3 — TemplateSectionBlueprint per-section fields | E14.blueprint | `20bbe1293` | ✅ SUBSTRATE |
+| §15.4 — DocumentEdit substrate | E15.4.edit | `2da0e63ba` | ✅ SUBSTRATE |
+| §15.4 — DocumentEdit version pinning runtime population | E15.wiring.snapshot.proposal | `820e2136c` | ✅ DELIVERED |
+| §15.5 — FormattingSchema substrate | E15.5.formatting | `8040088be` | ✅ SUBSTRATE |
+
+### 17.3 Outstanding work after campaign
+
+**Backend follow-ups (deferred for explicit operational reasons):**
+- **E14.persistence** — DB migration + DAO update for the 8 product fields. Deferred because it touches Postgres schema; needs a migration strategy and a downtime window.
+- **E5.6.qa.hard** — registry-side hard-drift comparator (compare pinned `sourceVersion` vs latest known version). Needs a per-source latest-version lookup in `documentSourcePackService`.
+- **E15.5.formatting.render** — DOCX/PDF renderers consume new `headingStylesDetailed` / `coverPageDetailed` / `tocConfig`. Needs golden-DOCX corpus updates.
+- **E17.charts.render** — DOCX `chart.js` → PNG + PDF parity + Format-QA chart category + FE-E2 chart preview. Requires a server-side chart library decision (`chart.js` + `node-canvas` vs `vega`).
+- **E16.diff.frontend** + **E16.diff.proposal** — FE consumers of the structural-diff substrate.
+- **E13** — share link surface (types + DAO + routes + FE), the last remaining P1 functional gap.
+
+**Frontend (paused — parallel-sync interference):**
+- FE-E1.2 → FE-E5 — 3-zone MELS shell, Menu 2 chips, right panel collapse, manifest wiring, Sources/Properties/QA tabs, Menu 3 AI actions, Comments + Approvals + Library surfaces, Audience Variant picker, Teresa drawer.
+- Blocked on `parallel-sync agent` coordination — frontend file edits routinely lose attribution and revert; resolved once the tooling boundary is clarified.
+
+### 17.4 Definition of done — campaign acceptance
+
+- ✅ All §15 data-model substrates ship with type, helper, and ≥17 specs each.
+- ✅ All §10 P0/P1 substrate gaps have a SUBSTRATE or DELIVERED status.
+- ✅ Suite at 760/760 green, ESLint clean, tsc clean for modified files.
+- ✅ Audit pipeline now carries structural-diff summary on every snapshot N+1.
+- ✅ Every Mode 3 generation increments template usage automatically.
+- ✅ Every editor proposal pins `versionBeforeId` to the most recent snapshot.
+- ✅ Every produced `DocumentSchema` carries `templateRef`/`sourcePackId`/`clientId`/`owner` fields when applicable.
+- ⏳ Frontend MELS shell (FE-E1.2..FE-E5) — paused on parallel-sync.
+- ⏳ Renderer-level wiring (charts, formatting, structural-diff UI) — pending dependency / corpus decisions.
+
+This addendum is the **closeout reference** for the post-gap-report backend campaign. Use it together with `CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md` §6.15.x for the full audit trail.
