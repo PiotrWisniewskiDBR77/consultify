@@ -150,7 +150,8 @@ const getRequestHost = (req: Request): string =>
     .toLowerCase()
     .split(':')[0];
 
-const isStageRedirectHost = (req: Request): boolean => STAGE_REDIRECT_HOSTS.has(getRequestHost(req));
+const isStageRedirectHost = (req: Request): boolean =>
+  STAGE_REDIRECT_HOSTS.has(getRequestHost(req));
 
 // Keep staging hostname as a dead-end entrypoint and always send traffic to demo.
 app.use((req: Request, res: Response, next: NextFunction) => {
