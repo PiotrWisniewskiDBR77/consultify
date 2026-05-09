@@ -304,6 +304,77 @@ function validateFamilyAlias(
 // ---------------------------------------------------------------------------
 
 /**
+ * Sprint S18 — registry hooks. The persistence layer registers itself
+ * here via `setRegistryHooks` during bootstrap (`initializeLayoutCapacityPersistence`).
+ * Tests that exercise the registry without persistence simply leave
+ * the hooks unset — the registry then behaves exactly as it did pre-S18.
+ *
+ * The registry intentionally knows NOTHING about file I/O. Hooks let
+ * the persistence layer subscribe to mutations without the registry
+ * importing it (avoids a circular dependency: persistence already
+ * imports `applyOverrides` / `resetToDefaults` from this module).
+ */
+export interface LayoutCapacityRegistryHooks {
+  /**
+   * Called after a successful `applyOverrides` merge. Receives the
+   * merged FULL snapshot (not a delta) so the persistence layer can
+   * write a self-contained file.
+   */
+  onApply?: (snapshot: LayoutCapacityRegistrySnapshot) => void;
+  /**
+   * Called after a successful `resetToDefaults`. Receives nothing —
+   * the persistence layer clears its file in response.
+   */
+  onReset?: () => void;
+}
+
+let _hooks: LayoutCapacityRegistryHooks | null = null;
+
+/**
+ * Wire (or unwire) the registry hooks. Pass `null` to clear; passing a
+ * new object replaces any prior hooks. Idempotent.
+ */
+export function setRegistryHooks(hooks: LayoutCapacityRegistryHooks | null): void {
+  _hooks = hooks;
+}
+
+// ---------------------------------------------------------------------------
+// Load warning channel (Sprint S18)
+// ---------------------------------------------------------------------------
+
+/**
+ * Surface a degraded-load condition. The persistence layer (Sprint
+ * S18) sets this when the on-disk file is corrupt or rejected by the
+ * registry's validator at boot time. The admin GET surfaces it so a
+ * SuperAdmin reading the snapshot sees the honest "we fell back to
+ * defaults because <reason>" instead of a clean snapshot that hides
+ * the lost runtime tuning.
+ */
+export interface LayoutCapacityRegistryLoadWarning {
+  reason: 'corrupt' | 'unsupported_schema' | 'io_error' | 'rejected_by_validator';
+  sourcePath: string;
+  details?: string;
+  /** ISO timestamp the warning was raised. */
+  raisedAt: string;
+}
+
+let _loadWarning: LayoutCapacityRegistryLoadWarning | null = null;
+
+/** Public read of the current degraded-load warning, or `null` if none. */
+export function getRegistryLoadWarning(): LayoutCapacityRegistryLoadWarning | null {
+  return _loadWarning ? { ...(_loadWarning as LayoutCapacityRegistryLoadWarning) } : null;
+}
+
+/**
+ * Set / clear the registry's load-warning channel. Production callers
+ * are limited to the persistence layer's bootstrap. Pass `null` after
+ * a successful re-load to clear a previously-raised warning.
+ */
+export function setRegistryLoadWarning(warning: LayoutCapacityRegistryLoadWarning | null): void {
+  _loadWarning = warning ? { ...warning } : null;
+}
+
+/**
  * Resolve the slot capacity for a given density, optionally narrowed by
  * a template family. Mirrors the previous static resolution in the audit
  * — every consumer that used the static maps now goes through here.
@@ -401,6 +472,21 @@ export function applyOverrides(payload: LayoutCapacityOverridesPayload): LayoutC
     }
   }
 
+  // Sprint S18 — fire the apply hook AFTER the merge succeeded so the
+  // persistence layer writes the FULL accumulated state to disk. We
+  // pass the merged snapshot rather than the delta because a future
+  // restart needs the full picture to replay. The hook is wrapped in
+  // try/catch so a write failure does NOT roll back the in-memory
+  // apply (operators expect their override to take effect immediately;
+  // a stale persisted file is the lesser harm).
+  if (_hooks?.onApply) {
+    try {
+      _hooks.onApply(getCurrentRegistrySnapshot());
+    } catch {
+      // Swallow; wiring layer logs on its own write failures.
+    }
+  }
+
   return { ok: true, applied: true, errors: [] };
 }
 
@@ -409,9 +495,21 @@ export function applyOverrides(payload: LayoutCapacityOverridesPayload): LayoutC
  * use this to "reload" after deploying a new code-baseline; tests use
  * it for isolation. Test files MUST call this in `beforeEach` if they
  * apply overrides.
+ *
+ * Sprint S18 — fires `hooks.onReset()` AFTER the in-memory state has
+ * been cleared so the persistence layer can drop its on-disk snapshot
+ * to match. The hook failure is non-fatal (logged by the wiring layer)
+ * because resetting state must not be blocked by a transient I/O error.
  */
 export function resetToDefaults(): void {
   state = cloneDefaults();
+  if (_hooks?.onReset) {
+    try {
+      _hooks.onReset();
+    } catch {
+      // Swallow; the wiring layer already logs on its own write failures.
+    }
+  }
 }
 
 /**

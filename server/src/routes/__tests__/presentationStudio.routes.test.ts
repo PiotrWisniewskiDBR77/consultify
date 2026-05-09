@@ -1843,3 +1843,84 @@ describe('presentationStudio.routes — POST /admin/layout-capacity/execute (S17
     expect(res.body.code).toBe('PERMISSION_DENIED');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Sprint S18 — admin GET surfaces loadWarning channel
+// ---------------------------------------------------------------------------
+
+import { setRegistryLoadWarning } from '../../services/presentationStudioLayoutCapacityRegistryService';
+
+describe('presentationStudio.routes — GET /admin/layout-capacity loadWarning (S18)', () => {
+  beforeEach(() => {
+    resetLayoutCapacityRegistry();
+    _clearApprovalTicketStoreForTests();
+    _setLayoutCapacityAdminDependenciesForTests(null);
+    setRegistryLoadWarning(null);
+    setAuth({
+      user: { id: 'admin-1', organizationId: 'org-Sys', role: 'SUPERADMIN' },
+      userRole: 'SUPERADMIN',
+    });
+  });
+
+  afterEach(() => {
+    setRegistryLoadWarning(null);
+  });
+
+  it('returns null loadWarning when persistence load was clean', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/admin/layout-capacity',
+      path: '/admin/layout-capacity',
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/admin/layout-capacity', req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.loadWarning).toBeNull();
+  });
+
+  it('surfaces a corrupt loadWarning via the GET when persistence raised one', async () => {
+    setRegistryLoadWarning({
+      reason: 'corrupt',
+      sourcePath: '/tmp/some-broken-file.json',
+      details: 'Unexpected token in JSON at position 0',
+      raisedAt: '2026-05-09T00:00:00.000Z',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/admin/layout-capacity',
+      path: '/admin/layout-capacity',
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/admin/layout-capacity', req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.loadWarning).toMatchObject({
+      reason: 'corrupt',
+      sourcePath: '/tmp/some-broken-file.json',
+      details: expect.stringContaining('Unexpected token'),
+    });
+  });
+
+  it('surfaces a rejected_by_validator loadWarning via the GET', async () => {
+    setRegistryLoadWarning({
+      reason: 'rejected_by_validator',
+      sourcePath: '/tmp/file.json',
+      details: 'densityBudgets.balanced.titleMaxChars: must be a finite positive number',
+      raisedAt: '2026-05-09T00:00:00.000Z',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      method: 'GET',
+      url: '/admin/layout-capacity',
+      path: '/admin/layout-capacity',
+      body: undefined,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'GET', '/admin/layout-capacity', req, res);
+    expect(res.body.data.loadWarning.reason).toBe('rejected_by_validator');
+    expect(res.body.data.loadWarning.details).toContain('titleMaxChars');
+  });
+});

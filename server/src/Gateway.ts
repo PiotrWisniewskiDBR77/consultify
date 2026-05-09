@@ -291,6 +291,7 @@ import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
+import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
 
 export class ApiGateway {
@@ -764,6 +765,25 @@ export class ApiGateway {
       app.use('/api/economics', economicsRoutes);
       app.use('/api/presentations', presentationsRoutes);
       app.use('/api/presentations-v4', presentationEnterpriseRoutes);
+      // Sprint S18 — restore persisted layout-capacity overrides BEFORE
+      // mounting Studio routes so the first GET /admin/layout-capacity
+      // already sees the restored state. A missing file is silent; a
+      // corrupt file falls back to defaults and surfaces a load warning
+      // on the registry's load-warning channel (visible via the GET).
+      try {
+        const restore = initializeLayoutCapacityPersistence();
+        logger.info(
+          `[PresentationStudio] Layout-capacity persistence: ${restore.status} (path=${restore.sourcePath})`
+        );
+      } catch (err: any) {
+        // Defense in depth: a transient persistence init failure must
+        // never block the Studio surface from coming up. The registry
+        // stays at defaults and operators can re-apply via the admin
+        // surface.
+        logger.warn(
+          `[PresentationStudio] Layout-capacity persistence init failed: ${err?.message || err}`
+        );
+      }
       app.use('/api/presentation-studio', presentationStudioRoutes);
       app.use('/api/results', resultsKpiReportsRoutes);
       app.use('/api/results-v4', resultsEnterpriseRoutes);

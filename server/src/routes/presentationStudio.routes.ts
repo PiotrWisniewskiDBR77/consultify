@@ -47,6 +47,7 @@ import {
 import {
   getCurrentRegistrySnapshot,
   getDefaultRegistrySnapshot,
+  getRegistryLoadWarning,
   type LayoutCapacityOverridesPayload,
 } from '../services/presentationStudioLayoutCapacityRegistryService.js';
 import {
@@ -779,6 +780,11 @@ router.get(
         current: getCurrentRegistrySnapshot(),
         defaults: getDefaultRegistrySnapshot(),
         scope: 'process_global',
+        // Sprint S18 — surface degraded-load conditions so the
+        // SuperAdmin sees an honest "we fell back to defaults
+        // because <reason>" instead of a clean snapshot that hides
+        // a corrupted persistence file.
+        loadWarning: getRegistryLoadWarning(),
       },
     });
   })

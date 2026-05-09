@@ -1489,3 +1489,83 @@ All three routes go through the same `verifyToken` + `presentation_admin_layout_
   - Layout-audit section card on the Studio canvas with per-slide drill-down (R-S14-3 + R-S15-2 + R-S16 user-pull all converge here).
   - Reset-to-defaults admin action with its own ticket (closes R-S17-4).
 
+## Phase 2 — Sprint S18 gate (Layout-capacity override persistence across restarts / 2026-05-09)
+
+Status: `PASS_WITH_P2`
+
+### Scope landed in S18
+
+S18 closes R-S13-2 — the highest-priority gap left after S17. Before S18 a SuperAdmin who carefully tuned the runtime caps via `/admin/layout-capacity/execute` (S17) would see the entire configuration silently revert on the next Node restart or deploy. Operators could believe their tuning was in effect for hours after it had quietly reset to defaults — exactly the silent-state honesty gap the UI/UX SOT calls out as a P0 risk for any governance surface.
+
+S18 closes that gap by persisting the registry's accumulated override state to a JSON file at apply-time and restoring it at server bootstrap. The constraint Q2=A says no DB migrations, so the file lives outside the source tree (default: `<cwd>/.runtime-config/presentation-studio-layout-capacity-overrides.json`) — a deploy never stomps on it and a `git clean` does not nuke an operator's tuning.
+
+The persistence layer is honest about failure modes: a missing file is the steady-state default and is silent; a corrupt or validator-rejected file does NOT crash the server, it falls back to the canonical defaults and surfaces a typed `loadWarning` on the registry's load-warning channel that the admin GET serializes into its response. A SuperAdmin reading the snapshot sees the honest "we fell back to defaults because <reason>" instead of a clean snapshot that hides the lost tuning.
+
+### Changes shipped
+
+Registry hooks + load-warning channel:
+
+- `presentationStudioLayoutCapacityRegistryService`: added `LayoutCapacityRegistryHooks` interface (`onApply` + `onReset`), `setRegistryHooks(hooks)` setter, and a load-warning channel (`LayoutCapacityRegistryLoadWarning` type + `getRegistryLoadWarning` + `setRegistryLoadWarning`). The registry intentionally knows NOTHING about file I/O; hooks let the persistence layer subscribe to mutations without the registry importing it (no circular dependency since persistence already imports the registry's `applyOverrides` / `resetToDefaults`).
+- `applyOverrides` now fires `hooks.onApply(currentSnapshot)` after a successful merge. The hook receives the FULL accumulated snapshot (not a delta) so the persistence layer writes a self-contained file. Hook errors are swallowed at the registry layer — an in-memory apply already succeeded and we do not roll it back for a transient I/O failure (the persistence layer raises a `loadWarning` instead so the operator sees the honest "could not persist" state).
+- `resetToDefaults` now fires `hooks.onReset()` AFTER the in-memory state is cleared so the persistence layer drops its on-disk snapshot to match.
+
+Persistence service (new):
+
+- `presentationStudioLayoutCapacityPersistenceService.ts` (new): exports a small `PersistenceFileSystemDriver` interface plus `_setLayoutCapacityPersistenceDriverForTests` so unit tests can swap the real fs for an in-memory map. Path resolution honors a test override, then `process.env.CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_PATH`, then a cwd-relative default. Three pure helpers (`loadPersistedOverrides`, `savePersistedOverrides`, `clearPersistedOverrides`) read / write a versioned JSON file (`schemaVersion: 1`, `writtenAt`, `overrides`). A `restorePersistedOverrides` helper composes load + apply with a typed outcome (`restored | no_persisted_file | corrupt | rejected_by_validator`).
+- `initializeLayoutCapacityPersistence()` is the one-shot bootstrap. It runs the restore, sets the registry's load-warning channel based on the outcome, and wires the registry hooks so subsequent `applyOverrides` / `resetToDefaults` calls keep disk in sync with memory. `teardownLayoutCapacityPersistence` is the symmetric cleanup the test suite uses.
+
+Bootstrap wiring:
+
+- `Gateway.ts`: imports `initializeLayoutCapacityPersistence` and calls it BEFORE mounting the Studio routes. The first GET `/admin/layout-capacity` therefore already sees the restored state. The init call is wrapped in try/catch — a transient persistence init failure must NEVER block the Studio surface from coming up; the registry stays at defaults and operators can re-apply via the admin surface.
+
+Admin GET surfaces the load-warning:
+
+- `routes/presentationStudio.routes::GET /admin/layout-capacity` now includes `loadWarning` in the response payload. SuperAdmin readers see `{ reason, sourcePath, details, raisedAt }` when the persistence layer raised a warning, or `null` for the steady-state.
+
+### Tests
+
+- `presentationStudioLayoutCapacityPersistenceService.test.ts` (new, 28 tests):
+  - `resolvePersistencePath` (3): honors test override, env var, default cwd-relative fallback.
+  - `loadPersistedOverrides` (7): missing, corrupt JSON, non-object top-level, unsupported `schemaVersion`, missing `overrides` field, driver `read` throws → `io_error`, well-formed file parses correctly.
+  - `savePersistedOverrides` (2): writes a `schemaVersion: 1` envelope with the supplied payload + a `writtenAt` ISO; `io_error` on driver write failure.
+  - `clearPersistedOverrides` (3): removes a present file, no-op on absent file, `io_error` on driver failure.
+  - `restorePersistedOverrides` (4): missing file → `no_persisted_file`; well-formed file replays into the live registry; rejected payload → `rejected_by_validator` + registry stays at defaults; bad shape → `corrupt`.
+  - `initializeLayoutCapacityPersistence` (9): clears prior load warning on clean missing-file boot; raises `corrupt` warning on bad parse; raises `rejected_by_validator` warning when validator rejects; subsequent `applyOverrides` writes through to disk; `resetToDefaults` clears the file; prior load warning cleared after a successful subsequent apply; `io_error` warning raised when persistence write fails on apply (with in-memory apply still succeeding); `teardown` stops further hook firing; full restore + apply round-trip.
+- `presentationStudio.routes.test.ts` (S18 block, 3 new tests):
+  - GET `/admin/layout-capacity` returns `loadWarning: null` for clean state.
+  - GET surfaces a `corrupt` `loadWarning` with shape `{ reason, sourcePath, details }` when persistence raised one.
+  - GET surfaces a `rejected_by_validator` `loadWarning` with the validator error string in `details`.
+
+### Validation
+
+- `npx vitest run` on the thirteen Studio-scoped suites + adjacent generator-golden + S15 PPTX marker + S16 PDF marker + S16 deck-document propagation + S17 admin service + S17 routes + S18 persistence + S18 routes — **223/223 pass** (S17 baseline 192 + 28 persistence-service + 3 admin-GET-loadWarning = 223). No regressions; the registry hooks are no-op when not wired, so all pre-S18 tests pass identically.
+- `npx eslint --fix` on the six S18 in-scope files — **0 errors**, 59 pre-existing P3 warnings (all `no-explicit-any` / `no-non-null-assertion` / `no-require-imports` baseline; the two `require()` calls in the persistence service have `eslint-disable` comments because they are deliberate lazy-loads to keep the module side-effect-free at import time and let tests swap the driver before any real `node:fs` import). The new files contributed zero new error-level findings.
+- `npx tsc --noEmit -p tsconfig.json` filtered to S18 in-scope files — **0 errors** in any file S18 touched. The 39 pre-existing TS errors in 7 unrelated baseline files (orchestration audit-details shape from S15, six tablePlatform files) carry over identically from S17 and remain documented as out-of-scope baseline carry-over.
+
+### Acceptance criteria covered by S18
+
+- AC: a SuperAdmin override applied via `/admin/layout-capacity/execute` survives a Node restart. **Met.** Hook fires after the merge succeeds; the persistence layer writes the FULL accumulated snapshot to a configurable JSON file. Bootstrap reads it back and replays it via `applyOverrides` BEFORE Studio routes are mounted.
+- AC: a missing persistence file is the steady-state default and must not produce a warning. **Met.** `loadPersistedOverrides` returns `{ ok: false, reason: 'missing' }`; the bootstrap maps that to `no_persisted_file` and clears any prior warning.
+- AC: a corrupt or validator-rejected persistence file must NOT crash the server. **Met.** Both paths fall back to canonical defaults and raise a typed `loadWarning` (`corrupt | unsupported_schema | io_error | rejected_by_validator`). The registry continues to serve and the admin surface continues to respond.
+- AC: the SuperAdmin admin surface must surface the degraded state, NOT hide it. **Met.** GET `/admin/layout-capacity` includes `loadWarning` in the response. A SuperAdmin reading the snapshot sees the honest "we fell back to defaults because <reason>" payload alongside the `current` and `defaults` snapshots.
+- AC: persistence write failure on a runtime apply must NOT roll back the in-memory apply. **Met.** Hook is wrapped in try/catch at the registry layer; a write failure raises a `loadWarning` (operator sees "could not persist your last write") but the in-memory state still reflects the override (the alternative — rolling back — would mislead the SuperAdmin into believing their override never landed when it did, just not durably).
+- AC: a `resetToDefaults` clears both memory AND disk so a subsequent restart does NOT silently re-apply the cleared overrides. **Met.** `onReset` hook calls `clearPersistedOverrides`; verified by the round-trip test.
+- AC: hooks must be opt-in so unrelated test suites are unaffected. **Met.** Hooks are `null` until `setRegistryHooks` is called; every pre-S18 test file passes without modification (verified by the 223/223 broader scope run).
+
+### Risks / open items (deferred)
+
+- R-S18-1 (P3): file path is process-global and not tenant-scoped — same constraint as R-S13-1. When tenant scoping lands, the persistence file will need tenant-keyed entries (or one file per tenant) and the bootstrap will need to restore each tenant's slice into a tenant-keyed registry.
+- R-S18-2 (P3): the file is JSON, not signed — a sysadmin with shell access could hand-edit it and bypass the SuperAdmin admin surface. The audit row from S17 only fires when an override goes through the admin route, so a hand-edited file would silently take effect on the next restart with NO audit trail. Mitigation: detect sus mismatch between the file's `writtenAt` and the most recent S17 audit row; alert when they diverge. Out of scope this sprint.
+- R-S18-3 (P3): no atomic file write. We `writeFile` directly without a `fsync` + rename dance, so a crash mid-write could leave a corrupt file. The bootstrap handles a corrupt file gracefully (falls back to defaults + raises load warning), so the failure mode is recoverable but loses the in-flight override. A future sprint could ship `writeFile` via tmp-file + rename for atomicity; the test surface would not change.
+- R-S18-4 (P3): there is no UI surface for the `loadWarning` yet — only the admin GET response. A SuperAdmin must call the route to see the warning. This converges with R-S17-3 (admin UI).
+- Carry-overs from S13 / S14 / S15 / S16 / S17: R-S13-1 (tenant scoping), R-S14-1, R-S14-3, R-S15-2, R-S15-3, R-S15-4, R-S16-1, R-S16-2, R-S16-3, R-S17-1 (race), R-S17-2 (audit pre/post diff), R-S17-3 (admin UI), R-S17-4 (reset-to-defaults action) all remain open.
+
+### Next sprint plan
+
+- Sprint S19 candidates (subject to your approval):
+  - Layout-capacity admin UI (closes R-S17-3 + R-S18-4): SuperAdmin section on the Studio canvas rendering `current vs defaults` + `loadWarning` + propose / execute form. Gives the S17 + S18 backend a usable surface; aligns with the workspace's `Menu 3` rule (admin actions live in the right-side command-row slot, not as a separate toolbar).
+  - Reset-to-defaults admin action (closes R-S17-4): small endpoint `POST /admin/layout-capacity/reset` gated by its own ticket. Single-sprint scope, leverages the propose / execute pattern from S17 with a different action_type.
+  - Tenant-scoped layout capacity overrides (closes R-S13-1 + R-S18-1) — bigger refactor, probably its own 2-sprint mini-track because it touches the registry signature, the audit shape, the persistence file format, and a new tenant-Owner capability.
+  - Layout-audit section card on the Studio canvas with per-slide drill-down (R-S14-3 + R-S15-2 + R-S16 user-pull all converge here).
+  - Atomic file write for persistence (closes R-S18-3): tmp-file + rename dance. Tiny scope; could bundle with S19-A if the UI is the main work.
+
