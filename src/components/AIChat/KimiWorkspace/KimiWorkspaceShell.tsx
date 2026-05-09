@@ -288,6 +288,7 @@ function ArtifactPreviewPane({
   const config = LANE_CONFIG[lane];
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const Icon = config.icon;
+  const usesChatOnlyStart = lane === 'tabele';
   const [activeSheet, setActiveSheet] = useState(0);
   const [goalInput, setGoalInput] = React.useState('');
   const [isStarting, setIsStarting] = React.useState(false);
@@ -379,10 +380,15 @@ function ArtifactPreviewPane({
                     : t('kimi.emptyDeck', 'Your presentation will appear here')}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {t('kimi.emptyHint', 'Describe what you need and click Generate')}
+              {usesChatOnlyStart
+                ? t(
+                    'kimi.emptyTabeleChatHint',
+                    'Describe the table in Teresa on the left. Your operational table will appear here.'
+                  )
+                : t('kimi.emptyHint', 'Describe what you need and click Generate')}
             </p>
           </div>
-          {onStartGeneration && (
+          {onStartGeneration && !usesChatOnlyStart && (
             <div className="space-y-3">
               <textarea
                 value={goalInput}
