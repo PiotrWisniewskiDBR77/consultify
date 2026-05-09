@@ -28,6 +28,7 @@
 
 import { randomUUID } from 'node:crypto';
 
+import { compareSourceVersionPin } from './documentSourceVersionRegistryService.js';
 import type {
   BrandVoiceProfile,
   DocumentBlock,
@@ -65,6 +66,15 @@ import { documentSourceRefHasVersionPin } from './documentStudioTypes.js';
 export interface RunDocumentQaOptions {
   template?: DocumentTemplate | null;
   brandVoiceProfile?: BrandVoiceProfile | null;
+  /**
+   * Tenant context for the source-drift hard comparator (Slice
+   * E5.6.qa.hard). When omitted, hard-drift checks are skipped and
+   * the source-drift category falls back to the soft (unpinned)
+   * surface only — preserving backward compatibility for callers
+   * that do not have a tenant id at hand (test harnesses, dev
+   * tools, single-tenant ad-hoc runs).
+   */
+  organizationId?: string;
 }
 
 /**
@@ -954,9 +964,9 @@ interface SourceRefDriftLocation {
 function emitDriftFinding(
   findings: DocumentQaFinding[],
   ref: DocumentSourceRef,
-  location: SourceRefDriftLocation
+  location: SourceRefDriftLocation,
+  organizationId: string | undefined
 ): void {
-  if (documentSourceRefHasVersionPin(ref)) return;
   const refLabel = ref.sourceTitle?.trim()
     ? `"${ref.sourceTitle.trim()}"`
     : `${ref.sourceType}:${ref.sourceId}`;
@@ -966,52 +976,106 @@ function emitDriftFinding(
       : location.scope === 'section'
         ? 'on a section'
         : 'on a block';
-  findings.push(
-    makeFinding(
-      'low',
-      `Source reference ${refLabel} is not pinned (no sourceVersion / sourceSnapshotId) ${where}; future re-renders cannot detect drift if the underlying source advances.`,
-      'source_drift_unpinned',
-      { sectionId: location.sectionId, blockId: location.blockId }
-    )
-  );
+
+  if (!documentSourceRefHasVersionPin(ref)) {
+    findings.push(
+      makeFinding(
+        'low',
+        `Source reference ${refLabel} is not pinned (no sourceVersion / sourceSnapshotId) ${where}; future re-renders cannot detect drift if the underlying source advances.`,
+        'source_drift_unpinned',
+        { sectionId: location.sectionId, blockId: location.blockId }
+      )
+    );
+    return;
+  }
+
+  // Slice E5.6.qa.hard — when the ref IS pinned and we have a
+  // tenant context (`organizationId`), consult the per-tenant
+  // version registry to detect HARD drift (pinned ≠ latest known
+  // version). HARD drift is a `medium`-severity advisory: louder
+  // than soft (unpinned) drift but still non-blocking, because
+  // gating on it requires explicit approver consent that we don't
+  // have yet at the schema level.
+  //
+  // Refs whose tuple is unknown to the registry (no observations
+  // for `(orgId, sourceType, sourceId)`) intentionally do NOT fire
+  // a hard-drift finding — that case is the soft-drift territory
+  // (the registry simply has no comparison baseline).
+  const pinnedVersion = ref.sourceVersion?.trim();
+  if (organizationId && pinnedVersion && pinnedVersion.length > 0) {
+    try {
+      const cmp = compareSourceVersionPin({
+        organizationId,
+        sourceType: ref.sourceType,
+        sourceId: ref.sourceId,
+        pinnedSourceVersion: pinnedVersion,
+      });
+      if (cmp.kind === 'hard_drift') {
+        findings.push(
+          makeFinding(
+            'medium',
+            `Source reference ${refLabel} is pinned to v${pinnedVersion} ${where}, but the source registry has since recorded a newer version (v${cmp.latest.sourceVersion} at ${cmp.latest.recordedAt}); re-render or re-pin before approval.`,
+            'source_drift_hard',
+            { sectionId: location.sectionId, blockId: location.blockId }
+          )
+        );
+      }
+    } catch {
+      // Defensive: registry hiccups must never fail QA. The pinned
+      // ref is treated as in-sync until a future QA run can read
+      // the registry successfully.
+    }
+  }
 }
 
-function runSourceDriftQa(schema: DocumentSchema): DocumentQaCategoryReport {
+function runSourceDriftQa(
+  schema: DocumentSchema,
+  organizationId?: string
+): DocumentQaCategoryReport {
   const findings: DocumentQaFinding[] = [];
 
   // Document-level sourceRefs. May exist without per-section / per-block
   // anchoring on early-MVP schemas.
   for (const ref of schema.sourceRefs ?? []) {
-    emitDriftFinding(findings, ref, { scope: 'document' });
+    emitDriftFinding(findings, ref, { scope: 'document' }, organizationId);
   }
 
   // Section + block-level refs.
   for (const section of schema.sections ?? []) {
     for (const ref of section.sourceRefs ?? []) {
-      emitDriftFinding(findings, ref, {
-        scope: 'section',
-        sectionId: section.sectionId,
-      });
+      emitDriftFinding(
+        findings,
+        ref,
+        { scope: 'section', sectionId: section.sectionId },
+        organizationId
+      );
     }
     for (const block of section.blocks ?? []) {
       if (block.sourceRef) {
-        emitDriftFinding(findings, block.sourceRef, {
-          scope: 'block',
-          sectionId: section.sectionId,
-          blockId: block.blockId,
-        });
+        emitDriftFinding(
+          findings,
+          block.sourceRef,
+          { scope: 'block', sectionId: section.sectionId, blockId: block.blockId },
+          organizationId
+        );
       }
     }
   }
 
   // Threshold = 0 → category is NEVER blocking. NFR-17 wants advisory
-  // surfacing, not export gating, until the registry-side hard-drift
-  // comparator lands.
+  // surfacing for both soft (unpinned) and hard (pinned-but-stale)
+  // drift, not export gating. A future slice can flip the threshold
+  // once approver consent for hard-drift gating is in place.
   return categoryReport('source_drift', findings, 0, (score, fs) => {
     if (fs.length === 0) {
-      return 'Source-drift QA clean: every source reference carries a version pin (or the document has no source references).';
+      return 'Source-drift QA clean: every source reference is pinned and aligned with the latest known version.';
     }
-    return `Source-drift QA: ${fs.length} unpinned reference(s) (advisory); score ${score}/100.`;
+    const hard = fs.filter((f) => f.code === 'source_drift_hard').length;
+    const unpinned = fs.filter((f) => f.code === 'source_drift_unpinned').length;
+    const parts: string[] = [];
+    if (hard > 0) parts.push(`${hard} hard-drift (pinned≠latest)`);
+    if (unpinned > 0) parts.push(`${unpinned} unpinned`);
+    return `Source-drift QA: ${parts.join(', ')} (advisory); score ${score}/100.`;
   });
 }
 
@@ -2055,7 +2119,10 @@ export function runDocumentQa(
     runSourceQa(schema),
     // Slice E5.6.qa — twinned with `sources` and runs immediately
     // after it so the right-panel QA tab keeps the two cards adjacent.
-    runSourceDriftQa(schema),
+    // Slice E5.6.qa.hard — passes `organizationId` (when supplied) so
+    // pinned refs can be compared against the per-tenant version
+    // registry for HARD drift (pinned ≠ latest known).
+    runSourceDriftQa(schema, options.organizationId),
     runMethodologyQa(schema, template),
     runExecutiveQa(schema),
     runRiskQa(schema),

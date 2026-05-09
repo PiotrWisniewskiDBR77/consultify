@@ -584,7 +584,13 @@ export async function exportDocumentArtifact(
     await ensureBrandVoiceRegistryHydrated(organizationId);
     const activeBrandVoiceProfile = getActiveBrandVoiceProfile(organizationId);
 
-    const report = runDocumentQa(schema, { brandVoiceProfile: activeBrandVoiceProfile });
+    // Slice E5.6.qa.hard — pass `organizationId` so the source-drift
+    // category can compare pinned versions against the per-tenant
+    // version registry.
+    const report = runDocumentQa(schema, {
+      brandVoiceProfile: activeBrandVoiceProfile,
+      organizationId,
+    });
     report.organizationId = organizationId;
 
     // Compact, audit-friendly snapshot of the report. Used both in the
@@ -2335,7 +2341,14 @@ export async function runQaForDocument(
     template = null;
   }
 
-  const report = runDocumentQa(schema, { template, brandVoiceProfile });
+  // Slice E5.6.qa.hard — pass `organizationId` so the source-drift
+  // category can compare pinned `sourceVersion` against the per-tenant
+  // version registry for HARD drift detection.
+  const report = runDocumentQa(schema, {
+    template,
+    brandVoiceProfile,
+    organizationId,
+  });
   report.organizationId = organizationId;
   return report;
 }

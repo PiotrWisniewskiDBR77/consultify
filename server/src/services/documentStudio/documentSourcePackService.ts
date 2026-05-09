@@ -37,6 +37,7 @@ import {
   persistSourcePack,
   persistSourcePackAuditEntry,
 } from './documentSourcePackRegistryDao.js';
+import { recordSeenSourceVersion } from './documentSourceVersionRegistryService.js';
 import type {
   DocumentSourceRef,
   SourcePack,
@@ -247,6 +248,29 @@ export function addSourcePackItem(params: AddSourcePackItemParams): SourcePack {
 
   registryStore.set(packKey(params.organizationId, pack.packId), next);
   void persistSourcePack(next).catch(() => undefined);
+
+  // Slice E5.6.qa.hard — when the freshly-ingested item carries a
+  // `sourceVersion` on its `sourceRef`, register the observation in
+  // the per-tenant version registry. This builds up the per-tuple
+  // history that `runSourceDriftQa` consults to flag HARD drift
+  // (pinned ≠ latest known). Wrapped defensively because the
+  // registry is a best-effort observability layer; a hiccup here
+  // must NEVER fail an otherwise-successful ingestion.
+  try {
+    const ref = newItem.sourceRef;
+    if (ref?.sourceVersion && ref.sourceVersion.trim().length > 0) {
+      recordSeenSourceVersion({
+        organizationId: params.organizationId,
+        sourceType: ref.sourceType,
+        sourceId: ref.sourceId,
+        sourceVersion: ref.sourceVersion,
+        sourceSnapshotId: ref.sourceSnapshotId,
+        recordedAt: now,
+      });
+    }
+  } catch {
+    // ignore — see contract above
+  }
 
   pushAudit({
     auditId: makeId('source-pack-audit'),
