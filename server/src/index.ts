@@ -1335,6 +1335,45 @@ app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextF
   return res.sendFile(currentBundle.fsPath);
 });
 
+// Runtime coherence guard for lazy chunks on staging/demo:
+// if a chunk imports a historical entry bundle, force reload instead of
+// serving an inconsistent module graph.
+app.get(/^\/assets\/[^/]+\.js$/, (req: Request, res: Response, next: NextFunction) => {
+  if (/^\/assets\/index-[^/]+\.js$/i.test(req.path)) return next();
+  if (!isStagingOrDemoHost(req)) return next();
+
+  const assetFsPath = path.resolve(frontendDistPath, req.path.replace(/^\//, ''));
+  if (!fs.existsSync(assetFsPath)) return next();
+
+  const currentBundle = resolveCurrentIndexBundlePath();
+  if (!currentBundle) return next();
+
+  try {
+    const jsSource = fs.readFileSync(assetFsPath, 'utf-8');
+    const importedIndexPublicPath = extractImportedIndexBundlePublicPath(jsSource);
+
+    if (importedIndexPublicPath && importedIndexPublicPath !== currentBundle.publicPath) {
+      logger.warn(
+        `[Server] Stale lazy chunk graph detected (${req.path} imports ${importedIndexPublicPath}, current entry: ${currentBundle.publicPath}). Forcing reload.`
+      );
+      return sendStaleChunkReloadScript(req, res);
+    }
+  } catch (error: any) {
+    logger.warn(
+      `[Server] Could not inspect JS chunk coherence for ${req.path}: ${error?.message || error}`
+    );
+    return next();
+  }
+
+  // Keep JS chunks non-cacheable on staging/demo to reduce mixed-build risk.
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  return res.sendFile(assetFsPath);
+});
+
 // Serve static files from the React app
 // fallthrough: true means continue to next middleware if file not found
 const isHashedAssetFilename = (filename: string): boolean =>
@@ -1342,6 +1381,13 @@ const isHashedAssetFilename = (filename: string): boolean =>
 
 const isMissingHashedJsChunkRequest = (requestPath: string): boolean =>
   /^\/assets\/[^/]+-[a-z0-9]{8,}\.js$/i.test(requestPath);
+
+const extractImportedIndexBundlePublicPath = (jsSource: string): string | null => {
+  if (!jsSource) return null;
+  const importMatch = jsSource.match(/['"]\.\/(index-[^'"]+\.js)['"]/);
+  if (!importMatch?.[1]) return null;
+  return `/assets/${importMatch[1]}`;
+};
 
 const sendStaleChunkReloadScript = (req: Request, res: Response): void => {
   logger.warn(`[Server] Missing hashed JS chunk, forcing client reload: ${req.path}`);
