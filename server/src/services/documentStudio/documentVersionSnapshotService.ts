@@ -30,6 +30,10 @@
  * `organizationId`. Cross-tenant lookups deny-by-default.
  */
 
+import {
+  computeDocumentSchemaDiff,
+  summarizeDocumentSchemaDiff,
+} from './documentSchemaDiffService.js';
 import type {
   DocumentAuditEntry,
   DocumentSchema,
@@ -197,6 +201,43 @@ export function createDocumentVersionSnapshot(
   const versionNumber =
     existing.length === 0 ? 1 : Math.max(...existing.map((s) => s.versionNumber)) + 1;
 
+  // Slice E16.diff.audit — find the most recent prior snapshot so
+  // the audit row can carry a structural-diff summary describing
+  // what actually changed between the previous canonical state and
+  // the freshly captured one. Best-effort: any computation failure
+  // is swallowed so snapshot capture never fails on the diff path.
+  const previousSnapshot =
+    existing.length === 0
+      ? null
+      : existing.reduce<DocumentVersionSnapshot | null>(
+          (acc, candidate) =>
+            !acc || candidate.versionNumber > acc.versionNumber ? candidate : acc,
+          null
+        );
+  let structuralDiffSummary: string | undefined;
+  let structuralDiffStats: Record<string, number> | undefined;
+  if (previousSnapshot) {
+    try {
+      const diff = computeDocumentSchemaDiff(previousSnapshot.schema, params.schema);
+      structuralDiffSummary = summarizeDocumentSchemaDiff(diff);
+      structuralDiffStats = {
+        addedSectionCount: diff.stats.addedSectionCount,
+        removedSectionCount: diff.stats.removedSectionCount,
+        modifiedSectionCount: diff.stats.modifiedSectionCount,
+        reorderedSectionCount: diff.stats.reorderedSectionCount,
+        unchangedSectionCount: diff.stats.unchangedSectionCount,
+        addedBlockCount: diff.stats.addedBlockCount,
+        removedBlockCount: diff.stats.removedBlockCount,
+        modifiedBlockCount: diff.stats.modifiedBlockCount,
+        unchangedBlockCount: diff.stats.unchangedBlockCount,
+      };
+    } catch {
+      // Diff computation MUST NEVER fail snapshot creation. Leave
+      // both summary fields undefined so audit consumers can detect
+      // the missing-diff condition deterministically.
+    }
+  }
+
   const snapshot: DocumentVersionSnapshot = {
     versionId: makeId('document-snapshot'),
     artifactId: params.artifactId,
@@ -230,10 +271,45 @@ export function createDocumentVersionSnapshot(
       label: snapshot.label,
       reason: snapshot.reason,
       statusAtCapture: snapshot.statusAtCapture,
+      // Slice E16.diff.audit — structural-diff summary lines
+      // suitable for log-stream rendering and forensic replay. Both
+      // fields stay undefined for the very first snapshot of an
+      // artifact (no prior state to compare against).
+      previousVersionId: previousSnapshot?.versionId,
+      previousVersionNumber: previousSnapshot?.versionNumber,
+      structuralDiffSummary,
+      structuralDiffStats,
     },
   });
 
   return cloneSnapshot(snapshot);
+}
+
+/**
+ * Slice E16.diff.audit — return the most recent snapshot for the
+ * given artifact (highest `versionNumber`) or `null` when no
+ * snapshots exist yet. Mirrors the deep-clone contract of the
+ * other readers so callers cannot mutate the registered row.
+ *
+ * Used by the studio service to wire `DocumentEditorProposal.versionBeforeId`
+ * (slice E15.4.edit) at proposal-creation time so the audit trail
+ * carries a deterministic pointer to the schema state the proposal
+ * was authored against.
+ */
+export function getMostRecentDocumentVersionSnapshot(
+  artifactId: string,
+  organizationId: string
+): DocumentVersionSnapshot | null {
+  if (!artifactId || !organizationId) return null;
+  const list = snapshotStore.get(key(organizationId, artifactId)) ?? [];
+  if (list.length === 0) return null;
+  let best = list[0];
+  for (let i = 1; i < list.length; i += 1) {
+    if (list[i].versionNumber > best.versionNumber) {
+      best = list[i];
+    }
+  }
+  return cloneSnapshot(best);
 }
 
 export function listDocumentVersionSnapshots(

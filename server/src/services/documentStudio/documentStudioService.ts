@@ -99,15 +99,36 @@ import type {
 import {
   getTemplate as getRegisteredTemplate,
   isTemplateUsableForGeneration,
+  recordTemplateUsage,
 } from './documentTemplateService.js';
 import {
   createDocumentVersionSnapshot as createDocumentVersionSnapshotInternal,
   ensureDocumentVersionSnapshotsHydrated,
   getDocumentVersionSnapshot,
   getDocumentVersionSnapshotByNumber,
+  getMostRecentDocumentVersionSnapshot,
   listDocumentVersionSnapshots,
   registerDocumentVersionSnapshotAuditPump,
 } from './documentVersionSnapshotService.js';
+
+/**
+ * Slice E15.wiring.snapshot.proposal — return the `versionId` of
+ * the most recent snapshot for the artifact, or `undefined` when
+ * no snapshot exists yet. Best-effort: any failure resolves to
+ * `undefined` so proposal creation never fails because of the
+ * `versionBeforeId` wiring.
+ */
+function resolveProposalVersionBeforeId(
+  artifactId: string,
+  organizationId: string
+): string | undefined {
+  try {
+    const recent = getMostRecentDocumentVersionSnapshot(artifactId, organizationId);
+    return recent?.versionId;
+  } catch {
+    return undefined;
+  }
+}
 
 const SCHEMA_METADATA_KEY = 'documentStudioSchema';
 const STUDIO_MODE_METADATA_KEY = 'documentStudioMode';
@@ -191,6 +212,22 @@ export interface MaterializeDocumentParams {
    * organization as the call site; cross-tenant template IDs are rejected.
    */
   templateId?: string | null;
+  /**
+   * Slice E15.wiring.materialize — explicit `sourcePackId` propagated
+   * onto the resulting `DocumentSchema.sourcePackId` artifact-ref
+   * field (spec §8.1). When present, downstream consumers can resolve
+   * the source pack without re-reading the wave5 attach audit row.
+   * Optional; defaults to undefined.
+   */
+  sourcePackId?: string | null;
+  /**
+   * Slice E15.wiring.materialize — explicit `clientId` propagated
+   * onto `DocumentSchema.clientId` (spec §8.1). When present, the
+   * artifact carries the client binding without forcing consumers to
+   * walk the project / source-pack graph. Optional; defaults to
+   * undefined.
+   */
+  clientId?: string | null;
 }
 
 /**
@@ -324,7 +361,27 @@ export async function materializeDocumentArtifact(
     provisionalSchema.languageStyle = template.languageStyle;
     provisionalSchema.communicationRegister = template.communicationRegister;
     provisionalSchema.density = template.density;
+    // Slice E15.wiring.materialize — populate the §15.1 artifact-ref
+    // `templateRef` substrate field so audit / lifecycle / FE-E2
+    // consumers can recover the canonical (templateId, version) pair
+    // directly from the schema, without re-walking wave5 metadata.
+    provisionalSchema.templateRef = {
+      templateId: template.templateId,
+      templateVersion: template.version,
+    };
   }
+  // Slice E15.wiring.materialize — populate the remaining §15.1
+  // artifact-ref substrate fields. `sourcePackId` flows from the
+  // chat-first creation orchestration; `clientId` flows from the
+  // intake or an explicit override; `owner` is the caller user id
+  // (the source-of-truth for "who created this artifact").
+  if (params.sourcePackId) {
+    provisionalSchema.sourcePackId = params.sourcePackId;
+  }
+  if (params.clientId) {
+    provisionalSchema.clientId = params.clientId;
+  }
+  provisionalSchema.owner = params.userId;
 
   const markdown = renderSchemaToMarkdown(provisionalSchema);
 
@@ -355,6 +412,25 @@ export async function materializeDocumentArtifact(
 
   const artifactId = String(artifact?.artifactId ?? artifact?.artifact_id ?? provisionalArtifactId);
   const finalSchema: DocumentSchema = { ...provisionalSchema, artifactId };
+
+  // Slice E14.recordUsage.wiring — when a template was actually
+  // consumed by this materialization, increment `usageCount` and
+  // refresh `lastUsedAt`. Best-effort: the registry hot path treats a
+  // missing template as a no-op and never throws.
+  if (template) {
+    try {
+      recordTemplateUsage({
+        templateId: template.templateId,
+        organizationId: params.organizationId,
+        userId: params.userId,
+        artifactId,
+      });
+    } catch {
+      // Recording usage MUST NEVER fail materialization. The audit
+      // trail lives in the document audit log via the
+      // `template_usage_recorded` action.
+    }
+  }
 
   // Epic E5 — seed lifecycle state at draft on first materialization.
   // initializeDocumentLifecycle is idempotent so repeated calls (e.g.
@@ -789,6 +865,12 @@ export async function createLocalEditProposal(
     diff: { before, after },
     createdBy: userId,
     createdAt,
+    // Slice E15.wiring.snapshot.proposal — pin the proposal to the
+    // most recent snapshot so audit / FE-E2 review surfaces can
+    // recover the exact schema state the proposal was authored
+    // against. `versionAfterId` is set in a follow-up slice when an
+    // accept-proposal / apply path lands.
+    versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
   proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
   pushAuditEntry({
@@ -889,6 +971,12 @@ export async function createSectionEditProposal(
     diff: { before, after: previewAfter },
     createdBy: userId,
     createdAt,
+    // Slice E15.wiring.snapshot.proposal — pin the proposal to the
+    // most recent snapshot so audit / FE-E2 review surfaces can
+    // recover the exact schema state the proposal was authored
+    // against. `versionAfterId` is set in a follow-up slice when an
+    // accept-proposal / apply path lands.
+    versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
   proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
   pushAuditEntry({
@@ -981,6 +1069,12 @@ export async function createGlobalEditProposal(
     diff: { before, after },
     createdBy: userId,
     createdAt,
+    // Slice E15.wiring.snapshot.proposal — pin the proposal to the
+    // most recent snapshot so audit / FE-E2 review surfaces can
+    // recover the exact schema state the proposal was authored
+    // against. `versionAfterId` is set in a follow-up slice when an
+    // accept-proposal / apply path lands.
+    versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
   proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
   pushAuditEntry({
@@ -1134,6 +1228,12 @@ export async function createMethodologyEditProposal(
     diff: { before, after },
     createdBy: userId,
     createdAt,
+    // Slice E15.wiring.snapshot.proposal — pin the proposal to the
+    // most recent snapshot so audit / FE-E2 review surfaces can
+    // recover the exact schema state the proposal was authored
+    // against. `versionAfterId` is set in a follow-up slice when an
+    // accept-proposal / apply path lands.
+    versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
   proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
   pushAuditEntry({
@@ -1254,6 +1354,12 @@ export async function createSourceEditProposal(
     diff: { before, after },
     createdBy: userId,
     createdAt,
+    // Slice E15.wiring.snapshot.proposal — pin the proposal to the
+    // most recent snapshot so audit / FE-E2 review surfaces can
+    // recover the exact schema state the proposal was authored
+    // against. `versionAfterId` is set in a follow-up slice when an
+    // accept-proposal / apply path lands.
+    versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
   proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
   pushAuditEntry({
@@ -1360,6 +1466,12 @@ export async function createTransformativeEditProposal(
     diff: { before, after },
     createdBy: userId,
     createdAt,
+    // Slice E15.wiring.snapshot.proposal — pin the proposal to the
+    // most recent snapshot so audit / FE-E2 review surfaces can
+    // recover the exact schema state the proposal was authored
+    // against. `versionAfterId` is set in a follow-up slice when an
+    // accept-proposal / apply path lands.
+    versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
   proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
   pushAuditEntry({
@@ -2127,6 +2239,10 @@ export async function createDocumentFromChatSourcePack(
     projectId: params.projectId ?? null,
     useLlm: params.useLlm,
     templateId: params.templateId ?? null,
+    // Slice E15.wiring.materialize — propagate the freshly drafted
+    // pack id onto `DocumentSchema.sourcePackId` so the artifact
+    // carries an explicit pointer to its grounding source pack.
+    sourcePackId: pack.packId,
   });
 
   // Now that the artifact id is known, write the pack -> artifact link.

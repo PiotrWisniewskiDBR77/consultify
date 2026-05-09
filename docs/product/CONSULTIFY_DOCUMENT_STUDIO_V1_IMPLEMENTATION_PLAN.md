@@ -1208,7 +1208,35 @@ The cost of these gaps shows up most acutely in the DOCX renderer (cannot apply 
 
 **Validation.** Document Studio + Execution Module Standard suite **748/748 green** (+27 from E16.diff). tsc clean for the modified files. ESLint clean (0 errors / 0 warnings) for all modified files after non-null-assertion refactor.
 
-**Closes gaps.** §10.9 of the gap-vs-target report (FR-15 / track-changes substrate) — SUBSTRATE DELIVERED. The FE-E2 track-changes UI (highlighted side-by-side rendering, per-block accept / reject), audit log enrichment (e.g. "approval modified 3 sections / added 7 blocks"), and editor-proposal review surface are scheduled as follow-up slices on top of this substrate (`E16.diff.frontend`, `E16.diff.audit`, `E16.diff.proposal`).
+**Closes gaps.** §10.9 of the gap-vs-target report (FR-15 / track-changes substrate) — SUBSTRATE DELIVERED. The FE-E2 track-changes UI (highlighted side-by-side rendering, per-block accept / reject) and editor-proposal review surface are scheduled as follow-up slices on top of this substrate (`E16.diff.frontend`, `E16.diff.proposal`). The audit-pipeline integration is delivered in slice 6.15.12 below.
+
+### 6.15.12 Slice E15.wiring.materialize + E14.recordUsage.wiring + E16.diff.audit + E15.wiring.snapshot.proposal — Substrate-to-consumer wiring
+
+**Scope.** Four backend wiring slices delivered as a single composite commit. Each slice activates one §15 / §10.6 / §10.9 substrate by wiring it into a live service hot path:
+
+1. **E15.wiring.materialize.** `materializeDocumentArtifact` now populates the §15.1 artifact-ref fields on every produced `DocumentSchema`:
+   - `templateRef = { templateId, templateVersion }` whenever a Mode 3 template is consumed (template-driven runs);
+   - `sourcePackId` when the caller passes the new optional `MaterializeDocumentParams.sourcePackId` (the chat-first orchestrator `createDocumentFromChatSourcePack` now passes the freshly drafted `pack.packId` automatically);
+   - `clientId` when the caller passes the new optional `MaterializeDocumentParams.clientId` (route layer can forward an explicit binding);
+   - `owner = params.userId` always — the authoritative pointer to the actor who created the artifact, independent of the wave5 audit row.
+2. **E14.recordUsage.wiring.** When `materializeDocumentArtifact` actually consumes a template (Mode 3), it now invokes `recordTemplateUsage({ templateId, organizationId, userId, artifactId })` exactly once per successful materialization. The call is wrapped in `try { … } catch { … }` so registry hiccups never fail the user-visible artifact creation. Closes the §10.6 substrate-to-runtime wiring loop: `usageCount` and `lastUsedAt` now reflect real Mode-3 generations rather than only manual recording.
+3. **E16.diff.audit.** `createDocumentVersionSnapshot` now finds the most recent prior snapshot and computes `computeDocumentSchemaDiff(previous.schema, params.schema)`. When a prior snapshot exists, the audit row's `details` payload carries:
+   - `previousVersionId` and `previousVersionNumber` (deterministic pointer to the comparison baseline);
+   - `structuralDiffSummary` (e.g. `"1 section added, 3 blocks modified."` for log lines and audit UI);
+   - `structuralDiffStats` (the 9-field `DocumentSchemaDiffStats` projection for forensic replay).
+   First-snapshot audit rows leave the four diff fields `undefined` so consumers detect the no-baseline case deterministically. The diff computation is wrapped in `try { … } catch { … }` so it never fails snapshot capture.
+4. **E15.wiring.snapshot.proposal.** Every editor-proposal creator (`createLocalEditProposal`, `createSectionEditProposal`, `createGlobalEditProposal`, `createMethodologyEditProposal`, `createSourceEditProposal`, `createTransformativeEditProposal`) now stamps `proposal.versionBeforeId` with the result of a new helper `getMostRecentDocumentVersionSnapshot(artifactId, organizationId)` exposed by the snapshot service. The pin is best-effort (`undefined` when no snapshot exists) so the substrate is non-breaking for artifacts that have never been snapshotted. `versionAfterId` is left for a follow-up slice — needs an accept-proposal / apply path that does not exist yet.
+
+**Files changed (3 production + 1 test):**
+- `consultify/server/src/services/documentStudio/documentStudioService.ts` — extended `MaterializeDocumentParams`; populated `templateRef` / `sourcePackId` / `clientId` / `owner`; wired `recordTemplateUsage`; passed `sourcePackId` from `createDocumentFromChatSourcePack`; added `resolveProposalVersionBeforeId` helper; stamped `versionBeforeId` in 6 proposal creators.
+- `consultify/server/src/services/documentStudio/documentVersionSnapshotService.ts` — imported `computeDocumentSchemaDiff` + `summarizeDocumentSchemaDiff`; computed previous-snapshot baseline; emitted structural-diff fields in audit details; exported new public helper `getMostRecentDocumentVersionSnapshot`.
+- `consultify/server/src/services/documentStudio/__tests__/documentStudioWiringE15E16.test.ts` — 12 new specs covering: most-recent helper (5 specs, including null / single / multi-version / deep-clone immutability / empty-arg rejection); structural-diff-in-audit (3 specs covering first-snapshot no-diff, second-snapshot diff payload, summary parity with `summarizeDocumentSchemaDiff`); schema artifact-ref population (4 specs covering owner / sourcePackId / clientId / templateRef / `recordTemplateUsage` hot path).
+
+**Backwards compatibility.** All four wirings are additive — no existing fields are touched, no existing route shape changes, no migrations needed. The new optional `sourcePackId` and `clientId` on `MaterializeDocumentParams` default to `undefined`, so every existing caller compiles unchanged. The new audit-detail keys are appended, never removed; existing audit consumers ignore unknown keys. The new `versionBeforeId` on `DocumentEditorProposal` was already an optional field shipped in slice E15.4.edit, so consumers parsing proposals already tolerate it.
+
+**Validation.** Document Studio + Execution Module Standard suite **760/760 green** (+12 from this slice). tsc clean for modified files. ESLint clean (0 errors / 0 warnings) after `--fix`.
+
+**Closes / advances gaps.** §10.6 (template usage tracking — wiring), §10.9 (track-changes substrate — audit-pipeline integration), §15.1 (artifact-ref fields — runtime population), §15.4 (DocumentEdit version pinning — runtime population). Together with slice 6.15.11 (E16.diff substrate), this completes the **audit-grade closeout** of the structural-diff and artifact-ref substrates.
 
 ---
 
