@@ -11,7 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -135,6 +135,7 @@ async function loadPresentationDeck(
 
 export const PrezentacjeView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const pipeline = useKimiArtifactPipeline('prezentacje');
   const activeMessages = useConversationStore((s) => s.activeMessages);
   const [searchParams] = useSearchParams();
@@ -292,6 +293,39 @@ export const PrezentacjeView: React.FC = () => {
     reopenDeckId,
   ]);
 
+  // Single source of truth for "Open in Deck Builder" navigation.
+  // Same-tab navigation via React Router avoids the silent popup-blocker
+  // failure mode that QA hit in `2026-05-08_1853_presentations-p2-alignment-retest`
+  // (button looked frozen because window.open was blocked / opened a tab the
+  // tester never focused). Toast + structured console log give the operator
+  // an immediate, observable signal that the click registered.
+  const openInDeckBuilder = useCallback(
+    (deckId: string | null | undefined) => {
+      if (!deckId) {
+        toast.error(
+          t(
+            'prezentacje.builderUnreachable',
+            'Deck identifier is missing — cannot open Deck Builder yet.'
+          )
+        );
+        // Deliberate observability log so operators / QA see the click
+        // registered even when the navigation cannot proceed. Required
+        // by the BLOCKED_P1 follow-up (`2026-05-08_1853_…`).
+        // eslint-disable-next-line no-console
+        console.warn('[Prezentacje] openInDeckBuilder called without deckId');
+        return;
+      }
+      const route = `/presentations/builder/${deckId}`;
+      // Deliberate observability log so operators / QA can confirm in
+      // DevTools that the button click reached the navigation handler.
+      // eslint-disable-next-line no-console
+      console.info('[Prezentacje] Open in Deck Builder', { deckId, route });
+      toast.success(t('prezentacje.openingBuilder', 'Opening Deck Builder...'));
+      navigate(route);
+    },
+    [navigate, t]
+  );
+
   // Post-generation chat intent routing (P20 audit §1.1)
   const lastRoutedMsgRef = useRef<string | null>(null);
   useEffect(() => {
@@ -350,7 +384,7 @@ export const PrezentacjeView: React.FC = () => {
       {
         match: /change\s*theme|zmień\s*motyw|styl/,
         handler: async () => {
-          window.open(`/presentations/builder/${deckTarget}`, '_blank');
+          openInDeckBuilder(deckTarget);
           toast.success(
             t('prezentacje.intentRouted.openBuilder', 'Opening Deck Builder for theme changes')
           );
@@ -359,7 +393,7 @@ export const PrezentacjeView: React.FC = () => {
       {
         match: /open\s*builder|edytuj|otwórz\s*builder/,
         handler: async () => {
-          window.open(`/presentations/builder/${deckTarget}`, '_blank');
+          openInDeckBuilder(deckTarget);
         },
       },
     ];
@@ -372,7 +406,14 @@ export const PrezentacjeView: React.FC = () => {
         return;
       }
     }
-  }, [activeMessages, pipeline.isCompleted, pipeline.currentRun, reopenDeckId, t]);
+  }, [
+    activeMessages,
+    pipeline.isCompleted,
+    pipeline.currentRun,
+    reopenDeckId,
+    t,
+    openInDeckBuilder,
+  ]);
 
   const effectivePreview = pipeline.preview || reopenPreview;
   const effectiveDeckId =
@@ -414,14 +455,12 @@ export const PrezentacjeView: React.FC = () => {
   );
 
   const handlePreviewFile = useCallback(() => {
-    if (effectiveDeckId) {
-      window.open(`/presentations/builder/${effectiveDeckId}`, '_blank');
-    }
-  }, [effectiveDeckId]);
+    openInDeckBuilder(effectiveDeckId);
+  }, [effectiveDeckId, openInDeckBuilder]);
 
   const handleAllFiles = useCallback(() => {
-    window.open('/presentations', '_blank');
-  }, []);
+    navigate('/prezentacje');
+  }, [navigate]);
 
   const handleDownload = useCallback(async () => {
     if (effectiveDeckId) {

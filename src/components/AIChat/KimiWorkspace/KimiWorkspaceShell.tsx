@@ -656,11 +656,11 @@ function ArtifactPreviewPane({
                   <p className="text-sm font-medium">
                     {t('kimi.deckPreview', 'Presentation preview')}
                   </p>
-                  {preview.deckId && (
+                  {preview.deckId && onPreviewFile && (
                     <button
-                      onClick={() =>
-                        window.open(`/presentations/builder/${preview.deckId}`, '_blank')
-                      }
+                      type="button"
+                      onClick={onPreviewFile}
+                      data-testid="kimi-open-in-builder-empty"
                       className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
                     >
                       <LayoutGrid size={14} />
@@ -670,17 +670,22 @@ function ArtifactPreviewPane({
                 </div>
               </div>
             )}
-            {preview.deckId && preview.deckSlides && preview.deckSlides.length > 0 && (
-              <div className="flex justify-center">
-                <button
-                  onClick={() => window.open(`/presentations/builder/${preview.deckId}`, '_blank')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
-                >
-                  <LayoutGrid size={14} />
-                  {t('kimi.openInBuilder', 'Open in Builder')}
-                </button>
-              </div>
-            )}
+            {preview.deckId &&
+              preview.deckSlides &&
+              preview.deckSlides.length > 0 &&
+              onPreviewFile && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={onPreviewFile}
+                    data-testid="kimi-open-in-builder-populated"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
+                  >
+                    <LayoutGrid size={14} />
+                    {t('kimi.openInBuilder', 'Open in Builder')}
+                  </button>
+                </div>
+              )}
           </div>
         )}
       </div>
