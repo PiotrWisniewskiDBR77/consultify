@@ -558,3 +558,68 @@ Domknięcie do 100% spec'a wymaga ~6-10 tygodni focused work przy obecnym poziom
 - ⏳ Renderer-level wiring (charts, formatting, structural-diff UI) — pending dependency / corpus decisions.
 
 This addendum is the **closeout reference** for the post-gap-report backend campaign. Use it together with `CONSULTIFY_DOCUMENT_STUDIO_V1_IMPLEMENTATION_PLAN.md` §6.15.x for the full audit trail.
+
+---
+
+## 18. Status updates after technical-debt remediation campaign (2026-05-09 PM)
+
+A targeted "tech debt" campaign followed §17. Focus was **operational** (parallel-sync investigation + tooling) plus **one consumer-wiring slice** that was previously deferred. This section records the resolution.
+
+### 18.1 Faza A — Parallel-sync agent root cause found
+
+**Identified root cause:** `Google Drive Desktop` (PID 3485, ~100% CPU running). It actively syncs `~/Documents/Antygracity/` with cloud Drive, which:
+
+- Causes transient file deletions during file-provider migration → `git add … && git commit …` lands as `no changes added to commit`.
+- Re-syncs commits from other-machine identities (e.g. `staging` on a different laptop) → silent attribution rewrite locally.
+
+**Existing partial defense:** `.cursor/hooks/agent-snapshot-pre-flight.sh` already snapshots `consultify/` before each prompt (passive — restores from `.drive-sync-backup/`), but never blocked the root cause.
+
+**Handover deliverable:** `DRD/consultify/docs/operations/PARALLEL_SYNC_REMEDIATION_2026-05-09.md` — three operator-side options (subfolder sync exclude / move repo out of `~/Documents/` / keep + defensive tooling) plus long-term recommendation (don't host product code in `~/Documents/` on macOS). User-side (GUI) action required for permanent fix; agent cannot reach Drive Settings.
+
+### 18.2 Faza B — Defensive tooling shipped
+
+`scripts/git-tools/` (commit `070e01f46`):
+
+- **`atomic-commit.sh`** — proactive `git add + commit + verify` wrapper with 200ms FS-settle. Exits non-zero on attribution mismatch (1) or empty staging (2) so CI / wrappers detect sync collisions.
+- **`post-commit-attribution-check`** — hook script firing after every commit (incl. IDE GUI / rebases / cherry-picks / amends), warning on stderr if `%an %ae` ≠ configured user.
+- **`install-hooks.sh`** — one-time installer setting `core.hooksPath = scripts/git-tools/hooks` and symlinking the hook. Idempotent.
+- **`README.md`** — full operator guide.
+
+Defensive tooling mitigates symptoms even if §18.1 remediation is never executed. Verified working: this campaign's 3 commits all show clean `Piotr` attribution after `atomic-commit.sh` invocation.
+
+### 18.3 Faza C — Consumer-wiring slice E15.5.formatting.render shipped
+
+Commit `5e905fb50`. Five §15.5 substrate fields wired into live DOCX + PDF renderers:
+
+| Substrate field | DOCX wiring | PDF wiring |
+| --- | --- | --- |
+| `headingStylesDetailed.{h1,h2,h3}` | `buildDocxStyleConfig` overrides class-derived sizing | `buildPdfRenderContext` overrides `PDF_SIZING_BY_CLASS` |
+| `headers.content` | `renderDocumentSchemaToDocxBuffer` header runs | `drawHeaderFooter` header text |
+| `footers.pageNumberingFormat` | tokenized into `PageNumber.CURRENT/TOTAL_PAGES` runs | literal `{N}` / `{M}` substitution |
+| `tocConfig.maxDepth` | `headingStyleRange = '1-${maxDepth}'` | filter PDF TOC entries |
+| `coverPageDetailed.{includeStatus,includeConfidentiality}` | conditional subtitle composition | conditional subtitle composition |
+
+**Tests:** 16 new specs in `documentRendererE15FormattingRender.test.ts` (verified via `JSZip` for DOCX XML + `pdf-parse` for PDF text). All pass; full Document Studio suite **731/731 green**.
+
+**Backwards compatibility:** Every wired surface uses `??` fallback to legacy default → schemas without the new fields render byte-identically. Verified by existing 24 DOCX renderer + style tests + 17 PDF parity tests (all unchanged).
+
+**Deferred:** `coverPageDetailed.includeLogo` — requires asset embedding pipeline (out of this slice).
+
+### 18.4 Outstanding work after this campaign
+
+**Resolved:**
+- ✅ Parallel-sync root cause identified, handover playbook delivered.
+- ✅ Defensive tooling shipped and verified working.
+- ✅ E15.5.formatting.render — last big substrate-to-renderer gap closed.
+
+**Still outstanding (unchanged from §17.3):**
+- E14.persistence (DB migration), E5.6.qa.hard (registry comparator), E17.charts.render (chart library decision), E16.diff.frontend, E16.diff.proposal, E13 (share link surface).
+- Frontend FE-E1.2 → FE-E5 — **now unblockable** once user runs §18.1 §2 GUI step or moves repo out of `~/Documents/`.
+
+### 18.5 Definition of done — tech-debt campaign acceptance
+
+- ✅ Parallel-sync investigated end-to-end; root cause documented with reproducible evidence (PID + ps output).
+- ✅ Defensive tooling shipped, executable, idempotent install, verified by 3 successful clean-attribution commits.
+- ✅ E15.5.formatting.render fully wired with 16 new specs and zero regressions in legacy tests.
+- ✅ Plan + gap report updated with full audit trail.
+- ⏳ User-side §18.1 §2 GUI step (operator-only; not agent-reachable).

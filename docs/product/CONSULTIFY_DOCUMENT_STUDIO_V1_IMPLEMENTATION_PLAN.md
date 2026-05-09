@@ -1240,6 +1240,32 @@ The cost of these gaps shows up most acutely in the DOCX renderer (cannot apply 
 
 ---
 
+### 6.15.13 Slice E15.5.formatting.render — DOCX/PDF renderery konsumują FormattingSchema substrate
+
+**Scope.** Konsumencka faza dla §15.5 substrate. Pięć pól FormattingSchema dostarczonych w slice 6.15.9 (E15.5.formatting) było type-only (substrate); ten slice wpina je do live DOCX i PDF rendererów tak żeby autorska polityka formatowania faktycznie surface'owała w wyrenderowanym artefakcie.
+
+**Wired surfaces.**
+
+1. **`headingStylesDetailed.{h1,h2,h3}`** — overrides class-derived heading sizing. DOCX (`buildDocxStyleConfig`): `fontSizePt × 2 = half-points`, `spacingBeforePt × 20 = TWIPs`, `bold` przejmuje override. PDF (`buildPdfRenderContext`): `fontSizePt` directly w points (PDFKit consumes points). Default fallback: class-derived `SIZING_BY_CLASS[…]` / `PDF_SIZING_BY_CLASS[…]`.
+2. **`headers.content`** — gdy ustawione (and non-empty after trim), zastępuje domyślny `schema.title` w nagłówku obu rendererów. Empty/unset preserves legacy behavior.
+3. **`footers.pageNumberingFormat`** — gdy ustawione, zastępuje legacy `Page N / M` runs / text template'em z `{N}` / `{M}` placeholderami (np. `"Strona {N} z {M}"` dla polskiego). Path DOCX tokenizuje template tak, że `{N}` / `{M}` stają się prawdziwymi Word `PageNumber` field children (Word recalculates on print). Path PDF robi literal string replacement na podstawie current page index / total.
+4. **`tocConfig.maxDepth`** — narrows Word's TOC `headingStyleRange` z domyślnego `1-3` do `1-${maxDepth}` (DOCX) i filtruje PDF TOC entries do `level ≤ maxDepth` (PDF). Default path: `maxDepth = 3` (current behavior).
+5. **`coverPageDetailed.{includeStatus, includeConfidentiality}`** — gdy `includeStatus=false`, subtitle cover-page'a pomija density token; gdy `includeConfidentiality=false`, pomija confidentiality token. Default (no override): pełen subtitle. **Note:** `includeLogo` jest captured przez substrate ale not yet rendered (image embedding wymaga asset storage / lookup, deferred do future slice).
+
+**Files changed (3 production + 1 test):**
+- `consultify/server/src/services/documentStudio/documentDocxStyles.ts` — extended `buildDocxStyleConfig` aby aplikował `headingStylesDetailed` overrides na top of class-derived sizing (z conversions pt→half-points i pt→TWIPs).
+- `consultify/server/src/services/documentStudio/documentDocxRenderer.ts` — wired `headers.content`, `footers.pageNumberingFormat`, `tocConfig.maxDepth`, `coverPageDetailed.{includeStatus,includeConfidentiality}` w `renderDocumentSchemaToDocxBuffer` / `renderCoverBlock` / `renderTocBlock`.
+- `consultify/server/src/services/documentStudio/documentPdfRenderer.ts` — extended `buildPdfRenderContext` o `headingStylesDetailed` override; wired `headers.content`, `footers.pageNumberingFormat`, `tocConfig.maxDepth`, `coverPageDetailed.{includeStatus,includeConfidentiality}` w `drawHeaderFooter` / `drawCover` / `drawTableOfContents`.
+- `consultify/server/src/services/documentStudio/__tests__/documentRendererE15FormattingRender.test.ts` — 16 nowych specs covering: 2 specs dla `buildDocxStyleConfig` (default + override fallback), 7 specs dla DOCX renderer (header default + override, footer default + custom format, TOC default + maxDepth=2, cover default + includeStatus=false), 7 specs dla PDF parity (te same scenariusze).
+
+**Backwards compatibility.** Każdy wpięty surface używa `??` fallback do legacy default — schemy które nie noszą nowych pól substrate renderują byte-identycznie do swojego previous output. Verified via existing 24 DOCX renderer + style tests + 17 PDF parity tests (all pass unchanged in this campaign).
+
+**Validation.** Document Studio suite **731/731 green** (+16 z tego slice). ESLint clean (0 errors / 0 warnings) po `--fix`. TSC clean dla modified scope (pre-existing TS errors w presentationStudio / tablePlatform są unrelated).
+
+**Closes gaps.** §15.5 (FormattingSchema substrate — runtime activation). Substrate dostarczony w 6.15.9 jest teraz **fully runtime-active**. Pozostałe `coverPageDetailed.includeLogo` deferred jako follow-up (wymaga embedding pipeline'a obrazów z asset registry — out of scope dla tego slice'a).
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
