@@ -13,6 +13,8 @@
  *     element for each non-zero flag class.
  *   - The toggle button flips visibility of the breakdown and warnings
  *     list, and `aria-expanded` updates correctly.
+ *   - S24 per-slide drill-down renders clean and flagged slide rows
+ *     from `slideAudits` inside the expanded details.
  *   - The banner is purely advisory: it never triggers a callback or a
  *     mutation. (Verified by absence of any such prop.)
  */
@@ -136,6 +138,57 @@ describe('PresentationStudioLayoutAuditBanner', () => {
     const warnings = screen.getByTestId('presentation-studio-layout-audit-warnings');
     expect(warnings.textContent).toContain('[layout_overflow_title]');
     expect(warnings.textContent).toContain('[layout_overflow_key_message]');
+  });
+
+  it('renders per-slide drill-down rows for clean and flagged slides (S24)', () => {
+    render(
+      <PresentationStudioLayoutAuditBanner audit={makeFindingsAudit()} defaultExpanded={true} />
+    );
+
+    const drilldown = screen.getByTestId('presentation-studio-layout-audit-slide-drilldown');
+    expect(drilldown.textContent).toContain('Per-slide drill-down');
+    expect(drilldown.textContent).toContain('3 slides checked');
+
+    const cover = screen.getByTestId('presentation-studio-layout-audit-slide-0');
+    expect(cover.getAttribute('data-state')).toBe('clean');
+    expect(screen.getByTestId('presentation-studio-layout-audit-slide-0-clean')).toBeTruthy();
+
+    const executive = screen.getByTestId('presentation-studio-layout-audit-slide-1');
+    expect(executive.getAttribute('data-state')).toBe('flagged');
+    expect(
+      screen.getByTestId('presentation-studio-layout-audit-slide-1-flag-layout_overflow_title')
+    ).toBeTruthy();
+  });
+
+  it('orders high-priority slide flags before advisory overflow flags (S24)', () => {
+    render(
+      <PresentationStudioLayoutAuditBanner
+        audit={{
+          warnings: ['[missing_source_for_evidence_intent] Slide 2 …'],
+          slideAudits: [
+            {
+              index: 1,
+              intent: 'recommendation_single',
+              flags: ['layout_overflow_title', 'missing_source_for_evidence_intent'],
+            },
+          ],
+          flagCounts: {
+            layout_overflow_title: 1,
+            layout_overflow_key_message: 0,
+            layout_overflow_blocks: 0,
+            missing_source_for_evidence_intent: 1,
+            unsupported_intent_for_pptx_export: 0,
+            unsupported_intent_for_pdf_export: 0,
+          },
+        }}
+      />
+    );
+
+    const slide = screen.getByTestId('presentation-studio-layout-audit-slide-1');
+    const flagText = Array.from(slide.querySelectorAll('[data-testid*="-flag-"]')).map(
+      (node) => node.textContent
+    );
+    expect(flagText).toEqual(['Missing source on evidence slide', 'Title overflow']);
   });
 
   it('uses singular language when there is exactly one finding', () => {

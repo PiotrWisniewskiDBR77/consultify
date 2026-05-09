@@ -74,6 +74,13 @@ function hasHighPriorityFlags(audit: PresentationStudioOutlineLayoutAudit): bool
   return false;
 }
 
+function flagToneClass(flag: PresentationStudioLayoutAuditFlag): string {
+  if (HIGH_PRIORITY_FLAGS.has(flag)) {
+    return 'border-rose-300 bg-rose-100 text-rose-900 dark:border-rose-900/60 dark:bg-rose-900/40 dark:text-rose-100';
+  }
+  return 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/40 dark:text-amber-100';
+}
+
 export interface PresentationStudioLayoutAuditBannerProps {
   /**
    * Audit payload from the latest `/generate/preview` response. When null
@@ -125,6 +132,16 @@ export function PresentationStudioLayoutAuditBanner({
     return FLAG_ORDER.map((flag) => ({ flag, count: audit.flagCounts[flag] ?? 0 })).filter(
       (entry) => entry.count > 0
     );
+  }, [audit]);
+
+  const slideDrilldown = useMemo(() => {
+    if (!audit) return [];
+    return audit.slideAudits.map((slide) => ({
+      ...slide,
+      flags: [...slide.flags].sort(
+        (a, b) => FLAG_ORDER.indexOf(a) - FLAG_ORDER.indexOf(b)
+      ) as PresentationStudioLayoutAuditFlag[],
+    }));
   }, [audit]);
 
   if (!audit) return null;
@@ -206,24 +223,75 @@ export function PresentationStudioLayoutAuditBanner({
       {expanded ? (
         <div
           id={`${dataTestId}-details`}
-          className="mt-1 grid gap-2 sm:grid-cols-2"
+          className="mt-1 space-y-3"
           data-testid={`${dataTestId}-details`}
         >
-          {breakdown.map(({ flag, count }) => (
-            <div
-              key={flag}
-              className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-white/70 px-3 py-2 text-xs dark:border-amber-900/60 dark:bg-amber-900/20"
-              data-testid={`${dataTestId}-flag-${flag}`}
-            >
-              <span className="font-medium">{FLAG_DISPLAY_LABEL[flag]}</span>
-              <span
-                className="rounded-full bg-amber-200 px-2 py-0.5 font-mono text-[11px] text-amber-900 dark:bg-amber-900/60 dark:text-amber-100"
-                data-testid={`${dataTestId}-flag-${flag}-count`}
+          <div className="grid gap-2 sm:grid-cols-2" data-testid={`${dataTestId}-flag-breakdown`}>
+            {breakdown.map(({ flag, count }) => (
+              <div
+                key={flag}
+                className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-white/70 px-3 py-2 text-xs dark:border-amber-900/60 dark:bg-amber-900/20"
+                data-testid={`${dataTestId}-flag-${flag}`}
               >
-                {count}
+                <span className="font-medium">{FLAG_DISPLAY_LABEL[flag]}</span>
+                <span
+                  className="rounded-full bg-amber-200 px-2 py-0.5 font-mono text-[11px] text-amber-900 dark:bg-amber-900/60 dark:text-amber-100"
+                  data-testid={`${dataTestId}-flag-${flag}-count`}
+                >
+                  {count}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="rounded-lg border border-slate-200 bg-white/70 p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300"
+            data-testid={`${dataTestId}-slide-drilldown`}
+          >
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                Per-slide drill-down
+              </span>
+              <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                {slideDrilldown.length} slides checked
               </span>
             </div>
-          ))}
+            <div className="space-y-2">
+              {slideDrilldown.map((slide) => (
+                <div
+                  key={`${slide.index}-${slide.intent}`}
+                  className="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 px-2.5 py-2 dark:bg-slate-950/50"
+                  data-testid={`${dataTestId}-slide-${slide.index}`}
+                  data-state={slide.flags.length > 0 ? 'flagged' : 'clean'}
+                >
+                  <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                    Slide {slide.index + 1}
+                  </span>
+                  <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-200">
+                    {slide.intent || 'unknown'}
+                  </span>
+                  {slide.flags.length > 0 ? (
+                    slide.flags.map((flag) => (
+                      <span
+                        key={flag}
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${flagToneClass(flag)}`}
+                        data-testid={`${dataTestId}-slide-${slide.index}-flag-${flag}`}
+                      >
+                        {FLAG_DISPLAY_LABEL[flag]}
+                      </span>
+                    ))
+                  ) : (
+                    <span
+                      className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+                      data-testid={`${dataTestId}-slide-${slide.index}-clean`}
+                    >
+                      No findings
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : null}
 

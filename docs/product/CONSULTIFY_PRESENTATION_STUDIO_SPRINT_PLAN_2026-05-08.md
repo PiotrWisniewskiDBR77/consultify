@@ -1939,3 +1939,62 @@ Closed the process-global write blast radius for layout-capacity overrides. Befo
 
 - **R-S14-3 / R-S15-2 / R-S16 follow-ups:** per-slide layout-audit drill-down on the Studio canvas.
 - **Operations runbook:** document the required HMAC secret, schema v2 tenant persistence, `signature_mismatch`, and `io_error` remediation.
+
+
+---
+
+## Sprint S24 — per-slide layout-audit drill-down (closes R-S14-3 + R-S15-2)
+
+**Status:** Completed
+**Date:** 2026-05-09
+**Phase:** 2 (Implementation)
+**Touched files:** 3 (1 UI component, 1 component test, 1 sprint-plan gate report)
+
+### Scope
+
+Closed the canvas-side visibility gap for layout audit. Before S24, the Studio canvas showed aggregate layout audit counts and raw warning strings, but the reviewer could not scan the structured per-slide `slideAudits` map returned by the backend. S24 extends the existing `PresentationStudioLayoutAuditBanner` in-place: the same canvas-side advisory banner now includes a per-slide drill-down inside the expanded details state, with one row per slide and semantic flag chips.
+
+### Changes
+
+- **MODIFIED** `src/components/PresentationStudio/PresentationStudioLayoutAuditBanner.tsx`
+  - Added `slideDrilldown` derived from `audit.slideAudits`.
+  - Expanded details now include:
+    - existing aggregate flag breakdown,
+    - new `Per-slide drill-down` section,
+    - one row per slide,
+    - `No findings` chip for clean slides,
+    - semantic flag chips for flagged slides.
+  - High-priority flags render with rose severity; advisory overflow flags render with amber severity.
+  - Slide flags are sorted by canonical `FLAG_ORDER`, so high-priority issues appear before overflow hints.
+  - No new toolbar, no duplicated action, no Menu 3 violation: this remains canvas-side status/evidence, not an AI action.
+- **MODIFIED** `src/components/PresentationStudio/__tests__/PresentationStudioLayoutAuditBanner.test.tsx`
+  - Added test for clean + flagged slide drill-down rows.
+  - Added test for high-priority flag ordering before advisory overflow flags.
+  - Updated test header to cover S24 drill-down acceptance.
+
+### UI/UX Governance
+
+- **Source of truth applied:** `DRD/UI_UX_SOURCE_OF_TRUTH.md`, Consultify Golden Standard, Operating Standard, and color-system standard.
+- **Placement:** The feature extends the existing canvas-resident audit banner. It does not create a new toolbar and does not place contextual AI actions outside Menu 3.
+- **Honest states:** `audit=null` still renders nothing before preview; clean audit renders an explicit success tile; warnings render advisory findings; expanded state now includes structured per-slide traceability.
+- **Color semantics:** rose for high-priority evidence/renderability flags, amber for advisory overflow flags, slate for neutral rows/clean state metadata, emerald for clean audit state.
+- **Severity:** PASS. No P0/P1/P2 found in scoped automated validation.
+
+### Validation
+
+- **Focused audit-banner vitest:** 13/13 passed.
+- **Studio FE vitest:** 73/73 passed (page 28 + admin panel 17 + audit banner 13 + admin api client 15).
+- **ESLint on S24-touched files:** 0 errors.
+- **Focused TypeScript:** 0 errors via transient `tsconfig.s24-check.json`.
+- **IDE lints:** no linter errors on S24 files.
+
+### Acceptance
+
+- R-S14-3 closed: Studio canvas now exposes per-slide layout-audit drill-down.
+- R-S15-2 closed: UI users can see which slide carries which audit flags before approving/generating.
+- The drill-down is derived from backend `slideAudits`; no client-only inference or duplicated audit logic.
+- Existing aggregate banner behavior remains intact: clean state, warning state, high-priority auto-expand, manual collapse, raw warnings list.
+
+### Remaining backlog
+
+- **Operations runbook:** document required HMAC secret, signed schema v2 tenant persistence, `signature_mismatch`, and S21 `io_error` fsync remediation.
