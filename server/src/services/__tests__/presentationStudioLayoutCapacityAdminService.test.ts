@@ -11,10 +11,14 @@ import { _clearApprovalTicketStoreForTests } from '../presentationStudioApproval
 import {
   _setLayoutCapacityAdminDependenciesForTests,
   executeLayoutCapacityOverrides,
+  executeLayoutCapacityReset,
   proposeLayoutCapacityOverrides,
+  proposeLayoutCapacityReset,
 } from '../presentationStudioLayoutCapacityAdminService';
 import {
+  applyOverrides,
   getCurrentRegistrySnapshot,
+  getDefaultRegistrySnapshot,
   resetToDefaults,
 } from '../presentationStudioLayoutCapacityRegistryService';
 
@@ -273,6 +277,273 @@ describe('executeLayoutCapacityOverrides', () => {
       overrides: { densityBudgets: { balanced: { titleMaxChars: -1 } } },
       reason: 'rationale',
     });
+    expect(audit).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sprint S19 — proposeLayoutCapacityReset / executeLayoutCapacityReset
+// ---------------------------------------------------------------------------
+
+describe('proposeLayoutCapacityReset', () => {
+  it('mints a ticket bound to (orgId, userId) without mutating the registry', () => {
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
+    const before = getCurrentRegistrySnapshot();
+    const result = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'returning to defaults after S17 experiment',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.ticket.organizationId).toBe('org-A');
+    expect(result.ticket.userId).toBe('user-1');
+    expect(result.ticket.consumedAt).toBeNull();
+    expect(result.payloadFingerprint).toMatch(/^[a-f0-9]{64}$/);
+    // No mutation: the registry still has the override we applied above.
+    expect(getCurrentRegistrySnapshot()).toEqual(before);
+  });
+
+  it('different reasons produce different fingerprints (so a swapped reason fails redemption)', () => {
+    const a = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'rationale A',
+    });
+    const b = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'rationale B',
+    });
+    expect(a.payloadFingerprint).not.toBe(b.payloadFingerprint);
+  });
+
+  it('null reason and missing reason produce the SAME fingerprint (both normalize to null)', () => {
+    const withNull = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: null,
+    });
+    const withoutReason = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+    });
+    expect(withNull.payloadFingerprint).toBe(withoutReason.payloadFingerprint);
+  });
+
+  it('reset fingerprints are NOT collision-equal with override fingerprints (action is bound)', () => {
+    const reset = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'sentinel',
+    });
+    const override = proposeLayoutCapacityOverrides({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      overrides: {},
+      reason: 'sentinel',
+    });
+    if (!override.ok) throw new Error('override propose failed unexpectedly');
+    expect(reset.payloadFingerprint).not.toBe(override.payloadFingerprint);
+  });
+});
+
+describe('executeLayoutCapacityReset', () => {
+  it('rejects with INVALID_APPROVAL_TICKET when no ticket exists', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    const result = await executeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: 'pssa_does_not_exist',
+      reason: 'rationale',
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(result.reason).toBe('not_found');
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('rejects with payload_mismatch when reason changed between propose and execute', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    const propose = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'rationale A',
+    });
+
+    const result = await executeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      reason: 'rationale B', // CHANGED
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(result.reason).toBe('payload_mismatch');
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('rejects with tenant_mismatch when a different org tries to redeem', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    const propose = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'rationale',
+    });
+
+    const result = await executeLayoutCapacityReset({
+      organizationId: 'org-B', // different org
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      reason: 'rationale',
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(result.reason).toBe('tenant_mismatch');
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('a redeemed reset ticket cannot be redeemed a second time (single-use semantics)', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    const propose = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'rationale',
+    });
+
+    const first = await executeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      reason: 'rationale',
+    });
+    expect(first.ok).toBe(true);
+
+    const second = await executeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      reason: 'rationale',
+    });
+    expect(second.ok).toBe(false);
+    if (second.ok) return;
+    expect(second.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(second.reason).toBe('consumed');
+    expect(audit).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops every prior override + records audit with pre/post snapshots on a clean round-trip', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+
+    // Apply a non-default override so the reset has something to drop.
+    applyOverrides({
+      densityBudgets: { balanced: { titleMaxChars: 100 } },
+      familyAliasByDeckType: { synthetic: 'Universal' },
+    });
+    const before = getCurrentRegistrySnapshot();
+    expect(before.densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(before.familyAliasByDeckType.synthetic).toBe('Universal');
+
+    const propose = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'returning to defaults after S17 experiment',
+    });
+
+    const result = await executeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      reason: 'returning to defaults after S17 experiment',
+      ipAddress: '127.0.0.1',
+      userAgent: 'test-agent',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    // Registry was actually reset to canonical defaults.
+    const after = getCurrentRegistrySnapshot();
+    const defaults = getDefaultRegistrySnapshot();
+    expect(after).toEqual(defaults);
+    expect(after.densityBudgets.balanced.titleMaxChars).not.toBe(100);
+
+    // Audit was recorded with the canonical reset action type +
+    // pre/post snapshots so the wiped configuration is replay-able.
+    expect(audit).toHaveBeenCalledTimes(1);
+    const auditArg = audit.mock.calls[0][0];
+    expect(auditArg.actionType).toBe('presentation_studio_layout_capacity_overrides_reset');
+    expect(auditArg.resourceType).toBe('presentation_studio_layout_capacity_registry');
+    expect(auditArg.resourceId).toBe(propose.ticket.ticketId);
+    expect(auditArg.organizationId).toBe('org-A');
+    expect(auditArg.userId).toBe('user-1');
+    expect(auditArg.details.ticketId).toBe(propose.ticket.ticketId);
+    expect(auditArg.details.reason).toBe('returning to defaults after S17 experiment');
+    expect(auditArg.details.registrySnapshotBefore.densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(auditArg.details.registrySnapshotBefore.familyAliasByDeckType.synthetic).toBe(
+      'Universal'
+    );
+    expect(auditArg.details.registrySnapshotAfter).toEqual(defaults);
+    expect(auditArg.ipAddress).toBe('127.0.0.1');
+    expect(auditArg.userAgent).toBe('test-agent');
+  });
+
+  it('emits audit AFTER the reset (snapshotAfter equals defaults, not the pre-state)', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    applyOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
+
+    const propose = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'rationale',
+    });
+    await executeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      reason: 'rationale',
+    });
+
+    const auditArg = audit.mock.calls[0][0];
+    // Pre-state captured the override.
+    expect(auditArg.details.registrySnapshotBefore.densityBudgets.balanced.titleMaxChars).toBe(100);
+    // Post-state captured the canonical default (NOT the override).
+    const defaults = getDefaultRegistrySnapshot();
+    expect(auditArg.details.registrySnapshotAfter.densityBudgets.balanced.titleMaxChars).toBe(
+      defaults.densityBudgets.balanced.titleMaxChars
+    );
+  });
+
+  it('reset ticket cannot be redeemed by an OVERRIDE execute call (action types do not collide)', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    const propose = proposeLayoutCapacityReset({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      reason: 'rationale',
+    });
+    // Try to redeem the RESET ticket via the OVERRIDE execute path.
+    // The fingerprint binds `{ action: 'reset_to_defaults', reason }`
+    // for the reset and `{ overrides, reason }` for the override, so
+    // they MUST differ — even with empty overrides + same reason.
+    const result = await executeLayoutCapacityOverrides({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      ticketId: propose.ticket.ticketId,
+      overrides: {},
+      reason: 'rationale',
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(result.reason).toBe('payload_mismatch');
     expect(audit).not.toHaveBeenCalled();
   });
 });

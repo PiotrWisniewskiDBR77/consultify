@@ -58,6 +58,84 @@ export interface PersistenceFileSystemDriver {
   removeFile(path: string): void;
 }
 
+/**
+ * Sprint S19 — minimal structural surface of `node:fs` used by
+ * `atomicWriteFile`. Letting tests pass a mock fs without spinning up
+ * a real temp dir keeps the helper pure and lets us assert the exact
+ * sequence of operations (write tmp -> rename -> success-or-cleanup).
+ */
+export interface AtomicWriteFileSystem {
+  existsSync(path: string): boolean;
+  mkdirSync(path: string, options?: { recursive?: boolean }): void;
+  writeFileSync(path: string, contents: string, encoding: 'utf-8'): void;
+  renameSync(oldPath: string, newPath: string): void;
+  unlinkSync(path: string): void;
+}
+
+export interface AtomicWritePathOps {
+  dirname(p: string): string;
+}
+
+/**
+ * Sprint S19 — atomic write helper (closes R-S18-3).
+ *
+ * Writes `<path>` via the canonical tmp-file + rename dance:
+ *   1. Ensure the parent dir exists.
+ *   2. Write the FULL contents to `<path>.tmp.<unique>`.
+ *   3. Atomically `rename` the tmp file onto the target path.
+ *   4. On any failure during steps 2 or 3, attempt to `unlink` the tmp
+ *      file so it does not linger as garbage on disk. The unlink
+ *      failure itself is swallowed (we cannot meaningfully recover).
+ *
+ * Why atomic?
+ *   - On POSIX `rename(2)` is atomic with respect to readers — they
+ *     either see the OLD contents or the NEW contents, never a partial
+ *     write. A crash mid-write therefore cannot leave the persisted
+ *     file in a corrupted state. (The honest fallback in
+ *     `loadPersistedOverrides` would catch a corrupted file, but the
+ *     SuperAdmin would lose the entire prior tuning. Atomic writes
+ *     reduce the failure mode to "the previous good copy is still
+ *     there" instead of "you lost everything because we crashed mid
+ *     `writeFileSync`".)
+ *   - The tmp file name embeds `process.pid` + a per-call counter so
+ *     two concurrent writers (e.g. the registry hook + a manual
+ *     SuperAdmin debug script) never collide on the same tmp path.
+ *
+ * Throws on any unrecoverable I/O failure. Caller (`savePersistedOverrides`)
+ * already wraps in try/catch and converts to a structured result.
+ */
+let _tmpCounter = 0;
+export function atomicWriteFile(
+  targetPath: string,
+  contents: string,
+  fsDriver: AtomicWriteFileSystem,
+  pathOps: AtomicWritePathOps
+): void {
+  const dir = pathOps.dirname(targetPath);
+  if (!fsDriver.existsSync(dir)) {
+    fsDriver.mkdirSync(dir, { recursive: true });
+  }
+  // Tmp suffix: pid + per-process counter + ".tmp" — survives concurrent
+  // writers in the same process (the counter is monotonic) and across
+  // processes (pid is unique enough at the granularity we care about).
+  _tmpCounter = (_tmpCounter + 1) % Number.MAX_SAFE_INTEGER;
+  const tmpPath = `${targetPath}.${process.pid}.${_tmpCounter}.tmp`;
+  try {
+    fsDriver.writeFileSync(tmpPath, contents, 'utf-8');
+    fsDriver.renameSync(tmpPath, targetPath);
+  } catch (err: unknown) {
+    // Best-effort cleanup of the tmp file. We deliberately do NOT
+    // surface the cleanup error — the original write/rename error is
+    // the meaningful one for the caller.
+    try {
+      if (fsDriver.existsSync(tmpPath)) fsDriver.unlinkSync(tmpPath);
+    } catch {
+      // Swallow. Tmp file may linger as garbage; acceptable trade-off.
+    }
+    throw err;
+  }
+}
+
 let _driver: PersistenceFileSystemDriver | null = null;
 
 function defaultDriver(): PersistenceFileSystemDriver {
@@ -79,11 +157,25 @@ function defaultDriver(): PersistenceFileSystemDriver {
       return fs.readFileSync(p, 'utf-8');
     },
     writeFile(p: string, contents: string): void {
-      const dir = path.dirname(p);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(p, contents, 'utf-8');
+      // Sprint S19 — atomic write (tmp-file + rename) closes R-S18-3.
+      // A crash mid-write now leaves the previous good copy intact
+      // instead of producing a corrupt file.
+      atomicWriteFile(
+        p,
+        contents,
+        {
+          existsSync: fs.existsSync.bind(fs),
+          mkdirSync: (dirPath: string, opts?: { recursive?: boolean }) => {
+            fs.mkdirSync(dirPath, opts);
+          },
+          writeFileSync: (filePath: string, c: string, encoding: 'utf-8') => {
+            fs.writeFileSync(filePath, c, encoding);
+          },
+          renameSync: fs.renameSync.bind(fs),
+          unlinkSync: fs.unlinkSync.bind(fs),
+        },
+        { dirname: path.dirname.bind(path) }
+      );
     },
     removeFile(p: string): void {
       if (!fs.existsSync(p)) return;

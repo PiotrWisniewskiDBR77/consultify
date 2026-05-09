@@ -1924,3 +1924,218 @@ describe('presentationStudio.routes — GET /admin/layout-capacity loadWarning (
     expect(res.body.data.loadWarning.details).toContain('titleMaxChars');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Sprint S19 — SuperAdmin reset-to-defaults admin route tests
+// ---------------------------------------------------------------------------
+
+describe('presentationStudio.routes — POST /admin/layout-capacity/reset/propose (S19)', () => {
+  beforeEach(() => {
+    resetLayoutCapacityRegistry();
+    _clearApprovalTicketStoreForTests();
+    _setLayoutCapacityAdminDependenciesForTests(null);
+    setAuth({
+      user: { id: 'admin-1', organizationId: 'org-Sys', role: 'SUPERADMIN' },
+      userRole: 'SUPERADMIN',
+    });
+  });
+
+  it('returns 200 with a fresh ticket for a SUPERADMIN (no payload required)', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/propose',
+      path: '/admin/layout-capacity/reset/propose',
+      body: { reason: 'returning to defaults after S17 experiment' },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/propose', req, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.ticket).toBeDefined();
+    expect(res.body.data.ticket.organizationId).toBe('org-Sys');
+    expect(res.body.data.ticket.userId).toBe('admin-1');
+    expect(res.body.data.ticket.consumedAt).toBeNull();
+    expect(res.body.data.payloadFingerprint).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('does NOT mutate the registry on a successful proposal', async () => {
+    applyLayoutCapacityOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
+    const before = getLayoutCapacitySnapshot();
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/propose',
+      path: '/admin/layout-capacity/reset/propose',
+      body: { reason: 'rationale' },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/propose', req, res);
+    expect(res.statusCode).toBe(200);
+    expect(getLayoutCapacitySnapshot()).toEqual(before);
+  });
+
+  it('returns 403 PERMISSION_DENIED for OWNER trying to propose a reset', async () => {
+    setAuth({
+      user: { id: 'owner-1', organizationId: 'org-A', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/propose',
+      path: '/admin/layout-capacity/reset/propose',
+      body: { reason: 'rationale' },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/propose', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PERMISSION_DENIED');
+  });
+
+  it('returns 403 PERMISSION_DENIED for ADMIN trying to propose a reset', async () => {
+    setAuth({
+      user: { id: 'admin-org', organizationId: 'org-A', role: 'ADMIN' },
+      userRole: 'ADMIN',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/propose',
+      path: '/admin/layout-capacity/reset/propose',
+      body: { reason: 'rationale' },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/propose', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PERMISSION_DENIED');
+  });
+});
+
+describe('presentationStudio.routes — POST /admin/layout-capacity/reset/execute (S19)', () => {
+  beforeEach(() => {
+    resetLayoutCapacityRegistry();
+    _clearApprovalTicketStoreForTests();
+    _setLayoutCapacityAdminDependenciesForTests(null);
+    setAuth({
+      user: { id: 'admin-1', organizationId: 'org-Sys', role: 'SUPERADMIN' },
+      userRole: 'SUPERADMIN',
+    });
+  });
+
+  async function proposeResetViaRoute(
+    router: any,
+    body: Record<string, unknown>
+  ): Promise<{ ticketId: string; fingerprint: string }> {
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/propose',
+      path: '/admin/layout-capacity/reset/propose',
+      body,
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/propose', req, res);
+    if (res.statusCode !== 200) {
+      throw new Error(`reset propose failed: ${JSON.stringify(res.body)}`);
+    }
+    return {
+      ticketId: res.body.data.ticket.ticketId,
+      fingerprint: res.body.data.payloadFingerprint,
+    };
+  }
+
+  it('redeems a fresh ticket and resets the registry end-to-end', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+
+    // Apply an override so the reset has work to do.
+    applyLayoutCapacityOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
+    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).toBe(100);
+
+    const router = await importRouter();
+    const reason = 'returning to defaults after S17 experiment';
+    const { ticketId } = await proposeResetViaRoute(router, { reason });
+
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/execute',
+      path: '/admin/layout-capacity/reset/execute',
+      body: { approvalTicket: ticketId, reason },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/execute', req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.ticketId).toBe(ticketId);
+    expect(res.body.data.auditEvent).toBe('presentation_studio_layout_capacity_overrides_reset');
+    expect(res.body.data.registrySnapshotBefore.densityBudgets.balanced.titleMaxChars).toBe(100);
+    // Post-state matches canonical defaults.
+    expect(res.body.data.registrySnapshotAfter.densityBudgets.balanced.titleMaxChars).not.toBe(100);
+
+    expect(audit).toHaveBeenCalledTimes(1);
+    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).not.toBe(100);
+  });
+
+  it('returns 403 PRECONDITION_REQUIRED when no ticket id is supplied', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/execute',
+      path: '/admin/layout-capacity/reset/execute',
+      body: { reason: 'rationale' },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/execute', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PRECONDITION_REQUIRED');
+  });
+
+  it('returns 403 INVALID_APPROVAL_TICKET when the ticket id is unknown', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/execute',
+      path: '/admin/layout-capacity/reset/execute',
+      body: { approvalTicket: 'pssa_does_not_exist', reason: 'rationale' },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/execute', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(res.body.reason).toBe('not_found');
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 payload_mismatch when reason changes between propose and execute', async () => {
+    const audit = vi.fn().mockResolvedValue(undefined);
+    _setLayoutCapacityAdminDependenciesForTests({ recordAudit: audit });
+    applyLayoutCapacityOverrides({ densityBudgets: { balanced: { titleMaxChars: 100 } } });
+    const router = await importRouter();
+    const { ticketId } = await proposeResetViaRoute(router, { reason: 'rationale A' });
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/execute',
+      path: '/admin/layout-capacity/reset/execute',
+      body: { approvalTicket: ticketId, reason: 'rationale B' }, // CHANGED
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/execute', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('INVALID_APPROVAL_TICKET');
+    expect(res.body.reason).toBe('payload_mismatch');
+    expect(audit).not.toHaveBeenCalled();
+    // Registry was NOT reset.
+    expect(getLayoutCapacitySnapshot().densityBudgets.balanced.titleMaxChars).toBe(100);
+  });
+
+  it('returns 403 PERMISSION_DENIED for OWNER trying to execute a reset', async () => {
+    setAuth({
+      user: { id: 'owner-1', organizationId: 'org-A', role: 'OWNER' },
+      userRole: 'OWNER',
+    });
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/admin/layout-capacity/reset/execute',
+      path: '/admin/layout-capacity/reset/execute',
+      body: { approvalTicket: 'pssa_x', reason: 'r' },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/admin/layout-capacity/reset/execute', req, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('PERMISSION_DENIED');
+  });
+});

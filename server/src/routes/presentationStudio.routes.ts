@@ -42,7 +42,9 @@ import {
 import type { DeckSetup, OutlineItem } from '../services/presentationGeneratorService.js';
 import {
   executeLayoutCapacityOverrides,
+  executeLayoutCapacityReset,
   proposeLayoutCapacityOverrides,
+  proposeLayoutCapacityReset,
 } from '../services/presentationStudioLayoutCapacityAdminService.js';
 import {
   getCurrentRegistrySnapshot,
@@ -938,6 +940,151 @@ router.post(
         });
         return;
       }
+      res.status(403).json({
+        success: false,
+        code: result.code,
+        reason: result.reason,
+      });
+      return;
+    }
+    res.json({ success: true, data: result.result });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Sprint S19 — SuperAdmin reset-to-defaults action (closes R-S17-4)
+//
+// Two endpoints under `/admin/layout-capacity/reset` gated by the same
+// `presentation_admin_layout_capacity` capability used by the override
+// pair. The reset has no payload — the only operator input is a
+// free-form `reason` string captured for the audit row and bound into
+// the ticket fingerprint (so a different reason between propose and
+// execute fails with `payload_mismatch`).
+//
+//   - POST /admin/layout-capacity/reset/propose   mint single-use approval ticket
+//   - POST /admin/layout-capacity/reset/execute   consume ticket -> reset -> audit
+//
+// Persistence note: `resetToDefaults()` fires the registry's `onReset`
+// hook (Sprint S18) which clears the on-disk persistence file, so the
+// reset survives a server restart. A SuperAdmin who resets does NOT
+// need to also clear the file by hand.
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/presentation-studio/admin/layout-capacity/reset/propose
+ *
+ * Phase A of the reset flow. No payload to validate — always mints a
+ * ticket. The response shape mirrors the overrides /propose endpoint
+ * minus the `overrides` echo (there is none).
+ *
+ * Body shape:
+ *   - reason?: string (optional but encouraged for audit clarity)
+ *
+ * Responses:
+ *   - 200 `{ success: true, data: { ticket, payloadFingerprint } }`
+ */
+router.post(
+  '/admin/layout-capacity/reset/propose',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_admin_layout_capacity')) return;
+    const orgId = getOrgId(req);
+    const userId = (req as any).user?.id || (req as any).userId || null;
+    if (!orgId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'Organization context required', code: 'NO_ORG_CONTEXT' });
+      return;
+    }
+    if (!userId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'User context required', code: 'NO_USER_CONTEXT' });
+      return;
+    }
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      reason?: unknown;
+    };
+    const reason = typeof body.reason === 'string' ? body.reason : null;
+
+    const result = proposeLayoutCapacityReset({
+      organizationId: orgId,
+      userId,
+      reason,
+    });
+    res.json({
+      success: true,
+      data: {
+        ticket: result.ticket,
+        payloadFingerprint: result.payloadFingerprint,
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/admin/layout-capacity/reset/execute
+ *
+ * Phase B of the reset flow. Atomically redeems an approval ticket
+ * and calls `resetToDefaults()` on the registry. Records
+ * `presentation_studio_layout_capacity_overrides_reset` in audit_logs
+ * with both pre- and post-reset snapshots. On any ticket failure NO
+ * reset is performed and NO audit event is emitted.
+ *
+ * Body shape:
+ *   - approvalTicket: string (REQUIRED — id from /reset/propose)
+ *   - reason?: string (must match the proposal's reason — bound into
+ *     the ticket fingerprint)
+ *
+ * Responses:
+ *   - 200 `{ success: true, data: { ticketId, registrySnapshotBefore, registrySnapshotAfter, auditEvent } }`
+ *   - 403 `{ success: false, code: 'PRECONDITION_REQUIRED', error: 'Approval ticket required.' }`
+ *     when ticket id missing.
+ *   - 403 `{ success: false, code: 'INVALID_APPROVAL_TICKET', reason }`
+ *     when ticket validation fails.
+ */
+router.post(
+  '/admin/layout-capacity/reset/execute',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_admin_layout_capacity')) return;
+    const orgId = getOrgId(req);
+    const userId = (req as any).user?.id || (req as any).userId || null;
+    if (!orgId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'Organization context required', code: 'NO_ORG_CONTEXT' });
+      return;
+    }
+    if (!userId) {
+      res
+        .status(403)
+        .json({ success: false, error: 'User context required', code: 'NO_USER_CONTEXT' });
+      return;
+    }
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as {
+      approvalTicket?: unknown;
+      reason?: unknown;
+    };
+    const ticketId = typeof body.approvalTicket === 'string' ? body.approvalTicket.trim() : '';
+    if (!ticketId) {
+      res.status(403).json({
+        success: false,
+        code: 'PRECONDITION_REQUIRED',
+        error: 'Approval ticket required.',
+      });
+      return;
+    }
+    const reason = typeof body.reason === 'string' ? body.reason : null;
+
+    const result = await executeLayoutCapacityReset({
+      organizationId: orgId,
+      userId,
+      ticketId,
+      reason,
+      ipAddress: req.ip || null,
+      userAgent: typeof req.headers?.['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+    });
+
+    if (!result.ok) {
       res.status(403).json({
         success: false,
         code: result.code,
