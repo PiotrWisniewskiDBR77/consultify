@@ -1385,7 +1385,7 @@ Public router exported jako `documentShareLinkPublicRoutes` i mountowany w `Gate
 **Deferred (intentional):**
 - FE share dialog (FE-E2 right-panel) — blocked by parallel-sync §18.1 §2.
 - Wave5 DB migration — substrate w in-memory DAO; mechanical replacement bez zmian public surface (mirror `sourcePack` pattern).
-- `edit` access scope — wymaga stronger authorization story dla anonymous mutations.
+- ~~`edit` access scope~~ → delivered in §6.15.25 (session-bound anonymous mutation guard).
 - ~~Token rotation route~~ → delivered in §6.15.21 (Slice E13.hardening).
 - ~~HMAC token hashing~~ → delivered in §6.15.21 (Slice E13.hardening).
 - ~~`download` access scope~~ → delivered in §6.15.21 (Slice E13.hardening).
@@ -1611,7 +1611,7 @@ Both routes call existing service methods (`recordTemplateUsage`, `recordTemplat
 - §K (P2 backlog) HMAC hashing — shipped.
 - §K (P2 backlog) Token rotation — shipped.
 
-**Deferred:** `edit` scope — still requires stronger authorization story for anonymous mutations (open product decision); wave5 DB migration drops plaintext token column.
+**Deferred:** full-schema anonymous edit semantics beyond comment-thread mutations remain open product scope; wave5 DB migration drops plaintext token column.
 
 **Commit:** `d2af7e489`.
 
@@ -1631,6 +1631,7 @@ Both routes call existing service methods (`recordTemplateUsage`, `recordTemplat
 | 6 | E13.hardening follow-up (DAO hash lookup + route tests) | `77f0c426b` | +21 | 831 → 851 |
 | 7 | E17 chart rasterization (Chart.js) | `ac344c01c` | +0 net (behavioral upgrade) | 851 stable |
 | 8 | E15.5 cover-logo aspect ratio + multipart upload | `b1c2b0c67` + `c2a52dd50` | +3 (new route tests) | 851 stable |
+| 9 | E13 edit-scope session auth + public comment mutations | `f9b6e27a8` | +8 | 859 stable |
 
 **Aggregate diff.** ~4,200 lines added across 20+ files (services, routes, renderers, tests, and dependency manifests). Zero breaking changes on public contracts; all additions are backward-compatible. Every commit attributed to `Piotr` via `atomic-commit.sh`.
 
@@ -1639,7 +1640,7 @@ Both routes call existing service methods (`recordTemplateUsage`, `recordTemplat
 **Frontend V1 campaign blocked** on the parallel-sync §18.1 §2 user-action remediation (Drive Desktop GUI step, ~15-30 min). Once unblocked, FE-E1.2..FE-E5 + FE-E2 right panel + FR-37 Activity tab + E16.diff track-changes UI can all proceed against a stable, audit-graded backend.
 
 **Open architectural decisions** (not eng work — product / architecture sign-off):
-- `edit` share scope authorization story (CSRF + identity verification model for anonymous mutations).
+- Scope boundary for anonymous `edit`: currently enabled for comment-thread mutations; decide whether schema-mutating edit operations should be exposed under the same session model or require authenticated seats.
 - Wave5 database migration sequencing (consolidate share-link DAO + asset registry DAO + persistence-already-shipped templates into one rollout).
 
 ---
@@ -1689,6 +1690,39 @@ Both routes call existing service methods (`recordTemplateUsage`, `recordTemplat
 - Existing cover-logo and renderer suites remain green.
 
 **Commits:** `b1c2b0c67` (ratio-aware sizing), `c2a52dd50` (multipart route + tests).
+
+---
+
+### 6.15.25 Slice E13.edit-scope.auth — Session-bound anonymous mutations for share links
+
+**Scope.** Closes the previously deferred `edit` scope authorization story by adding explicit short-lived edit sessions bound to `(share-token, consumer fingerprint)` and wiring public comment mutations through that guardrail.
+
+**Substrate (1) — Types + share-link service** (`documentStudioTypes.ts`, `documentShareLinkService.ts`):
+- `DocumentShareLinkAccessScope` widened to include `'edit'`.
+- New `createShareLinkEditSession({ token, consumerFingerprint })`:
+  - validates active link + `accessScope === 'edit'`,
+  - mints 30-minute session token,
+  - binds session to hashed `(token, fingerprint)` tuple.
+- New `authorizeShareLinkEditSession({ token, editSessionToken, consumerFingerprint })`:
+  - constant-time hash checks,
+  - link state + scope re-validation on each mutation,
+  - deny-by-default failures for invalid/expired sessions.
+
+**Substrate (2) — Routes** (`document-studio.routes.ts`):
+- Authenticated create path now accepts `accessScope: 'edit'`.
+- New public endpoint:
+  - `POST /share-links/edit-session` → mints edit session.
+- New public mutation endpoints (session-guarded):
+  - `POST /share-links/comments`
+  - `POST /share-links/comments/:commentId/reply`
+- Mutations are mapped to deterministic anonymous actor ids (`share-link:<id>`) and continue to flow through the existing comments audit pipeline.
+
+**Validation.**
+- Service tests extended for session mint/authorize + mismatch rejection.
+- Route tests extended for edit-session lifecycle and anonymous comment/reply mutation under `edit` scope.
+- Full Document Studio suite green: 859 tests across 71 files.
+
+**Commit:** `f9b6e27a8`.
 
 ---
 

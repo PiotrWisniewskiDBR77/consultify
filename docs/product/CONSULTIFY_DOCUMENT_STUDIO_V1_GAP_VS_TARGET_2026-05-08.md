@@ -767,7 +767,8 @@ The public route is exported as `documentShareLinkPublicRoutes` and mounted in `
 | E16.diff.frontend | blocked | §18.1 §2 user step |
 | FE-E1.2..FE-E5 | blocked | §18.1 §2 user step |
 | `coverPageDetailed.includeLogo` | open backend | Asset embedding pipeline |
-| `edit` / `download` share scopes | open product | Auth story for anonymous mutations |
+| `download` share scope | ✅ delivered | E13.hardening |
+| `edit` share scope (comment-thread mutation model) | ✅ delivered | E13.edit-scope.auth (`f9b6e27a8`) |
 | HMAC token hashing | open backend | Wave5 DB migration |
 
 **Backend P1 MISSING list is now empty.** Every `MISSING` row from §C.4 §0 (FR-22 charts, FR-37 access history UX, FR-40 share link) is either:
@@ -805,7 +806,7 @@ This section records the five-slice "CTO pit stop" closeout that brought the V1 
 | E13 HMAC token hash (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
 | E13 token rotation route (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
 | E13 `download` access scope (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
-| E13 `edit` access scope (P2) | 🔶 DEFERRED | Open product decision (anon-mutation auth story) |
+| E13 `edit` access scope (P2) | ✅ DELIVERED | Session-bound anonymous edit auth for comment-thread mutations (`f9b6e27a8`) |
 | FR-22 server-side chart rasterization | ✅ DELIVERED | Slice E17.rasterization (`ac344c01c`) |
 | `coverPageDetailed.includeLogo` aspect ratio | ✅ DELIVERED | Slice E15.5 follow-up (`b1c2b0c67`) |
 | `coverPageDetailed.includeLogo` multipart upload | ✅ DELIVERED | Slice E15.5 follow-up (`c2a52dd50`) |
@@ -817,11 +818,11 @@ This section records the five-slice "CTO pit stop" closeout that brought the V1 
 | Metric | Pre-campaign | Post-campaign |
 | --- | --- | --- |
 | Document Studio test files | ~62 | 71 |
-| Document Studio specs | 787 | 854 |
+| Document Studio specs | 787 | 859 |
 | Document Studio P1 backend MISSING gaps | 3 | 0 |
-| Document Studio P2 backend gaps | 6 | 1 (open product) |
+| Document Studio P2 backend gaps | 6 | 0 (engineering); 1 product-scope boundary decision |
 
-Full Document Studio sweep remains green after post-closeout follow-ups (share-link DAO/hash hardening, chart rasterization, cover-logo ratio + multipart route). Aggregate suite count is now **854 specs across 71 files**. Zero breaking changes; every consumer-facing surface either accepts new optional parameters or extends an existing enum additively.
+Full Document Studio sweep remains green after post-closeout follow-ups (share-link DAO/hash hardening, chart rasterization, cover-logo ratio + multipart route, edit-scope session auth). Aggregate suite count is now **859 specs across 71 files**. Zero breaking changes; every consumer-facing surface either accepts new optional parameters or extends an existing enum additively.
 
 ### 21.3 What V1 backend ships (acceptance contract)
 
