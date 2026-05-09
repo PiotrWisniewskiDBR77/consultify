@@ -49,6 +49,40 @@ P0 (docelowy kierunek produktu)
 ## 2026-05-09
 
 ### Screen / Area
+`Radar` / `AI Technology & Transformation Intelligence Radar` — pre-initiative technology intelligence layer
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Radar / AI Technology & Transformation Intelligence Radar`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/108_RAW_RADAR_TECHNOLOGY_TRANSFORMATION_INTELLIGENCE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan warstwy „przed inicjatywą”: kontekstowy radar technologiczny z relevance/maturity/readiness/hype scoringiem, osadzeniem w Digital Pathfinder i przejściem do note/idea/initiative draft bez wejścia w PMO execution.
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
+`Implementation / Realizacja` / `Implementation & PMO Engine` — initiative→execution→decision→result→ROI
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Implementation & PMO Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/107_RAW_IMPLEMENTATION_PMO_ENGINE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan modułu dowodzenia realizacją: stage-gate + decyzje + RAID + eskalacje + timeline slippage + PMO reporting, z domknięciem pętli do Results/ROI/Finance.
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
 `Finance` / `Finance & Intelligence Engine` — statement→model→analysis→decision→report→Results
 
 ### Raw requirement

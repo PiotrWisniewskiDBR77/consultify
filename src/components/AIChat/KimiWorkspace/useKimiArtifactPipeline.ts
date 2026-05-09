@@ -686,7 +686,29 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
       const tabeleTableId = resolveTabeleMaterializedTableId(lane, origin);
       if (tabeleTableId) {
-        const tableId = (await resolveAccessibleSheetTableId(tabeleTableId)) || tabeleTableId;
+        const tableId = await resolveAccessibleSheetTableId(tabeleTableId);
+        if (!tableId) {
+          const message =
+            'Table Studio materialization returned an unresolved table reference. Retry generation or reopen from Recent after backend mapping is fixed.';
+          setStartupError(message);
+          setPreview({
+            type: 'tabele',
+            title,
+            fileName: `${title.replace(/\s+/g, '_')}.csv`,
+            summary: message,
+            kpiItems: [
+              { label: 'Rows', value: '0' },
+              { label: 'Columns', value: '0' },
+              { label: 'Status', value: 'Mapping failed' },
+              { label: 'Format', value: 'Table / CSV' },
+            ],
+            tableData: { columns: [], rows: [] },
+            tabeleSchemaFields: [],
+            tabeleRelations: [],
+          });
+          setContentGenerated(true);
+          return;
+        }
         const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
 
         const fullPreview = await loadTabelePreviewByTableId(tableId, {
@@ -697,15 +719,18 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         if (fullPreview) {
           setPreview({ ...fullPreview, title: fullPreview.title || title });
         } else {
+          const message =
+            'Table Studio materialization completed, but the table cannot be loaded from table-platform (404).';
+          setStartupError(message);
           setPreview({
             type: 'tabele',
             title,
             fileName: `${title.replace(/\s+/g, '_')}.csv`,
-            summary: `Operational table "${title}".`,
+            summary: message,
             kpiItems: [
               { label: 'Rows', value: '0' },
               { label: 'Columns', value: '0' },
-              { label: 'Status', value: 'Pending' },
+              { label: 'Status', value: 'Load failed' },
               { label: 'Format', value: 'Table / CSV' },
             ],
             tableId,

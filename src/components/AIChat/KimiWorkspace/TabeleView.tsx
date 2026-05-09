@@ -145,14 +145,16 @@ export const TabeleView: React.FC = () => {
       if (cancelled) return;
 
       if (!resolvedTableId) {
-        setReopenTableId(artifactId);
+        setReopenTableId(null);
         setReopenPreview({
           type: 'tabele',
           title: t('tabele.defaultTitle', 'Operational table'),
           fileName: 'table.csv',
-          summary: t('tabele.loadPreviewFailed', 'Could not load table preview.'),
+          summary: t(
+            'tabele.loadPreviewFailed',
+            'Could not resolve artifact-to-table mapping. Table preview unavailable.'
+          ),
           kpiItems: [],
-          tableId: artifactId,
           tableData: { columns: [], rows: [] },
           tabeleSchemaFields: [],
           tabeleRelations: [],
