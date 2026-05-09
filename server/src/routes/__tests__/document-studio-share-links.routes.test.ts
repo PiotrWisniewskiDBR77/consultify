@@ -73,7 +73,8 @@ describe('POST /api/document-studio/:artifactId/share-links — create', () => {
     expect(res.body.shareLink.artifactId).toBe(ARTIFACT);
     expect(res.body.shareLink.organizationId).toBe(ORG);
     expect(res.body.shareLink.accessScope).toBe('read');
-    expect(res.body.shareLink.token).toMatch(/^[a-z0-9]{40,}$/);
+    expect(res.body.shareLink.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(res.body.shareLink.tokenHash).toMatch(/^[a-f0-9]{64}$/);
     expect(res.body.shareLink.status).toBe('active');
     expect(res.body.shareLink.label).toBe('Q1 review');
   });
@@ -176,6 +177,50 @@ describe('POST /api/document-studio/share-links/:shareLinkId/revoke', () => {
     mockUser = { id: 'other-user', organizationId: 'org-share-B', role: 'CONSULTANT' };
     const res = await request(app).post(`/api/document-studio/share-links/${id}/revoke`).send({});
     expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/document-studio/share-links/:shareLinkId/rotate', () => {
+  it('rotates token and invalidates the previous token immediately', async () => {
+    const app = createApp();
+    const created = await request(app)
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'download' });
+    const id = created.body.shareLink.shareLinkId;
+    const oldToken = created.body.shareLink.token;
+
+    const rotate = await request(app)
+      .post(`/api/document-studio/share-links/${id}/rotate`)
+      .send({ reason: 'routine-rotation' });
+    expect(rotate.status).toBe(200);
+    expect(rotate.body.shareLink.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(rotate.body.shareLink.token).not.toBe(oldToken);
+
+    mockUser = null;
+    const staleConsume = await request(app)
+      .post('/api/document-studio/share-links/resolve')
+      .send({ token: oldToken });
+    expect(staleConsume.status).toBe(404);
+
+    const freshConsume = await request(app)
+      .post('/api/document-studio/share-links/resolve')
+      .send({ token: rotate.body.shareLink.token });
+    expect(freshConsume.status).toBe(200);
+    expect(freshConsume.body.resolved.shareLinkId).toBe(id);
+    expect(freshConsume.body.resolved.accessScope).toBe('download');
+  });
+
+  it('returns 409 for revoked links', async () => {
+    const app = createApp();
+    const created = await request(app)
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'read' });
+    const id = created.body.shareLink.shareLinkId;
+    await request(app).post(`/api/document-studio/share-links/${id}/revoke`).send({});
+
+    const rotate = await request(app).post(`/api/document-studio/share-links/${id}/rotate`).send({});
+    expect(rotate.status).toBe(409);
+    expect(rotate.body.error).toBe('share_link_not_active');
   });
 });
 

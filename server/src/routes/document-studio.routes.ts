@@ -3768,7 +3768,7 @@ router.post(
     }
     const accessScopeRaw =
       typeof req.body?.accessScope === 'string' ? req.body.accessScope : 'read';
-    const allowedScopes: DocumentShareLinkAccessScope[] = ['read', 'comment'];
+    const allowedScopes: DocumentShareLinkAccessScope[] = ['read', 'comment', 'download'];
     if (!allowedScopes.includes(accessScopeRaw as DocumentShareLinkAccessScope)) {
       res.status(400).json({ error: 'invalid_access_scope', message: accessScopeRaw });
       return;

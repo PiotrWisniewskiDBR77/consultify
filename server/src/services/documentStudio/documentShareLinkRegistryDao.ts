@@ -46,6 +46,8 @@ const linkStore = new Map<string, DocumentShareLink>();
 const auditStore = new Map<string, DocumentShareLinkAuditEntry[]>();
 /** token → primary key (`${organizationId}::${shareLinkId}`). */
 const tokenIndex = new Map<string, string>();
+/** tokenHash → primary key (`${organizationId}::${shareLinkId}`). */
+const tokenHashIndex = new Map<string, string>();
 
 function key(organizationId: string, shareLinkId: string): string {
   return `${organizationId}::${shareLinkId}`;
@@ -110,6 +112,20 @@ export async function loadShareLinkByToken(token: string): Promise<DocumentShare
 }
 
 /**
+ * Hash-based resolve used by the hardening path. This is the DAO-level
+ * companion for the service's HMAC verification flow and allows a
+ * wave5 migration to drop plaintext token indexing without changing
+ * caller semantics.
+ */
+export async function loadShareLinkByTokenHash(tokenHash: string): Promise<DocumentShareLink | null> {
+  if (!tokenHash || tokenHash.trim().length === 0) return null;
+  const primaryKey = tokenHashIndex.get(tokenHash);
+  if (!primaryKey) return null;
+  const link = linkStore.get(primaryKey);
+  return link ? cloneLink(link) : null;
+}
+
+/**
  * Upsert a share link. Best-effort; never throws. Returns
  * `{ ok: false }` on an empty input so the service can choose to
  * degrade silently. Keeps the token index in sync — re-persisting
@@ -127,8 +143,14 @@ export async function persistShareLink(link: DocumentShareLink): Promise<{ ok: b
   if (previous && previous.token && previous.token !== link.token) {
     tokenIndex.delete(previous.token);
   }
+  if (previous && previous.tokenHash && previous.tokenHash !== link.tokenHash) {
+    tokenHashIndex.delete(previous.tokenHash);
+  }
   linkStore.set(primaryKey, cloneLink(link));
   tokenIndex.set(link.token, primaryKey);
+  if (link.tokenHash) {
+    tokenHashIndex.set(link.tokenHash, primaryKey);
+  }
   return { ok: true };
 }
 
@@ -249,4 +271,5 @@ export async function __resetShareLinkRegistryDaoForTests(): Promise<void> {
   linkStore.clear();
   auditStore.clear();
   tokenIndex.clear();
+  tokenHashIndex.clear();
 }

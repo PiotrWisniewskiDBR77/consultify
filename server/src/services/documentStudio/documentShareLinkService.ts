@@ -48,6 +48,7 @@ import {
   countActiveShareLinksForArtifact,
   loadAuditForShareLink,
   loadShareLinkByToken,
+  loadShareLinkByTokenHash,
   loadShareLinksForOrg,
   markShareLinkStatusInDao,
   persistShareLink,
@@ -606,7 +607,8 @@ export async function consumeShareLink(
     // Cold-start fallback: ask the DAO directly. This works even
     // before any tenant is hydrated — `loadShareLinkByToken` walks
     // the global token index without a tenant filter.
-    const persisted = await loadShareLinkByToken(token);
+    const persisted =
+      (await loadShareLinkByToken(token)) ?? (await loadShareLinkByTokenHash(hashToken(token)));
     if (!persisted) return null;
     primaryKey = linkKey(persisted.organizationId, persisted.shareLinkId);
     registryStore.set(primaryKey, persisted);
@@ -692,4 +694,4 @@ export async function __resetShareLinkRegistryForTests(): Promise<void> {
 // Re-export the DAO bumper so the test harness can call it directly
 // when it needs to seed a specific count without going through the
 // full consume path. NOT intended for production callers.
-export { loadShareLinkByToken } from './documentShareLinkRegistryDao.js';
+export { loadShareLinkByToken, loadShareLinkByTokenHash } from './documentShareLinkRegistryDao.js';
