@@ -114,3 +114,20 @@ Zamknąć docelowy stan: board jako wersjonowany artifact z provenance/confidenc
 ### Priority
 P0 (docelowy kierunek produktu)
 
+## 2026-05-09
+
+### Screen / Area
+`Ideas Tables` / `AI Structured Thinking Table Engine` — chaos→structure→scoring→decision→initiative→task
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Ideas Tables / AI Structured Thinking Table Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/101_RAW_IDEAS_TABLES_STRUCTURED_THINKING_TABLE_ENGINE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan: tabela jako consulting decision artifact z provenance per row/cell, confidence/origin, scoring, semantic diff i approval — oraz natywne przejście do inicjatyw/tasków i artefaktów (docs/slides/whiteboard/mindmap/process flow).
+
+### Priority
+P0 (docelowy kierunek produktu)
+

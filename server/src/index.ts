@@ -1310,12 +1310,20 @@ self.addEventListener('activate', (event) => {
 `);
 });
 
-// Emergency stale-client guard: if a browser/CDN has old HTML that references
-// a historical Vite entry bundle, serve the current entry bundle under that
-// old URL. This keeps stale HTML from booting obsolete AppProviders/TokenService code.
+// Emergency stale-client guard for stale entry chunks.
+// IMPORTANT: never alias an old entry URL to the current bundle because
+// dependent stale chunks can import symbol names that do not exist anymore,
+// causing runtime errors like:
+// "The requested module '.../index-<old>.js' does not provide an export named ...".
+// Instead, force a client reload to fetch a coherent build.
 app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextFunction) => {
   const currentBundle = resolveCurrentIndexBundlePath();
   if (!currentBundle) return next();
+
+  if (req.path !== currentBundle.publicPath) {
+    logger.warn(`[Server] Stale frontend entry requested: ${req.path}. Forcing reload.`);
+    return sendStaleChunkReloadScript(req, res);
+  }
 
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -1323,12 +1331,6 @@ app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextF
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
-
-  if (req.path !== currentBundle.publicPath) {
-    logger.warn(
-      `[Server] Rewriting stale frontend entry ${req.path} to ${currentBundle.publicPath}`
-    );
-  }
 
   return res.sendFile(currentBundle.fsPath);
 });
@@ -1447,19 +1449,8 @@ app.use((req: Request, res: Response) => {
   if (!req.path.startsWith('/api/')) {
     if (isStaticAssetRequest(req.path)) {
       if (/^\/assets\/index-[^/]+\.js$/.test(req.path)) {
-        const currentBundle = resolveCurrentIndexBundlePath();
-        if (currentBundle) {
-          logger.warn(
-            `[Server] 404 fallback rewriting stale frontend entry ${req.path} to ${currentBundle.publicPath}`
-          );
-          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-          res.setHeader('Pragma', 'no-cache');
-          res.setHeader('Expires', '0');
-          res.setHeader('Surrogate-Control', 'no-store');
-          res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
-          return res.sendFile(currentBundle.fsPath);
-        }
+        logger.warn(`[Server] 404 stale frontend entry requested: ${req.path}. Forcing reload.`);
+        return sendStaleChunkReloadScript(req, res);
       }
 
       if (isMissingHashedJsChunkRequest(req.path)) {

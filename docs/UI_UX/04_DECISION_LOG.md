@@ -159,3 +159,24 @@ P0
 ### Rationale
 Bez versioning/diff, provenance i execution conversions whiteboard kończy jako “ładna tablica”, a bez governance i approval AI-synthesis będzie ryzykowna (utrata niuansów, chaos, brak zaufania w enterprise).
 
+## 2026-05-09 — Ideas Tables as governed structured thinking engine (not a spreadsheet)
+
+### Decision
+`Ideas Tables` to `AI Structured Thinking Table Engine`: tabela w module `Ideas` jest **żywym consulting artifactem** (provenance per row/per cell, confidence+origin, scoring, QA, semantic diff/approval), który prowadzi od chaosu do decyzji i execution (inicjatywy/task + docs/slides/whiteboard/mindmap/process flow).
+
+Nie kopiujemy Excela/Airtable/Notion 1:1; grid jest interfejsem, a źródłem prawdy jest strukturalny `TableArtifact`.
+
+### Applies to
+Ideas module — structured registers/matrices + scoring + conversions + governance
+
+### Severity
+P0
+
+### Files updated
+- `39_IDEAS_TABLES_UX.md`
+- `99_RAW_INPUT.md`
+- `101_RAW_IDEAS_TABLES_STRUCTURED_THINKING_TABLE_ENGINE_2026-05-09.md`
+
+### Rationale
+Bez provenance per cell, scoring i semantic diff tabele degenerują się do “spreadsheet chaos”; bez approval/audit AI‑enrichment i merge stają się ryzykowne w enterprise.
+

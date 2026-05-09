@@ -88,6 +88,8 @@ Jeśli dokument niższego poziomu jest sprzeczny z tym katalogiem, należy go tr
   - docelowy UX kontrakt dla `Process Flow Studio` (process as living artifact + QA/analysis + versioning/diff + conversions)
 - `38_WHITEBOARD_UX.md`
   - docelowy UX kontrakt dla `Whiteboard` (workshop intelligence + clustering/synthesis + versioning/diff + execution conversions)
+- `39_IDEAS_TABLES_UX.md`
+  - docelowy UX kontrakt dla `Ideas Tables` (provenance per row/cell + scoring + semantic diff/approval + execution conversions)
 - `22_EXECUTIVE_ARTIFACT_LAYOUT.md`
   - Wordy / Tabele / Prezentacje: lewy rail, canvas, prawy rail, top actions
   - link do MELS: `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md`

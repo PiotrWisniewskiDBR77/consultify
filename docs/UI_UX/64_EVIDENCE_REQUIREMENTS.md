@@ -105,6 +105,26 @@ Nowe funkcje, przebudowy, naprawy P0/P1 oraz “enterprise readiness” claims.
 - **MUST**: Dowód governance:
   - permissions/denial bez leakage + audit trail + confidentiality mode.
 
+## Ideas Tables (minimal evidence pack)
+
+- **MUST**: Dowód “table as artifact (not spreadsheet)”:
+  - tabela istnieje jako `TableArtifact` z wersją/status/owner (UI pokazuje artifact meta), a export XLSX/CSV jest wtórny.
+- **MUST**: Dowód provenance per row i per cell:
+  - przykładowy wiersz ma źródła; co najmniej jedna kluczowa komórka ma `source_references` + `ai_origin` + `confidence_score` **albo** jawne `assumption`.
+- **MUST**: Dowód scoring jako sugestii:
+  - impact/effort/risk/confidence (lub model) ma origin+confidence + user może edytować i przeliczyć priority.
+- **MUST**: Dowód duplicate detection + merge approval:
+  - system pokazuje podobne wiersze, diff i merge jako propozycję; merge zachowuje źródła i tworzy wersję.
+- **MUST**: Dowód Table QA:
+  - QA pokazuje braki (missing fields/owner/source/contradictions) i jest linkowalny do wierszy.
+- **MUST**: Dowód versioning + semantic diff:
+  - widać zmianę wierszy/komórek/źródeł między wersjami.
+- **MUST**: Dowód conversions:
+  - table → initiative candidates + table → task candidates (z linkiem do source rows),
+  - opcjonalnie: table → doc/deck z source links.
+- **MUST**: Dowód governance:
+  - permissions/denial bez leakage + audit trail + client/internal mode dla pól/widoków.
+
 ## Must Not
 
 - **MUST NOT**: Uznawać “działa u mnie” za dowód, jeśli brak screenów/testów dla error/degraded.
