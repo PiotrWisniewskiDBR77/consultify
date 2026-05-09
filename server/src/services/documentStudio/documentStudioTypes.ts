@@ -1665,6 +1665,162 @@ export interface SourcePackAuditEntry {
 }
 
 // =============================================================================
+// Epic E13 — Document share-link surface (FR-40)
+// =============================================================================
+
+/**
+ * Lifecycle status of a `DocumentShareLink`. Links enter as `active`,
+ * end either as `revoked` (explicit revoke by the creator or an
+ * org admin) or `expired` (passive — `expiresAt` past now at
+ * consume-time). Status transitions are one-way: an expired or
+ * revoked link is immutable for audit purposes.
+ *
+ * `expired` is computed lazily by the service at consume / get time
+ * to avoid background sweepers; persisted rows may still carry
+ * `status: 'active'` while their `expiresAt` is past — the
+ * consumer / accessor is the source of truth for the runtime status.
+ */
+export type DocumentShareLinkStatus = 'active' | 'revoked' | 'expired';
+
+/**
+ * Permission scope a share link grants its consumer:
+ *
+ *   - `read` — render the document (DOCX / PDF / markdown) without
+ *     any mutation surface. Always allowed; the safe default.
+ *   - `comment` — additionally permits adding comments
+ *     (`documentCommentsService.addComment`) without joining the
+ *     organization. Useful for client review without onboarding.
+ *
+ * Future scopes (out of this slice's MVP):
+ *   - `edit` — mutate proposals via the editor surface. Requires
+ *     a stronger authorization story (audit trail per anonymous
+ *     mutation, abuse prevention) before it ships.
+ *   - `download` — restrict to render only, no export. Currently
+ *     `read` includes export; a follow-up can split that.
+ */
+export type DocumentShareLinkAccessScope = 'read' | 'comment';
+
+/**
+ * Audit verbs for `DocumentShareLinkAuditEntry`. Mirrors the
+ * `SourcePackAuditAction` style:
+ *
+ *   - `share_link_created` — link minted.
+ *   - `share_link_consumed` — token resolved by an external party.
+ *     Multiple `consumed` rows are expected per link (one per
+ *     access). Carries optional ip/user-agent hashes for forensic
+ *     replay.
+ *   - `share_link_revoked` — explicit revoke. Carries a free-text
+ *     `reason` in `details` when supplied.
+ *   - `share_link_expired_observed` — emitted on the FIRST
+ *     consume / get attempt that crosses the `expiresAt` boundary.
+ *     Persisted once per link to keep the audit trail finite even
+ *     if a stale token is hit thousands of times.
+ */
+export type DocumentShareLinkAuditAction =
+  | 'share_link_created'
+  | 'share_link_consumed'
+  | 'share_link_revoked'
+  | 'share_link_expired_observed';
+
+/**
+ * A share link grants scoped, optionally time-boxed access to a
+ * `DocumentArtifact` for a party that does NOT have a seat in the
+ * owning organization. Typical use cases:
+ *
+ *   - send-to-client review without onboarding the client into the
+ *     workspace;
+ *   - share with a partner / advisor for governance comments;
+ *   - public preview of an executive memo with `read` scope and a
+ *     short expiry.
+ *
+ * Token contract:
+ *
+ *   - `token` is a 256-bit URL-safe random string generated server-
+ *     side at create time. It is the ONLY field the consumer ever
+ *     sees — it MUST NOT carry tenant data, artifact id, or any
+ *     other guessable info. The DAO maintains a token → linkId
+ *     index for O(1) resolve in `consumeShareLink`.
+ *   - `token` is stored opaquely; we do NOT hash it (the in-memory
+ *     DAO is a pre-DB stand-in; the wave5 migration can choose to
+ *     hash with HMAC-SHA-256 + a per-tenant salt, but this slice
+ *     ships the substrate without breaking changes for that
+ *     follow-up).
+ *
+ * Tenant boundary: `organizationId` is the canonical owner. A
+ * cross-tenant `getShareLink(linkId, orgB)` returns `null` even if
+ * the link exists under `orgA`. `consumeShareLink` is the one
+ * exception — it accepts a `token` without an `organizationId`
+ * because the consumer does not know the tenant; the DAO resolves
+ * the tuple internally.
+ */
+export interface DocumentShareLink {
+  shareLinkId: string;
+  artifactId: string;
+  organizationId: string;
+  /** Opaque URL-safe token (>= 32 chars, server-generated). */
+  token: string;
+  accessScope: DocumentShareLinkAccessScope;
+  status: DocumentShareLinkStatus;
+  /**
+   * Optional ISO-8601 expiry. When unset, the link does not expire
+   * passively (only an explicit `revoke` ends it). When set and
+   * past, runtime status reads as `expired` regardless of the
+   * persisted `status` field.
+   */
+  expiresAt?: string;
+  /**
+   * Optional human-readable label for the right-panel surface.
+   * "Q1 client review", "Auditor preview", … Defaults to undefined.
+   */
+  label?: string;
+  /**
+   * Free-text reason captured at revoke time. `undefined` for
+   * active / expired links.
+   */
+  revokedReason?: string;
+  createdBy: string;
+  createdAt: string;
+  revokedBy?: string;
+  revokedAt?: string;
+  /**
+   * Total number of successful `consumeShareLink` resolutions for
+   * this link. Updated atomically with each consume so the
+   * right-panel surface can render "Used 17 times" without
+   * scanning the audit trail.
+   */
+  consumeCount: number;
+  /** ISO-8601 timestamp of the last successful consume, or undefined. */
+  lastConsumedAt?: string;
+}
+
+export interface DocumentShareLinkAuditEntry {
+  auditId: string;
+  shareLinkId: string;
+  artifactId: string;
+  organizationId: string;
+  action: DocumentShareLinkAuditAction;
+  /**
+   * For `share_link_created` and `share_link_revoked` this is the
+   * actor's user id. For `share_link_consumed` and
+   * `share_link_expired_observed` this is `'anonymous'` because the
+   * consumer is by definition outside the workspace.
+   */
+  actorId: string;
+  occurredAt: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Test-friendly contract for the runtime status of a link. Computed
+ * by the service from the persisted row + current time.
+ */
+export interface DocumentShareLinkRuntimeStatus {
+  effectiveStatus: DocumentShareLinkStatus;
+  isUsable: boolean;
+  reason?: 'revoked' | 'expired';
+}
+
+// =============================================================================
 // Epic E7 — Per-tenant Brand Voice profile
 // =============================================================================
 

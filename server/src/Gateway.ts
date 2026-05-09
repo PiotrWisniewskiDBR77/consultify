@@ -93,7 +93,9 @@ import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import demoRoutes from './routes/demo.routes.js';
-import documentStudioRoutes from './routes/document-studio.routes.js';
+import documentStudioRoutes, {
+  documentShareLinkPublicRoutes,
+} from './routes/document-studio.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import economicsRoutes from './routes/economics.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
@@ -660,6 +662,14 @@ export class ApiGateway {
       app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
       // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
       // above the V8.1 substrate. See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md
+      //
+      // Slice E13.1 — public share-link consume endpoint MUST mount BEFORE
+      // the authed `documentStudioRoutes` so the consumer (who has no
+      // workspace seat) can resolve a token without `verifyToken` rejecting
+      // the request. Express matches the first router whose path matches,
+      // so `POST /share-links/resolve` lands here and never reaches the
+      // authed router.
+      app.use('/api/document-studio', documentShareLinkPublicRoutes);
       app.use('/api/document-studio', documentStudioRoutes);
       // Execution-module UI/UX standard (Epic E11) — read-only governance
       // surface exposing the canonical Doc / Excel / Deck Builder standard

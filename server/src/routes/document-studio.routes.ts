@@ -137,7 +137,17 @@
  *   POST   /api/document-studio/content-blocks/:contentBlockId/instantiate        — body: { blockId? }; returns { block, template }
  *   GET    /api/document-studio/content-blocks/:contentBlockId/audit              — list audit entries
  *
+ * Share-link surface — Epic E13 (FR-40):
+ *   POST   /api/document-studio/:artifactId/share-links                            — body: { accessScope, expiresAt?, label? }; 201 { shareLink }
+ *   GET    /api/document-studio/:artifactId/share-links                            — query: status?, includeExpired?; returns links + runtimeStatus
+ *   GET    /api/document-studio/share-links/:shareLinkId                           — single link + runtimeStatus
+ *   POST   /api/document-studio/share-links/:shareLinkId/revoke                    — body: { reason? }; idempotent
+ *   GET    /api/document-studio/share-links/:shareLinkId/audit                     — list audit entries
+ *   POST   /api/document-studio/share-links/resolve                                — UNAUTHENTICATED public consume; body: { token, consumerFingerprint? }
+ *
  * Auth: reuses verifyToken + tenant guards used across artifact routes.
+ *       The public share-link consume endpoint is intentionally exempt
+ *       and mounts on a separate sub-router (see `documentShareLinkPublicRoutes`).
  */
 
 import { type Request, type Response, Router } from 'express';
@@ -198,6 +208,16 @@ import {
   listDocumentContentBlocks,
   updateDocumentContentBlock,
 } from '../services/documentStudio/documentContentBlockService.js';
+import {
+  consumeShareLink,
+  createShareLink,
+  ensureShareLinkRegistryHydrated,
+  getShareLink,
+  getShareLinkRuntimeStatus,
+  listShareLinkAuditEntries,
+  listShareLinks,
+  revokeShareLink,
+} from '../services/documentStudio/documentShareLinkService.js';
 import {
   ingestFileSource,
   ingestIntegrationSource,
@@ -285,6 +305,8 @@ import type {
   DocumentIntake,
   DocumentLanguageStyle,
   DocumentOutline,
+  DocumentShareLinkAccessScope,
+  DocumentShareLinkStatus,
   DocumentSourceRef,
   DocumentStatus,
   DocumentTypeKey,
@@ -3439,6 +3461,214 @@ router.get(
       return;
     }
     res.json({ report });
+  })
+);
+
+// =============================================================================
+// Share-link surface — Epic E13 (FR-40).
+//
+// Authed routes (creator / admin side). The public consume route lives
+// in `documentShareLinkPublicRoutes` below — it MUST run before
+// `verifyToken` so an unauthenticated consumer can resolve the token.
+// =============================================================================
+
+router.post(
+  '/:artifactId/share-links',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const accessScopeRaw =
+      typeof req.body?.accessScope === 'string' ? req.body.accessScope : 'read';
+    const allowedScopes: DocumentShareLinkAccessScope[] = ['read', 'comment'];
+    if (!allowedScopes.includes(accessScopeRaw as DocumentShareLinkAccessScope)) {
+      res.status(400).json({ error: 'invalid_access_scope', message: accessScopeRaw });
+      return;
+    }
+    const expiresAt = typeof req.body?.expiresAt === 'string' ? req.body.expiresAt : undefined;
+    const label = typeof req.body?.label === 'string' ? req.body.label : undefined;
+    try {
+      const link = createShareLink({
+        artifactId,
+        organizationId,
+        userId,
+        accessScope: accessScopeRaw as DocumentShareLinkAccessScope,
+        expiresAt,
+        label,
+      });
+      res.status(201).json({ shareLink: link });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'share_link_create_failed';
+      logger.warn('[DocumentStudio] share-link create failed', { message });
+      res.status(400).json({ error: 'share_link_create_failed', message });
+    }
+  })
+);
+
+router.get(
+  '/:artifactId/share-links',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureShareLinkRegistryHydrated(organizationId);
+    const statusRaw = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const allowedStatus: DocumentShareLinkStatus[] = ['active', 'revoked', 'expired'];
+    const status =
+      statusRaw && allowedStatus.includes(statusRaw as DocumentShareLinkStatus)
+        ? (statusRaw as DocumentShareLinkStatus)
+        : undefined;
+    const includeExpired = req.query.includeExpired === 'true' || req.query.includeExpired === '1';
+    const links = listShareLinks(organizationId, {
+      artifactId,
+      status,
+      includeExpired,
+    });
+    // Decorate each link with its runtime status so the FE-E2 right
+    // panel surface can render "expired" / "revoked" / "active" badges
+    // without re-deriving them.
+    const decorated = links.map((link) => ({
+      ...link,
+      runtimeStatus: getShareLinkRuntimeStatus(link),
+    }));
+    res.json({ shareLinks: decorated });
+  })
+);
+
+router.get(
+  '/share-links/:shareLinkId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const shareLinkId = String(req.params.shareLinkId || '');
+    if (!shareLinkId) {
+      res.status(400).json({ error: 'shareLinkId is required' });
+      return;
+    }
+    await ensureShareLinkRegistryHydrated(organizationId);
+    const link = getShareLink(shareLinkId, organizationId);
+    if (!link) {
+      res.status(404).json({ error: 'share_link_not_found' });
+      return;
+    }
+    res.json({
+      shareLink: link,
+      runtimeStatus: getShareLinkRuntimeStatus(link),
+    });
+  })
+);
+
+router.post(
+  '/share-links/:shareLinkId/revoke',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const shareLinkId = String(req.params.shareLinkId || '');
+    if (!shareLinkId) {
+      res.status(400).json({ error: 'shareLinkId is required' });
+      return;
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    try {
+      const revoked = revokeShareLink({
+        shareLinkId,
+        organizationId,
+        userId,
+        reason,
+      });
+      res.json({ shareLink: revoked });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'share_link_revoke_failed';
+      if (message === 'share_link_not_found') {
+        res.status(404).json({ error: message });
+        return;
+      }
+      logger.warn('[DocumentStudio] share-link revoke failed', { message });
+      res.status(400).json({ error: 'share_link_revoke_failed', message });
+    }
+  })
+);
+
+router.get(
+  '/share-links/:shareLinkId/audit',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const shareLinkId = String(req.params.shareLinkId || '');
+    if (!shareLinkId) {
+      res.status(400).json({ error: 'shareLinkId is required' });
+      return;
+    }
+    await ensureShareLinkRegistryHydrated(organizationId);
+    // Verify the link exists for this tenant before exposing its audit
+    // (cross-tenant audit reads must be deny-by-default).
+    const link = getShareLink(shareLinkId, organizationId);
+    if (!link) {
+      res.status(404).json({ error: 'share_link_not_found' });
+      return;
+    }
+    const auditEntries = listShareLinkAuditEntries(shareLinkId, organizationId);
+    res.json({ auditEntries });
+  })
+);
+
+// =============================================================================
+// Public share-link consume route — UNAUTHENTICATED on purpose.
+//
+// Mounted as a SEPARATE router so it can run before `verifyToken`. The
+// Gateway mounts this on the same `/api/document-studio` prefix so the
+// URL is `POST /api/document-studio/share-links/resolve`.
+//
+// Body: { token: string, consumerFingerprint?: string }
+// 200 { artifactId, organizationId, accessScope, shareLinkId, consumeCount }
+// 404 share_link_invalid_or_expired (catch-all for missing / revoked /
+//     expired tokens — never leak which of the three it is to a
+//     consumer).
+// =============================================================================
+
+export const documentShareLinkPublicRoutes = Router();
+
+documentShareLinkPublicRoutes.post(
+  '/share-links/resolve',
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    const consumerFingerprint =
+      typeof req.body?.consumerFingerprint === 'string' ? req.body.consumerFingerprint : undefined;
+    if (!token.trim()) {
+      res.status(400).json({ error: 'token_required' });
+      return;
+    }
+    const result = await consumeShareLink({ token, consumerFingerprint });
+    if (!result) {
+      // Single 404 surface for missing / revoked / expired so a
+      // consumer cannot enumerate which tokens existed once.
+      res.status(404).json({ error: 'share_link_invalid_or_expired' });
+      return;
+    }
+    res.json({ resolved: result });
   })
 );
 
