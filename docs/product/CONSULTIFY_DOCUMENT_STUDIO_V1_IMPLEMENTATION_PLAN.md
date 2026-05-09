@@ -1266,6 +1266,67 @@ The cost of these gaps shows up most acutely in the DOCX renderer (cannot apply 
 
 ---
 
+### 6.15.14 Slice E16.diff.proposal — Structural diff w `proposal_executed` audit row
+
+**Scope.** Dotyka pojedynczej funkcji `approveEditProposal` w `documentStudioService.ts`. Zamyka §15.4 / §10.9 wiring loop dla strony **proposal-side**: gdy editor proposal dowolnego scope (local / section / global / methodology / source / transformative) zostaje approved + applied, audit row `proposal_executed` niesie teraz strukturalny diff schemy-przed-apply vs schemy-po-apply.
+
+**Implementacja.** W `approveEditProposal`, po `applyProposalToSchema(schema, proposal)` produkuje `nextSchema`, kod wywołuje `computeDocumentSchemaDiff(schema, nextSchema)` w `try { … } catch { … }` (defensive — diff-service hiccup nie aborts approval który structurally już się powiódł). Wynik trafia jako `details.structuralDiffSummary` (string mirror `summarizeDocumentSchemaDiff(diff)`) + `details.structuralDiffStats` (9-field `DocumentSchemaDiffStats` projection).
+
+**Files changed (1 production + 1 test):**
+- `consultify/server/src/services/documentStudio/documentStudioService.ts` — imported `computeDocumentSchemaDiff` + `summarizeDocumentSchemaDiff`; extended `approveEditProposal` audit row.
+- `consultify/server/src/services/documentStudio/__tests__/documentStudioProposalDiffAudit.test.ts` — 4 specs: local-scope (modifiedBlockCount ≥ 1, summary parity), section-scope (≥ 2 blocks, ≥ 1 section), global-scope (≥ 3 blocks, ≥ 2 sections), backward-compat (legacy `details` fields wciąż landują obok diff).
+
+**Backwards compatibility.** Diff fields są **appended** do `details` shape — `undefined` na ścieżce error. Existing audit consumers ignorują unknown keys. Wszystkie 727 pre-existing documentStudio specs pass unchanged.
+
+**Validation.** Suite **735/735 green** (+4). ESLint clean.
+
+**Closes gaps.** §15.4 (DocumentEdit substrate — proposal-side diff wiring) i §10.9 (track-changes substrate — proposal_executed integration). Razem ze slice 6.15.12 (E16.diff.audit on snapshot-side), to zamyka audit-pipeline integration loop dla structural-diff substrate. `versionAfterId` na proposal pozostaje deferred — wymaga snapshot-after-apply path którego jeszcze nie ma; structural diff jest **audit-grade replacement** dla brakującego `versionAfterId` pinu do czasu jego dostarczenia.
+
+---
+
+### 6.15.15 Slice E5.6.qa.hard — Registry-side hard-drift comparator
+
+**Scope.** Zamyka §17.3 follow-up gap. Slice E5.6.qa (6.15.5) zaimplementował soft-drift detection (refs bez `sourceVersion` / `sourceSnapshotId`). Pinned refs były dotąd milcząco traktowane jako in-sync, niezależnie od tego czy underlying source nie poszedł do przodu od czasu autorstwa dokumentu. Ten slice ships per-tenant **version registry**, podpina source-pack ingestion żeby ją feedować, i extenduje QA o detection HARD drift (pinned ≠ latest known).
+
+**New service.** `documentSourceVersionRegistryService.ts`:
+- Append-only, tenant-scoped registry per `(organizationId, sourceType, sourceId) → list<{sourceVersion, recordedAt, sourceSnapshotId?}>`.
+- `recordSeenSourceVersion({...})` — idempotent na `(version, snapshot)`; refresh `recordedAt` na re-observation.
+- `getLatestKnownSourceVersion({...})` — recency-based latest lookup (NOT semver-sorted; V8 source kinds rzadko używają semveru).
+- `compareSourceVersionPin({..., pinnedSourceVersion})` — three-way: `no_registry_entry` / `in_sync` / `hard_drift`.
+- `__resetSourceVersionRegistryForTests()` — test isolation.
+
+In-memory only (rebuilds z source-pack ingestion na cold start). DAO layer można dodać gdy będzie cross-process need.
+
+**Wirings.**
+
+1. **`documentSourcePackService.addSourcePackItem`** — gdy `newItem.sourceRef.sourceVersion` jest non-empty, wywołuje `recordSeenSourceVersion`. Wrapped w `try { … } catch { … }` — registry hiccup nie fail ingestion.
+2. **`documentQaService.runSourceDriftQa`** — extended `emitDriftFinding` helper:
+   - UNPINNED ref → `source_drift_unpinned` finding na `low` severity (legacy unchanged).
+   - PINNED ref + tenant context known + `compareSourceVersionPin === 'hard_drift'` → emit `source_drift_hard` finding na `medium` severity z message naming pinned vs latest.
+   - PINNED ref + tuple unknown w registry → NO hard-drift finding (soft-drift territory).
+3. **`documentQaService.RunDocumentQaOptions.organizationId`** — nowe optional field. Gdy supplied, source-drift kategoria dostaje tenant context dla hard-drift comparison. Gdy omitted, hard-drift path jest skipped entirely (backward compat dla test harness / dev tools).
+4. **`documentStudioService.runQaForDocument`** + export-time QA call — oba pass `organizationId`, więc production QA runs widzą hard drift.
+
+**Summary line update.** Source-drift category summary teraz: `"Source-drift QA: N hard-drift (pinned≠latest), M unpinned (advisory); score X/100."` — audit / right-panel surface może render breakdown precyzyjnie.
+
+**Threshold = 0 stays.** Kategoria pozostaje advisory (NEVER blocking) — gating na hard drift wymaga explicit approver consent at schema level którego jeszcze nie mamy.
+
+**Files changed (4 production modified + 1 production new + 2 test new):**
+- `documentSourceVersionRegistryService.ts` (NEW) — registry service.
+- `documentSourcePackService.ts` — wpięcie `recordSeenSourceVersion` w `addSourcePackItem`.
+- `documentQaService.ts` — extended `emitDriftFinding` + `runSourceDriftQa(schema, organizationId)` + `RunDocumentQaOptions.organizationId`.
+- `documentStudioService.ts` — passes `organizationId` w obu wywołaniach `runDocumentQa(...)` (export-time + on-demand).
+- `__tests__/documentSourceVersionRegistryService.test.ts` (NEW, 10 specs) — registry surface coverage.
+- `__tests__/documentQaSourceDriftHard.test.ts` (NEW, 6 specs) — QA integration coverage (hard-drift fire / silent / no-tenant skip / tenant isolation / mixed summary).
+
+**Backwards compatibility.** Wszystkie 11 pre-existing soft-drift / unpinned specs pass unchanged. Existing callers `runDocumentQa(schema)` (bez `organizationId`) działają identycznie.
+
+**Validation.** Document Studio suite **751/751 green** (+16). ESLint clean dla nowych plików. 2 pre-existing lint warnings w `documentQaService.ts` (linie 723, 1710) untouched — nie z tego slice'a.
+
+**Closes gaps.** §17.3 follow-up `E5.6.qa.hard` — "needs a per-source latest-version lookup in `documentSourcePackService`" blocker zniesiony. NFR-17 implementation completion (advisory layer): soft + hard drift teraz oba detected and surfaced.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal

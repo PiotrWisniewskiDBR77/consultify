@@ -623,3 +623,81 @@ Commit `5e905fb50`. Five §15.5 substrate fields wired into live DOCX + PDF rend
 - ✅ E15.5.formatting.render fully wired with 16 new specs and zero regressions in legacy tests.
 - ✅ Plan + gap report updated with full audit trail.
 - ⏳ User-side §18.1 §2 GUI step (operator-only; not agent-reachable).
+
+---
+
+## 19. Status updates after second tech-debt sweep (2026-05-09 EOD)
+
+A second backend-focused sweep ran while the user-side parallel-sync GUI step (§18.1 §2) remained pending. Two more outstanding §17.3 follow-ups closed.
+
+### 19.1 Slice E16.diff.proposal — DONE (commit `c46b2f3b1`)
+
+**Scope.** Wired the structural-diff substrate (slice 6.15.11) into the **proposal-side** audit pipeline. `approveEditProposal` now computes `computeDocumentSchemaDiff(schema, nextSchema)` after `applyProposalToSchema(...)` produces `nextSchema`, and emits `details.structuralDiffSummary` + `details.structuralDiffStats` on the `proposal_executed` audit row alongside the existing `scope` / `sectionId` / `blockId` / `llmRefined` / `blockRewritesCount` fields.
+
+**Files.** `documentStudioService.ts` (1 hot-path function), `__tests__/documentStudioProposalDiffAudit.test.ts` (4 specs: local + section + global + backward-compat).
+
+**Validation.** Suite **735/735 green** (+4). ESLint clean for modified scope. `try { … } catch { … }` guard ensures a diff-service hiccup never aborts an approval that succeeded structurally.
+
+**Closes.** §15.4 (DocumentEdit substrate — proposal-side diff wiring), §10.9 (track-changes substrate — proposal_executed integration). Together with slice 6.15.12 (E16.diff.audit on snapshot-side), this **closes the full audit-pipeline integration loop** for the structural-diff substrate.
+
+**Note.** `versionAfterId` on the proposal still left for a follow-up — needs an explicit "snapshot after apply" path that does not exist yet. The structural diff is now the **audit-grade replacement** for the missing pin until that path lands.
+
+### 19.2 Slice E5.6.qa.hard — DONE (commit `1a8679103`)
+
+**Scope.** Closed the §17.3 follow-up explicitly named "registry-side hard-drift comparator (compare pinned `sourceVersion` vs latest known version in source registry; requires per-source latest-version lookup in `documentSourcePackService`)". This was the last NFR-17 implementation gap.
+
+**New service.** `documentSourceVersionRegistryService.ts` — append-only, tenant-scoped registry of every `sourceVersion` observation per `(organizationId, sourceType, sourceId)`. Public surface:
+
+| Function | Contract |
+| --- | --- |
+| `recordSeenSourceVersion({ orgId, type, id, version, snapshotId?, recordedAt? })` | Idempotent on `(version, snapshot)`; refreshes `recordedAt` on re-observation. Silent on whitespace / empty inputs. |
+| `getLatestKnownSourceVersion({ orgId, type, id })` | Recency-based latest (NOT semver-sorted; V8 sources rarely use semver). Returns `null` for unobserved tuples. |
+| `compareSourceVersionPin({ orgId, type, id, pinnedSourceVersion })` | Three-way: `no_registry_entry` / `in_sync` / `hard_drift`. Trim-aware. |
+| `__resetSourceVersionRegistryForTests()` | Test isolation. |
+
+In-memory only — rebuilds from source-pack ingestion on cold start. No DAO yet (no cross-process need). Tenant-isolated by `organizationId`-led keying.
+
+**Wirings.**
+
+1. `documentSourcePackService.addSourcePackItem` — when `newItem.sourceRef.sourceVersion` is non-empty, calls `recordSeenSourceVersion`. Wrapped in `try { … } catch { … }` — registry hiccup never fails ingestion.
+2. `documentQaService.runSourceDriftQa` — extended `emitDriftFinding` to consult the registry for **pinned** refs:
+   - `compareSourceVersionPin` returns `hard_drift` → emit `source_drift_hard` finding at `medium` severity (advisory; **NEVER blocking**).
+   - Returns `in_sync` or `no_registry_entry` → no finding.
+   - Unpinned refs: legacy `source_drift_unpinned` at `low` severity (unchanged).
+3. `documentQaService.RunDocumentQaOptions.organizationId` — new optional field. When supplied → tenant context flows; when omitted → hard-drift path skipped (backward compat for test harness / dev tools).
+4. `documentStudioService.runQaForDocument` + export-time QA call — both pass `organizationId` so production runs see hard drift.
+
+**Summary line update.** `Source-drift QA: N hard-drift (pinned≠latest), M unpinned (advisory); score X/100.` — audit / right-panel surface renders breakdown precisely.
+
+**Threshold = 0 stays.** Category remains advisory — gating on hard drift requires explicit approver consent at schema level (deferred).
+
+**Files.** `documentSourceVersionRegistryService.ts` (NEW), `documentSourcePackService.ts`, `documentQaService.ts`, `documentStudioService.ts`, `__tests__/documentSourceVersionRegistryService.test.ts` (10 specs), `__tests__/documentQaSourceDriftHard.test.ts` (6 specs).
+
+**Validation.** Suite **751/751 green** (+16). All 11 pre-existing soft-drift specs pass unchanged. ESLint clean for new files; 2 pre-existing lint warnings in `documentQaService.ts` (lines 723, 1710) untouched — not from this slice.
+
+**Closes.** §17.3 follow-up `E5.6.qa.hard` — "needs a per-source latest-version lookup" blocker resolved. NFR-17 implementation completion (advisory layer): soft + hard drift now both detected and surfaced.
+
+### 19.3 Outstanding work after this sweep
+
+**Resolved by this sweep:**
+- ✅ E16.diff.proposal (commit `c46b2f3b1`).
+- ✅ E5.6.qa.hard (commit `1a8679103`).
+
+**Still outstanding (post-§19):**
+- **E14.persistence** — DB migration (8 product fields). Blocked on schema migration approval.
+- **E17.charts.render** — server-side chart library decision (chart.js vs vega). Architectural call needed before implementation.
+- **E16.diff.frontend** — wire `computeDocumentSchemaDiff` into FE-E2 track-changes UI. Blocked by parallel-sync resolution.
+- **E13 (share link surface)** — types + DAO + routes + FE. P1 functional gap.
+- **`coverPageDetailed.includeLogo`** — image embedding pipeline + asset registry integration.
+- **Frontend FE-E1.2 → FE-E5** — entire frontend campaign. Blocked by parallel-sync resolution.
+
+**Backend audit-grade closeout reached:** every §17.3 follow-up that was independently shippable is now shipped. Remaining backend items either need migration consent (E14), an architecture decision (E17), or a full new substrate (E13). Frontend is the next campaign once §18.1 §2 user-side GUI step lands.
+
+### 19.4 Definition of done — second tech-debt sweep acceptance
+
+- ✅ E16.diff.proposal shipped — proposal_executed audit row carries structural diff for every editor scope.
+- ✅ E5.6.qa.hard shipped — registry-side hard-drift detection wired into both production QA call sites.
+- ✅ 16 new specs added; suite goes from 731 → 751 green (+20 since campaign start).
+- ✅ Backwards compatibility verified: every legacy spec passes unchanged after each commit.
+- ✅ Plan §6.15.14 + §6.15.15 documented; gap report §19 records full audit trail.
+- ✅ All commits use `atomic-commit.sh` and show clean `Piotr` attribution (defensive tooling working as designed).
