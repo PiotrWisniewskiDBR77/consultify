@@ -1218,13 +1218,11 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
   const graphNodes: Array<{
     path: string;
     imports: string[];
-    importedEntry: string | null;
     exists: boolean;
   }> = [];
-  const mismatches: Array<{
-    path: string;
-    importedEntry: string;
-    currentEntry: string;
+  const missingImports: Array<{
+    from: string;
+    importPath: string;
   }> = [];
 
   const jsFiles: string[] = [];
@@ -1251,10 +1249,7 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
     ...jsFiles.filter((assetPath) => assetPath !== entryPublicPath),
   ];
 
-  const nodeByPath = new Map<
-    string,
-    { path: string; imports: string[]; importedEntry: string | null; exists: boolean }
-  >();
+  const nodeByPath = new Map<string, { path: string; imports: string[]; exists: boolean }>();
 
   for (const assetPath of ordered) {
     const fsPath = path.resolve(frontendDistPath, assetPath.replace(/^\//, ''));
@@ -1262,13 +1257,11 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
       graphNodes.push({
         path: assetPath,
         imports: [],
-        importedEntry: null,
         exists: false,
       });
       nodeByPath.set(assetPath, {
         path: assetPath,
         imports: [],
-        importedEntry: null,
         exists: false,
       });
       continue;
@@ -1277,20 +1270,10 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
     try {
       const source = fs.readFileSync(fsPath, 'utf-8');
       const imports = extractRelativeJsImports(source);
-      const importedEntry = extractImportedIndexBundlePublicPath(source);
-
-      if (importedEntry && importedEntry !== entryPublicPath) {
-        mismatches.push({
-          path: assetPath,
-          importedEntry,
-          currentEntry: entryPublicPath,
-        });
-      }
 
       const node = {
         path: assetPath,
         imports,
-        importedEntry,
         exists: true,
       };
       graphNodes.push(node);
@@ -1299,7 +1282,6 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
       const node = {
         path: assetPath,
         imports: [],
-        importedEntry: null,
         exists: false,
       };
       graphNodes.push(node);
@@ -1325,18 +1307,28 @@ app.get(['/__build-graph', '/api/build-graph'], (_req: Request, res: Response) =
     }
   }
 
-  const reachableMismatches = mismatches.filter((mismatch) => reachable.has(mismatch.path));
+  for (const assetPath of reachable) {
+    const node = nodeByPath.get(assetPath);
+    if (!node) continue;
+    for (const imported of node.imports) {
+      if (!nodeByPath.has(imported)) {
+        missingImports.push({
+          from: assetPath,
+          importPath: imported,
+        });
+      }
+    }
+  }
 
   return res.json({
-    ok: reachableMismatches.length === 0,
+    ok: missingImports.length === 0,
     frontendDistPath,
     indexPath,
     entryPublicPath,
     assetsCount: ordered.length,
     reachableAssetsCount: reachable.size,
-    reachableMismatchCount: reachableMismatches.length,
-    reachableMismatches,
-    mismatches,
+    missingImportsCount: missingImports.length,
+    missingImports,
     graphNodes,
     generatedAt: new Date().toISOString(),
   });
@@ -1503,69 +1495,10 @@ self.addEventListener('activate', (event) => {
 `);
 });
 
-// Emergency stale-client guard for stale entry chunks.
-// IMPORTANT: never alias an old entry URL to the current bundle because
-// dependent stale chunks can import symbol names that do not exist anymore,
-// causing runtime errors like:
-// "The requested module '.../index-<old>.js' does not provide an export named ...".
-// Instead, force a client reload to fetch a coherent build.
-app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextFunction) => {
-  const currentBundle = resolveCurrentIndexBundlePath();
-  if (!currentBundle) return next();
-
-  if (req.path !== currentBundle.publicPath) {
-    logger.warn(`[Server] Stale frontend entry requested: ${req.path}. Forcing reload.`);
-    return sendStaleChunkReloadScript(req, res);
-  }
-
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('Surrogate-Control', 'no-store');
-  res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
-
-  return res.sendFile(currentBundle.fsPath);
-});
-
-// Runtime coherence guard for lazy chunks on staging/demo:
-// if a chunk imports a historical entry bundle, force reload instead of
-// serving an inconsistent module graph.
-app.get(/^\/assets\/[^/]+\.js$/, (req: Request, res: Response, next: NextFunction) => {
-  if (/^\/assets\/index-[^/]+\.js$/i.test(req.path)) return next();
-  if (!isStagingOrDemoHost(req)) return next();
-
-  const assetFsPath = path.resolve(frontendDistPath, req.path.replace(/^\//, ''));
-  if (!fs.existsSync(assetFsPath)) return next();
-
-  const currentBundle = resolveCurrentIndexBundlePath();
-  if (!currentBundle) return next();
-
-  try {
-    const jsSource = fs.readFileSync(assetFsPath, 'utf-8');
-    const importedIndexPublicPath = extractImportedIndexBundlePublicPath(jsSource);
-
-    if (importedIndexPublicPath && importedIndexPublicPath !== currentBundle.publicPath) {
-      logger.warn(
-        `[Server] Stale lazy chunk graph detected (${req.path} imports ${importedIndexPublicPath}, current entry: ${currentBundle.publicPath}). Forcing reload.`
-      );
-      return sendStaleChunkReloadScript(req, res);
-    }
-  } catch (error: any) {
-    logger.warn(
-      `[Server] Could not inspect JS chunk coherence for ${req.path}: ${error?.message || error}`
-    );
-    return next();
-  }
-
-  // Keep JS chunks non-cacheable on staging/demo to reduce mixed-build risk.
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('Surrogate-Control', 'no-store');
-  return res.sendFile(assetFsPath);
-});
+// NOTE:
+// Do not special-case all /assets/index-*.js requests here.
+// Vite can emit non-entry chunks named index-*.js (e.g. module index.ts chunks),
+// and intercepting them as "stale entry" can break lazy loading.
 
 // Serve static files from the React app
 // fallthrough: true means continue to next middleware if file not found
@@ -1574,13 +1507,6 @@ const isHashedAssetFilename = (filename: string): boolean =>
 
 const isMissingHashedJsChunkRequest = (requestPath: string): boolean =>
   /^\/assets\/[^/]+-[a-z0-9]{8,}\.js$/i.test(requestPath);
-
-const extractImportedIndexBundlePublicPath = (jsSource: string): string | null => {
-  if (!jsSource) return null;
-  const importMatch = jsSource.match(/['"]\.\/(index-[^'"]+\.js)['"]/);
-  if (!importMatch?.[1]) return null;
-  return `/assets/${importMatch[1]}`;
-};
 
 const extractRelativeJsImports = (jsSource: string): string[] => {
   if (!jsSource) return [];
