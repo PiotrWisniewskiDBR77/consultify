@@ -48,6 +48,7 @@
     "cookie-parser": "^1.4.7",
     "docx": "9.5.1",
     "googleapis": "^171.4.0",
+    "image-size": "^2.0.2",
     "ioredis": "^5.8.2",
     "mammoth": "^1.11.0",
     "multer": "^2.0.2",

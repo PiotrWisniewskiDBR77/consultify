@@ -29,6 +29,7 @@
  */
 
 import PDFDocument from 'pdfkit';
+import { imageSize } from 'image-size';
 
 import {
   formatAppendixHeading,
@@ -367,11 +368,23 @@ function drawCoverLogo(
   const widthCm = typeof asset.widthCm === 'number' && asset.widthCm > 0 ? asset.widthCm : 4;
   // 72 dpi: 1cm ≈ 28.35 points (PDFKit measures in points).
   const widthPt = widthCm * 28.346456;
+  let maxHeightPt = widthPt;
+  try {
+    const size = imageSize(buffer);
+    if (typeof size.width === 'number' && size.width > 0 && typeof size.height === 'number') {
+      maxHeightPt = (widthPt * size.height) / size.width;
+    }
+  } catch {
+    maxHeightPt = widthPt;
+  }
+  maxHeightPt = Math.min(maxHeightPt, 200);
   doc.moveDown(2);
   try {
-    // PDFKit centres an image when given `width` + `align: 'center'`.
-    // Aspect ratio is preserved by omitting `height`.
-    doc.image(buffer, { width: widthPt, align: 'center' });
+    doc.image(buffer, {
+      fit: [widthPt, maxHeightPt],
+      align: 'center',
+      valign: 'center',
+    });
   } catch {
     // Defensive: bad PNG/JPEG byte sequence → silently skip embed so
     // the cover keeps rendering. Production registry write-side

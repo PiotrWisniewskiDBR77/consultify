@@ -33,6 +33,7 @@
 // so the renderer stays type-safe at call sites without forking the `docx`
 // types.
 import * as docxModule from 'docx';
+import { imageSize } from 'image-size';
 
 import {
   formatAppendixHeading,
@@ -785,20 +786,27 @@ function buildCoverLogoParagraph(
   }
   if (!buffer || buffer.length === 0) return null;
   const widthCm = typeof asset.widthCm === 'number' && asset.widthCm > 0 ? asset.widthCm : 4;
-  // 96 dpi conversion: 1cm ≈ 37.7953 px. Keep height proportional
-  // (square-ish) since aspect-ratio probing requires a PNG/JPEG
-  // header parser; for the MVP we use a conservative 1:1 box so the
-  // logo always fits the cover. Authors can rotate to a wider asset
-  // and re-upload if they want a different aspect.
+  // 96 dpi conversion: 1cm ≈ 37.7953 px.
   const widthPx = Math.round(widthCm * 37.7953);
-  const heightPx = widthPx;
+  let heightPx = widthPx;
+  try {
+    const size = imageSize(buffer);
+    if (typeof size.width === 'number' && size.width > 0 && typeof size.height === 'number') {
+      heightPx = Math.max(1, Math.round((widthPx * size.height) / size.width));
+    }
+  } catch {
+    // Keep width=height fallback when metadata probe fails.
+    heightPx = widthPx;
+  }
+  // Keep cover layout stable for unusually tall logos.
+  const clampedHeightPx = Math.min(heightPx, 260);
   return new Paragraph({
     style: DOCX_STYLE_IDS.SUBTITLE,
     alignment: AlignmentType.CENTER,
     children: [
       new ImageRun({
         data: buffer,
-        transformation: { width: widthPx, height: heightPx },
+        transformation: { width: widthPx, height: clampedHeightPx },
         type: asset.mimeType === 'image/png' ? 'png' : 'jpg',
       }),
     ],
