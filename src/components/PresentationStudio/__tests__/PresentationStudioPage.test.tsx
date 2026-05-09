@@ -845,11 +845,11 @@ describe('PresentationStudioPage', () => {
     expect(banner.getAttribute('data-state')).toBe('warnings');
     expect(banner.textContent).toContain('Layout audit: 3 findings');
 
-    // Toggle expands the breakdown and the per-flag tiles render.
-    const toggle = screen.getByTestId('presentation-studio-layout-audit-toggle');
-    await act(async () => {
-      fireEvent.click(toggle);
-    });
+    // Sprint S12: with high-priority flags present (missing source +
+    // unsupported PDF intent) the breakdown auto-expands. Per-flag
+    // tiles must be visible without clicking the toggle.
+    expect(banner.getAttribute('data-priority')).toBe('high');
+    expect(screen.getByTestId('presentation-studio-layout-audit-priority-badge')).toBeTruthy();
     expect(
       screen.getByTestId('presentation-studio-layout-audit-flag-layout_overflow_title')
     ).toBeTruthy();

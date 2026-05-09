@@ -286,4 +286,148 @@ describe('presentationStudioLayoutAuditService', () => {
     expect(audit.flagCounts.unsupported_intent_for_pdf_export).toBe(0);
     expect(audit.flagCounts.unsupported_intent_for_pptx_export).toBe(0);
   });
+
+  // ------------------------------------------------------------------
+  // Sprint S12 — per-slot density override (closes R-S10-2).
+  // ------------------------------------------------------------------
+
+  it('falls back to slide-level density when slotDensities is absent (S12)', () => {
+    // 100-char title is over the canonical balanced cap (90) but under
+    // the canonical document cap (110). With slide-level `document` and
+    // no override, the audit must NOT flag.
+    const outline = [
+      slide({
+        intent: 'assessment',
+        title: 'X'.repeat(100),
+        density: 'document',
+        sourceRef: 'assessment:a-1',
+      }),
+    ];
+    const audit = auditPresentationStudioOutlineLayout(outline);
+    expect(audit.flagCounts.layout_overflow_title).toBe(0);
+  });
+
+  it('uses the per-slot title density when slotDensities.title is set (S12)', () => {
+    // Slide-level density is `document` (cap 110). slotDensities.title
+    // overrides to `visual` (cap 80). 90-char title should now flag.
+    const outline = [
+      slide({
+        intent: 'cover',
+        title: 'X'.repeat(90),
+        density: 'document',
+        slotDensities: { title: 'visual' },
+      }),
+    ];
+    const audit = auditPresentationStudioOutlineLayout(outline);
+    expect(audit.flagCounts.layout_overflow_title).toBe(1);
+    // keyMessage + blocks are not present, so no other flags.
+    expect(audit.flagCounts.layout_overflow_key_message).toBe(0);
+    expect(audit.flagCounts.layout_overflow_blocks).toBe(0);
+  });
+
+  it('uses the per-slot key-message density when slotDensities.keyMessage is set (S12)', () => {
+    // Slide-level density is `visual` (keyMessage cap 160). Override
+    // raises just keyMessage to `document` (cap 360). 200-char message
+    // should NOT flag.
+    const outline = [
+      slide({
+        intent: 'single_insight',
+        title: 'Insight',
+        density: 'visual',
+        keyMessage: 'M'.repeat(200),
+        slotDensities: { keyMessage: 'document' },
+      }),
+    ];
+    const audit = auditPresentationStudioOutlineLayout(outline);
+    expect(audit.flagCounts.layout_overflow_key_message).toBe(0);
+  });
+
+  it('uses the per-slot blocks density when slotDensities.blocks is set (S12)', () => {
+    // Slide-level density `visual` allows max 4 blocks. Override raises
+    // just blocks to `document` (max 8). 6 blocks should NOT flag.
+    const outline = [
+      slide({
+        intent: 'recommendation_portfolio',
+        title: 'Portfolio',
+        density: 'visual',
+        suggestedBlocks: ['a', 'b', 'c', 'd', 'e', 'f'],
+        sourceRef: 'assessment:a-1',
+        slotDensities: { blocks: 'document' },
+      }),
+    ];
+    const audit = auditPresentationStudioOutlineLayout(outline);
+    expect(audit.flagCounts.layout_overflow_blocks).toBe(0);
+  });
+
+  it('mixes per-slot density overrides on the same slide (S12)', () => {
+    // The classic R-S10-2 case: dense bullets + sparse hero + balanced
+    // body. slotDensities.title='visual' (cap 80), slotDensities.blocks
+    // ='document' (max 8), slotDensities.keyMessage stays slide-level.
+    // 90-char title overflows; 6 blocks fit; 250-char keyMessage at
+    // slide-level 'balanced' (cap 240) overflows.
+    const outline = [
+      slide({
+        intent: 'comparison',
+        title: 'X'.repeat(90),
+        density: 'balanced',
+        keyMessage: 'M'.repeat(250),
+        suggestedBlocks: ['a', 'b', 'c', 'd', 'e', 'f'],
+        sourceRef: 'assessment:a-1',
+        slotDensities: { title: 'visual', blocks: 'document' },
+      }),
+    ];
+    const audit = auditPresentationStudioOutlineLayout(outline);
+    expect(audit.flagCounts.layout_overflow_title).toBe(1);
+    expect(audit.flagCounts.layout_overflow_blocks).toBe(0);
+    expect(audit.flagCounts.layout_overflow_key_message).toBe(1);
+  });
+
+  it('ignores invalid slotDensities values and falls back to slide-level density (S12)', () => {
+    const outline = [
+      slide({
+        intent: 'cover',
+        title: 'X'.repeat(100),
+        density: 'document',
+        // Unknown override token must not crash and must fall through
+        // to the slide-level density (cap 110), so no flag.
+        slotDensities: { title: 'compact' as unknown as 'visual' },
+      }),
+    ];
+    const audit = auditPresentationStudioOutlineLayout(outline);
+    expect(audit.flagCounts.layout_overflow_title).toBe(0);
+  });
+
+  it('composes per-slot density with template-family override (S11+S12)', () => {
+    // Slide-level density `balanced` (canonical cap 90). With Steering
+    // Committee Deck override the balanced cap rises to 110. A 100-char
+    // title should NOT flag. Then add slotDensities.title='visual' —
+    // the visual cap (80) is the family override default (visual is
+    // not overridden under Steering Committee), so 100 chars SHOULD flag.
+    const titleOnlyOverride = [
+      slide({
+        intent: 'executive_summary',
+        title: 'X'.repeat(100),
+        density: 'balanced',
+        sourceRef: 'assessment:a-1',
+      }),
+    ];
+    const auditNoSlot = auditPresentationStudioOutlineLayout(titleOnlyOverride, {
+      templateFamily: 'Steering Committee Deck',
+    });
+    expect(auditNoSlot.flagCounts.layout_overflow_title).toBe(0);
+
+    const slotVisual = [
+      slide({
+        intent: 'executive_summary',
+        title: 'X'.repeat(100),
+        density: 'balanced',
+        sourceRef: 'assessment:a-1',
+        slotDensities: { title: 'visual' },
+      }),
+    ];
+    const auditWithSlot = auditPresentationStudioOutlineLayout(slotVisual, {
+      templateFamily: 'Steering Committee Deck',
+    });
+    expect(auditWithSlot.flagCounts.layout_overflow_title).toBe(1);
+  });
 });

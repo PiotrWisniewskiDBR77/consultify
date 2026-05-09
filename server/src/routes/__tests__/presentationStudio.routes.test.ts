@@ -943,6 +943,52 @@ describe('presentationStudio.routes — POST /generate/preview', () => {
     expect(audit.flagCounts.layout_overflow_title).toBe(0);
   });
 
+  it('threads slotDensities from the request body through to the audit (S12)', async () => {
+    const router = await importRouter();
+    // Slide-level density 'document' (cap 110) would NOT flag a 90-char
+    // title. With slotDensities.title='visual' the visual cap (80)
+    // applies and the title MUST flag.
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'slot densities probe',
+          audience: 'executive',
+          goal: 'inform',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'a',
+              confidence: 0.7,
+              readiness: 'ready',
+            },
+          ],
+        },
+        outline: [
+          {
+            intent: 'cover',
+            title: 'X'.repeat(90),
+            enabled: true,
+            density: 'document',
+            slotDensities: { title: 'visual' },
+          },
+        ],
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    const audit = res.body.data.layoutAudit;
+    expect(audit.flagCounts.layout_overflow_title).toBe(1);
+    expect(
+      res.body.data.warnings.some((w: string) => w.startsWith('[layout_overflow_title]'))
+    ).toBe(true);
+  });
+
   it('flags PDF parity in addition to PPTX parity for an unsupported intent (S11)', async () => {
     const router = await importRouter();
     const req = createMockReq({

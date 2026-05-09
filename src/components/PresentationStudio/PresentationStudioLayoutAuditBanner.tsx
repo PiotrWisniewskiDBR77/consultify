@@ -22,7 +22,7 @@
  */
 
 import { AlertTriangle, ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import type {
   PresentationStudioLayoutAuditFlag,
@@ -39,13 +39,40 @@ const FLAG_DISPLAY_LABEL: Record<PresentationStudioLayoutAuditFlag, string> = {
 };
 
 const FLAG_ORDER: PresentationStudioLayoutAuditFlag[] = [
+  // Sprint S12 — surface high-priority flags first so the breakdown row
+  // order matches the auto-expand priority. Reviewers always see the
+  // high-priority class on the first row when expanded.
+  'unsupported_intent_for_pptx_export',
+  'unsupported_intent_for_pdf_export',
+  'missing_source_for_evidence_intent',
   'layout_overflow_title',
   'layout_overflow_key_message',
   'layout_overflow_blocks',
-  'missing_source_for_evidence_intent',
+];
+
+/**
+ * Sprint S12 — flag classes that warrant auto-expansion of the breakdown.
+ * `unsupported_intent_*` indicates the renderer would silently fall back
+ * (the user almost certainly wants to see exactly which slides), and
+ * `missing_source_for_evidence_intent` is an evidence-discipline issue
+ * that the reviewer must read before approving generation.
+ *
+ * The other flags (overflow_*) are advisory typographic hints; a single
+ * overflow does not need to dominate the canvas. The reviewer can always
+ * expand manually.
+ */
+const HIGH_PRIORITY_FLAGS: ReadonlySet<PresentationStudioLayoutAuditFlag> = new Set([
   'unsupported_intent_for_pptx_export',
   'unsupported_intent_for_pdf_export',
-];
+  'missing_source_for_evidence_intent',
+]);
+
+function hasHighPriorityFlags(audit: PresentationStudioOutlineLayoutAudit): boolean {
+  for (const flag of HIGH_PRIORITY_FLAGS) {
+    if ((audit.flagCounts[flag] ?? 0) > 0) return true;
+  }
+  return false;
+}
 
 export interface PresentationStudioLayoutAuditBannerProps {
   /**
@@ -68,7 +95,23 @@ export function PresentationStudioLayoutAuditBanner({
   defaultExpanded = false,
   'data-testid': dataTestId = 'presentation-studio-layout-audit',
 }: PresentationStudioLayoutAuditBannerProps): React.ReactElement | null {
-  const [expanded, setExpanded] = useState<boolean>(defaultExpanded);
+  const highPriority = useMemo<boolean>(
+    () => (audit ? hasHighPriorityFlags(audit) : false),
+    [audit]
+  );
+
+  // Sprint S12 — auto-expand the breakdown when a high-priority flag is
+  // present. The reviewer can still collapse manually; we never collapse
+  // automatically. The rule is "if a high-priority flag appears, surface
+  // the breakdown by default".
+  const [expanded, setExpanded] = useState<boolean>(defaultExpanded || highPriority);
+
+  // When the audit changes (e.g. a new preview adds a high-priority flag
+  // where there was none) we re-expand. We never auto-collapse — that
+  // would override the reviewer's deliberate "Hide" click.
+  useEffect(() => {
+    if (highPriority) setExpanded(true);
+  }, [highPriority]);
 
   const totalFindings = useMemo<number>(() => {
     if (!audit) return 0;
@@ -108,16 +151,31 @@ export function PresentationStudioLayoutAuditBanner({
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+      className={
+        highPriority
+          ? 'flex flex-col gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200'
+          : 'flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200'
+      }
       role="status"
       data-testid={dataTestId}
       data-state="warnings"
+      data-priority={highPriority ? 'high' : 'normal'}
     >
       <div className="flex items-start gap-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
         <div className="min-w-0 flex-1">
-          <div className="font-medium">
-            Layout audit: {totalFindings} {totalFindings === 1 ? 'finding' : 'findings'}
+          <div className="flex flex-wrap items-center gap-2 font-medium">
+            <span>
+              Layout audit: {totalFindings} {totalFindings === 1 ? 'finding' : 'findings'}
+            </span>
+            {highPriority ? (
+              <span
+                className="inline-flex items-center rounded-full border border-rose-300 bg-rose-100 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-rose-900 dark:border-rose-900/60 dark:bg-rose-900/40 dark:text-rose-100"
+                data-testid={`${dataTestId}-priority-badge`}
+              >
+                High priority
+              </span>
+            ) : null}
           </div>
           <div className="mt-1">
             Findings are advisory and never block generation. Review the breakdown below before
@@ -126,7 +184,11 @@ export function PresentationStudioLayoutAuditBanner({
         </div>
         <button
           type="button"
-          className="ml-auto inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-white/60 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-white dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-100 dark:hover:bg-amber-900/40"
+          className={
+            highPriority
+              ? 'ml-auto inline-flex items-center gap-1 rounded-lg border border-rose-300 bg-white/60 px-2 py-1 text-xs font-medium text-rose-900 hover:bg-white dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-100 dark:hover:bg-rose-900/40'
+              : 'ml-auto inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-white/60 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-white dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-100 dark:hover:bg-amber-900/40'
+          }
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
           aria-controls={`${dataTestId}-details`}

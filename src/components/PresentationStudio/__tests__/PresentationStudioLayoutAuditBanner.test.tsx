@@ -40,26 +40,28 @@ function makeCleanAudit(): PresentationStudioOutlineLayoutAudit {
   };
 }
 
+/**
+ * Findings audit used by the S10 "warning state" tests that pre-date
+ * S12's auto-expand. We use overflow-only flags here so the banner
+ * stays collapsed by default — the auto-expand behaviour is asserted
+ * separately in the S12 tests below.
+ */
 function makeFindingsAudit(): PresentationStudioOutlineLayoutAudit {
   return {
     warnings: [
       '[layout_overflow_title] Slide 2 (executive_summary): title is 220 chars; …',
-      '[missing_source_for_evidence_intent] Slide 3 (recommendation_single): …',
+      '[layout_overflow_key_message] Slide 3 (key_messages): key message is 320 chars; …',
     ],
     slideAudits: [
       { index: 0, intent: 'cover', flags: [] },
       { index: 1, intent: 'executive_summary', flags: ['layout_overflow_title'] },
-      {
-        index: 2,
-        intent: 'recommendation_single',
-        flags: ['missing_source_for_evidence_intent'],
-      },
+      { index: 2, intent: 'key_messages', flags: ['layout_overflow_key_message'] },
     ],
     flagCounts: {
       layout_overflow_title: 1,
-      layout_overflow_key_message: 0,
+      layout_overflow_key_message: 1,
       layout_overflow_blocks: 0,
-      missing_source_for_evidence_intent: 1,
+      missing_source_for_evidence_intent: 0,
       unsupported_intent_for_pptx_export: 0,
       unsupported_intent_for_pdf_export: 0,
     },
@@ -106,7 +108,7 @@ describe('PresentationStudioLayoutAuditBanner', () => {
       screen.getByTestId('presentation-studio-layout-audit-flag-layout_overflow_title')
     ).toBeTruthy();
     expect(
-      screen.getByTestId('presentation-studio-layout-audit-flag-missing_source_for_evidence_intent')
+      screen.getByTestId('presentation-studio-layout-audit-flag-layout_overflow_key_message')
     ).toBeTruthy();
     expect(
       screen.queryByTestId('presentation-studio-layout-audit-flag-layout_overflow_blocks')
@@ -133,7 +135,7 @@ describe('PresentationStudioLayoutAuditBanner', () => {
     );
     const warnings = screen.getByTestId('presentation-studio-layout-audit-warnings');
     expect(warnings.textContent).toContain('[layout_overflow_title]');
-    expect(warnings.textContent).toContain('[missing_source_for_evidence_intent]');
+    expect(warnings.textContent).toContain('[layout_overflow_key_message]');
   });
 
   it('uses singular language when there is exactly one finding', () => {
@@ -156,5 +158,123 @@ describe('PresentationStudioLayoutAuditBanner', () => {
     expect(screen.getByTestId('presentation-studio-layout-audit').textContent).toContain(
       'Layout audit: 1 finding'
     );
+  });
+
+  // -------------------------------------------------------------------
+  // Sprint S12 — high-priority flag classes auto-expand the breakdown
+  // and surface a "High priority" badge.
+  // -------------------------------------------------------------------
+
+  it('auto-expands the breakdown when an unsupported_intent_for_pptx_export flag is present (S12)', () => {
+    render(
+      <PresentationStudioLayoutAuditBanner
+        audit={{
+          warnings: ['[unsupported_intent_for_pptx_export] Slide 3 …'],
+          slideAudits: [
+            {
+              index: 2,
+              intent: 'mystery_intent',
+              flags: ['unsupported_intent_for_pptx_export'],
+            },
+          ],
+          flagCounts: {
+            layout_overflow_title: 0,
+            layout_overflow_key_message: 0,
+            layout_overflow_blocks: 0,
+            missing_source_for_evidence_intent: 0,
+            unsupported_intent_for_pptx_export: 1,
+            unsupported_intent_for_pdf_export: 0,
+          },
+        }}
+      />
+    );
+    const banner = screen.getByTestId('presentation-studio-layout-audit');
+    expect(banner.getAttribute('data-priority')).toBe('high');
+    expect(screen.getByTestId('presentation-studio-layout-audit-priority-badge')).toBeTruthy();
+    expect(screen.getByTestId('presentation-studio-layout-audit-details')).toBeTruthy();
+    const toggle = screen.getByTestId('presentation-studio-layout-audit-toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('auto-expands when a missing_source_for_evidence_intent flag is present (S12)', () => {
+    render(
+      <PresentationStudioLayoutAuditBanner
+        audit={{
+          warnings: ['[missing_source_for_evidence_intent] Slide 2 …'],
+          slideAudits: [
+            {
+              index: 1,
+              intent: 'recommendation_single',
+              flags: ['missing_source_for_evidence_intent'],
+            },
+          ],
+          flagCounts: {
+            layout_overflow_title: 0,
+            layout_overflow_key_message: 0,
+            layout_overflow_blocks: 0,
+            missing_source_for_evidence_intent: 1,
+            unsupported_intent_for_pptx_export: 0,
+            unsupported_intent_for_pdf_export: 0,
+          },
+        }}
+      />
+    );
+    const banner = screen.getByTestId('presentation-studio-layout-audit');
+    expect(banner.getAttribute('data-priority')).toBe('high');
+    expect(screen.getByTestId('presentation-studio-layout-audit-priority-badge')).toBeTruthy();
+    expect(screen.getByTestId('presentation-studio-layout-audit-details')).toBeTruthy();
+  });
+
+  it('does NOT auto-expand and does NOT show the priority badge when only overflow flags are present (S12)', () => {
+    render(
+      <PresentationStudioLayoutAuditBanner
+        audit={{
+          warnings: ['[layout_overflow_title] Slide 1 …'],
+          slideAudits: [{ index: 0, intent: 'cover', flags: ['layout_overflow_title'] }],
+          flagCounts: {
+            layout_overflow_title: 1,
+            layout_overflow_key_message: 0,
+            layout_overflow_blocks: 0,
+            missing_source_for_evidence_intent: 0,
+            unsupported_intent_for_pptx_export: 0,
+            unsupported_intent_for_pdf_export: 0,
+          },
+        }}
+      />
+    );
+    const banner = screen.getByTestId('presentation-studio-layout-audit');
+    expect(banner.getAttribute('data-priority')).toBe('normal');
+    expect(screen.queryByTestId('presentation-studio-layout-audit-priority-badge')).toBeNull();
+    expect(screen.queryByTestId('presentation-studio-layout-audit-details')).toBeNull();
+  });
+
+  it('lets the user collapse a high-priority breakdown manually (S12)', () => {
+    render(
+      <PresentationStudioLayoutAuditBanner
+        audit={{
+          warnings: ['[unsupported_intent_for_pdf_export] Slide 4 …'],
+          slideAudits: [
+            {
+              index: 3,
+              intent: 'mystery_intent',
+              flags: ['unsupported_intent_for_pdf_export'],
+            },
+          ],
+          flagCounts: {
+            layout_overflow_title: 0,
+            layout_overflow_key_message: 0,
+            layout_overflow_blocks: 0,
+            missing_source_for_evidence_intent: 0,
+            unsupported_intent_for_pptx_export: 0,
+            unsupported_intent_for_pdf_export: 1,
+          },
+        }}
+      />
+    );
+    const toggle = screen.getByTestId('presentation-studio-layout-audit-toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByTestId('presentation-studio-layout-audit-details')).toBeNull();
   });
 });

@@ -288,6 +288,26 @@ function densityFor(item: OutlineItem): DensityKey {
   return (item.density as DensityKey) || 'balanced';
 }
 
+/**
+ * Sprint S12 — resolve the density for a specific slot. When the outline
+ * item declares `slotDensities[slot]` we use that; otherwise we fall back
+ * to the slide-level `density` (and ultimately to `'balanced'`). Closes
+ * R-S10-2 by allowing real layouts that mix densities within a slide
+ * (e.g. dense bullets + sparse hero) to be audited per slot.
+ */
+type SlotKey = 'title' | 'keyMessage' | 'blocks';
+
+function densityForSlot(item: OutlineItem, slot: SlotKey): DensityKey {
+  const slotDensities = item.slotDensities;
+  if (slotDensities) {
+    const override = slotDensities[slot];
+    if (override === 'visual' || override === 'balanced' || override === 'document') {
+      return override;
+    }
+  }
+  return densityFor(item);
+}
+
 function slideHasSourceReference(item: OutlineItem): boolean {
   if (item.sourceRef && String(item.sourceRef).trim().length > 0) return true;
   if (
@@ -349,28 +369,41 @@ export function auditPresentationStudioOutlineLayout(
       return;
     }
 
-    const budget = resolveSlotCapacity(densityFor(item), templateFamily);
+    // Sprint S12 — resolve slot capacities per-slot. When the outline
+    // item declares `slotDensities[slot]` we use that density's budget;
+    // otherwise we fall back to the slide-level `density`. The
+    // template-family override applies inside `resolveSlotCapacity` so
+    // S11 + S12 compose cleanly.
+    const titleBudget = resolveSlotCapacity(densityForSlot(item, 'title'), templateFamily);
+    const keyMessageBudget = resolveSlotCapacity(
+      densityForSlot(item, 'keyMessage'),
+      templateFamily
+    );
+    const blocksBudget = resolveSlotCapacity(densityForSlot(item, 'blocks'), templateFamily);
 
     // 1. Slot capacity
-    if (typeof item?.title === 'string' && item.title.length > budget.titleMaxChars) {
+    if (typeof item?.title === 'string' && item.title.length > titleBudget.titleMaxChars) {
       flags.push('layout_overflow_title');
       warnings.push(
-        `[layout_overflow_title] Slide ${index + 1} (${intent || 'unknown'}): title is ${item.title.length} chars; ${FLAG_LABELS.layout_overflow_title} (~${budget.titleMaxChars}).`
+        `[layout_overflow_title] Slide ${index + 1} (${intent || 'unknown'}): title is ${item.title.length} chars; ${FLAG_LABELS.layout_overflow_title} (~${titleBudget.titleMaxChars}).`
       );
     }
     if (
       typeof item?.keyMessage === 'string' &&
-      item.keyMessage.length > budget.keyMessageMaxChars
+      item.keyMessage.length > keyMessageBudget.keyMessageMaxChars
     ) {
       flags.push('layout_overflow_key_message');
       warnings.push(
-        `[layout_overflow_key_message] Slide ${index + 1} (${intent || 'unknown'}): key message is ${item.keyMessage.length} chars; ${FLAG_LABELS.layout_overflow_key_message} (~${budget.keyMessageMaxChars}).`
+        `[layout_overflow_key_message] Slide ${index + 1} (${intent || 'unknown'}): key message is ${item.keyMessage.length} chars; ${FLAG_LABELS.layout_overflow_key_message} (~${keyMessageBudget.keyMessageMaxChars}).`
       );
     }
-    if (Array.isArray(item?.suggestedBlocks) && item.suggestedBlocks.length > budget.blocksMax) {
+    if (
+      Array.isArray(item?.suggestedBlocks) &&
+      item.suggestedBlocks.length > blocksBudget.blocksMax
+    ) {
       flags.push('layout_overflow_blocks');
       warnings.push(
-        `[layout_overflow_blocks] Slide ${index + 1} (${intent || 'unknown'}): ${item.suggestedBlocks.length} suggested blocks; ${FLAG_LABELS.layout_overflow_blocks} (max ${budget.blocksMax}).`
+        `[layout_overflow_blocks] Slide ${index + 1} (${intent || 'unknown'}): ${item.suggestedBlocks.length} suggested blocks; ${FLAG_LABELS.layout_overflow_blocks} (max ${blocksBudget.blocksMax}).`
       );
     }
 

@@ -125,6 +125,18 @@ export interface OutlineItem {
   sourceRefs?: string[];
   confidence?: number;
   density?: 'visual' | 'balanced' | 'document';
+  /**
+   * Sprint S12 — per-slot density override. When present, the layout
+   * audit resolves capacity caps per-slot rather than routing the entire
+   * slide through one `density`. Closes R-S10-2. Backward compatible:
+   * omitted slots fall back to `density` (which itself falls back to
+   * 'balanced' inside the audit).
+   */
+  slotDensities?: {
+    title?: 'visual' | 'balanced' | 'document';
+    keyMessage?: 'visual' | 'balanced' | 'document';
+    blocks?: 'visual' | 'balanced' | 'document';
+  };
   visualPolicy?: string;
   layoutHint?: string;
   suggestedBlocks?: string[];

@@ -1095,3 +1095,72 @@ S11 closes two of the three S10 follow-up risks (R-S10-1: per-template-family ov
   - Move the audit's family + density caps into a per-template-family JSON config the runtime can hot-reload (groundwork for tenant-specific overrides without a code deploy).
   - Optional: a dedicated "Layout audit" section card in the Studio canvas (richer than the banner, with per-slide drill-down). Today the banner is enough; we'd ship the section card only if reviewers ask for slide-level detail beyond the warning list.
 
+## Phase 2 — Sprint S12 gate (Per-slot density + banner priority / 2026-05-09)
+
+**Gate**: closed → committed under `adb76af0a..HEAD` on `staging`.
+
+### Scope landed in S12
+
+Cross-reference: master sprint map WP-06 carry / MT-PRES-041. Backend + Frontend. No DB migrations. Approval-ticket invariant preserved. The audit remains advisory and never blocks generation. Closes R-S10-2 (per-slot density mode).
+
+S12 closes the last open S10 follow-up (R-S10-2: real layouts mix densities within a slide) by introducing an optional `slotDensities` override on `OutlineItem` that the audit resolves per-slot before applying capacity caps. The change is fully backward compatible — every existing path that does not set `slotDensities` is unchanged. S12 also addresses R-S11-3 (high-priority flags warrant immediate visibility) by auto-expanding the layout audit banner when an `unsupported_intent_*` or `missing_source_for_evidence_intent` flag is present, and surfacing a "High priority" badge with a rose tone instead of amber.
+
+### Changes
+
+- `consultify/server/src/services/presentationGeneratorService.ts`
+  - Added optional `slotDensities?: { title?; keyMessage?; blocks? }` (each with the same `'visual' | 'balanced' | 'document'` enum) to `OutlineItem`. Backward compatible; no existing emit path is required to set it.
+- `consultify/server/src/services/presentationStudioLayoutAuditService.ts`
+  - Added `densityForSlot(item, slot)` helper. Returns `slotDensities[slot]` when valid, otherwise falls back to the slide-level `density`. Unknown override tokens silently fall through to the slide-level density.
+  - Per-slot capacities are now resolved separately for title / keyMessage / blocks. The template-family override resolver from S11 composes cleanly: per-slot density → density bucket → family override → final cap.
+- `consultify/server/src/routes/presentationStudio.routes.ts`
+  - `parseOutlineFromBody` now accepts an optional `slotDensities` object on each outline entry. Each slot value is type-narrowed (`'visual' | 'balanced' | 'document'` only); unknown tokens / wrong types are silently dropped, mirroring the rest of the parser.
+- `consultify/server/src/services/__tests__/presentationStudioLayoutAuditService.test.ts`
+  - +7 tests covering: fallback to slide-level density when `slotDensities` absent; per-slot title override flips a 90-char title from clean (document cap 110) to overflow (visual cap 80); per-slot keyMessage override flips a 200-char message from overflow (visual cap 160) to clean (document cap 360); per-slot blocks override flips a 6-block slide from overflow (visual max 4) to clean (document max 8); mixed per-slot densities (title=visual, blocks=document, keyMessage=balanced fallback) produce mixed flag results on a single slide; invalid `slotDensities.title` token (e.g. `'compact'`) silently falls back; per-slot density composes with template-family override (Steering Committee balanced 110 → slot visual 80).
+- `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts`
+  - +1 regression test asserting `slotDensities` flows from the request body through `parseOutlineFromBody`, the orchestrator, and into the layout audit, producing the expected overflow flag.
+- `consultify/src/components/PresentationStudio/PresentationStudioLayoutAuditBanner.tsx`
+  - Added `HIGH_PRIORITY_FLAGS` set: `unsupported_intent_for_pptx_export`, `unsupported_intent_for_pdf_export`, `missing_source_for_evidence_intent`. The first two indicate silent renderer fallback; the third is an evidence-discipline issue. Overflow flags remain advisory.
+  - Added `hasHighPriorityFlags(audit)` predicate.
+  - The banner auto-expands when a high-priority flag is present, switches its tone to rose (vs. amber for advisory-only findings), exposes `data-priority="high" | "normal"`, and renders a "High priority" badge next to the aggregate count. The reviewer can still collapse the breakdown manually; we never auto-collapse.
+  - `FLAG_ORDER` rebalanced so the breakdown rows surface high-priority flags first.
+- `consultify/src/components/PresentationStudio/__tests__/PresentationStudioLayoutAuditBanner.test.tsx`
+  - Updated `makeFindingsAudit` to use overflow-only flags so the pre-S12 tests assert the collapsed-by-default behaviour without colliding with auto-expand.
+  - +4 tests covering: auto-expand on `unsupported_intent_for_pptx_export`; auto-expand on `missing_source_for_evidence_intent`; NO auto-expand and NO priority badge when only overflow flags are present; manual collapse works on a high-priority audit.
+- `consultify/src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`
+  - Updated the S11 page-level test that previously clicked the toggle to now expect auto-expansion + the priority badge (the audit fixture has high-priority flags, so the new behaviour is the correct one). All other page tests pass unchanged.
+
+### Validation performed
+
+- `npx vitest run` over the full Studio surface — **119/119 passed** (8 ticket + 24 layout audit + 6 source artifacts + 44 route + 26 page + 11 banner). Net +12 tests over S11.
+- `npx eslint` on the seven primary S12 in-scope files — **0 errors**, 49 warnings (pre-existing P3 carry-over: no-explicit-any in test mocks + S5 baseline empty interface alias). The generator file shows a higher pre-existing warning count when included in scope but the S12 change there is a single backward-compatible field addition; we do NOT touch existing warnings per the S0 baseline policy.
+- `npx tsc --noEmit` on the layout audit service in isolation — clean. Generator + routes + page changes are verified through the live route + component test suites.
+- Tenant + approval invariants unchanged. The new `slotDensities` field is reflected by `parseOutlineFromBody` and is part of the payload that gets fingerprinted into the approval ticket on the mutating path; a tampered post-approval swap of `slotDensities` would already be rejected by the ticket service via `payload_mismatch`.
+- Workspace rules upheld: AI-actions-in-Menu-3 unchanged. UI-UX source-of-truth: the rose tone reuses the canonical "high priority / blocked" color from the Consultify color contract; emerald (clean), amber (advisory), rose (high priority) maintain a consistent semantic ladder.
+
+### Gate result: `PASS_WITH_P2`
+
+- 0 P0, 0 P1, 0 P2.
+- P3 deferred: pre-existing P3 warnings on the generator file (n=56) are out-of-scope for S12 even though the audit-relevant change is one new optional field; addressing them would balloon S12 beyond the contract's "small, reviewable" gate criterion. Addressed via R-S0-baseline carry.
+
+### Acceptance criteria covered by S12
+
+- **Closes R-S10-2**: per-slot density override on `OutlineItem` lets the audit treat title / keyMessage / blocks as independent capacity cells rather than routing the entire slide through one density. Unit tests cover override, fallback, mixed, and family-composed cases.
+- **Closes R-S11-3**: high-priority flags now auto-surface their breakdown without manual interaction. The reviewer cannot accidentally miss an `unsupported_intent_*` or `missing_source_for_evidence_intent` finding.
+- **Body-level wiring complete**: `slotDensities` flows from request body → parser → orchestrator → audit → response, exercised by a route regression test.
+- **Approval invariant preserved**: `slotDensities` is part of the fingerprinted payload, so it cannot be swapped post-approval.
+- **No silent execution**: the auto-expand UI behavior is visible (priority badge + rose tone + `data-priority` attribute), so the user always knows when high-priority flags caused the breakdown to expand.
+
+### Risks / next-step notes
+
+- R-S12-1: No generator path emits `slotDensities` today; the field is consumer-only. The audit will keep falling back to slide-level density for every emitted slide until a future generator change starts emitting per-slot densities. This is the intended progression — S12 makes the audit capable, S13+ can teach the generator (and AI prompt) to emit per-slot densities for layouts that demonstrably mix densities (e.g. comparison slides with sparse hero + dense bullet cells).
+- R-S12-2: The "High priority" semantic is fixed in code (`HIGH_PRIORITY_FLAGS` constant). If a future flag class is added — e.g. an `accessibility_*` flag — its priority must be classified at introduction time. The banner test for "no priority badge with overflow-only flags" guards against accidentally promoting an advisory flag into the high-priority bucket.
+- R-S12-3: The audit walks the outline in a single pass; per-slot density is resolved per slide. A future renderer-driven per-cell audit (e.g. one slide can declare 4 distinct text frames each with its own density) is a strictly larger refactor and is deferred to a dedicated sprint with its own contract.
+
+### Next sprint plan
+
+- Sprint S13 candidates (subject to your approval):
+  - Hot-reloadable JSON config for per-family + density caps (groundwork for tenant-specific overrides without code deploy). Backend.
+  - Renderer-side honest truncation indicator: when a slide is rendered with an overflow flag, the PPTX/PDF master surfaces a small inline marker. Closes the gap between "audit warned" and "renderer silently truncated".
+  - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down. Today the banner is enough; ship the section card only if reviewers ask for slide-level detail beyond the warning list.
+  - Optional: teach the generator to emit `slotDensities` for known mixed-density layouts (closes the consumer-side of R-S12-1).
+

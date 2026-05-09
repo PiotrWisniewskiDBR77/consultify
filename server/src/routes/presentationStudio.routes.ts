@@ -151,6 +151,32 @@ function parseOutlineFromBody(rawOutline: unknown): OutlineItem[] {
         : undefined,
       confidence: typeof item.confidence === 'number' ? item.confidence : undefined,
       density: item.density,
+      slotDensities:
+        item.slotDensities && typeof item.slotDensities === 'object'
+          ? {
+              title:
+                typeof (item.slotDensities as { title?: unknown }).title === 'string'
+                  ? ((item.slotDensities as { title?: string }).title as
+                      | 'visual'
+                      | 'balanced'
+                      | 'document')
+                  : undefined,
+              keyMessage:
+                typeof (item.slotDensities as { keyMessage?: unknown }).keyMessage === 'string'
+                  ? ((item.slotDensities as { keyMessage?: string }).keyMessage as
+                      | 'visual'
+                      | 'balanced'
+                      | 'document')
+                  : undefined,
+              blocks:
+                typeof (item.slotDensities as { blocks?: unknown }).blocks === 'string'
+                  ? ((item.slotDensities as { blocks?: string }).blocks as
+                      | 'visual'
+                      | 'balanced'
+                      | 'document')
+                  : undefined,
+            }
+          : undefined,
       visualPolicy: typeof item.visualPolicy === 'string' ? item.visualPolicy : undefined,
       layoutHint: typeof item.layoutHint === 'string' ? item.layoutHint : undefined,
       suggestedBlocks: Array.isArray(item.suggestedBlocks)
