@@ -96,3 +96,66 @@ P0
 ### Rationale
 Bez źródeł/diff/approval i PPTX-quality Presentation Studio degraduje się do “ładnego generatora slajdów”, co jest commodity i nie przechodzi enterprise trust gate.
 
+## 2026-05-09 — Idea Notebook as context engine (not a basic notepad)
+
+### Decision
+`Consultify Idea Notebook` jest `AI Context Notebook Engine`: notatka to obiekt operacyjny i źródło kontekstu, który prowadzi myśl przez `capture → enrichment → context linking → review queue → conversions` do idei, inicjatyw, tasków i artefaktów — z kontrolą scope/prywatności i `memory candidate approval`.
+
+Najpierw zapisujemy, potem porządkujemy. AI proponuje (z confidence), ale user kontroluje krytyczne linki i konwersje; nie tworzymy inicjatyw autonomicznie bez approve.
+
+### Applies to
+Notebook/Notes surface + Idee/Inicjatywy conversion + memory candidates + semantic search
+
+### Severity
+P0
+
+### Files updated
+- `28_IDEA_NOTEBOOK_UX.md`
+- `99_RAW_INPUT.md`
+- `97_RAW_IDEA_NOTEBOOK_CONTEXT_ENGINE_2026-05-09.md`
+
+### Rationale
+Bez quick capture + review queue + governance notatnik staje się śmietnikiem albo “Notion clone”, a bez memory approval ryzykuje wycieki i utratę zaufania w enterprise.
+
+## 2026-05-09 — Process Flow as governed process intelligence artifact (not a diagram tool)
+
+### Decision
+`Consultify Process Flow Studio` jest `AI Process Intelligence Engine`: proces jest **żywym artifactem** (model danych + wersje + diff + governance), który AI potrafi tworzyć z prompt/notes/docs, analizować (QA/diagnosis/Lean layer) i przekształcać w inicjatywy, taski, SOP oraz materiały zarządcze (docs/slides/tables).
+
+Nie kopiujemy Miro/Visio/BPMN toola/Celonis 1:1. Domyślny UX jest business-first (business flow), a BPMN-like jest trybem advanced; process mining i mining connectors to etap późniejszy.
+
+### Applies to
+Process Flow Studio / process canvas + analysis + versioning/diff + conversions + export + governance
+
+### Severity
+P0
+
+### Files updated
+- `29_PROCESS_FLOW_UX.md`
+- `99_RAW_INPUT.md`
+- `98_RAW_PROCESS_FLOW_AI_PROCESS_INTELLIGENCE_2026-05-09.md`
+
+### Rationale
+Bez model-first + provenance + QA + diff + initiative conversion moduł degraduje się do “ładnego obrazka” i nie prowadzi transformacji (consulting execution), a bez governance nie przejdzie enterprise trust gate.
+
+## 2026-05-09 — Whiteboard as governed workshop-to-execution artifact (not an infinite canvas clone)
+
+### Decision
+`Consultify Whiteboard` jest `AI-native Visual Collaboration & Workshop Intelligence Engine`: board jest **wersjonowanym artifactem** z provenance/confidence, trybem warsztatowym live oraz natywnym przejściem od chaosu ideacji do execution (decyzje → inicjatywy → taski → docs/slides/tables/mindmap/process flow).
+
+AI może generować, klastrować i syntetyzować, ale wszystkie krytyczne zmiany są kontrolowane: `proposal → approve → version` (non-destructive; bez “znikających karteczek”).
+
+### Applies to
+Whiteboard / workshops + AI clustering/synthesis + conversions + governance + export
+
+### Severity
+P0
+
+### Files updated
+- `38_WHITEBOARD_UX.md`
+- `99_RAW_INPUT.md`
+- `95_RAW_WHITEBOARD_AI_COLLABORATIVE_WHITEBOARD_ENGINE_2026-05-09.md`
+
+### Rationale
+Bez versioning/diff, provenance i execution conversions whiteboard kończy jako “ładna tablica”, a bez governance i approval AI-synthesis będzie ryzykowna (utrata niuansów, chaos, brak zaufania w enterprise).
+

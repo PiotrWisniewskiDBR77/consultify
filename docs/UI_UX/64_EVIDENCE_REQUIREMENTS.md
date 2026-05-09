@@ -53,6 +53,58 @@ Nowe funkcje, przebudowy, naprawy P0/P1 oraz “enterprise readiness” claims.
   - PDF gotowy do wysłania,
   - jawny degraded/fallback jeśli któryś pipeline niedostępny.
 
+## Idea Notebook (minimal evidence pack)
+
+- **MUST**: Dowód quick capture:
+  - notatka zapisana bez wyboru kategorii/projektu przed zapisem (oraz brak utraty przy refresh).
+- **MUST**: Dowód scope/privacy:
+  - private vs project/team/client note + permissions‑aware visibility (deny/locked bez leakage).
+- **MUST**: Dowód enrichment jako sugestii:
+  - tytuł/summary/tagi/linki z confidence + user accept/reject.
+- **MUST**: Dowód Review Queue:
+  - widok notatek wymagających decyzji (convert/link/merge/memory) działa jako główna “ochrona przed śmietnikiem”.
+- **MUST**: Dowód konwersji:
+  - note → idea → initiative candidate z zachowaniem `source_note_ids` i approval.
+- **MUST**: Dowód memory candidates:
+  - propozycja memory candidate + approval; brak auto‑memory dla wrażliwych treści.
+
+## Process Flow Studio (minimal evidence pack)
+
+- **MUST**: Dowód “process as artifact (not picture)”:
+  - proces ma strukturalne `nodes/edges/swimlanes` (inspector pokazuje dane), nie tylko canvas layout.
+- **MUST**: Dowód prompt-to-process + manual edit:
+  - draft z promptu + możliwość poprawy na canvasie + autosave.
+- **MUST**: Dowód source provenance + confidence:
+  - co najmniej dla kluczowych kroków: `source references` + `confidence_score` (AI‑pochodne elementy).
+- **MUST**: Dowód Process QA:
+  - lista problemów (brak start/end, brak owner, brak input/output, dead ends/orphans) + link do kroków.
+- **MUST**: Dowód current vs future + diff:
+  - widoczne rozdzielenie stanów i structural diff (nodes/edges/owners).
+- **MUST**: Dowód “problems → initiative candidates”:
+  - kandydat inicjatywy linkuje do kroków źródłowych (`source_node_ids`).
+- **MUST**: Dowód eksportu:
+  - PDF + PNG/SVG czytelne (auto-layout nie degraduje procesu do nieczytelnej mapy).
+- **MUST**: Dowód governance:
+  - permissions/denial bez leakage + audit trail dla zmian/approvali.
+
+## Whiteboard (minimal evidence pack)
+
+- **MUST**: Dowód “board as artifact (not picture)”:
+  - board ma strukturalne obiekty (sticky/frame/connector) widoczne w inspectorze, nie tylko canvas.
+- **MUST**: Dowód workshop mode (live):
+  - timer + voting + private ideation → reveal + follow presenter/bring-to-frame.
+- **MUST**: Dowód AI clustering jako propozycji:
+  - AI clustering nie niszczy oryginałów; jest `proposal → approve → new version` z możliwością rollback.
+- **MUST**: Dowód provenance + confidence:
+  - kluczowe obiekty/wnioski mają `source references` albo jawne `assumption` + `confidence`.
+- **MUST**: Dowód “execution conversions”:
+  - board → initiative candidates + board → task candidates (z linkiem do source objects),
+  - board → dokument/prezentacja/tabela z source links.
+- **MUST**: Dowód exportu:
+  - PDF + PNG/SVG czytelne; brak “fake success” na eksporcie.
+- **MUST**: Dowód governance:
+  - permissions/denial bez leakage + audit trail + confidentiality mode.
+
 ## Must Not
 
 - **MUST NOT**: Uznawać “działa u mnie” za dowód, jeśli brak screenów/testów dla error/degraded.

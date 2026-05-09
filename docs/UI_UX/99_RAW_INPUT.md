@@ -63,3 +63,54 @@ Zamknąć docelowy stan: deck jako żywy artifact (sources+diff+approval+version
 ### Priority
 P0 (docelowy kierunek produktu)
 
+## 2026-05-09
+
+### Screen / Area
+`Idea Notebook` / `AI Context Notebook Engine` — capture→enrichment→idea→initiative (notes as context engine)
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Idea Notebook / AI Context Notebook Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/97_RAW_IDEA_NOTEBOOK_CONTEXT_ENGINE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan: notatka jako obiekt operacyjny, który szybko przechwytuje myśl i prowadzi ją przez enrichment/linking/review queue do idei/inicjatywy/tasków/artefaktów, z kontrolą prywatności i memory candidates.
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
+`Process Flow Studio` / `AI Process Intelligence Engine` — process as living artifact + analysis + conversions
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Process Flow / AI Process Flow Analysis Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/98_RAW_PROCESS_FLOW_AI_PROCESS_INTELLIGENCE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan: proces jako model operacyjny (dane + wersje + diff + governance) oraz engine, który przechodzi od prompt/notes/docs do procesu, a potem od procesu do diagnozy, rekomendacji, inicjatyw, tasków, SOP i materiałów zarządczych.
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
+`Whiteboard` / `AI Collaborative Whiteboard Engine` — visual collaboration + workshop intelligence + execution conversions
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Whiteboard / AI Collaborative Whiteboard Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/95_RAW_WHITEBOARD_AI_COLLABORATIVE_WHITEBOARD_ENGINE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan: board jako wersjonowany artifact z provenance/confidence, kontrolowanymi AI zmianami (proposal→approve→version), warsztatowym trybem live oraz natywną ścieżką “whiteboard → decyzje → inicjatywy → taski → docs/slides/tables”.
+
+### Priority
+P0 (docelowy kierunek produktu)
+

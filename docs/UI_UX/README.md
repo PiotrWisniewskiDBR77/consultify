@@ -82,6 +82,12 @@ Jeśli dokument niższego poziomu jest sprzeczny z tym katalogiem, należy go tr
   - docelowy UX kontrakt dla `Document Studio` (schema-first artifact + source pack + diff/approval + export)
 - `27_PRESENTATION_STUDIO_UX.md`
   - docelowy UX kontrakt dla `Presentation Studio` (Gamma-class artifact engine + sources + diff/approval + PPTX/PDF export)
+- `28_IDEA_NOTEBOOK_UX.md`
+  - docelowy UX kontrakt dla `Idea Notebook` (capture→enrichment→review queue→konwersje→memory candidates)
+- `29_PROCESS_FLOW_UX.md`
+  - docelowy UX kontrakt dla `Process Flow Studio` (process as living artifact + QA/analysis + versioning/diff + conversions)
+- `38_WHITEBOARD_UX.md`
+  - docelowy UX kontrakt dla `Whiteboard` (workshop intelligence + clustering/synthesis + versioning/diff + execution conversions)
 - `22_EXECUTIVE_ARTIFACT_LAYOUT.md`
   - Wordy / Tabele / Prezentacje: lewy rail, canvas, prawy rail, top actions
   - link do MELS: `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md`
