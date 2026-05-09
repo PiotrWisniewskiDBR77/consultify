@@ -32,6 +32,7 @@ export const ROUTES = {
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   WORDY: '/wordy',
+  // Legacy spreadsheet route kept as a redirect-only alias to canonical Table Studio.
   EXCELE: '/excele',
   PREZENTACJE_GEN: '/prezentacje',
   TABELE: '/tabele',
@@ -343,7 +344,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PRESENTATIONS]: ROUTES.PRESENTATIONS,
   [AppView.MEETING]: ROUTES.MEETING,
   [AppView.WORDY]: ROUTES.WORDY,
-  [AppView.EXCELE]: ROUTES.EXCELE,
+  [AppView.EXCELE]: ROUTES.TABELE,
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
   [AppView.TABELE]: ROUTES.TABELE,
   [AppView.KPI_OKR_DASHBOARD]: ROUTES.KPI_OKR,
@@ -551,6 +552,9 @@ export function getRouteFromAppView(view: AppView): string {
  */
 export function getAppViewFromRoute(path: string): AppView | null {
   const canonicalRouteOrder: AppView[] = [
+    AppView.TABELE,
+    AppView.WORDY,
+    AppView.PREZENTACJE_GEN,
     AppView.SUPERADMIN_OVERVIEW,
     AppView.SUPERADMIN_DASHBOARD,
     AppView.SUPERADMIN_CUSTOMERS,
@@ -727,7 +731,7 @@ export function getAppViewFromPath(path: string): AppView | null {
 
   // KIMI-style workspaces
   if (normalized.startsWith(ROUTES.WORDY)) return AppView.WORDY;
-  if (normalized.startsWith(ROUTES.EXCELE)) return AppView.EXCELE;
+  if (normalized.startsWith(ROUTES.EXCELE)) return AppView.TABELE;
   if (normalized.startsWith(ROUTES.PREZENTACJE_GEN)) return AppView.PREZENTACJE_GEN;
   if (normalized.startsWith(ROUTES.TABELE)) return AppView.TABELE;
 

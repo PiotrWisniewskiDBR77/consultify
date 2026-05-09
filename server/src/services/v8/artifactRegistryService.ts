@@ -48,6 +48,17 @@ const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
 const BACKFILL_TTL_MS = 30_000;
 
+type StarterTableField = {
+  name: string;
+  fieldType: string;
+  options?: Record<string, unknown>;
+};
+
+type StarterTableSeed = {
+  fields: StarterTableField[];
+  records: Array<Record<string, unknown>>;
+};
+
 type AuditAction =
   | 'created'
   | 'preflight'
@@ -698,6 +709,189 @@ export async function registerGovernedTableSheetArtifact(params: {
     throw new Error('Failed to register governed table sheet artifact');
   }
   return artifact;
+}
+
+function buildStarterTableSeed(params: {
+  goal?: string | null;
+  title?: string | null;
+  explicitColumns?: unknown;
+  explicitRows?: unknown;
+}): StarterTableSeed {
+  const explicitFields = Array.isArray(params.explicitColumns)
+    ? params.explicitColumns
+        .map((column) => {
+          if (typeof column === 'string') {
+            const name = column.trim();
+            return name ? { name, fieldType: 'singleLineText' } : null;
+          }
+          if (!column || typeof column !== 'object') return null;
+          const raw = column as Record<string, unknown>;
+          const name = String(raw.name || raw.label || '').trim();
+          if (!name || name.toLowerCase() === 'name') return null;
+          return {
+            name,
+            fieldType:
+              String(raw.fieldType || raw.type || 'singleLineText').trim() || 'singleLineText',
+            options:
+              raw.options && typeof raw.options === 'object'
+                ? (raw.options as Record<string, unknown>)
+                : undefined,
+          };
+        })
+        .filter((field): field is StarterTableField => Boolean(field))
+    : [];
+
+  if (explicitFields.length > 0) {
+    return {
+      fields: explicitFields,
+      records: Array.isArray(params.explicitRows)
+        ? params.explicitRows
+            .filter((row): row is Record<string, unknown> =>
+              Boolean(row && typeof row === 'object')
+            )
+            .slice(0, 10)
+        : [],
+    };
+  }
+
+  const goal = `${params.goal || ''} ${params.title || ''}`.toLowerCase();
+  if (
+    goal.includes('crm') ||
+    goal.includes('lead') ||
+    goal.includes('klient') ||
+    goal.includes('customer') ||
+    goal.includes('sprzeda')
+  ) {
+    return {
+      fields: [
+        { name: 'Company', fieldType: 'singleLineText' },
+        { name: 'Contact', fieldType: 'singleLineText' },
+        { name: 'Email', fieldType: 'email' },
+        {
+          name: 'Status',
+          fieldType: 'singleSelect',
+          options: { options: [{ value: 'New' }, { value: 'Qualified' }, { value: 'Won' }] },
+        },
+        { name: 'Deal Value', fieldType: 'number' },
+        { name: 'Next Step', fieldType: 'longText' },
+      ],
+      records: [
+        {
+          Name: 'Acme pilot',
+          Company: 'Acme Manufacturing',
+          Contact: 'Anna Nowak',
+          Email: 'anna.nowak@example.com',
+          Status: 'New',
+          'Deal Value': 45000,
+          'Next Step': 'Schedule discovery call',
+        },
+        {
+          Name: 'Beta rollout',
+          Company: 'Beta Logistics',
+          Contact: 'Jan Kowalski',
+          Email: 'jan.kowalski@example.com',
+          Status: 'Qualified',
+          'Deal Value': 82000,
+          'Next Step': 'Prepare ROI estimate',
+        },
+      ],
+    };
+  }
+
+  return {
+    fields: [
+      { name: 'Owner', fieldType: 'singleLineText' },
+      {
+        name: 'Status',
+        fieldType: 'singleSelect',
+        options: { options: [{ value: 'New' }, { value: 'In Progress' }, { value: 'Done' }] },
+      },
+      {
+        name: 'Priority',
+        fieldType: 'singleSelect',
+        options: { options: [{ value: 'Low' }, { value: 'Medium' }, { value: 'High' }] },
+      },
+      { name: 'Due Date', fieldType: 'date' },
+      { name: 'Notes', fieldType: 'longText' },
+    ],
+    records: [
+      {
+        Name: 'Initial item',
+        Owner: 'Team',
+        Status: 'New',
+        Priority: 'Medium',
+        'Due Date': new Date().toISOString().slice(0, 10),
+        Notes: 'Generated starter record for Table Studio validation.',
+      },
+    ],
+  };
+}
+
+async function ensureStarterTableData(params: {
+  tableId: string;
+  seed: StarterTableSeed;
+  actorUserId: string;
+}): Promise<void> {
+  const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
+  const recordsService = (await import('../tablePlatform/RecordsService.js')).default;
+
+  const table = await metadataService.getTable(params.tableId);
+  if (!table) {
+    throw new Error(`Table Studio materialization table ${params.tableId} was not persisted`);
+  }
+
+  const existingFields = Array.isArray((table as any).fields) ? (table as any).fields : [];
+  const fieldNames = new Set(
+    existingFields
+      .map((field: any) =>
+        String(field?.name || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  );
+
+  for (const field of params.seed.fields) {
+    const name = field.name.trim();
+    if (!name || fieldNames.has(name.toLowerCase())) continue;
+    const created = await metadataService.createField(
+      params.tableId,
+      name,
+      field.fieldType || 'singleLineText',
+      field.options || {},
+      params.actorUserId
+    );
+    if (created) fieldNames.add(name.toLowerCase());
+  }
+
+  for (const record of params.seed.records) {
+    await recordsService.createRecord(params.tableId, { ...record }, params.actorUserId);
+  }
+}
+
+async function assertMaterializedTableReady(params: {
+  tableId: string;
+  organizationId: string;
+}): Promise<void> {
+  const ready = await dbGet<{ table_id: string; field_count: number }>(
+    `SELECT t.id AS table_id, COUNT(f.id) AS field_count
+       FROM tp_tables t
+       JOIN tp_bases b ON b.id = t.base_id
+       LEFT JOIN tp_fields f ON f.table_id = t.id
+      WHERE t.id = ? AND b.organization_id = ?
+      GROUP BY t.id
+      LIMIT 1`,
+    [params.tableId, params.organizationId],
+    { fallback: false }
+  );
+  if (!ready?.table_id) {
+    throw new Error(`Table Studio materialization failed: table ${params.tableId} does not exist`);
+  }
+  if (Number(ready.field_count || 0) < 2) {
+    throw new Error(
+      `Table Studio materialization failed: table ${params.tableId} has no usable schema`
+    );
+  }
 }
 
 async function getOriginLinkByOrigin(
@@ -1965,7 +2159,7 @@ function inferArtifactPlan(
     return {
       artifactFamily: 'sheet',
       outputType: 'sheet',
-      titleHint: 'Structured sheet draft',
+      titleHint: request.goal.trim() || 'Structured sheet draft',
       governancePath: 'execution_spine',
       visibilityScope: 'organization',
     };
@@ -2820,10 +3014,11 @@ export async function materializeArtifactRun(
         typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
       const tableName =
         typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
-      const workspaceTarget =
-        typeof validated.projectId === 'string' && validated.projectId.trim().length > 0
-          ? validated.projectId.trim()
-          : validated.organizationId;
+      const workspaceId =
+        typeof validated.config?.workspaceId === 'string' && validated.config.workspaceId.trim()
+          ? validated.config.workspaceId.trim()
+          : '';
+      const workspaceTarget = workspaceId || validated.organizationId;
 
       // Hardening (P1): never trust incoming tableId blindly.
       // If the provided table is missing or belongs to another organization,
@@ -2883,7 +3078,7 @@ export async function materializeArtifactRun(
             const newTable = await metadataService.createTable(
               baseId,
               tableName || validated.title || current.plan.titleHint || 'Generated Sheet',
-              `Auto-created by Excele pipeline for artifact run ${validated.runId}`,
+              `Auto-created by Table Studio pipeline for artifact run ${validated.runId}`,
               validated.actorUserId
             );
             tableId = (newTable as any)?.id || '';
@@ -2901,6 +3096,25 @@ export async function materializeArtifactRun(
           );
         }
       }
+
+      const tableSeed = buildStarterTableSeed({
+        goal:
+          typeof validated.config?.goal === 'string'
+            ? validated.config.goal
+            : current.plan.titleHint,
+        title: tableName || validated.title || current.plan.titleHint,
+        explicitColumns: validated.config?.columns,
+        explicitRows: validated.config?.rows,
+      });
+      await ensureStarterTableData({
+        tableId,
+        seed: tableSeed,
+        actorUserId: validated.actorUserId,
+      });
+      await assertMaterializedTableReady({
+        tableId,
+        organizationId: validated.organizationId,
+      });
 
       const artifact = await registerGovernedTableSheetArtifact({
         organizationId: validated.organizationId,

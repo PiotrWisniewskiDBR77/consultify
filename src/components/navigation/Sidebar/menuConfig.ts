@@ -19,7 +19,6 @@ import {
   CreditCard,
   Database,
   Factory,
-  FileSpreadsheet,
   FileText,
   FolderOutput,
   GitBranch,
@@ -132,15 +131,7 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       viewId: AppView.WORDY,
       badge: 'soon',
     },
-    // 11. Excele — KIMI-style spreadsheet generation (P23) — contact required
-    {
-      id: 'MODULE_EXCELE',
-      label: t('sidebar.excele', 'Tables'),
-      icon: React.createElement(FileSpreadsheet, { size: 20 }),
-      viewId: AppView.EXCELE,
-      badge: 'soon',
-    },
-    // 12. Prezentacje — Gamma-style presentation generation (P20) — contact required
+    // 11. Prezentacje — Gamma-style presentation generation (P20) — contact required
     {
       id: 'MODULE_PREZENTACJE_GEN',
       label: t('sidebar.prezentacje', 'Presentations'),
@@ -148,10 +139,10 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       viewId: AppView.PREZENTACJE_GEN,
       badge: 'soon',
     },
-    // 13. Tabele Studio — operational tables (Table Studio Foundation block, D1=visible, sky accent)
+    // 12. Tabele Studio — operational tables (single canonical tables module)
     {
       id: 'MODULE_TABELE',
-      label: t('sidebar.tabele', 'Tables'),
+      label: t('sidebar.tabele', 'Table Studio'),
       icon: React.createElement(Table, { size: 20 }),
       viewId: AppView.TABELE,
     },
@@ -313,8 +304,8 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.PRESENTATIONS]: t('sidebar.outputsLibrary', 'Outputs'),
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentations'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
-    [AppView.EXCELE]: t('sidebar.excele', 'Tables'),
-    [AppView.TABELE]: t('sidebar.tabele', 'Tables'),
+    [AppView.EXCELE]: t('sidebar.tabele', 'Table Studio'),
+    [AppView.TABELE]: t('sidebar.tabele', 'Table Studio'),
   };
   return viewNames[view] || t('common.previousStep');
 }

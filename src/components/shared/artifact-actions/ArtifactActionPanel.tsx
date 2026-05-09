@@ -461,7 +461,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
           id,
           type: target,
           label: isPolish ? 'Otwórz tabelę' : 'Open table',
-          path: `/excele?artifactId=${id}`,
+          path: `/tabele?artifactId=${id}`,
         };
         rawPayload = res;
       }

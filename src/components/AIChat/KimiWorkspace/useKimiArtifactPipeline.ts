@@ -924,7 +924,8 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               runId: accepted.runId,
               params: {
                 title: accepted.plan.titleHint,
-                config: outputType === 'sheet' ? { tableName: accepted.plan.titleHint } : undefined,
+                config:
+                  outputType === 'sheet' ? { tableName: accepted.plan.titleHint, goal } : undefined,
               },
             });
             setCurrentRun(materialized);
@@ -1008,7 +1009,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           runId: currentRun.runId,
           params: {
             title: currentRun.plan.titleHint,
-            config: outputType === 'sheet' ? { tableName: currentRun.plan.titleHint } : undefined,
+            config:
+              outputType === 'sheet'
+                ? {
+                    tableName: currentRun.plan.titleHint,
+                    goal: lastGoal || currentRun.plan.titleHint,
+                  }
+                : undefined,
           },
         });
         setCurrentRun(completed);
@@ -1019,7 +1026,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       setStartupError(error instanceof Error ? error.message : 'Failed to advance pipeline');
       toast.error(error instanceof Error ? error.message : 'Failed to advance pipeline');
     }
-  }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType]);
+  }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType, lastGoal]);
 
   const handleReplay = useCallback(() => {
     contentGenerationTriggered.current = false;

@@ -1755,13 +1755,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (outputTool !== 'auto') {
         const routeMap: Record<string, string> = {
           wordy: '/wordy',
-          excele: '/excele',
+          excele: '/tabele',
+          tabele: '/tabele',
           prezentacje: '/prezentacje',
         };
         const uiLangExplicit = (i18n.language || 'en').split('-')[0];
         const labelMap: Record<string, { pl: string; en: string }> = {
           wordy: { pl: 'Dokumenty', en: 'Documents' },
-          excele: { pl: 'Tabele', en: 'Tables' },
+          excele: { pl: 'Tabele Studio', en: 'Table Studio' },
+          tabele: { pl: 'Tabele Studio', en: 'Table Studio' },
           prezentacje: { pl: 'Prezentacje', en: 'Presentations' },
         };
         const label = labelMap[outputTool]?.[uiLangExplicit === 'pl' ? 'pl' : 'en'] || outputTool;
@@ -1876,7 +1878,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
 
-      // P23 Excele: intercept workbook/excel/financial model intents before Table Builder
+      // Tables / workbook intents now land in the single canonical Table Studio module.
       if (detectExceleIntent(text)) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
@@ -1905,13 +1907,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content:
             uiLang === 'pl'
-              ? 'Otwieram Tabele \u2014 zaraz przygotuję Twój skoroszyt.'
-              : "Opening Tables \u2014 I'll prepare your workbook.",
+              ? 'Otwieram Tabele Studio — zaraz przygotuję Twoją tabelę.'
+              : "Opening Table Studio — I'll prepare your table.",
           timestamp: new Date(),
         });
 
         useAppStore.getState().setChatKickoffMessage(text);
-        navigateToRoute('/excele');
+        navigateToRoute('/tabele');
         onMessageSent?.(content);
         return;
       }

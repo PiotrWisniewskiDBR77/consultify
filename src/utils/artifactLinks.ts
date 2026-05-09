@@ -290,7 +290,7 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'presentation':
       return `/prezentacje?artifactId=${id}`;
     case 'sheet':
-      return `/excele?artifactId=${id}`;
+      return `/tabele?artifactId=${id}`;
     case 'meeting':
       return '/meeting';
     // V5-IDEA-34: Finance artifact parity

@@ -50,7 +50,7 @@ const LANE_META: Record<
   },
   excele: {
     icon: FileSpreadsheet,
-    route: '/excele',
+    route: '/tabele',
     accentBg: 'bg-emerald-500/10',
     accentText: 'text-emerald-500',
   },

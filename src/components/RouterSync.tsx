@@ -119,7 +119,7 @@ export const RouterSync: React.FC = () => {
 
     if (type === 'sheet') {
       nextParams.set('artifactId', id);
-      navigate(`/excele?${nextParams.toString()}`, { replace: true });
+      navigate(`/tabele?${nextParams.toString()}`, { replace: true });
       return;
     }
 
@@ -254,6 +254,7 @@ export const RouterSync: React.FC = () => {
       path.startsWith('/interview') ||
       path.startsWith('/wordy') ||
       path.startsWith('/excele') ||
+      path.startsWith('/tabele') ||
       path.startsWith('/prezentacje') ||
       path.startsWith('/meeting') ||
       path.startsWith('/mcp/');

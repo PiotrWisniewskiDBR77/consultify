@@ -230,9 +230,6 @@ const Wave9OutcomeAIOpsPanel = React.lazy(() =>
 const WordyView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/WordyView').then((m) => ({ default: m.WordyView }))
 );
-const ExceleView = React.lazy(() =>
-  import('@/components/AIChat/KimiWorkspace/ExceleView').then((m) => ({ default: m.ExceleView }))
-);
 const PrezentacjeView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/PrezentacjeView').then((m) => ({
     default: m.PrezentacjeView,
@@ -485,6 +482,19 @@ const RedirectWithTracking: React.FC<{ from: string; to: string; reason: string 
     trackFunnelEvent('route_redirected', { from, to, reason });
   }, [from, to, reason]);
   return <Navigate to={to} replace />;
+};
+
+const RedirectPreservingQuery: React.FC<{ from: string; to: string; reason: string }> = ({
+  from,
+  to,
+  reason,
+}) => {
+  const location = useLocation();
+  const target = `${to}${location.search || ''}`;
+  React.useEffect(() => {
+    trackFunnelEvent('route_redirected', { from, to: target, reason });
+  }, [from, target, reason]);
+  return <Navigate to={target} replace />;
 };
 
 const ReportsBuilderLegacyRedirect: React.FC = () => {
@@ -1385,19 +1395,15 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* KIMI Tabele — contact-required blocking page */}
+        {/* Legacy Excele/Tables route -> canonical Table Studio. */}
         <Route
           path={ROUTES.EXCELE}
           element={
-            <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Tables')]}>
-                <RouteErrorBoundary>
-                  <KimiModuleGate moduleKey="excele">
-                    <ExceleView />
-                  </KimiModuleGate>
-                </RouteErrorBoundary>
-              </MainLayout>
-            </ProtectedRoute>
+            <RedirectPreservingQuery
+              from={ROUTES.EXCELE}
+              to={ROUTES.TABELE}
+              reason="excele_merged_into_table_studio"
+            />
           }
         />
 

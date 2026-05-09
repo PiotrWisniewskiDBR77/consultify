@@ -49,6 +49,57 @@ P0 (docelowy kierunek produktu)
 ## 2026-05-09
 
 ### Screen / Area
+`Finance` / `Finance & Intelligence Engine` — statement→model→analysis→decision→report→Results
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Finance & Intelligence Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/106_RAW_FINANCE_INTELLIGENCE_ENGINE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan finansowego engine’u Consultify: od ingestion i normalizacji statementów, przez modele/forecast/valuation/investment, do audytowalnego raportowania i powiązania z Results/ROI.
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
+`Results` / `Results & Value Realization Engine` — initiative→KPI→ROI→action→verified result
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Results & Value Realization Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/105_RAW_RESULTS_VALUE_REALIZATION_ENGINE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan modułu odpowiedzialności za wartość: KPI + ROI + evidence + reconciliation + approval + corrective actions, z przejściem od odchylenia do działania i potwierdzonego efektu biznesowego.
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
+`Conversational Work OS` / `Teresa Chat Engine` — conversation→context→artifact→decision→task→execution→report
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Conversational Work OS / AI Chat / Teresa Chat Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/104_RAW_CONVERSATIONAL_WORK_OS_TERESA_CHAT_ENGINE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan centralnego interfejsu operacyjnego Consultify: czat jako execution layer, który łączy model/data scope/sources/governance z przejściem do artifactów, decyzji, tasków i raportowania.
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
 `Presentation Studio` (Presentation Artifact Engine) — Gamma-class, enterprise deck lifecycle (PPTX/PDF)
 
 ### Raw requirement

@@ -113,7 +113,7 @@ const CURATED_LABELS: Partial<Record<AppView, string>> = {
   [AppView.MY_ASSESSMENTS]: 'My assessments',
   [AppView.GAP_MAP]: 'Gap map',
   [AppView.WORDY]: 'Wordy',
-  [AppView.EXCELE]: 'Excele',
+  [AppView.EXCELE]: 'Table Studio',
   [AppView.PREZENTACJE_GEN]: 'Prezentacje',
   [AppView.MEETING]: 'Meeting',
   [AppView.PRESENTATIONS]: 'Presentations',

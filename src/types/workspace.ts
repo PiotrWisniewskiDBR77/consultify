@@ -135,7 +135,7 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
     [AppView.DASHBOARD]: 'dashboard',
     [AppView.USER_DASHBOARD]: 'dashboard',
     [AppView.WORDY]: 'document',
-    [AppView.EXCELE]: 'artifact',
+    [AppView.EXCELE]: 'document',
     [AppView.PREZENTACJE_GEN]: 'artifact',
     [AppView.TABELE]: 'document',
     [AppView.ECONOMICS]: 'finance',
