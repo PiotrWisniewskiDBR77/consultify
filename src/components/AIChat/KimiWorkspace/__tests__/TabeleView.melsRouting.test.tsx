@@ -30,11 +30,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 const searchParamsMock = new URLSearchParams('artifactId=tbl-1');
+const navigateMock = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
     useSearchParams: () => [searchParamsMock, () => undefined] as const,
+    useNavigate: () => navigateMock,
   };
 });
 
@@ -107,6 +109,7 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
 vi.mock('@/utils/tabeleArtifactOpen', () => ({
   downloadTabeleArtifactCsv: vi.fn().mockResolvedValue(true),
   openTableBuilderInNewTab: vi.fn(),
+  buildTableBuilderOpenPath: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -115,6 +118,11 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('../tabeleSystemPrompt', () => ({
   TABELE_SYSTEM_PROMPT: '',
+}));
+
+vi.mock('../tabele/loadTabelePreview', () => ({
+  loadTabelePreviewByTableId: vi.fn().mockResolvedValue(null),
+  resolveAccessibleTableId: vi.fn().mockResolvedValue('tbl-1'),
 }));
 
 import { TabeleView } from '../TabeleView';

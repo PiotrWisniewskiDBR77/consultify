@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Database, Rows3, Table2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Database, Pencil, Rows3, Table2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -89,6 +89,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 
 export function TabelePreviewLayout({
   preview,
+  onOpenBuilder,
   onOpenProposalQueue,
   isPolish,
 }: TabelePreviewLayoutProps) {
@@ -162,9 +163,22 @@ export function TabelePreviewLayout({
                   })}
               </p>
             </div>
-            <div className="flex items-center gap-2 rounded-hig-full border border-slate-300/80 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-200">
-              <span className="h-2 w-2 rounded-hig-full bg-emerald-500" aria-hidden="true" />
-              {t('kimi.tabele.preview.livePreview', { defaultValue: 'Live preview' })}
+            <div className="flex flex-col items-start gap-2 sm:items-end">
+              <div className="flex items-center gap-2 rounded-hig-full border border-slate-300/80 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-200">
+                <span className="h-2 w-2 rounded-hig-full bg-emerald-500" aria-hidden="true" />
+                {t('kimi.tabele.preview.livePreview', { defaultValue: 'Live preview' })}
+              </div>
+              {onOpenBuilder && preview.tableId && (
+                <button
+                  type="button"
+                  onClick={onOpenBuilder}
+                  data-testid="tabele-preview-open-grid"
+                  className="inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
+                >
+                  <Pencil size={14} aria-hidden="true" />
+                  {t('kimi.tabele.preview.openGrid', { defaultValue: 'Open grid editor' })}
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -308,6 +322,19 @@ export function TabelePreviewLayout({
                   defaultValue: 'No record sample is available in this preview yet.',
                 })}
               </p>
+              {onOpenBuilder && preview.tableId && (
+                <button
+                  type="button"
+                  onClick={onOpenBuilder}
+                  data-testid="tabele-preview-open-grid-empty"
+                  className="mt-4 inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
+                >
+                  <Pencil size={14} aria-hidden="true" />
+                  {t('kimi.tabele.preview.openGridEmpty', {
+                    defaultValue: 'Open grid editor to add records',
+                  })}
+                </button>
+              )}
             </div>
           )}
         </section>

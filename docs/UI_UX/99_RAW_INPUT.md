@@ -131,3 +131,37 @@ Zamknąć docelowy stan: tabela jako consulting decision artifact z provenance p
 ### Priority
 P0 (docelowy kierunek produktu)
 
+## 2026-05-09
+
+### Screen / Area
+`Workbench` / `AI Operating Workspace` — dual pane (Teresa chat + live artifact) with diff/approval/sources
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Workbench / AI Side Workspace & Artifact Canvas Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/102_RAW_WORKBENCH_AI_SIDE_WORKSPACE_2026-05-09.md`
+
+### Why
+Zamknąć docelowy stan: chat nie kończy pracy, tylko prowadzi artifact, a praca jest sterowana przez diff/approve/version/sources i kończy się conversion + client-ready export + execution (inicjatywy/task).
+
+### Priority
+P0 (docelowy kierunek produktu)
+
+## 2026-05-09
+
+### Screen / Area
+`Execution Hub` / `AI Execution Management Engine` — consulting execution layer (tasks/projects/decisions/inbox/calendar/workload/reports)
+
+### Raw requirement
+Wklejone założenia (produkt + architektura) dla `Consultify Execution Hub / AI Execution Management Engine`.
+
+Surowy materiał wejściowy (raw reference):
+- `DRD/consultify/docs/UI_UX/103_RAW_EXECUTION_HUB_AI_EXECUTION_MANAGEMENT_ENGINE_2026-05-09.md`
+
+### Why
+Złapać docelowy stan “operacyjnego kręgosłupa”: execution graph (initiative→project→task→decision), inbox jako action queue, workload-aware scheduling, AI triage/prioritization/follow-up/reporting oraz client/internal reporting.
+
+### Priority
+P0 (docelowy kierunek produktu)
+

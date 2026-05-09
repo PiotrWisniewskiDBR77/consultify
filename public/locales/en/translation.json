@@ -8582,7 +8582,9 @@
         "noRelationsCollapsed": "Relations are collapsed because no relations are available.",
         "expandSection": "Expand",
         "collapseSection": "Collapse",
-        "rationaleTitle": "AI Rationale"
+        "rationaleTitle": "AI Rationale",
+        "openGrid": "Open grid editor",
+        "openGridEmpty": "Open grid editor to add records"
       },
       "schema": {
         "committed": "Committed",

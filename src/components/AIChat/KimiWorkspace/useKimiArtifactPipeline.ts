@@ -35,6 +35,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { downloadSheetArtifactXlsx } from '@/utils/sheetArtifactOpen';
 
 import type { ArtifactPreview, KimiLane, TaskStep } from './KimiWorkspaceShell';
+import { loadTabelePreviewByTableId } from './tabele/loadTabelePreview';
 
 function deriveEffectiveStatus(
   runStatus: ArtifactRunRecord['runStatus'],
@@ -688,97 +689,27 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         const tableId = (await resolveAccessibleSheetTableId(tabeleTableId)) || tabeleTableId;
         const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
 
-        try {
-          const [tableInfo, recordsResult, proposalsResult] = await Promise.all([
-            TablePlatformApi.getTable(tableId).catch(() => null),
-            TablePlatformApi.listRecords(tableId, { pageSize: 25 }).catch(() => null),
-            workspaceIdForProposals
-              ? TablePlatformApi.listSchemaProposals(workspaceIdForProposals, 'pending').catch(
-                  () => [] as Awaited<ReturnType<typeof TablePlatformApi.listSchemaProposals>>
-                )
-              : Promise.resolve(
-                  [] as Awaited<ReturnType<typeof TablePlatformApi.listSchemaProposals>>
-                ),
-          ]);
+        const fullPreview = await loadTabelePreviewByTableId(tableId, {
+          titleFallback: title,
+          ...(workspaceIdForProposals ? { workspaceIdForProposals } : {}),
+        }).catch(() => null);
 
-          const fields = Array.isArray(tableInfo?.fields) ? (tableInfo as any).fields : [];
-          const proposalByFieldId = new Map<string, string>();
-          for (const p of Array.isArray(proposalsResult) ? proposalsResult : []) {
-            const targetFieldId = (p as any)?.targetFieldId;
-            const proposalId = (p as any)?.id;
-            if (typeof targetFieldId === 'string' && typeof proposalId === 'string') {
-              proposalByFieldId.set(targetFieldId, proposalId);
-            }
-          }
-
-          const tabeleSchemaFields = fields.map((f: any) => {
-            const proposalId = proposalByFieldId.get(f?.id ?? f?.fieldId ?? '');
-            return {
-              fieldId: String(f?.id ?? f?.fieldId ?? ''),
-              name: String(f?.name ?? ''),
-              fieldType: String(f?.type ?? f?.fieldType ?? 'text'),
-              governanceState: proposalId ? ('proposed' as const) : ('committed' as const),
-              ...(proposalId ? { proposalId } : {}),
-            };
-          });
-
-          const tabeleRelations = fields
-            .filter((f: any) => (f?.type ?? f?.fieldType) === 'relation')
-            .map((f: any) => ({
-              fieldId: String(f?.id ?? f?.fieldId ?? ''),
-              fieldName: String(f?.name ?? ''),
-              targetTableId: String(f?.targetTableId ?? f?.relation?.targetTableId ?? ''),
-              targetTableName: String(f?.targetTableName ?? f?.relation?.targetTableName ?? ''),
-              targetCount: Number(f?.targetCount ?? 0),
-            }));
-
-          // Reserve a slot for explainRelation per relation. Sprint 3 / EPIC-2 will
-          // resolve these per-record. Failures must NOT block the preview, so we
-          // intentionally leave `tabeleRationale` undefined when explain is unavailable.
-          let tabeleRationale: ArtifactPreview['tabeleRationale'] = undefined;
-          if (tabeleRelations.length > 0) {
-            const firstRecord = Array.isArray(recordsResult?.records)
-              ? recordsResult.records[0]
-              : Array.isArray(recordsResult)
-                ? recordsResult[0]
-                : null;
-            const firstRecordId = (firstRecord as any)?.id;
-            if (firstRecordId) {
-              try {
-                const explained = await TablePlatformApi.explainRelation(tableId, firstRecordId, {
-                  max: 12,
-                });
-                if (explained?.relations && explained.relations.length > 0) {
-                  tabeleRationale = {
-                    summary: `Explained ${explained.relations.length} relations`,
-                    bullets: explained.relations.map(
-                      (r: any) => `${r.fieldName} → ${r.targetDisplayName}: ${r.reason}`
-                    ),
-                    citedSourceIds: explained.relations
-                      .map((r: any) => r.targetRecordId)
-                      .filter(Boolean),
-                    proposalStatus: 'none',
-                  };
-                }
-              } catch {
-                tabeleRationale = undefined;
-              }
-            }
-          }
-
+        if (fullPreview) {
+          setPreview({ ...fullPreview, title: fullPreview.title || title });
+        } else {
           setPreview({
             type: 'tabele',
             title,
+            fileName: `${title.replace(/\s+/g, '_')}.csv`,
+            summary: `Operational table "${title}".`,
+            kpiItems: [
+              { label: 'Rows', value: '0' },
+              { label: 'Columns', value: '0' },
+              { label: 'Status', value: 'Pending' },
+              { label: 'Format', value: 'Table / CSV' },
+            ],
             tableId,
-            tabeleSchemaFields,
-            tabeleRelations,
-            ...(tabeleRationale ? { tabeleRationale } : {}),
-          });
-        } catch {
-          setPreview({
-            type: 'tabele',
-            title,
-            tableId,
+            tableData: { columns: [], rows: [] },
             tabeleSchemaFields: [],
             tabeleRelations: [],
           });

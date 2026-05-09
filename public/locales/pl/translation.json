@@ -9271,7 +9271,9 @@
         "noRelationsCollapsed": "Relacje zwinięte, ponieważ nie są dostępne.",
         "expandSection": "Rozwiń",
         "collapseSection": "Zwiń",
-        "rationaleTitle": "Uzasadnienie AI"
+        "rationaleTitle": "Uzasadnienie AI",
+        "openGrid": "Otwórz edytor siatki",
+        "openGridEmpty": "Otwórz edytor siatki, aby dodać rekordy"
       },
       "schema": {
         "committed": "Zatwierdzone",

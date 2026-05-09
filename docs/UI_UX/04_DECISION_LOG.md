@@ -180,3 +180,24 @@ P0
 ### Rationale
 Bez provenance per cell, scoring i semantic diff tabele degenerują się do “spreadsheet chaos”; bez approval/audit AI‑enrichment i merge stają się ryzykowne w enterprise.
 
+## 2026-05-09 — Workbench as AI operating workspace (chat + live artifact, not chat-only)
+
+### Decision
+`Consultify Workbench` jest centralnym trybem pracy z AI: dwupanelowy workspace (Teresa/chat po lewej, edytowalny artifact po prawej), w którym obowiązuje pełny lifecycle pracy: `sources → diff → approve/reject → version → export → conversion → execution`.
+
+To jest analog wzorca Cursor dla konsultingu: AI nie tylko odpowiada, ale **pracuje na artifactach** i proponuje zmiany jako diffy, z pełnym governance (statusy, client-ready, audit trail, permissions).
+
+### Applies to
+Global work mode / dual-pane shell + artifact editing + diff/approval + conversions + exports
+
+### Severity
+P0
+
+### Files updated
+- `19_WORKBENCH_DUAL_PANE_WORKSPACE.md`
+- `99_RAW_INPUT.md`
+- `102_RAW_WORKBENCH_AI_SIDE_WORKSPACE_2026-05-09.md`
+
+### Rationale
+Bez Workbench pattern Consultify kończy jako “chat + copy/paste”, co niszczy provenance, odpowiedzialność i audyt; bez diff/approval AI zmiany nie przejdą enterprise trust gate.
+

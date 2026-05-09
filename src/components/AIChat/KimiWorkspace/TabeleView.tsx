@@ -8,159 +8,35 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isMelsTabeleEnabled } from '@/utils/melsTabeleFlag';
-import { downloadTabeleArtifactCsv, openTableBuilderInNewTab } from '@/utils/tabeleArtifactOpen';
+import { buildTableBuilderOpenPath, downloadTabeleArtifactCsv } from '@/utils/tabeleArtifactOpen';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
+import { loadTabelePreviewByTableId, resolveAccessibleTableId } from './tabele/loadTabelePreview';
 import { TabeleMelsView } from './tabeleShell/TabeleMelsView';
 import { useTabeleRightRailPanels } from './tabeleShell/useTabeleRightRailPanels';
 import { TABELE_SYSTEM_PROMPT } from './tabeleSystemPrompt';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 
-function unwrapData<T>(value: T | { data?: T }): T {
-  if (value && typeof value === 'object' && 'data' in value) {
-    const wrapped = value as { data?: T };
-    if (wrapped.data !== undefined) return wrapped.data;
-  }
-  return value as T;
-}
-
-function normalizeRecords(recordsResult: any): Array<Record<string, unknown>> {
-  const records = Array.isArray(recordsResult?.records)
-    ? recordsResult.records
-    : Array.isArray(recordsResult)
-      ? recordsResult
-      : [];
-  return records.slice(0, 25).map((record: any) => record?.data || record || {});
-}
-
-function normalizeColumns(tableInfo: any, rows: Array<Record<string, unknown>>): string[] {
-  const fields = Array.isArray(tableInfo?.fields) ? tableInfo.fields : [];
-  const fromFields = fields
-    .map((field: any) => String(field?.name ?? '').trim())
-    .filter((name: string) => name.length > 0);
-  if (fromFields.length > 0) return fromFields;
-
-  const firstRow = rows[0] || {};
-  return Object.keys(firstRow).filter((key) => !['id', 'created_at', 'updated_at'].includes(key));
-}
-
-function buildTabelePreview(
-  tableId: string,
-  tableInfo: any,
-  recordsResult: any,
-  proposalsResult: unknown,
-  titleFallback: string
-): ArtifactPreview {
-  const fields = Array.isArray(tableInfo?.fields) ? tableInfo.fields : [];
-  const rows = normalizeRecords(recordsResult);
-  const columns = normalizeColumns(tableInfo, rows);
-  const rowCount = Number(recordsResult?.total ?? rows.length);
-  const title = String(tableInfo?.name || tableInfo?.title || titleFallback);
-
-  const proposalByFieldId = new Map<string, string>();
-  for (const proposal of Array.isArray(proposalsResult) ? proposalsResult : []) {
-    const targetFieldId = (proposal as any)?.targetFieldId;
-    const proposalId = (proposal as any)?.id;
-    if (typeof targetFieldId === 'string' && typeof proposalId === 'string') {
-      proposalByFieldId.set(targetFieldId, proposalId);
-    }
-  }
-
-  const tabeleSchemaFields = fields.map((field: any) => {
-    const fieldId = String(field?.id ?? field?.fieldId ?? '');
-    const proposalId = proposalByFieldId.get(fieldId);
-    return {
-      fieldId,
-      name: String(field?.name ?? ''),
-      fieldType: String(field?.type ?? field?.fieldType ?? 'text'),
-      governanceState: proposalId ? ('proposed' as const) : ('committed' as const),
-      ...(proposalId ? { proposalId } : {}),
-    };
-  });
-
-  const tabeleRelations = fields
-    .filter((field: any) => (field?.type ?? field?.fieldType) === 'relation')
-    .map((field: any) => ({
-      fieldId: String(field?.id ?? field?.fieldId ?? ''),
-      fieldName: String(field?.name ?? ''),
-      targetTableId: String(field?.targetTableId ?? field?.relation?.targetTableId ?? ''),
-      targetTableName: String(field?.targetTableName ?? field?.relation?.targetTableName ?? ''),
-      targetCount: Number(field?.targetCount ?? 0),
-    }));
-
-  return {
-    type: 'tabele',
-    title,
-    fileName: `${title.replace(/\s+/g, '_')}.csv`,
-    summary: `Operational table "${title}" - ${rowCount} rows, ${columns.length} columns.`,
-    kpiItems: [
-      { label: 'Rows', value: String(rowCount) },
-      { label: 'Columns', value: String(columns.length) },
-      { label: 'Status', value: 'Committed' },
-      { label: 'Format', value: 'Table / CSV' },
-    ],
-    tableId,
-    tableData: { columns, rows },
-    tabeleSchemaFields,
-    tabeleRelations,
-    tabeleRationale: {
-      summary:
-        tabeleRelations.length > 0
-          ? 'Relations are available for explainability review.'
-          : 'No relation fields detected yet.',
-      bullets: [],
-      citedSourceIds: [],
-      proposalStatus: 'none',
-    },
-  };
-}
-
-async function resolveAccessibleTableId(candidateId: string): Promise<string | null> {
-  const normalized = String(candidateId || '').trim();
-  if (!normalized) return null;
-
-  try {
-    await TablePlatformApi.getTable(normalized);
-    return normalized;
-  } catch {
-    let fromArtifact: string | null = null;
-    try {
-      const actionTargetRaw = await Api.get(
-        `/artifacts/${encodeURIComponent(normalized)}/action-target`
-      );
-      const actionTarget = unwrapData<any>(actionTargetRaw);
-      const originRuntime = String(actionTarget?.originRuntime || '')
-        .trim()
-        .toLowerCase();
-      const originRecordId = String(actionTarget?.originRecordId || '').trim();
-      if (originRuntime === 'sheet' && originRecordId) {
-        fromArtifact = originRecordId;
-      }
-    } catch {
-      fromArtifact = null;
-    }
-    if (!fromArtifact || fromArtifact === normalized) return null;
-    try {
-      await TablePlatformApi.getTable(fromArtifact);
-      return fromArtifact;
-    } catch {
-      return null;
-    }
-  }
-}
+// Note: Tabele preview builders + accessible-table resolver live in
+// `./tabele/loadTabelePreview.ts` to keep this view thin and so the
+// reopen flow and the materialization pipeline share a single shape.
 
 /**
  * Internal wrapper: composes the MELS view with right-rail AI Editor + QA
  * panels so the connector hook can render only when needed.
+ *
+ * The `onAfterApply` callback is forwarded to `useTabeleRightRailPanels`
+ * so the parent can refresh the table preview after the AI Editor
+ * applies a proposal, eliminating the "applied but canvas stale" gap.
  */
 const TabeleMelsViewWithPanels: React.FC<{
   preview: (ArtifactPreview & { type: 'tabele' }) | null;
@@ -168,10 +44,12 @@ const TabeleMelsViewWithPanels: React.FC<{
   workspaceId: string | null | undefined;
   onShare: () => void;
   onRunPrimary: () => void;
-}> = ({ preview, tableId, workspaceId, onShare, onRunPrimary }) => {
+  onAfterApply?: () => void;
+}> = ({ preview, tableId, workspaceId, onShare, onRunPrimary, onAfterApply }) => {
   const { rightRailPanels } = useTabeleRightRailPanels({
     tableId: tableId ?? null,
     workspaceId: workspaceId ?? null,
+    ...(onAfterApply ? { onAfterApply } : {}),
   });
   return (
     <TabeleMelsView
@@ -189,6 +67,7 @@ export const TabeleView: React.FC = () => {
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const artifactId = searchParams.get('artifactId');
@@ -245,12 +124,26 @@ export const TabeleView: React.FC = () => {
       });
   }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating]);
 
+  const refreshNonceRef = useRef(0);
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  const triggerPreviewRefresh = useCallback(() => {
+    refreshNonceRef.current += 1;
+    setRefreshTick(refreshNonceRef.current);
+  }, []);
+
   useEffect(() => {
-    if (!artifactId || reopenLoaded.current) return;
-    reopenLoaded.current = true;
+    if (!artifactId) return;
+
+    let cancelled = false;
+    if (!reopenLoaded.current) {
+      reopenLoaded.current = true;
+    }
 
     const loadReopenPreview = async () => {
       const resolvedTableId = await resolveAccessibleTableId(artifactId);
+      if (cancelled) return;
+
       if (!resolvedTableId) {
         setReopenTableId(artifactId);
         setReopenPreview({
@@ -268,29 +161,17 @@ export const TabeleView: React.FC = () => {
       }
 
       const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
-      try {
-        const [tableInfoRaw, recordsResult, proposalsResult] = await Promise.all([
-          TablePlatformApi.getTable(resolvedTableId),
-          TablePlatformApi.listRecords(resolvedTableId, { pageSize: 25 }).catch(() => null),
-          workspaceIdForProposals
-            ? TablePlatformApi.listSchemaProposals(workspaceIdForProposals, 'pending').catch(
-                () => []
-              )
-            : Promise.resolve([]),
-        ]);
-        const tableInfo = unwrapData<any>(tableInfoRaw);
-        setReopenTableId(resolvedTableId);
-        setReopenPreview(
-          buildTabelePreview(
-            resolvedTableId,
-            tableInfo,
-            recordsResult,
-            proposalsResult,
-            t('tabele.defaultTitle', 'Operational table')
-          )
-        );
-      } catch {
-        setReopenTableId(resolvedTableId);
+      const fullPreview = await loadTabelePreviewByTableId(resolvedTableId, {
+        titleFallback: t('tabele.defaultTitle', 'Operational table'),
+        ...(workspaceIdForProposals ? { workspaceIdForProposals } : {}),
+      }).catch(() => null);
+
+      if (cancelled) return;
+
+      setReopenTableId(resolvedTableId);
+      if (fullPreview) {
+        setReopenPreview(fullPreview);
+      } else {
         setReopenPreview({
           type: 'tabele',
           title: t('tabele.defaultTitle', 'Operational table'),
@@ -306,7 +187,10 @@ export const TabeleView: React.FC = () => {
     };
 
     void loadReopenPreview();
-  }, [artifactId, currentOrganization?.id, currentProjectId, t]);
+    return () => {
+      cancelled = true;
+    };
+  }, [artifactId, currentOrganization?.id, currentProjectId, t, refreshTick]);
 
   useEffect(() => {
     if (!pipeline.isGenerating || pipeline.isBusy) return undefined;
@@ -428,7 +312,17 @@ export const TabeleView: React.FC = () => {
       {
         match: /open\s*builder|otw[oó]rz\s*builder|edytuj/,
         handler: async () => {
-          await openTableBuilderInNewTab(effectiveTableId, t);
+          const path = await buildTableBuilderOpenPath(effectiveTableId);
+          if (!path) {
+            toast.error(
+              t('tabele.builderUnreachable', 'Could not resolve workspace for this table')
+            );
+            return;
+          }
+          toast.success(t('tabele.openingBuilder', 'Opening Table Builder...'), {
+            duration: 1500,
+          });
+          navigate(path);
         },
       },
       {
@@ -471,19 +365,25 @@ export const TabeleView: React.FC = () => {
     effectiveCompleted,
     effectivePreview,
     effectiveTableId,
+    navigate,
     t,
     workspaceIdForIntents,
   ]);
 
-  const handlePreviewFile = useCallback(() => {
-    if (effectiveTableId) {
-      void openTableBuilderInNewTab(effectiveTableId, t);
+  const handlePreviewFile = useCallback(async () => {
+    if (!effectiveTableId) return;
+    const path = await buildTableBuilderOpenPath(effectiveTableId);
+    if (!path) {
+      toast.error(t('tabele.builderUnreachable', 'Could not resolve workspace for this table'));
+      return;
     }
-  }, [effectiveTableId, t]);
+    toast.success(t('tabele.openingBuilder', 'Opening Table Builder...'), { duration: 1500 });
+    navigate(path);
+  }, [effectiveTableId, navigate, t]);
 
   const handleAllFiles = useCallback(() => {
-    window.open('/presentations?tab=sheets', '_blank');
-  }, []);
+    navigate('/presentations?tab=sheets');
+  }, [navigate]);
 
   const handleDownload = useCallback(async () => {
     if (!effectiveTableId) {
@@ -512,6 +412,7 @@ export const TabeleView: React.FC = () => {
         workspaceId={workspaceIdForIntents}
         onShare={handleAllFiles}
         onRunPrimary={handlePreviewFile}
+        onAfterApply={triggerPreviewRefresh}
       />
     );
   }

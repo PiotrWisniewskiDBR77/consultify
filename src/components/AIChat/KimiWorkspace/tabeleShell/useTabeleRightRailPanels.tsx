@@ -38,6 +38,13 @@ export interface UseTabeleRightRailPanelsArgs {
   isSuperAdmin?: boolean;
   /** Permits unit tests to bypass the kill switches without monkey-patching. */
   forceEnableForTesting?: boolean;
+  /**
+   * Optional callback invoked when the AI Editor successfully applies a
+   * proposal. Lets the parent view re-fetch the table preview so the
+   * canvas reflects the just-applied diff (no false-positive
+   * "applied but UI stale" gap).
+   */
+  onAfterApply?: () => void;
 }
 
 export interface UseTabeleRightRailPanelsResult {
@@ -86,7 +93,7 @@ function presetFromPack(pack: SourcePack, nonce: number): AiEditorPreset {
 export function useTabeleRightRailPanels(
   args: UseTabeleRightRailPanelsArgs
 ): UseTabeleRightRailPanelsResult {
-  const { tableId, workspaceId, isSuperAdmin, forceEnableForTesting } = args;
+  const { tableId, workspaceId, isSuperAdmin, forceEnableForTesting, onAfterApply } = args;
   const [preset, setPreset] = useState<AiEditorPreset | null>(null);
   const presetCounter = React.useRef(0);
 
@@ -134,6 +141,7 @@ export function useTabeleRightRailPanels(
                 initialContext: preset.context,
               }
             : {})}
+          {...(onAfterApply ? { onAfterApply } : {})}
           // The nonce on key forces a clean remount when a new preset arrives.
           key={preset ? `preset-${preset.nonce}` : 'fresh'}
         />
@@ -153,6 +161,7 @@ export function useTabeleRightRailPanels(
     isSuperAdmin,
     handleOpenInAiEditor,
     handleUsePackInAiEditor,
+    onAfterApply,
     preset,
   ]);
 
@@ -160,9 +169,9 @@ export function useTabeleRightRailPanels(
     rightRailPanels,
     panelsActive: Boolean(
       rightRailPanels.qaReport ||
-        rightRailPanels.aiEditor ||
-        rightRailPanels.sourcePack ||
-        rightRailPanels.share
+      rightRailPanels.aiEditor ||
+      rightRailPanels.sourcePack ||
+      rightRailPanels.share
     ),
   };
 }

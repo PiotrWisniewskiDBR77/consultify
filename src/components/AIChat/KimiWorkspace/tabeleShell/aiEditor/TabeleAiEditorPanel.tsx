@@ -28,10 +28,10 @@ import {
   type AiBudgetSnapshot,
   type AiEditorLevel,
   type AiEditorProposeResponse,
-  type QaSuggestion,
   applyAiProposal,
   getAiBudget,
   proposeAiEdit,
+  type QaSuggestion,
   rejectAiProposal,
 } from '@/services/api/tablePlatform.api';
 
@@ -53,6 +53,12 @@ export interface TabeleAiEditorPanelProps {
   isSuperAdmin?: boolean;
   /** Test seam: skip network calls. */
   testInitialBudget?: AiBudgetSnapshot | null;
+  /**
+   * Called after a proposal is successfully applied so the parent view
+   * can re-fetch the table preview. Without this, the canvas keeps
+   * showing the pre-apply state until the user reopens the table.
+   */
+  onAfterApply?: () => void;
 }
 
 interface ActiveProposal extends AiEditorProposeResponse {
@@ -67,6 +73,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
   initialContext,
   isSuperAdmin = false,
   testInitialBudget,
+  onAfterApply,
 }) => {
   const [level, setLevel] = useState<AiEditorLevel>(initialLevel);
   const [prompt, setPrompt] = useState<string>(initialPrompt);
@@ -128,12 +135,25 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       toast.success(`Applied: ${result.reason ?? 'ok'}`);
       setActive(null);
       setPrompt('');
+      // Refresh budget so the badge reflects the just-spent tokens.
+      if (workspaceId) {
+        getAiBudget(workspaceId)
+          .then(setBudget)
+          .catch(() => undefined);
+      }
+      // Tell the parent view to re-fetch the table preview so the canvas
+      // does not lag behind the just-applied diff.
+      try {
+        onAfterApply?.();
+      } catch {
+        // never let a parent callback throw out of the apply path
+      }
     } catch (e) {
       toast.error(`Apply failed: ${(e as Error)?.message ?? 'unknown error'}`);
     } finally {
       setBusyApply(false);
     }
-  }, [active, workspaceId]);
+  }, [active, workspaceId, onAfterApply]);
 
   const reject = useCallback(async () => {
     if (!active || !workspaceId) return;
@@ -156,25 +176,18 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       aria-label="Tabele AI Editor"
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          AI Editor
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">AI Editor</h3>
         {budget && (
           <span
             className="text-[11px] text-slate-500 dark:text-slate-400"
             data-testid="ai-editor-budget"
           >
-            {budget.tokensUsedToday.toLocaleString()} /{' '}
-            {budget.budget.toLocaleString()} tokens
+            {budget.tokensUsedToday.toLocaleString()} / {budget.budget.toLocaleString()} tokens
           </span>
         )}
       </header>
 
-      <div
-        className="grid grid-cols-2 gap-1.5"
-        role="radiogroup"
-        aria-label="AI Editor level"
-      >
+      <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="AI Editor level">
         {AI_EDITOR_LEVELS_META.map((meta) => {
           const Icon = meta.icon;
           const disabled = meta.superAdminOnly === true && !isSuperAdmin;

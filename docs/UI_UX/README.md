@@ -71,6 +71,8 @@ Jeśli dokument niższego poziomu jest sprzeczny z tym katalogiem, należy go tr
   - presety po lewej, akcje kontekstowe i AI po prawej
 - `15_NAVIGATION_STATES.md`
   - active, hover, disabled, locked, soon, no project selected, permission denied
+- `19_WORKBENCH_DUAL_PANE_WORKSPACE.md`
+  - docelowy UX kontrakt dla `Workbench` (dual pane: chat + live artifact, diff/approve/version/sources, conversion + client-ready export)
 
 ### 20 — Layouty i typy ekranów
 

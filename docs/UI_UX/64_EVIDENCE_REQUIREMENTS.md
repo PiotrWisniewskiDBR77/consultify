@@ -125,6 +125,27 @@ Nowe funkcje, przebudowy, naprawy P0/P1 oraz “enterprise readiness” claims.
 - **MUST**: Dowód governance:
   - permissions/denial bez leakage + audit trail + client/internal mode dla pól/widoków.
 
+## Workbench (minimal evidence pack)
+
+- **MUST**: Dowód dual-pane shell:
+  - chat po lewej + artifact po prawej; resize działa i stan nie “lata”/nie resetuje się.
+- **MUST**: Dowód editable artifact (nie preview):
+  - manual edit + autosave + preview mode (final view) istnieją i są rozdzielone.
+- **MUST**: Dowód selection-based AI edit:
+  - AI działa na zaznaczeniu/bloku/wierszu i pokazuje propozycję zmiany w kontekście artifactu.
+- **MUST**: Dowód diff + accept/reject:
+  - każda istotna zmiana AI ma diff; user może accept/reject (minimum: pojedyncza zmiana).
+- **MUST**: Dowód versioning + rollback:
+  - zaakceptowana zmiana tworzy wersję; rollback tworzy nową wersję i jest audytowalny.
+- **MUST**: Dowód sources + labels:
+  - kluczowy blok/teza ma `source references` **albo** jawne `assumption`, oraz label fact/inferred/assumption/recommendation + (jeśli dotyczy) confidence.
+- **MUST**: Dowód conversion → execution:
+  - artifact → initiative/task (candidates) z zachowaniem provenance.
+- **MUST**: Dowód client-ready packaging:
+  - internal vs client-ready tryb wpływa na export (ukrywa internal-only treści) + export history.
+- **MUST**: Dowód governance:
+  - permissions/denial bez leakage + audit trail dla diffów/approvali/exports.
+
 ## Must Not
 
 - **MUST NOT**: Uznawać “działa u mnie” za dowód, jeśli brak screenów/testów dla error/degraded.

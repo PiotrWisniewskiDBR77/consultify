@@ -36,24 +36,19 @@ import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
 
 import type { ArtifactPreview } from '../KimiWorkspaceShell';
 import TabelePreviewLayout from '../tabelePreview/TabelePreviewLayout';
-
+import { TabeleLeftRail, type TabeleOutlineItem, type TabeleSectionId } from './TabeleLeftRail';
 import {
+  buildTabeleRightRailTools,
+  TabeleRightRailPanel,
+  type TabeleRightRailPanelRenderers,
+  type TabeleRightRailToolId,
+} from './TabeleRightRail';
+import {
+  buildTabeleTopBarChips,
   type Confidentiality,
   type GovernanceVerdict,
   type TabeleTopBarChipsHandlers,
-  buildTabeleTopBarChips,
 } from './TabeleTopBarChips';
-import {
-  type TabeleOutlineItem,
-  type TabeleSectionId,
-  TabeleLeftRail,
-} from './TabeleLeftRail';
-import {
-  type TabeleRightRailPanelRenderers,
-  type TabeleRightRailToolId,
-  TabeleRightRailPanel,
-  buildTabeleRightRailTools,
-} from './TabeleRightRail';
 
 export interface TabeleMelsViewProps {
   /** The tabele preview returned from `useKimiArtifactPipeline`. */
@@ -151,8 +146,7 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
   const [activeSection, setActiveSection] = useState<TabeleSectionId>(initialActiveSection);
 
   const moduleLbl = moduleLabel ?? t('tabele.moduleLabel', 'Tabele');
-  const title =
-    preview?.title ?? fallbackTitle ?? t('tabele.defaultTitle', 'Operational table');
+  const title = preview?.title ?? fallbackTitle ?? t('tabele.defaultTitle', 'Operational table');
 
   const chips = useMemo(
     () =>
@@ -180,15 +174,7 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
           run: t('tabele.topBar.run', 'Run'),
         },
       }),
-    [
-      topBarHandlers,
-      onRunPrimary,
-      confidentiality,
-      governanceVerdict,
-      agentOpen,
-      preview,
-      t,
-    ]
+    [topBarHandlers, onRunPrimary, confidentiality, governanceVerdict, agentOpen, preview, t]
   );
 
   const leftItems = useMemo(() => {
@@ -221,7 +207,11 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
 
   const canvas = preview ? (
     <div className="px-6 py-4 max-w-[1024px] mx-auto" data-testid="tabele-mels-canvas">
-      <TabelePreviewLayout preview={preview} isPolish={isPolish} />
+      <TabelePreviewLayout
+        preview={preview}
+        isPolish={isPolish}
+        {...(onRunPrimary ? { onOpenBuilder: onRunPrimary } : {})}
+      />
     </div>
   ) : (
     <div className="px-6 py-12 max-w-[1024px] mx-auto" data-testid="tabele-mels-canvas-empty">
