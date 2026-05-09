@@ -1647,3 +1647,89 @@ Atomic file write (closes R-S18-3):
   - Tenant-scoped layout capacity overrides (closes R-S13-1 + R-S18-1) — bigger refactor, probably its own 2-sprint mini-track because it touches the registry signature, the audit shape, the persistence file format, and a new tenant-Owner capability.
   - Layout-audit section card on the Studio canvas with per-slide drill-down (R-S14-3 + R-S15-2 + R-S16 user-pull all converge here).
   - Signed persistence file (closes R-S18-2): HMAC over the JSON contents using a server-side secret; bootstrap rejects an unsigned or forged file and raises a `loadWarning`. Defends against hand-edits that bypass the audit trail.
+
+
+---
+
+## Sprint S20 — Layout-capacity admin UI (closes R-S17-3 + R-S18-4 + R-S19-3)
+
+**Status:** Completed
+**Date:** 2026-05-09
+**Phase:** 2 (Implementation)
+**Touched files:** 5 (1 new api client, 1 new component, 1 new api test, 1 new component test, 1 page wiring + page-level integration test extensions)
+
+### Scope
+
+Closed three accumulated UI carry-overs from the recent S17 / S18 / S19 backend sprints in one focused FE-only sprint. The backend surface for layout-capacity admin had no UI — a SuperAdmin had to use `curl` to call `/admin/layout-capacity/{propose,execute}` and `/admin/layout-capacity/reset/{propose,execute}`. S20 delivers a SuperAdmin-only canvas section that renders the registry snapshot, the `current vs defaults` diff, the persistence layer's `loadWarning`, and both governance flows (override + reset) with all their honest-state branches.
+
+### Carry-overs closed
+
+- **R-S17-3** (S17): SuperAdmin admin endpoint had no UI. Closed by the new `PresentationStudioLayoutCapacityAdminPanel` rendering on the Studio canvas with full propose / execute UI for overrides.
+- **R-S18-4** (S18): Persistence `loadWarning` was reachable only via the GET response and surfaced nowhere in UI. Closed by the panel's `loadWarning` banner — rose tone for `corrupt` / `rejected_by_validator`, amber for `io_error` / `unsupported_schema` — with explicit details and a raised-at timestamp.
+- **R-S19-3** (S19): Reset-to-defaults action had no UI button. Closed by the panel's reset propose / confirm flow, which renders the pre-reset snapshot in the confirmation step so the SuperAdmin sees exactly what configuration would be wiped (no single-click resets).
+
+### Changes
+
+- **NEW** `src/services/api/presentationStudioLayoutCapacityAdmin.api.ts`
+  - Five-function admin client: `get`, `proposeOverrides`, `executeOverrides`, `proposeReset`, `executeReset`.
+  - Typed error class `LayoutCapacityAdminApiError` carrying `status`, `code`, `reason`, and `errors[]` (server validation list).
+  - Decoupled from `PresentationStudioApiError` because the admin flow has no `preview` field and a different error code surface (`PERMISSION_DENIED` / `INVALID_OVERRIDES_PAYLOAD` / `INVALID_APPROVAL_TICKET` / `PRECONDITION_REQUIRED`).
+  - Wire types mirror the backend snapshot shape (densityBudgets, templateFamilyOverrides, familyAliasByDeckType) plus the `LayoutCapacityRegistryLoadWarning` shape from S18.
+- **NEW** `src/components/PresentationStudio/PresentationStudioLayoutCapacityAdminPanel.tsx`
+  - Server-driven visibility: a non-SuperAdmin GET returns `403 PERMISSION_DENIED` and the panel renders nothing — no toast, no banner, no ghost surface that returns 403 on every interaction.
+  - State machine with bootstrap (`loading | forbidden | ready | error`) + override flow + reset flow, each with their own pending tracker so a long propose does not block a concurrent retry.
+  - `current vs defaults` diff rendered as an explicit table with a `N changed` badge so a SuperAdmin can see at a glance whether the registry is in its baked-in default state or an active-override state.
+  - Override flow: textarea-driven JSON entry + audit-recorded reason field; client-side JSON parse error renders an honest banner without calling the API; server-side `INVALID_OVERRIDES_PAYLOAD` renders the typed `errors[]` list verbatim.
+  - Reset flow: propose mints a ticket, the confirmation panel shows the pre-reset snapshot (the configuration that would be wiped), and a separate "Confirm reset" CTA must be clicked second. A single propose-only click never wipes the registry.
+  - Honest ticket failure surfacing: each `INVALID_APPROVAL_TICKET.reason` (`not_found | expired | consumed | tenant_mismatch | user_mismatch | payload_mismatch`) is rendered with a human-readable label and clears the held ticket so the user can re-propose.
+  - Bootstrap is auto-refreshed after every successful execute / reset so the diff view always reflects the post-mutation state.
+- **NEW** `src/services/api/__tests__/presentationStudioLayoutCapacityAdmin.api.test.ts` (14 tests)
+  - Mocks `baseClient.fetchWithRetry` so the suite never touches the network.
+  - Coverage: 200 happy paths for all five endpoints; 403 PERMISSION_DENIED; 412 INVALID_OVERRIDES_PAYLOAD with `errors[]`; 403 INVALID_APPROVAL_TICKET with typed reasons (`payload_mismatch`, `consumed`); PRECONDITION_REQUIRED for missing ticket; null-vs-undefined reason serialization; full LayoutCapacityAdminApiError shape verification.
+- **NEW** `src/components/PresentationStudio/__tests__/PresentationStudioLayoutCapacityAdminPanel.test.tsx` (16 tests)
+  - Visibility gate: 403 → renders nothing; loading skeleton during in-flight GET; non-403 error → error card + retry button.
+  - loadWarning banner: rendered or hidden depending on response; correct rose-vs-amber tone selection per reason.
+  - Diff view: 0 changed for default-equals-defaults; counts changed rows correctly when overrides exist.
+  - Override flow: JSON parse error path; server validator `errors[]` rendering; clean propose → execute round-trip; ticket failure clears the ticket; editing the JSON after a successful propose invalidates the held ticket.
+  - Reset flow: propose → confirmation with pre-reset snapshot preview; confirm reset → success + bootstrap refresh; reset failure clears the ticket.
+- **MODIFIED** `src/components/PresentationStudio/PresentationStudioPage.tsx`
+  - Mounts the admin panel below the existing section cards. Mount is unconditional because the panel is server-driven (renders nothing for non-SuperAdmin), so no client-side role check is required.
+  - Inline comment explains the contract — the panel's mount is safe for every role and only adds DOM when the user has `presentation_admin_layout_capacity`.
+- **MODIFIED** `src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`
+  - Added a `vi.mock` for the new admin api module so the panel's mount-time GET does not hit the real network during the existing 26 page tests.
+  - Default `beforeEach` simulates a non-SuperAdmin (403) so the panel renders nothing and the existing tests pass unchanged. Tests that exercise the panel override `get` per-test.
+  - Added 2 new page-level integration tests:
+    - `does NOT mount the layout-capacity admin panel for non-SuperAdmin (default 403)` — verifies server-driven hide-yourself works at the page level and the rest of the Studio surface is unaffected.
+    - `mounts the admin panel for a SuperAdmin and surfaces the loadWarning when present (S20)` — verifies the page-level integration with a populated `loadWarning` (R-S18-4 acceptance).
+
+### UI/UX governance
+
+- **Menu 3 rule (`.cursor/rules/ai-actions-menu3.mdc`)**: The Studio canvas's existing Menu 3 right slot continues to host the deck-scoped contextual AI actions (`Run preview` / `Request approval` / `Confirm generate`). The admin panel's form-scoped CTAs (`Propose override` / `Confirm apply` / `Propose reset` / `Confirm reset`) live inline with their textarea + reason inputs because they are NOT contextual AI actions on the active deck/preview — they act on the registry config and need the input context to be meaningful. No duplication; no canvas toolbar; no violation of the rule.
+- **Honest states**: loading, success, error, empty, degraded (`loadWarning`), and ticket-rejection states are all rendered explicitly. No fake success on a failed propose, no infinite spinner during slow ticket redemptions, no hidden writes.
+- **Canonical color palette** (slate / blue / amber / emerald / rose; primary reserved for selection / focus / CTA): rose for severe loadWarning + ticket failures + execute-error, amber for advisory loadWarning + propose CTA, emerald for success banners, blue for the diff view's "N changed" indicator, primary for the high-attention Confirm-apply CTA, rose for the destructive Confirm-reset CTA.
+- **Canonical chip semantics**: scope chip uses slate (informational metadata); no ad-hoc local color maps introduced.
+- **Two-step destructive flow**: the reset action is split into propose + confirm, with the pre-reset snapshot visible in the confirmation step. A single propose click never wipes the registry. This mirrors the pattern used for the deck `request-approval -> confirm-generate` flow.
+
+### Validation
+
+- **Studio FE-scoped vitest**: 69/69 passed (28 page + 16 panel + 11 audit banner + 14 api client). No regressions in the existing 26 page tests after the new admin panel was wired into the canvas.
+- **ESLint** on all six S20-touched files: 0 errors, 0 warnings (after running `--fix` for prettier-only formatting issues).
+- **TypeScript** focused check on all six S20-touched files via a transient `tsconfig.s20-check.json`: 0 errors. (Full-project `tsc` was not run because the pre-existing 39-error baseline in unrelated files is unchanged from S19.)
+
+### Acceptance
+
+- R-S17-3 closed: SuperAdmin admin endpoint has a UI surface (canvas section + propose/execute forms + bootstrap refresh).
+- R-S18-4 closed: persistence `loadWarning` is now visible to a SuperAdmin via the panel's loadWarning banner with details + sourcePath + raisedAt.
+- R-S19-3 closed: reset-to-defaults action has a propose / confirm UI flow with explicit pre-reset snapshot preview.
+- Server-driven visibility: 403 PERMISSION_DENIED hides the panel silently; no ghost surface for non-SuperAdmins.
+- Honest UI/UX: all loading / success / error / empty / degraded / ticket-rejection / validation-error states rendered explicitly; no fake success; no hidden writes; no single-click destructive actions.
+- Tenant safety: panel exists only as a thin client over the SUPERADMIN-only backend endpoints; no client-side authority added.
+- Test coverage: 30 new tests across api client (14) + panel (16); 2 new page-level integration tests added without breaking the existing 26 page tests.
+
+### Next-step risks / candidates for S21
+
+- R-S17-2 (process-global write blast radius): still open. Tenant-scoped overrides would convert this from a process-level switch into a tenant-aware policy, but it's a multi-sprint refactor (registry signature change + new persistence file format + new tenant-Owner capability + audit shape change). Probably its own dedicated track.
+- R-S18-2 (signed persistence file): still open. HMAC over the persisted JSON would defend against hand-edits that bypass the audit trail and forge `loadWarning` into surfacing the forgery. Medium scope — introduces a new server-side secret env var + bootstrap rejection path + new `loadWarning` reason.
+- R-S19-1 (fsync hardening on atomic write): still open. Tmp-file + fsync + rename + dir-fsync would close the last gap in the atomic-write story (currently the rename is atomic but not durable across power-loss). Tiny scope; could be the next mechanical sprint.
+- R-S14-3 + R-S15-2 (per-slide layout-audit drill-down): the canvas-side audit summary is still aggregate-only; a per-slide drill-down is a self-contained UI sprint that could ship in parallel with backend hardening.
+- The admin panel currently surfaces `loadWarning` but does not offer a "clear loadWarning" or "re-attempt persistence" admin action. If a SuperAdmin wants to acknowledge a transient `io_error` and clear the banner without performing a reset, that's a follow-up. Currently an explicit `reset to defaults` clears it as a side effect; document this in the operating runbook.

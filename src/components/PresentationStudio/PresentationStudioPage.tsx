@@ -60,6 +60,7 @@ import {
 } from '@/services/api/presentationStudio.api';
 
 import { PresentationStudioLayoutAuditBanner } from './PresentationStudioLayoutAuditBanner';
+import { PresentationStudioLayoutCapacityAdminPanel } from './PresentationStudioLayoutCapacityAdminPanel';
 import {
   PRESENTATION_STUDIO_SETUP_FORM_DEFAULT,
   PresentationStudioSetupForm,
@@ -923,6 +924,16 @@ export const PresentationStudioPage: React.FC = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">No data yet.</p>
           )}
         </SectionCard>
+
+        {/* Sprint S20: SuperAdmin layout-capacity admin surface.
+            Server-driven visibility: a non-SuperAdmin GET returns
+            403 PERMISSION_DENIED and the panel renders nothing — the
+            mount is therefore safe for every role and only adds DOM
+            for users with `presentation_admin_layout_capacity`.
+            Closes R-S17-3 (no UI for the S17 admin endpoint),
+            R-S18-4 (loadWarning was not surfaced anywhere in UI),
+            and R-S19-3 (reset action had no UI button). */}
+        <PresentationStudioLayoutCapacityAdminPanel />
       </main>
     </div>
   );

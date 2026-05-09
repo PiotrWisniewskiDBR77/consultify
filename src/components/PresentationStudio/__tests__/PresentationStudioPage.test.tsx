@@ -40,6 +40,10 @@ import {
   PresentationStudioApi,
   PresentationStudioApiError,
 } from '@/services/api/presentationStudio.api';
+import {
+  LayoutCapacityAdminApiError,
+  PresentationStudioLayoutCapacityAdminApi,
+} from '@/services/api/presentationStudioLayoutCapacityAdmin.api';
 
 import { PresentationStudioPage } from '../PresentationStudioPage';
 
@@ -61,6 +65,28 @@ vi.mock('@/services/api/presentationStudio.api', async () => {
   };
 });
 
+// Sprint S20: Mock the layout-capacity admin api so the
+// `PresentationStudioLayoutCapacityAdminPanel` mount-time GET does
+// not hit the real network. Default behavior simulates a non-
+// SuperAdmin (403 PERMISSION_DENIED) so the panel renders nothing
+// for the existing pre-S20 tests. Tests that exercise the panel
+// override `get` per-test.
+vi.mock('@/services/api/presentationStudioLayoutCapacityAdmin.api', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/services/api/presentationStudioLayoutCapacityAdmin.api')
+  >('@/services/api/presentationStudioLayoutCapacityAdmin.api');
+  return {
+    ...actual,
+    PresentationStudioLayoutCapacityAdminApi: {
+      get: vi.fn(),
+      proposeOverrides: vi.fn(),
+      executeOverrides: vi.fn(),
+      proposeReset: vi.fn(),
+      executeReset: vi.fn(),
+    },
+  };
+});
+
 const mockedApi = PresentationStudioApi as unknown as {
   previewSourcePack: ReturnType<typeof vi.fn>;
   previewNarrativePlan: ReturnType<typeof vi.fn>;
@@ -69,6 +95,14 @@ const mockedApi = PresentationStudioApi as unknown as {
   requestApproval: ReturnType<typeof vi.fn>;
   executeGenerate: ReturnType<typeof vi.fn>;
   listSourceArtifacts: ReturnType<typeof vi.fn>;
+};
+
+const mockedAdminApi = PresentationStudioLayoutCapacityAdminApi as unknown as {
+  get: ReturnType<typeof vi.fn>;
+  proposeOverrides: ReturnType<typeof vi.fn>;
+  executeOverrides: ReturnType<typeof vi.fn>;
+  proposeReset: ReturnType<typeof vi.fn>;
+  executeReset: ReturnType<typeof vi.fn>;
 };
 
 function makeHappySourcePack() {
@@ -211,6 +245,11 @@ describe('PresentationStudioPage', () => {
     mockedApi.requestApproval.mockReset();
     mockedApi.executeGenerate.mockReset();
     mockedApi.listSourceArtifacts.mockReset();
+    mockedAdminApi.get.mockReset();
+    mockedAdminApi.proposeOverrides.mockReset();
+    mockedAdminApi.executeOverrides.mockReset();
+    mockedAdminApi.proposeReset.mockReset();
+    mockedAdminApi.executeReset.mockReset();
     // Default for all tests: an empty source artifact list. Tests that need
     // populated artifacts override the mock locally.
     mockedApi.listSourceArtifacts.mockResolvedValue({
@@ -220,6 +259,16 @@ describe('PresentationStudioPage', () => {
       generatedAt: '2026-05-08T20:00:00.000Z',
       warnings: [],
     });
+    // Sprint S20 default: simulate non-SuperAdmin so the admin panel
+    // hides itself silently. Tests that exercise the admin surface
+    // override `get` per-test.
+    mockedAdminApi.get.mockRejectedValue(
+      new LayoutCapacityAdminApiError({
+        status: 403,
+        code: 'PERMISSION_DENIED',
+        message: 'Permission denied',
+      })
+    );
   });
 
   afterEach(() => {
@@ -864,5 +913,69 @@ describe('PresentationStudioPage', () => {
   it('does NOT render the layout audit banner before a preview has run (S11)', () => {
     render(<PresentationStudioPage />);
     expect(screen.queryByTestId('presentation-studio-layout-audit')).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // Sprint S20: Layout-capacity admin panel page-level integration.
+  // -------------------------------------------------------------------------
+
+  it('does NOT mount the layout-capacity admin panel for non-SuperAdmin (default 403)', async () => {
+    // Default beforeEach mock simulates a non-SuperAdmin (403). The
+    // panel must render nothing, and the page must continue to work.
+    render(<PresentationStudioPage />);
+    // Initial loading skeleton may flash briefly. After settle, panel gone.
+    await waitFor(() => {
+      expect(mockedAdminApi.get).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(screen.queryByTestId('studio-layout-capacity-admin')).toBeNull();
+      expect(screen.queryByTestId('studio-layout-capacity-admin-loading')).toBeNull();
+      expect(screen.queryByTestId('studio-layout-capacity-admin-error')).toBeNull();
+    });
+    // Existing Studio surface still renders normally.
+    expect(screen.getByTestId('presentation-studio-command-row')).toBeTruthy();
+    expect(screen.getByTestId('presentation-studio-empty')).toBeTruthy();
+  });
+
+  it('mounts the admin panel for a SuperAdmin and surfaces the loadWarning when present (S20)', async () => {
+    // Reset the default 403 and simulate a SuperAdmin GET with a
+    // populated loadWarning. R-S18-4 closes here: this is the first
+    // place a SuperAdmin can SEE that the persistence layer is in a
+    // degraded state.
+    mockedAdminApi.get.mockReset();
+    mockedAdminApi.get.mockResolvedValue({
+      current: {
+        densityBudgets: {
+          visual: { titleMaxChars: 60, keyMessageMaxChars: 100, blocksMax: 5 },
+          balanced: { titleMaxChars: 80, keyMessageMaxChars: 200, blocksMax: 6 },
+          document: { titleMaxChars: 100, keyMessageMaxChars: 400, blocksMax: 8 },
+        },
+        templateFamilyOverrides: {},
+        familyAliasByDeckType: {},
+      },
+      defaults: {
+        densityBudgets: {
+          visual: { titleMaxChars: 60, keyMessageMaxChars: 100, blocksMax: 5 },
+          balanced: { titleMaxChars: 80, keyMessageMaxChars: 200, blocksMax: 6 },
+          document: { titleMaxChars: 100, keyMessageMaxChars: 400, blocksMax: 8 },
+        },
+        templateFamilyOverrides: {},
+        familyAliasByDeckType: {},
+      },
+      scope: 'process_global',
+      loadWarning: {
+        reason: 'corrupt',
+        sourcePath: '/tmp/persisted.json',
+        details: 'Unexpected token in JSON at position 0',
+        raisedAt: '2026-05-09T00:00:00.000Z',
+      },
+    });
+
+    render(<PresentationStudioPage />);
+    await screen.findByTestId('studio-layout-capacity-admin');
+    // loadWarning banner is rendered inside the panel.
+    const warning = await screen.findByTestId('studio-layout-capacity-admin-load-warning');
+    expect(warning.textContent).toContain('/tmp/persisted.json');
+    expect(warning.textContent).toContain('Unexpected token');
   });
 });
