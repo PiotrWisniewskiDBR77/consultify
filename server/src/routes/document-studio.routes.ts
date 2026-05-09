@@ -151,6 +151,7 @@
  */
 
 import { type Request, type Response, Router } from 'express';
+import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import {
@@ -210,6 +211,7 @@ import {
 } from '../services/documentStudio/documentContentBlockService.js';
 import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
+  DOCUMENT_ASSET_MAX_BYTES,
   archiveAsset,
   getActiveOrgLogo,
   getAssetById,
@@ -339,6 +341,25 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+const logoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: DOCUMENT_ASSET_MAX_BYTES },
+});
+
+function logoUploadSingleMiddleware(req: Request, res: Response, next: (err?: unknown) => void): void {
+  logoUpload.single('file')(req, res, (err) => {
+    if (!err) {
+      next();
+      return;
+    }
+    const code = (err as { code?: string }).code;
+    if (code === 'LIMIT_FILE_SIZE') {
+      res.status(400).json({ error: 'asset_too_large' });
+      return;
+    }
+    res.status(400).json({ error: 'asset_invalid_upload' });
+  });
+}
 
 router.use(verifyToken);
 
@@ -3637,6 +3658,40 @@ router.post(
         actorId: userId,
         mimeType,
         dataBase64,
+        filename,
+      });
+      res.status(201).json({ asset });
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'asset_invalid';
+      res.status(400).json({ error: code });
+    }
+  })
+);
+
+router.post(
+  '/assets/logo/upload',
+  logoUploadSingleMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const uploaded = (req as Request & { file?: Express.Multer.File }).file;
+    if (!uploaded || !uploaded.buffer || uploaded.buffer.length === 0) {
+      res.status(400).json({ error: 'asset_file_required' });
+      return;
+    }
+    const filename =
+      typeof req.body?.filename === 'string' && req.body.filename.trim().length > 0
+        ? req.body.filename
+        : uploaded.originalname;
+    try {
+      const asset = registerLogo({
+        organizationId,
+        actorId: userId,
+        mimeType: uploaded.mimetype ?? '',
+        dataBase64: uploaded.buffer.toString('base64'),
         filename,
       });
       res.status(201).json({ asset });
