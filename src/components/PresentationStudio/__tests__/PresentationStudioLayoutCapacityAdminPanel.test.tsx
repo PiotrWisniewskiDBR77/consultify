@@ -155,7 +155,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — visibility', () => {
       resolveGet({
         current: makeDefaultsSnapshot(),
         defaults: makeDefaultsSnapshot(),
-        scope: 'process_global',
+        scope: 'tenant',
         loadWarning: null,
       });
     });
@@ -176,7 +176,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — visibility', () => {
     api.get.mockResolvedValueOnce({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
     await act(async () => {
@@ -197,7 +197,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — loadWarning', () => {
     api.get.mockResolvedValueOnce({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
     render(
@@ -209,13 +209,15 @@ describe('PresentationStudioLayoutCapacityAdminPanel — loadWarning', () => {
       expect(screen.getByTestId('studio-layout-capacity-admin')).toBeTruthy();
     });
     expect(screen.queryByTestId('studio-layout-capacity-admin-load-warning')).toBeNull();
+    expect(screen.getByText(/Tenant-scoped registry/i)).toBeTruthy();
+    expect(screen.getByText(/scope: tenant/i)).toBeTruthy();
   });
 
   it('renders a rose loadWarning banner for `corrupt` (file unparseable)', async () => {
     api.get.mockResolvedValueOnce({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: {
         reason: 'corrupt',
         sourcePath: '/tmp/persisted.json',
@@ -238,7 +240,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — loadWarning', () => {
     api.get.mockResolvedValueOnce({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: {
         reason: 'io_error',
         sourcePath: '/tmp/persisted.json',
@@ -261,7 +263,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — loadWarning', () => {
     api.get.mockResolvedValueOnce({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: {
         reason: 'signature_mismatch',
         sourcePath: '/tmp/persisted.json',
@@ -290,7 +292,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — diff view', () => {
     api.get.mockResolvedValueOnce({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
     render(
@@ -308,7 +310,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — diff view', () => {
     api.get.mockResolvedValueOnce({
       current: makeOverriddenSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
     render(
@@ -338,7 +340,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — override flow', () => {
     api.get.mockResolvedValue({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
   });
@@ -426,7 +428,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — override flow', () => {
     api.get.mockResolvedValueOnce({
       current: makeOverriddenSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
 
@@ -548,7 +550,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — reset flow', () => {
     api.get.mockResolvedValue({
       current: makeOverriddenSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
   });
@@ -606,7 +608,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — reset flow', () => {
     api.get.mockResolvedValueOnce({
       current: makeDefaultsSnapshot(),
       defaults: makeDefaultsSnapshot(),
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: null,
     });
 

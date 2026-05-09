@@ -2046,3 +2046,32 @@ Closed the final operations carry-over from S21/S22/S23. The layout-capacity run
 ### Remaining backlog
 
 - No known high-priority Presentation Studio carry-overs remain from S13-S24. Future enhancements are product polish, not blocking backlog from this delivery track.
+
+
+---
+
+## Sprint S26 — final contract closeout polish
+
+**Status:** Completed
+**Date:** 2026-05-09
+**Phase:** 2 (Implementation / closeout polish)
+
+### Scope
+
+Final post-closeout consistency pass after S22-S25. S23 changed the backend admin scope from historical `process_global` to tenant-scoped `scope: 'tenant'`, but the frontend admin client/test fixtures and SuperAdmin panel copy still carried the old process-global wording. S26 aligns the client contract, UI copy, and test fixtures with the delivered tenant-scoped behavior.
+
+### Changes
+
+- `src/services/api/presentationStudioLayoutCapacityAdmin.api.ts`
+  - Narrows `LayoutCapacityAdminGetResponse.scope` to `'tenant' | 'process_global'` so the current contract is explicit while legacy compatibility remains typed.
+- `src/components/PresentationStudio/PresentationStudioLayoutCapacityAdminPanel.tsx`
+  - Updates panel description from process-global to tenant-scoped registry for the authenticated organization.
+- Frontend tests:
+  - Update admin API, admin panel, and page-level fixtures to `scope: 'tenant'`.
+  - Add panel assertion for tenant-scoped copy and visible `scope: tenant` chip.
+
+### Acceptance
+
+- SuperAdmin UI no longer describes the S23-delivered registry as process-global.
+- Frontend tests now exercise the current `tenant` scope returned by backend routes.
+- Historical sprint notes remain unchanged as history; S22-S25 closeout sections document the current final state.

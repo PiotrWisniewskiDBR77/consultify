@@ -77,14 +77,14 @@ describe('PresentationStudioLayoutCapacityAdminApi.get', () => {
             templateFamilyOverrides: {},
             familyAliasByDeckType: {},
           },
-          scope: 'process_global',
+          scope: 'tenant',
           loadWarning: null,
         },
       })
     );
 
     const result = await PresentationStudioLayoutCapacityAdminApi.get();
-    expect(result.scope).toBe('process_global');
+    expect(result.scope).toBe('tenant');
     expect(result.loadWarning).toBeNull();
     expect(result.current.densityBudgets.balanced.titleMaxChars).toBe(80);
     expect(result.defaults.densityBudgets.balanced.titleMaxChars).toBe(80);
@@ -118,7 +118,7 @@ describe('PresentationStudioLayoutCapacityAdminApi.get', () => {
             templateFamilyOverrides: {},
             familyAliasByDeckType: {},
           },
-          scope: 'process_global',
+          scope: 'tenant',
           loadWarning: {
             reason: 'corrupt',
             sourcePath: '/tmp/persisted.json',
@@ -161,7 +161,7 @@ describe('PresentationStudioLayoutCapacityAdminApi.get', () => {
             templateFamilyOverrides: {},
             familyAliasByDeckType: {},
           },
-          scope: 'process_global',
+          scope: 'tenant',
           loadWarning: {
             reason: 'signature_mismatch',
             sourcePath: '/tmp/persisted.json',

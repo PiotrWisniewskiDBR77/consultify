@@ -962,7 +962,7 @@ describe('PresentationStudioPage', () => {
         templateFamilyOverrides: {},
         familyAliasByDeckType: {},
       },
-      scope: 'process_global',
+      scope: 'tenant',
       loadWarning: {
         reason: 'corrupt',
         sourcePath: '/tmp/persisted.json',

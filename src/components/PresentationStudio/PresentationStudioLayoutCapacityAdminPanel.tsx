@@ -611,8 +611,8 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
             Layout-capacity admin (SuperAdmin)
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Process-global registry that drives the Studio layout audit. Changes are gated by an
-            explicit approval ticket and audited as
+            Tenant-scoped registry that drives the Studio layout audit for the authenticated
+            organization. Changes are gated by an explicit approval ticket and audited as
             <span className="ml-1 font-mono text-xs">
               presentation_studio_layout_capacity_overrides_*
             </span>

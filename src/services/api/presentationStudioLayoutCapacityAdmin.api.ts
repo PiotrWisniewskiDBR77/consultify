@@ -96,7 +96,7 @@ export interface LayoutCapacityRegistryLoadWarning {
 export interface LayoutCapacityAdminGetResponse {
   current: LayoutCapacityRegistrySnapshot;
   defaults: LayoutCapacityRegistrySnapshot;
-  scope: 'process_global' | string;
+  scope: 'tenant' | 'process_global';
   loadWarning: LayoutCapacityRegistryLoadWarning | null;
 }
 
