@@ -2335,6 +2335,43 @@ export interface DocumentContentBlockAuditEntry {
 }
 
 /**
+ * Slice FR-37.access-history — unified access-history aggregator.
+ *
+ * Surfaces a chronological feed of every meaningful event that
+ * touched a `DocumentArtifact`, drawing from the per-service audit
+ * stores: the document-level audit (`listDocumentAuditEntries`),
+ * the share-link audit (`listShareLinkAuditEntries`), and the
+ * approval audit (`listDocumentApprovalAuditEntries`).
+ *
+ * Each entry preserves the raw action verb from the underlying
+ * audit row so the UI / analytics can categorize without forcing
+ * the aggregator to pre-classify.
+ */
+export type DocumentAccessHistorySource =
+  | 'document_audit'
+  | 'share_link'
+  | 'approval';
+
+export interface DocumentAccessHistoryEntry {
+  /** Composite id `${source}::${origin row's auditId}` for stable React keys. */
+  entryId: string;
+  source: DocumentAccessHistorySource;
+  artifactId: string;
+  organizationId: string;
+  /** `userId` for authed actions, `'anonymous-{shareLinkId}'` for public consumes. */
+  actorId: string;
+  /** Raw action verb (`proposal_executed`, `share_link_consumed`, ...). */
+  action: string;
+  occurredAt: string;
+  /**
+   * Origin entity id (share-link id, approval id, comment id, etc.).
+   * `undefined` for `document_audit` rows that don't carry an origin.
+   */
+  sourceId?: string;
+  details?: Record<string, unknown>;
+}
+
+/**
  * Slice E15.5.coverPageLogo — tenant-scoped binary asset registry.
  *
  * Stores small visual assets (currently `'logo'`) so the renderer

@@ -208,6 +208,7 @@ import {
   listDocumentContentBlocks,
   updateDocumentContentBlock,
 } from '../services/documentStudio/documentContentBlockService.js';
+import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
   archiveAsset,
   getActiveOrgLogo,
@@ -3517,6 +3518,63 @@ router.get(
     }
     const auditEntries = listDocumentAuditEntries(artifactId, organizationId);
     res.json({ auditEntries });
+  })
+);
+
+// Slice FR-37.access-history — unified, chronological view of every
+// touch on the document (proposals, comments, lifecycle, exports,
+// share-link consumes, approvals, ...). Replaces the per-service
+// audit drill-down with a single feed for the right-panel "Access
+// History" tab.
+//
+// GET /api/document-studio/:artifactId/access-history?limit=&offset=&source=
+//   - `source` repeats are allowed: ?source=document_audit&source=share_link
+//   - default limit = 200; hard cap = 1000.
+router.get(
+  '/:artifactId/access-history',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'artifact_not_found' });
+      return;
+    }
+    const limitRaw = req.query.limit;
+    const offsetRaw = req.query.offset;
+    const limit = typeof limitRaw === 'string' ? Number.parseInt(limitRaw, 10) : undefined;
+    const offset = typeof offsetRaw === 'string' ? Number.parseInt(offsetRaw, 10) : undefined;
+    const sourceRaw = req.query.source;
+    const sourcesArr: ('document_audit' | 'share_link' | 'approval')[] = [];
+    const validSources = new Set(['document_audit', 'share_link', 'approval'] as const);
+    if (typeof sourceRaw === 'string') {
+      if (validSources.has(sourceRaw as never))
+        sourcesArr.push(sourceRaw as 'document_audit' | 'share_link' | 'approval');
+    } else if (Array.isArray(sourceRaw)) {
+      for (const s of sourceRaw) {
+        if (typeof s === 'string' && validSources.has(s as never)) {
+          sourcesArr.push(s as 'document_audit' | 'share_link' | 'approval');
+        }
+      }
+    }
+    const result = getDocumentAccessHistory({
+      artifactId,
+      organizationId,
+      options: {
+        limit,
+        offset,
+        sources: sourcesArr.length > 0 ? sourcesArr : undefined,
+      },
+    });
+    res.json(result);
   })
 );
 
