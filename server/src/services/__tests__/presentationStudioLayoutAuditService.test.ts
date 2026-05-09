@@ -7,7 +7,7 @@
  * canonical-set drift guard.
  */
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import type { OutlineItem } from '../presentationGeneratorService';
 import {
@@ -17,6 +17,10 @@ import {
   _templateFamilyOverridesForTests,
   auditPresentationStudioOutlineLayout,
 } from '../presentationStudioLayoutAuditService';
+import {
+  applyOverrides as applyCapacityOverrides,
+  resetToDefaults as resetCapacityRegistry,
+} from '../presentationStudioLayoutCapacityRegistryService';
 // Type-only import: the canonical SlideIntent union we want to keep in
 // sync with the audit's PPTX-supported set.
 import type { SlideIntent } from '../report/pptx/types';
@@ -31,6 +35,13 @@ function slide(partial: Partial<OutlineItem>): OutlineItem {
 }
 
 describe('presentationStudioLayoutAuditService', () => {
+  // S13: the audit now reads slot capacities from the layout-capacity
+  // registry. Reset after every test so a registry override applied in
+  // one test does not bleed into the next.
+  afterEach(() => {
+    resetCapacityRegistry();
+  });
+
   it('returns a clean audit for a small healthy outline', () => {
     const outline = [
       slide({ intent: 'cover', title: 'Q3 readiness review' }),
@@ -429,5 +440,93 @@ describe('presentationStudioLayoutAuditService', () => {
       templateFamily: 'Steering Committee Deck',
     });
     expect(auditWithSlot.flagCounts.layout_overflow_title).toBe(1);
+  });
+
+  // -------------------------------------------------------------------------
+  // Sprint S13: runtime registry override
+  //
+  // The audit must consult the live capacity registry, not a hardcoded
+  // map. We assert two directions:
+  //
+  //   (a) raise the visual title cap → a previously-flagging slide
+  //       passes without any code change to the audit module.
+  //   (b) lower the visual title cap → a previously-clean slide
+  //       starts flagging.
+  //
+  // If either branch fails, it means the audit is reading stale
+  // numbers — i.e. the registry plumbing has regressed.
+  // -------------------------------------------------------------------------
+
+  it('honours a runtime visual title cap RAISE applied via the capacity registry (S13)', () => {
+    const longTitle = 'X'.repeat(120); // exceeds canonical visual cap 80
+    const outline = [slide({ intent: 'cover', title: longTitle, density: 'visual' })];
+
+    // Default registry → flags.
+    expect(auditPresentationStudioOutlineLayout(outline).flagCounts.layout_overflow_title).toBe(1);
+
+    // Operator pushes a hot-reload override raising the cap to 200.
+    const result = applyCapacityOverrides({
+      densityBudgets: { visual: { titleMaxChars: 200 } },
+    });
+    expect(result.ok).toBe(true);
+
+    // Same outline, same audit code → now clean. Proves the cap came
+    // from the registry, not a static map.
+    expect(auditPresentationStudioOutlineLayout(outline).flagCounts.layout_overflow_title).toBe(0);
+  });
+
+  it('honours a runtime per-family cap LOWER applied via the capacity registry (S13)', () => {
+    const outline = [
+      slide({
+        intent: 'executive_summary',
+        title: 'X'.repeat(100),
+        density: 'balanced',
+        sourceRef: 'assessment:a-1',
+      }),
+    ];
+    // Default Steering Committee balanced cap is 110 → no flag.
+    expect(
+      auditPresentationStudioOutlineLayout(outline, {
+        templateFamily: 'Steering Committee Deck',
+      }).flagCounts.layout_overflow_title
+    ).toBe(0);
+
+    // Operator tightens the Steering family cap to 80.
+    applyCapacityOverrides({
+      templateFamilyOverrides: {
+        'Steering Committee Deck': {
+          balanced: { titleMaxChars: 80 },
+        },
+      },
+    });
+
+    expect(
+      auditPresentationStudioOutlineLayout(outline, {
+        templateFamily: 'Steering Committee Deck',
+      }).flagCounts.layout_overflow_title
+    ).toBe(1);
+  });
+
+  it('honours a runtime alias REGISTRATION via the capacity registry (S13)', () => {
+    // Register a brand new raw deck-type that maps to Steering family.
+    applyCapacityOverrides({
+      familyAliasByDeckType: { product_strategy_deck: 'Steering Committee Deck' },
+    });
+
+    const outline = [
+      slide({
+        intent: 'executive_summary',
+        title: 'X'.repeat(100),
+        density: 'balanced',
+        sourceRef: 'assessment:a-1',
+      }),
+    ];
+
+    // The raw alias is normalised → Steering balanced cap 110 → clean.
+    expect(
+      auditPresentationStudioOutlineLayout(outline, {
+        templateFamily: 'product_strategy_deck',
+      }).flagCounts.layout_overflow_title
+    ).toBe(0);
   });
 });

@@ -31,6 +31,11 @@
  */
 
 import type { OutlineItem } from './presentationGeneratorService.js';
+import {
+  _snapshotRegistryForTests,
+  normalizeTemplateFamily as registryNormalizeTemplateFamily,
+  resolveSlotCapacity as registryResolveSlotCapacity,
+} from './presentationStudioLayoutCapacityRegistryService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -62,131 +67,25 @@ export interface PresentationStudioOutlineLayoutAudit {
 }
 
 // ---------------------------------------------------------------------------
-// Slot capacity model — canonical PPTX 16:9 (13.333" x 7.5").
+// Slot capacity model
 //
-// These budgets are intentionally conservative. They are NOT meant to mirror
-// the exact pixel layout (renderer-specific) but to flag obvious overflows
-// the user can fix at outline time. The numbers came from auditing the
-// existing `presentationBrandLayoutService` and `report/pptx` layouts and
-// rounding down to the nearest typographically safe character count. If a
-// future renderer extends a slot, raise the cap here and re-test.
-// ---------------------------------------------------------------------------
-
-interface SlotCapacity {
-  titleMaxChars: number;
-  /**
-   * `keyMessage` budget. For multi-line keymessages we count total
-   * characters; an explicit per-line cap is renderer-specific and lives in
-   * the renderer.
-   */
-  keyMessageMaxChars: number;
-  /** Maximum number of suggested blocks (bullets, content tiles) on the slide. */
-  blocksMax: number;
-}
-
-/**
- * Per-density slot capacities. `density` is set by the generator on each
- * outline item (`visual` | `balanced` | `document`). When the generator
- * does not set a density, we default to `balanced`.
- */
-const DENSITY_BUDGETS: Record<'visual' | 'balanced' | 'document', SlotCapacity> = {
-  // Visual-heavy slides (covers, single-insight, comparison) keep little
-  // text on screen. A user-typed title above 80 chars almost always wraps
-  // beyond two lines on a 16:9 master.
-  visual: { titleMaxChars: 80, keyMessageMaxChars: 160, blocksMax: 4 },
-  // Balanced slides (executive summary, key messages, performance overview)
-  // mix a hero message with 3-6 supporting points.
-  balanced: { titleMaxChars: 90, keyMessageMaxChars: 240, blocksMax: 6 },
-  // Document-density slides (assessment, recommendation_portfolio, appendix)
-  // tolerate longer prose but still cap at body-frame heights.
-  document: { titleMaxChars: 110, keyMessageMaxChars: 360, blocksMax: 8 },
-};
-
-// ---------------------------------------------------------------------------
-// Per-template-family slot capacity OVERRIDES (Sprint S11 — closes R-S10-1).
-//
-// When a template family's master extends a slot beyond the canonical
-// 16:9 budget, the override map raises the cap for that family only.
-// This is a partial map: families that are absent fall back to the
-// canonical `DENSITY_BUDGETS` above. Each entry is also partial — only
-// the densities that differ from the canonical baseline are listed.
-//
-// The values below are calibrated against the actual master pages /
-// recipe blocks declared in `presentationTemplateRuntimeService` and the
-// PPTX `report/pptx` masters. If a family adds or removes a slot in a
-// future revision, update the override here in the same change.
+// Sprint S13: capacity numbers + per-family overrides + raw-deck-type
+// aliases moved into `presentationStudioLayoutCapacityRegistryService`.
+// The audit consults the registry through `resolveSlotCapacity`, which
+// reads the live state (canonical defaults + any runtime overrides
+// applied via `applyOverrides`). The `DensityKey` alias stays here as
+// the audit's local type because it is also referenced by `densityFor`
+// and `densityForSlot` below.
 // ---------------------------------------------------------------------------
 
 type DensityKey = 'visual' | 'balanced' | 'document';
-type SlotCapacityOverride = Partial<Record<DensityKey, Partial<SlotCapacity>>>;
 
-/**
- * Map raw deck-type strings (as returned by `resolveTemplateFamilyFromSetup`)
- * to canonical TemplateFamily display names. Mirrors `FAMILY_BY_DECK_TYPE`
- * in `presentationTemplateRuntimeService`. Duplicated here to keep the
- * audit decoupled from the runtime's import graph; the unit test guards
- * drift by enumerating both maps.
- */
-const FAMILY_ALIAS_BY_DECK_TYPE: Readonly<Record<string, string>> = {
-  digital_transformation_read_deck: 'Digital Transformation Read Deck',
-  transformation_read_deck: 'Digital Transformation Read Deck',
-  board_decision_deck: 'Board Decision Deck',
-  assessment_summary: 'DRD Diagnostic Deck',
-  tool_workshop: 'Initiative Kickoff Deck',
-  steering_committee: 'Steering Committee Deck',
-  program_update: 'Steering Committee Deck',
-};
-
-const TEMPLATE_FAMILY_BUDGET_OVERRIDES: Readonly<Record<string, SlotCapacityOverride>> = {
-  // Steering Committee Deck uses an extended 3-line title band on the
-  // executive summary master and a wider body frame for the program
-  // pulse table. Raise the balanced/document caps modestly.
-  'Steering Committee Deck': {
-    balanced: { titleMaxChars: 110, keyMessageMaxChars: 280, blocksMax: 7 },
-    document: { titleMaxChars: 130, keyMessageMaxChars: 420, blocksMax: 10 },
-  },
-  // Board Decision Deck explicitly favours a denser hero panel on
-  // recommendation_single + risk_management slides — the master uses a
-  // 2-line hero title with a generous body frame.
-  'Board Decision Deck': {
-    balanced: { titleMaxChars: 100, keyMessageMaxChars: 280, blocksMax: 6 },
-  },
-  // DRD Diagnostic Deck assessment slides ship a longer narrative body
-  // (the diagnostic prose is the point), so we raise the document cap.
-  'DRD Diagnostic Deck': {
-    document: { titleMaxChars: 110, keyMessageMaxChars: 480, blocksMax: 9 },
-  },
-};
-
-function normalizeTemplateFamily(family: string | null | undefined): string | null {
-  if (!family) return null;
-  const trimmed = String(family).trim();
-  if (!trimmed) return null;
-  // Canonical display names pass through untouched.
-  if (Object.prototype.hasOwnProperty.call(TEMPLATE_FAMILY_BUDGET_OVERRIDES, trimmed)) {
-    return trimmed;
-  }
-  // Raw deck-type aliases get normalized to canonical names.
-  return FAMILY_ALIAS_BY_DECK_TYPE[trimmed] ?? trimmed;
-}
-
-function resolveSlotCapacity(
-  density: DensityKey,
-  templateFamily: string | null | undefined
-): SlotCapacity {
-  const baseline = DENSITY_BUDGETS[density];
-  const normalized = normalizeTemplateFamily(templateFamily);
-  if (!normalized) return baseline;
-  const override = TEMPLATE_FAMILY_BUDGET_OVERRIDES[normalized];
-  if (!override) return baseline;
-  const densityOverride = override[density];
-  if (!densityOverride) return baseline;
-  return {
-    titleMaxChars: densityOverride.titleMaxChars ?? baseline.titleMaxChars,
-    keyMessageMaxChars: densityOverride.keyMessageMaxChars ?? baseline.keyMessageMaxChars,
-    blocksMax: densityOverride.blocksMax ?? baseline.blocksMax,
-  };
-}
+// Re-export the registry resolver under the local name the audit uses.
+const resolveSlotCapacity = registryResolveSlotCapacity;
+// `normalizeTemplateFamily` is consumed exclusively by `resolveSlotCapacity`
+// inside the registry; the audit no longer needs to call it directly. We
+// reference the import once so dependency-pruning lint rules see it.
+void registryNormalizeTemplateFamily;
 
 // ---------------------------------------------------------------------------
 // Evidence rule set
@@ -460,19 +359,21 @@ export function _pdfSupportedIntentsForTests(): ReadonlySet<string> {
 }
 
 /**
- * Test-only helper (Sprint S11). Returns the registered template-family
- * override map. Tests use this to guard against accidental drift between
- * the audit's family list and the runtime's actual `TemplateFamily` enum.
+ * Test-only helper (Sprint S11; updated S13). Returns the live
+ * template-family override map snapshot from the capacity registry.
+ * Tests use this to guard against accidental drift between the audit's
+ * family list and the runtime's actual `TemplateFamily` enum.
  */
-export function _templateFamilyOverridesForTests(): Readonly<Record<string, SlotCapacityOverride>> {
-  return TEMPLATE_FAMILY_BUDGET_OVERRIDES;
+export function _templateFamilyOverridesForTests(): Readonly<Record<string, unknown>> {
+  return _snapshotRegistryForTests().templateFamilyOverrides;
 }
 
 /**
- * Test-only helper (Sprint S11). Returns the raw-deck-type → canonical
- * TemplateFamily alias map used to normalize override lookups. The unit
- * test asserts every value is a registered override key.
+ * Test-only helper (Sprint S11; updated S13). Returns the live
+ * raw-deck-type → canonical TemplateFamily alias snapshot from the
+ * capacity registry. The unit test asserts every value is a registered
+ * override key.
  */
 export function _familyAliasByDeckTypeForTests(): Readonly<Record<string, string>> {
-  return FAMILY_ALIAS_BY_DECK_TYPE;
+  return _snapshotRegistryForTests().familyAliasByDeckType;
 }

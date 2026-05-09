@@ -1164,3 +1164,61 @@ S12 closes the last open S10 follow-up (R-S10-2: real layouts mix densities with
   - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down. Today the banner is enough; ship the section card only if reviewers ask for slide-level detail beyond the warning list.
   - Optional: teach the generator to emit `slotDensities` for known mixed-density layouts (closes the consumer-side of R-S12-1).
 
+## Phase 2 — Sprint S13 gate (Layout capacity registry / 2026-05-09)
+
+Status: `PASS_WITH_P2`
+
+### Scope landed in S13
+
+S13 targets the first of the four S13 candidates: a hot-reloadable layout capacity registry. Before S13 the slot capacity numbers and the per-template-family overrides lived as `const` maps inside the audit module, which meant any tweak — even an opportunistic one — required a code deploy and a release. S13 reframes those numbers as runtime configuration that:
+
+- ships with the canonical S10 + S11 defaults preserved verbatim (so no behaviour change for any existing call site),
+- accepts JSON-shaped overrides via `applyOverrides` with strict, all-or-nothing validation (no partial mutation, no silent failure),
+- is read live by the audit through `resolveSlotCapacity` — there is no longer a static cap map inside the audit module,
+- exposes `resetToDefaults()` for test isolation (tests that mutate the registry MUST `afterEach`-reset),
+- snapshots cleanly via `_snapshotRegistryForTests` so existing S11 drift tests continue to work without rewriting.
+
+This is the groundwork milestone for tenant-specific layout overrides: the registry is process-global today, not per-tenant; tenant scoping is an explicit follow-up risk (see below). The renderer-side truncation indicator and the canvas-side per-slide drill-down section card are NOT in scope and are deferred to S14+ candidates.
+
+### Changes shipped
+
+Backend (services / audit):
+
+- Added `consultify/server/src/services/presentationStudioLayoutCapacityRegistryService.ts` (new). Defines `LayoutSlotCapacity`, `LayoutCapacityOverridesPayload`, default density budgets (visual/balanced/document), default template-family overrides (Steering Committee Deck, Board Decision Deck, DRD Diagnostic Deck), default raw-deck-type aliases. Exports `resolveSlotCapacity`, `normalizeTemplateFamily`, `applyOverrides`, `resetToDefaults`, `_snapshotRegistryForTests`. Validation rejects: unknown density keys, non-positive numbers, unknown cap fields (typo guard), non-string alias values. All-or-nothing merge — bad payloads cannot half-update state.
+- Refactored `presentationStudioLayoutAuditService.ts` to consume the registry. Deleted the inline `DENSITY_BUDGETS`, `TEMPLATE_FAMILY_BUDGET_OVERRIDES`, and `FAMILY_ALIAS_BY_DECK_TYPE` constants and the local `normalizeTemplateFamily` / `resolveSlotCapacity` helpers; the audit now imports `resolveSlotCapacity` from the registry. The `_templateFamilyOverridesForTests` and `_familyAliasByDeckTypeForTests` test-only exports remain stable in shape — they now read from the registry snapshot — so all S11 drift-guard tests continue to pass unchanged.
+
+Backend tests:
+
+- Added `presentationStudioLayoutCapacityRegistryService.test.ts` (14 tests): canonical defaults match the S10 + S11 numbers, validation rejects unknown densities / negative numbers / unknown fields / non-string aliases, all-or-nothing merge, single-section payloads, alias registration flows into `resolveSlotCapacity`, `resetToDefaults` snaps state back.
+- Extended `presentationStudioLayoutAuditService.test.ts` with 3 new S13 tests asserting that runtime overrides flip the audit end-to-end: (a) raising the visual title cap clears a previously-flagging slide, (b) lowering the Steering family balanced cap turns a previously-clean slide into a flag, (c) registering a brand-new raw-deck-type alias makes the audit normalize and apply the family override. Added an `afterEach` reset hook so registry overrides cannot leak between tests.
+
+### Validation
+
+- `npx vitest run` on the seven primary Studio-scoped suites — **136/136 pass** (S12 baseline 119 + 14 new registry + 3 new audit S13 = 136). No regressions.
+- `npx eslint` on the four S13 in-scope files (with `--fix` for prettier-only nits) — **0 errors**. Pre-existing P3 warnings on adjacent files are not touched per the S0 baseline policy.
+- `npx tsc --noEmit` on the four S13 in-scope files (strict, ESNext, bundler resolution, JSX preserve, skipLibCheck) — **0 errors**.
+- Backward-compat invariant: every previously-passing audit test still passes without changes to its expected flag counts. The registry's canonical defaults match the deleted static maps verbatim — confirmed by the S10/S11 drift tests that read `_snapshotRegistryForTests`.
+
+### Acceptance criteria covered by S13
+
+- AC: a layout capacity number (e.g. `Steering Committee Deck.balanced.titleMaxChars`) can be changed at runtime without a code deploy. **Met.** `applyOverrides` accepts the JSON payload, validates it, and the next audit invocation reads the new number.
+- AC: invalid configuration is rejected before any state mutation. **Met.** All-or-nothing merge in `applyOverrides`; the failure path returns a structured `errors[]` and `applied: false`. The "rejects unknown density keys without partial mutation" test asserts state is unchanged after a rejected payload.
+- AC: existing audit behaviour is unchanged when no overrides have been applied. **Met.** The 24 carry-over audit tests (clean outlines, overflow flags, missing source, unsupported PPTX/PDF intents, family overrides, per-slot density) all pass with the canonical defaults and zero modifications.
+- AC: tests can mutate the registry without leaking state across test files / test cases. **Met.** The audit suite added an `afterEach(resetCapacityRegistry)` hook; the registry suite resets in `beforeEach`. Both patterns guard against bleed-over.
+
+### Risks / open items (deferred)
+
+- R-S13-1 (P2): the registry is process-global. Tenant-scoped overrides are NOT yet supported — every tenant in the same process sees the same caps. This is intentional for S13 (the contract did not include tenant scoping in the slot-capacity surface) and the next sprint that introduces tenant overrides will add an `organizationId` parameter to `resolveSlotCapacity` and a tenant-keyed override map. Documented here so reviewers do not assume tenant safety where there is none yet.
+- R-S13-2 (P3): `applyOverrides` does not persist the override across process restarts. If we want tenant overrides to survive deploys, we will need either a config table (preferred — auditable, RBAC-able) or a watched JSON file (faster, less governable). The choice is out of scope for S13.
+- R-S13-3 (P3): no admin/operator surface yet. The registry is reachable only via in-process imports (which is exactly what the audit and the S13 tests use). Exposing it through an authenticated SuperAdmin endpoint with `proposal -> approval -> execution -> audit` (per the Consultify standard) is a follow-up sprint.
+- R-S13-4 (P3): renderer-side truncation indicator (one of the original S13 candidates) is NOT in scope. Today the renderer can still silently truncate a string that the audit warned about — the user sees the warning but no inline marker on the rendered slide. This remains a gap that the next sprint should close.
+- R-S12-1 carry-over (P3): the generator still does not emit `slotDensities`. The audit consumer side is fully wired (S12) and the registry change in S13 does not move that needle either way. Closing this requires a generator-side change with its own gate.
+
+### Next sprint plan
+
+- Sprint S14 candidates (subject to your approval):
+  - Renderer-side honest truncation indicator (closes R-S13-4): when a slide carries an overflow flag from the audit, the PPTX/PDF master surfaces an inline marker so the rendered artifact is honest about the warning.
+  - SuperAdmin layout-capacity admin endpoint (closes R-S13-3): authenticated POST that wraps `applyOverrides` with `proposal -> approval -> execution -> audit`. Tenant-scoped overrides require a separate sprint (R-S13-1).
+  - Optional: dedicated "Layout audit" section card in the Studio canvas with per-slide drill-down (still on the table; deferred from S13 scope cap).
+  - Optional: generator-side `slotDensities` emission for known mixed-density layouts (closes R-S12-1).
+
