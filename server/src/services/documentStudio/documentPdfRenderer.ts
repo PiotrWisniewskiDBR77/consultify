@@ -36,11 +36,13 @@ import {
   planSectionHeadings,
 } from './documentDocxStructure.js';
 import { type FormattingClass, resolveFormattingClass } from './documentDocxStyles.js';
-import type {
-  DocumentBlock,
-  DocumentSchema,
-  DocumentSection,
-  FormattingSchema,
+import {
+  type DocumentBlock,
+  documentChartBlockContent,
+  type DocumentSchema,
+  type DocumentSection,
+  type FormattingSchema,
+  summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
 
 const POINTS_PER_CM = 28.3464567; // 1cm at 72dpi
@@ -477,6 +479,37 @@ function drawImage(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   doc.moveDown(0.4);
 }
 
+function drawChart(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
+  // Slice E17.charts.render — fallback (substrate-first) renderer for
+  // `chart` blocks. PDF parity with `renderChartPlaceholder` in the
+  // DOCX renderer: emit a structured placeholder + figure caption so
+  // the visual flow + counter stay correct until the chart.js → PNG
+  // rasterizer follow-up swap lands.
+  ctx.figureCounter.value += 1;
+  const captionLabel = `Figure ${ctx.figureCounter.value}`;
+  const summary = summarizeDocumentChartBlock(block);
+  const titleText = summary.title ?? '(untitled chart)';
+  const kindText = summary.kind ?? 'unknown';
+  const seriesText = summary.seriesCount === 1 ? '1 series' : `${summary.seriesCount} series`;
+  const valuesText =
+    summary.totalValueCount === 1 ? '1 value' : `${summary.totalValueCount} values`;
+  const citationSuffix = block.sourceRef ? buildCitationSuffix(ctx, block.sourceRef) : '';
+  doc
+    .fontSize(ctx.sizing.caption)
+    .fillColor('#64748B')
+    .font('Helvetica-Oblique')
+    .text(
+      `[${captionLabel} chart placeholder — ${kindText} chart, ${seriesText}, ${valuesText}; rasterization pending]`
+    );
+  doc.text(`${captionLabel} — ${titleText}${citationSuffix}`);
+  const content = documentChartBlockContent(block);
+  if (content?.caption && content.caption.trim().length > 0) {
+    doc.text(content.caption.trim());
+  }
+  doc.font('Helvetica');
+  doc.moveDown(0.4);
+}
+
 function drawInlineFootnote(
   doc: PDFKit.PDFDocument,
   block: DocumentBlock,
@@ -518,6 +551,9 @@ function drawBlock(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
       return;
     case 'image':
       drawImage(doc, block, ctx);
+      return;
+    case 'chart':
+      drawChart(doc, block, ctx);
       return;
     case 'footnote':
       drawInlineFootnote(doc, block, ctx);

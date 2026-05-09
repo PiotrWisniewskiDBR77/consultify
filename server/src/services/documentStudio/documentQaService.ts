@@ -44,7 +44,12 @@ import type {
   FormattingSchema,
   TemplateSectionBlueprint,
 } from './documentStudioTypes.js';
-import { documentSourceRefHasVersionPin } from './documentStudioTypes.js';
+import {
+  documentChartBlockContent,
+  documentSourceRefHasVersionPin,
+  isDocumentChartBlock,
+  summarizeDocumentChartBlock,
+} from './documentStudioTypes.js';
 
 /**
  * Options accepted by `runDocumentQa`. Both the template and the brand
@@ -1968,13 +1973,81 @@ function runFormatQa(schema: DocumentSchema): DocumentQaCategoryReport {
             )
           );
         }
+      } else if (type === 'chart') {
+        // Slice E17.charts.qa — chart-block validation. Substrate-
+        // level checks; richer semantic checks (axis-label fit, color
+        // contrast, etc.) defer to the renderer follow-up.
+        if (!isDocumentChartBlock(block)) {
+          findings.push(
+            makeFinding(
+              'medium',
+              `Chart in section "${section.title}" has malformed payload (missing kind / title / non-finite values).`,
+              'format_chart_invalid_payload',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+          continue;
+        }
+        const summary = summarizeDocumentChartBlock(block);
+        if (summary.seriesCount === 0) {
+          findings.push(
+            makeFinding(
+              'medium',
+              `Chart "${summary.title ?? '(untitled)'}" in section "${section.title}" has no valid series — at least one series with finite numeric values is required.`,
+              'format_chart_no_series',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        }
+        const chart = documentChartBlockContent(block);
+        if (chart && Array.isArray(chart.categories) && chart.categories.length > 0) {
+          // Series value count must match category count when both
+          // are declared (otherwise the renderer falls back to "1, 2, 3"
+          // and the labels desynchronize from the bars).
+          for (const series of chart.series) {
+            if (
+              Array.isArray(series.values) &&
+              series.values.length !== chart.categories.length
+            ) {
+              findings.push(
+                makeFinding(
+                  'low',
+                  `Chart "${summary.title ?? '(untitled)'}" series "${series.label}" has ${series.values.length} values but ${chart.categories.length} categories — counts will desynchronize on render.`,
+                  'format_chart_series_category_mismatch',
+                  { sectionId: section.sectionId, blockId: block.blockId }
+                )
+              );
+            }
+          }
+        }
+        // Pie / donut charts traditionally don't carry x/y axis
+        // labels (axes don't apply); for bar / line / area / scatter
+        // we surface a `low` finding when the author forgot them so
+        // the FE chart-preview can encourage richer semantics.
+        if (
+          chart &&
+          (chart.kind === 'bar' ||
+            chart.kind === 'line' ||
+            chart.kind === 'area' ||
+            chart.kind === 'scatter') &&
+          !summary.hasAxisLabels
+        ) {
+          findings.push(
+            makeFinding(
+              'low',
+              `Chart "${summary.title ?? '(untitled)'}" (${chart.kind}) is missing axis labels — add xAxisLabel + yAxisLabel for clearer interpretation.`,
+              'format_chart_missing_axis_labels',
+              { sectionId: section.sectionId, blockId: block.blockId }
+            )
+          );
+        }
       }
     }
   }
 
   return categoryReport('format', findings, 70, (score, fs) =>
     fs.length === 0
-      ? 'Format QA clean: heading hierarchy, lists and tables are well-formed.'
+      ? 'Format QA clean: heading hierarchy, lists, tables and charts are well-formed.'
       : `Format QA: ${fs.length} finding(s); score ${score}/100.`
   );
 }
