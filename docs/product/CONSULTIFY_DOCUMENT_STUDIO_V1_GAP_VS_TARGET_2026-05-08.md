@@ -701,3 +701,88 @@ In-memory only — rebuilds from source-pack ingestion on cold start. No DAO yet
 - ✅ Backwards compatibility verified: every legacy spec passes unchanged after each commit.
 - ✅ Plan §6.15.14 + §6.15.15 documented; gap report §19 records full audit trail.
 - ✅ All commits use `atomic-commit.sh` and show clean `Piotr` attribution (defensive tooling working as designed).
+
+---
+
+## 20. Slice E13.1 — Share-link surface (FR-40) — DONE (2026-05-09 EOD)
+
+**Commit `a4ae18a65`.** Closed the **last remaining P1 functional gap** (FR-40 share link, MISSING per §C.4 / §I §11.5 #5 / §K §12.2). Backend substrate ships end-to-end; FE share dialog stays deferred behind §18.1 §2 parallel-sync remediation.
+
+### 20.1 What shipped
+
+**Types** (`documentStudioTypes.ts` §E13 block, ~150 lines):
+- `DocumentShareLinkStatus` (`active | revoked | expired`), `DocumentShareLinkAccessScope` (`read | comment`), `DocumentShareLinkAuditAction` (4 verbs), `DocumentShareLink`, `DocumentShareLinkAuditEntry`, `DocumentShareLinkRuntimeStatus`.
+
+**DAO** (`documentShareLinkRegistryDao.ts`, NEW):
+- Mirror of `documentSourcePackRegistryDao` contract.
+- Maps + token-secondary-index keyed by `${organizationId}::${shareLinkId}`.
+- Public surface: `loadShareLinksForOrg` / `loadShareLinkById` / `loadShareLinkByToken` (tenant-less; consumer doesn't know the tenant) / `persistShareLink` (keeps token index in sync on rotate) / `markShareLinkStatusInDao` / `bumpShareLinkConsumeCount` (atomic counter + lastConsumedAt) / `loadAuditForShareLink` (sorted ASC) / `persistShareLinkAuditEntry` (idempotent on auditId) / `countActiveShareLinksForArtifact` / `__resetShareLinkRegistryDaoForTests`.
+
+**Service** (`documentShareLinkService.ts`, NEW):
+- Synchronous-friendly mutation surface, in-process Map cache + best-effort DAO write-through.
+- `createShareLink` (input validation, 256-bit URL-safe token, audit) / `revokeShareLink` (idempotent) / `getShareLink` / `listShareLinks` (hides expired by default) / `consumeShareLink` (UNAUTHENTICATED — cold-start DAO fallback, count bump, audit, single 404 anti-enumeration, one-shot `share_link_expired_observed`) / `getShareLinkRuntimeStatus` (pure: revoked-wins, then `expiresAt vs now()`) / `getActiveShareLinkCount` / `ensureShareLinkRegistryHydrated` / `__resetShareLinkRegistryForTests`.
+
+**Routes** (`document-studio.routes.ts` + `Gateway.ts`):
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| POST | `/api/document-studio/:artifactId/share-links` | yes | create |
+| GET | `/api/document-studio/:artifactId/share-links` | yes | list (decorated runtimeStatus) |
+| GET | `/api/document-studio/share-links/:shareLinkId` | yes | get one + runtimeStatus |
+| POST | `/api/document-studio/share-links/:shareLinkId/revoke` | yes | revoke (idempotent) |
+| GET | `/api/document-studio/share-links/:shareLinkId/audit` | yes | full audit trail |
+| POST | `/api/document-studio/share-links/resolve` | **NO** | public consume (anti-enumeration) |
+
+The public route is exported as `documentShareLinkPublicRoutes` and mounted in `Gateway.ts` BEFORE `documentStudioRoutes` on the same `/api/document-studio` prefix — Express matches the first router whose path resolves, so the public route never reaches `verifyToken`.
+
+### 20.2 Tests
+
+| File | Specs | Coverage |
+| --- | --- | --- |
+| `documentShareLinkService.test.ts` (NEW) | 20 | create / revoke / get / list / consume / runtime-status / count, all tenant-isolated |
+| `document-studio-share-links.routes.test.ts` (NEW) | 16 | every route × success + error paths + 401 unauth + 404 cross-tenant + anti-enumeration |
+
+**Suite: 787/787 green** (+36 specs since slice start; 731 → 751 after §19, 751 → 787 after §20).
+
+### 20.3 Validation
+
+- ESLint: 0 errors. 2 `@typescript-eslint/no-explicit-any` warnings on the `vi.mock(verifyToken)` signature in the route test — identical pattern to `admin.routes.test.ts`; not a regression.
+- TSC clean for the entire scope.
+- Backwards compatible: zero existing routes / services / types modified destructively. `Gateway.ts` mounts a new router BEFORE the existing one without changing any existing mount.
+
+### 20.4 Gaps closed
+
+- **FR-40 share link** — was the only **P1 MISSING** in §0 / §C.4. Now DELIVERED on backend with audit-grade integration.
+- **§11.5 #5** ("Share link nie istnieje jako Document Studio surface — nie ma share UX, nie ma expiry, nie ma scoped permissions per share") — all three concerns shipped server-side.
+- **§K §12.2 — Slice E13** — closed except for FE share dialog (FE-E2 right-panel, blocked by parallel-sync).
+
+### 20.5 Outstanding work after §20
+
+| Item | Status | Unblocker |
+| --- | --- | --- |
+| §18.1 §2 GUI step (parallel-sync) | ⏳ user-only | 15-30 min in Drive Settings GUI |
+| E14.persistence | blocked | DB migration approval |
+| E17.charts.render | blocked | Chart library architectural call (chart.js vs vega) |
+| E13.fe (share dialog FE-E2 right-panel) | blocked | §18.1 §2 user step |
+| E16.diff.frontend | blocked | §18.1 §2 user step |
+| FE-E1.2..FE-E5 | blocked | §18.1 §2 user step |
+| `coverPageDetailed.includeLogo` | open backend | Asset embedding pipeline |
+| `edit` / `download` share scopes | open product | Auth story for anonymous mutations |
+| HMAC token hashing | open backend | Wave5 DB migration |
+
+**Backend P1 MISSING list is now empty.** Every `MISSING` row from §C.4 §0 (FR-22 charts, FR-37 access history UX, FR-40 share link) is either:
+- delivered on backend (FR-40 — this slice), or
+- blocked on architectural decision (FR-22 — chart library), or
+- a frontend-only gap (FR-37 — access history UX).
+
+The backend audit-grade closeout for the V1 Document Studio is essentially complete. Outstanding backend slices (E14 / E17 / `includeLogo` / token-hash) all need product or architecture sign-off before they can ship.
+
+### 20.6 Definition of done — Slice E13.1 acceptance
+
+- ✅ Substrate (types) shipped.
+- ✅ DAO with token-secondary-index + tenant-isolated reads + idempotent audit shipped.
+- ✅ Service with full mutation + read + consume surface + runtime-status helper shipped.
+- ✅ 5 authed routes + 1 public consume route shipped; public route mounts before `verifyToken` and is anti-enumeration on the 404 surface.
+- ✅ 36 new specs (20 service + 16 routes); suite 751 → 787 green.
+- ✅ Plan §6.15.16 + gap report §20 documented.
+- ✅ Commit `a4ae18a65` shows clean `Piotr` attribution via `atomic-commit.sh`.

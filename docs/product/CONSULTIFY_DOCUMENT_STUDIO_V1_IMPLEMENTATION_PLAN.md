@@ -1327,6 +1327,70 @@ In-memory only (rebuilds z source-pack ingestion na cold start). DAO layer możn
 
 ---
 
+### 6.15.16 Slice E13.1 — Share-link surface (FR-40)
+
+**Scope.** Zamyka ostatni P1 functional gap z §11.5 #5 i §K (P1 backlog) gap raportu: share-link substrate + service + DAO + routes audit-grade, tenant-isolated, z anti-enumeration na konsumer-facing surface. Frontend share dialog (FE-E2 right-panel) deferred pod parallel-sync remediation.
+
+**Substrate (1) — Types** (`documentStudioTypes.ts`):
+- `DocumentShareLinkStatus` — `'active' | 'revoked' | 'expired'` (persisted state one-way; `expired` computed runtime).
+- `DocumentShareLinkAccessScope` — `'read' | 'comment'` (MVP; `edit` / `download` deferred).
+- `DocumentShareLinkAuditAction` — 4 verbs: created / consumed / revoked / expired_observed (idempotent ONCE-per-link na pierwszy stale-token hit).
+- `DocumentShareLink` — full entity (id / artifact / org / token / scope / status / expiresAt / label / created* / revoked* / consumeCount / lastConsumedAt).
+- `DocumentShareLinkAuditEntry` + `DocumentShareLinkRuntimeStatus`.
+
+**Substrate (2) — DAO** (`documentShareLinkRegistryDao.ts`):
+In-memory persistence layer mirroring `documentSourcePackRegistryDao` pattern. Token-secondary-index dla O(1) resolve. Tenant safety: every primary-key query carries org id; cross-tenant deny-by-default. Token-based `loadShareLinkByToken` jest jedynym wyjątkiem — bierze token bez org id (consumer go nie zna) i zwraca row + owning org tak żeby service mógł stamping kazda downstream mutation.
+
+**Substrate (3) — Service** (`documentShareLinkService.ts`):
+Synchronous-friendly mutation surface, in-process Map cache + best-effort DAO write-through, mirroring `documentSourcePackService` design. Public surface:
+- `createShareLink(...)` — input validation, 256-bit URL-safe token, audit on create.
+- `revokeShareLink(...)` — idempotent (drugi revoke zwraca existing row, no duplicate audit).
+- `getShareLink` / `listShareLinks` — tenant + artifact scoped, ukrywa expired by default.
+- `consumeShareLink({ token, consumerFingerprint? })` — UNAUTHENTICATED public surface. Cold-start fallback przez DAO token index. Increment + audit. Single 404 dla unknown / revoked / expired (anti-enumeration). One-shot `share_link_expired_observed` audit.
+- `getShareLinkRuntimeStatus(link, now?)` — pure computation: `revoked` always wins; potem `expiresAt vs now()`.
+- `getActiveShareLinkCount(...)` + `ensureShareLinkRegistryHydrated(...)` + `__resetShareLinkRegistryForTests()`.
+
+**Substrate (4) — Routes** (`document-studio.routes.ts` + `Gateway.ts`):
+
+5 authed routes + 1 public consume route:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/:artifactId/share-links` | Create. 201 `{ shareLink }`. Body: `{ accessScope, expiresAt?, label? }`. |
+| GET | `/:artifactId/share-links` | List. Query: `status?`, `includeExpired?`. Decoruje runtimeStatus per row. |
+| GET | `/share-links/:shareLinkId` | Get one + runtimeStatus. 404 cross-tenant. |
+| POST | `/share-links/:shareLinkId/revoke` | Body `{ reason? }`. Idempotent. |
+| GET | `/share-links/:shareLinkId/audit` | Full audit trail. 404 cross-tenant (no audit leakage). |
+| POST | `/share-links/resolve` | **UNAUTHENTICATED**. Body `{ token, consumerFingerprint? }`. 200 `{ resolved }`. 400 `token_required`. 404 `share_link_invalid_or_expired` (single anti-enumeration surface). |
+
+Public router exported jako `documentShareLinkPublicRoutes` i mountowany w `Gateway.ts` BEFORE `documentStudioRoutes` na tym samym `/api/document-studio` prefiksie. Express walks routers in registration order — `POST /share-links/resolve` ląduje na public router i nigdy nie dochodzi do `verifyToken` na authed router.
+
+**Files (3 NEW + 3 modified + 2 NEW tests):**
+- `documentShareLinkRegistryDao.ts` (NEW) — DAO + token-secondary-index.
+- `documentShareLinkService.ts` (NEW) — full service surface.
+- `documentStudioTypes.ts` — types added.
+- `document-studio.routes.ts` — 5 authed + 1 public route + named export.
+- `Gateway.ts` — mount public router BEFORE authed router.
+- `__tests__/documentShareLinkService.test.ts` (NEW, 20 specs).
+- `__tests__/document-studio-share-links.routes.test.ts` (NEW, 16 specs).
+
+**Validation.** Suite **787/787 green** (+36 nowych specs since slice start). ESLint clean (0 errors; 2 warnings dla `any` w `vi.mock(verifyToken)` — identyczny pattern jak w istniejących `admin.routes.test.ts` mocks; nie regression). TSC clean.
+
+**Backwards compatibility.** Zero existing routes / services / types modified destructively. `Gateway.ts` mountuje nowy router PRZED istniejącym bez zmiany żadnego istniejącego mountpointu. Pełna istniejąca suite pass unchanged.
+
+**Closes gaps.**
+- **FR-40 (P1, MISSING → DELIVERED on backend)** — share-link routes + expiry + scoped permissions + tenant isolation + anti-enumeration shipped.
+- §11.5 #5 — wszystkie trzy concerns (share UX backend, expiry, scoped permissions) shipped server-side.
+
+**Deferred (intentional):**
+- FE share dialog (FE-E2 right-panel) — blocked by parallel-sync §18.1 §2.
+- Wave5 DB migration — substrate w in-memory DAO; mechanical replacement bez zmian public surface (mirror `sourcePack` pattern).
+- `edit` / `download` access scopes — wymagają stronger authorization story dla anonymous mutations.
+- Token rotation route — DAO supports it (`persistShareLink` re-syncs token index na re-persist), brak route'a; add when FE asks.
+- HMAC token hashing — straightforward DAO-level upgrade, add at wave5 migration.
+
+---
+
 ## 7. MVP-4 — Advanced DOCX export
 
 ### 7.1 Goal
