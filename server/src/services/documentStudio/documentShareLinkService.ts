@@ -68,6 +68,17 @@ const registryStore = new Map<string, DocumentShareLink>();
 const auditStore = new Map<string, DocumentShareLinkAuditEntry[]>();
 /** Cache mirror of the DAO `tokenIndex`; service-side fast path. */
 const tokenIndex = new Map<string, string>();
+const editSessionStore = new Map<
+  string,
+  {
+    shareLinkId: string;
+    organizationId: string;
+    artifactId: string;
+    tokenHash: string;
+    fingerprintHash: string;
+    expiresAtMs: number;
+  }
+>();
 /** Tracks which links have already emitted `share_link_expired_observed`. */
 const expiredAuditedLinks = new Set<string>();
 
@@ -252,6 +263,7 @@ const VALID_ACCESS_SCOPES: ReadonlySet<DocumentShareLinkAccessScope> = new Set([
   'read',
   'comment',
   'download',
+  'edit',
 ]);
 
 export function createShareLink(params: CreateShareLinkParams): DocumentShareLink {
@@ -662,6 +674,104 @@ export async function consumeShareLink(
   };
 }
 
+export interface CreateShareLinkEditSessionParams {
+  token: string;
+  consumerFingerprint: string;
+}
+
+export interface CreateShareLinkEditSessionResult {
+  shareLinkId: string;
+  artifactId: string;
+  organizationId: string;
+  editSessionToken: string;
+  expiresAt: string;
+}
+
+const EDIT_SESSION_TTL_MS = 30 * 60 * 1000;
+
+export async function createShareLinkEditSession(
+  params: CreateShareLinkEditSessionParams
+): Promise<CreateShareLinkEditSessionResult> {
+  const token = params.token?.trim();
+  const consumerFingerprint = params.consumerFingerprint?.trim();
+  if (!token) throw new Error('token_required');
+  if (!consumerFingerprint) throw new Error('consumer_fingerprint_required');
+
+  const resolved = await consumeShareLink({ token, consumerFingerprint });
+  if (!resolved) throw new Error('share_link_invalid_or_expired');
+  if (resolved.accessScope !== 'edit') throw new Error('share_link_scope_forbidden');
+
+  const editSessionToken = randomBytes(32).toString('base64url');
+  const expiresAtMs = Date.now() + EDIT_SESSION_TTL_MS;
+  editSessionStore.set(hashToken(editSessionToken), {
+    shareLinkId: resolved.shareLinkId,
+    organizationId: resolved.organizationId,
+    artifactId: resolved.artifactId,
+    tokenHash: hashToken(token),
+    fingerprintHash: hashToken(consumerFingerprint),
+    expiresAtMs,
+  });
+
+  return {
+    shareLinkId: resolved.shareLinkId,
+    artifactId: resolved.artifactId,
+    organizationId: resolved.organizationId,
+    editSessionToken,
+    expiresAt: new Date(expiresAtMs).toISOString(),
+  };
+}
+
+export interface AuthorizeShareLinkEditSessionParams {
+  token: string;
+  editSessionToken: string;
+  consumerFingerprint: string;
+}
+
+export interface AuthorizeShareLinkEditSessionResult {
+  shareLinkId: string;
+  artifactId: string;
+  organizationId: string;
+}
+
+export async function authorizeShareLinkEditSession(
+  params: AuthorizeShareLinkEditSessionParams
+): Promise<AuthorizeShareLinkEditSessionResult> {
+  const token = params.token?.trim();
+  const editSessionToken = params.editSessionToken?.trim();
+  const consumerFingerprint = params.consumerFingerprint?.trim();
+  if (!token) throw new Error('token_required');
+  if (!editSessionToken) throw new Error('edit_session_token_required');
+  if (!consumerFingerprint) throw new Error('consumer_fingerprint_required');
+
+  const sessionKey = hashToken(editSessionToken);
+  const session = editSessionStore.get(sessionKey);
+  if (!session) throw new Error('share_link_edit_session_invalid');
+  if (session.expiresAtMs <= Date.now()) {
+    editSessionStore.delete(sessionKey);
+    throw new Error('share_link_edit_session_expired');
+  }
+
+  if (
+    !timingSafeHashEqual(session.tokenHash, hashToken(token)) ||
+    !timingSafeHashEqual(session.fingerprintHash, hashToken(consumerFingerprint))
+  ) {
+    throw new Error('share_link_edit_session_invalid');
+  }
+
+  await ensureHydrated(session.organizationId);
+  const link = registryStore.get(linkKey(session.organizationId, session.shareLinkId));
+  if (!link) throw new Error('share_link_not_found');
+  if (link.accessScope !== 'edit') throw new Error('share_link_scope_forbidden');
+  const runtime = getShareLinkRuntimeStatus(link);
+  if (!runtime.isUsable) throw new Error('share_link_not_active');
+
+  return {
+    shareLinkId: link.shareLinkId,
+    artifactId: link.artifactId,
+    organizationId: link.organizationId,
+  };
+}
+
 /**
  * Right-panel companion: returns the count of currently-active links
  * for an artifact. Driven by the DAO so the in-memory + future-DB
@@ -685,6 +795,7 @@ export async function __resetShareLinkRegistryForTests(): Promise<void> {
   registryStore.clear();
   auditStore.clear();
   tokenIndex.clear();
+  editSessionStore.clear();
   expiredAuditedLinks.clear();
   hydratedOrgs.clear();
   hydrationInflight.clear();

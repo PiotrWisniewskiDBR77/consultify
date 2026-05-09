@@ -24,6 +24,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { __resetShareLinkRegistryForTests } from '../../services/documentStudio/documentShareLinkService.js';
+import { __resetDocumentCommentsForTests } from '../../services/documentStudio/documentCommentsService.js';
 
 let mockUser: { id: string; organizationId: string; role: string } | null = null;
 
@@ -61,6 +62,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   mockUser = { id: UID, organizationId: ORG, role: 'CONSULTANT' };
   await __resetShareLinkRegistryForTests();
+  __resetDocumentCommentsForTests();
 });
 
 describe('POST /api/document-studio/:artifactId/share-links — create', () => {
@@ -82,7 +84,7 @@ describe('POST /api/document-studio/:artifactId/share-links — create', () => {
   it('returns 400 on invalid access scope', async () => {
     const res = await request(createApp())
       .post(`/api/document-studio/${ARTIFACT}/share-links`)
-      .send({ accessScope: 'edit' });
+      .send({ accessScope: 'owner' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('invalid_access_scope');
   });
@@ -305,5 +307,64 @@ describe('POST /api/document-studio/share-links/resolve — public consume', () 
     const res = await request(app).post('/api/document-studio/share-links/resolve').send({ token });
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('share_link_invalid_or_expired');
+  });
+});
+
+describe('POST /api/document-studio/share-links/edit-session + public edit comments', () => {
+  it('creates edit session and allows anonymous comment mutation for edit scope', async () => {
+    const app = createApp();
+    const created = await request(app)
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'edit' });
+    expect(created.status).toBe(201);
+    const token = created.body.shareLink.token;
+    const shareLinkId = created.body.shareLink.shareLinkId;
+
+    mockUser = null;
+    const session = await request(app)
+      .post('/api/document-studio/share-links/edit-session')
+      .send({ token, consumerFingerprint: 'fp-edit-1' });
+    expect(session.status).toBe(201);
+    expect(session.body.session.shareLinkId).toBe(shareLinkId);
+    expect(session.body.session.editSessionToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+
+    const commentCreate = await request(app)
+      .post('/api/document-studio/share-links/comments')
+      .send({
+        token,
+        editSessionToken: session.body.session.editSessionToken,
+        consumerFingerprint: 'fp-edit-1',
+        body: 'External reviewer edit suggestion',
+        anchor: { kind: 'document' },
+      });
+    expect(commentCreate.status).toBe(201);
+    expect(commentCreate.body.comment.authorId).toBe(`share-link:${shareLinkId}`);
+
+    const commentReply = await request(app)
+      .post(
+        `/api/document-studio/share-links/comments/${commentCreate.body.comment.commentId}/reply`
+      )
+      .send({
+        token,
+        editSessionToken: session.body.session.editSessionToken,
+        consumerFingerprint: 'fp-edit-1',
+        body: 'Follow-up detail from same external reviewer',
+      });
+    expect(commentReply.status).toBe(201);
+    expect(commentReply.body.comment.parentCommentId).toBe(commentCreate.body.comment.commentId);
+  });
+
+  it('rejects edit session for non-edit scopes', async () => {
+    const app = createApp();
+    const created = await request(app)
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'comment' });
+    const token = created.body.shareLink.token;
+    mockUser = null;
+    const session = await request(app)
+      .post('/api/document-studio/share-links/edit-session')
+      .send({ token, consumerFingerprint: 'fp-edit-2' });
+    expect(session.status).toBe(403);
+    expect(session.body.error).toBe('share_link_scope_forbidden');
   });
 });

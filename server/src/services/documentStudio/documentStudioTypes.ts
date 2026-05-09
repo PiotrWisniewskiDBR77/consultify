@@ -1698,7 +1698,7 @@ export type DocumentShareLinkStatus = 'active' | 'revoked' | 'expired';
  *   - `download` — restrict to render only, no export. Currently
  *     `read` includes export; a follow-up can split that.
  */
-export type DocumentShareLinkAccessScope = 'read' | 'comment' | 'download';
+export type DocumentShareLinkAccessScope = 'read' | 'comment' | 'download' | 'edit';
 
 /**
  * Audit verbs for `DocumentShareLinkAuditEntry`. Mirrors the

@@ -19,7 +19,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  authorizeShareLinkEditSession,
   __resetShareLinkRegistryForTests,
+  createShareLinkEditSession,
   consumeShareLink,
   createShareLink,
   getActiveShareLinkCount,
@@ -79,7 +81,7 @@ describe('createShareLink', () => {
         organizationId: 'org-A',
         userId: 'user-1',
         // @ts-expect-error — runtime guard, not a type guard
-        accessScope: 'edit',
+        accessScope: 'owner',
       })
     ).toThrow(/unsupported share-link accessScope/);
   });
@@ -659,5 +661,66 @@ describe('rotateShareLinkToken', () => {
         userId: '',
       })
     ).toThrowError(/userId is required/);
+  });
+});
+
+describe('edit session authorization for edit scope', () => {
+  it('creates and validates an edit session bound to token + fingerprint', async () => {
+    const link = createShareLink({
+      artifactId: 'art-edit-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'edit',
+    });
+
+    const session = await createShareLinkEditSession({
+      token: link.token,
+      consumerFingerprint: 'fp-edit-1',
+    });
+    expect(session.shareLinkId).toBe(link.shareLinkId);
+    expect(session.editSessionToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+
+    const auth = await authorizeShareLinkEditSession({
+      token: link.token,
+      editSessionToken: session.editSessionToken,
+      consumerFingerprint: 'fp-edit-1',
+    });
+    expect(auth.artifactId).toBe('art-edit-1');
+    expect(auth.organizationId).toBe('org-A');
+  });
+
+  it('rejects session mint for non-edit scopes', async () => {
+    const link = createShareLink({
+      artifactId: 'art-comment-1',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'comment',
+    });
+    await expect(
+      createShareLinkEditSession({
+        token: link.token,
+        consumerFingerprint: 'fp-edit-2',
+      })
+    ).rejects.toThrow(/share_link_scope_forbidden/);
+  });
+
+  it('rejects validation when fingerprint mismatches', async () => {
+    const link = createShareLink({
+      artifactId: 'art-edit-2',
+      organizationId: 'org-A',
+      userId: 'user-1',
+      accessScope: 'edit',
+    });
+    const session = await createShareLinkEditSession({
+      token: link.token,
+      consumerFingerprint: 'fp-edit-3',
+    });
+    await expect(
+      authorizeShareLinkEditSession({
+        token: link.token,
+        editSessionToken: session.editSessionToken,
+        consumerFingerprint: 'fp-edit-OTHER',
+      })
+    ).rejects.toThrow(/share_link_edit_session_invalid/);
   });
 });

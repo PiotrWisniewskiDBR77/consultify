@@ -220,6 +220,8 @@ import {
   registerLogo,
 } from '../services/documentStudio/documentAssetRegistryService.js';
 import {
+  authorizeShareLinkEditSession,
+  createShareLinkEditSession,
   consumeShareLink,
   createShareLink,
   ensureShareLinkRegistryHydrated,
@@ -3823,7 +3825,7 @@ router.post(
     }
     const accessScopeRaw =
       typeof req.body?.accessScope === 'string' ? req.body.accessScope : 'read';
-    const allowedScopes: DocumentShareLinkAccessScope[] = ['read', 'comment', 'download'];
+    const allowedScopes: DocumentShareLinkAccessScope[] = ['read', 'comment', 'download', 'edit'];
     if (!allowedScopes.includes(accessScopeRaw as DocumentShareLinkAccessScope)) {
       res.status(400).json({ error: 'invalid_access_scope', message: accessScopeRaw });
       return;
@@ -4048,6 +4050,134 @@ documentShareLinkPublicRoutes.post(
       return;
     }
     res.json({ resolved: result });
+  })
+);
+
+documentShareLinkPublicRoutes.post(
+  '/share-links/edit-session',
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    const consumerFingerprint =
+      typeof req.body?.consumerFingerprint === 'string' ? req.body.consumerFingerprint : '';
+    try {
+      const session = await createShareLinkEditSession({ token, consumerFingerprint });
+      res.status(201).json({ session });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'share_link_edit_session_failed';
+      if (message === 'share_link_invalid_or_expired') {
+        res.status(404).json({ error: message });
+        return;
+      }
+      if (message === 'share_link_scope_forbidden') {
+        res.status(403).json({ error: message });
+        return;
+      }
+      if (message === 'token_required' || message === 'consumer_fingerprint_required') {
+        res.status(400).json({ error: message });
+        return;
+      }
+      res.status(400).json({ error: 'share_link_edit_session_failed', message });
+    }
+  })
+);
+
+documentShareLinkPublicRoutes.post(
+  '/share-links/comments',
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    const editSessionToken =
+      typeof req.body?.editSessionToken === 'string' ? req.body.editSessionToken : '';
+    const consumerFingerprint =
+      typeof req.body?.consumerFingerprint === 'string' ? req.body.consumerFingerprint : '';
+    const body = typeof req.body?.body === 'string' ? req.body.body : '';
+    const anchor = parseCommentAnchorFromBody(req.body);
+    if (!anchor) {
+      res.status(400).json({
+        error: 'invalid_anchor',
+        message:
+          'anchor must be { kind: "document" } | { kind: "section", sectionId } | { kind: "block", sectionId, blockId }',
+      });
+      return;
+    }
+    try {
+      const auth = await authorizeShareLinkEditSession({
+        token,
+        editSessionToken,
+        consumerFingerprint,
+      });
+      await ensureDocumentCommentsHydrated(auth.organizationId);
+      const comment = createDocumentComment({
+        organizationId: auth.organizationId,
+        artifactId: auth.artifactId,
+        authorId: `share-link:${auth.shareLinkId}`,
+        body,
+        anchor,
+      });
+      res.status(201).json({ comment });
+    } catch (err) {
+      if (err instanceof DocumentCommentError) {
+        res
+          .status(mapCommentErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'share_link_comment_create_failed';
+      if (message === 'share_link_not_found' || message === 'share_link_edit_session_invalid') {
+        res.status(404).json({ error: message });
+        return;
+      }
+      if (message === 'share_link_scope_forbidden' || message === 'share_link_not_active') {
+        res.status(403).json({ error: message });
+        return;
+      }
+      res.status(400).json({ error: 'share_link_comment_create_failed', message });
+    }
+  })
+);
+
+documentShareLinkPublicRoutes.post(
+  '/share-links/comments/:commentId/reply',
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    const editSessionToken =
+      typeof req.body?.editSessionToken === 'string' ? req.body.editSessionToken : '';
+    const consumerFingerprint =
+      typeof req.body?.consumerFingerprint === 'string' ? req.body.consumerFingerprint : '';
+    const body = typeof req.body?.body === 'string' ? req.body.body : '';
+    const parentCommentId = String(req.params.commentId || '');
+    try {
+      const auth = await authorizeShareLinkEditSession({
+        token,
+        editSessionToken,
+        consumerFingerprint,
+      });
+      await ensureDocumentCommentsHydrated(auth.organizationId);
+      const comment = replyToDocumentComment({
+        organizationId: auth.organizationId,
+        artifactId: auth.artifactId,
+        authorId: `share-link:${auth.shareLinkId}`,
+        parentCommentId,
+        body,
+      });
+      res.status(201).json({ comment });
+    } catch (err) {
+      if (err instanceof DocumentCommentError) {
+        res
+          .status(mapCommentErrorToStatus(err.code))
+          .json({ error: err.code, message: err.message });
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'share_link_comment_reply_failed';
+      if (message === 'share_link_not_found' || message === 'share_link_edit_session_invalid') {
+        res.status(404).json({ error: message });
+        return;
+      }
+      if (message === 'share_link_scope_forbidden' || message === 'share_link_not_active') {
+        res.status(403).json({ error: message });
+        return;
+      }
+      res.status(400).json({ error: 'share_link_comment_reply_failed', message });
+    }
   })
 );
 
