@@ -11,6 +11,19 @@ export { default as CsvImportService } from './CsvImportService.js';
 export { DependencyGraph } from './dependencyGraph.js';
 export { default as ErrorHandling } from './ErrorHandling.js';
 export { ExtensionService, extensionService } from './ExtensionService.js';
+export {
+  type FormIntakeContext,
+  FormIntakeError,
+  type FormIntakeKind,
+  type RateLimiter as FormIntakeRateLimiter,
+  default as FormIntakeService,
+  type FormSubmissionStatus,
+  hashClientIp,
+  type IssuedJwtLink,
+  type IssueJwtLinkInput,
+  type SubmitFromPublicInput,
+  type SubmitFromPublicResult,
+} from './FormIntakeService.js';
 export { default as FormService } from './FormService.js';
 export {
   evaluateFormula,
@@ -94,6 +107,20 @@ export {
   validateSpecializedField,
 } from './SpecializedFieldTypes.js';
 export { SSOService, ssoService } from './SSOService.js';
+export {
+  default as TableArtifactConversionService,
+  type ArtifactMaterializer as TableArtifactMaterializer,
+  TableConversionError,
+  type ConversionFailureStage as TableConversionFailureStage,
+  type ConversionMaterializeRequest as TableConversionMaterializeRequest,
+  type ConversionMaterializeResult as TableConversionMaterializeResult,
+  type ConversionRecord as TableConversionRecord,
+  type ConversionSnapshot as TableConversionSnapshot,
+  type ConversionStatus as TableConversionStatus,
+  type ConversionTarget as TableConversionTarget,
+  type ConvertTableInput as TableConvertInput,
+  type ConvertTableResult as TableConvertResult,
+} from './TableArtifactConversionService.js';
 export { default as TableContextService } from './TableContextService.js';
 export {
   type QaAxisDetail,

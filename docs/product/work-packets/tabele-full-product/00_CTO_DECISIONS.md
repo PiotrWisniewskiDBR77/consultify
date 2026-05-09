@@ -237,9 +237,50 @@ Project Backlog, Interview Tracker, Workshop Output Table, Digital Transformatio
 
 ---
 
+## Q15 — Block D Conversion entry-point in MELS right rail (decided 2026-05-08)
+
+**Decision:** Reuse the existing `share` right-rail tool for Block D's "Convert to Doc / Deck" actions. Do NOT introduce a new `conversions` tool. The `share` panel hosts a "Conversions" section above the existing share controls.
+
+**Reasoning:**
+- The MELS right-rail tool taxonomy is fixed at 7 tools (`search`, `ai-editor`, `qa-report`, `source-pack`, `layout`, `share`, `analytics`). Adding an 8th would push the icon strip past the agreed 7-icon ceiling.
+- Conversions are conceptually a "share" action (Tabele → Doc/Deck → distribute), so the semantic stretch is minimal.
+- Hosting in `share` keeps Block D's UI surface contained and avoids touching the right-rail tool registry.
+- Alternative (`presenceSlot` in top bar) would violate `.cursor/rules/ai-actions-menu3.mdc` because conversion calls `AiUsageService` and is therefore an AI action.
+
+**Risk:** Users may not discover conversions inside the share panel. Mitigation: D-S5 trial validates discoverability; if heatmap shows < 5 % click-through, file `TBL-FU-D-RIGHT-RAIL-CONVERSIONS-TOOL` for a dedicated tool in a follow-up program.
+
+---
+
+## Q16 — Block D V8 snapshot adapter (decided 2026-05-08)
+
+**Decision:** Build a thin adapter inside `TableArtifactConversionService` that translates `tp_source_packs.v8_snapshot` (records + fields) into the explicit `sourceType: 'tabele_table'` + `sourceId` parameters that `artifactRegistryService.materializeArtifactRun` already accepts. Do NOT extend `SNAPSHOT_SOURCE_KIND_TO_*` registries with `source_pack_create`.
+
+**Reasoning:**
+- `tp_source_packs.v8_snapshot` and `ContextSnapshot.sourceContextRefs` are different axes of the V8 contract. Forcing one into the other would couple Block D's conversion path to the chat-snapshot pipeline forever.
+- The existing materialize pipeline already accepts explicit `sourceType` + `sourceId`. Conversion is a one-liner translation, not a registry change.
+- A new audit table `tp_table_conversions` records every conversion (status, target, source pack, artifact run id) — sufficient for replay without persisting a new V8 kind.
+
+**Risk:** Source-pack snapshot drift over time (records change after pack is created). Mitigation: pack snapshots are immutable by Block C contract; conversion uses the snapshot at pack-create time, not the live records — explicitly documented in `TableArtifactConversionService` JSDoc.
+
+---
+
+## Q17 — Block D public form auth (decided 2026-05-08)
+
+**Decision:** Add a parallel JWT-tokenized public route `/api/table-platform/public/forms/jwt/:token/submit` alongside the existing slug-based `publicFormRouter`. Slug router stays for backward compatibility. New consultants get JWT URLs by default. Field allow-list and rate limit (10 / IP / minute, 100 / IP / hour) ship in the same migration.
+
+**Reasoning:**
+- Replacing the slug router would break every existing public share link in production.
+- JWT tokens give per-recipient auditability and hard expiry that slugs cannot.
+- Field allow-list (`tp_forms.field_allow_list JSONB`) prevents the over-collection vulnerability flagged in the Block D risk register (D-S1: public form data leak).
+- Public rate limit on submission endpoints closes the third Block D leak vector (form spam).
+
+**Risk:** Two public form code paths increases surface area. Mitigation: both routes funnel through the same `FormService.submitFromPublic(...)` helper that performs allow-list filtering, rate-limit, and provenance tagging. Branch-specific code is limited to auth (slug vs JWT).
+
+---
+
 ## Sign-off
 
-- Decided: 2026-05-07 (CTO mode under user delegation). Q6 / Q7 / Q8 added 2026-05-08 under same delegation ("Ty jetes CTO wiec decyduj"). Q9 / Q10 / Q11 / Q12 / Q13 / Q14 added 2026-05-08 (later same day) under explicit re-delegation ("100% zgody — ty jesteś CTO — więc decyzja należy do ciebie. Działaj zatem").
+- Decided: 2026-05-07 (CTO mode under user delegation). Q6 / Q7 / Q8 added 2026-05-08 under same delegation ("Ty jetes CTO wiec decyduj"). Q9 / Q10 / Q11 / Q12 / Q13 / Q14 added 2026-05-08 (later same day) under explicit re-delegation ("100% zgody — ty jesteś CTO — więc decyzja należy do ciebie. Działaj zatem"). Q15 / Q16 / Q17 added 2026-05-08 (D-S0 audit) under same standing delegation.
 - Reviewer (UI/UX): pending block kick-off.
 - Reviewer (Security): pending block kick-off.
 - Reviewer (QA): pending Sprint 6 of each block.

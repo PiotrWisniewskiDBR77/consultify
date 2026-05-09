@@ -8,6 +8,7 @@ import {
   ExternalLink,
   FileText,
   Globe,
+  KeyRound,
   Loader2,
   Lock,
   Plus,
@@ -21,8 +22,10 @@ import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField } from '@/types/tablePlatform';
+import { isTabeleFormIntakeEnabled } from '@/utils/tabeleFormIntakeFlag';
 
 import FormBuilder from '../FormBuilder';
+import { IntakeJwtPanel } from './IntakeJwtPanel';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,6 +72,8 @@ export function FormsIndex({
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [shareMenuId, setShareMenuId] = useState<string | null>(null);
+  const [intakeFormId, setIntakeFormId] = useState<string | null>(null);
+  const intakeEnabled = isTabeleFormIntakeEnabled();
 
   const loadForms = useCallback(async () => {
     setLoading(true);
@@ -389,6 +394,18 @@ export function FormsIndex({
                   </a>
                 )}
 
+                {/* Manage intake (private JWT links) — gated by Tabele form-intake flag */}
+                {intakeEnabled && (
+                  <button
+                    onClick={() => setIntakeFormId(form.id)}
+                    className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                    title={t('formsIndex.manageIntake', 'Manage intake (private link)')}
+                    data-testid={`forms-index-manage-intake-${form.id}`}
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                  </button>
+                )}
+
                 <div className="flex-1" />
 
                 {/* Edit */}
@@ -433,6 +450,34 @@ export function FormsIndex({
           );
         })}
       </div>
+
+      {intakeFormId
+        ? (() => {
+            const form = forms.find((f) => f.id === intakeFormId);
+            if (!form) return null;
+            const configuredFields = (form.config?.fields ?? [])
+              .map((fc: any) => {
+                const fieldId = String(fc?.fieldId ?? '');
+                if (!fieldId) return null;
+                const platformField = tableFields.find((tf) => tf.id === fieldId);
+                return {
+                  fieldId,
+                  label: String(fc?.label ?? platformField?.name ?? fieldId),
+                };
+              })
+              .filter(
+                (entry): entry is { fieldId: string; label: string } => entry != null
+              );
+            return (
+              <IntakeJwtPanel
+                formId={form.id}
+                configuredFields={configuredFields}
+                baseUrl={baseUrl}
+                onClose={() => setIntakeFormId(null)}
+              />
+            );
+          })()
+        : null}
     </div>
   );
 }

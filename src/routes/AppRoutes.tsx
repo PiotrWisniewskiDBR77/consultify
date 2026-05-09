@@ -430,6 +430,13 @@ const PublicFormPage = React.lazy(() =>
   }))
 );
 
+// Public JWT Form Page (Table Platform · Block D · D-S4)
+const PublicJwtFormPage = React.lazy(() =>
+  import('@/components/MyWork/table/forms/PublicJwtFormPage').then((m) => ({
+    default: m.PublicJwtFormPage,
+  }))
+);
+
 // Public Shared View (Table Platform)
 const PublicViewPage = React.lazy(() => import('@/components/MyWork/table/PublicViewPage'));
 
@@ -944,6 +951,16 @@ export const AppRoutes: React.FC = () => {
           element={
             <Suspense fallback={<LoadingScreen message="Loading form..." />}>
               <PublicFormPage />
+            </Suspense>
+          }
+        />
+
+        {/* Public JWT Form Page (Block D · D-S4) — no auth required, JWT-tokenized */}
+        <Route
+          path="/public/forms/jwt/:token"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading private form..." />}>
+              <PublicJwtFormPage />
             </Suspense>
           }
         />

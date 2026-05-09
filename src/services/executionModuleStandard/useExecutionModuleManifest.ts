@@ -18,7 +18,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { ExecutionModuleNotFoundError, fetchExecutionModuleManifest } from './api';
+import {
+  ExecutionModuleNotFoundError,
+  fetchExecutionModuleManifest,
+} from './api';
 import type { ExecutionModuleId, ExecutionModuleManifest } from './types';
 
 // =============================================================================

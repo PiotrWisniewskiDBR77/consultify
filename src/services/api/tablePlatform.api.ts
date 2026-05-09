@@ -1989,3 +1989,219 @@ export async function markSourcePackUsed(
   const data = await handleResponse<any>(res, 'Failed to mark source pack used');
   return unwrapDataEnvelope(data);
 }
+
+// ============================================================================
+// TABLE ARTIFACT CONVERSION API (Block D · Sprint D-S1)
+// ============================================================================
+
+export type TableConversionTarget = 'document' | 'presentation';
+
+export type TableConversionStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'cancelled';
+
+export interface TableConversionOutlineHint {
+  heading: string;
+  bodyHint?: string;
+}
+
+export interface TableConvertInput {
+  workspaceId: string;
+  target: TableConversionTarget;
+  sourcePackId?: string;
+  title?: string;
+  outline?: TableConversionOutlineHint[];
+  liveRecordCap?: number;
+}
+
+export interface TableConvertResult {
+  conversionId: string;
+  status: TableConversionStatus;
+  artifactRunId: string | null;
+  artifactDeepLink: string | null;
+  sourcePackId: string | null;
+}
+
+export interface TableConversionRecord {
+  id: string;
+  organizationId: string;
+  workspaceId: string;
+  tableId: string;
+  sourcePackId: string | null;
+  target: TableConversionTarget;
+  title: string | null;
+  outline: TableConversionOutlineHint[] | null;
+  status: TableConversionStatus;
+  artifactRunId: string | null;
+  artifactDeepLink: string | null;
+  initiatedBy: string;
+  initiatedAt: string;
+  completedAt: string | null;
+  failureReason: string | null;
+  failureStage: string | null;
+}
+
+export async function convertTable(
+  tableId: string,
+  input: TableConvertInput
+): Promise<TableConvertResult> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/convert`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to convert table');
+  return unwrapDataEnvelope(data);
+}
+
+export async function getTableConversion(
+  conversionId: string
+): Promise<TableConversionRecord> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/table-conversions/${encodeURIComponent(conversionId)}`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to fetch conversion');
+  return unwrapDataEnvelope(data);
+}
+
+export async function listTableConversions(
+  tableId: string,
+  options?: { status?: TableConversionStatus; limit?: number }
+): Promise<TableConversionRecord[]> {
+  const params = new URLSearchParams();
+  if (options?.status) params.set('status', options.status);
+  if (options?.limit != null) params.set('limit', String(options.limit));
+  const url = `${BASE_PATH}/tables/${encodeURIComponent(tableId)}/conversions${
+    params.toString() ? `?${params.toString()}` : ''
+  }`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  const data = await handleResponse<any>(res, 'Failed to list conversions');
+  return unwrapDataEnvelope<TableConversionRecord[]>(data) ?? [];
+}
+
+// ============================================================================
+// FORM INTAKE (JWT) API (Block D · Sprint D-S2 / D-S4)
+// ============================================================================
+
+export type FormIntakeKind = 'slug' | 'jwt';
+
+export interface FormIntakeContext {
+  formId: string;
+  formSlug: string;
+  /** Either embed_target_table_id (when set) or the form's own table_id. */
+  targetTableId: string;
+  /** When NULL, the configured form fields are accepted as-is. */
+  fieldAllowList: string[] | null;
+  publicLinkExpiresAt: string | null;
+  isPublished: boolean;
+}
+
+export interface IssueFormIntakeJwtInput {
+  subject: string;
+  expiresInSeconds?: number;
+  hardExpiresAt?: string;
+}
+
+export interface IssuedFormIntakeJwt {
+  token: string;
+  expiresAt: string;
+}
+
+/** Admin: fetch the JWT-intake context for a form (target table + allow-list). */
+export async function getFormIntakeContext(formId: string): Promise<FormIntakeContext> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake`,
+    { headers: getHeaders() }
+  );
+  const data = await handleResponse<any>(res, 'Failed to fetch form intake context');
+  return unwrapDataEnvelope(data);
+}
+
+/** Admin: issue a JWT link for a recipient. */
+export async function issueFormIntakeJwt(
+  formId: string,
+  input: IssueFormIntakeJwtInput
+): Promise<IssuedFormIntakeJwt> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake/jwt`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to issue intake JWT');
+  return unwrapDataEnvelope(data);
+}
+
+/** Admin: replace the field allow-list. Pass `null` to fall back to the form's
+ *  configured fields (no filter applied). */
+export async function setFormIntakeAllowList(
+  formId: string,
+  allowList: string[] | null
+): Promise<FormIntakeContext> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/forms/${encodeURIComponent(formId)}/intake/allow-list`,
+    {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ allowList }),
+    }
+  );
+  const data = await handleResponse<any>(res, 'Failed to update allow list');
+  return unwrapDataEnvelope(data);
+}
+
+/** Public (no auth): resolve the JWT and return the form context.
+ *  Mirrors `getPublicForm(slug)` but verifies a JWT instead. */
+export async function getPublicFormByJwt(token: string): Promise<{
+  formId: string;
+  formSlug: string;
+  targetTableId: string;
+  fieldAllowList: string[] | null;
+  publicLinkExpiresAt: string | null;
+  /** Form metadata returned via the slug-based endpoint to render fields.
+   *  Fetched lazily by the caller via `getPublicForm(formSlug)`. */
+}> {
+  const res = await fetch(`${BASE_PATH}/public/forms/jwt/${encodeURIComponent(token)}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as any).error || 'Form not found');
+  }
+  const json = await res.json();
+  return json.data ?? json;
+}
+
+/** Public (no auth): submit a form via JWT path. */
+export async function submitPublicFormByJwt(
+  token: string,
+  data: Record<string, unknown>
+): Promise<{ recordId: string }> {
+  const res = await fetch(
+    `${BASE_PATH}/public/forms/jwt/${encodeURIComponent(token)}/submit`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data }),
+    }
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const code = (body as any)?.code;
+    const message =
+      (body as any).error ||
+      (code === 'RATE_LIMITED'
+        ? 'Submission rate limit exceeded'
+        : 'Submission failed');
+    throw new Error(message);
+  }
+  const json = await res.json();
+  return json.data ?? json;
+}

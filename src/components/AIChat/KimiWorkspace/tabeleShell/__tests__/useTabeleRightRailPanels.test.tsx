@@ -36,6 +36,9 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
   listSourcePacksForTable: vi.fn().mockResolvedValue([]),
   listSourcePacksForWorkspace: vi.fn().mockResolvedValue([]),
   markSourcePackUsed: vi.fn(),
+  convertTable: vi.fn(),
+  listTableConversions: vi.fn().mockResolvedValue([]),
+  getTableConversion: vi.fn(),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -60,6 +63,7 @@ const Probe: React.FC<{
       <div data-testid="qa-slot">{rightRailPanels.qaReport ?? null}</div>
       <div data-testid="ai-slot">{rightRailPanels.aiEditor ?? null}</div>
       <div data-testid="source-pack-slot">{rightRailPanels.sourcePack ?? null}</div>
+      <div data-testid="share-slot">{rightRailPanels.share ?? null}</div>
     </div>
   );
 };
@@ -75,18 +79,20 @@ describe('useTabeleRightRailPanels', () => {
     expect(screen.getByTestId('panels-active')).toHaveTextContent('false');
   });
 
-  it('renders all three panels when forced enabled with tableId and workspaceId', () => {
+  it('renders all four panels when forced enabled with tableId and workspaceId', () => {
     render(<Probe tableId="tbl-1" workspaceId="ws-1" forced />);
     expect(screen.getByTestId('panels-active')).toHaveTextContent('true');
     expect(screen.getByTestId('tabele-qa-panel')).toBeInTheDocument();
     expect(screen.getByTestId('tabele-ai-editor-panel')).toBeInTheDocument();
     expect(screen.getByTestId('tabele-source-pack-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('tabele-share-panel')).toBeInTheDocument();
   });
 
-  it('omits AI Editor and Source Pack panels when workspaceId is missing', () => {
+  it('omits AI Editor, Source Pack, and Share panels when workspaceId is missing', () => {
     render(<Probe tableId="tbl-1" workspaceId={null} forced />);
     expect(screen.queryByTestId('tabele-ai-editor-panel')).toBeNull();
     expect(screen.queryByTestId('tabele-source-pack-panel')).toBeNull();
+    expect(screen.queryByTestId('tabele-share-panel')).toBeNull();
     // QA still renders since it only needs a tableId.
     expect(screen.getByTestId('tabele-qa-panel')).toBeInTheDocument();
   });

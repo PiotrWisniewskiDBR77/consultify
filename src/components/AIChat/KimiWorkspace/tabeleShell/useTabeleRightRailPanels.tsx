@@ -22,11 +22,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import type { AiEditorLevel, QaSuggestion, SourcePack } from '@/services/api/tablePlatform.api';
 import { isTabeleAiEditorEnabled } from '@/utils/tabeleAiEditorFlag';
+import { isTabeleConversionsEnabled } from '@/utils/tabeleConversionsFlag';
 import { isTabeleQaEnabled } from '@/utils/tabeleQaFlag';
 import { isTabeleSourcePackEnabled } from '@/utils/tabeleSourcePackFlag';
 
 import { TabeleAiEditorPanel } from './aiEditor/TabeleAiEditorPanel';
 import { TabeleQaPanel } from './qa/TabeleQaPanel';
+import { TabeleSharePanel } from './share/TabeleSharePanel';
 import { TabeleSourcePackPanel } from './sourcePack/TabeleSourcePackPanel';
 import type { TabeleRightRailPanelRenderers } from './TabeleRightRail';
 
@@ -91,6 +93,7 @@ export function useTabeleRightRailPanels(
   const aiEditorEnabled = forceEnableForTesting === true || isTabeleAiEditorEnabled();
   const qaEnabled = forceEnableForTesting === true || isTabeleQaEnabled();
   const sourcePackEnabled = forceEnableForTesting === true || isTabeleSourcePackEnabled();
+  const conversionsEnabled = forceEnableForTesting === true || isTabeleConversionsEnabled();
 
   const handleOpenInAiEditor = useCallback((s: QaSuggestion) => {
     presetCounter.current += 1;
@@ -136,6 +139,9 @@ export function useTabeleRightRailPanels(
         />
       );
     }
+    if (conversionsEnabled && workspaceId) {
+      panels.share = <TabeleSharePanel tableId={tableId} workspaceId={workspaceId} />;
+    }
     return panels;
   }, [
     tableId,
@@ -143,6 +149,7 @@ export function useTabeleRightRailPanels(
     qaEnabled,
     aiEditorEnabled,
     sourcePackEnabled,
+    conversionsEnabled,
     isSuperAdmin,
     handleOpenInAiEditor,
     handleUsePackInAiEditor,
@@ -152,7 +159,10 @@ export function useTabeleRightRailPanels(
   return {
     rightRailPanels,
     panelsActive: Boolean(
-      rightRailPanels.qaReport || rightRailPanels.aiEditor || rightRailPanels.sourcePack
+      rightRailPanels.qaReport ||
+        rightRailPanels.aiEditor ||
+        rightRailPanels.sourcePack ||
+        rightRailPanels.share
     ),
   };
 }

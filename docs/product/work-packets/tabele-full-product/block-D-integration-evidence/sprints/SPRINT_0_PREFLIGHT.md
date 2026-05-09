@@ -2,8 +2,9 @@
 
 **Sprint ID:** `D-S0`
 **Owner:** Orchestrator
-**Status:** `PLANNED`
+**Status:** `EXECUTED — GO`
 **Estimate:** ~0.5 day
+**Closed:** 2026-05-08
 
 ## Goal
 
@@ -34,9 +35,15 @@ D-T1 (V8 drift), D-S1 (public form data leak).
 
 ## Sprint Entry Gate
 
-- [ ] Block C `03_BLOCK_CLOSEOUT.md` shows `GO`.
+- [x] Block C `03_BLOCK_CLOSEOUT.md` shows `GO_WITH_CONSTRAINTS` (acceptable per program rules — feature flags off by default).
 
 ## Sprint Exit Gate
 
-- [ ] Audits complete.
-- [ ] Recommendation: `GO` to S1.
+- [x] Audits complete (intent routing, V8 contracts, public form).
+- [x] CTO decisions Q15–Q17 locked in `00_CTO_DECISIONS.md`.
+- [x] Migration plans signed off (`20260512_block_d_table_conversions.sql`, `20260513_block_d_form_intake.sql`).
+- [x] Recommendation: `GO` to D-S1.
+
+## Outcome
+
+`GO` to D-S1. See `evidence/sprint-0/exit-recommendation.md`.

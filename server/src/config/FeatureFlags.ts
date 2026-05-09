@@ -26,6 +26,8 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TABLE_AI_EDITOR: z.boolean().default(false),
   ENABLE_TABLE_QA_ENGINE: z.boolean().default(false),
   ENABLE_TABLE_SOURCE_PACK: z.boolean().default(false),
+  ENABLE_TABLE_ARTIFACT_CONVERSION: z.boolean().default(false),
+  ENABLE_TABLE_FORM_INTAKE_JWT: z.boolean().default(false),
   ENABLE_V8_GLOBAL: z.boolean().default(false),
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
 });
@@ -85,6 +87,19 @@ export function loadFeatureFlags(): FeatureFlags {
     // until C-S6 frontend lands; the route layer still applies cross-tenant
     // defenses so backend QA can exercise the pipeline.
     ENABLE_TABLE_SOURCE_PACK: process.env.ENABLE_TABLE_SOURCE_PACK === 'true',
+
+    // Block D (Table → Doc/Deck Conversion): bridges Tabele tables into
+    // Document Studio v1 / DeckBuilder. Disabled by default until D-S3 ships
+    // the lane UI; backend route still applies tenant guards so QA can
+    // exercise the pipeline before the UI surface lands.
+    ENABLE_TABLE_ARTIFACT_CONVERSION: process.env.ENABLE_TABLE_ARTIFACT_CONVERSION === 'true',
+
+    // Block D (Form Intake JWT): per-recipient JWT links + field allow-list
+    // + public submission rate limit on top of the existing slug-based
+    // public form router. Disabled by default until D-S4 ships the
+    // recipient form page; the slug router stays live for backward
+    // compatibility regardless of this flag.
+    ENABLE_TABLE_FORM_INTAKE_JWT: process.env.ENABLE_TABLE_FORM_INTAKE_JWT === 'true',
 
     // V8: global kill switch for all V8 features
     ENABLE_V8_GLOBAL: process.env.ENABLE_V8_GLOBAL === 'true',

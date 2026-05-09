@@ -2,9 +2,10 @@
 
 **Sprint ID:** `D-S2`
 **Owner:** Agent A
-**Status:** `PLANNED`
+**Status:** `EXECUTED — GO`
 **Estimate:** ~1.5 days
 **Epic:** EPIC-T14
+**Closed:** 2026-05-08
 
 ## Goal
 
@@ -36,10 +37,18 @@ D-S1 (public form data leak), D-S2 (JWT secret leak), D-T5 (form abuse).
 - `consultify/server/src/services/tablePlatform/index.ts`
 - `consultify/server/src/index.ts` (mount routes)
 
+## CTO decisions applied
+
+- **Q17**: parallel JWT route alongside slug router. Slug router untouched; new route lives at `/api/table-platform/public/forms/jwt/:token`.
+
 ## Sprint Exit Gate
 
-- [ ] Public route mounted under `/api/public/forms/...` (no auth middleware).
-- [ ] All security tests green: JWT expiry, allow-list, rate limit.
-- [ ] Cross-tenant 403 on admin endpoints.
-- [ ] Audit log on every public submission.
-- [ ] Recommendation: `GO` to S3.
+- [x] Public route mounted under `/api/table-platform/public/forms/jwt/...` (no auth middleware).
+- [x] All security tests green: JWT expiry, allow-list, rate limit.
+- [x] Cross-tenant 403 on admin endpoints.
+- [x] Audit log on every public submission (accepted / rejected / rate-limited).
+- [x] Recommendation: `GO` to D-S3.
+
+## Outcome
+
+`GO` to D-S3. See `evidence/sprint-2/validation-matrix-run.md`.
