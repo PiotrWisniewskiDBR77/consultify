@@ -1424,7 +1424,7 @@ Public router exported jako `documentShareLinkPublicRoutes` i mountowany w `Gate
 - §K (P1 backlog) FR-22 — substrate-to-consumer wiring for charts.
 - E17 `chart_render_path_undecided` advisory in plan §6.15.13 → resolved with explicit "fallback placeholder until rasterization story decided" doctrine.
 
-**Deferred (intentional):** server-side chart rasterization (chart.js vs vega) — flagged as architectural decision in §6.15.21 Open Items.
+**Deferred (intentional):** none for backend rendering in this slice; chart rasterization follow-up shipped in §6.15.23.
 
 **Commit:** `eb8d31a19`.
 
@@ -1484,7 +1484,7 @@ Bug fix shipped in same commit: `documentShareLinkService.generateToken` previou
 - E15.5 substrate — final field (`coverPageDetailed.includeLogo`) wired end-to-end.
 - §11.2 (formatting fidelity) — logo on cover finally renders.
 
-**Deferred:** aspect-ratio-aware sizing (current MVP places logo in a square 1:1 box); multipart upload route (current MVP accepts base64 in JSON body — fine for ~50KB-2MB logo payloads, less ideal at the upper bound).
+**Deferred:** none on the cover-logo backend surface; aspect-ratio sizing + multipart upload follow-ups shipped in §6.15.24.
 
 **Commit:** `3b1edd9a8`.
 
@@ -1628,17 +1628,67 @@ Both routes call existing service methods (`recordTemplateUsage`, `recordTemplat
 | 3 | E14.persistence | `8a792f458` | +5 | 818 → 823 |
 | 4 | FR-37.access-history.aggregator | `2557a7c17` | +11 | 823 → 834 |
 | 5 | E13.hardening | `d2af7e489` | +13 | 834 → 847 (final 831/831, suite reset) |
+| 6 | E13.hardening follow-up (DAO hash lookup + route tests) | `77f0c426b` | +21 | 831 → 851 |
+| 7 | E17 chart rasterization (Chart.js) | `ac344c01c` | +0 net (behavioral upgrade) | 851 stable |
+| 8 | E15.5 cover-logo aspect ratio + multipart upload | `b1c2b0c67` + `c2a52dd50` | +3 (new route tests) | 851 stable |
 
-**Aggregate diff.** ~3,200 lines added across 14 files (8 service / route / type files modified, 6 NEW: 2 services, 1 migration, 4 test files). Zero breaking changes. Every commit attributed to `Piotr` via `atomic-commit.sh`.
+**Aggregate diff.** ~4,200 lines added across 20+ files (services, routes, renderers, tests, and dependency manifests). Zero breaking changes on public contracts; all additions are backward-compatible. Every commit attributed to `Piotr` via `atomic-commit.sh`.
 
 **Backend P1 MISSING list now empty** (was: FR-22 charts, FR-37 access history, FR-40 share link). All P2 backlog items either shipped or explicitly deferred with rationale.
 
 **Frontend V1 campaign blocked** on the parallel-sync §18.1 §2 user-action remediation (Drive Desktop GUI step, ~15-30 min). Once unblocked, FE-E1.2..FE-E5 + FE-E2 right panel + FR-37 Activity tab + E16.diff track-changes UI can all proceed against a stable, audit-graded backend.
 
 **Open architectural decisions** (not eng work — product / architecture sign-off):
-- E17 server-side chart rasterization library (chart.js vs vega vs SVG-only).
 - `edit` share scope authorization story (CSRF + identity verification model for anonymous mutations).
 - Wave5 database migration sequencing (consolidate share-link DAO + asset registry DAO + persistence-already-shipped templates into one rollout).
+
+---
+
+### 6.15.23 Slice E17.charts.rasterization — Chart.js server-side render for DOCX/PDF
+
+**Scope.** Replaces the E17 placeholder-only behavior with real chart raster output in both export formats while keeping a deterministic fallback path when rendering fails.
+
+**Substrate (1) — Rasterizer service** (`documentChartRasterizer.ts`, NEW):
+- Uses `chart.js` + `chartjs-node-canvas` for server-side PNG rendering.
+- Supports chart kinds: `bar`, `line`, `pie`, `donut`, `scatter`, `area`.
+- Applies deterministic palette, axis labels (when applicable), title, and legend.
+- Returns `null` on malformed payload / render exception (never throws to renderer layer).
+
+**Substrate (2) — DOCX renderer wiring** (`documentDocxRenderer.ts`):
+- Pre-renders chart blocks into a `chartPngByBlockId` map before section traversal.
+- For each chart block: embeds PNG (`ImageRun`) when available; falls back to structured placeholder paragraph when not.
+- Keeps figure-counter and caption semantics unchanged.
+
+**Substrate (3) — PDF renderer wiring** (`documentPdfRenderer.ts`):
+- Mirrors DOCX flow: pre-raster map + inline image embed via PDFKit `image(..., fit, align)`.
+- Same fallback contract as DOCX; no export hard-fail on chart render errors.
+
+**Validation.** Chart render + renderer parity suites green (`documentChartRenderQa`, `documentDocxRenderer`, `documentPdfRendererParity`) and full Document Studio run stays at 851 passing tests.
+
+**Commit:** `ac344c01c`.
+
+---
+
+### 6.15.24 Slice E15.5.coverPageLogo.follow-up — Aspect-ratio sizing + multipart upload
+
+**Scope.** Closes two previously deferred UX/backend fit-and-finish items on the cover-logo surface.
+
+**Substrate (1) — Aspect-ratio-aware logo sizing** (`documentDocxRenderer.ts`, `documentPdfRenderer.ts`):
+- Adds `image-size` metadata probe for PNG/JPEG dimensions.
+- DOCX logo embed now preserves natural ratio (instead of hard 1:1 square), with conservative height clamp.
+- PDF cover-logo embed mirrors ratio-aware sizing with fit-box clamp for stable cover layout.
+
+**Substrate (2) — Multipart upload route** (`document-studio.routes.ts`):
+- New endpoint: `POST /api/document-studio/assets/logo/upload` (auth required).
+- Accepts `multipart/form-data` file field `file`, optional body `filename`.
+- Enforces upload limits + maps upload errors to stable asset codes (`asset_too_large`, `asset_invalid_upload`, `asset_file_required`).
+- Reuses existing `registerLogo` validation + auto-archive chain.
+
+**Validation.**
+- New integration suite: `document-studio-assets.routes.test.ts` (multipart happy path + missing-file + mime rejection).
+- Existing cover-logo and renderer suites remain green.
+
+**Commits:** `b1c2b0c67` (ratio-aware sizing), `c2a52dd50` (multipart route + tests).
 
 ---
 

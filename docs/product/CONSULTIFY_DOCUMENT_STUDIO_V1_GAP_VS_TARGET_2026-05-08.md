@@ -797,7 +797,7 @@ This section records the five-slice "CTO pit stop" closeout that brought the V1 
 
 | Gap row (original) | Status | Shipped by |
 | --- | --- | --- |
-| FR-22 charts (P1, MISSING) | ✅ DELIVERED (placeholder render + QA) | Slice E17.charts (`eb8d31a19`) |
+| FR-22 charts (P1, MISSING) | ✅ DELIVERED (real raster render + QA) | Slices E17.charts + E17.rasterization (`eb8d31a19` + `ac344c01c`) |
 | FR-37 access history aggregator (P1, MISSING) | ✅ DELIVERED (backend) | Slice FR-37 (`2557a7c17`) |
 | FR-40 share-link surface (P1, MISSING) | ✅ DELIVERED (backend, incl. hardening) | Slices E13.1 + E13.hardening (`a4ae18a65` + `d2af7e489`) |
 | E14 template product-fields persistence (P2) | ✅ DELIVERED | Slice E14.persistence (`8a792f458`) |
@@ -806,9 +806,9 @@ This section records the five-slice "CTO pit stop" closeout that brought the V1 
 | E13 token rotation route (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
 | E13 `download` access scope (P2) | ✅ DELIVERED | Slice E13.hardening (`d2af7e489`) |
 | E13 `edit` access scope (P2) | 🔶 DEFERRED | Open product decision (anon-mutation auth story) |
-| FR-22 server-side chart rasterization | 🔶 DEFERRED | Open architectural decision (chart.js vs vega) |
-| `coverPageDetailed.includeLogo` aspect ratio | 🔶 DEFERRED | UX polish, MVP uses 1:1 box |
-| `coverPageDetailed.includeLogo` multipart upload | 🔶 DEFERRED | UX polish, MVP accepts base64-in-JSON |
+| FR-22 server-side chart rasterization | ✅ DELIVERED | Slice E17.rasterization (`ac344c01c`) |
+| `coverPageDetailed.includeLogo` aspect ratio | ✅ DELIVERED | Slice E15.5 follow-up (`b1c2b0c67`) |
+| `coverPageDetailed.includeLogo` multipart upload | ✅ DELIVERED | Slice E15.5 follow-up (`c2a52dd50`) |
 
 **Backend V1 MISSING list is empty.** Every row in §C.4 §0 (P1) and §K (P2) is either shipped or carries explicit deferral rationale tied to a product / architecture decision rather than engineering capacity.
 
@@ -816,12 +816,12 @@ This section records the five-slice "CTO pit stop" closeout that brought the V1 
 
 | Metric | Pre-campaign | Post-campaign |
 | --- | --- | --- |
-| Document Studio test files | ~62 | 68 |
-| Document Studio specs | 787 | 831 |
+| Document Studio test files | ~62 | 71 |
+| Document Studio specs | 787 | 854 |
 | Document Studio P1 backend MISSING gaps | 3 | 0 |
-| Document Studio P2 backend gaps | 6 | 1 (open product) + 2 (UX polish) |
+| Document Studio P2 backend gaps | 6 | 1 (open product) |
 
-Full Document Studio sweep: **831/831 green across 68 files** (last verified post Slice E13.hardening). Aggregate suite count grew by ~60 specs across 14 modified files + 6 NEW files. Zero breaking changes; every consumer-facing surface either accepts new optional parameters or extends an existing enum additively.
+Full Document Studio sweep remains green after post-closeout follow-ups (share-link DAO/hash hardening, chart rasterization, cover-logo ratio + multipart route). Aggregate suite count is now **854 specs across 71 files**. Zero breaking changes; every consumer-facing surface either accepts new optional parameters or extends an existing enum additively.
 
 ### 21.3 What V1 backend ships (acceptance contract)
 
@@ -829,7 +829,7 @@ A consumer of the Document Studio V1 backend can:
 
 1. **Generate** documents through the existing planner / generator pipeline (unchanged).
 2. **Render** them to DOCX or PDF with full E15.5 formatting fidelity — heading styles, header content, footer page numbering, TOC depth, full cover page (incl. logo).
-3. **Embed charts** as structured placeholders with deterministic figure-counter advancement (rasterization upgrade is a swap-the-renderer concern when the library decision is made).
+3. **Embed charts** as real rendered images in DOCX/PDF (Chart.js server-side rasterization), with deterministic fallback placeholders when rendering fails.
 4. **Persist + discover templates** with usage / feedback / persona / region / brand / dependency tags surviving process restart and feeding the discovery sort path.
 5. **Share** an artifact with an external party via tenant-scoped, time-boxed, scope-controlled (`read | comment | download`) links — with HMAC-hashed tokens, constant-time verification, rotation on demand, idempotent revoke, anti-enumeration consume, and full audit trail.
 6. **Audit** the artifact end-to-end through a unified access-history aggregator that joins direct artifact audit + share-link audit + approval audit chronologically with pagination + source filtering.
@@ -839,7 +839,6 @@ A consumer of the Document Studio V1 backend can:
 
 - Frontend (entire FE-E1.2 .. FE-E5 campaign) — blocked on parallel-sync remediation.
 - DB-backed share-link / asset DAOs — wave5 mechanical migration; in-memory DAOs preserve the public surface verbatim.
-- Server-side chart rasterization — architectural decision pending.
 - `edit` share scope — product decision pending.
 
 ### 21.5 Required user actions before frontend campaign starts
@@ -857,6 +856,6 @@ Everything else can proceed under engineering-only authority: ops can run the `7
 - ✅ 831/831 Document Studio specs green across 68 files.
 - ✅ Lint + typecheck clean across all touched files.
 - ✅ Plan §6.15.17–§6.15.22 + gap §21 document the campaign in audit-grade detail.
-- ✅ Five commits (`eb8d31a19`, `3b1edd9a8`, `8a792f458`, `2557a7c17`, `d2af7e489`) all show clean `Piotr` attribution via `atomic-commit.sh`.
+- ✅ Post-closeout follow-up commits (`77f0c426b`, `ac344c01c`, `b1c2b0c67`, `c2a52dd50`) also show clean `Piotr` attribution via `atomic-commit.sh`.
 - ✅ Backend ships zero breaking changes; every existing call site continues to function unmodified.
 - 🔶 One user action queued (parallel-sync remediation) — required to unblock the frontend V1 campaign, NOT part of backend acceptance.
