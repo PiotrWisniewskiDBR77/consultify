@@ -894,6 +894,97 @@ describe('presentationStudio.routes — POST /generate/preview', () => {
       res.body.data.warnings.some((w: string) => w.includes('[unsupported_intent_for_pptx_export]'))
     ).toBe(true);
   });
+
+  // -----------------------------------------------------------------
+  // Sprint S11 — per-family overrides + PDF parity flag flow through
+  // /generate/preview
+  // -----------------------------------------------------------------
+
+  it('applies the steering_committee family override to the layout audit (S11)', async () => {
+    const router = await importRouter();
+    // 100-char title sits above the canonical balanced cap (90) but below
+    // the Steering Committee override (110).
+    const longTitle = 'X'.repeat(100);
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'family override probe',
+          audience: 'executive',
+          goal: 'inform',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'a',
+              confidence: 0.7,
+              readiness: 'ready',
+            },
+          ],
+        },
+        outline: [
+          {
+            intent: 'executive_summary',
+            title: longTitle,
+            enabled: true,
+            density: 'balanced',
+            sourceRef: 'assessment:art-1',
+          },
+        ],
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    const audit = res.body.data.layoutAudit;
+    expect(audit.flagCounts.layout_overflow_title).toBe(0);
+  });
+
+  it('flags PDF parity in addition to PPTX parity for an unsupported intent (S11)', async () => {
+    const router = await importRouter();
+    const req = createMockReq({
+      url: '/generate/preview',
+      path: '/generate/preview',
+      body: {
+        setup: {
+          title: 'pdf parity probe',
+          audience: 'executive',
+          goal: 'inform',
+          deckType: 'steering_committee',
+          sourceArtifacts: [
+            {
+              type: 'assessment',
+              id: 'art-1',
+              label: 'a',
+              confidence: 0.7,
+              readiness: 'ready',
+            },
+          ],
+        },
+        outline: [
+          {
+            intent: 'mystery_intent',
+            title: 'Mystery slide',
+            enabled: true,
+            density: 'balanced',
+          },
+        ],
+      },
+    });
+    const res = createMockRes();
+    await runRouter(router, 'POST', '/generate/preview', req, res);
+
+    expect(res.statusCode).toBe(200);
+    const audit = res.body.data.layoutAudit;
+    expect(audit.flagCounts.unsupported_intent_for_pptx_export).toBeGreaterThanOrEqual(1);
+    expect(audit.flagCounts.unsupported_intent_for_pdf_export).toBeGreaterThanOrEqual(1);
+    expect(
+      res.body.data.warnings.some((w: string) => w.includes('[unsupported_intent_for_pdf_export]'))
+    ).toBe(true);
+  });
 });
 
 import {

@@ -59,6 +59,7 @@ import {
   TemplatePlanPreviewResponse,
 } from '@/services/api/presentationStudio.api';
 
+import { PresentationStudioLayoutAuditBanner } from './PresentationStudioLayoutAuditBanner';
 import {
   PRESENTATION_STUDIO_SETUP_FORM_DEFAULT,
   PresentationStudioSetupForm,
@@ -713,6 +714,15 @@ export const PresentationStudioPage: React.FC = () => {
             </div>
           </div>
         ) : null}
+
+        {/* Sprint S11: pre-flight layout audit banner. Advisory only,
+            never blocks generation. Sits canvas-side with other status
+            banners so it stays visually adjacent to the Generate CTA in
+            Menu 3 without violating the AI-actions-in-Menu-3 rule. */}
+        <PresentationStudioLayoutAuditBanner
+          audit={state.generate?.layoutAudit ?? null}
+          data-testid="presentation-studio-layout-audit"
+        />
 
         {isEmpty && !state.loading && !state.error ? (
           <div

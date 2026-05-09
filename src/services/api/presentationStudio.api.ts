@@ -181,6 +181,31 @@ export interface TemplatePlanPreviewResponse {
   previewId: string;
 }
 
+/**
+ * Sprint S10/S11 layout audit shape. The backend audits the deterministic
+ * outline for overflow, evidence-discipline, and PDF/PPTX parity issues
+ * and returns one entry per slide plus aggregate flag counts.
+ */
+export type PresentationStudioLayoutAuditFlag =
+  | 'layout_overflow_title'
+  | 'layout_overflow_key_message'
+  | 'layout_overflow_blocks'
+  | 'missing_source_for_evidence_intent'
+  | 'unsupported_intent_for_pptx_export'
+  | 'unsupported_intent_for_pdf_export';
+
+export interface PresentationStudioSlideLayoutAudit {
+  index: number;
+  intent: string;
+  flags: PresentationStudioLayoutAuditFlag[];
+}
+
+export interface PresentationStudioOutlineLayoutAudit {
+  warnings: string[];
+  slideAudits: PresentationStudioSlideLayoutAudit[];
+  flagCounts: Record<PresentationStudioLayoutAuditFlag, number>;
+}
+
 export interface GeneratePreviewResponse {
   outlinePreview: PresentationStudioOutlineItem[];
   estimatedSlideCount: number;
@@ -194,6 +219,8 @@ export interface GeneratePreviewResponse {
   missingInputs: string[];
   warnings: string[];
   wouldGenerate: PresentationStudioWouldGenerate;
+  /** Sprint S10/S11: layout audit findings on the outline preview. */
+  layoutAudit: PresentationStudioOutlineLayoutAudit;
   previewId: string;
 }
 

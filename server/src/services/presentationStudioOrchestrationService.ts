@@ -470,7 +470,9 @@ export function previewPresentationStudioGenerate(
     );
   }
 
-  const layoutAudit = auditPresentationStudioOutlineLayout(outlinePreview);
+  const layoutAudit = auditPresentationStudioOutlineLayout(outlinePreview, {
+    templateFamily: family ?? null,
+  });
 
   const warnings = [
     ...sourcePack.warnings,
@@ -790,7 +792,12 @@ export async function executePresentationStudioGenerate(
   // the preview). Findings merge into `validationWarnings` so the API
   // response, the audit row, and any consumer logging all see the same
   // honest set of layout flags.
-  const layoutAudit = auditPresentationStudioOutlineLayout(generated.outline);
+  // Sprint S11: pass the template family resolved from the setup so the
+  // audit can apply per-family slot capacity overrides.
+  const executeFamily = resolveTemplateFamilyFromSetup(input.setup);
+  const layoutAudit = auditPresentationStudioOutlineLayout(generated.outline, {
+    templateFamily: executeFamily ?? null,
+  });
   const mergedValidationWarnings = [
     ...(generated.validationWarnings || []),
     ...layoutAudit.warnings,

@@ -158,6 +158,24 @@ function fillRequiredFields() {
   });
 }
 
+function makeCleanLayoutAudit() {
+  return {
+    warnings: [],
+    slideAudits: [
+      { index: 0, intent: 'cover', flags: [] },
+      { index: 1, intent: 'executive_summary', flags: [] },
+    ],
+    flagCounts: {
+      layout_overflow_title: 0,
+      layout_overflow_key_message: 0,
+      layout_overflow_blocks: 0,
+      missing_source_for_evidence_intent: 0,
+      unsupported_intent_for_pptx_export: 0,
+      unsupported_intent_for_pdf_export: 0,
+    },
+  };
+}
+
 function makeGeneratePreview(canProceed: boolean) {
   return {
     outlinePreview: [
@@ -179,6 +197,7 @@ function makeGeneratePreview(canProceed: boolean) {
       blockingReasons: canProceed ? [] : ['Strict mode requires source coverage.'],
       strict: !canProceed,
     },
+    layoutAudit: makeCleanLayoutAudit(),
     previewId: 'pssp_org-A_4',
   };
 }
@@ -754,5 +773,96 @@ describe('PresentationStudioPage', () => {
     await waitFor(() => {
       expect(mockedApi.listSourceArtifacts).toHaveBeenCalledTimes(2);
     });
+  });
+
+  // ---------------------------------------------------------------------
+  // Sprint S11 — pre-flight layout audit banner integration on the page.
+  // ---------------------------------------------------------------------
+
+  it('renders the layout audit clean banner after a preview with no findings (S11)', async () => {
+    mockedApi.previewSourcePack.mockResolvedValue(makeHappySourcePack());
+    mockedApi.previewNarrativePlan.mockResolvedValue(makeHappyNarrativePlan());
+    mockedApi.previewTemplatePlan.mockResolvedValue(makeHappyTemplatePlan());
+    mockedApi.previewGenerate.mockResolvedValue(makeGeneratePreview(true));
+
+    render(<PresentationStudioPage />);
+    fillRequiredFields();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
+    });
+
+    const banner = await screen.findByTestId('presentation-studio-layout-audit');
+    expect(banner.getAttribute('data-state')).toBe('clean');
+    expect(banner.textContent).toContain('Layout audit: no findings');
+  });
+
+  it('renders the layout audit warning banner with breakdown after a preview with findings (S11)', async () => {
+    const generateWithFindings = {
+      ...makeGeneratePreview(true),
+      layoutAudit: {
+        warnings: [
+          '[layout_overflow_title] Slide 2 (executive_summary): title is 220 chars; …',
+          '[missing_source_for_evidence_intent] Slide 3 (recommendation_single): …',
+          '[unsupported_intent_for_pdf_export] Slide 4: …',
+        ],
+        slideAudits: [
+          { index: 0, intent: 'cover', flags: [] },
+          { index: 1, intent: 'executive_summary', flags: ['layout_overflow_title' as const] },
+          {
+            index: 2,
+            intent: 'recommendation_single',
+            flags: ['missing_source_for_evidence_intent' as const],
+          },
+          {
+            index: 3,
+            intent: 'mystery_intent',
+            flags: ['unsupported_intent_for_pdf_export' as const],
+          },
+        ],
+        flagCounts: {
+          layout_overflow_title: 1,
+          layout_overflow_key_message: 0,
+          layout_overflow_blocks: 0,
+          missing_source_for_evidence_intent: 1,
+          unsupported_intent_for_pptx_export: 0,
+          unsupported_intent_for_pdf_export: 1,
+        },
+      },
+    };
+
+    mockedApi.previewSourcePack.mockResolvedValue(makeHappySourcePack());
+    mockedApi.previewNarrativePlan.mockResolvedValue(makeHappyNarrativePlan());
+    mockedApi.previewTemplatePlan.mockResolvedValue(makeHappyTemplatePlan());
+    mockedApi.previewGenerate.mockResolvedValue(generateWithFindings);
+
+    render(<PresentationStudioPage />);
+    fillRequiredFields();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('presentation-studio-run-preview'));
+    });
+
+    const banner = await screen.findByTestId('presentation-studio-layout-audit');
+    expect(banner.getAttribute('data-state')).toBe('warnings');
+    expect(banner.textContent).toContain('Layout audit: 3 findings');
+
+    // Toggle expands the breakdown and the per-flag tiles render.
+    const toggle = screen.getByTestId('presentation-studio-layout-audit-toggle');
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
+    expect(
+      screen.getByTestId('presentation-studio-layout-audit-flag-layout_overflow_title')
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('presentation-studio-layout-audit-flag-missing_source_for_evidence_intent')
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId('presentation-studio-layout-audit-flag-unsupported_intent_for_pdf_export')
+    ).toBeTruthy();
+  });
+
+  it('does NOT render the layout audit banner before a preview has run (S11)', () => {
+    render(<PresentationStudioPage />);
+    expect(screen.queryByTestId('presentation-studio-layout-audit')).toBeNull();
   });
 });

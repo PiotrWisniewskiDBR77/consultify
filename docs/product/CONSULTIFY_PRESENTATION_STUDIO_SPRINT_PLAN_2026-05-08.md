@@ -1023,3 +1023,75 @@ S10 introduces a **deterministic, pure-function layout audit pass** that is run 
   - Surface `layoutAudit.flagCounts` in the Studio Surface UI as a non-blocking pre-flight banner adjacent to the Generate CTA.
   - PDF export parity: extend `unsupported_intent_for_pptx_export` to also flag intents not in the PDF pipeline's supported set (currently both pipelines align, but the audit should enforce this independently).
 
+## Phase 2 — Sprint S11 gate (Layout audit hardening + UI surface / 2026-05-09)
+
+**Gate**: closed → committed under `19ff0a01d..HEAD` on `staging`.
+
+### Scope landed in S11
+
+Cross-reference: master sprint map WP-06 carry / MT-PRES-039 / MT-PRES-040. Backend + Frontend. No DB migrations. Approval-ticket invariant preserved. The audit remains advisory and never blocks generation.
+
+S11 closes two of the three S10 follow-up risks (R-S10-1: per-template-family overrides; new structural PDF parity check) and ships the first user-facing surface for the audit (a non-blocking pre-flight banner that sits canvas-side, never inside Menu 3, per the AI-actions-in-Menu-3 workspace rule). Per-slot density (R-S10-2) is intentionally deferred — it requires extending `OutlineItem` and the generator and is scoped for S12.
+
+### Changes
+
+- `consultify/server/src/services/presentationStudioLayoutAuditService.ts`
+  - Added `unsupported_intent_for_pdf_export` to `LayoutAuditFlag` and `flagCounts`.
+  - Added `PDF_SUPPORTED_INTENTS` (mirrors PPTX 1:1 today; tracked separately so a future PDF-only divergence is caught at the moment of divergence, not at the moment a customer sees a blank slide). Added the corresponding test-only export.
+  - Added `TEMPLATE_FAMILY_BUDGET_OVERRIDES` keyed by canonical TemplateFamily display names. Conservative bumps for three families calibrated against the existing masters: `Steering Committee Deck` (extended balanced + document caps), `Board Decision Deck` (extended balanced cap), `DRD Diagnostic Deck` (extended document cap). Other families fall back to the canonical `DENSITY_BUDGETS`.
+  - Added `FAMILY_ALIAS_BY_DECK_TYPE` mirroring `FAMILY_BY_DECK_TYPE` from the runtime service so raw deck-type strings (e.g. body sets `deckType: 'steering_committee'`) normalize to canonical family display names. Drift between the two maps is guarded by a unit test.
+  - Added `normalizeTemplateFamily` + `resolveSlotCapacity`. `auditPresentationStudioOutlineLayout` now accepts an optional second arg `{ templateFamily }` that flows through both code paths.
+  - Test-only exports `_pdfSupportedIntentsForTests`, `_templateFamilyOverridesForTests`, `_familyAliasByDeckTypeForTests` for drift-guards.
+- `consultify/server/src/services/presentationStudioOrchestrationService.ts`
+  - Both `previewPresentationStudioGenerate` and `executePresentationStudioGenerate` now pass `{ templateFamily: family }` (resolved from the deck-type / explicit family on `setup`) into the audit, so per-family overrides apply on both code paths.
+- `consultify/server/src/services/__tests__/presentationStudioLayoutAuditService.test.ts`
+  - +7 tests covering: override raises Steering Committee balanced title cap; raw deck-type alias normalization; non-overridden family still flags; override map is keyed only by canonical TemplateFamily names AND every alias resolves to one of those canonical names; PPTX/PDF parity-set symmetry; PDF parity flag fires on unsupported intents; canonical SlideIntents do NOT fire PDF parity flag.
+- `consultify/server/src/routes/__tests__/presentationStudio.routes.test.ts`
+  - +2 route regressions: `/generate/preview` honours the steering_committee family override (100-char balanced title no longer flags overflow), and the PDF parity flag flows through into `flagCounts.unsupported_intent_for_pdf_export` and the merged `warnings[]` for an unsupported intent.
+- `consultify/src/services/api/presentationStudio.api.ts`
+  - Added `PresentationStudioLayoutAuditFlag`, `PresentationStudioSlideLayoutAudit`, `PresentationStudioOutlineLayoutAudit` types.
+  - Extended `GeneratePreviewResponse` with `layoutAudit: PresentationStudioOutlineLayoutAudit`.
+- `consultify/src/components/PresentationStudio/PresentationStudioLayoutAuditBanner.tsx` (new)
+  - Pure presentational component. Renders nothing when `audit` is null (page never shows audit summary before a preview ran). Renders an emerald "no findings" tile when clean, an amber warning tile with aggregate count + collapsible breakdown when findings exist. Per-flag tiles only render for flag classes with `count > 0`. The raw `[<flag_id>]`-prefixed warning lines are exposed inside the expanded `details` so reviewers can see exactly which slides triggered which findings. The banner triggers no callbacks and never blocks generation — it is advisory canvas status, not an AI action.
+- `consultify/src/components/PresentationStudio/PresentationStudioPage.tsx`
+  - Imported the banner. Rendered it canvas-side after the existing approval / ticket / generated banners and before the empty / preview cards. The banner sits adjacent to the Generate CTA in Menu 3 without violating the AI-actions-in-Menu-3 rule (banner is status, not action).
+- `consultify/src/components/PresentationStudio/__tests__/PresentationStudioLayoutAuditBanner.test.tsx` (new)
+  - 7 tests: null audit renders nothing; clean state renders with `data-state="clean"` and no toggle; warning state renders with `data-state="warnings"` and aggregate count; toggle expands/collapses (asserts `aria-expanded`); per-flag tiles render only for non-zero counts; raw warning strings appear inside the expanded list; singular/plural "finding"/"findings" wording is correct.
+- `consultify/src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`
+  - Updated `makeGeneratePreview` helper to include a clean `layoutAudit` (so all S5/S7/S8/S9 tests still pass with the new wire-shape).
+  - +3 page-level integration tests: clean banner after preview with no findings; warning banner with breakdown + per-flag tiles after preview with findings (including PDF parity flag); banner is NOT rendered before any preview has run.
+
+### Validation performed
+
+- `npx vitest run` over the full Studio surface — **107/107 passed** (8 ticket + 17 layout audit + 6 source artifacts + 43 route integration + 26 page + 7 banner).
+- `npx eslint` on the nine S11 in-scope files — **0 errors**. Remaining 25 warnings are pre-existing P3 (no-explicit-any in test mocks + the S5 baseline empty interface alias on `SourcePackPreviewRequest` + the S0 baseline `(setup as any)` cast on the orchestrator).
+- `npx tsc --noEmit` on the layout audit service in isolation — clean. Orchestrator + routes + page changes are verified through the live route + component test suites.
+- Tenant + approval invariants unchanged. The audit reads only the outline + an optional family string; it cannot leak data across tenants by construction. The mutating `/generate` path runs the audit AFTER ticket consumption (so a tampered outline still cannot bypass approval) and BEFORE `recordAudit` (so the audit row reflects what was actually generated, not what was previewed).
+- Workspace rule `ai-actions-menu3.mdc` upheld: the new banner is canvas-side status and contains no AI action button. Existing Menu 3 actions (Run preview / Request approval / Confirm generate) are unchanged and remain in the right slot.
+
+### Gate result: `PASS_WITH_P2`
+
+- 0 P0, 0 P1, 0 P2.
+- P3 deferred: pre-existing no-explicit-any + no-empty-object-type warnings carried over from S0/S5 baselines. No new P3 introduced.
+
+### Acceptance criteria covered by S11
+
+- **Closes R-S10-1** (per-template-family slot capacity overrides). Three families ship overrides today; others fall back to canonical caps. The drift-guard test asserts every override key is a canonical TemplateFamily name AND every raw-deck-type alias resolves to one of those canonical names.
+- **Adds PDF export parity flag** alongside the existing PPTX parity flag. Both sets are identical today; the structural separation guarantees a future PDF-only divergence is caught immediately by the existing tests.
+- **Surfaces the audit signal to the user** through a canvas-side, non-blocking, collapsible banner with per-flag breakdown. The banner is visible adjacent to the Generate CTA in Menu 3 without violating the AI-actions-in-Menu-3 rule.
+- **Approval invariant preserved** — the audit runs after ticket consumption on the execute path; the family is resolved from the same `setup` that was fingerprinted into the ticket, so a tampered family swap would already be rejected by the ticket service.
+
+### Risks / next-step notes
+
+- R-S11-1: The override numbers for the three registered families are conservative bumps based on the existing masters. If a master is extended or revised, the override must be updated in the same change. Mitigation: the unit tests pin canonical numeric expectations (e.g. 100-char balanced title under Steering override) so a regression in the override numbers will fail a test, not pass silently.
+- R-S11-2: PDF parity remains structural — the PDF set mirrors PPTX 1:1 today because the PDF path runs through the PPTX pipeline. The day a native HTML→PDF deck renderer ships and omits a slide intent, the PDF set must be edited to remove that intent from the supported set; the existing parity test will then fail and signal that the divergence has been formally accepted.
+- R-S11-3: The banner is collapsed by default when findings exist. We accept the small risk that a user dismisses the banner without reading the breakdown — the aggregate count is always visible, and findings are advisory by design (a P0 layout problem would have been caught by the renderer's own validation, which still runs end-to-end). Future work could auto-expand the banner when `unsupported_intent_for_*` flags appear (those have higher reviewer priority than density overflows).
+
+### Next sprint plan
+
+- Sprint S12 candidates (subject to your approval):
+  - Per-slot density mode on `OutlineItem` (closes R-S10-2). Requires extending the type, the generator's emit path, and the audit's per-slide loop. Backend-heavy.
+  - Renderer-side honest truncation indicator: when a slide is rendered with an overflow flag, the PPTX/PDF master surfaces a small inline marker. This closes the gap between "audit warned" and "renderer silently truncated" by making the truncation visible in the export itself.
+  - Move the audit's family + density caps into a per-template-family JSON config the runtime can hot-reload (groundwork for tenant-specific overrides without a code deploy).
+  - Optional: a dedicated "Layout audit" section card in the Studio canvas (richer than the banner, with per-slide drill-down). Today the banner is enough; we'd ship the section card only if reviewers ask for slide-level detail beyond the warning list.
+
