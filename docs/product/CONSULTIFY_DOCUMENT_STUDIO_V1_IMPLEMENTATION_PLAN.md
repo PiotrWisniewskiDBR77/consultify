@@ -820,6 +820,57 @@ Epic outline (each epic ~3-5 slices):
 - **FE-E4** — Comments + Approvals + Library (E6 + E10 surfaces). Block-level comment markers in canvas, right-panel Comments + Approvals tabs, Reviewer Inbox view at `/document-studio/inbox`.
 - **FE-E5** — Audience Variant picker + Teresa drawer + closeout. Menu 3 `ai.render_audience_variant` action (E9), Teresa-only chat drawer, final manifest conformance check via `POST /api/execution-modules/manifests/doc-builder/validate`.
 
+### 6.14.2 Slice FE-E1.2/FE-E2/FE-E3-lite/FE-E4-lite/FE-E5-lite — MELS document workspace + right-rail consumers
+
+**Scope.** Converts the generated document phase from a flat preview/export panel into the shared `ExecutiveModuleShell` (MELS) and wires the first real right-rail consumers against the already-shipped backend APIs.
+
+**Frontend substrate.**
+- `DocumentStudioDocumentPanel.tsx` now renders inside `ExecutiveModuleShell` with:
+  - left outline rail,
+  - central document preview canvas,
+  - canonical MELS topbar chips (`history`, `qa`, `governance`, `share`, `agent`, `run`),
+  - right rail tools for Sources, Properties, Activity, Comments, Share links, Audience variants, Approvals, Content library, QA, and AI Editor.
+- AI Editor and QA are no longer duplicated as canvas toolbars; they live in the right rail, matching Menu 3 / contextual AI action placement rules.
+- Sources tab renders version/snapshot pinning state and assumption counts.
+- Properties tab consumes `templateRef`, `sourcePackId`, `clientId`, and `owner` without cross-service joins.
+- Activity tab consumes `GET /api/document-studio/:artifactId/access-history`.
+- Comments tab consumes `GET /comments/threads` and `POST /comments` for document-level review comments.
+- Share tab consumes `GET/POST /share-links`, including the new `edit` access scope.
+- Audience variants tab consumes `GET /:artifactId/variants` and `GET /:artifactId/variants/:profileId`.
+- Approvals tab consumes `GET/POST /:artifactId/approvals`, `POST /:artifactId/approvals/:approvalId/decisions`, and `POST /:artifactId/approvals/:approvalId/cancel`.
+- Content library tab consumes `GET /content-blocks?status=active&documentType=&language=` and `POST /content-blocks/:contentBlockId/instantiate`.
+- AI Editor now exposes all six scopes (`local`, `section`, `global`, `methodology`, `source`, `transformative`) and renders structured `proposedChanges[]` + snapshot metadata when the backend provides them.
+
+**Types/API.**
+- `types.ts` now mirrors `DocumentCommentThread`, `DocumentAccessHistoryEntry`, `DocumentShareLink`, `AudienceProfile` / variants, `DocumentApprovalRequest`, and `DocumentContentBlockTemplate`.
+- `api.ts` now exposes focused wrappers for access history, comment threads/create, share link list/create, variants, approvals, and content blocks.
+
+**Validation.**
+- New smoke test: `src/components/DocumentStudio/__tests__/DocumentStudioDocumentPanel.test.tsx`.
+- `npx vitest run "src/components/DocumentStudio/__tests__/DocumentStudioDocumentPanel.test.tsx"` → 2/2 passing.
+- `npx eslint "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx" "src/components/DocumentStudio/api.ts" "src/components/DocumentStudio/types.ts" "src/components/DocumentStudio/__tests__/DocumentStudioDocumentPanel.test.tsx" --quiet` → pass after import-sort autofix.
+- Full `npm run type-check -- --pretty false` was attempted but the process was killed with `exit 137`; not counted as a passing gate.
+
+**Still open.**
+- Final manifest validator wiring.
+- Durable content-library insertion into a live document schema still requires a backend schema-mutation route; current UI instantiates and previews the block returned by the existing API.
+- Full E16.diff side-by-side document-level track-changes UI still requires a dedicated document-level diff surface/route; the editor proposal surface now renders structured per-target changes.
+
+### 6.14.3 Slice FE-closeout — final UI mutations and six-scope editor
+
+**Scope.** Completes the remaining frontend work that can be delivered against the existing backend contract.
+
+**Delivered.**
+- Teresa right-rail panel added as the AI document co-editor entry.
+- Manual AI Editor exposes all six editor scopes and calls the matching existing client wrappers.
+- Transformative scope requires explicit user confirmation before creating the proposal.
+- Approvals panel supports request, reviewer decision (`approve` / `reject` / `request_changes`), and cancel.
+- Content library panel supports instantiated block preview.
+
+**Validation.**
+- `npx eslint "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx" "src/components/DocumentStudio/DocumentStudioEditorPanel.tsx" "src/components/DocumentStudio/api.ts" "src/components/DocumentStudio/types.ts" "src/components/DocumentStudio/__tests__/DocumentStudioDocumentPanel.test.tsx" --quiet` → pass.
+- `npx vitest run "src/components/DocumentStudio/__tests__/DocumentStudioDocumentPanel.test.tsx" --pool=forks --maxWorkers=1 --maxConcurrency=1` → 2/2 passing.
+
 ### 6.14.1 Slice FE-E1.1 — Manifest loader hook + API client (commit `8967420fc`, mis-attributed)
 
 - New `src/services/executionModuleStandard/`:
@@ -1723,6 +1774,41 @@ Both routes call existing service methods (`recordTemplateUsage`, `recordTemplat
 - Full Document Studio suite green: 859 tests across 71 files.
 
 **Commit:** `f9b6e27a8`.
+
+---
+
+### 6.15.26 Document Studio V1 contract closeout — DONE (2026-05-09)
+
+**Scope.** Closed the final code-level V1 contract gaps that remained after the backend and frontend campaigns. This slice deliberately did **not** edit the attached Cursor plan file; it updates only product closeout documentation.
+
+**DELIVERED.**
+
+- **Durable content-library insertion**: `POST /api/document-studio/:artifactId/content-blocks/:contentBlockId/insert` inserts an active library block into a target `DocumentSchema` section, writes through the existing live schema overlay, captures a version snapshot, emits `content_block_inserted` audit, and returns schema read-back. The Content Library right rail now performs real insertion instead of preview-only instantiate.
+- **Document-level schema diff surface**: `GET /api/document-studio/:artifactId/diff` compares the live schema to the latest or requested snapshot via `computeDocumentSchemaDiff`, returning summary, stats, base snapshot metadata and section/block entries. The right rail now exposes a read-only "Schema diff" panel.
+- **DOC_BUILDER_MANIFEST visible gate**: Document Studio now has a "Manifest gate" right-rail panel that fetches the system `doc-builder` manifest and validates it through the existing execution-module validator, surfacing MUST/SHOULD violations in-module.
+- **Source/provenance matrix UI**: Sources now show a visible matrix (`used`, `skipped`, `missing`, `assumption`, `pinned`) and per-source connector state. Native/local source types report ready; Notion/Drive/SharePoint/Confluence report honest degraded external-connector gates rather than fake success.
+
+**EXTERNAL_GATE.**
+
+- Native enterprise connectors for Notion/Drive/SharePoint/Confluence still require real credentials/integration setup. V1 now exposes their degraded state honestly; it does not fake connector completion.
+- Wave5/Postgres migration for still in-memory DAOs remains an operational migration, not a Document Studio code-contract gap.
+
+**PRODUCT_DECISION.**
+
+- Anonymous `edit` share scope currently supports comment-thread mutations through session-bound auth. Expanding it to broader schema mutation remains a product/security decision.
+
+**OUT_OF_SCOPE_FOR_V1.**
+
+- Full real-time multiplayer editing, marketplace, and native Word/Google Docs round-trip integrations remain platform-level future work.
+- Pixel-perfect DOCX golden-corpus verification remains a release-quality program item, not a missing V1 code path.
+
+**Validation.**
+
+- ESLint on all modified closeout files: 0 errors; 6 pre-existing `no-explicit-any` warnings remain in `document-studio.routes.ts` auth helper signatures.
+- Focused tests: `documentContentBlockInsertService.test.ts` + `DocumentStudioDocumentPanel.test.tsx` — **6/6 green**.
+- Full `npm run type-check` attempted with `--max-old-space-size=8192`; it still fails only on the known unrelated `AIChat/KimiWorkspace/__tests__/useKimiArtifactPipeline.test.ts(203,5)` error (`"conversation-1"` not assignable to `null`).
+
+**Closes gaps.** Durable content insert, document-level diff surface, visible manifest gate, and source/provenance matrix are now delivered in code. Remaining items are external gates, product decisions, or explicitly out of V1 scope.
 
 ---
 

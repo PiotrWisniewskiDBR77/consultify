@@ -14,9 +14,8 @@ import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
-import { downloadTabeleArtifactCsv, openTableBuilderInNewTab } from '@/utils/tabeleArtifactOpen';
-
 import { isMelsTabeleEnabled } from '@/utils/melsTabeleFlag';
+import { downloadTabeleArtifactCsv, openTableBuilderInNewTab } from '@/utils/tabeleArtifactOpen';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
@@ -125,6 +124,40 @@ function buildTabelePreview(
   };
 }
 
+async function resolveAccessibleTableId(candidateId: string): Promise<string | null> {
+  const normalized = String(candidateId || '').trim();
+  if (!normalized) return null;
+
+  try {
+    await TablePlatformApi.getTable(normalized);
+    return normalized;
+  } catch {
+    let fromArtifact: string | null = null;
+    try {
+      const actionTargetRaw = await Api.get(
+        `/artifacts/${encodeURIComponent(normalized)}/action-target`
+      );
+      const actionTarget = unwrapData<any>(actionTargetRaw);
+      const originRuntime = String(actionTarget?.originRuntime || '')
+        .trim()
+        .toLowerCase();
+      const originRecordId = String(actionTarget?.originRecordId || '').trim();
+      if (originRuntime === 'sheet' && originRecordId) {
+        fromArtifact = originRecordId;
+      }
+    } catch {
+      fromArtifact = null;
+    }
+    if (!fromArtifact || fromArtifact === normalized) return null;
+    try {
+      await TablePlatformApi.getTable(fromArtifact);
+      return fromArtifact;
+    } catch {
+      return null;
+    }
+  }
+}
+
 /**
  * Internal wrapper: composes the MELS view with right-rail AI Editor + QA
  * panels so the connector hook can render only when needed.
@@ -217,29 +250,8 @@ export const TabeleView: React.FC = () => {
     reopenLoaded.current = true;
 
     const loadReopenPreview = async () => {
-      const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
-      try {
-        const [tableInfoRaw, recordsResult, proposalsResult] = await Promise.all([
-          TablePlatformApi.getTable(artifactId),
-          TablePlatformApi.listRecords(artifactId, { pageSize: 25 }).catch(() => null),
-          workspaceIdForProposals
-            ? TablePlatformApi.listSchemaProposals(workspaceIdForProposals, 'pending').catch(
-                () => []
-              )
-            : Promise.resolve([]),
-        ]);
-        const tableInfo = unwrapData<any>(tableInfoRaw);
-        setReopenTableId(artifactId);
-        setReopenPreview(
-          buildTabelePreview(
-            artifactId,
-            tableInfo,
-            recordsResult,
-            proposalsResult,
-            t('tabele.defaultTitle', 'Operational table')
-          )
-        );
-      } catch {
+      const resolvedTableId = await resolveAccessibleTableId(artifactId);
+      if (!resolvedTableId) {
         setReopenTableId(artifactId);
         setReopenPreview({
           type: 'tabele',
@@ -248,6 +260,44 @@ export const TabeleView: React.FC = () => {
           summary: t('tabele.loadPreviewFailed', 'Could not load table preview.'),
           kpiItems: [],
           tableId: artifactId,
+          tableData: { columns: [], rows: [] },
+          tabeleSchemaFields: [],
+          tabeleRelations: [],
+        });
+        return;
+      }
+
+      const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
+      try {
+        const [tableInfoRaw, recordsResult, proposalsResult] = await Promise.all([
+          TablePlatformApi.getTable(resolvedTableId),
+          TablePlatformApi.listRecords(resolvedTableId, { pageSize: 25 }).catch(() => null),
+          workspaceIdForProposals
+            ? TablePlatformApi.listSchemaProposals(workspaceIdForProposals, 'pending').catch(
+                () => []
+              )
+            : Promise.resolve([]),
+        ]);
+        const tableInfo = unwrapData<any>(tableInfoRaw);
+        setReopenTableId(resolvedTableId);
+        setReopenPreview(
+          buildTabelePreview(
+            resolvedTableId,
+            tableInfo,
+            recordsResult,
+            proposalsResult,
+            t('tabele.defaultTitle', 'Operational table')
+          )
+        );
+      } catch {
+        setReopenTableId(resolvedTableId);
+        setReopenPreview({
+          type: 'tabele',
+          title: t('tabele.defaultTitle', 'Operational table'),
+          fileName: 'table.csv',
+          summary: t('tabele.loadPreviewFailed', 'Could not load table preview.'),
+          kpiItems: [],
+          tableId: resolvedTableId,
           tableData: { columns: [], rows: [] },
           tabeleSchemaFields: [],
           tabeleRelations: [],

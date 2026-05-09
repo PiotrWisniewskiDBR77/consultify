@@ -1,7 +1,7 @@
 import { ChevronRight, Menu, Sparkles, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { ForbiddenAccessBanner } from '../components/access/ForbiddenAccessBanner';
@@ -65,6 +65,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
 
   // Views where chat panel should NOT be shown (full-screen chat only, and settings)
@@ -74,6 +75,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     AppView.WORDY, // KIMI workspaces embed their own chat panel
     AppView.EXCELE,
     AppView.PREZENTACJE_GEN,
+    AppView.TABELE,
     AppView.SETTINGS_PROFILE,
     AppView.SETTINGS_PROFILE_MODULE,
     AppView.SETTINGS_AI,
@@ -87,7 +89,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     AppView.SETTINGS_APPEARANCE_MODULE,
   ];
 
-  const shouldShowChatPanel = currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true;
+  const hasEmbeddedModuleChat = React.useMemo(() => {
+    const path = location.pathname.toLowerCase();
+    // KIMI workspaces and Outputs Deck Builder render their own Teresa panel.
+    if (path.startsWith('/wordy')) return true;
+    if (path.startsWith('/excele')) return true;
+    if (path.startsWith('/prezentacje')) return true;
+    if (path.startsWith('/tabele')) return true;
+    if (path.startsWith('/presentations/builder/')) return true;
+    return false;
+  }, [location.pathname]);
+
+  const shouldShowChatPanel =
+    (currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true) &&
+    !hasEmbeddedModuleChat;
 
   // Compute workspace context for AI awareness
   const workspaceContext = useMemo(() => {

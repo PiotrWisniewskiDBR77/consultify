@@ -307,6 +307,39 @@ export function resolveTabeleMaterializedTableId(
   return tableId || null;
 }
 
+async function resolveAccessibleSheetTableId(candidateId: string): Promise<string | null> {
+  const normalized = String(candidateId || '').trim();
+  if (!normalized) return null;
+  try {
+    await TablePlatformApi.getTable(normalized);
+    return normalized;
+  } catch {
+    let fromArtifact: string | null = null;
+    try {
+      const actionTargetRaw = await Api.get(
+        `/artifacts/${encodeURIComponent(normalized)}/action-target`
+      );
+      const actionTarget = (actionTargetRaw as { data?: any })?.data ?? actionTargetRaw;
+      const originRuntime = String(actionTarget?.originRuntime || '')
+        .trim()
+        .toLowerCase();
+      const originRecordId = String(actionTarget?.originRecordId || '').trim();
+      if (originRuntime === 'sheet' && originRecordId) {
+        fromArtifact = originRecordId;
+      }
+    } catch {
+      fromArtifact = null;
+    }
+    if (!fromArtifact || fromArtifact === normalized) return null;
+    try {
+      await TablePlatformApi.getTable(fromArtifact);
+      return fromArtifact;
+    } catch {
+      return null;
+    }
+  }
+}
+
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const conversationId = useConversationStore((s) => s.activeConversationId);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
@@ -652,7 +685,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
       const tabeleTableId = resolveTabeleMaterializedTableId(lane, origin);
       if (tabeleTableId) {
-        const tableId = tabeleTableId;
+        const tableId = (await resolveAccessibleSheetTableId(tabeleTableId)) || tabeleTableId;
         const workspaceIdForProposals = currentOrganization?.id || currentProjectId || '';
 
         try {

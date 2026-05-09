@@ -154,6 +154,7 @@ import { type Request, type Response, Router } from 'express';
 import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
   cancelApproval,
   DocumentApprovalError,
@@ -166,6 +167,15 @@ import {
   recordApprovalDecision,
   requestDocumentApproval,
 } from '../services/documentStudio/documentApprovalService.js';
+import {
+  archiveAsset,
+  DOCUMENT_ASSET_MAX_BYTES,
+  getActiveOrgLogo,
+  getAssetById,
+  listAssetAudit,
+  listAssetsForOrg,
+  registerLogo,
+} from '../services/documentStudio/documentAssetRegistryService.js';
 import {
   activateAudienceProfile,
   archiveAudienceProfile,
@@ -209,21 +219,15 @@ import {
   listDocumentContentBlocks,
   updateDocumentContentBlock,
 } from '../services/documentStudio/documentContentBlockService.js';
-import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
-  DOCUMENT_ASSET_MAX_BYTES,
-  archiveAsset,
-  getActiveOrgLogo,
-  getAssetById,
-  listAssetAudit,
-  listAssetsForOrg,
-  registerLogo,
-} from '../services/documentStudio/documentAssetRegistryService.js';
+  computeDocumentSchemaDiff,
+  summarizeDocumentSchemaDiff,
+} from '../services/documentStudio/documentSchemaDiffService.js';
 import {
   authorizeShareLinkEditSession,
-  createShareLinkEditSession,
   consumeShareLink,
   createShareLink,
+  createShareLinkEditSession,
   ensureShareLinkRegistryHydrated,
   getShareLink,
   getShareLinkRuntimeStatus,
@@ -267,6 +271,7 @@ import {
   createTransformativeEditProposal,
   deleteDocumentComment,
   DocumentCommentError,
+  DocumentContentBlockInsertError,
   DocumentLifecycleTransitionError,
   DocumentRollbackError,
   ensureDocumentCommentsHydrated,
@@ -278,6 +283,7 @@ import {
   getDocumentCommentSectionCounts,
   getDocumentLifecycleState,
   getDocumentVersionSnapshot,
+  insertDocumentContentBlock,
   listDocumentAuditEntries,
   listDocumentComments,
   listDocumentCommentThreads,
@@ -348,7 +354,11 @@ const logoUpload = multer({
   limits: { fileSize: DOCUMENT_ASSET_MAX_BYTES },
 });
 
-function logoUploadSingleMiddleware(req: Request, res: Response, next: (err?: unknown) => void): void {
+function logoUploadSingleMiddleware(
+  req: Request,
+  res: Response,
+  next: (err?: unknown) => void
+): void {
   logoUpload.single('file')(req, res, (err) => {
     if (!err) {
       next();
@@ -2220,6 +2230,56 @@ router.post(
   })
 );
 
+router.post(
+  '/:artifactId/content-blocks/:contentBlockId/insert',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    const contentBlockId = String(req.params.contentBlockId || '');
+    if (!artifactId || !contentBlockId) {
+      res.status(400).json({ error: 'artifactId and contentBlockId are required' });
+      return;
+    }
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const sectionId = typeof body.sectionId === 'string' ? body.sectionId : '';
+    const position =
+      body.position === 'start' || body.position === 'after_block' || body.position === 'end'
+        ? body.position
+        : undefined;
+    try {
+      const result = await insertDocumentContentBlock({
+        organizationId,
+        artifactId,
+        userId,
+        contentBlockId,
+        sectionId,
+        position,
+        afterBlockId: typeof body.afterBlockId === 'string' ? body.afterBlockId : undefined,
+        blockId: typeof body.blockId === 'string' ? body.blockId : undefined,
+      });
+      res.status(201).json(result);
+    } catch (err) {
+      if (err instanceof DocumentContentBlockInsertError) {
+        const status =
+          err.code === 'document_not_found' || err.code === 'section_not_found'
+            ? 404
+            : err.code === 'content_block_not_found'
+              ? 404
+              : err.code === 'content_block_archived'
+                ? 409
+                : 400;
+        res.status(status).json({ error: err.code, message: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
 router.get(
   '/content-blocks/:contentBlockId/audit',
   asyncHandler(async (req: Request, res: Response) => {
@@ -2701,6 +2761,49 @@ router.get(
       return;
     }
     res.json({ snapshot });
+  })
+);
+
+router.get(
+  '/:artifactId/diff',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    await ensureDocumentVersionSnapshotsHydrated(organizationId);
+    const liveSchema = await getDocumentArtifact(artifactId, organizationId);
+    if (!liveSchema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
+    const versionId = typeof req.query.versionId === 'string' ? req.query.versionId : undefined;
+    const snapshot = versionId
+      ? getDocumentVersionSnapshot(versionId, organizationId)
+      : (listDocumentVersionSnapshots(artifactId, organizationId).at(-1) ?? null);
+    if (!snapshot || snapshot.artifactId !== artifactId) {
+      res.status(404).json({ error: 'snapshot_not_found' });
+      return;
+    }
+    const diff = computeDocumentSchemaDiff(snapshot.schema, liveSchema);
+    res.json({
+      baseSnapshot: {
+        versionId: snapshot.versionId,
+        versionNumber: snapshot.versionNumber,
+        capturedAt: snapshot.capturedAt,
+        label: snapshot.label,
+        origin: snapshot.origin,
+      },
+      comparedAt: new Date().toISOString(),
+      summary: summarizeDocumentSchemaDiff(diff),
+      diff,
+    });
   })
 );
 

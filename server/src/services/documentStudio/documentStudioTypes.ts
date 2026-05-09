@@ -1140,6 +1140,7 @@ export type DocumentAuditAction =
   | 'document_status_changed'
   | 'document_version_snapshot_created'
   | 'document_rolled_back'
+  | 'content_block_inserted'
   // Epic E6 — Comments + review mode
   | 'comment_added'
   | 'comment_replied'
@@ -2366,10 +2367,7 @@ export interface DocumentContentBlockAuditEntry {
  * audit row so the UI / analytics can categorize without forcing
  * the aggregator to pre-classify.
  */
-export type DocumentAccessHistorySource =
-  | 'document_audit'
-  | 'share_link'
-  | 'approval';
+export type DocumentAccessHistorySource = 'document_audit' | 'share_link' | 'approval';
 
 export interface DocumentAccessHistoryEntry {
   /** Composite id `${source}::${origin row's auditId}` for stable React keys. */
@@ -2429,10 +2427,7 @@ export interface DocumentAsset {
   archiveReason?: string;
 }
 
-export type DocumentAssetAuditAction =
-  | 'asset_registered'
-  | 'asset_archived'
-  | 'asset_replaced';
+export type DocumentAssetAuditAction = 'asset_registered' | 'asset_archived' | 'asset_replaced';
 
 export interface DocumentAssetAuditEntry {
   auditId: string;

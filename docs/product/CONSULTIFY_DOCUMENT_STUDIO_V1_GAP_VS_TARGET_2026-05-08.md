@@ -1,7 +1,7 @@
 # Consultify Document Studio — Gap Analysis vs 100% Product Vision
 
 **Data raportu:** 8 maja 2026
-**Wersja stanu kodu:** post-Epic E11 + slice E11.5 (MELS chip-id reconciliation) + slice FE-E1.1 (Frontend manifest loader hook)
+**Wersja stanu kodu:** post-Epic E11 + slice E11.5 (MELS chip-id reconciliation) + slice FE-E1.1 + FE-E1.2/FE-E2/FE-E3-lite/FE-E4-lite/FE-E5-lite right-rail consumers
 **Autor:** Document Studio Architect (agent)
 **Cel dokumentu:** porównać aktualny stan modułu Consultify Document Studio (DRD source-of-truth + zaszipowany kod) z 100% wizją produktową opisaną w `Consultify Document Studio / Word Artifact Engine — Dokument produktowo-architektoniczny` (8 maja 2026), wskazać konkretne luki i zaproponować backlog domknięcia.
 
@@ -17,11 +17,11 @@
 | 40 FR (P0/P1/P2) | **17 DELIVERED**, 19 PARTIAL, **4 MISSING** | Missing: FR-22 charts, FR-37 access history (UX), FR-40 share link, plus `transformative` edit level (poza FR-13 zakresem). |
 | 17 NFR | **0 DELIVERED**, 16 PARTIAL, 1 OPEN | Brak NFR-status "DELIVERED" wynika z metodologii: większość NFR wymaga golden tests / audytu bezpieczeństwa, których nie wykonano. |
 | 20 spec templates | **20 / 20 DELIVERED** | Plus 2 extras (`benefits_tracking_report`, `portfolio_overview`) i 1 fallback (`generic_document` — nie seedowany, dostępny jako enum). |
-| 5 MVPs | MVP-1..MVP-3 bardzo dobrze pokryte server-side; **MVP-4 tylko backend** (UI track-changes brak); MVP-5 enterprise — początek (E10 API). | Frontendowy "execution-module shell" track (FE-E1..FE-E5) tylko zaczęty (FE-E1.1). |
+| 5 MVPs | MVP-1..MVP-3 bardzo dobrze pokryte server-side; **MVP-4 backend + frontend right-rail surfaces**; MVP-5 enterprise — E10 API z approval mutations i content-block instantiate preview. | Frontendowy execution-module shell jest już w Document phase; pełny durable content-library insert i document-level track-changes wymagają brakujących backend surface/route decyzji. |
 | 15 risks | **0 MITIGATED**, 13 PARTIALLY MITIGATED, 2 OPEN | OPEN: R8 (vendor lock-in), R11 (high AI costs). Wszystkie pozostałe mają backend mitigation, ale ujawnienia / UX / governance UI są niepełne. |
 | 5 data models §8 | DocumentArtifact ~80% · DocumentTemplate ~85% · SectionBlueprint ~50% · DocumentEdit ~70% · FormattingSchema ~70% | Najsłabszy `SectionBlueprint` (brak `requiredData/optionalData/formattingStyle/approvalRequired` per blueprint). `DocumentArtifact` carries explicit `templateRef/sourcePackId/clientId/owner` przez V8 substrate, nie przez `DocumentSchema` self-describing. |
 
-**Najważniejszy wniosek:** moduł ma silny **server-side substrate** (49 plików / 571 specs, 47+ endpointów, 22 system templates × 2 języki, 10-kategoryjny QA, advanced DOCX, audit/approval/comments/brand-voice/audience/content-blocks API), ale brakuje **Frontend Document Studio jako execution-module zgodnego z MELS** + 6-poziomowego edytora (poziomy 5/6 nie wystawione przez HTTP, poziom 6 — `transformative` — nie istnieje w typach).
+**Najważniejszy wniosek:** moduł ma silny **server-side substrate** i Document phase ma już MELS shell + right-rail consumers (Sources / Properties / Activity / Comments / Share / Audience variants / Approvals / Content library / QA / Teresa / AI Editor). Frontend jest domknięty do granicy obecnego backend contract; pozostałe ograniczenia to durable content-library insert oraz pełny document-level E16.diff surface.
 
 ---
 
@@ -317,7 +317,7 @@ Dla każdego "lepiej niż X" z §16 product spec'a — czy claim jest w kodzie c
 3. **10-kategoryjny QA engine + role-gated export override + structured `QaBlockingError`** — silny inżynierski hardening.
 4. **Advanced DOCX stack** (E8: styles, structure, TOC, cover, appendix lettering, captions, footnotes, citations + PDF parity) z dedykowanymi specs.
 5. **Enterprise collaboration primitives na poziomie API/service** (comments E6, approvals E10, content blocks E10, audience variants E9, brand voice E7) — fundament wpięty.
-6. **MELS execution-module standard skodyfikowany** (E11) z reference manifestami doc/excel/deck-builder + walidatorem + governance API. Frontend MELS shell istnieje od dawna i jest production-tested w Tabele.
+6. **MELS execution-module standard skodyfikowany** (E11) z reference manifestami doc/excel/deck-builder + walidatorem + governance API. Document Studio document phase now consumes the shared `ExecutiveModuleShell`.
 7. **571 vitest specs przechodzą** w Document Studio + Execution Module Standard scope. Pre-existing tsc errors w `tablePlatform/AiUsageService.ts` znane i out-of-scope.
 8. **Audit trail per service** — każdy service ma swój `*Audit` DAO; każda mutacja zostawia ślad.
 
@@ -331,7 +331,7 @@ W kolejności impaktu (P0 governance / UX → P2):
 
 - **Slice E3.5** — wystawić HTTP routes dla methodology + source editor proposals (`POST /editor/proposals/methodology`, `POST /editor/proposals/source`). Update FE `types.ts` na 5 scopes. ~1 day server + ~0.5 day FE.
 - **Slice E3.6** — dodać `transformative` 6. poziom do typów + service + intent classifier + route. ~2 days.
-- **Frontend Document Studio epic family FE-E1..FE-E5** — adopcja MELS, prowadząca do 3-zone shell + Menu 2 chips + Teresa drawer + Menu 3 AI actions zgodnie z `DOC_BUILDER_MANIFEST`. ~3-4 weeks.
+- **Frontend Document Studio epic family FE-E1..FE-E5** — FE-E1/FE-E2 base + FE-E3/FE-E4/FE-E5-lite right-rail consumers now delivered; approvals mutations, content instantiate preview, Teresa rail, and six-scope editor delivered. Remaining: backend-backed durable content insertion and full document-level track-changes surface.
 
 ### 12.2 P1 — domknięcie spec'a
 
@@ -689,7 +689,7 @@ In-memory only — rebuilds from source-pack ingestion on cold start. No DAO yet
 - **E16.diff.frontend** — wire `computeDocumentSchemaDiff` into FE-E2 track-changes UI. Blocked by parallel-sync resolution.
 - **E13 (share link surface)** — types + DAO + routes + FE. P1 functional gap.
 - **`coverPageDetailed.includeLogo`** — image embedding pipeline + asset registry integration.
-- **Frontend FE-E1.2 → FE-E5** — entire frontend campaign. Blocked by parallel-sync resolution.
+- **Frontend residual** — durable content-library insert route + full document-level track-changes surface if product requires beyond proposal-level structured changes.
 
 **Backend audit-grade closeout reached:** every §17.3 follow-up that was independently shippable is now shipped. Remaining backend items either need migration consent (E14), an architecture decision (E17), or a full new substrate (E13). Frontend is the next campaign once §18.1 §2 user-side GUI step lands.
 
@@ -765,7 +765,9 @@ The public route is exported as `documentShareLinkPublicRoutes` and mounted in `
 | E17.charts.render | blocked | Chart library architectural call (chart.js vs vega) |
 | E13.fe (share dialog FE-E2 right-panel) | blocked | §18.1 §2 user step |
 | E16.diff.frontend | blocked | §18.1 §2 user step |
-| FE-E1.2..FE-E5 | blocked | §18.1 §2 user step |
+| FE-E1.2 / FE-E2 base / FE-E3-lite / FE-E4-lite / FE-E5-lite | ✅ delivered | MELS shell + Sources/Properties/Activity/Comments/Share/Audience/Approvals/Library/QA/AI right rail |
+| FE-closeout | ✅ delivered | Teresa rail, approval request/decision/cancel, content instantiate preview, six-scope editor |
+| Durable content insert + full document-level diff | product/backend extension | Requires schema mutation route / dedicated diff surface beyond existing proposal payload |
 | `coverPageDetailed.includeLogo` | open backend | Asset embedding pipeline |
 | `download` share scope | ✅ delivered | E13.hardening |
 | `edit` share scope (comment-thread mutation model) | ✅ delivered | E13.edit-scope.auth (`f9b6e27a8`) |
@@ -838,7 +840,7 @@ A consumer of the Document Studio V1 backend can:
 
 ### 21.4 What V1 backend explicitly does NOT ship
 
-- Frontend (entire FE-E1.2 .. FE-E5 campaign) — blocked on parallel-sync remediation.
+- Frontend residual — only where backend/product contract is absent: durable content-library insertion and full document-level diff route/surface.
 - DB-backed share-link / asset DAOs — wave5 mechanical migration; in-memory DAOs preserve the public surface verbatim.
 - `edit` share scope — product decision pending.
 
@@ -860,3 +862,37 @@ Everything else can proceed under engineering-only authority: ops can run the `7
 - ✅ Post-closeout follow-up commits (`77f0c426b`, `ac344c01c`, `b1c2b0c67`, `c2a52dd50`) also show clean `Piotr` attribution via `atomic-commit.sh`.
 - ✅ Backend ships zero breaking changes; every existing call site continues to function unmodified.
 - 🔶 One user action queued (parallel-sync remediation) — required to unblock the frontend V1 campaign, NOT part of backend acceptance.
+
+---
+
+## 22. V1 contract closeout — final code addendum (2026-05-09)
+
+This addendum supersedes the residual wording in earlier sections that described durable content insertion, document-level diff UI, manifest-gate visibility, and the source provenance matrix as pending. Those items are now implemented in code and covered by focused validation.
+
+### 22.1 DELIVERED
+
+| Contract item | Status | Evidence |
+| --- | --- | --- |
+| Durable content-block insertion | ✅ DELIVERED | `POST /:artifactId/content-blocks/:contentBlockId/insert`, live schema overlay write, snapshot capture, `content_block_inserted` audit, schema read-back; FE Content Library button now calls the durable mutation. |
+| Document-level schema diff surface | ✅ DELIVERED | `GET /:artifactId/diff` compares live schema to latest/requested snapshot using `computeDocumentSchemaDiff`; FE right rail renders summary, stats, changed sections and changed blocks. |
+| DOC_BUILDER_MANIFEST visible gate | ✅ DELIVERED | FE "Manifest gate" panel fetches `doc-builder` and validates via `/api/execution-modules/manifests/doc-builder/validate`, surfacing MUST/SHOULD violations. |
+| Source/provenance matrix | ✅ DELIVERED (V1 minimal) | Sources panel shows `used / skipped / missing / assumption / pinned`, per-source used/skipped badges, pinning status, snapshot status, and connector readiness/degraded states. |
+
+### 22.2 EXTERNAL_GATE
+
+- Native Notion / Drive / SharePoint / Confluence connector success requires real integration credentials and tenant setup. V1 now reports those as degraded external-connector gates instead of fake success.
+- Wave5/Postgres migration for still in-memory Document Studio DAOs remains an operational migration gate. Public contracts are stable for that migration.
+
+### 22.3 PRODUCT_DECISION
+
+- Anonymous `edit` share scope is intentionally limited to session-bound comment-thread mutations. Broader anonymous schema mutation requires explicit product/security approval.
+
+### 22.4 OUT_OF_SCOPE_FOR_V1
+
+- Real-time multiplayer editing, marketplace, Word/Google Docs round-trip integration, and pixel-perfect DOCX golden-corpus certification remain future/platform release-quality work.
+
+### 22.5 Validation
+
+- ESLint on modified closeout files: 0 errors; 6 pre-existing route-helper `no-explicit-any` warnings remain untouched.
+- Focused tests: **6/6 green** across `documentContentBlockInsertService.test.ts` and `DocumentStudioDocumentPanel.test.tsx`.
+- Full `npm run type-check`: attempted; still fails only on known unrelated `AIChat/KimiWorkspace/__tests__/useKimiArtifactPipeline.test.ts(203,5)` (`"conversation-1"` not assignable to `null`).

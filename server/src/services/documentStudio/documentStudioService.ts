@@ -25,6 +25,7 @@ import {
   getWave5Artifact,
   markWave5ArtifactExported,
 } from '../wave5ArtifactRuntimeService.js';
+import { getActiveOrgLogo } from './documentAssetRegistryService.js';
 import {
   ensureBrandVoiceRegistryHydrated,
   getActiveBrandVoiceProfile,
@@ -52,8 +53,11 @@ import {
   replyToDocumentComment as replyToDocumentCommentInternal,
   resolveDocumentComment as resolveDocumentCommentInternal,
 } from './documentCommentsService.js';
+import {
+  ensureContentBlockRegistryHydrated,
+  instantiateDocumentContentBlock,
+} from './documentContentBlockService.js';
 import { buildDocumentSchema } from './documentContentGenerator.js';
-import { getActiveOrgLogo } from './documentAssetRegistryService.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import type {
@@ -87,6 +91,7 @@ import {
 import { renderSchemaToMarkdown } from './documentSchemaRenderer.js';
 import type {
   DocumentAuditEntry,
+  DocumentBlock,
   DocumentEditorProposal,
   DocumentEditorProposalInput,
   DocumentExportResult,
@@ -1753,6 +1758,168 @@ export function rejectEditProposal(params: {
  * `rejectEditProposal`.
  */
 export const rejectLocalEditProposal = rejectEditProposal;
+
+export class DocumentContentBlockInsertError extends Error {
+  readonly code:
+    | 'invalid_input'
+    | 'document_not_found'
+    | 'section_not_found'
+    | 'content_block_not_found'
+    | 'content_block_archived';
+
+  constructor(
+    code:
+      | 'invalid_input'
+      | 'document_not_found'
+      | 'section_not_found'
+      | 'content_block_not_found'
+      | 'content_block_archived',
+    message: string
+  ) {
+    super(message);
+    this.name = 'DocumentContentBlockInsertError';
+    this.code = code;
+  }
+}
+
+export interface InsertDocumentContentBlockParams {
+  organizationId: string;
+  artifactId: string;
+  userId: string;
+  contentBlockId: string;
+  sectionId: string;
+  position?: 'start' | 'end' | 'after_block';
+  afterBlockId?: string;
+  blockId?: string;
+}
+
+export interface InsertDocumentContentBlockResult {
+  schema: DocumentSchema;
+  insertedBlock: DocumentBlock;
+  snapshot: DocumentVersionSnapshot;
+}
+
+export async function insertDocumentContentBlock(
+  params: InsertDocumentContentBlockParams
+): Promise<InsertDocumentContentBlockResult> {
+  const sectionId = params.sectionId?.trim();
+  const contentBlockId = params.contentBlockId?.trim();
+  if (!params.organizationId || !params.artifactId || !params.userId) {
+    throw new DocumentContentBlockInsertError('invalid_input', 'auth context is required');
+  }
+  if (!sectionId) {
+    throw new DocumentContentBlockInsertError('invalid_input', 'sectionId is required');
+  }
+  if (!contentBlockId) {
+    throw new DocumentContentBlockInsertError('invalid_input', 'contentBlockId is required');
+  }
+
+  const schema = await getDocumentArtifact(params.artifactId, params.organizationId);
+  if (!schema) {
+    throw new DocumentContentBlockInsertError(
+      'document_not_found',
+      `document ${params.artifactId} not found`
+    );
+  }
+
+  await ensureContentBlockRegistryHydrated(params.organizationId);
+  let instantiated: ReturnType<typeof instantiateDocumentContentBlock>;
+  try {
+    instantiated = instantiateDocumentContentBlock({
+      organizationId: params.organizationId,
+      contentBlockId,
+      blockId: params.blockId,
+    });
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === 'content_block_archived') {
+      throw new DocumentContentBlockInsertError(
+        'content_block_archived',
+        'content block is archived'
+      );
+    }
+    if (code === 'content_block_not_found') {
+      throw new DocumentContentBlockInsertError(
+        'content_block_not_found',
+        'content block not found'
+      );
+    }
+    throw err;
+  }
+
+  const nextSchema = cloneSchema(schema);
+  const section = nextSchema.sections.find((candidate) => candidate.sectionId === sectionId);
+  if (!section) {
+    throw new DocumentContentBlockInsertError(
+      'section_not_found',
+      `section ${sectionId} not found`
+    );
+  }
+
+  const position = params.position ?? 'end';
+  if (position === 'start') {
+    section.blocks.unshift(instantiated.block);
+  } else if (position === 'after_block') {
+    const afterBlockId = params.afterBlockId?.trim();
+    if (!afterBlockId) {
+      throw new DocumentContentBlockInsertError(
+        'invalid_input',
+        'afterBlockId is required for after_block inserts'
+      );
+    }
+    const index = section.blocks.findIndex((block) => block.blockId === afterBlockId);
+    if (index === -1) {
+      throw new DocumentContentBlockInsertError(
+        'invalid_input',
+        `afterBlockId ${afterBlockId} was not found in section ${sectionId}`
+      );
+    }
+    section.blocks.splice(index + 1, 0, instantiated.block);
+  } else {
+    section.blocks.push(instantiated.block);
+  }
+
+  nextSchema.updatedAt = nowIso();
+  schemaOverlayStore.set(schemaOverlayKey(params.artifactId, params.organizationId), nextSchema);
+
+  const lifecycle = getDocumentStatusOrDefault(params.artifactId, params.organizationId);
+  const snapshot = createDocumentVersionSnapshotInternal({
+    organizationId: params.organizationId,
+    artifactId: params.artifactId,
+    userId: params.userId,
+    schema: nextSchema,
+    statusAtCapture: lifecycle.status,
+    label: 'content block insert',
+    reason: instantiated.template.name,
+    origin: 'manual',
+  });
+
+  pushAuditEntry({
+    auditId: makeId('doc-audit'),
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    action: 'content_block_inserted',
+    actorId: params.userId,
+    occurredAt: nowIso(),
+    details: {
+      contentBlockId,
+      contentBlockName: instantiated.template.name,
+      insertedBlockId: instantiated.block.blockId,
+      sectionId,
+      position,
+      afterBlockId: params.afterBlockId,
+      snapshotVersionId: snapshot.versionId,
+      snapshotVersionNumber: snapshot.versionNumber,
+    },
+  });
+
+  const readBack = await getDocumentArtifact(params.artifactId, params.organizationId);
+  return {
+    schema: readBack ?? nextSchema,
+    insertedBlock: instantiated.block,
+    snapshot,
+  };
+}
 
 export function listDocumentAuditEntries(
   artifactId: string,

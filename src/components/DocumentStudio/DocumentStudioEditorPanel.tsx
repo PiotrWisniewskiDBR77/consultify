@@ -7,7 +7,10 @@ import {
   approveDocumentStudioProposal,
   createDocumentStudioGlobalProposal,
   createDocumentStudioLocalProposal,
+  createDocumentStudioMethodologyProposal,
   createDocumentStudioSectionProposal,
+  createDocumentStudioSourceProposal,
+  createDocumentStudioTransformativeProposal,
   getDocumentStudioAuditTrail,
   rejectDocumentStudioProposal,
 } from './api';
@@ -156,18 +159,37 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           },
           { useLlm }
         );
-      } else {
-        // E3.5 widened DocumentEditorScope to include 'methodology' and
-        // 'source'. This manual editor panel exposes only 3 chips today
-        // (the 5-scope UI lands in FE-E2/E3). Guard against the union
-        // expansion explicitly so a stray scope value cannot silently
-        // fall through to global-rewrite semantics.
-        throw new Error(
-          t(
-            'documentStudio.editor.unsupportedScope',
-            'This editor panel only supports local, section and global scopes. Use the AI assistant for methodology and source scopes.'
-          )
+      } else if (scope === 'methodology') {
+        proposal = await createDocumentStudioMethodologyProposal(
+          artifactId,
+          { instruction: instruction.trim() },
+          { useLlm }
         );
+      } else if (scope === 'source') {
+        proposal = await createDocumentStudioSourceProposal(
+          artifactId,
+          { instruction: instruction.trim() },
+          { useLlm }
+        );
+      } else if (scope === 'transformative') {
+        if (
+          !window.confirm(
+            t(
+              'documentStudio.editor.transformativeConfirm',
+              'This can dramatically rebuild the document. Continue?'
+            )
+          )
+        ) {
+          setSubmitting(false);
+          return;
+        }
+        proposal = await createDocumentStudioTransformativeProposal(
+          artifactId,
+          { instruction: instruction.trim() },
+          { useLlm }
+        );
+      } else {
+        throw new Error(t('documentStudio.editor.unsupportedScope', 'Unsupported editor scope.'));
       }
       setPendingProposal(proposal);
       const refinedNote =
@@ -247,7 +269,16 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2 text-xs">
-        {(['local', 'section', 'global'] as DocumentEditorScope[]).map((s) => (
+        {(
+          [
+            'local',
+            'section',
+            'global',
+            'methodology',
+            'source',
+            'transformative',
+          ] as DocumentEditorScope[]
+        ).map((s) => (
           <button
             key={s}
             type="button"
@@ -262,7 +293,13 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               ? t('documentStudio.editor.scopeLocal', 'Local block')
               : s === 'section'
                 ? t('documentStudio.editor.scopeSection', 'Section')
-                : t('documentStudio.editor.scopeGlobal', 'Whole document')}
+                : s === 'global'
+                  ? t('documentStudio.editor.scopeGlobal', 'Whole document')
+                  : s === 'methodology'
+                    ? t('documentStudio.editor.scopeMethodology', 'Methodology')
+                    : s === 'source'
+                      ? t('documentStudio.editor.scopeSource', 'Source')
+                      : t('documentStudio.editor.scopeTransformative', 'Transformative')}
           </button>
         ))}
       </div>
@@ -401,6 +438,46 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               </pre>
             </div>
           </div>
+          {pendingProposal.proposedChanges && pendingProposal.proposedChanges.length > 0 ? (
+            <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs dark:border-navy-700 dark:bg-navy-950">
+              <div className="mb-2 font-semibold text-slate-600 dark:text-slate-300">
+                {t('documentStudio.editor.structuredChanges', 'Structured changes')}
+              </div>
+              <ul className="space-y-2">
+                {pendingProposal.proposedChanges.map((change, index) => (
+                  <li
+                    key={`${change.targetSectionId}:${change.targetBlockId ?? 'section'}:${index}`}
+                    className="rounded border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
+                  >
+                    <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {change.targetSectionId}
+                      {change.targetBlockId ? ` · ${change.targetBlockId}` : ''} ·{' '}
+                      {change.editType ?? 'rewrite'}
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <pre className="whitespace-pre-wrap rounded bg-slate-100 p-2 text-slate-700 dark:bg-navy-800 dark:text-slate-200">
+                        {change.before}
+                      </pre>
+                      <pre className="whitespace-pre-wrap rounded bg-sky-50 p-2 text-slate-700 dark:bg-sky-500/10 dark:text-slate-200">
+                        {change.after}
+                      </pre>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {pendingProposal.versionBeforeId || pendingProposal.versionAfterId ? (
+            <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+              {pendingProposal.versionBeforeId
+                ? `Before snapshot: ${pendingProposal.versionBeforeId}`
+                : null}
+              {pendingProposal.versionBeforeId && pendingProposal.versionAfterId ? ' · ' : ''}
+              {pendingProposal.versionAfterId
+                ? `After snapshot: ${pendingProposal.versionAfterId}`
+                : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

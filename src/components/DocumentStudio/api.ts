@@ -11,15 +11,28 @@
 import { fetchWithRetry, getHeaders, handleResponse } from '@/services/api/baseClient';
 
 import type {
+  DocumentAccessHistoryEntry,
+  DocumentApprovalDecisionKind,
+  DocumentApprovalQuorumPolicy,
+  DocumentApprovalRequest,
   DocumentAuditEntry,
+  DocumentBlock,
+  DocumentCommentAnchor,
+  DocumentCommentThread,
+  DocumentContentBlockTemplate,
   DocumentEditorProposal,
   DocumentIntake,
   DocumentOutline,
   DocumentQaReport,
   DocumentSchema,
+  DocumentSchemaDiffResponse,
+  DocumentShareLink,
+  DocumentShareLinkAccessScope,
   DocumentStudioPolicy,
   DocumentTemplate,
   DocumentTypeKey,
+  DocumentVariant,
+  DocumentVariantSummary,
   TemplateAuditEntry,
   TemplateDraftInput,
   TemplateStatus,
@@ -530,4 +543,267 @@ export async function getDocumentStudioTemplateAudit(
     'DocumentStudio template audit'
   );
   return json.auditEntries;
+}
+
+// =============================================================================
+// FE-E3/FE-E4/FR-37 — right-rail review and sharing endpoints.
+// =============================================================================
+
+export async function getDocumentStudioAccessHistory(
+  artifactId: string,
+  options: { limit?: number } = {}
+): Promise<DocumentAccessHistoryEntry[]> {
+  const params = new URLSearchParams();
+  if (options.limit) params.set('limit', String(options.limit));
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/access-history${query}`,
+    {
+      method: 'GET',
+      headers: getHeaders(),
+    }
+  );
+  const json = await handleResponse<{ entries: DocumentAccessHistoryEntry[] }>(
+    res,
+    'DocumentStudio access history'
+  );
+  return json.entries;
+}
+
+export async function getDocumentStudioCommentThreads(
+  artifactId: string
+): Promise<DocumentCommentThread[]> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/comments/threads`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ threads: DocumentCommentThread[] }>(
+    res,
+    'DocumentStudio comment threads'
+  );
+  return json.threads;
+}
+
+export async function createDocumentStudioComment(
+  artifactId: string,
+  payload: { body: string; anchor: DocumentCommentAnchor }
+): Promise<DocumentCommentThread[]> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/comments`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  await handleResponse(res, 'DocumentStudio create comment');
+  return getDocumentStudioCommentThreads(artifactId);
+}
+
+export async function listDocumentStudioShareLinks(
+  artifactId: string
+): Promise<DocumentShareLink[]> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/share-links`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ shareLinks: DocumentShareLink[] }>(
+    res,
+    'DocumentStudio share links'
+  );
+  return json.shareLinks;
+}
+
+export async function createDocumentStudioShareLink(
+  artifactId: string,
+  payload: {
+    accessScope: DocumentShareLinkAccessScope;
+    label?: string;
+    expiresAt?: string;
+  }
+): Promise<DocumentShareLink> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/share-links`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const json = await handleResponse<{ shareLink: DocumentShareLink }>(
+    res,
+    'DocumentStudio create share link'
+  );
+  return json.shareLink;
+}
+
+export async function listDocumentStudioVariants(
+  artifactId: string
+): Promise<DocumentVariantSummary[]> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/variants`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ variants: DocumentVariantSummary[] }>(
+    res,
+    'DocumentStudio variants'
+  );
+  return json.variants;
+}
+
+export async function getDocumentStudioVariant(
+  artifactId: string,
+  profileId: string
+): Promise<DocumentVariant> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/variants/${encodeURIComponent(profileId)}`,
+    {
+      method: 'GET',
+      headers: getHeaders(),
+    }
+  );
+  const json = await handleResponse<{ variant: DocumentVariant }>(res, 'DocumentStudio variant');
+  return json.variant;
+}
+
+export async function getDocumentStudioSchemaDiff(
+  artifactId: string,
+  versionId?: string
+): Promise<DocumentSchemaDiffResponse> {
+  const params = new URLSearchParams();
+  if (versionId) params.set('versionId', versionId);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/diff${query}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  return handleResponse<DocumentSchemaDiffResponse>(res, 'DocumentStudio schema diff');
+}
+
+export async function listDocumentStudioApprovals(
+  artifactId: string
+): Promise<DocumentApprovalRequest[]> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/approvals`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ approvals: DocumentApprovalRequest[] }>(
+    res,
+    'DocumentStudio approvals'
+  );
+  return json.approvals;
+}
+
+export async function requestDocumentStudioApproval(
+  artifactId: string,
+  payload: {
+    participants: { userId: string; role?: string; required: boolean }[];
+    quorumPolicy?: DocumentApprovalQuorumPolicy;
+    reason?: string;
+  }
+): Promise<DocumentApprovalRequest> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/approvals`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const json = await handleResponse<{ approval: DocumentApprovalRequest }>(
+    res,
+    'DocumentStudio request approval'
+  );
+  return json.approval;
+}
+
+export async function recordDocumentStudioApprovalDecision(
+  artifactId: string,
+  approvalId: string,
+  payload: { kind: DocumentApprovalDecisionKind; comment?: string }
+): Promise<DocumentApprovalRequest> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/approvals/${encodeURIComponent(approvalId)}/decisions`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    }
+  );
+  const json = await handleResponse<{ approval: DocumentApprovalRequest }>(
+    res,
+    'DocumentStudio approval decision'
+  );
+  return json.approval;
+}
+
+export async function cancelDocumentStudioApproval(
+  artifactId: string,
+  approvalId: string,
+  reason?: string
+): Promise<DocumentApprovalRequest> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/approvals/${encodeURIComponent(approvalId)}/cancel`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason }),
+    }
+  );
+  const json = await handleResponse<{ approval: DocumentApprovalRequest }>(
+    res,
+    'DocumentStudio cancel approval'
+  );
+  return json.approval;
+}
+
+export async function listDocumentStudioContentBlocks(
+  options: {
+    documentType?: DocumentTypeKey;
+    language?: 'pl' | 'en';
+  } = {}
+): Promise<DocumentContentBlockTemplate[]> {
+  const params = new URLSearchParams();
+  params.set('status', 'active');
+  if (options.documentType) params.set('documentType', options.documentType);
+  if (options.language) params.set('language', options.language);
+  const res = await fetchWithRetry(`${BASE}/content-blocks?${params.toString()}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ contentBlocks: DocumentContentBlockTemplate[] }>(
+    res,
+    'DocumentStudio content blocks'
+  );
+  return json.contentBlocks;
+}
+
+export async function instantiateDocumentStudioContentBlock(
+  contentBlockId: string
+): Promise<{ block: DocumentBlock; template: DocumentContentBlockTemplate }> {
+  const res = await fetchWithRetry(
+    `${BASE}/content-blocks/${encodeURIComponent(contentBlockId)}/instantiate`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+    }
+  );
+  return handleResponse<{ block: DocumentBlock; template: DocumentContentBlockTemplate }>(
+    res,
+    'DocumentStudio instantiate content block'
+  );
+}
+
+export async function insertDocumentStudioContentBlock(
+  artifactId: string,
+  contentBlockId: string,
+  payload: {
+    sectionId: string;
+    position?: 'start' | 'end' | 'after_block';
+    afterBlockId?: string;
+  }
+): Promise<{ schema: DocumentSchema; insertedBlock: DocumentBlock }> {
+  const res = await fetchWithRetry(
+    `${BASE}/${encodeURIComponent(artifactId)}/content-blocks/${encodeURIComponent(contentBlockId)}/insert`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    }
+  );
+  return handleResponse<{ schema: DocumentSchema; insertedBlock: DocumentBlock }>(
+    res,
+    'DocumentStudio insert content block'
+  );
 }

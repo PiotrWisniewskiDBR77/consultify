@@ -86,6 +86,7 @@ export interface DocumentBlock {
   blockId: string;
   type: string;
   content: unknown;
+  sourceRef?: DocumentSourceRef;
   isAssumption?: boolean;
 }
 
@@ -415,3 +416,259 @@ export interface TemplateAuditEntry {
 }
 
 export type DocumentStudioMode = 'mode_1' | 'mode_2' | 'mode_3';
+
+// =============================================================================
+// FE-E3/FE-E4/FR-37 — right-rail review and sharing surfaces.
+// =============================================================================
+
+export type DocumentCommentStatus = 'open' | 'resolved';
+
+export type DocumentCommentAnchor =
+  | { kind: 'document' }
+  | { kind: 'section'; sectionId: string }
+  | { kind: 'block'; sectionId: string; blockId: string };
+
+export interface DocumentComment {
+  commentId: string;
+  threadId: string;
+  artifactId: string;
+  organizationId: string;
+  parentCommentId?: string;
+  anchor: DocumentCommentAnchor;
+  authorId: string;
+  body: string;
+  status: DocumentCommentStatus;
+  createdAt: string;
+  updatedAt: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  resolveReason?: string;
+  reopenedBy?: string;
+  reopenedAt?: string;
+  deletedBy?: string;
+  deletedAt?: string;
+}
+
+export interface DocumentCommentThread {
+  threadId: string;
+  artifactId: string;
+  organizationId: string;
+  anchor: DocumentCommentAnchor;
+  status: DocumentCommentStatus;
+  root: DocumentComment;
+  replies: DocumentComment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DocumentAccessHistorySource = 'document_audit' | 'share_link' | 'approval';
+
+export interface DocumentAccessHistoryEntry {
+  entryId: string;
+  source: DocumentAccessHistorySource;
+  artifactId: string;
+  organizationId: string;
+  actorId: string;
+  action: string;
+  occurredAt: string;
+  sourceId?: string;
+  details?: Record<string, unknown>;
+}
+
+export type DocumentShareLinkAccessScope = 'read' | 'comment' | 'download' | 'edit';
+export type DocumentShareLinkStatus = 'active' | 'revoked' | 'expired';
+
+export interface DocumentShareLinkRuntimeStatus {
+  effectiveStatus: DocumentShareLinkStatus;
+  isUsable: boolean;
+  reason?: 'revoked' | 'expired';
+}
+
+export interface DocumentShareLink {
+  shareLinkId: string;
+  artifactId: string;
+  organizationId: string;
+  token: string;
+  tokenHash?: string;
+  accessScope: DocumentShareLinkAccessScope;
+  status: DocumentShareLinkStatus;
+  runtimeStatus?: DocumentShareLinkRuntimeStatus;
+  expiresAt?: string;
+  label?: string;
+  revokedReason?: string;
+  createdBy: string;
+  createdAt: string;
+  revokedBy?: string;
+  revokedAt?: string;
+  consumeCount: number;
+  lastConsumedAt?: string;
+}
+
+export type AudienceProfileStatus = 'draft' | 'active' | 'archived';
+export type AudienceProfileExecutiveSummaryPolicy = 'preserve' | 'expand' | 'drop';
+export type AudienceProfileAppendixPolicy = 'preserve' | 'drop';
+export type AudienceProfileJargonPolicy = 'as_is' | 'plain_language';
+
+export interface AudienceProfileTagFilter {
+  include?: string[];
+  exclude?: string[];
+}
+
+export interface AudienceProfile {
+  profileId: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  status: AudienceProfileStatus;
+  version: string;
+  audienceLabels: string[];
+  registerOverride?: CommunicationRegister;
+  densityOverride?: DocumentDensity;
+  languageStyleOverride?: DocumentLanguageStyle;
+  sectionFilters: AudienceProfileTagFilter;
+  blockFilters: AudienceProfileTagFilter;
+  executiveSummaryPolicy: AudienceProfileExecutiveSummaryPolicy;
+  appendixPolicy: AudienceProfileAppendixPolicy;
+  jargonPolicy: AudienceProfileJargonPolicy;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentVariantProvenance {
+  sourceDocumentId: string;
+  sourceArtifactId: string;
+  profileId: string;
+  profileVersion: string;
+  projectedAt: string;
+  sectionsKept: string[];
+  sectionsDropped: { sectionId: string; reason: string }[];
+  blocksDropped: number;
+}
+
+export interface DocumentVariant {
+  schema: DocumentSchema;
+  provenance: DocumentVariantProvenance;
+}
+
+export interface DocumentVariantSummary {
+  profile: AudienceProfile;
+  plan: string[];
+}
+
+export type DocumentApprovalStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'changes_requested'
+  | 'cancelled';
+export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';
+export type DocumentApprovalQuorumPolicy = 'unanimous' | 'majority' | 'single_approval';
+
+export interface DocumentApprovalParticipant {
+  userId: string;
+  role?: string;
+  required: boolean;
+}
+
+export interface DocumentApprovalDecision {
+  decisionId: string;
+  approvalId: string;
+  reviewerId: string;
+  kind: DocumentApprovalDecisionKind;
+  comment?: string;
+  occurredAt: string;
+}
+
+export interface DocumentApprovalRequest {
+  approvalId: string;
+  organizationId: string;
+  artifactId: string;
+  requestedBy: string;
+  participants: DocumentApprovalParticipant[];
+  quorumPolicy: DocumentApprovalQuorumPolicy;
+  status: DocumentApprovalStatus;
+  decisions: DocumentApprovalDecision[];
+  reason?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  resolutionReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DocumentContentBlockStatus = 'draft' | 'active' | 'archived';
+
+export interface DocumentContentBlockTemplate {
+  contentBlockId: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  status: DocumentContentBlockStatus;
+  version: string;
+  tags: string[];
+  documentTypes: DocumentTypeKey[];
+  languageScope: 'pl' | 'en' | 'all';
+  block: Omit<DocumentBlock, 'blockId'>;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DocumentSectionDiffKind = 'added' | 'removed' | 'modified' | 'reordered' | 'unchanged';
+export type DocumentBlockDiffKind = 'added' | 'removed' | 'modified' | 'unchanged';
+
+export interface DocumentBlockDiffEntry {
+  kind: DocumentBlockDiffKind;
+  blockId: string;
+  blockType: string | null;
+  beforeText: string | null;
+  afterText: string | null;
+  beforePositionIndex: number | null;
+  afterPositionIndex: number | null;
+}
+
+export interface DocumentSectionDiffEntry {
+  kind: DocumentSectionDiffKind;
+  sectionId: string;
+  beforeTitle: string | null;
+  afterTitle: string | null;
+  beforeOrderIndex: number | null;
+  afterOrderIndex: number | null;
+  blockDiffs: DocumentBlockDiffEntry[];
+}
+
+export interface DocumentSchemaDiffStats {
+  addedSectionCount: number;
+  removedSectionCount: number;
+  modifiedSectionCount: number;
+  reorderedSectionCount: number;
+  unchangedSectionCount: number;
+  addedBlockCount: number;
+  removedBlockCount: number;
+  modifiedBlockCount: number;
+  unchangedBlockCount: number;
+}
+
+export interface DocumentSchemaDiff {
+  hasChanges: boolean;
+  sectionDiffs: DocumentSectionDiffEntry[];
+  stats: DocumentSchemaDiffStats;
+}
+
+export interface DocumentSchemaDiffResponse {
+  baseSnapshot: {
+    versionId: string;
+    versionNumber: number;
+    capturedAt: string;
+    label?: string;
+    origin?: string;
+  };
+  comparedAt: string;
+  summary: string;
+  diff: DocumentSchemaDiff;
+}

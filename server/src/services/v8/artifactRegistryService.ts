@@ -2820,23 +2820,58 @@ export async function materializeArtifactRun(
         typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
       const tableName =
         typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
+      const workspaceTarget =
+        typeof validated.projectId === 'string' && validated.projectId.trim().length > 0
+          ? validated.projectId.trim()
+          : validated.organizationId;
+
+      // Hardening (P1): never trust incoming tableId blindly.
+      // If the provided table is missing or belongs to another organization,
+      // fall back to deterministic auto-create flow below.
+      if (tableId) {
+        const existingTable = await dbGet<{ table_id: string }>(
+          `SELECT t.id AS table_id
+             FROM tp_tables t
+             JOIN tp_bases b ON b.id = t.base_id
+            WHERE t.id = ? AND b.organization_id = ?
+            LIMIT 1`,
+          [tableId, validated.organizationId],
+          { fallback: true }
+        );
+        if (!existingTable?.table_id) {
+          logger.warn(
+            `${LOG_PREFIX} Ignoring invalid sheet tableId from materialize config; auto-create fallback will run`,
+            {
+              runId: validated.runId,
+              organizationId: validated.organizationId,
+              providedTableId: tableId,
+            }
+          );
+          tableId = '';
+        }
+      }
 
       // Auto-create table when Excele pipeline doesn't provide one
       if (!tableId) {
         try {
           const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
 
-          // Find or create a base for this org's Excele artifacts
+          // Find or create a base for this org/workspace sheet artifacts.
           let baseId: string | null = null;
-          const existingBases = await dbAll(
-            `SELECT id FROM tp_bases WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
-            [validated.organizationId]
+          const workspaceScopedBase = await dbGet<{ id: string }>(
+            `SELECT id
+               FROM tp_bases
+              WHERE organization_id = ? AND workspace_id = ?
+              ORDER BY created_at DESC
+              LIMIT 1`,
+            [validated.organizationId, workspaceTarget],
+            { fallback: true }
           );
-          if (existingBases && (existingBases as any[]).length > 0) {
-            baseId = (existingBases as any[])[0].id;
+          if (workspaceScopedBase?.id) {
+            baseId = workspaceScopedBase.id;
           } else {
             const newBase = await metadataService.createBase(
-              validated.organizationId,
+              workspaceTarget,
               validated.organizationId,
               'Excele Workspace',
               validated.actorUserId
