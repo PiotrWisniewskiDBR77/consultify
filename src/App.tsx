@@ -16,6 +16,7 @@ import { ChatV9FlagsResetHandler } from './components/Admin/ChatV9FlagsResetHand
 import { PiiHeuristicToast } from './components/AIChat/PiiHeuristicToast';
 import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
 import { RouterSync } from './components/RouterSync';
+import { EnvironmentBadge } from './components/layout/EnvironmentBadge';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppProviders } from './providers/AppProviders';
@@ -355,6 +356,7 @@ function AppContent() {
           only — never the raw message. Kill-switch: flag OFF
           detaches the listener; the dispatch is a no-op. */}
       <PiiHeuristicToast />
+      <EnvironmentBadge />
       <Routes>
         <Route path="/invite/:token" element={<InviteRouteWrapper />} />
         <Route

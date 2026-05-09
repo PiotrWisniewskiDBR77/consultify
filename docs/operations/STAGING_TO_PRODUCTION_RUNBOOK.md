@@ -15,6 +15,7 @@ When a release also changes the production tenant topology or database target, r
 - staging deploy completed successfully
 - smoke checks passed on staging
 - business owner accepted the release candidate
+- you can confirm you are on the correct environment (non-prod shows an environment badge; for production it shows for privileged roles)
 
 ## Promotion Flow
 
@@ -48,6 +49,8 @@ Run the GitHub Actions workflow:
 - source ref: `main`
 
 Production deploy is manual by design.
+
+**Promotion guard:** production deploy is blocked unless the candidate `main` SHA matches the last staged revision (`staging-deployed` tag set automatically after a successful staging deploy).
 
 ### 5. Execute production verification
 

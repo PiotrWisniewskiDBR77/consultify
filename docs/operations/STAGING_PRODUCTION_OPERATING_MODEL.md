@@ -129,6 +129,7 @@ Never leave `develop` behind after a production hotfix.
 
 - `test-suite.yml` is the quality gate for `main` and `develop`
 - `railway-deploy.yml` is the deployment workflow
+- successful staging deploy records the deployed revision as the `staging-deployed` tag; production deploy is blocked unless `main` matches this tag
 - branch protection must match real GitHub job names, not legacy placeholders
 
 ## Reference Documents

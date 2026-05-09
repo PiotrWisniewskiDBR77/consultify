@@ -1057,12 +1057,95 @@ jobs:
   # ═══════════════════════════════════════════════════════════════
   # FINAL REPORT
   # ═══════════════════════════════════════════════════════════════
+  pr-gate:
+    name: ✅ PR Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      [
+        lint-typecheck,
+        test-quality-check,
+        skip-scan-gate,
+        levels-coverage-gates,
+        unit-tests,
+        component-tests,
+        integration-tests,
+        security-integrity,
+        e2e-tests,
+        readiness-smoke,
+        patch-coverage,
+      ]
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Fail if any required job failed
+        env:
+          LINT: ${{ needs.lint-typecheck.result }}
+          TEST_QUALITY: ${{ needs.test-quality-check.result }}
+          SKIP_GATE: ${{ needs.skip-scan-gate.result }}
+          LEVELS: ${{ needs.levels-coverage-gates.result }}
+          UNIT: ${{ needs.unit-tests.result }}
+          COMPONENT: ${{ needs.component-tests.result }}
+          INTEGRATION: ${{ needs.integration-tests.result }}
+          SECURITY_INTEGRITY: ${{ needs.security-integrity.result }}
+          E2E_TIER0: ${{ needs.e2e-tests.result }}
+          READINESS: ${{ needs.readiness-smoke.result }}
+          PATCH_COVERAGE: ${{ needs.patch-coverage.result }}
+        run: |
+          echo "PR Gate results:"
+          echo "  lint-typecheck=$LINT"
+          echo "  test-quality-check=$TEST_QUALITY"
+          echo "  skip-scan-gate=$SKIP_GATE"
+          echo "  levels-coverage-gates=$LEVELS"
+          echo "  unit-tests=$UNIT"
+          echo "  component-tests=$COMPONENT"
+          echo "  integration-tests=$INTEGRATION"
+          echo "  security-integrity=$SECURITY_INTEGRITY"
+          echo "  e2e-tests=$E2E_TIER0"
+          echo "  readiness-smoke=$READINESS"
+          echo "  patch-coverage=$PATCH_COVERAGE"
+
+          fail=0
+
+          req_ok () {
+            name="$1"
+            val="$2"
+            if [ "$val" != "success" ]; then
+              echo "::error::$name is $val (expected success)"
+              fail=1
+            fi
+          }
+
+          # readiness-smoke may be scoped out on PRs; skipped is acceptable.
+          req_ok_or_skipped () {
+            name="$1"
+            val="$2"
+            if [ "$val" != "success" ] && [ "$val" != "skipped" ]; then
+              echo "::error::$name is $val (expected success or skipped)"
+              fail=1
+            fi
+          }
+
+          req_ok "lint-typecheck" "$LINT"
+          req_ok "test-quality-check" "$TEST_QUALITY"
+          req_ok "skip-scan-gate" "$SKIP_GATE"
+          req_ok "levels-coverage-gates" "$LEVELS"
+          req_ok "unit-tests" "$UNIT"
+          req_ok "component-tests" "$COMPONENT"
+          req_ok "integration-tests" "$INTEGRATION"
+          req_ok "security-integrity" "$SECURITY_INTEGRITY"
+          req_ok "e2e-tests" "$E2E_TIER0"
+          req_ok_or_skipped "readiness-smoke" "$READINESS"
+          req_ok "patch-coverage" "$PATCH_COVERAGE"
+
+          exit "$fail"
+
   test-summary:
     name: 📋 Test Summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
       [
+        pr-gate,
         lint-typecheck,
         test-quality-check,
         skip-scan-gate,
