@@ -264,6 +264,42 @@ export function buildDocxStyleConfig(
   const fonts = resolveDocxFonts(schema, formattingClass);
   const sizing = getSizingForClass(formattingClass);
 
+  // Slice E15.5.formatting.render — when the schema carries a
+  // `headingStylesDetailed` override (E15.5 substrate), apply it on
+  // top of the class-derived sizing so author-supplied heading specs
+  // are honored. Conversion conventions:
+  //   - `fontSizePt` is in points; docx wants half-points → ×2.
+  //   - `spacingBeforePt` / `spacingAfterPt` are in points; docx
+  //     wants TWIPs (1pt = 20 TWIPs) → ×20.
+  //   - `bold` overrides the renderer default of `true`.
+  // Only fields present on the override are applied; missing fields
+  // fall back to the class-derived `sizing` defaults.
+  const detailedHeadings = schema.formattingSchema.headingStylesDetailed;
+  const h1Size = detailedHeadings ? detailedHeadings.h1.fontSizePt * 2 : sizing.heading1;
+  const h2Size = detailedHeadings ? detailedHeadings.h2.fontSizePt * 2 : sizing.heading2;
+  const h3Size = detailedHeadings ? detailedHeadings.h3.fontSizePt * 2 : sizing.heading3;
+  const h1Bold = detailedHeadings ? detailedHeadings.h1.bold : true;
+  const h2Bold = detailedHeadings ? detailedHeadings.h2.bold : true;
+  const h3Bold = detailedHeadings ? detailedHeadings.h3.bold : true;
+  const h1Before = detailedHeadings
+    ? detailedHeadings.h1.spacingBeforePt * 20
+    : sizing.spacing.h1Before;
+  const h1After = detailedHeadings
+    ? detailedHeadings.h1.spacingAfterPt * 20
+    : sizing.spacing.h1After;
+  const h2Before = detailedHeadings
+    ? detailedHeadings.h2.spacingBeforePt * 20
+    : sizing.spacing.h2Before;
+  const h2After = detailedHeadings
+    ? detailedHeadings.h2.spacingAfterPt * 20
+    : sizing.spacing.h2After;
+  const h3Before = detailedHeadings
+    ? detailedHeadings.h3.spacingBeforePt * 20
+    : sizing.spacing.h3Before;
+  const h3After = detailedHeadings
+    ? detailedHeadings.h3.spacingAfterPt * 20
+    : sizing.spacing.h3After;
+
   return {
     default: {
       document: {
@@ -272,29 +308,29 @@ export function buildDocxStyleConfig(
       heading1: {
         run: {
           font: fonts.heading,
-          size: sizing.heading1,
-          bold: true,
+          size: h1Size,
+          bold: h1Bold,
           color: '0F172A',
         },
-        paragraph: { spacing: { before: sizing.spacing.h1Before, after: sizing.spacing.h1After } },
+        paragraph: { spacing: { before: h1Before, after: h1After } },
       },
       heading2: {
         run: {
           font: fonts.heading,
-          size: sizing.heading2,
-          bold: true,
+          size: h2Size,
+          bold: h2Bold,
           color: '1E293B',
         },
-        paragraph: { spacing: { before: sizing.spacing.h2Before, after: sizing.spacing.h2After } },
+        paragraph: { spacing: { before: h2Before, after: h2After } },
       },
       heading3: {
         run: {
           font: fonts.heading,
-          size: sizing.heading3,
-          bold: true,
+          size: h3Size,
+          bold: h3Bold,
           color: '334155',
         },
-        paragraph: { spacing: { before: sizing.spacing.h3Before, after: sizing.spacing.h3After } },
+        paragraph: { spacing: { before: h3Before, after: h3After } },
       },
     },
     paragraphStyles: [

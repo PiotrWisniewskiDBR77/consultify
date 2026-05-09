@@ -145,7 +145,22 @@ interface PdfRenderContext {
 
 function buildPdfRenderContext(schema: DocumentSchema): PdfRenderContext {
   const formattingClass = resolveFormattingClass(schema);
-  const sizing = PDF_SIZING_BY_CLASS[formattingClass];
+  const baseSizing = PDF_SIZING_BY_CLASS[formattingClass];
+  // Slice E15.5.formatting.render — when the schema carries
+  // `headingStylesDetailed` (E15.5 substrate), apply the override on
+  // top of the class-derived sizing so author-supplied heading specs
+  // are honored. PDFKit consumes font sizes in **points** directly,
+  // so no half-point conversion is needed (unlike DOCX). Default
+  // (no override) keeps the legacy class-derived sizing.
+  const detailedHeadings = schema.formattingSchema.headingStylesDetailed;
+  const sizing: PdfClassSizing = detailedHeadings
+    ? {
+        ...baseSizing,
+        heading1: detailedHeadings.h1.fontSizePt,
+        heading2: detailedHeadings.h2.fontSizePt,
+        heading3: detailedHeadings.h3.fontSizePt,
+      }
+    : baseSizing;
   const sourceRefIndex = new Map<string, number>();
   schema.sourceRefs.forEach((ref, idx) => {
     sourceRefIndex.set(`${ref.sourceType}::${ref.sourceId}`, idx + 1);
@@ -248,11 +263,27 @@ function marginsInPoints(formatting: FormattingSchema): {
 
 function drawCover(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
   const schema = ctx.schema;
+  // Slice E15.5.formatting.render — `coverPageDetailed` lets the
+  // template suppress the density / confidentiality lines per
+  // template policy. Default (no override) keeps the legacy full
+  // cover so existing schemas render byte-stable.
+  const coverDetailed = schema.formattingSchema.coverPageDetailed;
+  const includeStatus = coverDetailed?.includeStatus ?? true;
+  const includeConfidentiality = coverDetailed?.includeConfidentiality ?? true;
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
     .slice(0, 10);
   const audience = schema.audience.length > 0 ? schema.audience.join(', ') : 'Internal';
-  const subtitle = `${schema.documentType.replace(/_/g, ' ')} · ${schema.language.toUpperCase()} · ${schema.density} · ${schema.confidentiality}`;
+  const subtitleParts: string[] = [];
+  subtitleParts.push(schema.documentType.replace(/_/g, ' '));
+  subtitleParts.push(schema.language.toUpperCase());
+  if (includeStatus) {
+    subtitleParts.push(schema.density);
+  }
+  if (includeConfidentiality) {
+    subtitleParts.push(schema.confidentiality);
+  }
+  const subtitle = subtitleParts.join(' · ');
   doc.moveDown(4);
   doc.fontSize(ctx.sizing.title).fillColor('#0F172A').text(schema.title, { align: 'center' });
   doc.moveDown(0.5);
@@ -272,9 +303,21 @@ function drawCover(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
 function drawTableOfContents(doc: PDFKit.PDFDocument, ctx: PdfRenderContext): void {
   const plan = planSectionHeadings(ctx.schema.sections, ctx.schema.formattingSchema);
   if (plan.length === 0) return;
+  // Slice E15.5.formatting.render — when `tocConfig.maxDepth` is set,
+  // filter the heading plan to only include levels ≤ maxDepth. Default
+  // (no override) renders all levels (current behavior). Defensive:
+  // entries without a numeric `level` are kept (caller's plan is the
+  // source of truth — never drop entries we can't classify).
+  const tocMaxDepth = ctx.schema.formattingSchema.tocConfig?.maxDepth ?? 3;
+  const filtered = plan.filter((entry) => {
+    const level = (entry as { level?: number }).level;
+    if (typeof level !== 'number') return true;
+    return level <= tocMaxDepth;
+  });
+  if (filtered.length === 0) return;
   drawHeading(doc, 'Table of Contents', 1, ctx);
   doc.fontSize(ctx.sizing.body).fillColor('#0F172A').font('Helvetica');
-  for (const entry of plan) {
+  for (const entry of filtered) {
     doc.text(entry.heading, { indent: 8 });
   }
   doc.moveDown(0.4);
@@ -546,12 +589,17 @@ function drawHeaderFooter(
   const formatting = schema.formattingSchema;
   const margins = marginsInPoints(formatting);
   if (formatting.headers.enabled) {
+    // Slice E15.5.formatting.render — `headers.content` overrides
+    // `schema.title` when set. Trimmed before use so accidental
+    // whitespace-only overrides don't render an empty header band.
+    const headerOverride = formatting.headers.content?.trim();
+    const headerText = headerOverride && headerOverride.length > 0 ? headerOverride : schema.title;
     doc
       .save()
       .fontSize(9)
       .fillColor('#64748B')
       .font('Helvetica')
-      .text(schema.title, margins.left, 22, {
+      .text(headerText, margins.left, 22, {
         align: 'left',
         width: doc.page.width - margins.left - margins.right,
       })
@@ -588,12 +636,24 @@ function drawHeaderFooter(
         .restore();
     }
     if (formatting.footers.pageNumbering) {
+      // Slice E15.5.formatting.render — `pageNumberingFormat` honors
+      // a template like `"Strona {N} z {M}"` (PL) or `"Page {N} of {M}"`
+      // (custom EN). `{N}` → pageNumber, `{M}` → totalPages. Default
+      // (no override) keeps the legacy `N / M` shape so existing
+      // schemas render byte-stable.
+      const formatTemplate = formatting.footers.pageNumberingFormat?.trim();
+      const numberingText =
+        formatTemplate && formatTemplate.length > 0
+          ? formatTemplate
+              .replace(/\{N\}/g, String(pageNumber))
+              .replace(/\{M\}/g, String(totalPages))
+          : `${pageNumber} / ${totalPages}`;
       doc
         .save()
         .fontSize(8)
         .fillColor('#94A3B8')
         .font('Helvetica')
-        .text(`${pageNumber} / ${totalPages}`, margins.left, footerY, {
+        .text(numberingText, margins.left, footerY, {
           align: 'right',
           width: doc.page.width - margins.left - margins.right,
         })

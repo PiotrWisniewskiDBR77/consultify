@@ -566,7 +566,30 @@ function renderSection(
 
 function renderCoverBlock(ctx: RenderContext): Paragraph[] {
   const schema = ctx.schema;
-  const subtitle = `${schema.documentType.replace(/_/g, ' ')} · ${schema.language.toUpperCase()} · ${schema.density} · ${schema.confidentiality}`;
+  // Slice E15.5.formatting.render — when the schema carries the
+  // `coverPageDetailed` E15.5 substrate, only render the lines whose
+  // `include*` flag is true. Default (no override) keeps the legacy
+  // full cover page so existing schemas render unchanged.
+  const coverDetailed = schema.formattingSchema.coverPageDetailed;
+  const includeStatus = coverDetailed?.includeStatus ?? true;
+  const includeConfidentiality = coverDetailed?.includeConfidentiality ?? true;
+  // Note: `includeLogo` is reserved for a future renderer pass that
+  // can place an embedded image on the cover. The substrate is
+  // captured here so future PRs need only to read `coverDetailed.includeLogo`.
+
+  // Subtitle composition — strip out parts that the override
+  // explicitly disables. Status = `<density> · <type-language>` line;
+  // confidentiality = the `· internal/restricted/...` tail.
+  const subtitleParts: string[] = [];
+  subtitleParts.push(schema.documentType.replace(/_/g, ' '));
+  subtitleParts.push(schema.language.toUpperCase());
+  if (includeStatus) {
+    subtitleParts.push(schema.density);
+  }
+  if (includeConfidentiality) {
+    subtitleParts.push(schema.confidentiality);
+  }
+  const subtitle = subtitleParts.join(' · ');
   const audience = schema.audience.length > 0 ? schema.audience.join(', ') : 'Internal';
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
@@ -630,9 +653,14 @@ function renderTocBlock(ctx: RenderContext): unknown[] {
     heading: HeadingLevel.HEADING_1,
     children: [new TextRun({ text: 'Table of Contents', font: ctx.headingFont })],
   });
+  // Slice E15.5.formatting.render — honor `tocConfig.maxDepth` when
+  // the schema carries the E15.5 substrate. Default stays `1-3`
+  // (current behavior) so legacy schemas render unchanged.
+  const tocMaxDepth = ctx.schema.formattingSchema.tocConfig?.maxDepth ?? 3;
+  const headingStyleRange = `1-${tocMaxDepth}`;
   const toc = new TableOfContents('Table of Contents', {
     hyperlink: true,
-    headingStyleRange: '1-3',
+    headingStyleRange,
   });
   const trailingBreak = new Paragraph({
     style: DOCX_STYLE_IDS.BODY_TEXT,
@@ -710,13 +738,20 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
   const headerEnabled = formatting.headers.enabled;
   const footerEnabled = formatting.footers.enabled;
 
+  // Slice E15.5.formatting.render — when `headers.content` is set,
+  // it overrides the default `schema.title` header text. Empty / null
+  // / undefined falls back to the legacy default. Trimmed before use
+  // so accidental whitespace-only overrides don't render an empty
+  // header strip.
+  const headerOverride = formatting.headers.content?.trim();
+  const headerText = headerOverride && headerOverride.length > 0 ? headerOverride : schema.title;
   const headerChildren = headerEnabled
     ? [
         new Paragraph({
           alignment: AlignmentType.LEFT,
           children: [
             new TextRun({
-              text: schema.title,
+              text: headerText,
               size: 18,
               color: '64748B',
               font: ctx.bodyFont,
@@ -737,23 +772,67 @@ export async function renderDocumentSchemaToDocxBuffer(schema: DocumentSchema): 
     );
   }
   if (formatting.footers.pageNumbering) {
-    footerRuns.push(
-      new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
-      new TextRun({ text: 'Page ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
-      new TextRun({
-        children: [PageNumber.CURRENT],
-        size: 16,
-        color: '94A3B8',
-        font: ctx.bodyFont,
-      }),
-      new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
-      new TextRun({
-        children: [PageNumber.TOTAL_PAGES],
-        size: 16,
-        color: '94A3B8',
-        font: ctx.bodyFont,
-      })
-    );
+    // Slice E15.5.formatting.render — `pageNumberingFormat` honors a
+    // template like `"Strona {N} z {M}"` (PL) or `"Page {N} of {M}"`
+    // (custom EN). When the template is set, `{N}` and `{M}` are
+    // replaced with the current page number and total page count
+    // fields respectively. Default (no override) keeps the legacy
+    // `Page N / M` runs so existing schemas render byte-stable.
+    const formatTemplate = formatting.footers.pageNumberingFormat?.trim();
+    if (formatTemplate && formatTemplate.length > 0) {
+      footerRuns.push(
+        new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont })
+      );
+      // Split the template around the `{N}` and `{M}` placeholders so
+      // the replacement runs become real Word `PageNumber` fields
+      // (which Word recalculates on print) rather than literal text.
+      // Tokenize via a regex that captures the placeholders alongside
+      // the text fragments.
+      const pieces = formatTemplate.split(/(\{N\}|\{M\})/);
+      for (const piece of pieces) {
+        if (piece === '{N}') {
+          footerRuns.push(
+            new TextRun({
+              children: [PageNumber.CURRENT],
+              size: 16,
+              color: '94A3B8',
+              font: ctx.bodyFont,
+            })
+          );
+        } else if (piece === '{M}') {
+          footerRuns.push(
+            new TextRun({
+              children: [PageNumber.TOTAL_PAGES],
+              size: 16,
+              color: '94A3B8',
+              font: ctx.bodyFont,
+            })
+          );
+        } else if (piece.length > 0) {
+          footerRuns.push(
+            new TextRun({ text: piece, size: 16, color: '94A3B8', font: ctx.bodyFont })
+          );
+        }
+      }
+    } else {
+      footerRuns.push(
+        new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+        new TextRun({ text: 'Page ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+        new TextRun({
+          children: [PageNumber.CURRENT],
+          size: 16,
+          color: '94A3B8',
+          font: ctx.bodyFont,
+        }),
+        new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+        new TextRun({
+          children: [PageNumber.TOTAL_PAGES],
+          size: 16,
+          color: '94A3B8',
+          font: ctx.bodyFont,
+        })
+      );
+    }
   }
   const footerChildren =
     footerEnabled && footerRuns.length > 0
