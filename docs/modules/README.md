@@ -59,3 +59,12 @@ Ten katalog jest **kuratorską nakładką** na istniejące SSOT w `DRD/consultif
 ## Coverage Manifest
 
 - `_AUTHOR_CONTRACT_COVERAGE_2026-05-09.md` — aktualny manifest pokrycia źródeł przez kontrakty modułów.
+
+## Program “Harvey dla consultingu”
+
+- `_PERFECT_CONSULTIFY_CONTRACT_WORKPLAN_2026-05-09.md` — programowy workplan dla perfekcyjnego kontraktu aplikacji.
+- `_EXECUTION_PLAN_HARVEY_FOR_CONSULTING_2026-05-09.md` — wykonawczy plan sprintów, bramek i hard-stopów.
+- `APPLICATION_OPERATING_MODEL.md` — model działania Consultify jako jednego systemu pracy konsultingowej.
+- `OBJECT_GRAPH.md` — główne obiekty systemu i ich właściciele.
+- `MODULE_HANDOFFS.md` — przepływy pracy i odpowiedzialności między modułami.
+- `UI_UX_CONTRACT_INDEX.md` — indeks i globalne wymagania dla kontraktów UX modułów.
