@@ -7,7 +7,7 @@
  *   - Server-driven visibility: 403 PERMISSION_DENIED -> renders nothing.
  *   - Honest loading + error states with retry path.
  *   - loadWarning banner rendering across reasons (corrupt / io_error /
- *     unsupported_schema / rejected_by_validator).
+ *     unsupported_schema / rejected_by_validator / signature_mismatch).
  *   - Override flow: JSON parse failure -> banner; server validation
  *     errors -> typed `errors[]` list; clean propose -> ticket displayed
  *     -> execute -> success banner + bootstrap refresh.
@@ -255,6 +255,29 @@ describe('PresentationStudioLayoutCapacityAdminPanel — loadWarning', () => {
     // Amber tone (advisory) is keyed by class `border-amber-200`.
     expect(banner.className).toContain('amber');
     expect(banner.textContent).toContain('EACCES');
+  });
+
+  it('renders a rose loadWarning banner for `signature_mismatch` (tampered persistence file)', async () => {
+    api.get.mockResolvedValueOnce({
+      current: makeDefaultsSnapshot(),
+      defaults: makeDefaultsSnapshot(),
+      scope: 'process_global',
+      loadWarning: {
+        reason: 'signature_mismatch',
+        sourcePath: '/tmp/persisted.json',
+        details: 'signature does not match persisted override contents',
+        raisedAt: '2026-05-09T00:00:00.000Z',
+      },
+    });
+    render(
+      <PresentationStudioLayoutCapacityAdminPanel
+        api={api as unknown as PresentationStudioLayoutCapacityAdminApiType}
+      />
+    );
+    const banner = await screen.findByTestId('studio-layout-capacity-admin-load-warning');
+    expect(banner.className).toContain('rose');
+    expect(banner.textContent).toContain('signature is missing or invalid');
+    expect(banner.textContent).toContain('signature does not match');
   });
 });
 

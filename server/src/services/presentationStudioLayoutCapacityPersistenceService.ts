@@ -360,6 +360,84 @@ export interface PersistedOverridesFileV1 {
    * caught by the same code path the SuperAdmin route uses.
    */
   overrides: LayoutCapacityOverridesPayload;
+  /**
+   * Sprint S22 (R-S18-2): HMAC-SHA256 over the canonical
+   * `{ schemaVersion, writtenAt, overrides }` payload. This prevents
+   * hand-edits from bypassing the audited SuperAdmin propose ->
+   * execute flow. A missing or invalid signature is an honest
+   * degraded-load state (`signature_mismatch`), not a silent restore.
+   */
+  signature: string;
+}
+
+const PERSISTENCE_HMAC_SECRET_ENV = 'CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_HMAC_SECRET';
+
+function resolvePersistenceSigningSecret(): string | null {
+  const secret = process.env[PERSISTENCE_HMAC_SECRET_ENV];
+  if (typeof secret === 'string' && secret.trim()) return secret.trim();
+  // Tests use an implicit deterministic secret so existing mock-driver
+  // tests stay hermetic without leaking a production default.
+  if (process.env.NODE_ENV === 'test') return 'test-layout-capacity-persistence-secret';
+  return null;
+}
+
+function canonicalSigningPayload(
+  file: Pick<PersistedOverridesFileV1, 'schemaVersion' | 'writtenAt' | 'overrides'>
+): string {
+  return JSON.stringify({
+    schemaVersion: file.schemaVersion,
+    writtenAt: file.writtenAt,
+    overrides: file.overrides,
+  });
+}
+
+function signPersistedOverridesFile(
+  file: Pick<PersistedOverridesFileV1, 'schemaVersion' | 'writtenAt' | 'overrides'>,
+  secret: string
+): string {
+  // Lazy require keeps import-time behavior unchanged for tests that
+  // replace the file-system driver before defaultDriver() is touched.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const crypto = require('crypto') as typeof import('crypto');
+  return crypto
+    .createHmac('sha256', secret)
+    .update(canonicalSigningPayload(file), 'utf-8')
+    .digest('hex');
+}
+
+function verifyPersistedOverridesSignature(file: Partial<PersistedOverridesFileV1>): {
+  ok: boolean;
+  details?: string;
+} {
+  if (typeof file.signature !== 'string' || !file.signature.trim()) {
+    return { ok: false, details: 'signature field missing or empty' };
+  }
+  const secret = resolvePersistenceSigningSecret();
+  if (!secret) {
+    return {
+      ok: false,
+      details: `${PERSISTENCE_HMAC_SECRET_ENV} is not configured; refusing to trust persisted overrides`,
+    };
+  }
+  const expected = signPersistedOverridesFile(
+    {
+      schemaVersion: 1,
+      writtenAt: typeof file.writtenAt === 'string' ? file.writtenAt : '',
+      overrides: file.overrides as LayoutCapacityOverridesPayload,
+    },
+    secret
+  );
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const crypto = require('crypto') as typeof import('crypto');
+  const actualBuffer = Buffer.from(file.signature, 'hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+  if (
+    actualBuffer.length !== expectedBuffer.length ||
+    !crypto.timingSafeEqual(actualBuffer, expectedBuffer)
+  ) {
+    return { ok: false, details: 'signature does not match persisted override contents' };
+  }
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -370,7 +448,7 @@ export type LoadPersistedOverridesResult =
   | { ok: true; payload: LayoutCapacityOverridesPayload; writtenAt: string; sourcePath: string }
   | {
       ok: false;
-      reason: 'missing' | 'corrupt' | 'unsupported_schema' | 'io_error';
+      reason: 'missing' | 'corrupt' | 'unsupported_schema' | 'io_error' | 'signature_mismatch';
       sourcePath: string;
       details?: string;
     };
@@ -383,6 +461,7 @@ export type LoadPersistedOverridesResult =
  *   - missing file -> `{ ok: false, reason: 'missing' }` (silent default).
  *   - parse error / wrong shape -> `{ ok: false, reason: 'corrupt' }`.
  *   - unsupported schemaVersion -> `{ ok: false, reason: 'unsupported_schema' }`.
+ *   - missing / invalid signature -> `{ ok: false, reason: 'signature_mismatch' }`.
  *   - I/O failure -> `{ ok: false, reason: 'io_error', details }`.
  *   - success -> `{ ok: true, payload, writtenAt, sourcePath }`.
  */
@@ -439,6 +518,15 @@ export function loadPersistedOverrides(): LoadPersistedOverridesResult {
       details: 'overrides field missing or not an object',
     };
   }
+  const signature = verifyPersistedOverridesSignature(obj);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      reason: 'signature_mismatch',
+      sourcePath,
+      details: signature.details,
+    };
+  }
   const writtenAt = typeof obj.writtenAt === 'string' ? obj.writtenAt : '';
   return {
     ok: true,
@@ -475,9 +563,15 @@ export function savePersistedOverrides(
     schemaVersion: 1,
     writtenAt,
     overrides: payload,
+    signature: '',
   };
   const driver = getDriver();
   try {
+    const secret = resolvePersistenceSigningSecret();
+    if (!secret) {
+      throw new Error(`${PERSISTENCE_HMAC_SECRET_ENV} is not configured`);
+    }
+    file.signature = signPersistedOverridesFile(file, secret);
     driver.writeFile(sourcePath, JSON.stringify(file, null, 2));
     return { ok: true, sourcePath, writtenAt };
   } catch (err: unknown) {
@@ -528,7 +622,7 @@ export type RestoreLoadOutcome =
   | {
       status: 'corrupt';
       sourcePath: string;
-      reason: 'corrupt' | 'unsupported_schema' | 'io_error';
+      reason: 'corrupt' | 'unsupported_schema' | 'io_error' | 'signature_mismatch';
       details?: string;
     }
   | {

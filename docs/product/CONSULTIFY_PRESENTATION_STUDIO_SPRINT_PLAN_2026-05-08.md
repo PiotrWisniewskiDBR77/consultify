@@ -1799,3 +1799,68 @@ Closed the last remaining gap in S19's atomic-write story (R-S18-3). After S19, 
 - **R-S17-2** (process-global write blast radius): still open. Tenant-scoped overrides would convert this from a process-level switch into a tenant-aware policy. Multi-sprint refactor (registry signature change + new persistence file format + new tenant-Owner capability + audit shape change). Probably its own dedicated track.
 - **R-S14-3 / R-S15-2** (per-slide layout-audit drill-down): the canvas-side audit summary is still aggregate-only; a per-slide drill-down is a self-contained UI sprint that can ship in parallel with backend hardening.
 - **Operations runbook update**: the new fsync sequence introduces a new failure mode operators should know about — a healthy `EIO: fsync failed` from a degraded storage device would now surface as a `loadWarning` with reason `io_error` (instead of silently swallowing the durability failure). The remediation playbook should add a section for "what to do when the persistence layer raises an io_error loadWarning" — verify disk health via `smartctl`, check the parent directory exists and is writable, etc.
+
+
+---
+
+## Sprint S22 — signed persistence file (closes R-S18-2)
+
+**Status:** Completed
+**Date:** 2026-05-09
+**Phase:** 2 (Implementation)
+**Touched files:** 7 (2 backend services, 1 backend test, 1 FE api client, 1 FE api test, 1 FE component, 1 FE component test)
+
+### Scope
+
+Closed R-S18-2: the persisted layout-capacity override file is now authenticated with an HMAC-SHA256 signature. Before S22, a hand-edit to the JSON file could bypass the audited SuperAdmin `proposal -> approval -> execution -> audit` flow and be restored on boot as if it had been legitimately applied. After S22, a missing or invalid signature is rejected as a degraded-load condition (`signature_mismatch`), the registry remains at canonical defaults, and the S20 admin panel surfaces the tamper state honestly.
+
+### Changes
+
+- **MODIFIED** `server/src/services/presentationStudioLayoutCapacityPersistenceService.ts`
+  - Added `signature` to `PersistedOverridesFileV1`.
+  - Added HMAC-SHA256 signing over canonical `{ schemaVersion, writtenAt, overrides }`.
+  - Added production secret source: `CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_HMAC_SECRET`.
+  - Production writes without a configured secret now fail honestly as `io_error` instead of writing unsigned data.
+  - Test environment uses a deterministic test-only fallback secret so mock-driver tests remain hermetic without creating a production default.
+  - `loadPersistedOverrides` now rejects missing or invalid signatures with `reason: 'signature_mismatch'`.
+  - `restorePersistedOverrides` propagates `signature_mismatch` through its existing corrupt/degraded branch, so boot remains non-crashing but honest.
+- **MODIFIED** `server/src/services/presentationStudioLayoutCapacityRegistryService.ts`
+  - Extended `LayoutCapacityRegistryLoadWarning.reason` with `signature_mismatch`.
+- **MODIFIED** `server/src/services/__tests__/presentationStudioLayoutCapacityPersistenceService.test.ts`
+  - Added local `signedPersistedFile` helper using the deterministic test HMAC secret.
+  - Updated legitimate restore tests to use signed fixtures.
+  - Added missing-signature and hand-edited-signature tests.
+  - Added initialize/restore tests verifying a tampered file does not apply to the live registry and raises `signature_mismatch`.
+  - Existing write tests now assert persisted files include a 64-char hex signature.
+- **MODIFIED** `src/services/api/presentationStudioLayoutCapacityAdmin.api.ts`
+  - Extended frontend admin client `LayoutCapacityRegistryLoadWarning.reason` with `signature_mismatch`.
+- **MODIFIED** `src/services/api/__tests__/presentationStudioLayoutCapacityAdmin.api.test.ts`
+  - Added client test proving `signature_mismatch` loadWarning passes through verbatim to UI consumers.
+- **MODIFIED** `src/components/PresentationStudio/PresentationStudioLayoutCapacityAdminPanel.tsx`
+  - Added SuperAdmin label for `signature_mismatch`: persisted overrides signature is missing or invalid; runtime overrides were ignored.
+  - Treats `signature_mismatch` as rose/severe alongside corrupt and rejected-by-validator.
+- **MODIFIED** `src/components/PresentationStudio/__tests__/PresentationStudioLayoutCapacityAdminPanel.test.tsx`
+  - Added UI test proving tamper evidence renders in the severe loadWarning banner.
+
+### Validation
+
+- **Persistence vitest:** 49/49 passed.
+- **Adjacent Studio backend vitest:** 154/154 passed (persistence 49 + registry 14 + admin 21 + routes 70).
+- **Studio FE vitest:** 71/71 passed (page 28 + admin panel 17 + audit banner 11 + admin api client 15).
+- **Touched tests after lint-fix:** 81/81 passed (49 backend persistence + 17 panel + 15 client).
+- **ESLint on S22-touched files:** 0 errors; 12 existing P3 `no-non-null-assertion` warnings remain in the legacy mock-heavy persistence test.
+- **Focused TypeScript:** 0 errors via transient `tsconfig.s22-check.json`.
+
+### Acceptance
+
+- R-S18-2 closed: persisted overrides cannot be hand-edited without detection.
+- Missing signature and invalid signature both degrade to `signature_mismatch`.
+- A tampered file does not mutate the live registry during restore/bootstrap.
+- SuperAdmin sees the degraded state in the S20 panel; no silent fallback that looks clean.
+- Production requires `CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_HMAC_SECRET` to write signed persistence. If absent, `savePersistedOverrides` reports `io_error`, and the registry loadWarning mechanism surfaces that failure.
+
+### Next-step candidates
+
+- **R-S17-2 / R-S13-1 / R-S18-1:** tenant-scoped layout-capacity overrides and persistence. Larger refactor across registry signatures, persistence file format, admin API, audit payload, and UI.
+- **R-S14-3 / R-S15-2 / R-S16 follow-ups:** per-slide layout-audit drill-down in the Studio canvas.
+- **Operations runbook:** document required `CONSULTIFY_LAYOUT_CAPACITY_OVERRIDES_HMAC_SECRET`, `signature_mismatch` remediation, and `io_error` remediation from S21 fsync failures.

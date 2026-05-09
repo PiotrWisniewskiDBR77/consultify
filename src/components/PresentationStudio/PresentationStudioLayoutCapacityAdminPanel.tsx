@@ -94,6 +94,8 @@ const LOAD_WARNING_LABELS: Record<LayoutCapacityRegistryLoadWarning['reason'], s
     'I/O error reading or writing the persisted overrides file. Last apply may not be durable.',
   rejected_by_validator:
     'Persisted overrides were rejected by the current registry validator (likely a baseline change).',
+  signature_mismatch:
+    'Persisted overrides file signature is missing or invalid. Runtime overrides were ignored.',
 };
 
 function formatTicketRejection(reason: string | null | undefined): string {
@@ -628,7 +630,8 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
           <div
             className={`flex items-start gap-3 rounded-md border px-4 py-3 text-sm ${
               data.loadWarning.reason === 'corrupt' ||
-              data.loadWarning.reason === 'rejected_by_validator'
+              data.loadWarning.reason === 'rejected_by_validator' ||
+              data.loadWarning.reason === 'signature_mismatch'
                 ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300'
                 : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200'
             }`}

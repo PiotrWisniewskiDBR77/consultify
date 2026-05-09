@@ -10,6 +10,7 @@
  *     raised on corrupt + cleared on next successful apply.
  */
 
+import { createHmac } from 'crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -70,6 +71,7 @@ function makeMockDriver(state: MockDriverState): PersistenceFileSystemDriver {
 }
 
 const TEST_PATH = '/tmp/test-presentation-studio-layout-capacity.json';
+const TEST_SIGNING_SECRET = 'test-layout-capacity-persistence-secret';
 
 let driverState: MockDriverState;
 
@@ -90,6 +92,21 @@ afterEach(() => {
   setRegistryHooks(null);
   setRegistryLoadWarning(null);
 });
+
+function signedPersistedFile(input: {
+  writtenAt?: string;
+  overrides: Record<string, unknown>;
+}): string {
+  const file = {
+    schemaVersion: 1 as const,
+    writtenAt: input.writtenAt ?? '2026-05-09T00:00:00.000Z',
+    overrides: input.overrides,
+  };
+  const signature = createHmac('sha256', TEST_SIGNING_SECRET)
+    .update(JSON.stringify(file), 'utf-8')
+    .digest('hex');
+  return JSON.stringify({ ...file, signature });
+}
 
 // ---------------------------------------------------------------------------
 // resolvePersistencePath
@@ -180,8 +197,7 @@ describe('loadPersistedOverrides', () => {
   it('returns ok with the parsed payload for a well-formed file', () => {
     driverState.files.set(
       TEST_PATH,
-      JSON.stringify({
-        schemaVersion: 1,
+      signedPersistedFile({
         writtenAt: '2026-05-09T00:00:00.000Z',
         overrides: { densityBudgets: { balanced: { titleMaxChars: 137 } } },
       })
@@ -213,6 +229,37 @@ describe('savePersistedOverrides', () => {
     const parsed = JSON.parse(raw!);
     expect(parsed.schemaVersion).toBe(1);
     expect(parsed.overrides.densityBudgets.balanced.titleMaxChars).toBe(100);
+    expect(parsed.signature).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('returns signature_mismatch when a schema-valid file has no signature', () => {
+    driverState.files.set(
+      TEST_PATH,
+      JSON.stringify({
+        schemaVersion: 1,
+        writtenAt: '2026-05-09T00:00:00.000Z',
+        overrides: { densityBudgets: { balanced: { titleMaxChars: 137 } } },
+      })
+    );
+    const r = loadPersistedOverrides();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe('signature_mismatch');
+    expect(r.details).toContain('signature field missing');
+  });
+
+  it('returns signature_mismatch when a signed file is hand-edited after write', () => {
+    const raw = signedPersistedFile({
+      overrides: { densityBudgets: { balanced: { titleMaxChars: 137 } } },
+    });
+    const edited = JSON.parse(raw);
+    edited.overrides.densityBudgets.balanced.titleMaxChars = 999;
+    driverState.files.set(TEST_PATH, JSON.stringify(edited));
+    const r = loadPersistedOverrides();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe('signature_mismatch');
+    expect(r.details).toContain('signature does not match');
   });
 
   it('returns io_error when the driver throws on write', () => {
@@ -261,8 +308,7 @@ describe('restorePersistedOverrides', () => {
   it('replays a persisted snapshot into the live registry', () => {
     driverState.files.set(
       TEST_PATH,
-      JSON.stringify({
-        schemaVersion: 1,
+      signedPersistedFile({
         writtenAt: '2026-05-09T00:00:00.000Z',
         overrides: { densityBudgets: { balanced: { titleMaxChars: 137 } } },
       })
@@ -275,8 +321,7 @@ describe('restorePersistedOverrides', () => {
   it('returns rejected_by_validator when persisted payload no longer validates', () => {
     driverState.files.set(
       TEST_PATH,
-      JSON.stringify({
-        schemaVersion: 1,
+      signedPersistedFile({
         writtenAt: '2026-05-09T00:00:00.000Z',
         overrides: { densityBudgets: { balanced: { titleMaxChars: -5 } } },
       })
@@ -293,6 +338,23 @@ describe('restorePersistedOverrides', () => {
     driverState.files.set(TEST_PATH, '{not json');
     const o = restorePersistedOverrides();
     expect(o.status).toBe('corrupt');
+  });
+
+  it('returns corrupt/signature_mismatch status without applying a hand-edited file', () => {
+    driverState.files.set(
+      TEST_PATH,
+      JSON.stringify({
+        schemaVersion: 1,
+        writtenAt: '2026-05-09T00:00:00.000Z',
+        overrides: { densityBudgets: { balanced: { titleMaxChars: 999 } } },
+        signature: '0'.repeat(64),
+      })
+    );
+    const o = restorePersistedOverrides();
+    expect(o.status).toBe('corrupt');
+    if (o.status !== 'corrupt') return;
+    expect(o.reason).toBe('signature_mismatch');
+    expect(getCurrentRegistrySnapshot().densityBudgets.balanced.titleMaxChars).not.toBe(999);
   });
 });
 
@@ -324,8 +386,7 @@ describe('initializeLayoutCapacityPersistence', () => {
   it('raises rejected_by_validator when persisted payload no longer validates', () => {
     driverState.files.set(
       TEST_PATH,
-      JSON.stringify({
-        schemaVersion: 1,
+      signedPersistedFile({
         writtenAt: '2026-05-09T00:00:00.000Z',
         overrides: { densityBudgets: { balanced: { titleMaxChars: -5 } } },
       })
@@ -334,6 +395,25 @@ describe('initializeLayoutCapacityPersistence', () => {
     const w = getRegistryLoadWarning();
     expect(w?.reason).toBe('rejected_by_validator');
     expect(w?.details).toBeTruthy();
+  });
+
+  it('raises signature_mismatch when the persisted file was hand-edited', () => {
+    driverState.files.set(
+      TEST_PATH,
+      JSON.stringify({
+        schemaVersion: 1,
+        writtenAt: '2026-05-09T00:00:00.000Z',
+        overrides: { densityBudgets: { balanced: { titleMaxChars: 999 } } },
+        signature: '0'.repeat(64),
+      })
+    );
+    const outcome = initializeLayoutCapacityPersistence();
+    expect(outcome.status).toBe('corrupt');
+    const w = getRegistryLoadWarning();
+    expect(w?.reason).toBe('signature_mismatch');
+    expect(w?.sourcePath).toBe(TEST_PATH);
+    expect(w?.details).toContain('signature does not match');
+    expect(getCurrentRegistrySnapshot().densityBudgets.balanced.titleMaxChars).not.toBe(999);
   });
 
   it('persists subsequent applyOverrides calls to disk', () => {
@@ -345,6 +425,7 @@ describe('initializeLayoutCapacityPersistence', () => {
     const parsed = JSON.parse(driverState.files.get(TEST_PATH)!);
     expect(parsed.schemaVersion).toBe(1);
     expect(parsed.overrides.densityBudgets.balanced.titleMaxChars).toBe(137);
+    expect(parsed.signature).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('clears the file on resetToDefaults', () => {
@@ -387,8 +468,7 @@ describe('initializeLayoutCapacityPersistence', () => {
     // Step 1: pre-existing persisted file.
     driverState.files.set(
       TEST_PATH,
-      JSON.stringify({
-        schemaVersion: 1,
+      signedPersistedFile({
         writtenAt: '2026-05-09T00:00:00.000Z',
         overrides: { densityBudgets: { balanced: { titleMaxChars: 137 } } },
       })
@@ -404,6 +484,7 @@ describe('initializeLayoutCapacityPersistence', () => {
     const parsed = JSON.parse(driverState.files.get(TEST_PATH)!);
     expect(parsed.overrides.densityBudgets.balanced.titleMaxChars).toBe(137);
     expect(parsed.overrides.densityBudgets.visual.blocksMax).toBe(9);
+    expect(parsed.signature).toMatch(/^[a-f0-9]{64}$/);
   });
 });
 

@@ -138,6 +138,49 @@ describe('PresentationStudioLayoutCapacityAdminApi.get', () => {
     });
   });
 
+  it('surfaces signature_mismatch loadWarning verbatim so tamper evidence reaches the UI', async () => {
+    mockedFetch.mockResolvedValueOnce(
+      makeResponse(200, {
+        success: true,
+        data: {
+          current: {
+            densityBudgets: {
+              visual: { titleMaxChars: 60, keyMessageMaxChars: 100, blocksMax: 5 },
+              balanced: { titleMaxChars: 80, keyMessageMaxChars: 200, blocksMax: 6 },
+              document: { titleMaxChars: 100, keyMessageMaxChars: 400, blocksMax: 8 },
+            },
+            templateFamilyOverrides: {},
+            familyAliasByDeckType: {},
+          },
+          defaults: {
+            densityBudgets: {
+              visual: { titleMaxChars: 60, keyMessageMaxChars: 100, blocksMax: 5 },
+              balanced: { titleMaxChars: 80, keyMessageMaxChars: 200, blocksMax: 6 },
+              document: { titleMaxChars: 100, keyMessageMaxChars: 400, blocksMax: 8 },
+            },
+            templateFamilyOverrides: {},
+            familyAliasByDeckType: {},
+          },
+          scope: 'process_global',
+          loadWarning: {
+            reason: 'signature_mismatch',
+            sourcePath: '/tmp/persisted.json',
+            details: 'signature does not match persisted override contents',
+            raisedAt: '2026-05-09T00:00:00.000Z',
+          },
+        },
+      })
+    );
+
+    const result = await PresentationStudioLayoutCapacityAdminApi.get();
+    expect(result.loadWarning).toEqual({
+      reason: 'signature_mismatch',
+      sourcePath: '/tmp/persisted.json',
+      details: 'signature does not match persisted override contents',
+      raisedAt: '2026-05-09T00:00:00.000Z',
+    });
+  });
+
   it('throws LayoutCapacityAdminApiError with status 403 + code PERMISSION_DENIED for non-SuperAdmin', async () => {
     mockedFetch.mockResolvedValueOnce(
       makeResponse(403, {

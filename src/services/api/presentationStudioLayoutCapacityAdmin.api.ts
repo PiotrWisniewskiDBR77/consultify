@@ -82,7 +82,12 @@ export interface LayoutCapacityRegistrySnapshot {
  * populated value means the panel must render a `loadWarning` banner.
  */
 export interface LayoutCapacityRegistryLoadWarning {
-  reason: 'corrupt' | 'unsupported_schema' | 'io_error' | 'rejected_by_validator';
+  reason:
+    | 'corrupt'
+    | 'unsupported_schema'
+    | 'io_error'
+    | 'rejected_by_validator'
+    | 'signature_mismatch';
   sourcePath: string;
   details?: string;
   raisedAt: string;

@@ -351,7 +351,12 @@ export function setRegistryHooks(hooks: LayoutCapacityRegistryHooks | null): voi
  * the lost runtime tuning.
  */
 export interface LayoutCapacityRegistryLoadWarning {
-  reason: 'corrupt' | 'unsupported_schema' | 'io_error' | 'rejected_by_validator';
+  reason:
+    | 'corrupt'
+    | 'unsupported_schema'
+    | 'io_error'
+    | 'rejected_by_validator'
+    | 'signature_mismatch';
   sourcePath: string;
   details?: string;
   /** ISO timestamp the warning was raised. */
