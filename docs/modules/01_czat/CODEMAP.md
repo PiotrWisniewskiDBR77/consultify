@@ -24,6 +24,13 @@ last_updated: 2026-05-09
 - `src/components/AIChat/UnifiedChatPanel.tsx` — chat panel used in full/split modes with workspace context and chat actions.
 - `src/components/AIChat/ConversationRouteSync.tsx` — route <-> conversation synchronization (mounted in chat routes).
 
+## Function Map (As-Is)
+
+| Function | Route scope | Core components | Notes |
+| --- | --- | --- | --- |
+| `CZ_CHAT_ENGINE` | `/chat`, `/chat/:conversationId` | `AIChatWelcomeView`, `UnifiedChatPanel`, `MessageRenderer`, `EnhancedChatInput`, `CitationList`, `TeresaProposalCard` | Primary production chat runtime. |
+| `CZ_CANVAS_WORKSPACE` | `/internal/v10-runtime` + chat workspace bridge flows | `V10RuntimeWorkspaceView`, `ChatV10RuntimesPanel`, `V8ArtifactRunControl`, `KimiWorkspaceShell` | Partial exposure: runtime bridge exists, KIMI lane routes are still coming-soon in app routing. |
+
 ## API / Services / Models (Confirmable)
 
 - API entry used by chat UI: `src/services/api.ts` (`Api` calls in chat views/panels).
