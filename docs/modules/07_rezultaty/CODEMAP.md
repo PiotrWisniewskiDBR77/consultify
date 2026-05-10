@@ -9,25 +9,32 @@ last_updated: 2026-05-09
 
 # Codemap — Rezultaty / Results & Value Realization
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Rezultaty`
-- Route: `/benefits`
-- AppView: `AppView.BENEFITS_REALIZATION`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry `MODULE_BENEFITS` maps to `AppView.BENEFITS_REALIZATION` in `menuConfig.ts`.
+- Canonical and related routes in `routeConfig.ts`: `/benefits`, `/kpi-okr`.
+- Route render map in `AppRoutes.tsx`:
+  - `/benefits` -> `ResultsHub`
+  - `/kpi-okr` -> `KpiOkrView`
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/components/Results/ResultsHub.tsx` — primary results/KPI/ROI runtime.
+- `src/views/KpiOkrView.tsx` — legacy/parallel KPI route surface.
+- `src/components/Results/*` subviews for KPI catalog, reports, scorecards, ROI analysis and tracking.
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- KPI and scorecard truth.
-- Baseline/target/actual/deviation tracking.
-- ROI realization, reconciliation and evidence.
-- Corrective action loop linked to initiatives/execution/finance.
+- Shared API usage: `src/services/api.ts`.
+- Results contracts: `src/services/api/v8/results.ts`.
+- Initiative linkage helper usage in results runtime: `src/services/initiativeWriteTruth.ts`.
+- Results domain types in component runtime: `kpiDomain` and related types under `src/components/Results`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- No dedicated `src/components/Results/*test*` files found.
+
+## Known Gaps (As-Is)
+
+- Active route coverage exists, but module-local automated tests for results surfaces are absent (`code_gap`).
+- Presence of both `/benefits` and `/kpi-okr` indicates mixed route surfaces for one functional lane (`partial`).

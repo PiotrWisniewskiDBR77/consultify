@@ -7,40 +7,28 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# Behavior — Dokumenty / Document Studio
+# Behavior — Dokumenty / Wordy
 
-## Purpose
+## As-Is Runtime Behavior
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Module entry is reachable from sidebar and direct route, but user lands on `V4ComingSoonView`.
+- No Document Studio transactional workflow is mounted under `/wordy` in current `AppRoutes`.
+- Navigation identity is stabilized by `AppView.WORDY` in `src/types/core.ts` and `APP_VIEW_TO_ROUTE` mapping in `routeConfig.ts`.
 
 ## Must
 
-- MUST plan document structure before generation when document is substantial.
-- MUST maintain source pack and mark assumptions/confidence.
-- MUST apply proposal -> diff -> approve -> version for material AI edits.
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve module ownership boundaries defined in global operating docs.
+- MUST expose blocked/placeholder state honestly when runtime is not yet mounted.
 
 ## Must Not
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or legacy surfaces from module contract narrative.
 
-## Should
+## Acceptance Criteria (Behavior)
 
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
-- `DRD/consultify/docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_DOCUMENTS.md`
-- `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_DOCUMENTS_2026-03-29.md`
-- `DRD/consultify/docs/UI_UX/92_RAW_DOCUMENT_STUDIO_RESEARCH_2026-05-08.md`
-- `DRD/consultify/docs/UI_UX/93_RAW_DOCUMENT_STUDIO_ANALYSIS_2026-05-09.md`
-- `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
+- [ ] Direct navigation to launch route resolves to documented current runtime.
+- [ ] AppView-to-route mapping resolves to the same module owner.
+- [ ] Cross-module ownership statements match global resolved decisions.

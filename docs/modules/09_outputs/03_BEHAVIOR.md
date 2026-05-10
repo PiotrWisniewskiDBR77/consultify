@@ -9,38 +9,20 @@ last_updated: 2026-05-09
 
 # Behavior — Outputs Library
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Outputs lane centers on `/presentations` with `ReportsAndPresentationsHub` handling aggregate, mine, review, documents, presentations, sheets, and templates tabs.
+- Legacy reports entry points redirect into outputs tab contexts instead of separate module ownership.
+- Artifact-level create/edit operations route users to specialized builders (`/reports/builder`, presentation wizard/deck builder) while library identity stays in outputs lane.
 
-## Must
+## State Handling (As-Is)
 
-- MUST be canonical home for durable artifacts.
-- MUST keep creation source, owner, version, review status and export history.
-- MUST route editing to correct runtime while preserving artifact identity.
+- Active tab can be route/query driven (`tab` parsing in outputs hub).
+- Hub maintains filters, search, view mode, open documents, and contextual help state.
+- Data loading is split by artifact family (`useReports`, `usePresentations`, `useTemplates`, `useArtifactOutputsList`, `useSheetOutputs`).
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`
-- `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_IMPLEMENTATION_PLAN.md`
-- `DRD/consultify/docs/product/REPORTS_AND_PRESENTATIONS_OUTPUT_OPERATING_MODEL_V8.md`
-- `DRD/consultify/docs/product/REPORTING_CANONICAL_TEMPLATES.md`
-- `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
-- `DRD/consultify/docs/UI_UX/96_RAW_PRESENTATION_STUDIO_GAMMA_CLASS_2026-05-09.md`
+- Artifact action targets and governance summaries are fetched through explicit API calls in `useRapData`.
+- Review/access actions are explicit user-triggered operations; no hidden route-level artifact mutation branch.
+- Outputs lane runs inside authenticated app shell and module production gating.

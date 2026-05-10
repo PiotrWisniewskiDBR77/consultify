@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Consultify Governance Loop Harness</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+    h2 { font-size: 14px; color: #475569; margin: 16px 0 8px; }
+    .verdict-pill { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+    .verdict-pill.blocked_p0 { background: #fecaca; color: #991b1b; }
+    .verdict-pill.blocked_p1 { background: #fed7aa; color: #9a3412; }
+    .verdict-pill.pass { background: #bbf7d0; color: #14532d; }
+    table { border-collapse: collapse; width: 100%; font-size: 12px; }
+    th, td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; }
+    [data-testid] { padding: 8px 12px; background: #f8fafc; border-radius: 6px; margin: 4px 0; font-size: 12px; }
+    ul { padding-left: 20px; }
+    li { font-size: 12px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h2>Watchlist</h2>
+  <div id="watchlist-area">
+    <table id="watchlist-table">
+      <thead><tr><th>Deck</th><th>Verdict</th><th>P0/P1/P2</th></tr></thead>
+      <tbody id="watchlist-body"></tbody>
+    </table>
+  </div>
+
+  <h2>Operations Health</h2>
+  <div id="ops-health-area">
+    <div data-testid="alerts-counter">Alerts sent: <span id="alerts-sent">0</span></div>
+    <div data-testid="alerts-dispatched">Dispatched: <span id="alerts-dispatched">0</span></div>
+  </div>
+
+  <h2>Audit log</h2>
+  <div id="audit-area">
+    <ul id="audit-list"></ul>
+  </div>
+
+<script>
+window.__state = {
+  watchlist: [],
+  opsHealth: { alerts: { sent: 0, dispatched: 0 } },
+  audit: [],
+};
+
+window.__mockApi = {
+  '/api/presentations/governance/watchlist': () => ({
+    success: true,
+    data: { generatedAt: '2026-05-07T11:50:00Z', totals: { decks: 1, blockedP0: 1, blockedP1: 0, passWithP2: 0, pass: 0, inconclusive: 0 }, entries: window.__state.watchlist },
+  }),
+  '/api/presentations/operations/health': () => ({
+    success: true,
+    data: {
+      generatedAt: '2026-05-07T11:50:00Z',
+      windowDays: 7,
+      slos: [],
+      jobs: [],
+      alerts: { windowDays: 7, attempted: window.__state.opsHealth.alerts.dispatched, sent: window.__state.opsHealth.alerts.sent, failed: 0, suppressed: 0, dryRun: 0, uniqueDecks: window.__state.opsHealth.alerts.dispatched, pausedSubscriptions: 0 },
+      warnings: [],
+    },
+  }),
+  '/api/presentations/decks/deck_p0/audit-log': () => ({
+    success: true,
+    data: { deckId: 'deck_p0', total: window.__state.audit.length, limit: 50, offset: 0, events: window.__state.audit },
+  }),
+  '/api/presentations/governance/alerts/dry-run': () => ({
+    success: true,
+    data: { attempted: 1, sent: 0, failed: 0, suppressed: 0, dryRun: 1 },
+  }),
+};
+
+window.__renderWatchlist = (entries) => {
+  const tbody = document.getElementById('watchlist-body');
+  tbody.innerHTML = '';
+  for (const e of entries) {
+    const tr = document.createElement('tr');
+    tr.dataset.deckId = e.deckId;
+    tr.innerHTML =
+      '<td>' + e.title + '</td>' +
+      '<td><span class="verdict-pill ' + e.verdict.toLowerCase() + '">' + e.verdict + '</span></td>' +
+      '<td>' + e.p0 + '/' + e.p1 + '/' + e.p2 + '</td>';
+    tbody.appendChild(tr);
+  }
+};
+
+window.__renderOpsHealth = (health) => {
+  document.getElementById('alerts-sent').textContent = String(health.alerts.sent);
+  document.getElementById('alerts-dispatched').textContent = String(health.alerts.dispatched);
+};
+
+window.__renderAudit = (rows) => {
+  const ul = document.getElementById('audit-list');
+  ul.innerHTML = '';
+  for (const r of rows) {
+    const li = document.createElement('li');
+    li.dataset.action = r.action;
+    li.dataset.deckId = r.deckId || '';
+    li.textContent = r.timestamp + ' ' + r.action + ' ' + (r.deckId || '');
+    ul.appendChild(li);
+  }
+};
+
+window.runScenario = (step) => {
+  if (step === 1) {
+    window.__state.watchlist = [{ deckId: 'deck_p0', title: 'Strategic Plan Q3', verdict: 'BLOCKED_P0', p0: 3, p1: 1, p2: 2 }];
+    window.__renderWatchlist(window.__state.watchlist);
+  } else if (step === 2) {
+    window.__state.opsHealth.alerts.dispatched = 1;
+    window.__renderOpsHealth(window.__state.opsHealth);
+  } else if (step === 3) {
+    window.__state.opsHealth.alerts.sent = 1;
+    window.__renderOpsHealth(window.__state.opsHealth);
+  } else if (step === 4) {
+    window.__state.audit = [
+      { timestamp: '2026-05-07T11:50:00Z', action: 'governance_alert_dispatched', deckId: 'deck_p0' },
+    ];
+    window.__renderAudit(window.__state.audit);
+  }
+};
+</script>
+</body>
+</html>

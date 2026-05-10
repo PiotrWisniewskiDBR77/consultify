@@ -9,36 +9,20 @@ last_updated: 2026-05-09
 
 # Behavior — Wywiad / Interview
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Interview routes (`/interview`, `/discovery`, `/project-intelligence`) all converge to `InterviewHub`.
+- `InterviewHub` drives sessions/insights/templates workflows with assignment, review, and preview interactions in one module shell.
+- Hub uses `Api` and `V8InterviewApi` for loading and mutating interview sessions, assignments, and insight artifacts.
 
-## Must
+## State Handling (As-Is)
 
-- MUST separate template lifecycle from respondent submission lifecycle.
-- MUST preserve raw response evidence and derived insight lineage.
-- MUST support upload/storage as real evidence, not only UI decoration.
+- Runtime maintains local state for filters, table/grid modes, hidden columns, open documents, and preview context.
+- Assignment and review operations surface guarded errors through safe error copy helpers and toast feedback.
+- Demo-data fallback logic is explicitly referenced in hub imports (`shouldAllowDemoData`, demo dataset helpers).
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/DISCOVERY_CONSULTANT_MODULE.md`
-- `DRD/consultify/docs/product/INTERVIEW_FORM_ENGINE_V3.md`
-- `DRD/consultify/docs/product/INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
-- `DRD/consultify/docs/product/INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
+- Session and assignment objects carry organization/user identifiers in typed API contracts (`v8/interview.ts`).
+- Review/send-back actions are explicit UI operations; no hidden execution branch in route layer.
+- Cross-module export/handoff is initiated by explicit user actions from interview hub elements.

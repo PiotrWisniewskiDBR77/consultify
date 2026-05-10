@@ -7,25 +7,28 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# Codemap — MCP Marketplace / DBR77
+# Codemap — MCP Marketplace
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is evidence)
 
-- Sidebar label: `MCP Marketplace`
-- Route: `/mcp/marketplace`
-- AppView: `AppView.MCP_MARKETPLACE`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `MCP_MARKETPLACE` (badge `soon`)
+- Launch AppView: `AppView.MCP_MARKETPLACE_COMING_SOON`
+- Launch route: `/mcp/marketplace`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: As-Is UI entry exists as a coming-soon catalog surface.
 
-## Code Ownership Rule
+## Routed Components
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/routes/AppRoutes.tsx` -> `ROUTES.MCP_MARKETPLACE` renders `V4ComingSoonView`
+- No dedicated mounted marketplace runtime component on current route tree
 
-## Integration Points
+## Relevant Services / Types
 
-- Provider config, catalog search, asset fetch, recommendations and governed import.
-- Tools and Presentations import paths.
+- `src/types/core.ts` (`AppView.MCP_MARKETPLACE_COMING_SOON`)
+- `src/services/api.ts` (shared services only; no routed marketplace runtime confirmed)
+- `src/types/core.ts` keeps enum identity for `AppView.MCP_MARKETPLACE_COMING_SOON`.
 
-## Hard Stops
+## Current Runtime Status
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- Classification: `stub + planned`
+- This codemap is As-Is only and reflects currently mounted route behavior.

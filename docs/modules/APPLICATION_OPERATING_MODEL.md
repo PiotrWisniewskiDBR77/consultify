@@ -18,7 +18,7 @@ Consultify exists to help expert teams move from conversation and source materia
 
 The canonical loop is:
 
-`Czat / Teresa -> Moja Praca -> Wywiad / Narzędzia -> Inicjatywy -> Realizacja -> Rezultaty -> Finanse -> Outputs -> Dokumenty / Prezentacje / Tabele -> Meeting / follow-up`
+`Czat / Teresa -> Moja Praca -> Wywiad / Narzędzia -> Inicjatywy (/portfolio canonical) -> Realizacja (/implementation canonical) -> Rezultaty -> Finanse (/finance canonical) -> Outputs (/presentations owner) -> Dokumenty / Prezentacje-lane (/prezentacje) / Tabele -> Meeting / follow-up`
 
 Each module must either:
 
@@ -125,10 +125,10 @@ Must not:
 
 Owner modules:
 
-- `09_outputs`
+- `09_outputs` (canonical owner of `/presentations`)
 - `10_dokumenty`
 - `11_tabele`
-- `12_prezentacje`
+- `12_prezentacje` (standalone `/prezentacje` generator lane)
 - `13_meeting`
 
 Responsibilities:
@@ -146,7 +146,7 @@ Must not:
 
 Owner modules:
 
-- `16_organizacja`
+- `16_organizacja` (canonical `/organization`; `/context` transitional)
 - `17_panel-administratora`
 - `18_ustawienia`
 

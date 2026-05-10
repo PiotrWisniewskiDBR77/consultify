@@ -9,41 +9,21 @@ last_updated: 2026-05-09
 
 # Behavior — Czat / Teresa Chat Engine
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- `/chat` mounts `AIChatWelcomeView`, which initializes conversation state from `useConversationStore`, streams AI responses, and persists assistant output through store/API helpers.
+- `/chat/:conversationId` mounts `UnifiedChatPanel` and keeps route-linked conversation context active.
+- Chat runtime provides explicit response/action surfaces (citations, proposal/action cards, message actions) through dedicated AI Chat components imported in both chat surfaces.
+- Conversation-scoped handoff exists from chat to other modules through explicit route targets and context openings (for example mapping to `initiatives`, `my-work`, `meeting`, `interview` in chat runtime code).
 
-## Must
+## State Handling (As-Is)
 
-- MUST expose selected context, sources and model/tool scope before high-impact work.
-- MUST distinguish answer, proposal, draft artifact, decision and executable action.
-- MUST require explicit approval before mutations, sends, publishes or governance transitions.
-- MUST preserve conversation lineage for artifacts and decisions created from chat.
-- MUST fail honestly with recoverable errors when tools, context or permissions are unavailable.
+- Loading state is managed in chat views via store flags and stream lifecycle.
+- Empty assistant response fallback text is generated explicitly (no silent blank response path).
+- Error paths use guarded messages and warning fallbacks in chat runtime helpers.
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/CHAT_V8_SSOT.md`
-- `DRD/consultify/docs/product/CHAT_V8_CONTROL_SURFACE_SPEC.md`
-- `DRD/consultify/docs/product/CHAT_V8_AI_GOVERNANCE.md`
-- `DRD/consultify/docs/product/CHAT_V8_SHARING_AND_PERMISSIONS.md`
-- `DRD/consultify/docs/product/CHAT_V8_ENTERPRISE_AND_COMPLIANCE.md`
-- `DRD/consultify/docs/product/CHAT_AND_AGENT_FUNCTIONAL_COMPLETENESS_AUDIT_V8.md`
-- `DRD/consultify/docs/UI_UX/104_RAW_CONVERSATIONAL_WORK_OS_TERESA_CHAT_ENGINE_2026-05-09.md`
+- Mutation paths run through shared API/store layer (`src/services/api.ts`, conversation store methods); no hidden write-only branch is documented in the chat view files.
+- Role/tenant enforcement is inherited from global app auth/session context; chat module does not expose a separate ACL bypass in route definitions.
+- High-impact action execution is represented as explicit action/proposal UI elements (not silent auto-commit in route code).

@@ -9,33 +9,55 @@ last_updated: 2026-05-09
 
 # UI/UX — Panel Administratora
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/admin/*` is an active secured admin workspace and tenant control plane. `/superadmin/*` is a separate plane and not this module. The screen job is tenant/admin control, policy and governance.
 
-## Must
+## 2. Runtime States
 
-- MUST use command-center IA and clear section boundaries.
-- MUST deep-link to Organization/Settings when those modules own the actual surface.
+- Loading: admin data, tenant settings and policy state must show loading before controls are trusted.
+- Empty: empty admin tables/settings must explain whether there is no data, no access or no configuration.
+- Error: failures must be visible through business-readable banner/toast states, not raw internals.
+- Degraded: restricted permissions, unavailable policy services or partial admin data must be visible.
+- Success: admin mutations must confirm what changed, who/what is affected and next review/audit step.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+Menu 2 keeps admin module navigation. Menu 3 is the active admin command row for selected tenant, policy, user, role, setting or governance object.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+Any contextual AI assistance for admin review, policy analysis or troubleshooting must live in Menu 3/right-side command placement. It must not be duplicated in the admin canvas.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+Admin UX must tell the user whether to configure, review permissions, approve a change, inspect audit, retry, request higher access or stop because access is denied.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+Admin decisions must show tenant, role/policy source, affected object and audit/evidence context. Security/ACL states cannot be hidden.
+
+## 7. Approval / Diff / Review
+
+Destructive/high-impact admin actions require explicit approval/review before execution and audit after execution. Role, policy and tenant changes must show diff/impact where available.
+
+## 8. Anti-Patterns
+
+- Hidden tenant/ACL denial.
+- Admin mutation without confirmation and audit.
+- Raw internal identifiers as the only user-facing explanation.
+- AI actions duplicated in canvas and Menu 3.
+- Confusing `/admin/*` with `/superadmin/*`.
+
+## 9. As-Is Gaps
+
+- Existing docs confirm active secured admin workspace and route ownership, but not the full state/copy matrix for every admin surface.
+- Diff/impact evidence for all admin mutations remains to be validated.
+
+## 10. Acceptance Criteria
+
+- `/admin/*` is documented as tenant admin control plane; `/superadmin/*` remains separate.
+- Loading, empty, error, degraded and success states are visible and actionable.
+- AI/admin assist actions use Menu 3/right-side placement without duplication.
+- Tenant/ACL/security state and evidence are visible.
+- High-impact admin actions require approval/review and audit.

@@ -9,24 +9,32 @@ last_updated: 2026-05-09
 
 # Codemap — Realizacja / Implementation & PMO
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Realizacja`
-- Route: `/execution`
-- AppView: `AppView.FULL_STEP5_EXECUTION`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry `MODULE_EXECUTION` maps to `AppView.IMPLEMENTATION` in `menuConfig.ts`.
+- Canonical and related routes in `routeConfig.ts`: `/execution`, `/implementation`, `/rollout`.
+- Route render map in `AppRoutes.tsx`:
+  - `/execution` -> `FullExecutionView`
+  - `/implementation` -> `ExecutionHub`
+  - `/rollout` -> `FullRolloutView`
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/components/Execution/ExecutionHub.tsx` — unified execution center runtime.
+- `src/views/FullExecutionView.tsx`, `src/views/ImplementationView.tsx`, `src/views/FullRolloutView.tsx` — route surfaces in the same lane.
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- Task/decision runtime during delivery.
-- Portfolio, reports and manager/control tower surfaces.
-- Schedule, baseline, blockers, risk, capacity and recovery interventions.
+- Shared API usage: `src/services/api.ts`.
+- Execution V8 contracts: `src/services/api/v8/execution-control.ts`.
+- Lifecycle and write-governance helpers: `src/services/initiativeLifecycle.ts`, `src/services/executionWriteTruth.ts`.
+- Initiative/task types consumed in execution runtime: `src/types/index.ts`, `src/types/initiative.ts`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- No dedicated `src/components/Execution/*test*` files found.
+
+## Known Gaps (As-Is)
+
+- Route family is active, but module-local frontend test coverage for `ExecutionHub` interactions is missing (`code_gap`).
+- Sidebar AppView points to implementation route identity while full lane includes `/execution` and `/rollout` (`partial`, explicit mapping).

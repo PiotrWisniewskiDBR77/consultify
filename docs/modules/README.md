@@ -65,6 +65,11 @@ Ten katalog jest **kuratorską nakładką** na istniejące SSOT w `DRD/consultif
 - `_PERFECT_CONSULTIFY_CONTRACT_WORKPLAN_2026-05-09.md` — programowy workplan dla perfekcyjnego kontraktu aplikacji.
 - `_EXECUTION_PLAN_HARVEY_FOR_CONSULTING_2026-05-09.md` — wykonawczy plan sprintów, bramek i hard-stopów.
 - `APPLICATION_OPERATING_MODEL.md` — model działania Consultify jako jednego systemu pracy konsultingowej.
+- `APPLICATION_LOGICAL_MODEL.md` — logiczny model całej aplikacji: input/output/handoff/must-not-own dla 19 modułów.
 - `OBJECT_GRAPH.md` — główne obiekty systemu i ich właściciele.
 - `MODULE_HANDOFFS.md` — przepływy pracy i odpowiedzialności między modułami.
 - `UI_UX_CONTRACT_INDEX.md` — indeks i globalne wymagania dla kontraktów UX modułów.
+- `_KNOWN_TRUTH_PHASE_2_PREP_2026-05-09.md` — przygotowanie fazy As-Is / Known Truth bez używania RAW jako wizji docelowej.
+- `_KNOWN_TRUTH_MODULE_AUDIT_MATRIX_2026-05-09.md` — robocza macierz audytu 19 modułów: SSOT, registry, routing, kod, status i rozjazdy.
+- `_AS_IS_FULL_MODULE_DOCUMENTATION_2026-05-09.md` — pełny opis As-Is dla 19 modułów: funkcjonalność, workflow, UI/UX, źródła i gotowość kodu.
+- `_QUALITY_GATE_DOCUMENTATION_2026-05-10.md` — 3-warstwowy Quality Gate dokumentacji + wynik pokrycia funkcji Menu 2.

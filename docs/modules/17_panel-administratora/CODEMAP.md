@@ -9,23 +9,27 @@ last_updated: 2026-05-09
 
 # Codemap — Panel Administratora
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is evidence)
 
-- Sidebar label: `Panel Administratora`
-- Route: `/admin`
-- AppView: `AppView.ADMIN`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `ADMIN` global menu item
+- Launch AppView: `AppView.ADMIN_DASHBOARD`
+- Launch route: `/admin/*`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: Admin ownership is `/admin/*` tenant control plane; `/superadmin/*` is separate plane and not this module.
 
-## Code Ownership Rule
+## Routed Components
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/routes/AppRoutes.tsx` -> `ROUTES.ADMIN.ROOT` renders `AdminView`
+- `src/components/ProtectedRoute.tsx` enforces `requiredRole="ADMIN"` for admin route tree
+- `src/views/admin/AdminView.tsx` is active admin UI root
 
-## Integration Points
+## Relevant Services / Types
 
-- Tenant admin IA, users, roles, settings, integrations, audit and mounted admin sections.
-- Inventory-driven real/partial/stub status.
+- `src/services/api.ts` (admin views consume backend APIs through shared client)
+- `src/types/core.ts` (ADMIN AppView family)
+- `src/types/core.ts` keeps enum identity for `AppView.ADMIN_DASHBOARD`.
 
-## Hard Stops
+## Current Runtime Status
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- Classification: `real + security_critical`
+- This codemap is As-Is only and reflects currently mounted route behavior.

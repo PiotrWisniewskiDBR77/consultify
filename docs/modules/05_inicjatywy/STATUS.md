@@ -9,17 +9,11 @@ last_updated: 2026-05-09
 
 # Status — Inicjatywy
 
-## Shipping Status
+## Status Tags (As-Is)
 
-- Current contract status: `shipped-core`.
-- Documentation status: canonical baseline migrated from verified repo sources.
-
-## Known Risks
-
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
-
-## Next Documentation Work
-
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- `real`: `/initiatives` route mounts `InitiativesHub`.
+- `real`: related route family (`/roadmap`, `/portfolio`, `/roi`) is active in `AppRoutes.tsx`.
+- `partial`: sidebar maps initiatives entry to `AppView.PORTFOLIO_ROADMAP`, while lane route entry is `/initiatives` (explicit mapping present).
+- `real`: lifecycle/governance helpers are wired (`initiativeLifecycle`, `initiativeWriteTruth`, `v8/planning`).
+- `code_gap`: no dedicated automated tests in `src/components/Initiatives`.
+- `doc_gap`: prior baseline did not specify route family and governance service files.

@@ -7,35 +7,57 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# UI/UX — Prezentacje / Presentation Studio
+# UI/UX — Prezentacje / Generator Lane
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: standalone generator lane `/prezentacje` is blocked/placeholder. Production presentations UX lives in `09_outputs` on `/presentations`. Future standalone generator runtime must preserve this ownership distinction and avoid creating a parallel Outputs library.
 
-## Must
+## 2. Runtime States
 
-- MUST support outline/story pane, slide canvas/preview, source panel, QA and export controls.
-- MUST aim for enterprise/Gamma-class quality while honoring Consultify design standards.
+- Loading: placeholder does not load a deck workspace; future generator must show deck/template loading.
+- Empty: placeholder must say the generator lane is blocked/coming soon and direct users to current presentations ownership when relevant.
+- Error: placeholder must avoid raw internals; future errors must offer retry or fallback.
+- Degraded: current state is blocked generator lane; future partial source/deck generation must be marked degraded.
+- Success: no active standalone generator success exists as-is; production success belongs to Outputs/builder flows.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+As-Is: no active generator command system beyond the placeholder route. Future Menu 2 must follow executive module chips where applicable; future Menu 3 must be the active slide/deck command row/right-side contextual action slot.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+No active standalone generator AI actions are implemented as-is. Future deck AI actions must live in Menu 3/Dynamic Tabs/local command row right-side slot and must not be duplicated in slide canvas and Menu 3.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+The placeholder must tell the user that standalone generator is blocked and where current presentation work is owned. Future runtime must guide create, edit, source review, approve, present/export or retry flows.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+As-Is: no standalone generated deck claims are produced. Future generated slides must show source materials, assumptions and evidence, or explicitly mark missing sources.
+
+## 7. Approval / Diff / Review
+
+As-Is: no active standalone deck mutation exists. Future generated presentations require review/approval before final presentation/export and must support diff/review where relevant.
+
+## 8. Anti-Patterns
+
+- Creating a second production presentations library outside `09_outputs`.
+- Presenting blocked generator lane as working deck runtime.
+- AI actions duplicated in slide canvas and Menu 3.
+- Source-free slide claims presented as approved.
+- Exporting without review/approval.
+
+## 9. As-Is Gaps
+
+- Main screen is blocked/placeholder.
+- Active production presentation UX is owned by `09_outputs`, not this module.
+- No standalone generator runtime, provenance UI, review/diff UI or success flow are validated as implemented.
+
+## 10. Acceptance Criteria
+
+- Sidebar/route lands on `/prezentacje`.
+- Current UI honestly renders blocked/placeholder generator state.
+- Contract explicitly points production presentations ownership to `09_outputs`.
+- Future standalone runtime preserves Menu 3 AI placement, provenance visibility and approval/review gates.

@@ -9,41 +9,21 @@ last_updated: 2026-05-09
 
 # Behavior — Inicjatywy
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Core initiatives flow runs in `InitiativesHub` with view modes (kanban/list/timeline/grid), filter chips, and preview/document interactions.
+- Hub uses explicit lifecycle transitions and status metadata from initiative lifecycle services.
+- Planning and governance context is loaded from V8 planning API contracts for decision chains and initiative snapshots.
+- Cross-module handoff to execution/results is route- and status-driven, not implicit in hidden background jobs.
 
-## Must
+## State Handling (As-Is)
 
-- MUST enforce source traceability before promotion.
-- MUST use gate DoD and status-role CTA matrix for transitions.
-- MUST represent decisions explicitly, not as hidden comments.
-- MUST resolve roles/capabilities server-side; UI must not infer permissions.
+- Runtime tracks active tab/view/filter/scope, selected initiative sets, deep-link opens, and open document state.
+- Loading/refresh/error state is explicitly maintained in hub state (`isLoading`, `isRefreshing`, `loadError`).
+- Bulk operations and create/edit actions are explicit UI pathways with user-triggered controls.
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
-- `DRD/consultify/docs/product/INITIATIVE_STATUS_ROLE_CTA_MATRIX.md`
-- `DRD/consultify/docs/product/INITIATIVE_CAPABILITIES_SYSTEM.md`
-- `DRD/consultify/docs/product/GATE_DEFINITION_OF_DONE.md`
-- `DRD/consultify/docs/product/SOURCE_TRACEABILITY_SPEC.md`
-- `DRD/consultify/docs/product/ROLES_MODEL.md`
-- `DRD/consultify/docs/product/PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
-- `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
+- Write operations are routed through governance helpers (`initiativeWriteTruth`) and shared API context.
+- Pilot/role restrictions are checked in runtime via guard utilities.
+- No separate route bypass exists for initiative status changes; transitions happen via explicit in-module actions.

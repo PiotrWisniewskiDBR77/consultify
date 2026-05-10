@@ -7,36 +7,28 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# Behavior — MCP Marketplace / DBR77
+# Behavior — MCP Marketplace
 
-## Purpose
+## As-Is Runtime Behavior
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Sidebar + route + AppView mapping are present for discovery/navigation.
+- Route renders placeholder and does not expose active marketplace interaction runtime.
+- Ownership boundary remains: Marketplace lists capabilities; IRIS is execution lane.
 
 ## Must
 
-- MUST be read-first for P0.
-- MUST preserve asset provenance/license during import.
-- MUST require explicit permission and audit for publish/order/license mutations.
+- MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.
+- MUST preserve module ownership boundaries defined in global operating docs.
+- MUST expose blocked/placeholder state honestly when runtime is not yet mounted.
 
 ## Must Not
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
+- MUST NOT treat target-state RAW assumptions as current behavior.
+- MUST NOT move ownership from canonical module boundaries documented in As-Is global docs.
+- MUST NOT hide route aliasing or legacy surfaces from module contract narrative.
 
-## Should
+## Acceptance Criteria (Behavior)
 
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
-- `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`
+- [ ] Direct navigation to launch route resolves to documented current runtime.
+- [ ] AppView-to-route mapping resolves to the same module owner.
+- [ ] Cross-module ownership statements match global resolved decisions.

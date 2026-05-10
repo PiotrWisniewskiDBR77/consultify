@@ -9,17 +9,18 @@ last_updated: 2026-05-09
 
 # Status — Ustawienia
 
-## Shipping Status
+## Shipping Status (As-Is)
 
-- Current contract status: `shipped-partial`.
-- Documentation status: canonical baseline migrated from verified repo sources.
+- Runtime class: `real`
+- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
+- Current ownership decision: Canonical user/workspace preference surface is `/settings/*`.
 
-## Known Risks
+## Current Risks
 
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
+- Route exists, but behavior can diverge if imports are present and not mounted.
+- Documentation must track mounted runtime, not planned/RAW target-state behavior.
 
-## Next Documentation Work
+## Next Contract Work (without changing scope)
 
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
+- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.

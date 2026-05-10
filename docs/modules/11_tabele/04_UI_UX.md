@@ -7,35 +7,56 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# UI/UX — Tabele / Table Studio
+# UI/UX — Tabele / Excele
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/excele` exists in router/sidebar ownership but the runtime is placeholder-only with no active table workspace UI. Future runtime must preserve canonical table/excel ownership and use the executive artifact layout when active.
 
-## Must
+## 2. Runtime States
 
-- MUST support grid, schema panel, source/provenance panel and AI proposal review.
-- MUST make imports, invalid states and QA failures visible.
+- Loading: placeholder does not load a table workspace; future workspace must show workbook/table loading.
+- Empty: placeholder must say the module is coming soon; future empty state must guide creating/importing tables.
+- Error: placeholder must avoid raw internals; future table errors must use business-readable inline/toast states.
+- Degraded: current degraded state is placeholder/blocked; future partial data or formula/source failures must be explicit.
+- Success: no active table success state exists as-is; future save/export/recalculation must confirm outcome and next step.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+As-Is: no active table command system beyond the placeholder route. Future Menu 2 must follow executive module chips where applicable; future Menu 3 must be the table command row/right-side contextual action slot.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+No active table AI actions are implemented as-is. Future contextual AI actions must live in Menu 3/Dynamic Tabs/local command row right-side slot and must not be duplicated in cells/canvas and Menu 3.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+The current placeholder must tell the user that the module is coming soon. Future workspace must guide import, create, calculate, review assumptions, approve and export flows.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+As-Is: no table claims/calculations are produced. Future tables and exports must show source datasets, formulas/assumptions, lineage and missing-data status.
+
+## 7. Approval / Diff / Review
+
+As-Is: no active high-impact table mutations exist. Future model changes, formula-driven outputs and exports require review/diff where relevant and approval before final use.
+
+## 8. Anti-Patterns
+
+- Presenting placeholder as active spreadsheet runtime.
+- AI actions duplicated in grid canvas and Menu 3.
+- Calculations without assumptions/source data.
+- Save state confused with approval state.
+- Exporting degraded/partial data as final.
+
+## 9. As-Is Gaps
+
+- Main screen is placeholder-only.
+- No active table workspace, runtime states, provenance UI, review/diff UI or export success flow are validated as implemented.
+
+## 10. Acceptance Criteria
+
+- Sidebar/route lands on `/excele`.
+- Current UI honestly renders placeholder/coming-soon.
+- Future table runtime preserves Menu 3 AI placement, source/provenance visibility and approval/review gates.
+- Placeholder status remains documented as an As-Is gap until active runtime exists.

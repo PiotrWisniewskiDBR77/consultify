@@ -9,23 +9,26 @@ last_updated: 2026-05-09
 
 # Codemap — Meeting
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is evidence)
 
-- Sidebar label: `Meeting`
-- Route: `/meeting`
-- AppView: `AppView.MEETING`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `MODULE_MEETING` (label `Meeting`, badge `soon`)
+- Launch AppView: `AppView.MEETING`
+- Launch route: `/meeting`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: As-Is route and menu are active; current runtime is placeholder.
 
-## Code Ownership Rule
+## Routed Components
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/routes/AppRoutes.tsx` -> `ROUTES.MEETING` renders `V4ComingSoonView`
+- `src/components/Meeting/MeetingHub.tsx` exists and is imported but not mounted on route
 
-## Integration Points
+## Relevant Services / Types
 
-- Meeting record, participants, agenda, pre-read, notes, decisions, tasks and follow-up.
-- Conversion from meeting outcomes to relevant modules.
+- `src/store/useAppStore.ts` (navigation/session state)
+- `src/types/core.ts` (`AppView.MEETING`)
+- `src/types/core.ts` keeps enum identity for `AppView.MEETING`.
 
-## Hard Stops
+## Current Runtime Status
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- Classification: `soon + code_gap`
+- This codemap is As-Is only and reflects currently mounted route behavior.

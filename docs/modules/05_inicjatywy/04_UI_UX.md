@@ -9,33 +9,55 @@ last_updated: 2026-05-09
 
 # UI/UX — Inicjatywy
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/initiatives` renders `InitiativesHub` in a no-padding module workspace layout. Related initiative lane surfaces remain available through `/roadmap`, `/portfolio` and `/roi`. The screen job is initiative portfolio work across kanban/list/timeline/grid, table+preview and open-document patterns.
 
-## Must
+## 2. Runtime States
 
-- MUST show lifecycle, gate readiness, blockers, roles and primary next action.
-- MUST make missing evidence and readiness gaps visible.
+- Loading: hub refresh/loading states must be visible before initiative data is trusted.
+- Empty: no-initiative or filtered-empty states must tell the user how to create, import, clear filters or inspect another scope.
+- Error: failures must use toast/banner handling and must not leave stale data looking current.
+- Degraded: pilot restrictions, partial portfolio data or unavailable linked lanes must be visible.
+- Success: creation, update, status transition or deep-link open must confirm the result and identify the next review/action.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+Menu 2 keeps module-level navigation. Menu 3 is the initiative command row for the active view, selected initiative or open document. `InitiativesHub` may register analysis action nodes in command-row space.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+Initiative analysis actions must render in Menu 3/right-side command space or row-scoped controls. The same AI action must not appear both in the initiative canvas and in Menu 3.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+The UX must tell the user whether to create/refine an initiative, review assumptions, move status, open linked ROI/roadmap data, clear filters or request access.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+Initiative recommendations, expected value and status summaries must show linked source documents, interviews, ROI assumptions or explicit missing-evidence status.
+
+## 7. Approval / Diff / Review
+
+High-impact transitions, portfolio decisions and value/ROI changes require explicit gated actions and visible review/diff where available. No hidden mutation path is allowed.
+
+## 8. Anti-Patterns
+
+- Status/value changes without review or visible result.
+- AI recommendation without source/evidence.
+- Hidden pilot/role denial.
+- Duplicated AI toolbar in canvas.
+- Stale portfolio data presented as current success.
+
+## 9. As-Is Gaps
+
+- Existing docs confirm hub state, status/filter chips and gated actions, but the per-transition approval/diff UI matrix is not fully enumerated.
+- Provenance display for all initiative recommendations and ROI links needs runtime validation.
+
+## 10. Acceptance Criteria
+
+- `/initiatives` renders `InitiativesHub` as the main initiative screen.
+- Loading, empty, error, degraded and success states are visible across portfolio views.
+- AI analysis actions use Menu 3/right-side placement without duplication.
+- Initiative claims and value data show source/provenance or missing-evidence status.
+- High-impact transitions require explicit review/approval.

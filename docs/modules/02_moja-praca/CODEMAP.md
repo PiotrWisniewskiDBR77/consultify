@@ -9,26 +9,29 @@ last_updated: 2026-05-09
 
 # Codemap — Moja Praca / My Work
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Moja Praca`
-- Route: `/my-work`
-- AppView: `AppView.MY_WORK`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `MY_WORK` with `viewId: AppView.MY_WORK` in `src/components/navigation/Sidebar/menuConfig.ts`.
+- Canonical route in `src/routes/routeConfig.ts`: `/my-work`.
+- Route render map in `src/routes/AppRoutes.tsx`: `/my-work/*` -> `MyWorkView` (`src/views/MyWorkView.tsx`).
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/views/MyWorkView.tsx` — route container with `SplitLayout` and `MyWorkHub`.
+- `src/components/MyWork/MyWorkHub.tsx` — module runtime with tabs (home, ideas, notebook, inbox, calendar, tasks, decisions, manager), context-aware chat open, and workspace panel strip.
+- `src/components/MyWork/table/*` — table workspace and related utilities used by My Work flows.
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- Personal home/dashboard blocks.
-- Inbox, SLA, assigned work and follow-up surfaces.
-- Radar signals, briefings and recommended next moves.
-- Notebook and calendar links where they support personal work orchestration.
-- Filtered view of artifacts owned by other modules.
+- Shared API entry used across My Work runtime: `src/services/api.ts`.
+- Workspace and app types consumed by My Work: `src/types/workspace.ts`, `src/types/index.ts`, `src/types/myWork.ts`.
+- My Work hub links to outputs routing helpers: `src/components/ReportsAndPresentations/outputsLibraryTabQuery.ts`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- `src/components/MyWork/table/__tests__/TablePlatformFrontend.test.tsx`
+
+## Known Gaps (As-Is)
+
+- No dedicated test file for `MyWorkView` route shell.
+- No dedicated module-level automated test for core `MyWorkHub` tab switching and menu action behavior.

@@ -35,12 +35,12 @@ Each handoff must preserve source, evidence, owner and next action. A handoff is
 | `08_finanse` | `09_outputs` | financial model, ROI, assumptions | Outputs must show assumptions/provenance. |
 | `09_outputs` | `10_dokumenty` | document artifact request | Documents own editable document form. |
 | `09_outputs` | `11_tabele` | table artifact request | Tables own editable spreadsheet/table form. |
-| `09_outputs` | `12_prezentacje` | deck artifact request | Presentations own editable deck form. |
+| `09_outputs` | `12_prezentacje` | standalone generator request (`/prezentacje`) | `/presentations` runtime remains owned by Outputs; `12_prezentacje` owns only generator lane context. |
 | `10_dokumenty` | `13_meeting` | document review package | Meeting can review, approve and create actions. |
 | `11_tabele` | `08_finanse` | structured table data | Finance may consume validated data. |
 | `12_prezentacje` | `13_meeting` | deck review package | Meeting can drive presentation follow-up. |
 | `13_meeting` | `02_moja-praca` | follow-up tasks, decisions | Moja Praca surfaces the follow-up. |
-| `16_organizacja` | all modules | organization context, knowledge, source refs | Context must respect tenant and provenance. |
+| `16_organizacja` | all modules | organization context, knowledge, source refs | Canonical context ownership is `/organization`; `/context` remains transitional legacy surface. |
 | `17_panel-administratora` | all modules | tenant/admin constraints | Admin controls boundaries, not domain content. |
 | `18_ustawienia` | all modules | user/workspace preferences | Preferences shape UX but must not bypass security. |
 | `14_mcp-iris` | all modules | integration execution, external context | External operations require approval when high-impact. |

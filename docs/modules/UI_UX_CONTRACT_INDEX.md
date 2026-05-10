@@ -14,6 +14,8 @@ This document links module-level UX contracts to the global Consultify UI/UX can
 
 UX is treated as a contract: it defines user jobs, states, actions, evidence, approvals and prohibited patterns.
 
+This schema is mandatory for every module-level `04_UI_UX.md`. Visual descriptions are not sufficient: each module contract must describe observable runtime behavior, state handling, provenance, review gates, anti-patterns and as-is gaps.
+
 ## Global Sources
 
 - `DRD/UI_UX_SOURCE_OF_TRUTH.md`
@@ -22,24 +24,40 @@ UX is treated as a contract: it defines user jobs, states, actions, evidence, ap
 - `DRD/consultify/docs/modules/README.md`
 - `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
 
-## Universal Module UX Requirements
+## Mandatory Module Contract Schema
 
 Every module `04_UI_UX.md` must define:
 
-- main screen,
-- primary user job,
-- Menu 2 behavior,
-- Menu 3 / command row behavior,
-- right-side placement for contextual AI actions,
-- loading state,
-- empty state,
-- error state,
-- degraded state,
-- success state,
-- source/provenance/evidence display,
-- approval/diff/review display when relevant,
-- next-action guidance,
-- explicit anti-patterns.
+1. Main Screen
+2. Runtime States (loading, empty, error, degraded, success)
+3. Menu 2 / Menu 3 Contract
+4. AI Actions Placement
+5. Next Action Guidance
+6. Source / Evidence / Provenance
+7. Approval / Diff / Review
+8. Anti-Patterns
+9. As-Is Gaps
+10. Acceptance Criteria
+
+For placeholder or coming-soon modules, the contract must say that the main screen is placeholder/coming-soon, define what the future runtime must preserve, and mark the missing runtime as an As-Is gap.
+
+Additionally, every module `04_UI_UX.md` MUST include a function-level annex (Menu 2 and module function surfaces), with links to detailed function contracts.
+
+## Mandatory Function Annex (Menu 2 + Module Functions)
+
+Function-level documentation is mandatory and complements the 10-section module schema above.
+
+Each module MUST maintain:
+
+- a function matrix in `04_UI_UX.md` (or linked appendix),
+- a per-function contract set under `docs/modules/<NN_slug>/functions/`.
+
+Each function contract MUST follow:
+
+- `docs/modules/FUNCTION_CONTRACT_STANDARD.md`
+- `docs/modules/FUNCTION_CONTRACT_TEMPLATE.md`
+
+Every function contract MUST include a concrete `UI Component Footprint` section to document which standard and custom components are used by that function.
 
 ## AI Action Placement
 
@@ -87,3 +105,12 @@ For every UX contract update, verify:
 - destructive or high-impact actions require approval,
 - tenant/ACL boundaries remain visible and enforced,
 - contextual AI controls are in Menu 3.
+
+## Global Invariants
+
+- Contextual AI actions MUST be rendered in Menu 3 / Dynamic Tabs / local command row right-side slot.
+- The same AI action MUST NOT be duplicated in the canvas and Menu 3.
+- Source, provenance and evidence MUST be visible where claims, recommendations, KPI/ROI values, exports or generated outputs are made.
+- Destructive or high-impact actions MUST require approval/review before execution and leave an audit trail where the runtime supports mutation.
+- Tenant, ACL and security states MUST NOT be hidden; denied/restricted/degraded access must be visible and honest.
+- UX MUST tell the user what happens next after loading, empty, error, degraded and success states.

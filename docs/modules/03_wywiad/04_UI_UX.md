@@ -9,33 +9,55 @@ last_updated: 2026-05-09
 
 # UI/UX — Wywiad / Interview
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: Interview routes render `InterviewHub` with ModuleHub-style tabbed surfaces. The screen job is structured interview work: session/template/insight tables, preview panes, assignment modals, template builders, insight viewers and row action menus. Interview/discovery route aliases normalize breadcrumbs to Interview context in `AppRoutes.tsx`.
 
-## Must
+## 2. Runtime States
 
-- MUST show template status, respondent status, privacy posture and export readiness.
-- MUST keep respondent UX simple and trustworthy.
+- Loading: hub and table/preview refreshes must show visual loaders or refresh indicators.
+- Empty: empty tables/previews must use explicit empty states such as `EmptyStateInline` and explain how to start or filter work.
+- Error: errors must use guarded toast copy and safe error mapping, not raw API internals.
+- Degraded: missing templates, partial insight data or unavailable assignment/review flows must be labeled honestly.
+- Success: assignment, review, template or export-related completions must confirm what changed and what the user should inspect next.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+Menu 2 keeps the module shell. Menu 3 is the Interview hub command row/table action area for the active tab, selected row or modal context. Context actions may also appear in row menus when scoped to a row.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+Contextual AI actions for interview analysis, review or summarization must live in Menu 3/right-side command slots or the active row/modal context. They must not be duplicated as a second toolbar under the canvas.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+Every interview state must tell the user whether to create a session, assign an owner, review an insight, clear filters, retry loading or export approved material.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+Insights, diagnoses and exports must expose interview session/template/source context. AI or analyst-generated conclusions must be traceable to the relevant interview record or explicitly marked as missing evidence.
+
+## 7. Approval / Diff / Review
+
+Assignment, review and export-related operations must be explicit user actions. High-impact interview conclusions or generated outputs require review/approval before being treated as final.
+
+## 8. Anti-Patterns
+
+- Interview insights without session/source provenance.
+- Raw tenant/user internals in business-facing tables.
+- Silent assignment or review-state mutation.
+- Duplicate AI toolbar under the table/canvas.
+- Empty preview that does not explain selection or next action.
+
+## 9. As-Is Gaps
+
+- Existing docs confirm hub loaders, empty states and guarded errors, but the exact degraded copy for missing templates/partial insights is not fully specified.
+- Evidence display requirements for every insight/export path need runtime verification.
+
+## 10. Acceptance Criteria
+
+- Interview routes render `InterviewHub` as the documented main workspace.
+- Loading, empty, error, degraded and success states are explicit across tables, previews and modals.
+- Contextual AI actions stay in Menu 3/right-side or row-scoped controls without duplication.
+- Insights and exports show source/provenance.
+- Assignment/review/export mutations require explicit user action and visible result.

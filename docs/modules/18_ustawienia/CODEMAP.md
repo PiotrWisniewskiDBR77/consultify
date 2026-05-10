@@ -9,25 +9,27 @@ last_updated: 2026-05-09
 
 # Codemap — Ustawienia
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is evidence)
 
-- Sidebar label: `Ustawienia`
-- Route: `/settings`
-- AppView: `AppView.SETTINGS`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `SETTINGS` global menu item
+- Launch AppView: `AppView.SETTINGS_PROFILE_MODULE`
+- Launch route: `/settings/*`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: Canonical user/workspace preference surface is `/settings/*`.
 
-## Code Ownership Rule
+## Routed Components
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/routes/AppRoutes.tsx` -> `ROUTES.SETTINGS.ROOT` renders `SettingsView` under `ProtectedRoute`
+- `src/views/SettingsView.tsx` is active settings UI root
+- `routeConfig.ts` maps detailed settings AppViews to nested `/settings/...` paths
 
-## Integration Points
+## Relevant Services / Types
 
-- User preferences and profile.
-- AI memory controls visible to the user.
-- Honest partial/stub state for settings not implemented.
-- Deep links to Admin/Organization for tenant-owned controls.
+- `src/store/useAppStore.ts` (theme/user session state integration)
+- `src/types/core.ts` (settings AppView family + module launcher view)
+- `src/types/core.ts` keeps enum identity for `AppView.SETTINGS_PROFILE_MODULE`.
 
-## Hard Stops
+## Current Runtime Status
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- Classification: `real`
+- This codemap is As-Is only and reflects currently mounted route behavior.

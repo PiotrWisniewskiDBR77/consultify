@@ -9,24 +9,36 @@ last_updated: 2026-05-09
 
 # Codemap — Outputs Library
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Outputs`
-- Route: `/presentations`
-- AppView: `AppView.FULL_STEP6_REPORTS`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry `MODULE_PRESENTATIONS` maps to `AppView.PRESENTATIONS` in `menuConfig.ts`.
+- Canonical route in `routeConfig.ts`: `/presentations` (outputs library lane).
+- Related routes in `AppRoutes.tsx`:
+  - `/presentations` -> `ReportsAndPresentationsHub`
+  - `/reports` and `/reports/management` -> redirects to `/presentations?tab=documents`
+  - `/reports/builder` (+ `/:reportId`) -> `ReportBuilderView`
+  - `/presentations/wizard` -> `PresentationWizard`
+  - `/presentations/builder/:deckId` -> `DeckBuilder`
+  - shared/embed presentation routes -> `SharedPresentationView`
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx` — library runtime.
+- `src/components/ReportsAndPresentations/useRapData.ts` — outputs registry and origin action data hooks.
+- `src/views/ReportBuilderView.tsx`, `src/components/Presentations/PresentationWizard.tsx`, `src/components/Presentations/DeckBuilder/DeckBuilder.tsx`.
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- Artifact registry and library views.
-- Review states, visibility, templates, exports and provenance.
-- Documents/presentations/sheets as artifact types and filters.
+- Shared API client and headers: `src/services/api.ts`.
+- Outputs data fetch/action hooks: `src/components/ReportsAndPresentations/useRapData.ts` (`/api/artifacts`, `/api/report-builder/*`, `/api/presentations/decks/*` paths).
+- Outputs models: `src/components/ReportsAndPresentations/types.ts`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- No dedicated `ReportsAndPresentationsHub` test file found in module folder scan.
+- One file matched naming pattern: `src/components/ReportsAndPresentations/TemplatesTabContent.tsx` (not a test file; retained as runtime evidence only).
+
+## Known Gaps (As-Is)
+
+- Core outputs library has no module-local automated tests (`code_gap`).
+- Route aliases from legacy reports paths remain active (`duplicate`/migration bridge by design).

@@ -9,17 +9,11 @@ last_updated: 2026-05-09
 
 # Status — Realizacja / Implementation & PMO
 
-## Shipping Status
+## Status Tags (As-Is)
 
-- Current contract status: `shipped-core`.
-- Documentation status: canonical baseline migrated from verified repo sources.
-
-## Known Risks
-
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
-
-## Next Documentation Work
-
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- `real`: execution lane routes (`/execution`, `/implementation`, `/rollout`) are active.
+- `real`: sidebar launches execution lane via `AppView.IMPLEMENTATION`.
+- `partial`: lane behavior spans both legacy and hub surfaces (`FullExecutionView` and `ExecutionHub`).
+- `real`: V8 execution-control contracts and execution write-truth service are wired in runtime imports.
+- `code_gap`: no dedicated automated tests in `src/components/Execution`.
+- `doc_gap`: previous baseline lacked route-family and service evidence.

@@ -7,35 +7,56 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# UI/UX — Dokumenty / Document Studio
+# UI/UX — Dokumenty / Wordy
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/wordy` exists in router/sidebar ownership but the runtime is placeholder/coming-soon with an honest blocked state. Future runtime must preserve canonical Document Studio ownership and use the executive artifact layout when active.
 
-## Must
+## 2. Runtime States
 
-- MUST support document outline, section review, source panel, QA status and export controls.
-- MUST keep contextual AI actions in Menu 3/right command row.
+- Loading: placeholder does not currently load a document workspace; future workspace must show document/template loading state.
+- Empty: placeholder must say the module is coming soon; future empty state must guide document creation/import.
+- Error: placeholder must not expose raw internals; future errors must be inline/toast with retry.
+- Degraded: coming-soon/blocked is the current degraded state and must be clear.
+- Success: no active document success state exists as-is; future success must confirm save/export/review results and next step.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+As-Is: no active document command system beyond the placeholder route. Future Menu 2 must follow executive module chips where applicable; future Menu 3 must be the document command row/right-side contextual action slot.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+No active AI document actions are implemented as-is. Future contextual AI actions must live in Menu 3/Dynamic Tabs/local command row right-side slot and must not be duplicated in the canvas.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+The current placeholder must tell the user that the module is coming soon and what to use instead if applicable. Future workspace must guide create, edit, review, approve, export or retry flows.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+As-Is: no generated document claims are produced. Future documents, summaries and exports must show source documents, assumptions, citations or explicit no-source status.
+
+## 7. Approval / Diff / Review
+
+As-Is: no active high-impact document mutations exist. Future document generation, approval and export must use review/diff where relevant and require approval before final output.
+
+## 8. Anti-Patterns
+
+- Pretending the placeholder is a working document editor.
+- AI actions in the document canvas instead of Menu 3.
+- Export without source/provenance.
+- Save state confused with approval state.
+- Hidden destructive edits or silent generation.
+
+## 9. As-Is Gaps
+
+- Main screen is placeholder/coming-soon.
+- No active document workspace, document runtime states, provenance UI, review/diff UI or export success flow are validated as implemented.
+
+## 10. Acceptance Criteria
+
+- Sidebar/route lands on `/wordy`.
+- Current UI honestly renders placeholder/coming-soon, not a fake active editor.
+- Future document runtime preserves Menu 3 AI placement, source/provenance visibility and approval/review gates.
+- Placeholder status remains documented as an As-Is gap until active runtime exists.

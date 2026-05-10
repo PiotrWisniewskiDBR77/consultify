@@ -9,33 +9,55 @@ last_updated: 2026-05-09
 
 # UI/UX — Narzędzia / Tools
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/discovery-tools*` uses `DiscoveryToolsHub` with ModuleHub table/grid/preview workflow; `/assessment/*` uses `AssessmentHub` and nested session editor; `/discovery-tools/strategic/megatrends` renders `MegatrendsWorkspace`. The screen job is consulting-tool discovery, assessment execution and analysis handoff.
 
-## Must
+## 2. Runtime States
 
-- MUST follow module hub and tool detail standards.
-- MUST show inputs, assumptions, output state and next-action paths.
+- Loading: hub-level loading flags, skeletons or spinners must be visible while tool/session data loads.
+- Empty: empty and filtered-empty outcomes must explain whether no tools exist, no filter matches, or no session is selected.
+- Error: tool/assessment failures must surface mapped errors or toasts without raw internals.
+- Degraded: unavailable tool families, incomplete assessment data or fallback status labels must be visible and not treated as success.
+- Success: completed assessment/tool actions must confirm the result and point to the next artifact, initiative or report step.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+Menu 2 keeps module-level navigation. Menu 3 is the tool/assessment command row for the selected hub tab, table row, session or editor context. `AssessmentMenu3ActionBar` is the explicit command-row pattern for assessment contextual actions.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+AI analysis or tool-assist actions must use Menu 3/right-side command placement or row-scoped controls. No standalone duplicated AI toolbar may be added below the canvas or under metadata.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+Tools UX must tell the user whether to select a tool, start/continue an assessment, clear filters, retry loading, hand off to initiatives/reports or review generated analysis.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+Analysis results and handoffs must preserve source tool, assessment session and input context. Generated findings must show supporting evidence or explicitly mark missing/partial evidence.
+
+## 7. Approval / Diff / Review
+
+Handoffs to initiatives/reports and any high-impact generated recommendation must be explicit user actions with review before finalization. Assessment session changes must not be hidden writes.
+
+## 8. Anti-Patterns
+
+- Treating fallback/degraded tool status as successful analysis.
+- AI actions duplicated in Menu 3 and canvas.
+- Tool output without source tool/session context.
+- Silent handoff into initiatives/reports.
+- Empty filtered table without clear reset/next action.
+
+## 9. As-Is Gaps
+
+- Existing docs confirm command-row action bars, empty components and mapped errors, but not every tool family's degraded state copy.
+- Runtime proof of source/provenance display for all report/initiative handoffs remains to be validated.
+
+## 10. Acceptance Criteria
+
+- Documented routes render the appropriate Tools, Assessment and Megatrends workspaces.
+- Loading, empty, error, degraded and success states are visible and actionable.
+- AI actions use Menu 3/right-side command placement without duplication.
+- Tool outputs and handoffs show source/provenance.
+- High-impact handoffs require review/approval.

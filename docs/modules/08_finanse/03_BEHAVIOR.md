@@ -9,36 +9,20 @@ last_updated: 2026-05-09
 
 # Behavior — Finanse / Finance & Intelligence
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Finance lane routes mount `EconomicsView`, which delegates runtime to `FinanceHub`.
+- `FinanceHub` manages multiple finance domains (statements, models, analysis, prediction, valuation, investment) with one tabbed runtime.
+- Runtime attempts V8 dashboard/data loading and falls back to legacy mode on defined fallback conditions.
 
-## Must
+## State Handling (As-Is)
 
-- MUST keep source, calculation and assumption lineage for all figures.
-- MUST distinguish imported data, normalized data, calculated data and AI interpretation.
-- MUST allow Results linkage only as governed reconciliation.
+- Hub maintains active tab/view/filter/query/open-document state and preview/detail state.
+- Finance lane panel and lane strip states are explicit in runtime for surfaced governance/runtime context.
+- Import/create/export flows are modal-based and user-triggered.
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/FINANCIAL_ANALYSIS_V3.md`
-- `DRD/consultify/docs/modules/ECONOMICS_MODULE.md`
-- `DRD/consultify/docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
-- `DRD/consultify/docs/UI_UX/106_RAW_FINANCE_INTELLIGENCE_ENGINE_2026-05-09.md`
+- Feature blocking is checked through policy snapshot and feature-flag hooks.
+- Finance actions call shared API clients with authenticated headers/session context.
+- No hidden route mutation path is defined; writes are initiated from visible row/actions/modals.

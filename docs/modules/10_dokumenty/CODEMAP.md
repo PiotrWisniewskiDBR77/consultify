@@ -7,25 +7,28 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# Codemap — Dokumenty / Document Studio
+# Codemap — Dokumenty / Wordy
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is evidence)
 
-- Sidebar label: `Dokumenty`
-- Route: `/documents`
-- AppView: `AppView.DOCUMENTS`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `MODULE_WORDY` (label `Documents`, badge `soon`)
+- Launch AppView: `AppView.WORDY`
+- Launch route: `/wordy`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: As-Is route is active in router and sidebar, but current runtime is placeholder (coming-soon).
 
-## Code Ownership Rule
+## Routed Components
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/routes/AppRoutes.tsx` -> route `ROUTES.WORDY` renders `V4ComingSoonView`
+- `src/components/AIChat/KimiWorkspace/WordyView.tsx` is imported but not mounted on current route
 
-## Integration Points
+## Relevant Services / Types
 
-- Document schema, source pack, narrative plan, template, review/diff/approval and DOCX/PDF export.
-- Document as artifact type under Outputs, not separate file storage.
+- `src/services/api.ts` (shared API client used by app shells)
+- `src/store/useAppStore.ts` (global state and navigation state)
+- `src/types/core.ts` keeps enum identity for `AppView.WORDY`.
 
-## Hard Stops
+## Current Runtime Status
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- Classification: `soon + code_gap`
+- This codemap is As-Is only and reflects currently mounted route behavior.

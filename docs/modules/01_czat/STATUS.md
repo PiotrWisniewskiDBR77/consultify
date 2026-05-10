@@ -9,17 +9,15 @@ last_updated: 2026-05-09
 
 # Status — Czat / Teresa Chat Engine
 
-## Shipping Status
+## Status Tags (As-Is)
 
-- Current contract status: `shipped-core`.
-- Documentation status: canonical baseline migrated from verified repo sources.
+- `real`: `/chat` and `/chat/:conversationId` are routed and mounted in `src/routes/AppRoutes.tsx`.
+- `real`: sidebar -> `AppView.AI_CHAT` mapping exists in `src/components/navigation/Sidebar/menuConfig.ts`.
+- `partial`: v10 runtime path `/internal/v10-runtime` is present but separate/internal compared to main user path.
+- `code_gap`: no dedicated route-level test for `AIChatWelcomeView` + `UnifiedChatPanel` transition.
+- `doc_gap`: prior baseline docs were generic and did not list concrete route/component/service evidence.
 
-## Known Risks
+## Runtime Notes (As-Is)
 
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
-
-## Next Documentation Work
-
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- Chat runtime includes proposal/action/citation building blocks in mounted chat components.
+- Security/tenant guarantees depend on shared API + auth layers (`Api` and protected app shell), not on a standalone chat-only gate.

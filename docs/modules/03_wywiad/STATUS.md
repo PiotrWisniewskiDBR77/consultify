@@ -9,17 +9,11 @@ last_updated: 2026-05-09
 
 # Status — Wywiad / Interview
 
-## Shipping Status
+## Status Tags (As-Is)
 
-- Current contract status: `shipped`.
-- Documentation status: canonical baseline migrated from verified repo sources.
-
-## Known Risks
-
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
-
-## Next Documentation Work
-
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- `real`: `/interview` and `/discovery` routes mount `InterviewHub`.
+- `real`: sidebar mapping to interview module exists via `AppView.DISCOVERY_CONSULTANT`.
+- `duplicate`: interview surface is reachable via multiple aliases (`/interview`, `/discovery`, `/project-intelligence`) pointing to same hub runtime.
+- `partial`: strong API contract coverage (`v8/interview.ts`) but no module-local frontend test suite in `src/components/Interview`.
+- `code_gap`: missing dedicated component tests for `InterviewHub`.
+- `doc_gap`: previous baseline did not enumerate route aliases and service evidence.

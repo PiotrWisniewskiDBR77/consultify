@@ -9,17 +9,12 @@ last_updated: 2026-05-09
 
 # Status — Outputs Library
 
-## Shipping Status
+## Status Tags (As-Is)
 
-- Current contract status: `shipped-core`.
-- Documentation status: canonical baseline migrated from verified repo sources.
-
-## Known Risks
-
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
-
-## Next Documentation Work
-
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- `real`: `/presentations` route mounts `ReportsAndPresentationsHub`.
+- `real`: sidebar mapping to `AppView.PRESENTATIONS` is active.
+- `real`: report/presentation builder routes are mounted and operationally connected to outputs lane.
+- `duplicate`: legacy `/reports` and `/reports/management` routes redirect to outputs library tabs.
+- `partial`: route family mixes hub and specialized builder pages.
+- `code_gap`: no dedicated automated tests for `ReportsAndPresentationsHub`.
+- `doc_gap`: previous baseline did not include explicit redirect/alias facts.

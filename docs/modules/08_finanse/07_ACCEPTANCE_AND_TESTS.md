@@ -9,34 +9,25 @@ last_updated: 2026-05-09
 
 # Acceptance & Tests — Finanse / Finance & Intelligence
 
-## Purpose
+## Acceptance Matrix (As-Is Runtime Paths)
 
-Define how to prove this module satisfies the author contract.
+| Path / flow | Current runtime evidence | Status |
+| --- | --- | --- |
+| Sidebar Finance -> `/economics` | `menuConfig.ts` + `AppRoutes.tsx` | pass |
+| Alias `/finance` and detail paths | mapped and mounted via `EconomicsView` | pass |
+| Core finance workspace | `EconomicsView` -> `FinanceHub` | pass |
+| V8 finance dashboard contract | `FinanceHub` imports `V8FinanceApi` | pass (`partial` with fallback) |
+| Module-local finance frontend tests | not found | gap (`code_gap`) |
 
-## Required Evidence
+## Confirmed Automated Evidence (As-Is)
 
-- Screenshot or recording for main happy path.
-- Screenshot or recording for loading, empty, error and degraded states where applicable.
-- Evidence of permissions/ACL behavior for at least one denied action.
-- Evidence that generated/converted objects preserve source/provenance.
-- Link to test plan, manual test prompt or automated test when available.
+- No dedicated `FinanceHub`/`EconomicsView` test file found in current tree scan.
 
-## Acceptance Criteria
+## Known Gaps / Blockers
 
-- Imported statement leads to normalized model with traceable calculations.
-- A finance-linked KPI shows whether Finance confirmed or only user-declared value.
+- `code_gap`: no automated regression suite for finance tab and fallback behavior.
+- `doc_gap`: no embedded UI recording links in this file.
 
-## Regression Checklist
+## Gate Vocabulary (Used For Reporting)
 
-- [ ] Route/sidebar entry opens the intended module.
-- [ ] Primary object lifecycle works end-to-end.
-- [ ] Cross-module handoff keeps lineage and does not duplicate ownership.
-- [ ] AI/automation actions are proposal/approval/audit aware.
-- [ ] Tenant/role boundaries hold under unauthorized access.
-
-## Gate Result Language
-
-- `PASS`: all P0/P1 acceptance criteria met.
-- `PASS_WITH_P2`: usable but non-blocking issues remain.
-- `BLOCKED_P1`: critical contract behavior missing.
-- `NO_GO`: security, tenancy or data-integrity breach.
+- `PASS`, `PASS_WITH_P2`, `BLOCKED_P1`, `INCONCLUSIVE`.

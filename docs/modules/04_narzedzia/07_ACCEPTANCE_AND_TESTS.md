@@ -9,33 +9,25 @@ last_updated: 2026-05-09
 
 # Acceptance & Tests — Narzędzia / Tools
 
-## Purpose
+## Acceptance Matrix (As-Is Runtime Paths)
 
-Define how to prove this module satisfies the author contract.
+| Path / flow | Current runtime evidence | Status |
+| --- | --- | --- |
+| Sidebar Tools -> `/discovery-tools` | `menuConfig.ts` + `AppRoutes.tsx` (`DiscoveryToolsHub`) | pass |
+| Assessment entry via sidebar sub-item | `AppView.ASSESSMENT_OVERVIEW` + `/assessment/*` routes | pass |
+| Legacy `/licensed-tools/*` alias | explicit redirect component in routes | pass (`duplicate` alias path) |
+| Megatrends canonical path | `/discovery-tools/strategic/megatrends` -> `MegatrendsWorkspace` | pass |
+| Module-local frontend tests for tools/assessment hubs | not found in component folders | gap (`code_gap`) |
 
-## Required Evidence
+## Confirmed Automated Evidence (As-Is)
 
-- Screenshot or recording for main happy path.
-- Screenshot or recording for loading, empty, error and degraded states where applicable.
-- Evidence of permissions/ACL behavior for at least one denied action.
-- Evidence that generated/converted objects preserve source/provenance.
-- Link to test plan, manual test prompt or automated test when available.
+- No dedicated automated test file found for `DiscoveryToolsHub` or `AssessmentHub`.
 
-## Acceptance Criteria
+## Known Gaps / Blockers
 
-- User can run a tool, save a session, review output and create a traceable initiative draft when allowed.
+- `code_gap`: missing hub-level regression tests for routing + tab/filter behavior.
+- `doc_gap`: no in-file screenshots/recordings linked yet for tools and assessment runtime states.
 
-## Regression Checklist
+## Gate Vocabulary (Used For Reporting)
 
-- [ ] Route/sidebar entry opens the intended module.
-- [ ] Primary object lifecycle works end-to-end.
-- [ ] Cross-module handoff keeps lineage and does not duplicate ownership.
-- [ ] AI/automation actions are proposal/approval/audit aware.
-- [ ] Tenant/role boundaries hold under unauthorized access.
-
-## Gate Result Language
-
-- `PASS`: all P0/P1 acceptance criteria met.
-- `PASS_WITH_P2`: usable but non-blocking issues remain.
-- `BLOCKED_P1`: critical contract behavior missing.
-- `NO_GO`: security, tenancy or data-integrity breach.
+- `PASS`, `PASS_WITH_P2`, `BLOCKED_P1`, `INCONCLUSIVE`.

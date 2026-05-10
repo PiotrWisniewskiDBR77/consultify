@@ -9,17 +9,11 @@ last_updated: 2026-05-09
 
 # Status — Rezultaty / Results & Value Realization
 
-## Shipping Status
+## Status Tags (As-Is)
 
-- Current contract status: `shipped-core`.
-- Documentation status: canonical baseline migrated from verified repo sources.
-
-## Known Risks
-
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
-
-## Next Documentation Work
-
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- `real`: `/benefits` route mounts `ResultsHub`.
+- `real`: sidebar mapping to `AppView.BENEFITS_REALIZATION` is active.
+- `partial`: additional `/kpi-okr` route remains active with separate view component.
+- `real`: V8 results API contracts are integrated in results runtime imports.
+- `code_gap`: no dedicated automated tests in `src/components/Results`.
+- `doc_gap`: prior baseline lacked concrete route/service evidence.

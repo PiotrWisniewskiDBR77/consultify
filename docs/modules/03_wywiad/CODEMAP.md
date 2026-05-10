@@ -9,25 +9,29 @@ last_updated: 2026-05-09
 
 # Codemap — Wywiad / Interview
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Wywiad`
-- Route: `/discovery`
-- AppView: `AppView.DISCOVERY_CONSULTANT`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `INTERVIEW` with `viewId: AppView.DISCOVERY_CONSULTANT` in `src/components/navigation/Sidebar/menuConfig.ts`.
+- Canonical routes in `src/routes/routeConfig.ts`: `/interview`, `/discovery` (legacy alias), `/project-intelligence` mapping.
+- Route render map in `src/routes/AppRoutes.tsx`: interview/discovery/project-intelligence paths mount `InterviewHub` (`src/components/Interview/InterviewHub.tsx`).
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/components/Interview/InterviewHub.tsx` — module hub with sessions/insights/templates flows, assignment and preview panes.
+- `src/components/Interview/InterviewWorkspace.tsx` and related preview/modals — detailed session/template interactions.
+- `src/components/Discovery/InterviewHub.tsx` — additional discovery-side interview component path present in codebase.
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- Interview template authoring and approval.
-- Submission runtime, assignment and response storage.
-- Privacy, consent, export and AI governance around responses.
-- Insight/export handoff to downstream modules.
+- Interview API client: `src/services/api/v8/interview.ts` (session, assignment, insight contracts).
+- Shared API usage in UI runtime: `src/services/api.ts`.
+- Discovery/interview-related types: `src/types/discovery.ts`, `src/types/index.ts`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- No dedicated `src/components/Interview/*test*` files found via path scan (recorded as gap).
+
+## Known Gaps (As-Is)
+
+- Interview runtime has rich UI and API contracts but lacks module-local frontend automated tests in component directory.
+- Alias routes are active; no separate route-specific regression file for alias-to-hub consistency was found.

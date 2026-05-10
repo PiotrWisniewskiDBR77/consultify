@@ -9,17 +9,11 @@ last_updated: 2026-05-09
 
 # Status — Finanse / Finance & Intelligence
 
-## Shipping Status
+## Status Tags (As-Is)
 
-- Current contract status: `shipped-partial`.
-- Documentation status: canonical baseline migrated from verified repo sources.
-
-## Known Risks
-
-- Some upstream product docs are broad and may contain implementation details not copied verbatim here.
-- This module contract is authoritative for author intent, but implementation work must still read linked source docs before code changes.
-
-## Next Documentation Work
-
-- Expand each MUST into test cases during the module implementation sprint.
-- Add screenshots/evidence links to `07_ACCEPTANCE_AND_TESTS.md` when UI is validated.
+- `real`: `/economics` and `/finance` routes are active and map to `EconomicsView`.
+- `real`: sidebar mapping to `AppView.ECONOMICS` is active.
+- `partial`: finance runtime includes V8 mode with legacy fallback toggles.
+- `real`: finance detail routes (`/finance/statements/:id`, `/finance/models/:id`, `/finance/analyses/:id`) are wired.
+- `code_gap`: no dedicated automated tests for `FinanceHub`/`EconomicsView`.
+- `doc_gap`: prior baseline did not include alias/detail route evidence.

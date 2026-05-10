@@ -9,38 +9,20 @@ last_updated: 2026-05-09
 
 # Behavior — Rezultaty / Results & Value Realization
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- `/benefits` runs `ResultsHub`, which manages KPI, tracked-initiative, reporting, and ROI views in one runtime.
+- Results runtime consumes V8 results dashboard/catalog structures and can fall back to legacy paths when configured.
+- `/kpi-okr` remains an active route surface tied to KPI-focused view.
 
-## Must
+## State Handling (As-Is)
 
-- MUST distinguish metric truth (Results) from modeled financial truth (Finance).
-- MUST explain deviations and require corrective action path when thresholds are crossed.
-- MUST keep evidence and approval state for realized value.
+- `ResultsHub` manages active tab/mode/filter/search state with URL query synchronization.
+- Runtime maintains KPI and ROI drawer/modal states, watched KPI state, and manual signal sheet context.
+- Loading and source-state (`v8`/`legacy`/`empty`/`showcase`) are explicit runtime flags.
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/RESULTS_V8_SSOT.md`
-- `DRD/consultify/docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
-- `DRD/consultify/docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
-- `DRD/consultify/docs/product/REPORTING_CANONICAL_TEMPLATES.md`
-- `DRD/consultify/docs/product/work-packets/T2_RESULTS_KPI_ROI_CHARTER.md`
-- `DRD/consultify/docs/UI_UX/105_RAW_RESULTS_VALUE_REALIZATION_ENGINE_2026-05-09.md`
+- Results entities are organization-scoped in V8 API contracts.
+- Updates/handoffs to initiative status use explicit helper calls (`initiativeWriteTruth`) and user-triggered interactions.
+- No hidden route-level mutation branch exists for results lane.

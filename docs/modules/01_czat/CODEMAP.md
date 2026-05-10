@@ -9,26 +9,34 @@ last_updated: 2026-05-09
 
 # Codemap — Czat / Teresa Chat Engine
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Czat`
-- Route: `/chat`
-- AppView: `AppView.AI_CHAT`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `AI_CHAT` with `viewId: AppView.AI_CHAT` in `src/components/navigation/Sidebar/menuConfig.ts`.
+- Canonical routes in `src/routes/routeConfig.ts`: `/chat`, `/chat/:conversationId`, `/internal/v10-runtime`.
+- Route render map in `src/routes/AppRoutes.tsx`:
+  - `/chat` -> `AIChatWelcomeView` (`src/views/AIChatWelcomeView.tsx`)
+  - `/chat/:conversationId` -> `UnifiedChatPanel` (`src/components/AIChat/UnifiedChatPanel.tsx`)
+  - `/internal/v10-runtime` -> `V10RuntimeWorkspaceView`
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/views/AIChatWelcomeView.tsx` — full-screen chat runtime, conversation history, suggestions, proposal cards, citations.
+- `src/components/AIChat/UnifiedChatPanel.tsx` — chat panel used in full/split modes with workspace context and chat actions.
+- `src/components/AIChat/ConversationRouteSync.tsx` — route <-> conversation synchronization (mounted in chat routes).
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- Unified chat shell and conversation runtime.
-- Project/workspace context selection, source scope and model/tool governance.
-- Attachments, retrieval, citations, memory candidates and source transparency.
-- Proposal -> approval -> execution -> audit for actions started from chat.
-- Artifact handoff to Outputs, Documents, Tables, Presentations, tasks and decisions.
+- API entry used by chat UI: `src/services/api.ts` (`Api` calls in chat views/panels).
+- Runtime types used by chat surfaces: `src/types/index.ts` (exports `AppView`, chat/domain types) and `src/types/workspace.ts`.
+- Additional chat runtime helpers used in panel/view: `useConversationStore`, `useAIStream`, Teresa runtime helpers under `src/components/AIChat`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- `src/components/AIChat/__tests__/EnhancedChatInput.teresaVoice.test.tsx`
+- `src/hooks/v10/__tests__/runtimeCapabilities.test.ts`
+- `src/utils/__tests__/chatV10Rollout.test.ts`
+
+## Known Gaps (As-Is)
+
+- No dedicated test file for `AIChatWelcomeView` route assembly in `src/views`.
+- No dedicated module-level acceptance test file for `/chat/:conversationId` route behavior (doc gap, not inferred functionality gap).

@@ -9,40 +9,20 @@ last_updated: 2026-05-09
 
 # Behavior — Realizacja / Implementation & PMO
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Execution lane uses three active routes: `/execution`, `/implementation`, `/rollout`.
+- `ExecutionHub` implements the unified execution center (initiative/task views, RAID/decisions, management/reporting interactions).
+- Runtime pulls execution risk/delay/budget/manager lane data through V8 execution-control contracts when available, with fallback handling.
 
-## Must
+## State Handling (As-Is)
 
-- MUST answer what is on track, blocked, late, over capacity and requiring decision.
-- MUST connect every intervention to task/decision/baseline evidence.
-- MUST distinguish forecast, actual and assumption.
+- Hub maintains explicit state for view modes, filters, drag-and-drop kanban context, timeline signals, and report generation.
+- Loading and error handling are explicit with toasts and guarded fallback logic.
+- Route-level wrappers apply production gating and protected access for this lane.
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/product/EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
-- `DRD/consultify/docs/product/EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
-- `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
-- `DRD/consultify/docs/product/DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
-- `DRD/consultify/docs/product/EXECUTION_ON_TIME_DELIVERY_FORECASTING_AND_BASELINE_CONTROL_V8.md`
-- `DRD/consultify/docs/product/EXECUTION_RESOURCE_BALANCING_AND_CAPACITY_OPERATIONS_V8.md`
-- `DRD/consultify/docs/UI_UX/107_RAW_IMPLEMENTATION_PMO_ENGINE_2026-05-09.md`
-- `DRD/consultify/docs/UI_UX/103_RAW_EXECUTION_HUB_AI_EXECUTION_MANAGEMENT_ENGINE_2026-05-09.md`
+- High-impact updates (status/timeline/budget/mitigation) are routed through service methods and guarded API calls.
+- No hidden route-level mutation exists; execution actions are user-triggered from visible controls.
+- Role/pilot gating utilities are imported and used in execution runtime.

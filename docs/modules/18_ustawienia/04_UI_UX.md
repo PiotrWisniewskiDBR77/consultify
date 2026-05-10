@@ -9,32 +9,55 @@ last_updated: 2026-05-09
 
 # UI/UX — Ustawienia
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/settings/*` is the active user/workspace preference surface with nested settings sections. The screen job is configuration of user/workspace preferences and settings.
 
-## Must
+## 2. Runtime States
 
-- MUST be simple, sectioned and honest about real/partial/stub.
+- Loading: settings sections must show loading while preferences/configuration are fetched.
+- Empty: empty or unconfigured sections must explain what can be configured and what defaults apply.
+- Error: failed reads/writes must show business-readable copy and must not show fake saved state.
+- Degraded: unavailable settings providers, policy-locked settings or partial configuration must be visible.
+- Success: setting saves must confirm persistence and tell the user whether refresh/re-login/retry is needed.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+Menu 2 keeps settings module navigation. Menu 3 is the active settings command row for the selected section or preference group.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+Any contextual AI help for settings explanation or policy guidance must live in Menu 3/right-side command placement. It must not be duplicated inside settings canvas.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+Settings UX must tell the user whether to save, retry, revert, request admin access, refresh, re-login or do nothing because defaults/policies apply.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+Settings that affect workspace behavior must show whether the value comes from user preference, workspace policy, tenant policy or default configuration. Policy/ACL locks must be visible.
+
+## 7. Approval / Diff / Review
+
+High-impact settings changes require confirmation/review. Save state and lifecycle/governance state must remain separate; `Saved` only means persisted, not approved.
+
+## 8. Anti-Patterns
+
+- Fake saved state after failed write.
+- Hidden policy lock or tenant restriction.
+- AI actions duplicated in canvas and Menu 3.
+- Raw internals as setting error copy.
+- Changing high-impact settings without confirmation.
+
+## 9. As-Is Gaps
+
+- Existing docs confirm active nested settings module and route ownership, but not every section's loading/empty/error/degraded copy.
+- Persistence/read-back evidence for all high-impact settings remains to be validated.
+
+## 10. Acceptance Criteria
+
+- `/settings/*` is documented as canonical settings ownership.
+- Loading, empty, error, degraded and success states are visible across nested sections.
+- AI/help actions use Menu 3/right-side placement without duplication.
+- Preference source and policy/ACL state are visible.
+- High-impact settings changes require confirmation and successful persistence feedback.

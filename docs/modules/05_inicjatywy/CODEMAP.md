@@ -9,25 +9,33 @@ last_updated: 2026-05-09
 
 # Codemap — Inicjatywy
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Inicjatywy`
-- Route: `/initiatives`
-- AppView: `AppView.FULL_STEP2_INITIATIVES`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry `MODULE_INITIATIVES` maps to `AppView.PORTFOLIO_ROADMAP` in `menuConfig.ts`.
+- Canonical and related routes in `routeConfig.ts`: `/initiatives`, `/roadmap`, `/portfolio`, `/roi`.
+- Route render map in `AppRoutes.tsx`:
+  - `/initiatives` -> `InitiativesHub`
+  - `/roadmap` -> `FullRoadmapView`
+  - `/portfolio` -> `PortfolioView`
+  - `/roi` -> `FullROIView`
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/components/Initiatives/InitiativesHub.tsx` — core module runtime (kanban/list/timeline/grid, filters, open docs, bulk actions).
+- `src/views/PortfolioView.tsx`, `src/views/FullRoadmapView.tsx`, `src/views/FullROIView.tsx` — related routes tied to initiatives lane.
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- Initiative identity, lifecycle, gates, roles, decisions and planning.
-- Source traceability from tools/interview/chat/artifacts.
-- Capability-driven UI and status/role CTA matrix.
-- Handoff to Execution and Results.
+- Shared API usage: `src/services/api.ts`.
+- Planning contracts: `src/services/api/v8/planning.ts`.
+- Lifecycle and write-governance helpers: `src/services/initiativeLifecycle.ts`, `src/services/initiativeWriteTruth.ts`.
+- Initiative model contracts: `src/types/initiative.ts`, `src/types/index.ts`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- No dedicated `src/components/Initiatives/*test*` files found.
+
+## Known Gaps (As-Is)
+
+- Module runtime is feature-rich but has no module-local automated tests (`code_gap`).
+- Sidebar AppView points to portfolio-roadmap identity while canonical module route is `/initiatives` (`partial` routing indirection, explicitly mapped).

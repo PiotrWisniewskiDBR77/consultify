@@ -7,34 +7,56 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# UI/UX — MCP Marketplace / DBR77
+# UI/UX — MCP Marketplace
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/mcp/marketplace` exists as a coming-soon placeholder catalog surface. Future runtime must preserve marketplace discovery, review, installation and security/tenant boundaries.
 
-## Must
+## 2. Runtime States
 
-- MUST show search, preview, license, source and import destination.
+- Loading: placeholder does not load marketplace catalog; future runtime must show catalog/provider loading.
+- Empty: placeholder must say the catalog is coming soon; future empty state must explain no matching tools/connectors and offer filter reset.
+- Error: placeholder must avoid raw internals; future errors must translate provider/catalog/install failures.
+- Degraded: current degraded state is coming-soon; future unavailable providers, policy blocks or partial catalog data must be visible.
+- Success: no active marketplace success state exists as-is; future install/enable success must confirm what changed and where to configure/review it.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+As-Is: no active marketplace command system beyond the placeholder route. Future Menu 3 must be the catalog/tool command row/right-side contextual slot for selected listing, filters, review or install request.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+No active marketplace AI actions are implemented as-is. Future contextual AI recommendation/review actions must live in Menu 3/Dynamic Tabs/local command row right-side slot and must not be duplicated in listing canvas.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+The placeholder must tell the user that the marketplace is coming soon. Future runtime must guide search/filter, inspect listing, review permissions, request/approve install, configure connector or retry.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+As-Is: no marketplace claims are produced. Future listings and recommendations must show provider/source, permissions, data access scope, trust/review evidence and missing-data status.
+
+## 7. Approval / Diff / Review
+
+As-Is: no active install/enable mutation exists. Future installs, permission grants and high-impact marketplace changes require review/approval before execution and audit after execution.
+
+## 8. Anti-Patterns
+
+- Installing/enabling connectors silently.
+- Hiding requested permissions or tenant/ACL scope.
+- AI recommendation without provider/source evidence.
+- AI actions duplicated in listing canvas and Menu 3.
+- Fake success when install/configuration is only partial.
+
+## 9. As-Is Gaps
+
+- Main screen is coming-soon placeholder.
+- No active catalog, permissions review, install approval, provenance display or audit result is validated as implemented.
+
+## 10. Acceptance Criteria
+
+- Sidebar/route lands on `/mcp/marketplace`.
+- Current UI honestly renders coming-soon placeholder.
+- Future runtime preserves Menu 3 AI placement, source/provenance visibility and approval/audit gates.
+- Placeholder status remains documented as an As-Is gap until active runtime exists.

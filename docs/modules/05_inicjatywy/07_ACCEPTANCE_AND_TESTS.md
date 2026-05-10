@@ -9,34 +9,25 @@ last_updated: 2026-05-09
 
 # Acceptance & Tests — Inicjatywy
 
-## Purpose
+## Acceptance Matrix (As-Is Runtime Paths)
 
-Define how to prove this module satisfies the author contract.
+| Path / flow | Current runtime evidence | Status |
+| --- | --- | --- |
+| Sidebar Initiatives -> route family | `menuConfig.ts` + routes `/initiatives`, `/roadmap`, `/portfolio`, `/roi` | pass |
+| Core module workspace | `/initiatives` -> `InitiativesHub` | pass |
+| Governance lifecycle integration | `initiativeLifecycle` + `initiativeWriteTruth` usage in hub | pass |
+| V8 planning evidence path | `v8/planning.ts` imported and consumed | pass |
+| Module-local frontend tests in initiatives folder | not found | gap (`code_gap`) |
 
-## Required Evidence
+## Confirmed Automated Evidence (As-Is)
 
-- Screenshot or recording for main happy path.
-- Screenshot or recording for loading, empty, error and degraded states where applicable.
-- Evidence of permissions/ACL behavior for at least one denied action.
-- Evidence that generated/converted objects preserve source/provenance.
-- Link to test plan, manual test prompt or automated test when available.
+- No dedicated `src/components/Initiatives/*test*` file found in current tree scan.
 
-## Acceptance Criteria
+## Known Gaps / Blockers
 
-- Initiative cannot be promoted without required source/gate evidence.
-- Role-specific CTAs match status-role matrix.
+- `code_gap`: missing automated regression tests for initiative lifecycle UI transitions.
+- `doc_gap`: no embedded UI evidence links (recording/screenshot) in this module file yet.
 
-## Regression Checklist
+## Gate Vocabulary (Used For Reporting)
 
-- [ ] Route/sidebar entry opens the intended module.
-- [ ] Primary object lifecycle works end-to-end.
-- [ ] Cross-module handoff keeps lineage and does not duplicate ownership.
-- [ ] AI/automation actions are proposal/approval/audit aware.
-- [ ] Tenant/role boundaries hold under unauthorized access.
-
-## Gate Result Language
-
-- `PASS`: all P0/P1 acceptance criteria met.
-- `PASS_WITH_P2`: usable but non-blocking issues remain.
-- `BLOCKED_P1`: critical contract behavior missing.
-- `NO_GO`: security, tenancy or data-integrity breach.
+- `PASS`, `PASS_WITH_P2`, `BLOCKED_P1`, `INCONCLUSIVE`.

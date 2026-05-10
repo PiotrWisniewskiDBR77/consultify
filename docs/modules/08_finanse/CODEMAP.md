@@ -9,24 +9,31 @@ last_updated: 2026-05-09
 
 # Codemap — Finanse / Finance & Intelligence
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is)
 
-- Sidebar label: `Finanse`
-- Route: `/economics`
-- AppView: `AppView.ECONOMICS`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry `MODULE_ECONOMICS` maps to `AppView.ECONOMICS` in `menuConfig.ts`.
+- Canonical routes in `routeConfig.ts`: `/economics` and alias `/finance`.
+- Additional finance detail routes in `AppRoutes.tsx`: `/finance/statements/:id`, `/finance/models/:id`, `/finance/analyses/:id` (all mounted through `EconomicsView`).
+- Route render map: `/economics` and `/finance` -> `EconomicsView` (`src/views/EconomicsView.tsx`) -> `FinanceHub`.
 
-## Code Ownership Rule
+## Main Component Paths (As-Is)
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/views/EconomicsView.tsx` — wrapper route component.
+- `src/components/Economics/FinanceHub.tsx` — primary finance runtime (statements/models/analysis/prediction/valuation/investment tabs).
+- `src/components/Economics/hooks/*` — data, lane, selection, row-actions hooks used by finance runtime.
 
-## Integration Points
+## API / Services / Models (Confirmable)
 
-- Financial statements, normalized financial models and analysis.
-- Forecasting, valuation, investment decision support and management reporting.
-- Optional KPI/Results reconciliation bridge.
+- Shared API usage: `src/services/api.ts`.
+- Finance V8 contracts: `src/services/api/v8/finance.ts` (imported in `FinanceHub`).
+- Results/benefits integrations via finance components and shared type paths.
+- Finance runtime model definitions: `src/components/Economics/financeTypes.ts`.
 
-## Hard Stops
+## Test / Evidence References (Confirmable)
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- No dedicated `Economics`/`FinanceHub` test file found under `src/views` or `src/components/Economics`.
+
+## Known Gaps (As-Is)
+
+- Finance runtime is active but module-local automated tests are missing (`code_gap`).
+- Legacy fallback mode is present in finance runtime (`partial`), with V8 runtime toggle/fallback logic.

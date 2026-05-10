@@ -7,25 +7,29 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
-# Codemap — Prezentacje / Presentation Studio
+# Codemap — Prezentacje / Generator Lane
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is evidence)
 
-- Sidebar label: `Prezentacje`
-- Route: `/presentations`
-- AppView: `AppView.PRESENTATIONS`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `MODULE_PREZENTACJE_GEN` (label `Presentations`, badge `soon`)
+- Launch AppView: `AppView.PREZENTACJE_GEN`
+- Launch route: `/prezentacje`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: Standalone generator lane is `/prezentacje` (placeholder). Canonical `/presentations` ownership belongs to `09_outputs`.
 
-## Code Ownership Rule
+## Routed Components
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/routes/AppRoutes.tsx` -> `ROUTES.PREZENTACJE_GEN` renders `V4ComingSoonView`
+- `/presentations` routes render `ReportsAndPresentationsHub`, `PresentationWizard`, `DeckBuilder`, `SharedPresentationView` under Outputs flow
+- `src/components/AIChat/KimiWorkspace/PrezentacjeView.tsx` is imported but not mounted on `/prezentacje`
 
-## Integration Points
+## Relevant Services / Types
 
-- Deck model, storyline, slide schema, visual system, sources, review workflow and export.
-- Decks as Outputs artifacts with format-specific runtime.
+- `src/services/funnelAnalytics.ts` (redirect/route tracking in outputs-related redirects)
+- `src/types/core.ts` (`AppView.PREZENTACJE_GEN`, `AppView.PRESENTATIONS`)
+- `src/types/core.ts` keeps enum identity for `AppView.PREZENTACJE_GEN`.
 
-## Hard Stops
+## Current Runtime Status
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- Classification: `partial + duplicate_boundary_resolved`
+- This codemap is As-Is only and reflects currently mounted route behavior.

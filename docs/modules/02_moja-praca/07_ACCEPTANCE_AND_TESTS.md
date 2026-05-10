@@ -9,35 +9,25 @@ last_updated: 2026-05-09
 
 # Acceptance & Tests — Moja Praca / My Work
 
-## Purpose
+## Acceptance Matrix (As-Is Runtime Paths)
 
-Define how to prove this module satisfies the author contract.
+| Path / flow | Current runtime evidence | Status |
+| --- | --- | --- |
+| Sidebar My Work -> `/my-work/*` | `menuConfig.ts` + `AppRoutes.tsx` -> `MyWorkView` | pass |
+| Route shell | `MyWorkView.tsx` mounts `MyWorkHub` in `SplitLayout` | pass |
+| Main personal orchestration workspace | `MyWorkHub.tsx` tab runtime + open-document state | pass |
+| Module-level automated tests | only table-platform test under MyWork path | partial |
+| End-to-end My Work hub regression tests | no dedicated suite found | gap (`code_gap`) |
 
-## Required Evidence
+## Confirmed Automated Evidence (As-Is)
 
-- Screenshot or recording for main happy path.
-- Screenshot or recording for loading, empty, error and degraded states where applicable.
-- Evidence of permissions/ACL behavior for at least one denied action.
-- Evidence that generated/converted objects preserve source/provenance.
-- Link to test plan, manual test prompt or automated test when available.
+- `src/components/MyWork/table/__tests__/TablePlatformFrontend.test.tsx`
 
-## Acceptance Criteria
+## Known Gaps / Blockers
 
-- Home shows current work and stale states with owning-module links.
-- Radar insight can become note/idea/chat without becoming execution by default.
-- Calendar/meeting items show conflicts and preparation state when available.
+- `code_gap`: no dedicated integration tests for My Work tab switching and command-row actions.
+- `doc_gap`: no module-local UI recording links currently embedded in this file.
 
-## Regression Checklist
+## Gate Vocabulary (Used For Reporting)
 
-- [ ] Route/sidebar entry opens the intended module.
-- [ ] Primary object lifecycle works end-to-end.
-- [ ] Cross-module handoff keeps lineage and does not duplicate ownership.
-- [ ] AI/automation actions are proposal/approval/audit aware.
-- [ ] Tenant/role boundaries hold under unauthorized access.
-
-## Gate Result Language
-
-- `PASS`: all P0/P1 acceptance criteria met.
-- `PASS_WITH_P2`: usable but non-blocking issues remain.
-- `BLOCKED_P1`: critical contract behavior missing.
-- `NO_GO`: security, tenancy or data-integrity breach.
+- `PASS`, `PASS_WITH_P2`, `BLOCKED_P1`, `INCONCLUSIVE`.

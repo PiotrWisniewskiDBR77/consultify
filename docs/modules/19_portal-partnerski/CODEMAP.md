@@ -9,23 +9,27 @@ last_updated: 2026-05-09
 
 # Codemap — Portal Partnerski
 
-## Route / AppView / Sidebar
+## Route / AppView / Sidebar (As-Is evidence)
 
-- Sidebar label: `Portal Partnerski`
-- Route: `/partner`
-- AppView: `AppView.PARTNER_PORTAL`
-- Routing source: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- Sidebar entry: `PARTNER_PORTAL` global menu item
+- Launch AppView: `AppView.PARTNER_LANDING`
+- Launch route: `/partner/*`
+- Evidence files: `src/components/navigation/Sidebar/menuConfig.ts`, `src/routes/routeConfig.ts`, `src/routes/AppRoutes.tsx`
+- Canonical ownership note: Canonical portal ownership is protected `/partner/*`; public partner acquisition routes remain related but not portal-internal ownership.
 
-## Code Ownership Rule
+## Routed Components
 
-Implementation files must be discovered from the active router/sidebar config before coding. This document is a contract map, not a guarantee that current code is complete.
+- `src/routes/AppRoutes.tsx` -> `ROUTES.PARTNER.LANDING` renders `PartnerPortalViewNew` under `ProtectedRoute`
+- `src/views/partner/PartnerPortalView.tsx` is active portal root
+- Public related surfaces: `/become-partner`, `/become-partner/apply`, `/partner/pricing`
 
-## Integration Points
+## Relevant Services / Types
 
-- Partner onboarding, activation, earnings, ledger, payout requests and operator review.
-- Partner/operator role separation.
+- `src/services/funnelAnalytics.ts` (public-to-portal journey analytics)
+- `src/types/core.ts` (partner AppView family)
+- `src/types/core.ts` keeps enum identity for `AppView.PARTNER_LANDING`.
 
-## Hard Stops
+## Current Runtime Status
 
-- Do not implement against a missing or guessed route without confirming code.
-- Do not create a second module owner for objects listed as out-of-scope in `02_SCOPE.md`.
+- Classification: `real + partial`
+- This codemap is As-Is only and reflects currently mounted route behavior.

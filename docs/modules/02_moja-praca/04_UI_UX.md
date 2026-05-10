@@ -9,34 +9,55 @@ last_updated: 2026-05-09
 
 # UI/UX — Moja Praca / My Work
 
-## Purpose
+## 1. Main Screen
 
-Define how the module must appear and behave for users while staying aligned with global Consultify UI governance.
+As-Is: `/my-work/*` uses `MyWorkView` with `SplitLayout` and `MyWorkHub` as the main runtime surface. The screen job is personal work orchestration: tabbed workspace UX, document/detail side flows, attention items and cross-module next actions.
 
-## Must
+## 2. Runtime States
 
-- MUST use clear blocks with freshness, owner module and state.
-- MUST distinguish Radar insight, task, artifact, meeting and calendar event.
-- MUST avoid dashboard overload; prioritize next action and context.
+- Loading: hub subviews must show explicit loading flags/spinners while personal work data is fetched.
+- Empty: each tab/subview must explain why there is no work and what the user can do next.
+- Error: failed work-queue or detail loads must surface toast/banner copy rather than raw errors.
+- Degraded: feature/pilot restrictions or partial data must be visible and must not imply that all work is current.
+- Success: completed refreshes, task transitions or opened details must confirm the result and route the user to the next logical step.
 
-## Global UI Rules
+## 3. Menu 2 / Menu 3 Contract
 
-- MUST follow `DRD/UI_UX_SOURCE_OF_TRUTH.md` and `DRD/consultify/docs/ui-standards/`.
-- MUST place contextual AI actions in Menu 3 / command row when attached to a module or artifact context.
-- MUST show loading, empty, error, degraded and success states honestly.
+Menu 2 keeps global app/module navigation. Menu 3 is the hub command row for the active My Work tab/detail context. `WorkspacePanelStrip` and module controls may expose context actions there; the canvas remains focused on the selected work surface.
 
-## Must Not
+## 4. AI Actions Placement
 
-- MUST NOT duplicate the same action in canvas and Menu 3.
-- MUST NOT hide governance state, source status, permissions or blocked actions behind generic copy.
+Chat/context actions must be invoked from hub command-row/right-side controls or equivalent Menu 3 slots. The module must not duplicate the same AI action in the work canvas and Menu 3.
 
-## Should
+## 5. Next Action Guidance
 
-- SHOULD prioritize user decision clarity over visual density.
-- SHOULD make object ownership and next action obvious.
+Every item, tab state and restriction must tell the user the next action: open owner module, continue review, retry, clear filters, request access or wait for data.
 
-## Acceptance Criteria
+## 6. Source / Evidence / Provenance
 
-- [ ] User can identify current state, owner module and next action without reading docs.
-- [ ] AI/workflow actions appear in the approved command area.
-- [ ] Error and degraded states are visibly different from success.
+Cross-module work cards must preserve owner-module context, source object and status. If the item is a projection from another module, My Work must not hide where the underlying record lives.
+
+## 7. Approval / Diff / Review
+
+My Work is an orchestration surface. Canonical edits of external objects must route to owner modules or explicit review flows; high-impact transitions require visible approval/review, not hidden direct writes.
+
+## 8. Anti-Patterns
+
+- Treating My Work as the source of truth for objects owned by other modules.
+- Dead-end empty states without a next action.
+- Hidden feature/pilot denial.
+- Duplicate AI toolbar under the canvas.
+- Success toast before owner-module write/read-back is confirmed.
+
+## 9. As-Is Gaps
+
+- Existing docs confirm tabbed hub, side flows and permission checks, but the full copy matrix for each tab's loading/empty/error/degraded state is not enumerated here.
+- Runtime evidence for refresh resistance of every cross-module transition remains to be validated.
+
+## 10. Acceptance Criteria
+
+- `/my-work/*` renders `MyWorkView`/`MyWorkHub` as the documented main screen.
+- Each hub tab exposes loading, empty, error, degraded and success states with next-step guidance.
+- Contextual AI actions use Menu 3/right-side command placement only.
+- Work items show source/owner-module provenance.
+- High-impact actions route through owner-module approval/review flows.

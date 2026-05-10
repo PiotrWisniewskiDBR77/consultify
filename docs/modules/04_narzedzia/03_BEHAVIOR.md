@@ -9,39 +9,21 @@ last_updated: 2026-05-09
 
 # Behavior — Narzędzia / Tools
 
-## Purpose
+## Runtime Behavior (As-Is)
 
-Describe runtime behavior that must remain true across UI, backend and AI workflows.
+- Tools module is split into discovery-tools hub paths and assessment hub paths, both mounted in app router.
+- `DiscoveryToolsHub` handles library/sessions/reports&presentations/initiative handoff patterns with category filtering.
+- `AssessmentHub` handles assessment/report/initiative flows and session editor route under `/assessment/:framework/:assessmentId`.
+- Legacy `/licensed-tools/*` entry is redirected into assessment routes.
 
-## Must
+## State Handling (As-Is)
 
-- MUST model each tool as inputs -> run/session -> output -> optional handoff.
-- MUST persist ToolSession/source snapshots for audit.
-- MUST explain gaps or degraded calculations.
+- Hub state includes category filters, status chips, view mode switching, preview panes, and open-document handling.
+- Assessment runtime keeps cached list/session/report state in browser session storage for continuity.
+- Errors and degraded data paths are surfaced through toast and explicit status mapping in hub logic.
 
-## Must Not
+## Security / Tenant / Governance (As-Is)
 
-- MUST NOT silently mutate high-impact objects.
-- MUST NOT show fake success, hide blocking errors or leave users in infinite loading states.
-- MUST NOT bypass source, role, approval or tenant constraints for convenience.
-
-## Should
-
-- SHOULD expose recovery paths for failed or degraded states.
-- SHOULD make AI-generated proposals reviewable before they become durable state.
-
-## Acceptance Criteria
-
-- [ ] Main happy path can be executed end-to-end with visible state transitions.
-- [ ] Error/degraded/empty states are explicit and recoverable.
-- [ ] Any AI or automation action is auditable and approval-aware.
-
-## Related Sources
-
-- `DRD/consultify/docs/modules/DISCOVERY_TOOLS_MODULE.md`
-- `DRD/consultify/docs/product/TOOLS_CATALOG_V3.md`
-- `DRD/consultify/docs/product/TOOLS_V8_SSOT.md`
-- `DRD/consultify/docs/product/OPERATING_MODEL_V3.md`
-- `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
-- `DRD/consultify/docs/ui-standards/03-modules/tools-library-detail-standard.md`
-- `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
+- Data operations run through shared API/session context (`Api` + app store identity).
+- Initiative promotion/handoff uses explicit runtime actions and lifecycle mapping helpers, not hidden route mutations.
+- No separate bypass route for assessment/tool writes is declared in router layer.

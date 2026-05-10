@@ -9,35 +9,27 @@ last_updated: 2026-05-09
 
 # Acceptance & Tests — Czat / Teresa Chat Engine
 
-## Purpose
+## Acceptance Matrix (As-Is Runtime Paths)
 
-Define how to prove this module satisfies the author contract.
+| Path / flow | Current runtime evidence | Status |
+| --- | --- | --- |
+| Sidebar Chat -> `/chat` | `menuConfig.ts` maps `AI_CHAT`; `AppRoutes.tsx` mounts `AIChatWelcomeView` | pass |
+| Deep link `/chat/:conversationId` | `routeConfig.ts` + `AppRoutes.tsx` mount `UnifiedChatPanel` | pass |
+| Conversation sync in route | `ConversationRouteSync` mounted on chat routes | pass |
+| Empty/failed AI response fallback | Fallback helpers imported/used in chat view/panel | pass |
+| Dedicated route-level automated test | no direct test file for chat routes | gap (`code_gap`) |
 
-## Required Evidence
+## Confirmed Automated Evidence (As-Is)
 
-- Screenshot or recording for main happy path.
-- Screenshot or recording for loading, empty, error and degraded states where applicable.
-- Evidence of permissions/ACL behavior for at least one denied action.
-- Evidence that generated/converted objects preserve source/provenance.
-- Link to test plan, manual test prompt or automated test when available.
+- `src/components/AIChat/__tests__/EnhancedChatInput.teresaVoice.test.tsx`
+- `src/hooks/v10/__tests__/runtimeCapabilities.test.ts`
+- `src/utils/__tests__/chatV10Rollout.test.ts`
 
-## Acceptance Criteria
+## Known Gaps / Blockers
 
-- A user can ask, attach sources, receive cited analysis, approve a proposal and create an artifact/task with traceable lineage.
-- Unauthorized sources/actions are blocked without leaking details.
-- A failed tool call shows recoverable state, not fake success or infinite spinner.
+- `doc_gap`: no module-local evidence links to UI recordings in this file yet.
+- `code_gap`: no explicit route-level test covering `/chat` + `/chat/:conversationId` transition as one scenario.
 
-## Regression Checklist
+## Gate Vocabulary (Used For Reporting)
 
-- [ ] Route/sidebar entry opens the intended module.
-- [ ] Primary object lifecycle works end-to-end.
-- [ ] Cross-module handoff keeps lineage and does not duplicate ownership.
-- [ ] AI/automation actions are proposal/approval/audit aware.
-- [ ] Tenant/role boundaries hold under unauthorized access.
-
-## Gate Result Language
-
-- `PASS`: all P0/P1 acceptance criteria met.
-- `PASS_WITH_P2`: usable but non-blocking issues remain.
-- `BLOCKED_P1`: critical contract behavior missing.
-- `NO_GO`: security, tenancy or data-integrity breach.
+- `PASS`, `PASS_WITH_P2`, `BLOCKED_P1`, `INCONCLUSIVE`.
