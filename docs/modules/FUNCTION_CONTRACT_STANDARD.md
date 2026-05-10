@@ -22,7 +22,7 @@ This standard is mandatory for:
 
 - A function contract MUST describe current As-Is behavior first.
 - A function contract MUST NOT mix current runtime truth with future target claims without explicit separation.
-- Every business claim MUST include source/evidence visibility rules.
+- Every critical business or runtime claim MUST include source/evidence links.
 - Every mutation path MUST define approval/review requirements.
 - Ownership and handoff MUST align with `OBJECT_GRAPH.md` and `MODULE_HANDOFFS.md`.
 
@@ -101,6 +101,11 @@ This section exists to simplify UI governance and reuse of standard components.
 
 - concrete acceptance checks for the function,
 - mapping to runtime/code evidence (route, component, API/model, test),
+- mandatory evidence bundle:
+  - route evidence,
+  - component evidence,
+  - API evidence,
+  - test evidence,
 - known `doc_gap` / `code_gap`.
 
 ### 12) Open Risks and Change Log
@@ -127,6 +132,8 @@ Each function file MUST include:
 - `status`
 - `last_updated`
 - `owner`
+- `owner_business`
+- `owner_tech`
 
 ## Quality Gate for Function Contracts
 
@@ -137,4 +144,5 @@ Function contract is PASS only if:
 - owner/handoff boundaries are explicit,
 - runtime states include next actions,
 - AI placement follows Menu 3 rule,
-- acceptance evidence references real As-Is code/runtime.
+- acceptance evidence references real As-Is code/runtime,
+- ownership fields are resolvable via local front matter or `CONTRACT_OWNERSHIP_REGISTRY.md`.

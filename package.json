@@ -113,6 +113,8 @@
     "test:scorecard": "npx tsx scripts/testing/quality-scorecard.ts",
     "test:scorecard:json": "npx tsx scripts/testing/quality-scorecard.ts --json",
     "test:monthly-audit": "npx tsx scripts/testing/monthly-audit.ts",
+    "docs:contract:pr-gate": "npx tsx scripts/testing/module-contract-pr-gate.ts",
+    "docs:contract:rerun-gate": "npx tsx scripts/testing/module-contract-rerun-gate.ts",
     "test:integrity": "node scripts/testing/verify-integrity.js",
     "security:integrity": "tsx scripts/security/verify-security-integrity.ts",
     "test:protect": "npm run test:quality-check && npm run security:integrity && npm run test:unit:critical",

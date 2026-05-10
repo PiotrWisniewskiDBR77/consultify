@@ -76,6 +76,7 @@ Total function contracts: **82**
 1. Execute targeted P2 runtime evidence packs for placeholder/transitional modules.
 2. Add module-local regression suites for security-critical and high-interaction modules first.
 3. Run focused rerun gate after P2 evidence closes.
+4. Track closure in `docs/modules/_P2_ZERO_CLOSURE_PLAN_2026-05-10.md` (owner + due date + evidence exit criteria).
 
 ## Testing Canon Decision and Evidence
 

@@ -23,6 +23,8 @@ This schema is mandatory for every module-level `04_UI_UX.md`. Visual descriptio
 - `DRD/consultify/docs/ui-standards/`
 - `DRD/consultify/docs/modules/README.md`
 - `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
+- `DRD/consultify/docs/modules/HIERARCHY_OF_TRUTH.md`
+- `DRD/consultify/docs/modules/CONTRACT_OWNERSHIP_REGISTRY.md`
 
 ## Mandatory Module Contract Schema
 
@@ -58,6 +60,8 @@ Each function contract MUST follow:
 - `docs/modules/FUNCTION_CONTRACT_TEMPLATE.md`
 
 Every function contract MUST include a concrete `UI Component Footprint` section to document which standard and custom components are used by that function.
+
+Every critical claim in function and module contracts MUST include runtime evidence links (route, component, API, test).
 
 ## AI Action Placement
 

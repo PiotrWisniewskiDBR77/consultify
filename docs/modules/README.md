@@ -73,3 +73,6 @@ Ten katalog jest **kuratorską nakładką** na istniejące SSOT w `DRD/consultif
 - `_KNOWN_TRUTH_MODULE_AUDIT_MATRIX_2026-05-09.md` — robocza macierz audytu 19 modułów: SSOT, registry, routing, kod, status i rozjazdy.
 - `_AS_IS_FULL_MODULE_DOCUMENTATION_2026-05-09.md` — pełny opis As-Is dla 19 modułów: funkcjonalność, workflow, UI/UX, źródła i gotowość kodu.
 - `_QUALITY_GATE_DOCUMENTATION_2026-05-10.md` — 3-warstwowy Quality Gate dokumentacji + wynik pokrycia funkcji Menu 2.
+- `HIERARCHY_OF_TRUTH.md` — zamrożona hierarchia prawdy (globalna + per moduł) i reguły rozstrzygania konfliktów.
+- `CONTRACT_OWNERSHIP_REGISTRY.md` — właściciele biznes/tech dla modułów i funkcji (model akceptacji kontraktów).
+- `_P2_ZERO_CLOSURE_PLAN_2026-05-10.md` — plan domknięcia P2 do zera (owner + data + evidence + exit criteria).

@@ -5,6 +5,8 @@ function_name: Function Name Placeholder
 doc_kind: FUNCTION_CONTRACT
 status: draft
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -82,7 +84,10 @@ last_updated: 2026-05-10
 ## 11. Acceptance Criteria and Test Evidence
 
 - Acceptance checks:
-- Code/runtime evidence (route/component/API/test):
+- Route evidence:
+- Component evidence:
+- API evidence:
+- Test evidence:
 - Known `doc_gap`:
 - Known `code_gap`:
 
