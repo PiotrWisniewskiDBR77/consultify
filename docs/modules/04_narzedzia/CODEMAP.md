@@ -26,6 +26,17 @@ last_updated: 2026-05-09
 - `src/components/assessment/AssessmentHub.tsx`
 - `src/components/Megatrend/MegatrendsWorkspace.tsx`
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `NZ_DISCOVERY_LIBRARY` | `DiscoveryToolsHub` tab `library` | catalog and framework entry surface. |
+| `NZ_DISCOVERY_SESSIONS` | `DiscoveryToolsHub` tab `sessions` | discovery + assessment session list lane. |
+| `NZ_DISCOVERY_OUTPUTS` | `DiscoveryToolsHub` tab `outputs` | reports/presentations output lane. |
+| `NZ_DISCOVERY_INITIATIVES` | `DiscoveryToolsHub` tab `initiatives` | traceable initiative handoff lane. |
+| `NZ_ASSESSMENT_HUB` | `AssessmentHub` tabs `list/reports/initiatives` | assessment runtime and report/initiative bridge. |
+| `NZ_MEGATRENDS_WORKSPACE` | `MegatrendsWorkspace` route | canonical strategic megatrends lane. |
+
 ## API / Services / Models (Confirmable)
 
 - Shared API usage in tool and assessment hubs: `src/services/api.ts`.

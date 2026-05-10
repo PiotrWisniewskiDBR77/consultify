@@ -21,10 +21,16 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Notebook and calendar links where they support personal work orchestration.
 - Filtered view of artifacts owned by other modules.
 
+Function mapping:
+
+- In scope core functions: `MW_HOME_RADAR`, `MW_IDEAS`, `MW_NOTEBOOK`, `MW_INBOX`, `MW_CALENDAR`, `MW_TASKS`, `MW_DECISIONS`, `MW_MANAGER`.
+- In scope ideas subfunctions: `MW_IDEAS_MINDMAP`, `MW_IDEAS_TABLE`, `MW_IDEAS_PROCESS_FLOW`, `MW_IDEAS_WHITEBOARD`.
+
 ## Out Of Scope (Must Not)
 
 - Becoming the canonical storage for artifacts, KPIs, projects or documents.
 - Replacing Execution, Results, Finance or Outputs ownership.
+- Turning My Work into a hidden mutation layer for foreign module canonical records.
 
 ## Inputs
 

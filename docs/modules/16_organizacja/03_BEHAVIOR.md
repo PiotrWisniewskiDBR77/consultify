@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Context-builder routes remain operational for compatibility but are not separate ownership domain for organization context.
 - Global sidebar launches organization via dedicated menu item and AppView mapping.
 
+## Function Runtime Breakdown
+
+- `ORG_CONTEXT_WORKSPACE`: canonical organization context runtime function.
+- `ORG_LEGACY_CONTEXT_BUILDER`: transitional compatibility function for `/context/*`.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

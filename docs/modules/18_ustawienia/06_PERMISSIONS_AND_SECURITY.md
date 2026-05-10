@@ -17,6 +17,8 @@ Define security, tenancy, ACL and approval rules for this module.
 
 - User can edit own settings; admin/tenant settings require admin route and role.
 
+Function-level enforcement applies uniformly to: `SET_SETTINGS_WORKSPACE`, `SET_POLICY_BOUNDARY_LINKS`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

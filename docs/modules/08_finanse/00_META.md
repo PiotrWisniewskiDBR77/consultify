@@ -29,6 +29,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
 - `DRD/consultify/docs/UI_UX/106_RAW_FINANCE_INTELLIGENCE_ENGINE_2026-05-09.md`
 
+## Function Coverage
+
+- Required functions documented: `7/7`.
+- Function contracts are stored in `functions/`.
+
 ## Open Questions
 
 1. Does the active code route still match the contract route above?

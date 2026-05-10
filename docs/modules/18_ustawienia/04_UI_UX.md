@@ -61,3 +61,10 @@ High-impact settings changes require confirmation/review. Save state and lifecyc
 - AI/help actions use Menu 3/right-side placement without duplication.
 - Preference source and policy/ACL state are visible.
 - High-impact settings changes require confirmation and successful persistence feedback.
+
+## 11. Function Annex — Settings Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `SET_SETTINGS_WORKSPACE` | Settings Workspace | `/settings/*` | real | `SettingsView` | `functions/SET_SETTINGS_WORKSPACE.md` |
+| `SET_POLICY_BOUNDARY_LINKS` | Policy Boundary and Admin Links | settings vs admin policy ownership boundary | partial | lock/deeplink boundary behavior | `functions/SET_POLICY_BOUNDARY_LINKS.md` |

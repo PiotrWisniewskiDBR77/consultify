@@ -60,3 +60,10 @@ As-Is: no active MCP execution exists. Future destructive/high-impact tool calls
 - Current UI honestly renders coming-soon placeholder.
 - Future runtime preserves Menu 3 AI/tool placement, provenance visibility and approval/audit gates.
 - Placeholder status remains documented as an As-Is gap until active runtime exists.
+
+## 11. Function Annex — MCP IRIS Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `IRIS_PLACEHOLDER_SURFACE` | MCP IRIS Placeholder Surface | `/mcp/iris` | stub | `V4ComingSoonView` | `functions/IRIS_PLACEHOLDER_SURFACE.md` |
+| `IRIS_RUNTIME_TARGET` | MCP IRIS Runtime Target | planned MCP IRIS runtime on `/mcp/iris` | partial | target MCP IRIS execution/control panel (not currently mounted) | `functions/IRIS_RUNTIME_TARGET.md` |

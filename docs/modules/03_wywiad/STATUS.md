@@ -17,3 +17,9 @@ last_updated: 2026-05-09
 - `partial`: strong API contract coverage (`v8/interview.ts`) but no module-local frontend test suite in `src/components/Interview`.
 - `code_gap`: missing dedicated component tests for `InterviewHub`.
 - `doc_gap`: previous baseline did not enumerate route aliases and service evidence.
+
+## Function Coverage Status
+
+- `pass`: function contract coverage complete (`6/6` Interview functions documented).
+- `real`: all six documented functions are present in Interview hub tab/runtime model.
+- `partial`: test depth is still limited (no full function-journey e2e suite).

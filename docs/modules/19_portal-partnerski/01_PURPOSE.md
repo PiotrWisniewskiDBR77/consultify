@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Portal i program partnerski: lifecycle onboard -> activate -> earn -> payout, partner/operator roles, ledger and payout governance.
 
+Cel jest realizowany przez funkcję chronionego workspace partnera i osobną funkcję granicy dla publicznej ścieżki akwizycyjnej.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

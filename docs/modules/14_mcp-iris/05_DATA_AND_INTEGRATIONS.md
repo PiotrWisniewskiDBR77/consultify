@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Provider config, tool definition, tool call log, health status, mapped external objects.
 
+## Function Data Responsibility Map
+
+- `IRIS_PLACEHOLDER_SURFACE`: route-level placeholder state only; no active tool execution runtime.
+- `IRIS_RUNTIME_TARGET`: target-state provider configuration, allowlisted calls and audit evidence.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

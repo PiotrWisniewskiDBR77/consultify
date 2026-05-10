@@ -61,3 +61,10 @@ High-impact memory/context changes, permission changes and AI-use approvals requ
 - AI actions use Menu 3/right-side placement without duplication.
 - Context sources, readiness and lineage are visible.
 - Memory/context mutations require review/approval and cannot be hidden.
+
+## 11. Function Annex — Organization Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `ORG_CONTEXT_WORKSPACE` | Context Workspace | `/organization/*` | real | `OrganizationView` | `functions/ORG_CONTEXT_WORKSPACE.md` |
+| `ORG_LEGACY_CONTEXT_BUILDER` | Legacy Context Builder Surface | `/context/*` | partial | `ContextBuilderView` | `functions/ORG_LEGACY_CONTEXT_BUILDER.md` |

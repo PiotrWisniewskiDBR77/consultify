@@ -17,6 +17,8 @@ Define security, tenancy, ACL and approval rules for this module.
 
 - Finance-confirmed values and executive-approved results require role/approval controls.
 
+Function-level enforcement applies uniformly to: `RZ_INITIATIVES_TRACKING`, `RZ_KPI_WORKSPACE`, `RZ_REPORTS_WORKSPACE`, `RZ_ROI_TRACKING`, `RZ_ROI_ANALYSIS`, `RZ_KPI_OKR_ROUTE`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

@@ -19,6 +19,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - AI memory controls visible to the user.
 - Honest partial/stub state for settings not implemented.
 - Deep links to Admin/Organization for tenant-owned controls.
+- Function set: `SET_SETTINGS_WORKSPACE`, `SET_POLICY_BOUNDARY_LINKS`.
 
 ## Out Of Scope (Must Not)
 

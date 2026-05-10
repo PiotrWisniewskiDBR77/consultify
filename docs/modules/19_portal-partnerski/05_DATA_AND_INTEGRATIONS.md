@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Partner, onboarding state, referral/earning event, ledger entry, balance, payout request and operator decision.
 
+## Function Data Responsibility Map
+
+- `PART_PORTAL_WORKSPACE`: protected partner workflow/deliverable/ledger state.
+- `PART_PUBLIC_ACQUISITION_BOUNDARY`: public acquisition vs protected portal boundary context.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 User and workspace settings hub: preferences, account/profile, memory controls and links to admin-owned settings where user lacks ownership.
 
+Cel jest realizowany przez funkcję kanoniczną settings workspace oraz funkcję graniczną polityk/admin links.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

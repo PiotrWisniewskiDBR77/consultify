@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Meeting record, participants, agenda, pre-read, notes, decisions, tasks and follow-up.
 - Conversion from meeting outcomes to relevant modules.
+- Function set: `ME_MEETING_PLACEHOLDER`, `ME_MEETING_RUNTIME_TARGET`.
 
 ## Out Of Scope (Must Not)
 

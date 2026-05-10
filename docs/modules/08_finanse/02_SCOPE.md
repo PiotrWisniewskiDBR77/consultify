@@ -18,6 +18,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Financial statements, normalized financial models and analysis.
 - Forecasting, valuation, investment decision support and management reporting.
 - Optional KPI/Results reconciliation bridge.
+- Function set: `FN_STATEMENTS_WORKSPACE`, `FN_MODELS_WORKSPACE`, `FN_ANALYSIS_WORKSPACE`, `FN_PREDICTION_WORKSPACE`, `FN_VALUATION_WORKSPACE`, `FN_INVESTMENT_WORKSPACE`, `FN_FINANCE_DETAIL_ROUTES`.
 
 ## Out Of Scope (Must Not)
 

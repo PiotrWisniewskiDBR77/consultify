@@ -60,3 +60,10 @@ As-Is: no active meeting mutations exist. Future decisions, action items and ext
 - Current UI honestly renders placeholder/coming-soon.
 - Future meeting runtime preserves Menu 3 AI placement, source/provenance visibility and approval/review gates.
 - Placeholder status remains documented as an As-Is gap until active runtime exists.
+
+## 11. Function Annex — Meeting Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `ME_MEETING_PLACEHOLDER` | Meeting Placeholder Runtime | `/meeting` | soon | `V4ComingSoonView` | `functions/ME_MEETING_PLACEHOLDER.md` |
+| `ME_MEETING_RUNTIME_TARGET` | Meeting Runtime Target | planned `/meeting` workspace | partial | target `MeetingHub` runtime (not currently mounted) | `functions/ME_MEETING_RUNTIME_TARGET.md` |

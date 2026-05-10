@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Document schema, source pack, narrative plan, template, review/diff/approval and DOCX/PDF export.
 - Document as artifact type under Outputs, not separate file storage.
+- Function set: `DOC_WORDY_PLACEHOLDER`, `DOC_STUDIO_RUNTIME_TARGET`.
 
 ## Out Of Scope (Must Not)
 

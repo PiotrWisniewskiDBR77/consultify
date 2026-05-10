@@ -17,6 +17,13 @@ Define module objects, integrations and lineage responsibilities.
 
 - Tasks, decisions, blockers, dependencies, schedule baseline, capacity records, delivery risks and reports.
 
+## Function Data Responsibility Map
+
+- `RL_EXECUTION_PORTFOLIO`: task/decision/blocker runtime and planning sync context.
+- `RL_EXECUTION_REPORTS`: report catalog data, quality flags and generated output lineage.
+- `RL_EXECUTION_MANAGER`: manager action metrics and workload signals.
+- `RL_FULL_EXECUTION_VIEW` / `RL_ROLLOUT_VIEW`: route-level execution and rollout context boundaries.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

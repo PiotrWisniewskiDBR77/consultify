@@ -13,6 +13,12 @@ last_updated: 2026-05-09
 
 Biblioteka narzędzi konsultingowych i assessmentów: użytkownik uruchamia narzędzie, zapisuje sesję, otrzymuje wynik i może przekazać go do inicjatyw lub artefaktów.
 
+Function-level realization:
+
+- Discovery lanes: `NZ_DISCOVERY_LIBRARY`, `NZ_DISCOVERY_SESSIONS`, `NZ_DISCOVERY_OUTPUTS`, `NZ_DISCOVERY_INITIATIVES`.
+- Assessment lane: `NZ_ASSESSMENT_HUB`.
+- Strategic lane: `NZ_MEGATRENDS_WORKSPACE`.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

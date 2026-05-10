@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Admin module runs inside `MainLayout` with dedicated view and internal navigation mapping.
 - SuperAdmin remains separately guarded and routed, preserving ownership boundary.
 
+## Function Runtime Breakdown
+
+- `ADM_ADMIN_WORKSPACE`: canonical admin runtime function on `/admin/*`.
+- `ADM_SUPERADMIN_BOUNDARY`: explicit boundary function between admin and superadmin planes.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

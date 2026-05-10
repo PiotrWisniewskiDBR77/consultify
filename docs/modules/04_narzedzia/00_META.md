@@ -18,6 +18,22 @@ last_updated: 2026-05-09
 - AppView: `AppView.DISCOVERY_TOOLS`
 - Owner: user
 
+## Canonical Routes (As-Is)
+
+- `/discovery-tools/*`
+- `/assessment/*`
+- `/discovery-tools/strategic/megatrends`
+- `/licensed-tools/*` (legacy redirect to assessment flow)
+
+## Function Inventory (Canonical For This Module)
+
+- `NZ_DISCOVERY_LIBRARY`
+- `NZ_DISCOVERY_SESSIONS`
+- `NZ_DISCOVERY_OUTPUTS`
+- `NZ_DISCOVERY_INITIATIVES`
+- `NZ_ASSESSMENT_HUB`
+- `NZ_MEGATRENDS_WORKSPACE`
+
 ## Canonicality
 
 This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.

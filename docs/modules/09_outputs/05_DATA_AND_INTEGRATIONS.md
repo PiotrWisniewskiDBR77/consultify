@@ -17,6 +17,14 @@ Define module objects, integrations and lineage responsibilities.
 
 - Artifact, artifact version, source pack, review state, export, template and visibility scope.
 
+## Function Data Responsibility Map
+
+- `OUT_LIBRARY_HUB`: artifact registry views, filter state, governance metadata.
+- `OUT_REPORT_BUILDER`: report build/edit data and handoff back to library.
+- `OUT_PRESENTATION_WIZARD` and `OUT_DECK_BUILDER`: presentation creation/edit payloads and lifecycle.
+- `OUT_SHARED_PRESENTATION`: share/embed-safe output payloads.
+- `OUT_LEGACY_REPORT_REDIRECT`: migration route mapping into canonical outputs tabs.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

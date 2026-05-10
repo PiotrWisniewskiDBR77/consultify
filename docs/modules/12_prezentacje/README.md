@@ -27,6 +27,12 @@ Presentation Studio tworzy Gamma-class enterprise decks jako żywe artefakty: st
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `PR_GEN_PLACEHOLDER`
+- `PR_GEN_RUNTIME_TARGET`
+- `PR_OUTPUTS_OWNERSHIP_BOUNDARY`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/PREZENTACJE_V8_SSOT.md`

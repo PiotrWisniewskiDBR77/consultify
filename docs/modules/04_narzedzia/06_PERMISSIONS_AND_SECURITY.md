@@ -18,6 +18,11 @@ Define security, tenancy, ACL and approval rules for this module.
 - Tool availability may depend on tenant license/role.
 - Outputs that affect governance require approval before handoff.
 
+Function-level enforcement:
+
+- Discovery and assessment functions MUST honor license/role gates before exposing execution actions.
+- Initiative/output handoffs (`NZ_DISCOVERY_INITIATIVES`, `NZ_DISCOVERY_OUTPUTS`, `NZ_ASSESSMENT_HUB`) MUST remain explicit and auditable.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

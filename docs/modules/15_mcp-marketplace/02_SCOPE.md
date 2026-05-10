@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Provider config, catalog search, asset fetch, recommendations and governed import.
 - Tools and Presentations import paths.
+- Function set: `MCPM_PLACEHOLDER_SURFACE`, `MCPM_RUNTIME_TARGET`.
 
 ## Out Of Scope (Must Not)
 

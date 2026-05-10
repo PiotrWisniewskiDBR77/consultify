@@ -18,6 +18,12 @@ Define security, tenancy, ACL and approval rules for this module.
 - User sees only work allowed by tenant/project/object permissions.
 - Private notes and memory candidates stay private until explicitly promoted.
 
+Function-level enforcement:
+
+- `MW_MANAGER` MUST remain role-gated with explicit denied state.
+- `MW_IDEAS_*` subfunctions MUST not bypass owner-module approval/mutation boundaries during conversion.
+- `MW_TASKS` and `MW_DECISIONS` mutations MUST stay explicit and auditable.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

@@ -16,6 +16,12 @@ last_updated: 2026-05-09
 - Planning and governance context is loaded from V8 planning API contracts for decision chains and initiative snapshots.
 - Cross-module handoff to execution/results is route- and status-driven, not implicit in hidden background jobs.
 
+## Function Runtime Breakdown
+
+- `IN_PORTFOLIO_HUB`: core operational function for portfolio work and transitions.
+- `IN_ANALYSIS_WORKSPACE`: analysis-driven function for feasibility/resources/logic/timeline/completeness.
+- `IN_ROADMAP_VIEW`, `IN_PORTFOLIO_VIEW`, `IN_ROI_VIEW`: route-level companion functions tied to planning/value lanes.
+
 ## State Handling (As-Is)
 
 - Runtime tracks active tab/view/filter/scope, selected initiative sets, deep-link opens, and open document state.

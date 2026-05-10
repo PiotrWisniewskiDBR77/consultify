@@ -20,10 +20,15 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Tool output as persistent source object.
 - Optional initiative draft handoff with traceability.
 
+Function mapping:
+
+- In scope functions: `NZ_DISCOVERY_LIBRARY`, `NZ_DISCOVERY_SESSIONS`, `NZ_DISCOVERY_OUTPUTS`, `NZ_DISCOVERY_INITIATIVES`, `NZ_ASSESSMENT_HUB`, `NZ_MEGATRENDS_WORKSPACE`.
+
 ## Out Of Scope (Must Not)
 
 - Unreviewed direct initiative creation.
 - Replacing Interview, Initiatives or Outputs ownership.
+- Treating Tools outputs as canonical editable destination instead of handoff references.
 
 ## Inputs
 

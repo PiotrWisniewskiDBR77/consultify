@@ -19,6 +19,13 @@ Define module objects, integrations and lineage responsibilities.
 - Raw sensitive payloads MUST NOT be exposed in UI/logs; use citations, summaries and governed source links.
 - Created artifacts MUST carry provenance back to conversation and source pack.
 
+## Function Data Responsibilities
+
+| Function | Primary data responsibility | Integration responsibility |
+| --- | --- | --- |
+| `CZ_CHAT_ENGINE` | conversation/message state, citations, proposal metadata | stream/runtime APIs, conversation persistence, contextual retrieval |
+| `CZ_CANVAS_WORKSPACE` | governed bridge context, artifact plan/review/materialization state | runtime rollout panels, governed artifact pipeline handoff |
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

@@ -17,6 +17,12 @@ Define module objects, integrations and lineage responsibilities.
 
 - Initiative, source links, decisions, gates, roles, capabilities, risks, tasks and benefit links.
 
+## Function Data Responsibility Map
+
+- `IN_PORTFOLIO_HUB`: primary initiative lifecycle/status datasets and previews.
+- `IN_ANALYSIS_WORKSPACE`: analysis subview data (resources, feasibility, logic, timeline, completeness).
+- `IN_ROADMAP_VIEW` / `IN_PORTFOLIO_VIEW` / `IN_ROI_VIEW`: route-specific read/write boundaries with explicit handoffs.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

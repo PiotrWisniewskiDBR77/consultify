@@ -13,6 +13,11 @@ last_updated: 2026-05-09
 
 Centralna powierzchnia rozmowy i pracy AI: rozmowa ma prowadzić do kontekstu, artefaktu, decyzji, taska, wykonania i raportu, a nie kończyć się wyłącznie odpowiedzią tekstową.
 
+Function-level realization:
+
+- `CZ_CHAT_ENGINE` drives conversation, suggestions, citations, proposals and explicit next actions.
+- `CZ_CANVAS_WORKSPACE` bridges approved chat outcomes toward governed workspace/canvas execution paths.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

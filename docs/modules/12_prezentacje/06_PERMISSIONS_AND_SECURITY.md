@@ -17,6 +17,8 @@ Define security, tenancy, ACL and approval rules for this module.
 
 - Client-ready decks require visibility/export controls and audit.
 
+Function-level enforcement applies uniformly to: `PR_GEN_PLACEHOLDER`, `PR_GEN_RUNTIME_TARGET`, `PR_OUTPUTS_OWNERSHIP_BOUNDARY`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

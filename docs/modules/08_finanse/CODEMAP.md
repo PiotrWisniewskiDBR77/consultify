@@ -22,6 +22,18 @@ last_updated: 2026-05-09
 - `src/components/Economics/FinanceHub.tsx` — primary finance runtime (statements/models/analysis/prediction/valuation/investment tabs).
 - `src/components/Economics/hooks/*` — data, lane, selection, row-actions hooks used by finance runtime.
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `FN_STATEMENTS_WORKSPACE` | `FinanceHub` tab `statements` | statements ingestion and preparation lane. |
+| `FN_MODELS_WORKSPACE` | `FinanceHub` tab `models` | financial model management lane. |
+| `FN_ANALYSIS_WORKSPACE` | `FinanceHub` tab `analysis` | financial analysis lane. |
+| `FN_PREDICTION_WORKSPACE` | `FinanceHub` tab `prediction` | scenario and prediction lane. |
+| `FN_VALUATION_WORKSPACE` | `FinanceHub` tab `valuation` | enterprise valuation lane. |
+| `FN_INVESTMENT_WORKSPACE` | `FinanceHub` tab `investment` | investment-case lane. |
+| `FN_FINANCE_DETAIL_ROUTES` | `EconomicsView` detail routes | deep-link entry routes for statements/models/analyses. |
+
 ## API / Services / Models (Confirmable)
 
 - Shared API usage: `src/services/api.ts`.

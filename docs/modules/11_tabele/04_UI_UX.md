@@ -60,3 +60,10 @@ As-Is: no active high-impact table mutations exist. Future model changes, formul
 - Current UI honestly renders placeholder/coming-soon.
 - Future table runtime preserves Menu 3 AI placement, source/provenance visibility and approval/review gates.
 - Placeholder status remains documented as an As-Is gap until active runtime exists.
+
+## 11. Function Annex — Tables Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `TB_EXCELE_PLACEHOLDER` | Excele Placeholder Runtime | `/excele` | soon | `V4ComingSoonView` | `functions/TB_EXCELE_PLACEHOLDER.md` |
+| `TB_TABLE_RUNTIME_TARGET` | Table Runtime Target | planned `/excele` table workspace | partial | target `ExceleView` runtime (not currently mounted) | `functions/TB_TABLE_RUNTIME_TARGET.md` |

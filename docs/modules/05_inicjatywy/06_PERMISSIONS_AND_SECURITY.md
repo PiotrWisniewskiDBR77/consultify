@@ -18,6 +18,8 @@ Define security, tenancy, ACL and approval rules for this module.
 - Role resolution and capabilities define all material actions.
 - Governance transitions require authorized actor and audit trail.
 
+Function-level enforcement applies uniformly to: `IN_PORTFOLIO_HUB`, `IN_ANALYSIS_WORKSPACE`, `IN_ROADMAP_VIEW`, `IN_PORTFOLIO_VIEW`, `IN_ROI_VIEW`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

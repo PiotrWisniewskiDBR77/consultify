@@ -13,6 +13,11 @@ last_updated: 2026-05-09
 
 Moduł pozyskiwania jakościowych informacji: szablony wywiadów, odpowiedzi, zgody, prywatność, eksport i przekazanie insightów do dalszej pracy.
 
+Function-level realization:
+
+- Assignment and governance lanes: `WY_MY_ASSIGNMENTS`, `WY_MANAGED_ASSIGNMENTS`, `WY_PENDING_REVIEW`.
+- Delivery lanes: `WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

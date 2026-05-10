@@ -15,6 +15,14 @@ last_updated: 2026-05-09
 - Results runtime consumes V8 results dashboard/catalog structures and can fall back to legacy paths when configured.
 - `/kpi-okr` remains an active route surface tied to KPI-focused view.
 
+## Function Runtime Breakdown
+
+- `RZ_INITIATIVES_TRACKING`: initiative realization tracking lane in results runtime.
+- `RZ_KPI_WORKSPACE`: KPI operations lane (`catalog`, `overview`, `queue`, `scorecards` modes).
+- `RZ_REPORTS_WORKSPACE`: results reporting lane.
+- `RZ_ROI_TRACKING` and `RZ_ROI_ANALYSIS`: ROI tracking and analysis lanes.
+- `RZ_KPI_OKR_ROUTE`: route-level KPI-focused parallel surface.
+
 ## State Handling (As-Is)
 
 - `ResultsHub` manages active tab/mode/filter/search state with URL query synchronization.

@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Current implementation is intentionally non-functional from UI perspective (placeholder).
 - No routed execution panel is mounted under `/mcp/iris` in As-Is tree.
 
+## Function Runtime Breakdown
+
+- `IRIS_PLACEHOLDER_SURFACE`: active placeholder function on `/mcp/iris`.
+- `IRIS_RUNTIME_TARGET`: target integration runtime function, currently not mounted.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

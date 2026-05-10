@@ -18,6 +18,8 @@ Define security, tenancy, ACL and approval rules for this module.
 - Confidential documents require scoped access and export controls.
 - Sources must not leak beyond allowed users.
 
+Function-level enforcement applies uniformly to: `DOC_WORDY_PLACEHOLDER`, `DOC_STUDIO_RUNTIME_TARGET`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

@@ -22,6 +22,13 @@ last_updated: 2026-05-09
 - `src/routes/AppRoutes.tsx` -> `ROUTES.MEETING` renders `V4ComingSoonView`
 - `src/components/Meeting/MeetingHub.tsx` exists and is imported but not mounted on route
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `ME_MEETING_PLACEHOLDER` | `V4ComingSoonView` on `/meeting` | active placeholder runtime. |
+| `ME_MEETING_RUNTIME_TARGET` | `MeetingHub` (imported only) | target runtime contract, not mounted. |
+
 ## Relevant Services / Types
 
 - `src/store/useAppStore.ts` (navigation/session state)

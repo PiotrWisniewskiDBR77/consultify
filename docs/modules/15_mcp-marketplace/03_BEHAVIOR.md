@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Route renders placeholder and does not expose active marketplace interaction runtime.
 - Ownership boundary remains: Marketplace lists capabilities; IRIS is execution lane.
 
+## Function Runtime Breakdown
+
+- `MCPM_PLACEHOLDER_SURFACE`: active placeholder function on `/mcp/marketplace`.
+- `MCPM_RUNTIME_TARGET`: documented target marketplace runtime function, currently not mounted.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

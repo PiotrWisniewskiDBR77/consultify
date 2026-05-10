@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Meeting jako event pracy decyzyjnej: agenda, pre-read, notes, decyzje, taski, follow-up i evidence linked back to modules.
 
+As-Is realizacja jest placeholderowa (`ME_MEETING_PLACEHOLDER`) przy zachowanym kontrakcie docelowego runtime (`ME_MEETING_RUNTIME_TARGET`).
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

@@ -27,6 +27,17 @@ Moduł pozyskiwania jakościowych informacji: szablony wywiadów, odpowiedzi, zg
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Coverage (Current)
+
+- `WY_MY_ASSIGNMENTS`
+- `WY_MANAGED_ASSIGNMENTS`
+- `WY_SESSIONS`
+- `WY_TEMPLATES`
+- `WY_INSIGHTS`
+- `WY_PENDING_REVIEW`
+
+Function contracts live in `functions/` and are mandatory for gate completeness.
+
 ## Primary Sources
 
 - `DRD/consultify/docs/modules/DISCOVERY_CONSULTANT_MODULE.md`

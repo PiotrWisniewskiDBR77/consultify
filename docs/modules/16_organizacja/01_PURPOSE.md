@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Warstwa Organization Context Engine: przyjmowanie materiałów organizacji/projektu/użytkownika, ekstrakcja, chunking/retrieval, citations, lineage and permission-filtered context for AI.
 
+Realizacja celu jest podzielona na funkcję kanoniczną `/organization/*` oraz funkcję przejściową kompatybilności `/context/*`.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

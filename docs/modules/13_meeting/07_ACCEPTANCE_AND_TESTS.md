@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `BLOCKED_P1 for functional meeting flow.`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `ME_MEETING_PLACEHOLDER` | `/meeting` mounts honest placeholder runtime | `AppRoutes.tsx` -> `V4ComingSoonView` | pass |
+| `ME_MEETING_RUNTIME_TARGET` | Target runtime remains documented as not mounted | `MeetingHub` exists/imported, not route-mounted | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

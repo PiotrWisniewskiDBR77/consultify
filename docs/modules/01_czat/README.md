@@ -27,6 +27,13 @@ Centralna powierzchnia rozmowy i pracy AI: rozmowa ma prowadzić do kontekstu, a
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Coverage (Current)
+
+- `CZ_CHAT_ENGINE` — conversation runtime (`/chat`, `/chat/:conversationId`).
+- `CZ_CANVAS_WORKSPACE` — chat-to-workspace/canvas bridge (`/internal/v10-runtime` + governed bridge flows).
+
+Function contracts live in `functions/` and are mandatory for gate completeness.
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/CHAT_V8_SSOT.md`

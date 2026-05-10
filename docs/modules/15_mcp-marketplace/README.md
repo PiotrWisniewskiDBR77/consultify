@@ -27,6 +27,11 @@ Marketplace asset provider: katalog/search/get/recommendations dla template, pla
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `MCPM_PLACEHOLDER_SURFACE`
+- `MCPM_RUNTIME_TARGET`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`

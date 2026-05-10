@@ -27,6 +27,11 @@ Tenant admin command center: settings, users, org controls, integrations, audit 
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `ADM_ADMIN_WORKSPACE`
+- `ADM_SUPERADMIN_BOUNDARY`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`

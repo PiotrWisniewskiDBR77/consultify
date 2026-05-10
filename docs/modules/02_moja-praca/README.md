@@ -27,6 +27,28 @@ Osobiste centrum pracy użytkownika: home, inbox/radar, bieżące artefakty, zad
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Coverage (Current)
+
+Core functions:
+
+- `MW_HOME_RADAR`
+- `MW_IDEAS`
+- `MW_NOTEBOOK`
+- `MW_INBOX`
+- `MW_CALENDAR`
+- `MW_TASKS`
+- `MW_DECISIONS`
+- `MW_MANAGER`
+
+Ideas subfunctions:
+
+- `MW_IDEAS_MINDMAP`
+- `MW_IDEAS_TABLE`
+- `MW_IDEAS_PROCESS_FLOW`
+- `MW_IDEAS_WHITEBOARD`
+
+Function contracts live in `functions/` and are mandatory for gate completeness.
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/MYWORK_HOME_V1_SSOT.md`

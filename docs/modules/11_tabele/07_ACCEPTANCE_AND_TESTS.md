@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `BLOCKED_P1 until workspace is mounted and testable.`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `TB_EXCELE_PLACEHOLDER` | `/excele` mounts honest placeholder runtime | `AppRoutes.tsx` -> `V4ComingSoonView` | pass |
+| `TB_TABLE_RUNTIME_TARGET` | Target runtime remains documented as not mounted | `ExceleView` imported, not route-mounted | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

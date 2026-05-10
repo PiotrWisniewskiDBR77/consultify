@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `PASS_WITH_P2 pending deep ACL regression evidence in module-local docs.`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `ADM_ADMIN_WORKSPACE` | Protected admin runtime is mounted | `AppRoutes.tsx` + `AdminView` + `ProtectedRoute(requiredRole="ADMIN")` | pass |
+| `ADM_SUPERADMIN_BOUNDARY` | Admin vs superadmin boundary is explicit | route ownership notes `/admin/*` vs `/superadmin/*` | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - User preference, profile setting, memory setting, tenant policy reference and audit where needed.
 
+## Function Data Responsibility Map
+
+- `SET_SETTINGS_WORKSPACE`: user/workspace settings values and persistence state.
+- `SET_POLICY_BOUNDARY_LINKS`: policy-lock and admin-owned-setting boundary metadata.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

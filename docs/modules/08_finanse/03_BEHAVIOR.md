@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - `FinanceHub` manages multiple finance domains (statements, models, analysis, prediction, valuation, investment) with one tabbed runtime.
 - Runtime attempts V8 dashboard/data loading and falls back to legacy mode on defined fallback conditions.
 
+## Function Runtime Breakdown
+
+- `FN_STATEMENTS_WORKSPACE`, `FN_MODELS_WORKSPACE`, `FN_ANALYSIS_WORKSPACE`, `FN_PREDICTION_WORKSPACE`, `FN_VALUATION_WORKSPACE`, `FN_INVESTMENT_WORKSPACE`: core tabbed function lanes within `FinanceHub`.
+- `FN_FINANCE_DETAIL_ROUTES`: deep-link detail entry routes for statement/model/analysis contexts via `EconomicsView`.
+
 ## State Handling (As-Is)
 
 - Hub maintains active tab/view/filter/query/open-document state and preview/detail state.

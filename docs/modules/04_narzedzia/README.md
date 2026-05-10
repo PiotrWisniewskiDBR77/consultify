@@ -27,6 +27,17 @@ Biblioteka narzędzi konsultingowych i assessmentów: użytkownik uruchamia narz
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Coverage (Current)
+
+- `NZ_DISCOVERY_LIBRARY`
+- `NZ_DISCOVERY_SESSIONS`
+- `NZ_DISCOVERY_OUTPUTS`
+- `NZ_DISCOVERY_INITIATIVES`
+- `NZ_ASSESSMENT_HUB`
+- `NZ_MEGATRENDS_WORKSPACE`
+
+Function contracts live in `functions/` and are mandatory for gate completeness.
+
 ## Primary Sources
 
 - `DRD/consultify/docs/modules/DISCOVERY_TOOLS_MODULE.md`

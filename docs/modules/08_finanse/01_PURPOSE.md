@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Finansowy mózg Consultify: statement ingestion, model, analysis, forecast, valuation, investment decision, report, audit trail and optional Results linkage.
 
+Cel jest realizowany przez zestaw funkcji tabowych (`statements`, `models`, `analysis`, `prediction`, `valuation`, `investment`) oraz dedykowane detail routes dla obiektów finansowych.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

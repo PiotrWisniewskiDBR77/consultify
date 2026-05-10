@@ -22,6 +22,13 @@ last_updated: 2026-05-09
 - `src/routes/AppRoutes.tsx` -> `ROUTES.MCP_MARKETPLACE` renders `V4ComingSoonView`
 - No dedicated mounted marketplace runtime component on current route tree
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `MCPM_PLACEHOLDER_SURFACE` | `V4ComingSoonView` on `/mcp/marketplace` | active placeholder surface. |
+| `MCPM_RUNTIME_TARGET` | planned marketplace runtime panel | target runtime contract, not mounted. |
+
 ## Relevant Services / Types
 
 - `src/types/core.ts` (`AppView.MCP_MARKETPLACE_COMING_SOON`)

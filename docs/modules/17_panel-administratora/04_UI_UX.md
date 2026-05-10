@@ -61,3 +61,10 @@ Destructive/high-impact admin actions require explicit approval/review before ex
 - AI/admin assist actions use Menu 3/right-side placement without duplication.
 - Tenant/ACL/security state and evidence are visible.
 - High-impact admin actions require approval/review and audit.
+
+## 11. Function Annex — Admin Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `ADM_ADMIN_WORKSPACE` | Admin Workspace | `/admin/*` | real | `AdminView` + `ProtectedRoute(requiredRole="ADMIN")` | `functions/ADM_ADMIN_WORKSPACE.md` |
+| `ADM_SUPERADMIN_BOUNDARY` | SuperAdmin Boundary | `/admin/*` vs `/superadmin/*` | partial | route and role boundary rules | `functions/ADM_SUPERADMIN_BOUNDARY.md` |

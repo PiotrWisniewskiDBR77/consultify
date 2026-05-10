@@ -22,6 +22,13 @@ last_updated: 2026-05-09
 - `src/routes/AppRoutes.tsx` -> route `ROUTES.EXCELE` renders `V4ComingSoonView`
 - `src/components/AIChat/KimiWorkspace/ExceleView.tsx` is imported but not mounted on current route
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `TB_EXCELE_PLACEHOLDER` | `V4ComingSoonView` on `/excele` | active placeholder runtime. |
+| `TB_TABLE_RUNTIME_TARGET` | `ExceleView` (imported only) | target runtime contract, not mounted. |
+
 ## Relevant Services / Types
 
 - `src/services/api.ts` (shared API client)

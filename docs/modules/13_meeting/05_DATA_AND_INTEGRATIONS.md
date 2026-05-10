@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Meeting, participant, agenda item, note, decision, task, follow-up and source/evidence link.
 
+## Function Data Responsibility Map
+
+- `ME_MEETING_PLACEHOLDER`: route-level placeholder state; no active meeting artifact mutation runtime.
+- `ME_MEETING_RUNTIME_TARGET`: target-state meeting agenda/notes/decisions/follow-up workflows.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

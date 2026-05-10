@@ -61,3 +61,13 @@ High-impact transitions, portfolio decisions and value/ROI changes require expli
 - AI analysis actions use Menu 3/right-side placement without duplication.
 - Initiative claims and value data show source/provenance or missing-evidence status.
 - High-impact transitions require explicit review/approval.
+
+## 11. Function Annex — Initiatives Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `IN_PORTFOLIO_HUB` | Portfolio Hub | `/initiatives` | real | `InitiativesHub` (table/kanban/timeline/grid + preview) | `functions/IN_PORTFOLIO_HUB.md` |
+| `IN_ANALYSIS_WORKSPACE` | Analysis Workspace | `InitiativesHub` tab `analysis` | real | analysis command row + subviews in `InitiativesHub` | `functions/IN_ANALYSIS_WORKSPACE.md` |
+| `IN_ROADMAP_VIEW` | Roadmap View | `/roadmap` | real | `FullRoadmapView` | `functions/IN_ROADMAP_VIEW.md` |
+| `IN_PORTFOLIO_VIEW` | Portfolio Route View | `/portfolio` | real | `PortfolioView` | `functions/IN_PORTFOLIO_VIEW.md` |
+| `IN_ROI_VIEW` | ROI View | `/roi` | real | `FullROIView` | `functions/IN_ROI_VIEW.md` |

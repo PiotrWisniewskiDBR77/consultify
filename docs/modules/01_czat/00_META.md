@@ -18,6 +18,17 @@ last_updated: 2026-05-09
 - AppView: `AppView.AI_CHAT`
 - Owner: user
 
+## Canonical Routes (As-Is)
+
+- `/chat` (chat start)
+- `/chat/:conversationId` (chat continuation)
+- `/internal/v10-runtime` (internal/runtime bridge surface)
+
+## Function Inventory (Canonical For This Module)
+
+- `CZ_CHAT_ENGINE` — real
+- `CZ_CANVAS_WORKSPACE` — partial
+
 ## Canonicality
 
 This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.

@@ -19,6 +19,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Source traceability from tools/interview/chat/artifacts.
 - Capability-driven UI and status/role CTA matrix.
 - Handoff to Execution and Results.
+- Function set: `IN_PORTFOLIO_HUB`, `IN_ANALYSIS_WORKSPACE`, `IN_ROADMAP_VIEW`, `IN_PORTFOLIO_VIEW`, `IN_ROI_VIEW`.
 
 ## Out Of Scope (Must Not)
 

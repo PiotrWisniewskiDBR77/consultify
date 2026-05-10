@@ -61,3 +61,13 @@ Execution mutations are explicit authenticated actions. High-impact status chang
 - AI/chat actions use Menu 3/right-side or row-scoped placement without duplication.
 - Reports/signals show source/provenance.
 - High-impact execution mutations require explicit review/approval.
+
+## 11. Function Annex — Execution Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `RL_EXECUTION_PORTFOLIO` | Execution Portfolio Operations | `/implementation` (hub tab `list`) | real | `ExecutionHub` list modes (table/kanban/timeline) | `functions/RL_EXECUTION_PORTFOLIO.md` |
+| `RL_EXECUTION_REPORTS` | Execution Reports | `ExecutionHub` tab `reports` | real | report catalog/report preview controls in `ExecutionHub` | `functions/RL_EXECUTION_REPORTS.md` |
+| `RL_EXECUTION_MANAGER` | Manager Lane | `ExecutionHub` tab `people_change` | real | manager metrics/suggestions views in `ExecutionHub` | `functions/RL_EXECUTION_MANAGER.md` |
+| `RL_FULL_EXECUTION_VIEW` | Full Execution Route | `/execution` | real | `FullExecutionView` | `functions/RL_FULL_EXECUTION_VIEW.md` |
+| `RL_ROLLOUT_VIEW` | Rollout View | `/rollout` | real | `FullRolloutView` | `functions/RL_ROLLOUT_VIEW.md` |

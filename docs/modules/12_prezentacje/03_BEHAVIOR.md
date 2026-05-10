@@ -15,6 +15,12 @@ last_updated: 2026-05-09
 - Route family `/presentations` is active and owned by Outputs (`09_outputs`) as canonical presentations library/runtime.
 - Legacy/related report routes redirect into `/presentations?tab=documents`, reinforcing Outputs ownership.
 
+## Function Runtime Breakdown
+
+- `PR_GEN_PLACEHOLDER`: active standalone lane function on `/prezentacje`.
+- `PR_GEN_RUNTIME_TARGET`: target generator runtime function, currently not mounted.
+- `PR_OUTPUTS_OWNERSHIP_BOUNDARY`: explicit boundary function preserving ownership split with module 09.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

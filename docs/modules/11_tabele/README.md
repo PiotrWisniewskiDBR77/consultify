@@ -27,6 +27,11 @@ Table Studio jako metadata-first table platform: tabele decyzyjne i operacyjne z
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `TB_EXCELE_PLACEHOLDER`
+- `TB_TABLE_RUNTIME_TARGET`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/TABLE_V8_SSOT.md`

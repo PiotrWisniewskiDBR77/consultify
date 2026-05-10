@@ -21,11 +21,17 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Proposal -> approval -> execution -> audit for actions started from chat.
 - Artifact handoff to Outputs, Documents, Tables, Presentations, tasks and decisions.
 
+Function mapping:
+
+- `CZ_CHAT_ENGINE`: in-scope as production chat interface and conversation lifecycle owner.
+- `CZ_CANVAS_WORKSPACE`: in-scope as governed bridge layer; internal/runtime and handoff semantics are part of contract, but full lane exposure remains partial by design.
+
 ## Out Of Scope (Must Not)
 
 - Silent execution or hidden writes.
 - Bypassing tenant, project or source permissions.
 - Using chat as an unmanaged dumping ground for every artifact instead of handoff to canonical modules.
+- Treating canvas bridge as autonomous owner of downstream canonical artifacts.
 
 ## Inputs
 

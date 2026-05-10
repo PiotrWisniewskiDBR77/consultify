@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Organization context ingestion, extraction, package/chunking, retrieval, citations and lineage.
 - Org/project/user scoped knowledge available to AI under permissions.
+- Function set: `ORG_CONTEXT_WORKSPACE`, `ORG_LEGACY_CONTEXT_BUILDER`.
 
 ## Out Of Scope (Must Not)
 

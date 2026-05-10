@@ -27,6 +27,14 @@ System planowania i decyzji transformacyjnych: inicjatywa jest podstawowym obiek
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `IN_PORTFOLIO_HUB`
+- `IN_ANALYSIS_WORKSPACE`
+- `IN_ROADMAP_VIEW`
+- `IN_PORTFOLIO_VIEW`
+- `IN_ROI_VIEW`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`

@@ -27,6 +27,11 @@ Meeting jako event pracy decyzyjnej: agenda, pre-read, notes, decyzje, taski, fo
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `ME_MEETING_PLACEHOLDER`
+- `ME_MEETING_RUNTIME_TARGET`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/MEETING_TOOL_V3.md`

@@ -19,6 +19,17 @@ last_updated: 2026-05-09
 | Results runtime hub | `src/components/Results/ResultsHub.tsx` | pass |
 | Module-local frontend tests in results folder | not found | gap (`code_gap`) |
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `RZ_INITIATIVES_TRACKING` | Initiatives tracking tab is mounted and active | `ResultsHub.tsx` tab logic | pass |
+| `RZ_KPI_WORKSPACE` | KPI tab with workspace modes is active | `ResultsHub.tsx` KPI branches | pass |
+| `RZ_REPORTS_WORKSPACE` | Reports tab is active and routable | `ResultsHub.tsx` reports branches | pass |
+| `RZ_ROI_TRACKING` | ROI tracking tab is active | `ResultsHub.tsx` ROI branch + ROI views | pass |
+| `RZ_ROI_ANALYSIS` | ROI analysis tab is active | `ResultsHub.tsx` `roi_analysis` branch | pass |
+| `RZ_KPI_OKR_ROUTE` | Parallel KPI route is mounted | `AppRoutes.tsx`, `KpiOkrView.tsx` | pass (`partial`) |
+
 ## Confirmed Automated Evidence (As-Is)
 
 - No dedicated `src/components/Results/*test*` file found in current tree scan.

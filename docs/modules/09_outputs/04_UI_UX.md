@@ -61,3 +61,14 @@ Review/mine/all artifact views are explicit tabs. Governance/access actions fetc
 - AI/output actions use Menu 3/right-side or artifact-scoped placement without duplication.
 - Outputs show source/provenance and review state.
 - Share/export/finalization require explicit user action and visible result.
+
+## 11. Function Annex — Outputs Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `OUT_LIBRARY_HUB` | Library Hub | `/presentations` | real | `ReportsAndPresentationsHub` | `functions/OUT_LIBRARY_HUB.md` |
+| `OUT_REPORT_BUILDER` | Report Builder Route | `/reports/builder`, `/reports/builder/:reportId` | real | `ReportBuilderView` | `functions/OUT_REPORT_BUILDER.md` |
+| `OUT_PRESENTATION_WIZARD` | Presentation Wizard | `/presentations/wizard` | real | `PresentationWizard` | `functions/OUT_PRESENTATION_WIZARD.md` |
+| `OUT_DECK_BUILDER` | Deck Builder | `/presentations/builder/:deckId` | real | `DeckBuilder` | `functions/OUT_DECK_BUILDER.md` |
+| `OUT_SHARED_PRESENTATION` | Shared Presentation Surface | shared/embed presentation routes | real | `SharedPresentationView` | `functions/OUT_SHARED_PRESENTATION.md` |
+| `OUT_LEGACY_REPORT_REDIRECT` | Legacy Reports Redirect Bridge | `/reports`, `/reports/management` | partial | route redirect to outputs tabs | `functions/OUT_LEGACY_REPORT_REDIRECT.md` |

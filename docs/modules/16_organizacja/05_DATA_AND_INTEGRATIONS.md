@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Organization source, package, chunk, embedding/retrieval index, citation and lineage record.
 
+## Function Data Responsibility Map
+
+- `ORG_CONTEXT_WORKSPACE`: canonical organization context assets, readiness and lineage.
+- `ORG_LEGACY_CONTEXT_BUILDER`: transitional context-builder data flow retained for compatibility.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

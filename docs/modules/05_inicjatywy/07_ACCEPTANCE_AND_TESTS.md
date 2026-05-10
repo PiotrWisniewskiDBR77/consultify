@@ -19,6 +19,16 @@ last_updated: 2026-05-09
 | V8 planning evidence path | `v8/planning.ts` imported and consumed | pass |
 | Module-local frontend tests in initiatives folder | not found | gap (`code_gap`) |
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `IN_PORTFOLIO_HUB` | Portfolio runtime and view modes are operational | `InitiativesHub.tsx` | pass |
+| `IN_ANALYSIS_WORKSPACE` | Analysis subviews are present and actionable | `InitiativesHub.tsx` analysis tab/subviews | pass |
+| `IN_ROADMAP_VIEW` | Roadmap route is mounted | `AppRoutes.tsx`, `FullRoadmapView.tsx` | pass |
+| `IN_PORTFOLIO_VIEW` | Portfolio route is mounted | `AppRoutes.tsx`, `PortfolioView.tsx` | pass |
+| `IN_ROI_VIEW` | ROI route is mounted | `AppRoutes.tsx`, `FullROIView.tsx` | pass |
+
 ## Confirmed Automated Evidence (As-Is)
 
 - No dedicated `src/components/Initiatives/*test*` file found in current tree scan.

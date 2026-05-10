@@ -14,8 +14,8 @@ last_updated: 2026-05-09
 - Module id: `MODULE_DOCUMENTS`
 - Sidebar label: `Dokumenty`
 - Folder: `10_dokumenty`
-- Route: `/documents`
-- AppView: `AppView.DOCUMENTS`
+- Route: `/wordy`
+- AppView: `AppView.WORDY`
 - Owner: user
 
 ## Canonicality
@@ -30,6 +30,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/UI_UX/92_RAW_DOCUMENT_STUDIO_RESEARCH_2026-05-08.md`
 - `DRD/consultify/docs/UI_UX/93_RAW_DOCUMENT_STUDIO_ANALYSIS_2026-05-09.md`
 - `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
+
+## Function Coverage
+
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
 
 ## Open Questions
 

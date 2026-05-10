@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Kontrolowany provider MCP do IRIS: odczyt KPI/evidence/workorders and integration touchpoints through allowlisted, audited tools.
 
+As-Is realizacja jest placeholderowa (`IRIS_PLACEHOLDER_SURFACE`) z utrzymanym kontraktem funkcji docelowej (`IRIS_RUNTIME_TARGET`).
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

@@ -14,8 +14,8 @@ last_updated: 2026-05-09
 - Module id: `MODULE_ADMIN_PANEL`
 - Sidebar label: `Panel Administratora`
 - Folder: `17_panel-administratora`
-- Route: `/admin`
-- AppView: `AppView.ADMIN`
+- Route: `/admin/*`
+- AppView: `AppView.ADMIN_DASHBOARD`
 - Owner: user
 
 ## Canonicality
@@ -29,6 +29,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_32_ADMIN_2026-03-29.md`
 - `DRD/consultify/docs/product/SUPERADMIN_V8_SSOT.md`
 - `DRD/consultify/docs/product/VIRTUAL_WORKERS_SUPERADMIN_IMPLEMENTATION_PLAN_V8.md`
+
+## Function Coverage
+
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
 
 ## Open Questions
 

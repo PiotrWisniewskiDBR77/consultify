@@ -22,6 +22,13 @@ last_updated: 2026-05-09
 - `src/routes/AppRoutes.tsx` -> `ROUTES.MCP_IRIS` renders `V4ComingSoonView`
 - No dedicated mounted IRIS runtime component on current route tree
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `IRIS_PLACEHOLDER_SURFACE` | `V4ComingSoonView` on `/mcp/iris` | active placeholder integration surface. |
+| `IRIS_RUNTIME_TARGET` | planned IRIS runtime panel | target runtime contract, not mounted. |
+
 ## Relevant Services / Types
 
 - `src/types/core.ts` (`AppView.MCP_IRIS_COMING_SOON`)

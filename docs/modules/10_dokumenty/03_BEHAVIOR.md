@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - No Document Studio transactional workflow is mounted under `/wordy` in current `AppRoutes`.
 - Navigation identity is stabilized by `AppView.WORDY` in `src/types/core.ts` and `APP_VIEW_TO_ROUTE` mapping in `routeConfig.ts`.
 
+## Function Runtime Breakdown
+
+- `DOC_WORDY_PLACEHOLDER`: active function on `/wordy` delivering coming-soon state.
+- `DOC_STUDIO_RUNTIME_TARGET`: documented target runtime function, currently not mounted.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

@@ -23,6 +23,13 @@ last_updated: 2026-05-09
 - `src/views/partner/PartnerPortalView.tsx` is active portal root
 - Public related surfaces: `/become-partner`, `/become-partner/apply`, `/partner/pricing`
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `PART_PORTAL_WORKSPACE` | `PartnerPortalViewNew` on `/partner/*` | protected portal ownership surface. |
+| `PART_PUBLIC_ACQUISITION_BOUNDARY` | public/protected route boundary | acquisition routes remain outside protected portal ownership. |
+
 ## Relevant Services / Types
 
 - `src/services/funnelAnalytics.ts` (public-to-portal journey analytics)

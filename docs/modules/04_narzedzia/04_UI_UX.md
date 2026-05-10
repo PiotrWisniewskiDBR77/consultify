@@ -61,3 +61,20 @@ Handoffs to initiatives/reports and any high-impact generated recommendation mus
 - AI actions use Menu 3/right-side command placement without duplication.
 - Tool outputs and handoffs show source/provenance.
 - High-impact handoffs require review/approval.
+
+## 11. Function Annex — Tools Functions
+
+Function groups:
+
+- **Discovery consulting tools lane**: `NZ_DISCOVERY_LIBRARY`, `NZ_DISCOVERY_SESSIONS`, `NZ_DISCOVERY_OUTPUTS`, `NZ_DISCOVERY_INITIATIVES`.
+- **Assessment lane**: `NZ_ASSESSMENT_HUB`.
+- **Strategic workspace lane**: `NZ_MEGATRENDS_WORKSPACE`.
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `NZ_DISCOVERY_LIBRARY` | Discovery Library | `/discovery-tools` -> tab `library` | real | `DiscoveryToolsHub` library table/grid + preview | `functions/NZ_DISCOVERY_LIBRARY.md` |
+| `NZ_DISCOVERY_SESSIONS` | Discovery Sessions | `/discovery-tools` -> tab `sessions` | real | `DiscoveryToolsHub` sessions table/grid + filters | `functions/NZ_DISCOVERY_SESSIONS.md` |
+| `NZ_DISCOVERY_OUTPUTS` | Reports & Presentations Outputs | `/discovery-tools` -> tab `outputs` | real | `DiscoveryToolsHub` outputs table + preview | `functions/NZ_DISCOVERY_OUTPUTS.md` |
+| `NZ_DISCOVERY_INITIATIVES` | Initiatives Handoff | `/discovery-tools` -> tab `initiatives` | real | `DiscoveryToolsHub` initiatives table + handoff actions | `functions/NZ_DISCOVERY_INITIATIVES.md` |
+| `NZ_ASSESSMENT_HUB` | Assessment Hub | `/assessment/*` | real | `AssessmentHub`, session editor, tabbed assessment/report/initiative controls | `functions/NZ_ASSESSMENT_HUB.md` |
+| `NZ_MEGATRENDS_WORKSPACE` | Megatrends Workspace | `/discovery-tools/strategic/megatrends` | real | `MegatrendsWorkspace` | `functions/NZ_MEGATRENDS_WORKSPACE.md` |

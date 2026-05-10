@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Tenant admin IA, users, roles, settings, integrations, audit and mounted admin sections.
 - Inventory-driven real/partial/stub status.
+- Function set: `ADM_ADMIN_WORKSPACE`, `ADM_SUPERADMIN_BOUNDARY`.
 
 ## Out Of Scope (Must Not)
 

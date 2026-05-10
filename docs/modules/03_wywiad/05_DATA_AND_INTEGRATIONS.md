@@ -17,6 +17,13 @@ Define module objects, integrations and lineage responsibilities.
 
 - InterviewTemplate, InterviewSubmission, respondent metadata, attachments, answers, extracted insights and export packages.
 
+## Function Data Responsibilities
+
+| Function group | Primary data responsibility | Integration responsibility |
+| --- | --- | --- |
+| Assignment/review (`WY_MY_ASSIGNMENTS`, `WY_MANAGED_ASSIGNMENTS`, `WY_PENDING_REVIEW`) | assignment queues, review states, SLA and ownership metadata | interview assignment APIs and status transition paths |
+| Session/template/insight (`WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`) | session lifecycle, template question models, insight records | `V8InterviewApi` + shared `Api` interview endpoints |
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

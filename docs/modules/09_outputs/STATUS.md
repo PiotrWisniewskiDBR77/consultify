@@ -18,3 +18,8 @@ last_updated: 2026-05-09
 - `partial`: route family mixes hub and specialized builder pages.
 - `code_gap`: no dedicated automated tests for `ReportsAndPresentationsHub`.
 - `doc_gap`: previous baseline did not include explicit redirect/alias facts.
+
+## Function Coverage Status
+
+- Required functions documented: `6/6`.
+- Covered: `OUT_LIBRARY_HUB`, `OUT_REPORT_BUILDER`, `OUT_PRESENTATION_WIZARD`, `OUT_DECK_BUILDER`, `OUT_SHARED_PRESENTATION`, `OUT_LEGACY_REPORT_REDIRECT`.

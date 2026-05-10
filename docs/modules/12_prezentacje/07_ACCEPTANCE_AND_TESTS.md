@@ -27,6 +27,14 @@ last_updated: 2026-05-09
 - Expected gate result today: `PASS_WITH_P2 for ownership clarity; BLOCKED_P1 for standalone lane runtime.`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `PR_GEN_PLACEHOLDER` | `/prezentacje` mounts honest placeholder runtime | `AppRoutes.tsx` -> `V4ComingSoonView` | pass |
+| `PR_GEN_RUNTIME_TARGET` | Target generator runtime remains documented as not mounted | `PrezentacjeView` imported, not route-mounted | pass (`partial`) |
+| `PR_OUTPUTS_OWNERSHIP_BOUNDARY` | Ownership split (`/prezentacje` vs `/presentations`) is explicit | codemap + route ownership evidence | pass |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

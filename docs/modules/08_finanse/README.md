@@ -27,6 +27,16 @@ Finansowy mózg Consultify: statement ingestion, model, analysis, forecast, valu
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `FN_STATEMENTS_WORKSPACE`
+- `FN_MODELS_WORKSPACE`
+- `FN_ANALYSIS_WORKSPACE`
+- `FN_PREDICTION_WORKSPACE`
+- `FN_VALUATION_WORKSPACE`
+- `FN_INVESTMENT_WORKSPACE`
+- `FN_FINANCE_DETAIL_ROUTES`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/FINANCIAL_ANALYSIS_V3.md`

@@ -14,8 +14,8 @@ last_updated: 2026-05-09
 - Module id: `MODULE_ORGANIZATION`
 - Sidebar label: `Organizacja`
 - Folder: `16_organizacja`
-- Route: `/organization`
-- AppView: `AppView.ORGANIZATION`
+- Route: `/organization/*`
+- AppView: `AppView.ORGANIZATION_PROFILE`
 - Owner: user
 
 ## Canonicality
@@ -29,6 +29,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/work-packets/cursor-work/wave2-full-audit/WAVE2_FINAL_IMPLEMENTATION_PLAN_ORGANIZATION_2026-03-29.md`
 - `DRD/consultify/docs/product/modules/admin/ADMIN_ORGANIZATION_MODULE_ANALYSIS.md`
 - `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`
+
+## Function Coverage
+
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
 
 ## Open Questions
 

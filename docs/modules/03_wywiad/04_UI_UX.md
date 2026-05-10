@@ -61,3 +61,14 @@ Assignment, review and export-related operations must be explicit user actions. 
 - Contextual AI actions stay in Menu 3/right-side or row-scoped controls without duplication.
 - Insights and exports show source/provenance.
 - Assignment/review/export mutations require explicit user action and visible result.
+
+## 11. Function Annex — Interview Functions
+
+| Function ID | Menu label | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `WY_MY_ASSIGNMENTS` | `My Assignments` | `InterviewHub` tab `my_assignments` | real | `InterviewHub`, assignment table/cards, row actions | `functions/WY_MY_ASSIGNMENTS.md` |
+| `WY_MANAGED_ASSIGNMENTS` | `Managed` | `InterviewHub` tab `managed` | real (permission-dependent) | `InterviewHub` managed assignment views | `functions/WY_MANAGED_ASSIGNMENTS.md` |
+| `WY_SESSIONS` | `Sessions` | `InterviewHub` tab `sessions` | real | session list + dynamic document panels in `InterviewHub` | `functions/WY_SESSIONS.md` |
+| `WY_TEMPLATES` | `Templates` | `InterviewHub` tab `templates` | real | template list/cards, question preview in `InterviewHub` | `functions/WY_TEMPLATES.md` |
+| `WY_INSIGHTS` | `Insights` | `InterviewHub` tab `insights` | real | insight list/report views + preview in `InterviewHub` | `functions/WY_INSIGHTS.md` |
+| `WY_PENDING_REVIEW` | `Pending Review` | `InterviewHub` tab `pending_review` | real (permission-dependent) | review-filtered table/preview controls | `functions/WY_PENDING_REVIEW.md` |

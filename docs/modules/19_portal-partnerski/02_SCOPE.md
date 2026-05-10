@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Partner onboarding, activation, earnings, ledger, payout requests and operator review.
 - Partner/operator role separation.
+- Function set: `PART_PORTAL_WORKSPACE`, `PART_PUBLIC_ACQUISITION_BOUNDARY`.
 
 ## Out Of Scope (Must Not)
 

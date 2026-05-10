@@ -14,8 +14,8 @@ last_updated: 2026-05-09
 - Module id: `MODULE_PARTNER_PORTAL`
 - Sidebar label: `Portal Partnerski`
 - Folder: `19_portal-partnerski`
-- Route: `/partner`
-- AppView: `AppView.PARTNER_PORTAL`
+- Route: `/partner/*`
+- AppView: `AppView.PARTNER_LANDING`
 - Owner: user
 
 ## Canonicality
@@ -29,6 +29,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/work-packets/wave-2/module-cards/WAVE_2_MODULE_CARD_PARTNER_PROGRAM.md`
 - `DRD/consultify/docs/product/PARTNER_PROGRAM_V8_MASTER_SUMMARY.md`
 - `DRD/consultify/docs/product/modules/partner/PARTNER_PORTAL_MODULE.md`
+
+## Function Coverage
+
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
 
 ## Open Questions
 

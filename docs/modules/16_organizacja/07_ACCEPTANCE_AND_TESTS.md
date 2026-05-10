@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `PASS_WITH_P2 (legacy/transitional overlap still present).`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `ORG_CONTEXT_WORKSPACE` | Canonical organization runtime is mounted | `AppRoutes.tsx` + `OrganizationView.tsx` | pass |
+| `ORG_LEGACY_CONTEXT_BUILDER` | Transitional `/context/*` runtime remains mounted | `AppRoutes.tsx` + `ContextBuilderView` mapping | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

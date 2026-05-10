@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Marketplace asset provider: katalog/search/get/recommendations dla template, playbooków, promptów i komponentów, z importem do Consultify i jawnością licencji/proweniencji.
 
+As-Is realizacja jest placeholderowa (`MCPM_PLACEHOLDER_SURFACE`) przy zachowanym kontrakcie funkcji docelowej (`MCPM_RUNTIME_TARGET`).
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

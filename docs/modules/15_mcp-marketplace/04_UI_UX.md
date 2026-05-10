@@ -60,3 +60,10 @@ As-Is: no active install/enable mutation exists. Future installs, permission gra
 - Current UI honestly renders coming-soon placeholder.
 - Future runtime preserves Menu 3 AI placement, source/provenance visibility and approval/audit gates.
 - Placeholder status remains documented as an As-Is gap until active runtime exists.
+
+## 11. Function Annex — MCP Marketplace Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `MCPM_PLACEHOLDER_SURFACE` | Marketplace Placeholder Surface | `/mcp/marketplace` | stub | `V4ComingSoonView` | `functions/MCPM_PLACEHOLDER_SURFACE.md` |
+| `MCPM_RUNTIME_TARGET` | Marketplace Runtime Target | planned catalog/install runtime on `/mcp/marketplace` | partial | target marketplace catalog/review/install panel (not mounted) | `functions/MCPM_RUNTIME_TARGET.md` |

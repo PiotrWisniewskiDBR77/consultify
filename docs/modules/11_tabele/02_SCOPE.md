@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Table schema, rows/cells, provenance, formulas/typed columns, imports, views and AI proposals.
 - Decision/idea tables, consulting analysis tables and operational data tables.
+- Function set: `TB_EXCELE_PLACEHOLDER`, `TB_TABLE_RUNTIME_TARGET`.
 
 ## Out Of Scope (Must Not)
 

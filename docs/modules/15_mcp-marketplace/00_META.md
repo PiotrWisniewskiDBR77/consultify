@@ -15,7 +15,7 @@ last_updated: 2026-05-09
 - Sidebar label: `MCP Marketplace`
 - Folder: `15_mcp-marketplace`
 - Route: `/mcp/marketplace`
-- AppView: `AppView.MCP_MARKETPLACE`
+- AppView: `AppView.MCP_MARKETPLACE_COMING_SOON`
 - Owner: user
 
 ## Canonicality
@@ -26,6 +26,11 @@ This folder is the author-level module contract. Other product, engineering and 
 
 - `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
 - `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`
+
+## Function Coverage
+
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
 
 ## Open Questions
 

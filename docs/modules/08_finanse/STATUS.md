@@ -17,3 +17,8 @@ last_updated: 2026-05-09
 - `real`: finance detail routes (`/finance/statements/:id`, `/finance/models/:id`, `/finance/analyses/:id`) are wired.
 - `code_gap`: no dedicated automated tests for `FinanceHub`/`EconomicsView`.
 - `doc_gap`: prior baseline did not include alias/detail route evidence.
+
+## Function Coverage Status
+
+- Required functions documented: `7/7`.
+- Covered: `FN_STATEMENTS_WORKSPACE`, `FN_MODELS_WORKSPACE`, `FN_ANALYSIS_WORKSPACE`, `FN_PREDICTION_WORKSPACE`, `FN_VALUATION_WORKSPACE`, `FN_INVESTMENT_WORKSPACE`, `FN_FINANCE_DETAIL_ROUTES`.

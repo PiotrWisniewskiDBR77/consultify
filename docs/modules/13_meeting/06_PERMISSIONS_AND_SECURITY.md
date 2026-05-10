@@ -17,6 +17,8 @@ Define security, tenancy, ACL and approval rules for this module.
 
 - Meeting content follows project/client confidentiality and participant permissions.
 
+Function-level enforcement applies uniformly to: `ME_MEETING_PLACEHOLDER`, `ME_MEETING_RUNTIME_TARGET`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

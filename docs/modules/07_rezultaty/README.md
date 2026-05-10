@@ -27,6 +27,15 @@ System odpowiedzialności za wartość: KPI, baseline, target, actual, deviation
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `RZ_INITIATIVES_TRACKING`
+- `RZ_KPI_WORKSPACE`
+- `RZ_REPORTS_WORKSPACE`
+- `RZ_ROI_TRACKING`
+- `RZ_ROI_ANALYSIS`
+- `RZ_KPI_OKR_ROUTE`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/RESULTS_V8_SSOT.md`

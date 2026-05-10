@@ -18,6 +18,11 @@ Define security, tenancy, ACL and approval rules for this module.
 - Sensitive responses require explicit access control and audit.
 - AI processing must respect privacy/governance settings.
 
+Function-level enforcement:
+
+- Managed/review tabs (`WY_MANAGED_ASSIGNMENTS`, `WY_PENDING_REVIEW`) MUST stay permission-gated.
+- Insight finalization (`WY_INSIGHTS` / review lanes) MUST remain explicit and auditable.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

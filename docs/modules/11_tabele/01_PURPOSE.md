@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Table Studio jako metadata-first table platform: tabele decyzyjne i operacyjne z provenance, schema, AI proposal workflow, intake forms, QA and conversions.
 
+As-Is realizacja jest ograniczona do funkcji placeholder (`TB_EXCELE_PLACEHOLDER`) z utrzymanym kontraktem docelowego runtime (`TB_TABLE_RUNTIME_TARGET`).
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

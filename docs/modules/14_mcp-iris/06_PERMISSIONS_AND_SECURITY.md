@@ -17,6 +17,8 @@ Define security, tenancy, ACL and approval rules for this module.
 
 - Admin-only configuration; user tool access scoped by role and org policy.
 
+Function-level enforcement applies uniformly to: `IRIS_PLACEHOLDER_SURFACE`, `IRIS_RUNTIME_TARGET`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Kanoniczna biblioteka artefaktów wyjściowych: reports, presentations, documents, sheets/templates and review-ready packages. Chat creates; Outputs stores and governs.
 
+Cel jest realizowany przez funkcje biblioteki artefaktów oraz wyspecjalizowane trasy builderów i bezpiecznych powierzchni shared/embed.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

@@ -9,6 +9,13 @@ last_updated: 2026-05-09
 
 # Changelog — MCP IRIS
 
+## 2026-05-10
+
+- Added function-first contract layer for module 14 (`2/2` functions).
+- Added function annex in `04_UI_UX.md` and linked function contracts in `functions/`.
+- Updated codemap, behavior, acceptance and status with function coverage evidence.
+- Corrected META identity to As-Is appview mapping (`AppView.MCP_IRIS_COMING_SOON`).
+
 ## 2026-05-09
 
 - Rebuilt module contract as author-level canonical baseline.

@@ -20,10 +20,15 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Privacy, consent, export and AI governance around responses.
 - Insight/export handoff to downstream modules.
 
+Function mapping:
+
+- In scope functions: `WY_MY_ASSIGNMENTS`, `WY_MANAGED_ASSIGNMENTS`, `WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`, `WY_PENDING_REVIEW`.
+
 ## Out Of Scope (Must Not)
 
 - Direct creation of initiatives without governed review.
 - Analytics dashboards beyond interview evidence unless defined in source docs.
+- Silent approval/finalization outside explicit review functions.
 
 ## Inputs
 

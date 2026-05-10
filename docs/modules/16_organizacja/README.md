@@ -27,6 +27,11 @@ Warstwa Organization Context Engine: przyjmowanie materiałów organizacji/proje
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `ORG_CONTEXT_WORKSPACE`
+- `ORG_LEGACY_CONTEXT_BUILDER`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/work-packets/cursor-work/final_master/final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_30_ORGANIZATION_2026-03-29.md`

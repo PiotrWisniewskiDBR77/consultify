@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Document artifact, document schema, section, paragraph/table, citation, template, version, QA verdict and export record.
 
+## Function Data Responsibility Map
+
+- `DOC_WORDY_PLACEHOLDER`: route-level placeholder state only; no document artifact mutation runtime.
+- `DOC_STUDIO_RUNTIME_TARGET`: target-state document artifacts, sections, citations, QA and exports (contract intent).
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

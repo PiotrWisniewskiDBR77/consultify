@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Table artifact, table schema, row, cell, formula, source link, proposal, view, import and export.
 
+## Function Data Responsibility Map
+
+- `TB_EXCELE_PLACEHOLDER`: route-level placeholder state; no active table mutation runtime.
+- `TB_TABLE_RUNTIME_TARGET`: target-state table artifacts, schema/row/cell operations and exports.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

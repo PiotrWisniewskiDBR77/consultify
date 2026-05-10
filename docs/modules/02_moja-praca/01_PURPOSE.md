@@ -13,6 +13,11 @@ last_updated: 2026-05-09
 
 Osobiste centrum pracy użytkownika: home, inbox/radar, bieżące artefakty, zadania, powroty do pracy i dzienny rytm bez przejmowania odpowiedzialności modułów źródłowych.
 
+Function-level realization:
+
+- Core orchestration is delivered by 8 runtime functions (`MW_HOME_RADAR` ... `MW_MANAGER`).
+- Idea development depth is delivered by 4 dedicated subfunctions (`mindmap`, `table`, `process_flow`, `whiteboard`).
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

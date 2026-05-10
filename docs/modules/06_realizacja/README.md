@@ -27,6 +27,14 @@ Operacyjne dowodzenie realizacją: portfolio, PMO reports, manager/control tower
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `RL_EXECUTION_PORTFOLIO`
+- `RL_EXECUTION_REPORTS`
+- `RL_EXECUTION_MANAGER`
+- `RL_FULL_EXECUTION_VIEW`
+- `RL_ROLLOUT_VIEW`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`

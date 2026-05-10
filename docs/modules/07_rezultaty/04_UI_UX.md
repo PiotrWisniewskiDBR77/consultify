@@ -61,3 +61,14 @@ High-impact tracking updates, linked status operations and generated value repor
 - AI analysis uses Menu 3/right-side placement without duplication.
 - KPI/ROI/reports expose sources, assumptions and evidence.
 - High-impact results operations require review/approval.
+
+## 11. Function Annex — Results Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `RZ_INITIATIVES_TRACKING` | Initiatives Tracking | `/benefits` (tab `results_initiatives`) | real | initiatives workspace in `ResultsHub` | `functions/RZ_INITIATIVES_TRACKING.md` |
+| `RZ_KPI_WORKSPACE` | KPI Workspace | `/benefits` (tab `results_kpi`) | real | KPI catalog/overview/queue/scorecards in `ResultsHub` | `functions/RZ_KPI_WORKSPACE.md` |
+| `RZ_REPORTS_WORKSPACE` | Reports Workspace | `/benefits` (tab `results_reports`) | real | reporting workspace in `ResultsHub` | `functions/RZ_REPORTS_WORKSPACE.md` |
+| `RZ_ROI_TRACKING` | ROI Tracking | `/benefits` (tab `roi`) | real | ROI tracking views/drawers in results runtime | `functions/RZ_ROI_TRACKING.md` |
+| `RZ_ROI_ANALYSIS` | ROI Analysis | `/benefits` (tab `roi_analysis`) | real | `ROIAnalysisView` in results runtime | `functions/RZ_ROI_ANALYSIS.md` |
+| `RZ_KPI_OKR_ROUTE` | KPI/OKR Route Surface | `/kpi-okr` | partial | `KpiOkrView` route-level KPI surface | `functions/RZ_KPI_OKR_ROUTE.md` |

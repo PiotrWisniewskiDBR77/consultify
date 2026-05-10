@@ -22,6 +22,13 @@ last_updated: 2026-05-09
 - `src/routes/AppRoutes.tsx` -> route `ROUTES.WORDY` renders `V4ComingSoonView`
 - `src/components/AIChat/KimiWorkspace/WordyView.tsx` is imported but not mounted on current route
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `DOC_WORDY_PLACEHOLDER` | `V4ComingSoonView` on `/wordy` | active and honest placeholder runtime. |
+| `DOC_STUDIO_RUNTIME_TARGET` | `WordyView` (imported only) | target runtime contract, not currently mounted. |
+
 ## Relevant Services / Types
 
 - `src/services/api.ts` (shared API client used by app shells)

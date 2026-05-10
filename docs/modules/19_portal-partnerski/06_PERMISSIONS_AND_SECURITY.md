@@ -18,6 +18,8 @@ Define security, tenancy, ACL and approval rules for this module.
 - Partner sees own data; operator/admin sees scoped review data.
 - Payout actions require explicit authorization and audit.
 
+Function-level enforcement applies uniformly to: `PART_PORTAL_WORKSPACE`, `PART_PUBLIC_ACQUISITION_BOUNDARY`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

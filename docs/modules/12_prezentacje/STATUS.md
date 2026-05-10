@@ -24,3 +24,8 @@ last_updated: 2026-05-09
 
 - Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
 - Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
+
+## Function Coverage Status
+
+- Required functions documented: `3/3`.
+- Covered: `PR_GEN_PLACEHOLDER`, `PR_GEN_RUNTIME_TARGET`, `PR_OUTPUTS_OWNERSHIP_BOUNDARY`.

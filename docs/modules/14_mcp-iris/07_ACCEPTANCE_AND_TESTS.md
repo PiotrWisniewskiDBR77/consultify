@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `BLOCKED_P1 for executable MCP IRIS user flow.`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `IRIS_PLACEHOLDER_SURFACE` | `/mcp/iris` mounts honest placeholder runtime | `AppRoutes.tsx` -> `V4ComingSoonView` | pass |
+| `IRIS_RUNTIME_TARGET` | Target runtime remains documented as not mounted | codemap confirms no dedicated mounted IRIS runtime component | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

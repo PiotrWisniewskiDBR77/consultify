@@ -60,3 +60,10 @@ As-Is: no active high-impact document mutations exist. Future document generatio
 - Current UI honestly renders placeholder/coming-soon, not a fake active editor.
 - Future document runtime preserves Menu 3 AI placement, source/provenance visibility and approval/review gates.
 - Placeholder status remains documented as an As-Is gap until active runtime exists.
+
+## 11. Function Annex — Documents Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `DOC_WORDY_PLACEHOLDER` | Wordy Placeholder Runtime | `/wordy` | soon | `V4ComingSoonView` | `functions/DOC_WORDY_PLACEHOLDER.md` |
+| `DOC_STUDIO_RUNTIME_TARGET` | Document Studio Runtime Target | planned `/wordy` studio runtime | partial | target `WordyView` document runtime (not currently mounted) | `functions/DOC_STUDIO_RUNTIME_TARGET.md` |

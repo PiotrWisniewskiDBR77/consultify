@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Launcher AppView points to profile module root while detailed settings AppViews map to concrete nested paths.
 - Settings acts as preference layer and must not bypass admin/tenant policy boundaries.
 
+## Function Runtime Breakdown
+
+- `SET_SETTINGS_WORKSPACE`: canonical settings runtime function on `/settings/*`.
+- `SET_POLICY_BOUNDARY_LINKS`: explicit ownership boundary function for admin/policy-locked controls.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

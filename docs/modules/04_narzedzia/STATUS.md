@@ -17,3 +17,9 @@ last_updated: 2026-05-09
 - `duplicate`: `/licensed-tools/*` alias redirects to assessment flow.
 - `code_gap`: no dedicated automated tests in `src/components/Discovery` and `src/components/assessment`.
 - `doc_gap`: previous baseline did not capture real route matrix and alias behavior.
+
+## Function Coverage Status
+
+- `pass`: function contract coverage complete (`6/6` Tools functions documented).
+- `real`: all six documented functions are represented in runtime routes/components.
+- `partial`: function-level runtime is broad, but automated test depth remains limited.

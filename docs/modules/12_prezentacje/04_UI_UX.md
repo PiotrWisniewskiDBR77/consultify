@@ -61,3 +61,11 @@ As-Is: no active standalone deck mutation exists. Future generated presentations
 - Current UI honestly renders blocked/placeholder generator state.
 - Contract explicitly points production presentations ownership to `09_outputs`.
 - Future standalone runtime preserves Menu 3 AI placement, provenance visibility and approval/review gates.
+
+## 11. Function Annex — Presentation Generator Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `PR_GEN_PLACEHOLDER` | Generator Placeholder Runtime | `/prezentacje` | partial | `V4ComingSoonView` | `functions/PR_GEN_PLACEHOLDER.md` |
+| `PR_GEN_RUNTIME_TARGET` | Generator Runtime Target | planned standalone generator on `/prezentacje` | partial | target `PrezentacjeView` runtime (not currently mounted) | `functions/PR_GEN_RUNTIME_TARGET.md` |
+| `PR_OUTPUTS_OWNERSHIP_BOUNDARY` | Outputs Ownership Boundary | `/prezentacje` vs `/presentations` | real | route ownership and lane boundary contract | `functions/PR_OUTPUTS_OWNERSHIP_BOUNDARY.md` |

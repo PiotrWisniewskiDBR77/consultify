@@ -17,6 +17,14 @@ Define module objects, integrations and lineage responsibilities.
 
 - ToolDefinition, ToolSession, ToolOutput, source links, assessment report links and handoff proposals.
 
+## Function Data Responsibilities
+
+| Function group | Primary data responsibility | Integration responsibility |
+| --- | --- | --- |
+| Discovery hub (`NZ_DISCOVERY_LIBRARY`, `NZ_DISCOVERY_SESSIONS`, `NZ_DISCOVERY_OUTPUTS`, `NZ_DISCOVERY_INITIATIVES`) | tool catalog, session projections, output projections, initiative handoff list | discovery APIs, initiatives/report/deck references, lifecycle helpers |
+| Assessment lane (`NZ_ASSESSMENT_HUB`) | assessment records, assessment reports, assessment-derived initiatives | assessment APIs, session editor routing, report builder handoff |
+| Strategic lane (`NZ_MEGATRENDS_WORKSPACE`) | megatrend analysis workspace state and derived insight references | strategic workspace integrations and downstream handoff paths |
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

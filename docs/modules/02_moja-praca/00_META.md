@@ -18,6 +18,16 @@ last_updated: 2026-05-09
 - AppView: `AppView.MY_WORK`
 - Owner: user
 
+## Canonical Routes (As-Is)
+
+- `/my-work/*` (module shell route)
+- tab-level paths include `home`, `ideas`, `notebook`, `inbox`, `calendar`, `tasks`, `decisions`, `manager`
+
+## Function Inventory (Canonical For This Module)
+
+- Core: `MW_HOME_RADAR`, `MW_IDEAS`, `MW_NOTEBOOK`, `MW_INBOX`, `MW_CALENDAR`, `MW_TASKS`, `MW_DECISIONS`, `MW_MANAGER`
+- Ideas subfunctions: `MW_IDEAS_MINDMAP`, `MW_IDEAS_TABLE`, `MW_IDEAS_PROCESS_FLOW`, `MW_IDEAS_WHITEBOARD`
+
 ## Canonicality
 
 This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.

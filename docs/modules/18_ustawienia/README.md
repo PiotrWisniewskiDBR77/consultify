@@ -27,6 +27,11 @@ User and workspace settings hub: preferences, account/profile, memory controls a
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `SET_SETTINGS_WORKSPACE`
+- `SET_POLICY_BOUNDARY_LINKS`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/modules/ADMIN_SETTINGS_SUPERADMIN_CONTRACT_INVENTORY.md`

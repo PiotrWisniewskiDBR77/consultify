@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 System planowania i decyzji transformacyjnych: inicjatywa jest podstawowym obiektem konsultingowym łączącym źródła, zakres, decyzje, role, bramki i dalszą realizację.
 
+Realizacja celu jest podzielona na funkcje: operacyjny portfolio hub, workspace analityczny oraz dedykowane powierzchnie tras `/roadmap`, `/portfolio` i `/roi`.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

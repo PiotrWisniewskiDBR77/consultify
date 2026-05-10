@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Tenant admin command center: settings, users, org controls, integrations, audit and enterprise administration without mixing with platform SuperAdmin.
 
+Cel jest realizowany przez funkcję kanoniczną admin workspace oraz jawnie utrzymywaną granicę z plane SuperAdmin.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

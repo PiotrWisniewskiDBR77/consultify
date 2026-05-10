@@ -17,6 +17,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 
 - Deck model, storyline, slide schema, visual system, sources, review workflow and export.
 - Decks as Outputs artifacts with format-specific runtime.
+- Function set: `PR_GEN_PLACEHOLDER`, `PR_GEN_RUNTIME_TARGET`, `PR_OUTPUTS_OWNERSHIP_BOUNDARY`.
 
 ## Out Of Scope (Must Not)
 

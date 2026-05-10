@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `PASS_WITH_P2 (needs per-section acceptance evidence expansion).`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `SET_SETTINGS_WORKSPACE` | Protected settings runtime is mounted | `AppRoutes.tsx` + `SettingsView` | pass |
+| `SET_POLICY_BOUNDARY_LINKS` | Settings vs admin policy ownership boundary is explicit | behavior/codemap ownership and route mapping notes | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

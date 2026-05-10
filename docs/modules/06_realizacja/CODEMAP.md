@@ -23,6 +23,16 @@ last_updated: 2026-05-09
 - `src/components/Execution/ExecutionHub.tsx` — unified execution center runtime.
 - `src/views/FullExecutionView.tsx`, `src/views/ImplementationView.tsx`, `src/views/FullRolloutView.tsx` — route surfaces in the same lane.
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `RL_EXECUTION_PORTFOLIO` | `ExecutionHub` tab `list` | execution tasks/decisions/blockers lane. |
+| `RL_EXECUTION_REPORTS` | `ExecutionHub` tab `reports` | report catalog generation/export lane. |
+| `RL_EXECUTION_MANAGER` | `ExecutionHub` tab `people_change` | manager-focused insights and recommendations. |
+| `RL_FULL_EXECUTION_VIEW` | `FullExecutionView` | execution route surface. |
+| `RL_ROLLOUT_VIEW` | `FullRolloutView` | rollout route surface. |
+
 ## API / Services / Models (Confirmable)
 
 - Shared API usage: `src/services/api.ts`.

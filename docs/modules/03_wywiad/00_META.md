@@ -18,6 +18,21 @@ last_updated: 2026-05-09
 - AppView: `AppView.DISCOVERY_CONSULTANT`
 - Owner: user
 
+## Canonical Routes (As-Is)
+
+- `/interview`
+- `/discovery` (legacy alias still active)
+- `/project-intelligence` (additional alias path to interview runtime)
+
+## Function Inventory (Canonical For This Module)
+
+- `WY_MY_ASSIGNMENTS`
+- `WY_MANAGED_ASSIGNMENTS`
+- `WY_SESSIONS`
+- `WY_TEMPLATES`
+- `WY_INSIGHTS`
+- `WY_PENDING_REVIEW`
+
 ## Canonicality
 
 This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.

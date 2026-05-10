@@ -31,6 +31,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/work-packets/T2_RESULTS_KPI_ROI_CHARTER.md`
 - `DRD/consultify/docs/UI_UX/105_RAW_RESULTS_VALUE_REALIZATION_ENGINE_2026-05-09.md`
 
+## Function Coverage
+
+- Required functions documented: `6/6`.
+- Function contracts are stored in `functions/`.
+
 ## Open Questions
 
 1. Does the active code route still match the contract route above?

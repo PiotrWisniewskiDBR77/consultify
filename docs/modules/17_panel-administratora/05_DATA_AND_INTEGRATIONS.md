@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Admin section, user, role, policy, integration config, audit event and status inventory.
 
+## Function Data Responsibility Map
+
+- `ADM_ADMIN_WORKSPACE`: admin entities, policies, integrations and audit events.
+- `ADM_SUPERADMIN_BOUNDARY`: route/role ownership boundary metadata between admin and superadmin planes.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

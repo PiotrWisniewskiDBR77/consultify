@@ -18,6 +18,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Task/decision runtime during delivery.
 - Portfolio, reports and manager/control tower surfaces.
 - Schedule, baseline, blockers, risk, capacity and recovery interventions.
+- Function set: `RL_EXECUTION_PORTFOLIO`, `RL_EXECUTION_REPORTS`, `RL_EXECUTION_MANAGER`, `RL_FULL_EXECUTION_VIEW`, `RL_ROLLOUT_VIEW`.
 
 ## Out Of Scope (Must Not)
 

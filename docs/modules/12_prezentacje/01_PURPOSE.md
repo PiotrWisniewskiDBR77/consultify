@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Presentation Studio tworzy Gamma-class enterprise decks jako żywe artefakty: story, slides, sources, versions, approvals and PPTX/PDF export.
 
+As-Is realizacja tej lane jest placeholderowa (`PR_GEN_PLACEHOLDER`), przy zachowaniu kontraktu funkcji docelowej i jawnej granicy ownership z `09_outputs`.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

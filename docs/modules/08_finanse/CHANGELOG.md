@@ -9,6 +9,12 @@ last_updated: 2026-05-09
 
 # Changelog — Finanse / Finance & Intelligence
 
+## 2026-05-10
+
+- Added function-first contract layer for module 08 (`7/7` functions).
+- Added function annex in `04_UI_UX.md` and linked function contracts in `functions/`.
+- Updated codemap, behavior, acceptance and status with function coverage evidence.
+
 ## 2026-05-09
 
 - Rebuilt module contract as author-level canonical baseline.

@@ -17,6 +17,11 @@ Define module objects, integrations and lineage responsibilities.
 
 - Marketplace asset, collection, provider config, import mapping and audit log.
 
+## Function Data Responsibility Map
+
+- `MCPM_PLACEHOLDER_SURFACE`: route-level placeholder state only; no active catalog/install mutation runtime.
+- `MCPM_RUNTIME_TARGET`: target-state marketplace catalog, recommendation, install/config and audit flows.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

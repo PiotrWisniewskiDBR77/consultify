@@ -14,8 +14,8 @@ last_updated: 2026-05-09
 - Module id: `MODULE_PRESENTATIONS`
 - Sidebar label: `Prezentacje`
 - Folder: `12_prezentacje`
-- Route: `/presentations`
-- AppView: `AppView.PRESENTATIONS`
+- Route: `/prezentacje`
+- AppView: `AppView.PREZENTACJE_GEN`
 - Owner: user
 
 ## Canonicality
@@ -31,6 +31,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
 - `DRD/consultify/docs/product/REPORTS_AND_PRESENTATIONS_V8_MASTER_SUMMARY.md`
 - `DRD/consultify/docs/UI_UX/96_RAW_PRESENTATION_STUDIO_GAMMA_CLASS_2026-05-09.md`
+
+## Function Coverage
+
+- Required functions documented: `3/3`.
+- Function contracts are stored in `functions/`.
 
 ## Open Questions
 

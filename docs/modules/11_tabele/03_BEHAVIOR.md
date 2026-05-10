@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Current user experience is intentionally blocked by coming-soon placeholder.
 - Route/AppView identity is defined in `routeConfig.ts` and `src/types/core.ts` via `AppView.EXCELE`.
 
+## Function Runtime Breakdown
+
+- `TB_EXCELE_PLACEHOLDER`: active function on `/excele` showing blocked/coming-soon state.
+- `TB_TABLE_RUNTIME_TARGET`: documented target function, currently not mounted.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

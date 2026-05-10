@@ -15,6 +15,13 @@ last_updated: 2026-05-09
 - `ExecutionHub` implements the unified execution center (initiative/task views, RAID/decisions, management/reporting interactions).
 - Runtime pulls execution risk/delay/budget/manager lane data through V8 execution-control contracts when available, with fallback handling.
 
+## Function Runtime Breakdown
+
+- `RL_EXECUTION_PORTFOLIO`: execution tasks/decisions/blockers operating lane in `ExecutionHub`.
+- `RL_EXECUTION_REPORTS`: report generation and reporting review lane.
+- `RL_EXECUTION_MANAGER`: manager-specific lane for signal triage and recommendation actions.
+- `RL_FULL_EXECUTION_VIEW` and `RL_ROLLOUT_VIEW`: route companion functions for lane-specific execution surfaces.
+
 ## State Handling (As-Is)
 
 - Hub maintains explicit state for view modes, filters, drag-and-drop kanban context, timeline signals, and report generation.

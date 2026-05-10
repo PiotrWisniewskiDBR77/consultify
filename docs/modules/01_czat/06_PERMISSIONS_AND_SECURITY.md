@@ -19,6 +19,11 @@ Define security, tenancy, ACL and approval rules for this module.
 - Sharing and memory must follow user/org/project visibility rules.
 - Tool calls and approvals must be audited with actor, time, scope, inputs summary and outcome.
 
+Function-level enforcement:
+
+- `CZ_CHAT_ENGINE` MUST never execute hidden high-impact actions from message content alone.
+- `CZ_CANVAS_WORKSPACE` MUST keep governed plan/review boundaries explicit before downstream mutation/materialization.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

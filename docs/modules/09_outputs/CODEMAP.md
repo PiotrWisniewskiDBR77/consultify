@@ -27,6 +27,17 @@ last_updated: 2026-05-09
 - `src/components/ReportsAndPresentations/useRapData.ts` — outputs registry and origin action data hooks.
 - `src/views/ReportBuilderView.tsx`, `src/components/Presentations/PresentationWizard.tsx`, `src/components/Presentations/DeckBuilder/DeckBuilder.tsx`.
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `OUT_LIBRARY_HUB` | `ReportsAndPresentationsHub` | canonical outputs library surface. |
+| `OUT_REPORT_BUILDER` | `ReportBuilderView` | report build/edit route surface. |
+| `OUT_PRESENTATION_WIZARD` | `PresentationWizard` | guided presentation creation route. |
+| `OUT_DECK_BUILDER` | `DeckBuilder` | deck edit route surface. |
+| `OUT_SHARED_PRESENTATION` | `SharedPresentationView` | shared/embed presentation surface. |
+| `OUT_LEGACY_REPORT_REDIRECT` | route redirect handlers | migration bridge to outputs tabs. |
+
 ## API / Services / Models (Confirmable)
 
 - Shared API client and headers: `src/services/api.ts`.

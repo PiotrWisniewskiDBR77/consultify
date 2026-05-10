@@ -19,6 +19,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Baseline/target/actual/deviation tracking.
 - ROI realization, reconciliation and evidence.
 - Corrective action loop linked to initiatives/execution/finance.
+- Function set: `RZ_INITIATIVES_TRACKING`, `RZ_KPI_WORKSPACE`, `RZ_REPORTS_WORKSPACE`, `RZ_ROI_TRACKING`, `RZ_ROI_ANALYSIS`, `RZ_KPI_OKR_ROUTE`.
 
 ## Out Of Scope (Must Not)
 

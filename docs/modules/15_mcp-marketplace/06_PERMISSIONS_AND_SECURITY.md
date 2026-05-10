@@ -17,6 +17,8 @@ Define security, tenancy, ACL and approval rules for this module.
 
 - Provider config admin-only; asset import depends on destination permissions.
 
+Function-level enforcement applies uniformly to: `MCPM_PLACEHOLDER_SURFACE`, `MCPM_RUNTIME_TARGET`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

@@ -27,6 +27,11 @@ Kontrolowany provider MCP do IRIS: odczyt KPI/evidence/workorders and integratio
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `IRIS_PLACEHOLDER_SURFACE`
+- `IRIS_RUNTIME_TARGET`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`

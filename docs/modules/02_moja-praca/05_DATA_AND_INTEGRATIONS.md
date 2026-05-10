@@ -18,6 +18,14 @@ Define module objects, integrations and lineage responsibilities.
 - References tasks, decisions, artifacts, radar signals, calendar events and notes by link, not by duplicating source records.
 - Radar items must keep source, trust, freshness and recommendation strength.
 
+## Function Data Responsibilities
+
+| Function group | Primary data responsibility | Integration responsibility |
+| --- | --- | --- |
+| Core (`MW_HOME_RADAR`, `MW_INBOX`, `MW_CALENDAR`, `MW_TASKS`, `MW_DECISIONS`, `MW_MANAGER`, `MW_NOTEBOOK`) | user work queue context, task/decision/inbox/calendar/notebook projections with explicit ownership references | shared API/store integrations and route handoff to owner modules |
+| Ideas parent (`MW_IDEAS`) | idea list/workspace entry state and conversion intent context | cross-module conversion and artifact navigation hooks |
+| Ideas subfunctions (`MW_IDEAS_MINDMAP`, `MW_IDEAS_TABLE`, `MW_IDEAS_PROCESS_FLOW`, `MW_IDEAS_WHITEBOARD`) | tool-specific workspace graph/table/flow/board state within one idea context | workspace runtime/tooling integrations and explicit convert/export bridges |
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

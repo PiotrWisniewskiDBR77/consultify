@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 System odpowiedzialności za wartość: KPI, baseline, target, actual, deviation, corrective action, ROI reconciliation, evidence and verified result.
 
+Cel jest realizowany przez funkcje: tracking inicjatyw, workspace KPI, workspace raportów, tracking ROI, analiza ROI oraz równoległą powierzchnię trasy KPI/OKR.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

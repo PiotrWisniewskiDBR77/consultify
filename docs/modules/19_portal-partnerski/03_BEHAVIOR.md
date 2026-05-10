@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Public recruitment/pricing routes coexist as acquisition layer and are outside secured portal shell.
 - AppView mapping includes partner dashboard/resources/client-access routes under partner namespace.
 
+## Function Runtime Breakdown
+
+- `PART_PORTAL_WORKSPACE`: canonical protected portal runtime function.
+- `PART_PUBLIC_ACQUISITION_BOUNDARY`: explicit boundary between public acquisition and protected portal contexts.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

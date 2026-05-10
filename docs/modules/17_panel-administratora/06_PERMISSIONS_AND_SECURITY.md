@@ -18,6 +18,8 @@ Define security, tenancy, ACL and approval rules for this module.
 - Admin-only actions require tenant role and audit.
 - SuperAdmin boundaries must not leak to tenant admin users.
 
+Function-level enforcement applies uniformly to: `ADM_ADMIN_WORKSPACE`, `ADM_SUPERADMIN_BOUNDARY`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

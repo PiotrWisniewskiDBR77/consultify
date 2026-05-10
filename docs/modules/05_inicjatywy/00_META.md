@@ -33,6 +33,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
 - `DRD/consultify/docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
 
+## Function Coverage
+
+- Required functions documented: `5/5`.
+- Function contracts are stored in `functions/`.
+
 ## Open Questions
 
 1. Does the active code route still match the contract route above?

@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Format runtime dla profesjonalnych dokumentów Word/PDF jako żywych, wersjonowanych, źródłowych artefaktów konsultingowych.
 
+As-Is realizacja celu jest obecnie ograniczona do funkcji placeholder (`DOC_WORDY_PLACEHOLDER`), z osobno utrzymanym kontraktem funkcji docelowej (`DOC_STUDIO_RUNTIME_TARGET`).
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

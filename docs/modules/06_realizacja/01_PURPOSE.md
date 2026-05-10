@@ -13,6 +13,8 @@ last_updated: 2026-05-09
 
 Operacyjne dowodzenie realizacją: portfolio, PMO reports, manager/control tower, task-decision runtime, ryzyka, baseline i interwencje.
 
+Cel jest realizowany przez zestaw funkcji: operacje wykonawcze, raporty, lane managerski oraz dedykowane powierzchnie tras `/execution` i `/rollout`.
+
 ## Must
 
 - MUST solve the job described above for the user-visible module, not only expose implementation internals.

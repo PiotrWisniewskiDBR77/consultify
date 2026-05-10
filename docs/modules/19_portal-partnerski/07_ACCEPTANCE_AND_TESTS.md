@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `PASS_WITH_P2 (public/protected boundary requires ongoing consistency checks).`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `PART_PORTAL_WORKSPACE` | Protected partner portal runtime is mounted | `AppRoutes.tsx` + `PartnerPortalViewNew` + `ProtectedRoute` | pass |
+| `PART_PUBLIC_ACQUISITION_BOUNDARY` | Public vs protected partner boundary is explicit | codemap route ownership notes | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

@@ -17,6 +17,8 @@ Define security, tenancy, ACL and approval rules for this module.
 
 - Tenant/ACL boundaries are non-negotiable; deny by default on uncertainty.
 
+Function-level enforcement applies uniformly to: `ORG_CONTEXT_WORKSPACE`, `ORG_LEGACY_CONTEXT_BUILDER`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

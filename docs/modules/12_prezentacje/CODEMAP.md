@@ -23,6 +23,14 @@ last_updated: 2026-05-09
 - `/presentations` routes render `ReportsAndPresentationsHub`, `PresentationWizard`, `DeckBuilder`, `SharedPresentationView` under Outputs flow
 - `src/components/AIChat/KimiWorkspace/PrezentacjeView.tsx` is imported but not mounted on `/prezentacje`
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `PR_GEN_PLACEHOLDER` | `V4ComingSoonView` on `/prezentacje` | active standalone-lane placeholder. |
+| `PR_GEN_RUNTIME_TARGET` | `PrezentacjeView` (imported only) | target generator runtime, not mounted. |
+| `PR_OUTPUTS_OWNERSHIP_BOUNDARY` | route ownership boundary | production `/presentations` ownership belongs to module 09. |
+
 ## Relevant Services / Types
 
 - `src/services/funnelAnalytics.ts` (redirect/route tracking in outputs-related redirects)

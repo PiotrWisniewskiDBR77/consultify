@@ -23,6 +23,13 @@ last_updated: 2026-05-09
 - `src/components/ProtectedRoute.tsx` enforces `requiredRole="ADMIN"` for admin route tree
 - `src/views/admin/AdminView.tsx` is active admin UI root
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `ADM_ADMIN_WORKSPACE` | `AdminView` on `/admin/*` | canonical tenant-admin control plane. |
+| `ADM_SUPERADMIN_BOUNDARY` | route/role boundary | `/superadmin/*` remains separate ownership plane. |
+
 ## Relevant Services / Types
 
 - `src/services/api.ts` (admin views consume backend APIs through shared client)

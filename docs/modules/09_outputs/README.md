@@ -27,6 +27,15 @@ Kanoniczna biblioteka artefaktów wyjściowych: reports, presentations, document
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `OUT_LIBRARY_HUB`
+- `OUT_REPORT_BUILDER`
+- `OUT_PRESENTATION_WIZARD`
+- `OUT_DECK_BUILDER`
+- `OUT_SHARED_PRESENTATION`
+- `OUT_LEGACY_REPORT_REDIRECT`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`

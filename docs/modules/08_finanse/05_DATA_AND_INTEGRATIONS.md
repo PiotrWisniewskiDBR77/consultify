@@ -17,6 +17,16 @@ Define module objects, integrations and lineage responsibilities.
 
 - Statement, financial line item, model version, forecast scenario, valuation, investment decision, report and reconciliation link.
 
+## Function Data Responsibility Map
+
+- `FN_STATEMENTS_WORKSPACE`: statement packs, statement data and readiness context.
+- `FN_MODELS_WORKSPACE`: model versions, assumptions and derived planning context.
+- `FN_ANALYSIS_WORKSPACE`: financial analysis records and ratio/evidence context.
+- `FN_PREDICTION_WORKSPACE`: prediction scenarios and model/budget projection context.
+- `FN_VALUATION_WORKSPACE`: valuation entities, methods and output lineage.
+- `FN_INVESTMENT_WORKSPACE`: investment-case datasets and decision-support outcomes.
+- `FN_FINANCE_DETAIL_ROUTES`: route-parameter deep-link contexts for statement/model/analysis entities.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

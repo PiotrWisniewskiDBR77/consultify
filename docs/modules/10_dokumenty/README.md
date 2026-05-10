@@ -27,6 +27,11 @@ Format runtime dla profesjonalnych dokumentów Word/PDF jako żywych, wersjonowa
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
+## Function Inventory (Function-First)
+
+- `DOC_WORDY_PLACEHOLDER`
+- `DOC_STUDIO_RUNTIME_TARGET`
+
 ## Primary Sources
 
 - `DRD/consultify/docs/product/V8_1_NATIVE_ARTIFACT_RUNTIME_AND_OUTPUTS_FUNCTIONAL_SPEC.md`

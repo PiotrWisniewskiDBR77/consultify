@@ -15,6 +15,11 @@ last_updated: 2026-05-09
 - Current route returns placeholder UI rather than active meeting orchestration workspace.
 - Potential runtime (`MeetingHub`) is present in codebase but not wired in current route tree.
 
+## Function Runtime Breakdown
+
+- `ME_MEETING_PLACEHOLDER`: active placeholder function on `/meeting`.
+- `ME_MEETING_RUNTIME_TARGET`: documented meeting runtime target, currently not mounted.
+
 ## Must
 
 - MUST keep route/appview/sidebar mapping aligned across `menuConfig.ts`, `routeConfig.ts`, and `AppRoutes.tsx`.

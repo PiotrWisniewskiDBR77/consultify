@@ -23,6 +23,13 @@ last_updated: 2026-05-09
 - `src/views/OrganizationView.tsx` is active surface owner
 - `/context/*` routes render `ContextBuilderView` and remain transitional compatibility surface
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `ORG_CONTEXT_WORKSPACE` | `OrganizationView` on `/organization/*` | canonical organization ownership surface. |
+| `ORG_LEGACY_CONTEXT_BUILDER` | `ContextBuilderView` on `/context/*` | transitional compatibility surface (`partial`). |
+
 ## Relevant Services / Types
 
 - `src/components/ProtectedRoute.tsx` (auth boundary)

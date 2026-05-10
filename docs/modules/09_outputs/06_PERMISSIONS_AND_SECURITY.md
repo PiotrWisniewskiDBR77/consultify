@@ -18,6 +18,8 @@ Define security, tenancy, ACL and approval rules for this module.
 - Artifact visibility must respect tenant/project/object permissions.
 - Client-ready export requires review/approval where configured.
 
+Function-level enforcement applies uniformly to: `OUT_LIBRARY_HUB`, `OUT_REPORT_BUILDER`, `OUT_PRESENTATION_WIZARD`, `OUT_DECK_BUILDER`, `OUT_SHARED_PRESENTATION`, `OUT_LEGACY_REPORT_REDIRECT`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

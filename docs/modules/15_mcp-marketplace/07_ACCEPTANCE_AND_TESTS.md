@@ -27,6 +27,13 @@ last_updated: 2026-05-09
 - Expected gate result today: `BLOCKED_P1 for functional marketplace flow.`
 - This is As-Is readiness, not target-state implementation readiness.
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `MCPM_PLACEHOLDER_SURFACE` | `/mcp/marketplace` mounts honest placeholder runtime | `AppRoutes.tsx` -> `V4ComingSoonView` | pass |
+| `MCPM_RUNTIME_TARGET` | Target runtime remains documented as not mounted | codemap confirms no dedicated mounted marketplace runtime | pass (`partial`) |
+
 ## Evidence Pointers
 
 - `src/components/navigation/Sidebar/menuConfig.ts`

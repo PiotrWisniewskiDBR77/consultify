@@ -18,6 +18,8 @@ Define security, tenancy, ACL and approval rules for this module.
 - High-impact mutations need explicit approval and audit.
 - Managers see scoped workload; tenant/project boundaries are enforced.
 
+Function-level enforcement applies uniformly to: `RL_EXECUTION_PORTFOLIO`, `RL_EXECUTION_REPORTS`, `RL_EXECUTION_MANAGER`, `RL_FULL_EXECUTION_VIEW`, `RL_ROLLOUT_VIEW`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

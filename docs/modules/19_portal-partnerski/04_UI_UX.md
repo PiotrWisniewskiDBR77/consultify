@@ -61,3 +61,10 @@ Partner-facing deliverables, access changes and high-impact workflow transitions
 - AI/help actions use Menu 3/right-side placement without duplication.
 - Partner deliverables show source/provenance and review status.
 - Access and high-impact partner workflow transitions require approval/review.
+
+## 11. Function Annex — Partner Portal Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `PART_PORTAL_WORKSPACE` | Protected Portal Workspace | `/partner/*` | real | `PartnerPortalViewNew` | `functions/PART_PORTAL_WORKSPACE.md` |
+| `PART_PUBLIC_ACQUISITION_BOUNDARY` | Public Acquisition Boundary | protected `/partner/*` vs public partner routes | partial | public/protected route boundary rules | `functions/PART_PUBLIC_ACQUISITION_BOUNDARY.md` |

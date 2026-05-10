@@ -29,6 +29,11 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
 - `DRD/consultify/docs/product/V3_MODULE_VERIFICATION_MATRIX.md`
 
+## Function Coverage
+
+- Required functions documented: `2/2`.
+- Function contracts are stored in `functions/`.
+
 ## Open Questions
 
 1. Does the active code route still match the contract route above?

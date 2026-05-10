@@ -18,6 +18,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Org-level provider configuration.
 - MCP transport, tool allowlist, health/test and audited calls.
 - Read-first KPI/evidence/execution integration paths.
+- Function set: `IRIS_PLACEHOLDER_SURFACE`, `IRIS_RUNTIME_TARGET`.
 
 ## Out Of Scope (Must Not)
 

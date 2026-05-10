@@ -24,6 +24,16 @@ last_updated: 2026-05-09
 - `src/components/Initiatives/InitiativesHub.tsx` — core module runtime (kanban/list/timeline/grid, filters, open docs, bulk actions).
 - `src/views/PortfolioView.tsx`, `src/views/FullRoadmapView.tsx`, `src/views/FullROIView.tsx` — related routes tied to initiatives lane.
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `IN_PORTFOLIO_HUB` | `InitiativesHub` tab `list` | primary portfolio execution surface. |
+| `IN_ANALYSIS_WORKSPACE` | `InitiativesHub` tab `analysis` | analysis subview lane (resources/feasibility/logic/timeline/completeness). |
+| `IN_ROADMAP_VIEW` | `FullRoadmapView` | roadmap lane route. |
+| `IN_PORTFOLIO_VIEW` | `PortfolioView` | related portfolio route lane. |
+| `IN_ROI_VIEW` | `FullROIView` | ROI lane route. |
+
 ## API / Services / Models (Confirmable)
 
 - Shared API usage: `src/services/api.ts`.

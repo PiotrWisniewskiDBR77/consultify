@@ -19,6 +19,18 @@ last_updated: 2026-05-09
 | V8 finance dashboard contract | `FinanceHub` imports `V8FinanceApi` | pass (`partial` with fallback) |
 | Module-local finance frontend tests | not found | gap (`code_gap`) |
 
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `FN_STATEMENTS_WORKSPACE` | Statements tab runtime is active | `FinanceHub.tsx` `statements` tab | pass |
+| `FN_MODELS_WORKSPACE` | Models tab runtime is active | `FinanceHub.tsx` `models` tab | pass |
+| `FN_ANALYSIS_WORKSPACE` | Analysis tab runtime is active | `FinanceHub.tsx` `analysis` tab | pass |
+| `FN_PREDICTION_WORKSPACE` | Prediction tab runtime is active | `FinanceHub.tsx` `prediction` tab | pass |
+| `FN_VALUATION_WORKSPACE` | Valuation tab runtime is active | `FinanceHub.tsx` `valuation` tab | pass |
+| `FN_INVESTMENT_WORKSPACE` | Investment tab runtime is active | `FinanceHub.tsx` `investment` tab | pass |
+| `FN_FINANCE_DETAIL_ROUTES` | Detail routes are mounted | `AppRoutes.tsx` finance detail route entries | pass |
+
 ## Confirmed Automated Evidence (As-Is)
 
 - No dedicated `FinanceHub`/`EconomicsView` test file found in current tree scan.

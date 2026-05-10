@@ -18,6 +18,8 @@ Define security, tenancy, ACL and approval rules for this module.
 - Row/cell edits and imports respect artifact permissions and audit.
 - Public/intake forms require explicit scoped write rules.
 
+Function-level enforcement applies uniformly to: `TB_EXCELE_PLACEHOLDER`, `TB_TABLE_RUNTIME_TARGET`.
+
 ## Global Security Rules
 
 - MUST enforce tenant and project boundaries.

@@ -17,6 +17,14 @@ Define module objects, integrations and lineage responsibilities.
 
 - KPI, scorecard, baseline, target, actual, deviation, explanation, corrective action, ROI record and evidence.
 
+## Function Data Responsibility Map
+
+- `RZ_INITIATIVES_TRACKING`: initiative realization linkage and corrective loop context.
+- `RZ_KPI_WORKSPACE`: KPI datasets, mappings, scorecards and deviation streams.
+- `RZ_REPORTS_WORKSPACE`: results reporting datasets and lineage context.
+- `RZ_ROI_TRACKING` and `RZ_ROI_ANALYSIS`: ROI assumptions, realizations and variance evidence.
+- `RZ_KPI_OKR_ROUTE`: route-level KPI-focused read/write surface.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

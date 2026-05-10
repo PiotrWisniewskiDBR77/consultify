@@ -23,6 +23,13 @@ last_updated: 2026-05-09
 - `src/views/SettingsView.tsx` is active settings UI root
 - `routeConfig.ts` maps detailed settings AppViews to nested `/settings/...` paths
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `SET_SETTINGS_WORKSPACE` | `SettingsView` on `/settings/*` | canonical settings runtime. |
+| `SET_POLICY_BOUNDARY_LINKS` | settings-to-admin policy boundary | user-owned settings vs admin-owned controls separation. |
+
 ## Relevant Services / Types
 
 - `src/store/useAppStore.ts` (theme/user session state integration)

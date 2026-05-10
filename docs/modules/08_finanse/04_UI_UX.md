@@ -61,3 +61,15 @@ Create/import/export and high-impact finance calculations must be explicit actio
 - AI actions use Menu 3/right-side or row/action placement without duplication.
 - Finance outputs expose source data, assumptions and evidence.
 - High-impact calculations/exports require review/approval.
+
+## 11. Function Annex — Finance Functions
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `FN_STATEMENTS_WORKSPACE` | Statements Workspace | `/economics`, `/finance` (tab `statements`) | real | statements table/grid/preview + import flows in `FinanceHub` | `functions/FN_STATEMENTS_WORKSPACE.md` |
+| `FN_MODELS_WORKSPACE` | Models Workspace | `/economics`, `/finance` (tab `models`) | real | model workspace in `FinanceHub` | `functions/FN_MODELS_WORKSPACE.md` |
+| `FN_ANALYSIS_WORKSPACE` | Analysis Workspace | `/economics`, `/finance` (tab `analysis`) | real | analysis workspace in `FinanceHub` | `functions/FN_ANALYSIS_WORKSPACE.md` |
+| `FN_PREDICTION_WORKSPACE` | Prediction Workspace | `/economics`, `/finance` (tab `prediction`) | real | prediction workspace in `FinanceHub` | `functions/FN_PREDICTION_WORKSPACE.md` |
+| `FN_VALUATION_WORKSPACE` | Valuation Workspace | `/economics`, `/finance` (tab `valuation`) | real | valuation workspace in `FinanceHub` | `functions/FN_VALUATION_WORKSPACE.md` |
+| `FN_INVESTMENT_WORKSPACE` | Investment Analysis Workspace | `/economics`, `/finance` (tab `investment`) | real | investment-case workspace in `FinanceHub` | `functions/FN_INVESTMENT_WORKSPACE.md` |
+| `FN_FINANCE_DETAIL_ROUTES` | Detail Route Surfaces | `/finance/statements/:id`, `/finance/models/:id`, `/finance/analyses/:id` | real | detail-route mounting through `EconomicsView` | `functions/FN_FINANCE_DETAIL_ROUTES.md` |

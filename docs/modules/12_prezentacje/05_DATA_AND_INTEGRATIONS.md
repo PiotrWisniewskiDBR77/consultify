@@ -17,6 +17,12 @@ Define module objects, integrations and lineage responsibilities.
 
 - Deck artifact, slide, layout, asset, source link, theme/template, version, QA verdict and export.
 
+## Function Data Responsibility Map
+
+- `PR_GEN_PLACEHOLDER`: route-level placeholder state only, no active deck mutation runtime.
+- `PR_GEN_RUNTIME_TARGET`: target-state generator deck/story/source operations.
+- `PR_OUTPUTS_OWNERSHIP_BOUNDARY`: cross-module ownership mapping between standalone lane and outputs runtime.
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.

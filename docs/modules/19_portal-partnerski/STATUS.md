@@ -24,3 +24,8 @@ last_updated: 2026-05-09
 
 - Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
 - Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
+
+## Function Coverage Status
+
+- Required functions documented: `2/2`.
+- Covered: `PART_PORTAL_WORKSPACE`, `PART_PUBLIC_ACQUISITION_BOUNDARY`.

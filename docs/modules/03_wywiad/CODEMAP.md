@@ -21,6 +21,17 @@ last_updated: 2026-05-09
 - `src/components/Interview/InterviewWorkspace.tsx` and related preview/modals — detailed session/template interactions.
 - `src/components/Discovery/InterviewHub.tsx` — additional discovery-side interview component path present in codebase.
 
+## Function Map (As-Is)
+
+| Function | Runtime anchor | Notes |
+| --- | --- | --- |
+| `WY_MY_ASSIGNMENTS` | `InterviewHub` tab `my_assignments` | default assignment queue. |
+| `WY_MANAGED_ASSIGNMENTS` | `InterviewHub` tab `managed` | manager oversight assignment surface. |
+| `WY_SESSIONS` | `InterviewHub` tab `sessions` | session lifecycle and deep-link open flows. |
+| `WY_TEMPLATES` | `InterviewHub` tab `templates` | template catalog and questions preview. |
+| `WY_INSIGHTS` | `InterviewHub` tab `insights` | insight review/report mode surface. |
+| `WY_PENDING_REVIEW` | `InterviewHub` tab `pending_review` | review-gated queue for pending insight actions. |
+
 ## API / Services / Models (Confirmable)
 
 - Interview API client: `src/services/api/v8/interview.ts` (session, assignment, insight contracts).

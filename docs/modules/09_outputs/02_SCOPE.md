@@ -18,6 +18,7 @@ Define exact ownership boundaries so the system does not duplicate features acro
 - Artifact registry and library views.
 - Review states, visibility, templates, exports and provenance.
 - Documents/presentations/sheets as artifact types and filters.
+- Function set: `OUT_LIBRARY_HUB`, `OUT_REPORT_BUILDER`, `OUT_PRESENTATION_WIZARD`, `OUT_DECK_BUILDER`, `OUT_SHARED_PRESENTATION`, `OUT_LEGACY_REPORT_REDIRECT`.
 
 ## Out Of Scope (Must Not)
 
