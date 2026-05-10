@@ -61,3 +61,22 @@ My Work is an orchestration surface. Canonical edits of external objects must ro
 - Contextual AI actions use Menu 3/right-side command placement only.
 - Work items show source/owner-module provenance.
 - High-impact actions route through owner-module approval/review flows.
+
+## 11. Function Annex — Menu 2 and Module Functions
+
+The function-level contracts below are mandatory and use `FUNCTION_CONTRACT_STANDARD.md`.
+
+| Function ID | Menu label | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `MW_HOME_RADAR` | `Start` / `Home` / `Radar` | `"/my-work"`, `"/my-work/home"` | real | `MyWorkView`, `MyWorkHub`, `HomeView` | `functions/MW_HOME_RADAR.md` |
+| `MW_IDEAS` | `Pomysly` / `Ideas` | `"/my-work/ideas"`, `"/my-work/ideas/:ideaId"` | real | `MyIdeasListContent`, `IdeaMapWorkspace`, `WorkspacePanelStrip` | `functions/MW_IDEAS.md` |
+| `MW_IDEAS_MINDMAP` | `Ideas / Mindmap` | `"/my-work/ideas/:ideaId"` (tool: `mindmap`) | real | `IdeaRecommendationMap`, `IdeaWorkspaceToolbar`, `CanvasLeftToolbar` | `functions/MW_IDEAS_MINDMAP.md` |
+| `MW_IDEAS_TABLE` | `Ideas / Table` | `"/my-work/ideas/:ideaId"` (tool: `table`) | real | `IdeaTableTool`, `IdeaWorkspaceToolbar` | `functions/MW_IDEAS_TABLE.md` |
+| `MW_IDEAS_PROCESS_FLOW` | `Ideas / Process Flow` | `"/my-work/ideas/:ideaId"` (tool: `process_flow`) | real | `IdeaProcessFlowTool`, `IdeaWorkspaceToolbar`, `IdeaWorkspaceTools` | `functions/MW_IDEAS_PROCESS_FLOW.md` |
+| `MW_IDEAS_WHITEBOARD` | `Ideas / Whiteboard` | `"/my-work/ideas/:ideaId"` (tool: `whiteboard`) | real | `IdeaWhiteboardTool`, `IdeaWorkspaceToolbar`, `IdeaWorkspaceTools` | `functions/MW_IDEAS_WHITEBOARD.md` |
+| `MW_NOTEBOOK` | `Notatnik` / `Notebook` | `"/my-work/notebook"` | real | `NotebookContent`, `WorkspacePanelStrip` | `functions/MW_NOTEBOOK.md` |
+| `MW_INBOX` | `Skrzynka` / `Inbox` | `"/my-work/inbox"` | real | `InboxContent`, `NotificationDetailView` | `functions/MW_INBOX.md` |
+| `MW_CALENDAR` | `Kalendarz` / `Calendar` | `"/my-work/calendar"` | real | `CalendarView` (calendar workspace in `MyWorkHub`) | `functions/MW_CALENDAR.md` |
+| `MW_TASKS` | `Zadania` / `Tasks` | `"/my-work/tasks"`, `"/my-work/tasks/:taskId"` | real | `MyTasksListContent`, `TasksKanbanBoard`, `TasksCalendarView`, `TaskDetailView` | `functions/MW_TASKS.md` |
+| `MW_DECISIONS` | `Decyzje` / `Decisions` | `"/my-work/decisions"`, `"/my-work/decisions/:decisionId"` | real | `DecisionsPanelContent`, `DecisionsKanbanBoard`, `DecisionsTimelineContainer`, `DecisionDetailView` | `functions/MW_DECISIONS.md` |
+| `MW_MANAGER` | `Menedzer` / `Manager` | `"/my-work/manager"` | real (role-restricted) | `ExecutiveDashboard` with role-gated access state | `functions/MW_MANAGER.md` |

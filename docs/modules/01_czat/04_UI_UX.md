@@ -61,3 +61,12 @@ High-impact actions proposed from chat follow `proposal -> approval -> execution
 - Contextual AI actions live in Menu 3/local command row and are not duplicated in canvas.
 - Claims and exports show sources/provenance or an explicit no-source state.
 - High-impact chat actions require approval/review before execution.
+
+## 11. Function Annex — Chat vs Canvas
+
+Separate function contracts for this module:
+
+| Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
+| --- | --- | --- | --- | --- | --- |
+| `CZ_CHAT_ENGINE` | Teresa chat conversation engine | `"/chat"`, `"/chat/:conversationId"` | real | `AIChatWelcomeView`, `UnifiedChatPanel`, `MessageRenderer`, `EnhancedChatInput`, `CitationList`, `TeresaProposalCard` | `functions/CZ_CHAT_ENGINE.md` |
+| `CZ_CANVAS_WORKSPACE` | Chat canvas / workspace bridge | `"/internal/v10-runtime"` + workspace-linked chat flows | partial | `V10RuntimeWorkspaceView`, `ChatV10RuntimesPanel`, `V8ArtifactRunControl`, `KimiWorkspaceShell` | `functions/CZ_CANVAS_WORKSPACE.md` |
