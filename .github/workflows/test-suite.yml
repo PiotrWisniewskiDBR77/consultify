@@ -103,6 +103,8 @@ jobs:
         run: npm ci
       - name: Enforce runtime-contract sync gate
         run: npx tsx scripts/testing/module-contract-pr-gate.ts --base ${{ github.event.pull_request.base.sha }}
+        env:
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
 
   # ═══════════════════════════════════════════════════════════════
   # TEST QUALITY (Anti-Placeholder)

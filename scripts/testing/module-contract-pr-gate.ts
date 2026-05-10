@@ -68,6 +68,31 @@ function parseArgs(): { base: string } {
   return { base: 'origin/main' };
 }
 
+function validateOwnerAcceptance(prBody: string): string[] {
+  const errors: string[] = [];
+  const body = prBody || '';
+
+  const hasBusinessYes = /business_owner_acceptance\s*:\s*yes/i.test(body);
+  const hasTechYes = /tech_owner_acceptance\s*:\s*yes/i.test(body);
+  const hasModules = /impacted_modules\s*:\s*(.+)/i.test(body);
+  const hasFunctions = /impacted_functions\s*:\s*(.+)/i.test(body);
+
+  if (!hasBusinessYes) {
+    errors.push('PR body missing `business_owner_acceptance: yes` for runtime-impacting changes.');
+  }
+  if (!hasTechYes) {
+    errors.push('PR body missing `tech_owner_acceptance: yes` for runtime-impacting changes.');
+  }
+  if (!hasModules) {
+    errors.push('PR body missing `impacted_modules:` declaration.');
+  }
+  if (!hasFunctions) {
+    errors.push('PR body missing `impacted_functions:` declaration.');
+  }
+
+  return errors;
+}
+
 function getChangedFiles(base: string): string[] {
   const cmd = `git diff --name-only --diff-filter=ACMR ${base}...HEAD`;
   const out = execSync(cmd, { encoding: 'utf-8' }).trim();
@@ -238,6 +263,9 @@ function main(): void {
 
   const evidenceErrors = validateEvidenceTags(changedFiles);
   errors.push(...evidenceErrors);
+
+  const ownerAcceptanceErrors = validateOwnerAcceptance(process.env.PR_BODY || '');
+  errors.push(...ownerAcceptanceErrors);
 
   if (errors.length > 0) {
     console.error('\n❌ Module contract PR gate failed:');
