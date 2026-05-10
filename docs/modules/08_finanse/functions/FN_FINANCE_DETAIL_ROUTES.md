@@ -16,10 +16,35 @@ last_updated: 2026-05-10
 - Runtime anchor: `EconomicsView` -> `FinanceHub`
 - Feature state: `real`
 
-## 2-12. Contract Summary
+## 2. User Job and Business Outcome
 - Purpose: deep-link into statement/model/analysis detail contexts.
+
+## 3. Trigger and Entry Points
+- Primary trigger and entry points follow the route/runtime scope documented in Section 1.
+
+## 4. UI Component Footprint
+- UI footprint follows the mounted runtime anchor and standard module layout components.
+
+## 5. Inputs, Data Contracts, and Dependencies
 - Inputs: route id params and resolved finance entities.
+
+## 6. Outputs and Side Effects
 - Outputs: explicit open/edit/review actions within governed finance runtime.
+
+## 7. Ownership and Handoff Boundaries
 - Boundaries: detail routes are entry surfaces, not hidden mutation channels.
+
+## 8. Runtime States and UX Behavior
+- Runtime behavior must keep loading/empty/error/degraded/success states explicit with next-step guidance.
+
+## 9. AI, Source, Evidence, Approval
+- AI actions, source visibility, and approval expectations follow Menu 3 placement and auditable review rules.
+
+## 10. Security, Roles, and Tenancy
+- Security is deny-by-default with tenant/ACL and role boundaries enforced for this function.
+
+## 11. Acceptance Criteria and Test Evidence
 - Evidence: `AppRoutes.tsx` finance detail routes.
+
+## 12. Open Risks and Change Log
 - Risk: deep-link state mismatch if tab/selection sync regresses.

@@ -15,11 +15,35 @@ last_updated: 2026-05-10
 - Runtime anchor: `ExecutionHub` tab `people_change` (`Manager`)
 - Feature state: `real`
 
-## 2-12. Contract Summary
+## 2. User Job and Business Outcome
 - Purpose: manager-focused execution signals and action suggestions.
+
+## 3. Trigger and Entry Points
+- Primary trigger and entry points follow the route/runtime scope documented in Section 1.
+
+## 4. UI Component Footprint
+- UI footprint follows the mounted runtime anchor and standard module layout components.
+
+## 5. Inputs, Data Contracts, and Dependencies
 - Inputs: manager lane metrics, blockers, due-soon tasks, KPI alerts.
+
+## 6. Outputs and Side Effects
 - Outputs: explicit management actions and escalation paths.
+
+## 7. Ownership and Handoff Boundaries
 - Boundaries: manager lane suggests/coordinates, not hidden direct writes.
+
+## 8. Runtime States and UX Behavior
+- Runtime behavior must keep loading/empty/error/degraded/success states explicit with next-step guidance.
+
+## 9. AI, Source, Evidence, Approval
+- AI actions, source visibility, and approval expectations follow Menu 3 placement and auditable review rules.
+
+## 10. Security, Roles, and Tenancy
 - Security: role and tenant constraints.
+
+## 11. Acceptance Criteria and Test Evidence
 - Evidence: `ExecutionHub.tsx` manager metrics and suggestions.
+
+## 12. Open Risks and Change Log
 - Risk: management recommendations without review can create false certainty.

@@ -15,10 +15,35 @@ last_updated: 2026-05-10
 - Runtime anchor: `FinanceHub` tab `prediction`
 - Feature state: `real`
 
-## 2-12. Contract Summary
+## 2. User Job and Business Outcome
 - Purpose: work with forecast/prediction scenarios from models and budgets.
-- Inputs: model/budget prediction sources and scenario metadata.
-- Outputs: explicit scenario analysis and follow-up actions.
+
+## 3. Trigger and Entry Points
+- Primary trigger and entry points follow the route/runtime scope documented in Section 1.
+
+## 4. UI Component Footprint
 - UI: prediction tab views and row actions in `FinanceHub`.
+
+## 5. Inputs, Data Contracts, and Dependencies
+- Inputs: model/budget prediction sources and scenario metadata.
+
+## 6. Outputs and Side Effects
+- Outputs: explicit scenario analysis and follow-up actions.
+
+## 7. Ownership and Handoff Boundaries
+- Ownership and handoff boundaries remain explicit and do not bypass canonical owner modules.
+
+## 8. Runtime States and UX Behavior
+- Runtime behavior must keep loading/empty/error/degraded/success states explicit with next-step guidance.
+
+## 9. AI, Source, Evidence, Approval
+- AI actions, source visibility, and approval expectations follow Menu 3 placement and auditable review rules.
+
+## 10. Security, Roles, and Tenancy
+- Security is deny-by-default with tenant/ACL and role boundaries enforced for this function.
+
+## 11. Acceptance Criteria and Test Evidence
 - Evidence: `FinanceHub.tsx` prediction tab logic.
+
+## 12. Open Risks and Change Log
 - Risk: scenario misuse without explicit assumption context.
