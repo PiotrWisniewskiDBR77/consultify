@@ -5,6 +5,8 @@ function_name: Ideas / Pomysly
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -93,13 +95,17 @@ last_updated: 2026-05-10
   - Ideas list opens in `"/my-work/ideas"` and supports table/grid view.
   - Idea detail opens in workspace mode with tool/panel control.
   - Conversion actions remain explicit and source-aware.
-- Code/runtime evidence:
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/MyIdeasListContent.tsx`
   - `src/components/MyWork/IdeaMapWorkspace.tsx`
   - `src/components/MyWork/IdeaWorkspaceToolbar.tsx`
 - Known `doc_gap`: per-tool behavior matrix is not fully decomposed in docs.
 - Known `code_gap`: no dedicated end-to-end test for full idea conversion chain.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 

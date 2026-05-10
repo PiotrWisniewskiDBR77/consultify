@@ -5,6 +5,8 @@ function_name: Decisions / Decyzje
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -85,7 +87,6 @@ last_updated: 2026-05-10
   - Decisions tab supports table/kanban/timeline modes.
   - Priority filter and decision filters are available in command row.
   - Decision detail opens and returns to list context safely.
-- Code/runtime evidence:
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/DecisionsPanelContent.tsx`
   - `src/components/MyWork/DecisionsKanbanBoard.tsx`
@@ -93,6 +94,11 @@ last_updated: 2026-05-10
   - `src/components/MyWork/DecisionDetailView.tsx`
 - Known `doc_gap`: explicit decision lifecycle copy matrix still needs deepening.
 - Known `code_gap`: no dedicated end-to-end decision governance contract test.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 

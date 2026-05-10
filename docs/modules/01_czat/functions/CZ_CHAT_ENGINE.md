@@ -5,6 +5,8 @@ function_name: Teresa Chat Engine
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -85,13 +87,17 @@ last_updated: 2026-05-10
   - `"/chat"` renders `AIChatWelcomeView`.
   - `"/chat/:conversationId"` renders `UnifiedChatPanel` with route sync.
   - citations/proposals/approval flow are visible in runtime.
-- Code/runtime evidence:
   - `src/views/AIChatWelcomeView.tsx`
   - `src/components/AIChat/UnifiedChatPanel.tsx`
   - `src/components/AIChat/ConversationRouteSync.tsx`
   - `src/components/AIChat/MessageRenderer.tsx`
 - Known `doc_gap`: message-level state matrix per component is still high-level.
 - Known `code_gap`: no dedicated module-level route acceptance suite for chat routes.
+
+- Route evidence: module route/view scope for `01_czat` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `01_czat` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `01_czat` user flows.
 
 ## 12. Open Risks and Change Log
 

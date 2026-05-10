@@ -5,6 +5,8 @@ function_name: Documents — Wordy Placeholder Runtime
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -44,7 +46,13 @@ last_updated: 2026-05-10
 - Security: no hidden writes or fake editor operations.
 
 ## 11. Acceptance Criteria and Test Evidence
-- Evidence: `AppRoutes.tsx` route mount, codemap status.
+
+- Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
+
+- Route evidence: module route/view scope for `10_dokumenty` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `10_dokumenty` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `10_dokumenty` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: misleading expectations if placeholder text drifts from reality.

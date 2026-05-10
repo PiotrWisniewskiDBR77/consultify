@@ -5,6 +5,8 @@ function_name: Presentations Generator — Outputs Ownership Boundary
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -43,7 +45,13 @@ last_updated: 2026-05-10
 - Security/governance: avoid hidden cross-lane mutation confusion.
 
 ## 11. Acceptance Criteria and Test Evidence
-- Evidence: codemap and route ownership notes in module 12 + module 09.
+
+- Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
+
+- Route evidence: module route/view scope for `12_prezentacje` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `12_prezentacje` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `12_prezentacje` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: boundary ambiguity can create duplicate UX expectations.

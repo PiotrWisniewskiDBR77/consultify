@@ -5,6 +5,8 @@ function_name: Tools — Discovery Library
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -46,8 +48,13 @@ last_updated: 2026-05-10
 - Licensed/tenant-based availability and ACL constraints apply.
 
 ## 11. Acceptance Criteria and Test Evidence
+
 - Library renders with tool + assessment catalog.
-- Evidence: `DiscoveryToolsHub.tsx`, route wiring.
+
+- Route evidence: module route/view scope for `04_narzedzia` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `04_narzedzia` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `04_narzedzia` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: catalog breadth can drift without explicit category contracts.

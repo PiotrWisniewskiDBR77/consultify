@@ -5,6 +5,8 @@ function_name: Interview — Insights
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -50,8 +52,13 @@ last_updated: 2026-05-10
 - Insight visibility and mutation follow tenant + role ACL.
 
 ## 11. Acceptance Criteria and Test Evidence
+
 - Insight tab supports flat/report modes and deep-link open.
-- Evidence: `InterviewHub.tsx`, insight API client integration.
+
+- Route evidence: module route/view scope for `03_wywiad` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `03_wywiad` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `03_wywiad` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: evidence display inconsistency across insight subviews.

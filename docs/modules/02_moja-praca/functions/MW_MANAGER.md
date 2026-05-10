@@ -5,6 +5,8 @@ function_name: Manager / Menedzer
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -85,11 +87,15 @@ last_updated: 2026-05-10
   - Unauthorized users cannot operate manager function and see explicit restriction state.
   - Authorized users can open manager dashboard and jump to tasks/decisions/inbox/home.
   - Manager function does not perform hidden direct writes in foreign domains.
-- Code/runtime evidence:
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/Executive/ExecutiveDashboard.tsx`
 - Known `doc_gap`: exact role matrix wording in docs should be unified globally.
 - Known `code_gap`: dedicated manager-role e2e coverage not documented here.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 

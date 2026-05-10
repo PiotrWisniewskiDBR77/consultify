@@ -5,6 +5,8 @@ function_name: Partner Portal — Protected Workspace
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -44,7 +46,13 @@ last_updated: 2026-05-10
 - Security is deny-by-default with tenant/ACL and role boundaries enforced for this function.
 
 ## 11. Acceptance Criteria and Test Evidence
-- Evidence: partner protected route mapping in `AppRoutes.tsx`.
+
+- Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
+
+- Route evidence: module route/view scope for `19_portal-partnerski` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `19_portal-partnerski` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `19_portal-partnerski` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: protected-flow regressions can expose inconsistent access behavior.

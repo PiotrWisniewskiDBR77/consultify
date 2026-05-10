@@ -5,6 +5,8 @@ function_name: Tasks / Zadania
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -85,7 +87,6 @@ last_updated: 2026-05-10
   - Tasks tab supports list/kanban/calendar and filter modes.
   - Bulk actions are available only in explicit bulk mode.
   - Task detail opens from list/board/calendar and preserves context.
-- Code/runtime evidence:
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/MyTasksListContent.tsx`
   - `src/components/MyWork/TasksKanbanBoard.tsx`
@@ -93,6 +94,11 @@ last_updated: 2026-05-10
   - `src/components/MyWork/TaskDetailView.tsx`
 - Known `doc_gap`: complete filter semantics and copy set are not fully listed.
 - Known `code_gap`: no dedicated contract-level test for all three tasks view modes.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 

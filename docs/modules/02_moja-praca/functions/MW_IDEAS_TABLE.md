@@ -5,6 +5,8 @@ function_name: Ideas — Table / Tabele
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -86,12 +88,16 @@ last_updated: 2026-05-10
   - table tool opens in idea workspace and honors deep-linked table/view context.
   - table context can be propagated back to workspace shell.
   - conversion remains explicit and source-aware.
-- Code/runtime evidence:
   - `src/components/MyWork/IdeaMapWorkspace.tsx`
   - `src/components/MyWork/IdeaTableTool.tsx`
   - `src/components/MyWork/IdeaWorkspaceToolbar.tsx`
 - Known `doc_gap`: full table capability matrix (forms/views/automations) needs dedicated sub-spec.
 - Known `code_gap`: no single end-to-end contract test for idea-table conversion chain.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 

@@ -5,6 +5,8 @@ function_name: Settings — Settings Workspace
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -44,7 +46,13 @@ last_updated: 2026-05-10
 - Security is deny-by-default with tenant/ACL and role boundaries enforced for this function.
 
 ## 11. Acceptance Criteria and Test Evidence
-- Evidence: settings route mapping and `SettingsView` mount.
+
+- Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
+
+- Route evidence: module route/view scope for `18_ustawienia` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `18_ustawienia` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `18_ustawienia` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: false saved-state UX if write/readback handling regresses.

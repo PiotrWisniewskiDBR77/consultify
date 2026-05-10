@@ -64,16 +64,18 @@ last_updated: 2026-05-10
 - Failure behavior: deny-by-default when tenant or permission context is missing.
 
 ## 11. Acceptance Criteria and Test Evidence
+
 - Acceptance checks:
   - initiatives tab renders and maps rows to tracked realization state;
   - results view reflects initiative status/value transitions without hidden writes;
   - empty/error/degraded states expose honest user guidance.
-- Route evidence: `/benefits` tab `results_initiatives` in `src/views/Results/ResultsHub.tsx`.
-- Component evidence: initiatives tab rendering in `src/views/Results/ResultsHub.tsx`.
-- API evidence: results data loading surface in `src/services/api.ts` and related server routes.
-- Test evidence: results/initiative integration checks under `tests/` and smoke coverage in `tests/e2e/`.
 - Known `doc_gap`: detailed per-field source lineage still requires deep evidence linking rollout.
 - Known `code_gap`: dedicated module-local regression test for initiative tracking remains to be expanded.
+
+- Route evidence: module route/view scope for `07_rezultaty` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `07_rezultaty` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `07_rezultaty` user flows.
 
 ## 12. Open Risks and Change Log
 - Risks: trust drop if initiative value lineage is not clearly visible in UI.

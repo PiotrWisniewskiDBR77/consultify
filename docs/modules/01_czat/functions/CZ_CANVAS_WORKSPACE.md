@@ -5,6 +5,8 @@ function_name: Chat Canvas / Workspace Function
 doc_kind: FUNCTION_CONTRACT
 status: partial
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -90,7 +92,6 @@ last_updated: 2026-05-10
   - `"/internal/v10-runtime"` renders the internal runtime workspace summary.
   - chat surface exposes governed artifact/canvas bridge controls.
   - blocked KIMI lane routes are documented as coming-soon rather than claimed shipped.
-- Code/runtime evidence:
   - `src/views/V10RuntimeWorkspaceView.tsx`
   - `src/components/AIChat/MessageRenderer.tsx`
   - `src/components/AIChat/V8ArtifactRunControl.tsx`
@@ -98,6 +99,11 @@ last_updated: 2026-05-10
   - `src/routes/AppRoutes.tsx`
 - Known `doc_gap`: end-user canvas UX contract is not fully stabilized while lane routes are blocked.
 - Known `code_gap`: lane runtime is partially available in components but not fully exposed in production routes.
+
+- Route evidence: module route/view scope for `01_czat` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `01_czat` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `01_czat` user flows.
 
 ## 12. Open Risks and Change Log
 

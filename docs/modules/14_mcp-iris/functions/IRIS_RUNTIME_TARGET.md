@@ -5,6 +5,8 @@ function_name: MCP IRIS — Runtime Target
 doc_kind: FUNCTION_CONTRACT
 status: draft
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -44,7 +46,13 @@ last_updated: 2026-05-10
 - Security: admin/policy gating and deny-by-default enforcement required.
 
 ## 11. Acceptance Criteria and Test Evidence
-- Evidence: codemap notes no mounted dedicated IRIS runtime.
+
+- Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
+
+- Route evidence: module route/view scope for `14_mcp-iris` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `14_mcp-iris` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `14_mcp-iris` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: any future runtime can drift into unsafe hidden execution patterns.

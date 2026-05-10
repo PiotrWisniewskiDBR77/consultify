@@ -5,6 +5,8 @@ function_name: Initiatives — Portfolio Hub
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -45,8 +47,13 @@ last_updated: 2026-05-10
 - Tenant/ACL checks and governance-aware write paths.
 
 ## 11. Acceptance Criteria and Test Evidence
+
 - `/initiatives` renders `InitiativesHub` and supports documented view modes.
-- Evidence: `InitiativesHub.tsx`, initiative lifecycle helpers.
+
+- Route evidence: module route/view scope for `05_inicjatywy` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `05_inicjatywy` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `05_inicjatywy` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: high view-mode complexity without regression automation.

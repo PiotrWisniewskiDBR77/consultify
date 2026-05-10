@@ -5,6 +5,8 @@ function_name: Outputs — Legacy Reports Redirect Bridge
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -44,7 +46,13 @@ last_updated: 2026-05-10
 - Security is deny-by-default with tenant/ACL and role boundaries enforced for this function.
 
 ## 11. Acceptance Criteria and Test Evidence
-- Evidence: `AppRoutes.tsx` redirect mappings.
+
+- Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
+
+- Route evidence: module route/view scope for `09_outputs` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `09_outputs` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `09_outputs` user flows.
 
 ## 12. Open Risks and Change Log
 - Risk: duplicate-lane confusion until migration bridge is removed.

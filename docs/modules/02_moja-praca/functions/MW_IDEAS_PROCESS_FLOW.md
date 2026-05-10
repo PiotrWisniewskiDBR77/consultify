@@ -5,6 +5,8 @@ function_name: Ideas — Process Flow
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -86,12 +88,16 @@ last_updated: 2026-05-10
   - process-flow tool can be selected and rendered in idea workspace.
   - node/lane/property interactions are available through tool + tools panel.
   - conversion path remains explicit with source context.
-- Code/runtime evidence:
   - `src/components/MyWork/IdeaMapWorkspace.tsx`
   - `src/components/MyWork/IdeaProcessFlowTool.tsx`
   - `src/components/MyWork/IdeaWorkspaceTools.tsx`
 - Known `doc_gap`: full BPMN-like semantics contract still requires deeper dedicated spec.
 - Known `code_gap`: no dedicated e2e test proving full process-flow to execution handoff chain.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 

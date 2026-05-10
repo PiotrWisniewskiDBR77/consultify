@@ -5,6 +5,8 @@ function_name: Home / Start (Radar)
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -85,12 +87,16 @@ last_updated: 2026-05-10
   - `"/my-work/*"` renders `MyWorkHub` and `home` tab can be activated.
   - Home actions can route user to concrete execution tabs.
   - Home never writes canonical records directly.
-- Code/runtime evidence:
   - `src/views/MyWorkView.tsx`
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/Home/HomeView.tsx`
 - Known `doc_gap`: full card-by-card copy matrix is not yet documented.
 - Known `code_gap`: no dedicated automated module-level Home flow test.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 

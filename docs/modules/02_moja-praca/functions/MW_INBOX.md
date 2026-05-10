@@ -5,6 +5,8 @@ function_name: Inbox / Skrzynka
 doc_kind: FUNCTION_CONTRACT
 status: active
 owner: user
+owner_business: user
+owner_tech: user
 last_updated: 2026-05-10
 ---
 
@@ -85,12 +87,16 @@ last_updated: 2026-05-10
   - Inbox tab supports filter presets and view modes.
   - Triage actions preserve source context and route correctly.
   - Inbox does not claim ownership over source records.
-- Code/runtime evidence:
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/InboxContent.tsx`
   - `src/components/MyWork/NotificationDetailView.tsx`
 - Known `doc_gap`: complete preset semantics matrix still needs deeper formalization.
 - Known `code_gap`: no dedicated inbox triage end-to-end suite in module docs.
+
+- Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
+- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
+- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
+- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `02_moja-praca` user flows.
 
 ## 12. Open Risks and Change Log
 
