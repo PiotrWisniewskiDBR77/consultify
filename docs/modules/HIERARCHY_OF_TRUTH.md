@@ -40,6 +40,18 @@ When two sources conflict, apply this order from highest priority to lowest.
    - `docs/modules/UI_UX_CONTRACT_INDEX.md`
    - `docs/modules/FUNCTION_CONTRACT_STANDARD.md`
    - `docs/modules/FUNCTION_CONTRACT_TEMPLATE.md`
+   - `docs/modules/MODULE_INTERACTION_GRAPH.md`
+   - `docs/modules/CONTROL_PLANE_CONTRACT.md`
+   - `docs/modules/END_TO_END_WORKFLOWS.md`
+   - `docs/modules/CROSS_MODULE_PERMISSION_MATRIX.md`
+   - `docs/modules/APPROVED_COMPONENT_COMPOSITION.md`
+   - `docs/modules/ARTIFACT_LINEAGE_MATRIX.md`
+   - `docs/modules/UI_UX_COMPONENTS_AND_ARTIFACTS_UNIFIED_STANDARD.md`
+   - `docs/modules/SYSTEM_TRACEABILITY_MATRIX.md`
+   - `docs/modules/EVIDENCE_REGISTRY.md`
+   - `docs/modules/DECISION_LOG.md`
+   - `docs/modules/CHANGE_TYPE_DOR_DOD.md`
+   - `docs/modules/RELEASE_READINESS_CONTRACT.md`
 5. **L4 - Module contract layer (canonical per module)**
    - `docs/modules/<NN_slug>/00_META.md`
    - `docs/modules/<NN_slug>/01_PURPOSE.md`

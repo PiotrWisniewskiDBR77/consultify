@@ -25,6 +25,10 @@ This schema is mandatory for every module-level `04_UI_UX.md`. Visual descriptio
 - `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
 - `DRD/consultify/docs/modules/HIERARCHY_OF_TRUTH.md`
 - `DRD/consultify/docs/modules/CONTRACT_OWNERSHIP_REGISTRY.md`
+- `DRD/consultify/docs/modules/UI_UX_COMPONENTS_AND_ARTIFACTS_UNIFIED_STANDARD.md`
+- `DRD/consultify/docs/modules/SYSTEM_TRACEABILITY_MATRIX.md`
+- `DRD/consultify/docs/modules/EVIDENCE_REGISTRY.md`
+- `DRD/consultify/docs/modules/RELEASE_READINESS_CONTRACT.md`
 
 ## Mandatory Module Contract Schema
 

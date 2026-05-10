@@ -68,6 +68,18 @@ Ten katalog jest **kuratorską nakładką** na istniejące SSOT w `DRD/consultif
 - `APPLICATION_LOGICAL_MODEL.md` — logiczny model całej aplikacji: input/output/handoff/must-not-own dla 19 modułów.
 - `OBJECT_GRAPH.md` — główne obiekty systemu i ich właściciele.
 - `MODULE_HANDOFFS.md` — przepływy pracy i odpowiedzialności między modułami.
+- `MODULE_INTERACTION_GRAPH.md` — siatka powiązań moduł-moduł i moduł-superadmin (typy interakcji + reguły ownership).
+- `CONTROL_PLANE_CONTRACT.md` — kontrakt granic między warstwą domenową, admin i superadmin.
+- `END_TO_END_WORKFLOWS.md` — kanoniczne przepływy E2E przez wiele modułów.
+- `CROSS_MODULE_PERMISSION_MATRIX.md` — macierz ról i uprawnień cross-module dla całej aplikacji.
+- `APPROVED_COMPONENT_COMPOSITION.md` — mapa zatwierdzonych shelli i komponentów dla rozwoju wszystkich modułów.
+- `ARTIFACT_LINEAGE_MATRIX.md` — pełna matryca pochodzenia artefaktów (owner, approval, evidence, dystrybucja).
+- `UI_UX_COMPONENTS_AND_ARTIFACTS_UNIFIED_STANDARD.md` — jeden kontrakt wykonawczy spinający zatwierdzone komponenty i lifecycle artefaktów.
+- `SYSTEM_TRACEABILITY_MATRIX.md` — macierz `requirement -> module -> function -> object/artifact -> route -> component -> API -> test -> owner`.
+- `EVIDENCE_REGISTRY.md` — rejestr typów dowodów i statusów evidence dla runtime claims.
+- `DECISION_LOG.md` — dziennik decyzji produktowych, architektonicznych i governance.
+- `CHANGE_TYPE_DOR_DOD.md` — Definition of Ready/Done per typ zmiany, w tym RAW-to-contract.
+- `RELEASE_READINESS_CONTRACT.md` — warunki GO/GO_WITH_P2/NO_GO dla release całej aplikacji.
 - `UI_UX_CONTRACT_INDEX.md` — indeks i globalne wymagania dla kontraktów UX modułów.
 - `_KNOWN_TRUTH_PHASE_2_PREP_2026-05-09.md` — przygotowanie fazy As-Is / Known Truth bez używania RAW jako wizji docelowej.
 - `_KNOWN_TRUTH_MODULE_AUDIT_MATRIX_2026-05-09.md` — robocza macierz audytu 19 modułów: SSOT, registry, routing, kod, status i rozjazdy.
