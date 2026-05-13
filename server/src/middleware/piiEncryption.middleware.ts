@@ -57,13 +57,17 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
 
 const readPath = (req: Request): string =>
   (() => {
+    const normalizePathSlashes = (value: string): string => {
+      const collapsed = value.replace(/\/{2,}/g, '/');
+      return collapsed.length > 1 && collapsed.endsWith('/') ? collapsed.slice(0, -1) : collapsed;
+    };
     const raw =
       normalizeOptionalString(safeRead(() => req.path, undefined)) ||
       normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
       '';
     const noQuery = raw.split('?')[0] ?? raw;
     const noHash = noQuery.split('#')[0] ?? noQuery;
-    return noHash;
+    return normalizePathSlashes(noHash);
   })();
 
 const readMethod = (req: Request): string =>
@@ -79,6 +83,13 @@ const isPlainObjectRecord = (value: unknown): value is Record<string, unknown> =
 
 const responseJsonWrapped = new WeakSet<Response>();
 const _piiRouteConfigIssuesLogged = { done: false };
+const safeCallNext = (next: NextFunction, context: string): void => {
+  if (typeof next !== 'function') {
+    logger.error('[PIIEncryption] next is not a function; skipping continuation', { context });
+    return;
+  }
+  next();
+};
 
 export function getPiiRouteConfigIssues(
   piiRoutes: readonly string[] = PII_ENCRYPTION_ROUTES,
@@ -146,12 +157,14 @@ export function encryptRequestPII(req: Request, _res: Response, next: NextFuncti
     const requestPath = readPath(req);
     // Skip for non-applicable routes
     if (SKIP_ROUTES.some((route) => matchesConfiguredRoute(requestPath, route))) {
-      return next();
+      safeCallNext(next, 'encryptRequestPII:skipRoute');
+      return;
     }
 
     // Only encrypt for write operations
     if (!['POST', 'PUT', 'PATCH'].includes(readMethod(req))) {
-      return next();
+      safeCallNext(next, 'encryptRequestPII:readOnlyMethod');
+      return;
     }
 
     // Encrypt PII in request body
@@ -164,10 +177,10 @@ export function encryptRequestPII(req: Request, _res: Response, next: NextFuncti
       );
     }
 
-    next();
+    safeCallNext(next, 'encryptRequestPII:success');
   } catch (error) {
     logger.error('[PIIEncryption] Request encryption error:', error);
-    next(); // Continue without encryption on error
+    safeCallNext(next, 'encryptRequestPII:error'); // Continue without encryption on error
   }
 }
 
@@ -180,12 +193,14 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
   const requestPath = readPath(req);
   // Skip for non-applicable routes
   if (SKIP_ROUTES.some((route) => matchesConfiguredRoute(requestPath, route))) {
-    return next();
+    safeCallNext(next, 'decryptResponsePII:skipRoute');
+    return;
   }
 
   // Already wrapped on this response object
   if (responseJsonWrapped.has(res)) {
-    return next();
+    safeCallNext(next, 'decryptResponsePII:alreadyWrapped');
+    return;
   }
 
   // Store original json function
@@ -195,7 +210,7 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
       path: requestPath,
       type: typeof jsonCandidate,
     });
-    next();
+    safeCallNext(next, 'decryptResponsePII:jsonNotFunction');
     return;
   }
   const originalJson = safeRead(
@@ -203,7 +218,7 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
     null as unknown as Response['json']
   );
   if (!originalJson) {
-    next();
+    safeCallNext(next, 'decryptResponsePII:bindFailed');
     return;
   }
 
@@ -242,7 +257,7 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
     logger.error('[PIIEncryption] Unable to wrap res.json:', error);
   }
 
-  next();
+  safeCallNext(next, 'decryptResponsePII:success');
 }
 
 /**

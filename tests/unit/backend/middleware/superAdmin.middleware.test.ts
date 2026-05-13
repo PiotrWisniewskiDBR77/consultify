@@ -44,7 +44,12 @@ describe('verifySuperAdmin', () => {
 
   it('allows access when token has SUPERADMIN role', async () => {
     const verify = vi.fn((...args: unknown[]) => {
-      invokeVerifyCallback(args, { id: 'admin-1', role: 'SUPERADMIN', organizationId: 'org-1' });
+      invokeVerifyCallback(args, {
+        id: 'admin-1',
+        sub: 'admin-1',
+        role: 'SUPERADMIN',
+        organizationId: 'org-1',
+      });
     });
     setDependencies({
       jwt: { verify } as any,
@@ -62,6 +67,32 @@ describe('verifySuperAdmin', () => {
       expect.objectContaining({ algorithms: ['HS256'], clockTolerance: 30 }),
       expect.any(Function)
     );
+  });
+
+  it('rejects and skips DB lookup when jwt sub disagrees with id', async () => {
+    const dbGet = vi.fn();
+    setDependencies({
+      jwt: {
+        verify: (...args: unknown[]) =>
+          invokeVerifyCallback(args, {
+            id: 'admin-1',
+            sub: 'admin-2',
+            role: 'SUPERADMIN',
+            organizationId: 'org-1',
+          }),
+      } as any,
+      config: { JWT_SECRET: 'test-secret' },
+      dbGet,
+    });
+    const req = mockReq();
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(dbGet).not.toHaveBeenCalled();
   });
 
   it('rejects when authorization header getter throws', async () => {
@@ -354,6 +385,27 @@ describe('verifySuperAdmin', () => {
     expect(verify).not.toHaveBeenCalled();
   });
 
+  it('rejects and skips JWT verify when bearer token contains non-compact JWS characters', async () => {
+    const verify = vi.fn();
+    setDependencies({
+      jwt: { verify } as any,
+      config: { JWT_SECRET: 'test-secret' },
+    });
+    const req = mockReq({
+      headers: {
+        authorization: 'Bearer abc+def',
+      },
+    });
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(verify).not.toHaveBeenCalled();
+  });
+
   it('rejects and skips DB lookup when decoded subject id exceeds max length', async () => {
     const dbGet = vi.fn();
     setDependencies({
@@ -489,6 +541,50 @@ describe('superadmin capabilities', () => {
 
     middleware(req, res, next);
     expect(next).toHaveBeenCalled();
+  });
+
+  it('fails closed with 500 when capability gate has no required capabilities', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const middleware = requireSuperAdminCapability();
+    const req = mockReq({
+      userRole: 'SUPERADMIN',
+      user: { superadminCapabilities: ['billing_ops', 'platform_ops'] },
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(500);
+    expect(res.body.code).toBe('SUPERADMIN_CAPABILITY_GATE_MISCONFIGURED');
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it('fails closed with 500 when capability gate includes unknown capability', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const middleware = requireSuperAdminCapability('billing_ops', 'unknown_capability' as any);
+    const req = mockReq({
+      userRole: 'SUPERADMIN',
+      user: { superadminCapabilities: ['billing_ops', 'platform_ops'] },
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(500);
+    expect(res.body.code).toBe('SUPERADMIN_CAPABILITY_GATE_MISCONFIGURED');
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[SuperAdmin Middleware] requireSuperAdminCapability invoked with unknown capabilities',
+      expect.objectContaining({
+        code: 'SUPERADMIN_CAPABILITY_GATE_MISCONFIGURED',
+        unknownCapabilities: ['unknown_capability'],
+      })
+    );
+    errorSpy.mockRestore();
   });
 
   it('rejects requests missing the required capability', () => {

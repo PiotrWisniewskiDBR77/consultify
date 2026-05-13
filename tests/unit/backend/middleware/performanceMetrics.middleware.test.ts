@@ -99,8 +99,66 @@ describe('performanceMetrics.middleware', () => {
     performanceMetricsMiddleware(req as any, res, vi.fn() as unknown as NextFunction);
     expect(() => finishHandlers.forEach((fn) => fn())).not.toThrow();
 
+    expect(metricsStore.requests.length).toBe(1);
     expect(loggerWarnMock).toHaveBeenCalledWith(
-      'Performance middleware finish handler failed',
+      'Performance middleware recordHttpRequest failed',
+      expect.any(Error)
+    );
+  });
+
+  it('continues pipeline when enablePerformanceTracking throws during registration', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/example',
+      originalUrl: '/api/example',
+      user: { id: 'u-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 200,
+      on: vi.fn(),
+    } as unknown as Response;
+    const next = vi.fn();
+    const enableSpy = vi.spyOn(queryHelpers, 'enablePerformanceTracking').mockImplementation(() => {
+      throw new Error('enable failed');
+    });
+
+    expect(() =>
+      performanceMetricsMiddleware(req as any, res, next as unknown as NextFunction)
+    ).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      'Performance middleware enablePerformanceTracking failed',
+      expect.any(Error)
+    );
+
+    enableSpy.mockRestore();
+  });
+
+  it('stores metric and logs when recordError fails for error status', () => {
+    const finishHandlers: Array<() => void> = [];
+    recordErrorMock.mockImplementation(() => {
+      throw new Error('recordError failed');
+    });
+    const req = {
+      method: 'GET',
+      path: '/api/example',
+      originalUrl: '/api/example',
+      user: { id: 'u-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 404,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    } as unknown as Response;
+
+    performanceMetricsMiddleware(req as any, res, vi.fn() as unknown as NextFunction);
+    finishHandlers[0]?.();
+
+    expect(metricsStore.requests).toHaveLength(1);
+    expect(metricsStore.requests[0]?.statusCode).toBe(404);
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      'Performance middleware recordError failed',
       expect.any(Error)
     );
   });

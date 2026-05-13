@@ -131,6 +131,7 @@ const MAX_VERSION_INPUT_CHARS = 256;
 const MAX_HEADER_VALUE_CHARS = 128;
 const MAX_PATH_CHARS_FOR_VERSION_URL_PARSE = 8192;
 const MAX_LOG_PATH_CHARS = 512;
+const MAX_SUPPORTED_VERSIONS_IN_ERROR = 32;
 
 const formatVersionForError = (value: unknown): string => {
   const normalized = String(value ?? '');
@@ -140,10 +141,15 @@ const formatVersionForError = (value: unknown): string => {
 
 const clampVersionInput = (value: string): string =>
   value.length > MAX_VERSION_INPUT_CHARS ? value.slice(0, MAX_VERSION_INPUT_CHARS) : value;
+const stripAsciiControlChars = (value: string): string => value.replace(/[\u0000-\u001F\u007F]/g, '');
 const sanitizeHeaderValue = (value: string): string =>
   value.replace(/[\r\n\0]/g, '').slice(0, MAX_HEADER_VALUE_CHARS);
 const truncateLogPath = (value: string): string =>
   value.length > MAX_LOG_PATH_CHARS ? `${value.slice(0, MAX_LOG_PATH_CHARS)}...` : value;
+const getSupportedMajorVersionsForError = (): string[] =>
+  Object.keys(API_VERSIONS)
+    .filter((v) => !v.includes('.'))
+    .slice(0, MAX_SUPPORTED_VERSIONS_IN_ERROR);
 
 const applyNoStoreHeaders = (res: Response): void => {
   safeSetHeader(res, 'Cache-Control', 'no-store');
@@ -212,7 +218,7 @@ export function apiVersionMiddleware(
     }
 
     // Normalize version
-    const normalizedVersion = normalizeVersion(clampVersionInput(version));
+    const normalizedVersion = normalizeVersion(stripAsciiControlChars(clampVersionInput(version)));
     const versionInfo = API_VERSIONS[normalizedVersion];
 
     if (!versionInfo) {
@@ -229,7 +235,7 @@ export function apiVersionMiddleware(
         !safeStatusJson(res, 400, {
         error: 'Invalid API version',
         message: `Unsupported API version: ${formatVersionForError(version)}`,
-        supportedVersions: Object.keys(API_VERSIONS).filter((v) => !v.includes('.')),
+        supportedVersions: getSupportedMajorVersionsForError(),
         currentVersion: LATEST_VERSION,
         })
       ) {
@@ -298,7 +304,7 @@ export function requireVersion(minVersion: string) {
       return;
     }
 
-    const normalizedMinVersionInput = clampVersionInput(String(minVersion ?? ''));
+    const normalizedMinVersionInput = stripAsciiControlChars(clampVersionInput(String(minVersion ?? '')));
     const minInfo = API_VERSIONS[normalizeVersion(normalizedMinVersionInput)];
     if (!minInfo) {
       next();

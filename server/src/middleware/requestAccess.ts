@@ -20,6 +20,14 @@ const getOwnUserRole = (user: AuthRequest['user'] | undefined): unknown => {
   if (!user || typeof user !== 'object' || !hasOwn(user as object, 'role')) return undefined;
   return safeRead(() => user.role, undefined);
 };
+const getOwnRequestUser = (req: AuthRequest): AuthRequest['user'] | undefined => {
+  if (!req || typeof req !== 'object' || !hasOwn(req as object, 'user')) return undefined;
+  return safeRead(() => req.user, undefined as AuthRequest['user']);
+};
+const getOwnRequestUserRole = (req: AuthRequest): unknown => {
+  if (!req || typeof req !== 'object' || !hasOwn(req as object, 'userRole')) return undefined;
+  return safeRead(() => req.userRole, undefined);
+};
 
 export const normalizeAccessRole = (role?: unknown): RequestAccessRole => {
   const normalized = safeRead(() => {
@@ -31,9 +39,9 @@ export const normalizeAccessRole = (role?: unknown): RequestAccessRole => {
           ? role
           : '';
     if (roleInput === '') return '';
-    return String(role)
-      .slice(0, MAX_ACCESS_ROLE_INPUT_CHARS)
-      .normalize('NFKC')
+    const slicedInput = String(role).slice(0, MAX_ACCESS_ROLE_INPUT_CHARS);
+    const normalizedNfkc = safeRead(() => slicedInput.normalize('NFKC'), slicedInput);
+    return normalizedNfkc
       .replace(/[\x00-\x1F\x7F]+/g, '')
       .replace(/[\u200B-\u200D\uFEFF]+/g, '')
       .replace(/[\u202A-\u202E\u2060-\u2069]+/g, '')
@@ -58,14 +66,14 @@ export const normalizeAccessRole = (role?: unknown): RequestAccessRole => {
 };
 
 export const isRequestSuperAdmin = (req: AuthRequest): boolean => {
-  if (isOwnSuperAdminTrue(safeRead(() => req.user, undefined as AuthRequest['user']))) return true;
-  const userRoleSnapshot = safeRead(() => req.userRole, undefined);
+  if (isOwnSuperAdminTrue(getOwnRequestUser(req))) return true;
+  const userRoleSnapshot = getOwnRequestUserRole(req);
   return normalizeAccessRole(userRoleSnapshot) === 'superadmin';
 };
 
 export const getRequestAccessRole = (req: AuthRequest): RequestAccessRole => {
-  const requestUserSnapshot = safeRead(() => req.user, undefined as AuthRequest['user']);
-  const userRoleSnapshot = safeRead(() => req.userRole, undefined);
+  const requestUserSnapshot = getOwnRequestUser(req);
+  const userRoleSnapshot = getOwnRequestUserRole(req);
   if (isOwnSuperAdminTrue(requestUserSnapshot) || normalizeAccessRole(userRoleSnapshot) === 'superadmin') {
     return 'superadmin';
   }

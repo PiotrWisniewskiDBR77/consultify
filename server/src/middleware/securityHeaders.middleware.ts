@@ -55,6 +55,12 @@ const safeSetHeader = (res: Response, key: string, value: string): void => {
     return true;
   }, false);
 };
+const safeRemoveHeader = (res: Response, key: string): void => {
+  safeRead(() => {
+    res.removeHeader(key);
+    return true;
+  }, false);
+};
 
 const safeSendJson = (res: Response, statusCode: number, payload: Record<string, unknown>): void => {
   safeRead(() => {
@@ -93,6 +99,8 @@ rateLimitStoreCleanupInterval.unref?.();
  * Apply security headers to responses
  */
 export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
+  safeRemoveHeader(res, 'X-Powered-By');
+
   // Prevent MIME type sniffing
   safeSetHeader(res, 'X-Content-Type-Options', 'nosniff');
 
@@ -168,12 +176,13 @@ export const createRateLimiter = (options: RateLimitOptions = {}) => {
       normalizeOptionalString(safeRead(() => req.ip, undefined)) ||
       normalizeOptionalString(safeRead(() => req.socket?.remoteAddress, undefined)) ||
       '';
+    const ipSegment = truncateKeySegment(ip);
     const pathRaw =
       normalizeOptionalString(safeRead(() => req.path, undefined)) ||
       normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
       '';
     const path = truncateKeySegment(pathRaw);
-    const key = `${ip}-${path}`;
+    const key = `${ipSegment}-${path}`;
     const now = Date.now();
     const windowStart = now - windowMs;
 
@@ -261,6 +270,12 @@ export const rateLimitPresets = {
  * @param schema - Validation schema
  */
 export const validateRequest = (schema: ValidationSchema) => {
+  const formatEnumValuesForMessage = (values: unknown[]): string => {
+    const formatted = values.map((entry) =>
+      typeof entry === 'string' ? entry : safeRead(() => JSON.stringify(entry), String(entry))
+    );
+    return formatted.join(', ');
+  };
   return (req: Request, res: Response, next: NextFunction): void => {
     const errors: Array<{ field: string; message: string }> = [];
     const rawBody = safeRead(() => req.body as Record<string, unknown>, {} as Record<string, unknown>);
@@ -288,7 +303,10 @@ export const validateRequest = (schema: ValidationSchema) => {
           errors.push({ field, message: `${field} must be a boolean` });
         }
         if (rules.enum && !rules.enum.includes(value)) {
-          errors.push({ field, message: `${field} must be one of: ${rules.enum.join(', ')}` });
+          errors.push({
+            field,
+            message: `${field} must be one of: ${formatEnumValuesForMessage(rules.enum)}`,
+          });
         }
         if (rules.minLength && typeof value === 'string' && value.length < rules.minLength) {
           errors.push({
@@ -312,6 +330,8 @@ export const validateRequest = (schema: ValidationSchema) => {
     }
 
     if (errors.length > 0) {
+      safeSetHeader(res, 'Cache-Control', 'no-store');
+      safeSetHeader(res, 'Pragma', 'no-cache');
       safeSendJson(res, 400, {
         error: 'Validation failed',
         code: 'VALIDATION_ERROR',

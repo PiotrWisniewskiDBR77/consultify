@@ -275,7 +275,13 @@ export function requirePermission(permission: string) {
       return;
     }
 
-    const hasPermission = UserStateMachine.hasPermission(currentState, normalizedPermission);
+    let hasPermission = false;
+    try {
+      hasPermission = UserStateMachine.hasPermission(currentState, normalizedPermission);
+    } catch (error: unknown) {
+      logger.warn('requirePermission hasPermission error:', error);
+      hasPermission = false;
+    }
 
     if (!hasPermission) {
       res.status(403).json({
@@ -365,7 +371,7 @@ export async function transitionState(
         metadata: {
           fromState: normalizedFromState,
           toState: normalizedToState,
-          fromPhase: UserStateMachine.getPhase(normalizedFromState),
+          fromPhase: safeRead(() => UserStateMachine.getPhase(normalizedFromState), newPhase),
           toPhase: newPhase,
           context: { ...context, timestamp: new Date().toISOString() },
         },

@@ -143,6 +143,17 @@ describe('apiVersion.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('strips embedded control chars from x-api-version before normalization', () => {
+    const req: any = { path: '/api/x', headers: { 'x-api-version': '1\u0000.0.0' }, query: {} };
+    const res = makeRes();
+    const next = vi.fn();
+
+    apiVersionMiddleware(req, res as any, next as any);
+
+    expect(req.apiVersion?.full).toBe('1.0.0');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to query param when URL+header missing', () => {
     const req: any = { path: '/api/x', headers: {}, query: { version: '1.0' } };
     const res = makeRes();
@@ -179,6 +190,38 @@ describe('apiVersion.middleware (L1)', () => {
     expect(res.headers['cache-control']).toBe('no-store');
     expect(res.headers['pragma']).toBe('no-cache');
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('caps supportedVersions list length in invalid-version 400 payload', () => {
+    const syntheticKeys: string[] = [];
+    for (let i = 10; i <= 60; i += 1) {
+      const key = String(i);
+      syntheticKeys.push(key);
+      (API_VERSIONS as Record<string, any>)[key] = {
+        major: i,
+        minor: 0,
+        patch: 0,
+        full: `${i}.0.0`,
+        deprecated: false,
+        sunsetDate: null,
+      };
+    }
+    try {
+      const req: any = { path: '/api/x', headers: { 'x-api-version': '999' }, query: {} };
+      const res = makeRes();
+      const next = vi.fn();
+
+      apiVersionMiddleware(req, res as any, next as any);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(Array.isArray(res.body.supportedVersions)).toBe(true);
+      expect(res.body.supportedVersions.length).toBe(32);
+      expect(next).not.toHaveBeenCalled();
+    } finally {
+      for (const key of syntheticKeys) {
+        delete (API_VERSIONS as Record<string, any>)[key];
+      }
+    }
   });
 
   it('sanitizes response api-version header value when version metadata is polluted', () => {
@@ -377,6 +420,36 @@ describe('apiVersion.middleware (L1)', () => {
         requireVersion('  v2.0.0  ')(req, res as any, next as any);
 
         expect(res.status).toHaveBeenCalledWith(400);
+        expect(next).not.toHaveBeenCalled();
+      } finally {
+        if (original) API_VERSIONS['2'] = original;
+        else delete (API_VERSIONS as any)['2'];
+      }
+    });
+
+    it('strips embedded control chars from minVersion before lookup', () => {
+      const original = API_VERSIONS['2'];
+      API_VERSIONS['2'] = {
+        major: 2,
+        minor: 0,
+        patch: 0,
+        full: '2.0.0',
+        deprecated: false,
+        sunsetDate: null,
+      };
+      try {
+        const req: any = { apiVersion: API_VERSIONS['1'] };
+        const res = makeRes();
+        const next = vi.fn();
+
+        requireVersion('2\u000D\u000A.0.0')(req, res as any, next as any);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.body).toEqual(
+          expect.objectContaining({
+            requiredVersion: '2.0.0',
+          })
+        );
         expect(next).not.toHaveBeenCalled();
       } finally {
         if (original) API_VERSIONS['2'] = original;

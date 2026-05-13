@@ -26,6 +26,7 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
   return normalized || undefined;
 };
 const FRAMEWORK_ID_MAX_LEN = 64;
+const ORG_ID_MAX_LEN = 128;
 const FRAMEWORK_PARAM_NAME_MAX_LEN = 64;
 const FRAMEWORK_ACCESS_LEVEL_MAX_LEN = 32;
 const FRAMEWORK_REASON_MAX_LEN = 512;
@@ -100,6 +101,12 @@ const readOrgId = (req: AuthRequest): string | undefined =>
   normalizeOptionalString(
     safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
   );
+const readBoundedOrgId = (req: AuthRequest): string | undefined => {
+  const orgId = readOrgId(req);
+  if (!orgId) return undefined;
+  if (orgId.length > ORG_ID_MAX_LEN) return undefined;
+  return orgId;
+};
 
 export function requireFrameworkAccess(frameworkId: string) {
   const normalizedFrameworkId = normalizeOptionalString(frameworkId);
@@ -124,7 +131,7 @@ export function requireFrameworkAccess(frameworkId: string) {
       );
       return;
     }
-    const orgId = readOrgId(req);
+    const orgId = readBoundedOrgId(req);
     if (!orgId) {
       respondOrNextOnWriteFailure(
         res,
@@ -139,6 +146,19 @@ export function requireFrameworkAccess(frameworkId: string) {
       const result = await FrameworkEntitlementService.checkAccess(orgId, canonicalFrameworkId);
       if (!isEntitlementResultRecord(result)) {
         logger.warn('[FrameworkGate] checkAccess returned non-object result', {
+          framework: canonicalFrameworkId,
+        });
+        const sent = sendJsonIfHeadersOpen(res, 503, {
+          error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+          framework: canonicalFrameworkId,
+        });
+        if (!sent && !safeRead(() => res.headersSent, false)) {
+          next(new Error('Framework access check returned invalid payload'));
+        }
+        return;
+      }
+      if (typeof result.allowed !== 'boolean') {
+        logger.warn('[FrameworkGate] checkAccess returned malformed allowed flag', {
           framework: canonicalFrameworkId,
         });
         const sent = sendJsonIfHeadersOpen(res, 503, {
@@ -198,7 +218,7 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
     };
   }
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const orgId = readOrgId(req);
+    const orgId = readBoundedOrgId(req);
     const fwId =
       normalizeOptionalString(safeRead(() => req.params?.[normalizedParamName], undefined)) ||
       normalizeOptionalString(
@@ -247,6 +267,19 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
       const result = await FrameworkEntitlementService.checkAccess(orgId, canonicalFwId);
       if (!isEntitlementResultRecord(result)) {
         logger.warn('[FrameworkGate] dynamic checkAccess returned non-object result', {
+          framework: canonicalFwId,
+        });
+        const sent = sendJsonIfHeadersOpen(res, 503, {
+          error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+          framework: canonicalFwId,
+        });
+        if (!sent && !safeRead(() => res.headersSent, false)) {
+          next(new Error('Dynamic framework access check returned invalid payload'));
+        }
+        return;
+      }
+      if (typeof result.allowed !== 'boolean') {
+        logger.warn('[FrameworkGate] dynamic checkAccess returned malformed allowed flag', {
           framework: canonicalFwId,
         });
         const sent = sendJsonIfHeadersOpen(res, 503, {

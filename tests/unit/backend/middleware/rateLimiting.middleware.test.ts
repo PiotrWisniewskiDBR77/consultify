@@ -36,6 +36,10 @@ describe('rateLimiting.middleware (L1)', () => {
       windowMs: 15 * 60_000,
       max: 1,
     });
+    expect(mod.__private__.toSafeNonNegativeIntCount(Number.NaN)).toBe(0);
+    expect(mod.__private__.toSafeNonNegativeIntCount(12.9)).toBe(12);
+    expect(mod.__private__.toSafeNonNegativeIntSeconds(Number.POSITIVE_INFINITY)).toBe(0);
+    expect(mod.__private__.toSafeNonNegativeIntSeconds(1.1)).toBe(2);
   });
 
   it('is a no-op in NODE_ENV=test', async () => {
@@ -129,6 +133,27 @@ describe('rateLimiting.middleware (L1)', () => {
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
     } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('fails open to next when Date.now throws during limiter evaluation', async () => {
+    const prev = process.env.NODE_ENV;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => {
+      throw new Error('clock failure');
+    });
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const res = makeRes();
+      const next = vi.fn();
+      const req: any = { method: 'GET', ip: '6.6.6.6', headers: {}, socket: {} };
+
+      expect(() => mod.defaultRateLimiter(req, res as any, next as any)).not.toThrow();
+      expect(next).toHaveBeenCalledTimes(1);
+    } finally {
+      nowSpy.mockRestore();
       process.env.NODE_ENV = prev;
     }
   });

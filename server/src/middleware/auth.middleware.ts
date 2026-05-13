@@ -20,6 +20,7 @@ const MAX_AUTH_JWT_CHARS = 8192;
 const MAX_AUTH_HEADER_CHARS = MAX_AUTH_JWT_CHARS + 64;
 const MAX_AUTH_JWT_SEGMENT_CHARS = 6144;
 const MAX_AUTH_JTI_CHARS = 256;
+const MAX_JWT_SECRET_CHARS = 4096;
 const AUTH_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 const AUTH_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
 const ALLOWED_AUTH_JWT_ALGORITHM = 'HS256';
@@ -731,6 +732,10 @@ const checkTokenRevocation = async (
     await attachUser(decoded, req, next, res);
     return;
   }
+  if (AUTH_TOKEN_CONTROL_CHARS.test(tokenJti) || AUTH_TOKEN_DISALLOWED_UNICODE.test(tokenJti)) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
   if (tokenJti.length > MAX_AUTH_JTI_CHARS) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
@@ -978,9 +983,11 @@ export const verifyToken = asyncHandler(
       const jwtSecret = normalizeJwtSecret(
         (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET
       );
-      if (!config || !jwtSecret) {
+      if (!config || !jwtSecret || jwtSecret.length > MAX_JWT_SECRET_CHARS) {
         logger.error(
-          `[AuthMiddleware] CRITICAL: config object is ${typeof config}, keys: ${config ? Object.keys(config) : 'none'}, JWT_SECRET is ${config?.JWT_SECRET ? 'present' : 'missing'}`
+          `[AuthMiddleware] CRITICAL: config object is ${typeof config}, keys: ${config ? Object.keys(config) : 'none'}, JWT_SECRET is ${
+            !jwtSecret ? 'missing' : jwtSecret.length > MAX_JWT_SECRET_CHARS ? 'oversized' : 'present'
+          }`
         );
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -1058,7 +1065,7 @@ export const optionalAuth = asyncHandler(
 
     const token = extractToken(req);
 
-    if (!token || !jwtSecret) {
+    if (!token || !jwtSecret || jwtSecret.length > MAX_JWT_SECRET_CHARS) {
       return next();
     }
     if (token.length > MAX_AUTH_JWT_CHARS) {

@@ -60,6 +60,8 @@ const readValidationErrors = (result: unknown): Array<{ field: string; message: 
       };
     }
   });
+const isZodSchemaLike = (schema: unknown): schema is z.ZodSchema =>
+  Boolean(schema) && typeof (schema as z.ZodSchema).safeParse === 'function';
 
 const respondIfHeadersOpen = (
   req: Request,
@@ -76,7 +78,24 @@ const respondIfHeadersOpen = (
     }, false);
     return false;
   }
-  res.status(statusCode).json(payload);
+  try {
+    res.status(statusCode).json(payload);
+  } catch (writeErr) {
+    safeRead(() => {
+      logger.error('[ValidationMiddleware] Failed to serialize/write JSON response', writeErr);
+      return true;
+    }, false);
+    safeRead(() => {
+      if (!safeRead(() => res.headersSent, false)) {
+        const safePayload: Record<string, unknown> = {
+          error: typeof payload.error === 'string' ? payload.error : 'Error',
+          details: Array.isArray(payload.details) ? payload.details : [],
+        };
+        res.status(statusCode).type('application/json').send(JSON.stringify(safePayload));
+      }
+      return true;
+    }, false);
+  }
   return true;
 };
 
@@ -91,6 +110,11 @@ const respondIfHeadersOpen = (
  */
 export const validateBody = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
+    if (!isZodSchemaLike(schema)) {
+      logger.error('[ValidationMiddleware] Invalid schema: expected Zod schema with safeParse');
+      respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+      return;
+    }
     try {
       const result = schema.safeParse(safeRead(() => req.body, undefined));
       if (!result.success) {
@@ -139,6 +163,11 @@ export const validateBody = (schema: z.ZodSchema) => {
  */
 export const validateQuery = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
+    if (!isZodSchemaLike(schema)) {
+      logger.error('[ValidationMiddleware] Invalid schema: expected Zod schema with safeParse');
+      respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+      return;
+    }
     try {
       const result = schema.safeParse(safeRead(() => req.query, undefined));
       if (!result.success) {
@@ -186,6 +215,11 @@ export const validateQuery = (schema: z.ZodSchema) => {
  */
 export const validateParams = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
+    if (!isZodSchemaLike(schema)) {
+      logger.error('[ValidationMiddleware] Invalid schema: expected Zod schema with safeParse');
+      respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+      return;
+    }
     try {
       const result = schema.safeParse(safeRead(() => req.params, undefined));
       if (!result.success) {

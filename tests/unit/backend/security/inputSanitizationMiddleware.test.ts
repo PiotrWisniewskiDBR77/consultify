@@ -97,6 +97,19 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(req.body.html).toContain('<script>');
   });
 
+  it('skips multipart payloads when content-type header has leading whitespace', async () => {
+    const req = createReq({
+      headers: { 'content-type': '   multipart/form-data; boundary=---x' },
+      body: { html: '<script>nope</script>' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body.html).toContain('<script>');
+  });
+
   it('treats missing content-type header as empty string (still sanitizes)', async () => {
     const req = createReq({
       headers: {},
@@ -226,6 +239,15 @@ describe('inputSanitizationMiddleware (L1)', () => {
     } finally {
       logger.warn = origWarn;
     }
+  });
+
+  it('checkForSuspiciousContent does not throw on circular object graph', () => {
+    const circular: any = { safe: 'ok' };
+    circular.self = circular;
+
+    expect(() =>
+      __private__.checkForSuspiciousContent(circular, '/api/test', 'POST')
+    ).not.toThrow();
   });
 
   it('sanitizes query even when req.body is a primitive', async () => {

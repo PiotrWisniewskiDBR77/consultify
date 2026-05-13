@@ -56,6 +56,23 @@ describe('requestAccess middleware helpers', () => {
     );
   });
 
+  it('normalizeAccessRole still maps role when NFKC normalization throws on malformed unicode', () => {
+    const normalizeSpy = vi
+      .spyOn(String.prototype, 'normalize')
+      .mockImplementation(function () {
+        if (this.toString() === 'ADMIN') {
+          throw new Error('normalize failed');
+        }
+        return this.toString();
+      });
+
+    try {
+      expect(normalizeAccessRole('ADMIN')).toBe('admin');
+    } finally {
+      normalizeSpy.mockRestore();
+    }
+  });
+
   it('normalizeAccessRole stringifies bigint inputs consistently', () => {
     expect(normalizeAccessRole(1n as any)).toBe('member');
     expect(normalizeAccessRole(1234567890123456789n as any)).toBe('member');
@@ -99,6 +116,16 @@ describe('requestAccess middleware helpers', () => {
     expect(isRequestSuperAdmin({ user, userRole: 'member' } as any)).toBe(false);
   });
 
+  it('isRequestSuperAdmin ignores inherited req.user and req.userRole values', () => {
+    const reqProto = {
+      user: { isSuperAdmin: true, role: 'SUPERADMIN' },
+      userRole: 'superadmin',
+    };
+    const req: any = Object.create(reqProto);
+
+    expect(isRequestSuperAdmin(req)).toBe(false);
+  });
+
   it('getRequestAccessRole does not elevate for non-boolean isSuperAdmin values', () => {
     expect(
       getRequestAccessRole({
@@ -111,6 +138,16 @@ describe('requestAccess middleware helpers', () => {
   it('getRequestAccessRole ignores inherited user.role when userRole is empty', () => {
     const user = Object.create({ role: 'ADMIN' });
     expect(getRequestAccessRole({ user, userRole: undefined } as any)).toBe('');
+  });
+
+  it('getRequestAccessRole ignores inherited req.userRole and req.user values', () => {
+    const reqProto = {
+      userRole: 'superadmin',
+      user: { role: 'ADMIN', isSuperAdmin: true },
+    };
+    const req: any = Object.create(reqProto);
+
+    expect(getRequestAccessRole(req)).toBe('');
   });
 
   it('getRequestAccessRole falls back safely when userRole accessor throws', () => {

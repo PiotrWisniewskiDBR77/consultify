@@ -108,6 +108,16 @@ function safeSetHeader(res: Response, headerName: string, value: string): void {
     // Best effort only; limiter still functions without headers.
   }
 }
+function toSafeNonNegativeIntCount(value: unknown, fallback = 0): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.max(0, Math.floor(numeric));
+}
+function toSafeNonNegativeIntSeconds(value: unknown, fallback = 0): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.max(0, Math.ceil(numeric));
+}
 
 function extractToken(req: Request): string | null {
   const authHeader = safeRead(() => req.headers['authorization'], undefined as unknown);
@@ -208,30 +218,43 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
       safeInvokeNext(next);
       return;
     }
-    const key = `rl:${prefix}:${extractKey(req)}`;
-    const { count, resetAt } = increment(key, windowMs);
-    safeSetHeader(res, 'X-RateLimit-Limit', String(max));
-    safeSetHeader(res, 'X-RateLimit-Remaining', String(Math.max(0, max - count)));
-    safeSetHeader(res, 'X-RateLimit-Reset', String(Math.ceil(resetAt / 1000)));
-    if (count > max) {
-      const retryAfter = Math.max(0, Math.ceil((resetAt - Date.now()) / 1000));
-      safeSetHeader(res, 'Retry-After', String(retryAfter));
+    try {
+      const key = `rl:${prefix}:${extractKey(req)}`;
+      const { count, resetAt } = increment(key, windowMs);
+      const remaining = toSafeNonNegativeIntCount(max - count, 0);
+      const resetSeconds = toSafeNonNegativeIntSeconds(resetAt / 1000, 0);
+
+      safeSetHeader(res, 'X-RateLimit-Limit', String(max));
+      safeSetHeader(res, 'X-RateLimit-Remaining', String(remaining));
+      safeSetHeader(res, 'X-RateLimit-Reset', String(resetSeconds));
+
+      if (count > max) {
+        const retryAfter = toSafeNonNegativeIntSeconds((resetAt - Date.now()) / 1000, 0);
+        safeSetHeader(res, 'Retry-After', String(retryAfter));
+        if (safeRead(() => res.headersSent, false)) {
+          safeInvokeNext(next);
+          return;
+        }
+        try {
+          res.status(429).json({
+            error: message,
+            code: 'RATE_LIMIT_EXCEEDED',
+            retryAfter,
+          });
+        } catch {
+          safeInvokeNext(next);
+        }
+        return;
+      }
+      safeInvokeNext(next);
+    } catch {
+      // Limiter is defense-in-depth; unexpected internal failures should not block requests.
       if (safeRead(() => res.headersSent, false)) {
         safeInvokeNext(next);
         return;
       }
-      try {
-        res.status(429).json({
-          error: message,
-          code: 'RATE_LIMIT_EXCEEDED',
-          retryAfter,
-        });
-      } catch {
-        safeInvokeNext(next);
-      }
-      return;
+      safeInvokeNext(next);
     }
-    safeInvokeNext(next);
   };
 }
 
@@ -313,6 +336,8 @@ export const feedbackRateLimiter = createLimiter({
 
 export const __private__ = {
   resolveLimiterParams,
+  toSafeNonNegativeIntCount,
+  toSafeNonNegativeIntSeconds,
   getStoreSize: (): number => store.size,
 };
 

@@ -43,10 +43,21 @@ const responseAlreadyCommitted = (res: Response): boolean =>
 const invokeNext = (next: NextFunction, phase: string): void => {
   if (typeof next !== 'function') return;
   try {
-    next();
+    const result = next();
+    if (result && typeof (result as PromiseLike<unknown>).then === 'function') {
+      void Promise.resolve(result as PromiseLike<unknown>).catch((error) => {
+        logger.warn('[ResourceQuota] next() rejected', { phase, error });
+      });
+    }
   } catch (error) {
     logger.warn('[ResourceQuota] next() threw', { phase, error });
   }
+};
+const readSubscriptionPlanId = (orgPlan: Record<string, unknown> | null): unknown => {
+  if (!orgPlan) return undefined;
+  const raw = orgPlan.subscription_plan_id;
+  if (typeof raw === 'string') return normalizeOptionalString(raw);
+  return raw;
 };
 
 const shouldSkipCommittedResponse = (res: Response, next: NextFunction): boolean => {
@@ -83,6 +94,16 @@ const logQuotaExceeded = (
 ): void => {
   logger.warn('[ResourceQuota] Quota exceeded', { kind, organizationId, current, limit });
 };
+const toLoggableError = (error: unknown): Record<string, unknown> => {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+  }
+  return { message: String(error) };
+};
 
 const getOrgId = (req: AuthRequest): string | undefined =>
   normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
@@ -103,14 +124,16 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       'SELECT subscription_plan_id FROM organization_billing WHERE organization_id = ?',
       [orgId]
     );
-    if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
+    const subscriptionPlanId = readSubscriptionPlanId(orgPlan as Record<string, unknown> | null);
+    if (!subscriptionPlanId) {
       invokeNext(next, 'memory-no-plan');
       return;
     }
 
     const plan = await queryOne('SELECT id, memory_limit_mb FROM subscription_plans WHERE id = ?', [
-      (orgPlan as Record<string, unknown>).subscription_plan_id,
+      subscriptionPlanId,
     ]);
+    if (shouldSkipCommittedResponse(res, next)) return;
     const memoryLimit = readFiniteNumber(
       (plan as Record<string, unknown> | null)?.memory_limit_mb as unknown
     );
@@ -155,7 +178,7 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
 
     invokeNext(next, 'memory-pass');
   } catch (error) {
-    logger.warn('[ResourceQuota] Memory quota check failed', error as Error);
+    logger.warn('[ResourceQuota] Memory quota check failed', toLoggableError(error));
     if (responseAlreadyCommitted(res)) return;
     invokeNext(next, 'memory-catch');
   }
@@ -174,15 +197,17 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       'SELECT subscription_plan_id FROM organization_billing WHERE organization_id = ?',
       [orgId]
     );
-    if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
+    const subscriptionPlanId = readSubscriptionPlanId(orgPlan as Record<string, unknown> | null);
+    if (!subscriptionPlanId) {
       invokeNext(next, 'cpu-no-plan');
       return;
     }
 
     const plan = await queryOne(
       'SELECT id, cpu_quota_percent FROM subscription_plans WHERE id = ?',
-      [(orgPlan as Record<string, unknown>).subscription_plan_id]
+      [subscriptionPlanId]
     );
+    if (shouldSkipCommittedResponse(res, next)) return;
     const cpuLimit = readFiniteNumber(
       (plan as Record<string, unknown> | null)?.cpu_quota_percent as unknown
     );
@@ -227,7 +252,7 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
 
     invokeNext(next, 'cpu-pass');
   } catch (error) {
-    logger.warn('[ResourceQuota] CPU quota check failed', error as Error);
+    logger.warn('[ResourceQuota] CPU quota check failed', toLoggableError(error));
     if (responseAlreadyCommitted(res)) return;
     invokeNext(next, 'cpu-catch');
   }
@@ -284,7 +309,7 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
 
     invokeNext(next, 'budget-pass');
   } catch (error) {
-    logger.warn('[ResourceQuota] Budget quota check failed', error as Error);
+    logger.warn('[ResourceQuota] Budget quota check failed', toLoggableError(error));
     if (responseAlreadyCommitted(res)) return;
     invokeNext(next, 'budget-catch');
   }

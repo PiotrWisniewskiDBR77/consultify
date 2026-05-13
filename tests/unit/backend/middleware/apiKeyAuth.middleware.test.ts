@@ -13,6 +13,25 @@ const RUN_DB_TESTS = process.env.RUN_DB_TESTS === '1';
 const describeIfDb = RUN_DB_TESTS ? describe : describe.skip;
 
 describe('apiKeyAuth.middleware hardening (no DB)', () => {
+  it('cleanup interval timer is unrefd so it does not pin the event loop', async () => {
+    vi.resetModules();
+    const unref = vi.fn();
+    const setIntervalSpy = vi
+      .spyOn(globalThis, 'setInterval')
+      .mockImplementation(
+        () =>
+          ({
+            unref,
+          }) as unknown as ReturnType<typeof setInterval>
+      );
+    try {
+      await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+      expect(unref).toHaveBeenCalledTimes(1);
+    } finally {
+      setIntervalSpy.mockRestore();
+    }
+  });
+
   it('requireApiKeyPermission does not throw when permissions is not an array', async () => {
     vi.resetModules();
     const mwMod = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
@@ -132,6 +151,144 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
     );
     expect(validateKey).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('apiKeyAuth ignores pathological Authorization header length before validation', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn();
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: { authorization: `Bearer ${' '.repeat(10_000)}not-a-key` },
+      query: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(validateKey).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'API_KEY_REQUIRED' }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('apiKeyAuth ignores pathological x-api-key header length before validation', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn();
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: { 'x-api-key': 'x'.repeat(20_000) },
+      query: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(validateKey).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'API_KEY_REQUIRED' }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('apiKeyAuth ignores pathological api_key query length before validation', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn();
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: {},
+      query: { api_key: 'x'.repeat(20_000) },
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(validateKey).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'API_KEY_REQUIRED' }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('apiKeyAuth accepts lowercase bearer authorization scheme', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn().mockResolvedValue({
+      kind: 'org',
+      id: 'k-bearer-lower',
+      organizationId: 'org-1',
+      permissions: ['read_projects'],
+      rateLimit: 100,
+    });
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+        READ_PROJECTS: 'read_projects',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: { authorization: 'bearer ck_valid-lower-bearer-key' },
+      query: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(validateKey).toHaveBeenCalledWith('ck_valid-lower-bearer-key', '127.0.0.1');
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalledWith(401);
   });
 
   it('apiKeyAuth rejects too-short API key before validation', async () => {

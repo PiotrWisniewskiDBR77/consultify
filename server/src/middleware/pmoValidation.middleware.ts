@@ -132,6 +132,13 @@ export const validateInitiative = (req: PMORequest, res: Response, next: NextFun
     });
     return;
   }
+  if (owner.length > MAX_PMO_ENTITY_ID_CHARS) {
+    res.status(400).json({
+      error: 'Owner identifier is too long',
+      rule: 'OWNER_VALUE_TOO_LONG',
+    });
+    return;
+  }
 
   next();
 };
@@ -152,6 +159,13 @@ export const validateTask = async (
     res.status(400).json({
       error: 'Task must belong to an initiative',
       rule: 'TASK_INITIATIVE_REQUIRED',
+    });
+    return;
+  }
+  if (initId.length > MAX_PMO_ENTITY_ID_CHARS) {
+    res.status(400).json({
+      error: 'Invalid initiative id',
+      rule: 'INVALID_ENTITY_ID',
     });
     return;
   }

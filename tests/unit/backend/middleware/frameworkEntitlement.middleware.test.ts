@@ -92,6 +92,27 @@ describe('frameworkEntitlement.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 503 when static entitlement allowed flag is non-boolean', async () => {
+    checkAccessMock.mockResolvedValueOnce({
+      allowed: 'false',
+      accessLevel: 'full',
+      requiresLegalNotice: false,
+    });
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireFrameworkAccess('DRD');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE', framework: 'DRD' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(req.frameworkAccess).toBeUndefined();
+  });
+
   it('does not send 503 body when headers are already sent in static middleware catch path', async () => {
     checkAccessMock.mockRejectedValueOnce(new Error('db unavailable'));
     const req: any = { user: { organizationId: 'org-1' } };
@@ -156,6 +177,27 @@ describe('frameworkEntitlement.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 503 when dynamic entitlement allowed flag is non-boolean', async () => {
+    checkAccessMock.mockResolvedValueOnce({
+      allowed: 'true',
+      accessLevel: 'full',
+      requiresLegalNotice: false,
+    });
+    const req: any = { user: { organizationId: 'org-1' }, params: { frameworkId: 'cmmi' } };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE', framework: 'CMMI' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(req.frameworkAccess).toBeUndefined();
+  });
+
   it('forwards error via next when static catch-path 503 body cannot be written and headers remain open', async () => {
     checkAccessMock.mockRejectedValueOnce(new Error('db unavailable'));
     const req: any = { user: { organizationId: 'org-1' } };
@@ -186,6 +228,34 @@ describe('frameworkEntitlement.middleware', () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
+  it('returns 401 when static organizationId exceeds max length', async () => {
+    const req: any = { user: { organizationId: 'o'.repeat(129) } };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireFrameworkAccess('DRD');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'UNAUTHORIZED' }));
+    expect(checkAccessMock).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when dynamic organizationId exceeds max length', async () => {
+    const req: any = { user: { organizationId: 'o'.repeat(129) }, params: { frameworkId: 'cmmi' } };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'UNAUTHORIZED' }));
+    expect(checkAccessMock).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('canonicalizes dynamic framework id with en-US locale casing', async () => {

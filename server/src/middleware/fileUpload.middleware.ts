@@ -46,6 +46,9 @@ const readOrgId = (req: Request): string =>
   'unknown';
 const MAX_UPLOAD_ORG_ID_CHARS = 128;
 const MAX_UPLOAD_BASENAME_CHARS = 120;
+const MAX_UPLOAD_FILENAME_CHARS = 200;
+export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE = 'Upload workspace unavailable';
+export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE = 'FILE_UPLOAD_WORKSPACE_UNAVAILABLE' as const;
 export const sanitizeOrgIdForUploadPath = (value: unknown): string => {
   const normalized = normalizeOptionalString(value);
   if (!normalized) return 'unknown';
@@ -68,13 +71,18 @@ export const buildSafeUploadedFilename = (originalname: unknown): string => {
   const normalizedOriginalName = normalizeOptionalString(originalname) || 'upload.bin';
   const ext = path.extname(normalizedOriginalName);
   const basename = path.basename(normalizedOriginalName, ext) || 'upload';
-  const safeBasename =
+  let safeBasename =
     basename.length > MAX_UPLOAD_BASENAME_CHARS
       ? basename.slice(0, MAX_UPLOAD_BASENAME_CHARS)
       : basename;
   const entropy = randomBytes(8).toString('hex');
   const uniqueSuffix = `${Date.now()}-${entropy}`;
-  return `${uniqueSuffix}-${safeBasename}${ext}`;
+  const filenamePrefix = `${uniqueSuffix}-`;
+  const maxBasenameChars = Math.max(1, MAX_UPLOAD_FILENAME_CHARS - filenamePrefix.length - ext.length);
+  if (safeBasename.length > maxBasenameChars) {
+    safeBasename = safeBasename.slice(0, maxBasenameChars);
+  }
+  return `${filenamePrefix}${safeBasename}${ext}`;
 };
 const assessmentsUploadRoot = path.resolve(path.join(__dirname, '../../../uploads/assessments'));
 const isPathInsideDir = (baseDir: string, candidatePath: string): boolean => {
@@ -82,15 +90,31 @@ const isPathInsideDir = (baseDir: string, candidatePath: string): boolean => {
   return !relative.startsWith('..') && !path.isAbsolute(relative);
 };
 export const resolveAssessmentUploadDir = (req: Request): string => {
-  const orgId = sanitizeOrgIdForUploadPath(readOrgId(req));
-  const dir = path.resolve(path.join(assessmentsUploadRoot, orgId));
-  if (!isPathInsideDir(assessmentsUploadRoot, dir)) {
-    throw new Error('Upload path outside assessments root');
+  try {
+    const orgId = sanitizeOrgIdForUploadPath(readOrgId(req));
+    const dir = path.resolve(path.join(assessmentsUploadRoot, orgId));
+    if (!isPathInsideDir(assessmentsUploadRoot, dir)) {
+      throw new Error('Upload path outside assessments root');
+    }
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const realRoot = fs.realpathSync(assessmentsUploadRoot);
+    const realDir = fs.realpathSync(dir);
+    if (!isPathInsideDir(realRoot, realDir)) {
+      throw new Error('Upload path outside assessments root');
+    }
+    return realDir;
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Upload path outside assessments root') {
+      throw error;
+    }
+    const err = new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE) as Error & {
+      code?: typeof FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE;
+    };
+    err.code = FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE;
+    throw err;
   }
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return dir;
 };
 
 // ==========================================
@@ -110,7 +134,7 @@ const storage = multer.diskStorage({
       const dir = resolveAssessmentUploadDir(req);
       cb(null, dir);
     } catch (error) {
-      cb(error instanceof Error ? error : new Error('Upload workspace unavailable'), '');
+      cb(error instanceof Error ? error : new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE), '');
     }
   },
   filename: (
@@ -136,6 +160,10 @@ const fileFilter = (
 
   const originalName =
     normalizeOptionalString(safeRead(() => file.originalname, undefined)) || 'unknown.file';
+  if (/[\u0000-\u001F\u007F]/.test(originalName)) {
+    cb(createInvalidFilenameError(), false);
+    return;
+  }
   const mimeType =
     normalizeMimeType(normalizeOptionalString(safeRead(() => file.mimetype, undefined)) || '');
   const extname = safeRead(() => allowedExts.test(path.extname(originalName).toLowerCase()), false);
@@ -164,12 +192,22 @@ export const uploadLimits = {
 export const FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE =
   'Only PDF, Excel, and Word documents are allowed';
 export const FILE_UPLOAD_DISALLOWED_TYPE_CODE = 'FILE_UPLOAD_DISALLOWED_TYPE' as const;
+export const FILE_UPLOAD_INVALID_FILENAME_MESSAGE =
+  'The uploaded filename contains invalid characters';
+export const FILE_UPLOAD_INVALID_FILENAME_CODE = 'FILE_UPLOAD_INVALID_FILENAME' as const;
 
 const createDisallowedFileTypeError = (): Error => {
   const err = new Error(FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE) as Error & {
     code?: typeof FILE_UPLOAD_DISALLOWED_TYPE_CODE;
   };
   err.code = FILE_UPLOAD_DISALLOWED_TYPE_CODE;
+  return err;
+};
+const createInvalidFilenameError = (): Error => {
+  const err = new Error(FILE_UPLOAD_INVALID_FILENAME_MESSAGE) as Error & {
+    code?: typeof FILE_UPLOAD_INVALID_FILENAME_CODE;
+  };
+  err.code = FILE_UPLOAD_INVALID_FILENAME_CODE;
   return err;
 };
 

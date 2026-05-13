@@ -46,10 +46,20 @@ const sendJsonIfHeadersOpen = (
   statusCode: number,
   payload: Record<string, unknown>
 ): boolean => {
-  if (safeRead(() => res.headersSent, false)) return false;
-  if (safeRead(() => (res as { writableEnded?: boolean }).writableEnded, false)) return false;
-  if (safeRead(() => (res as { destroyed?: boolean }).destroyed, false)) return false;
-  if (safeRead(() => (res as { finished?: boolean }).finished, false)) return false;
+  let skipReason: 'headersSent' | 'writableEnded' | 'destroyed' | 'finished' | null = null;
+  if (safeRead(() => res.headersSent, false)) skipReason = 'headersSent';
+  else if (safeRead(() => (res as { writableEnded?: boolean }).writableEnded, false)) {
+    skipReason = 'writableEnded';
+  } else if (safeRead(() => (res as { destroyed?: boolean }).destroyed, false)) skipReason = 'destroyed';
+  else if (safeRead(() => (res as { finished?: boolean }).finished, false)) skipReason = 'finished';
+  if (skipReason) {
+    logger.warn('[featureGate] Skipped JSON response write (response already finalized)', {
+      skipReason,
+      statusCode,
+      errorCode: typeof payload.error === 'string' ? payload.error : undefined,
+    });
+    return false;
+  }
   try {
     res.status(statusCode).json(payload);
     return true;
@@ -238,63 +248,71 @@ export function requireFeature(featureId: string) {
   }
 
   return (req: FeatureRequest, res: Response, next: NextFunction): void => {
-    const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
-    const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
-    const currentRole =
-      normalizeRole(safeRead(() => req.userRole, undefined)) ||
-      normalizeRole(safeRead(() => req.user?.role, undefined));
+    try {
+      const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
+      const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
+      const currentRole =
+        normalizeRole(safeRead(() => req.userRole, undefined)) ||
+        normalizeRole(safeRead(() => req.user?.role, undefined));
 
-    const errors: Array<{ type: string; required: string[]; current: string | null }> = [];
+      const errors: Array<{ type: string; required: string[]; current: string | null }> = [];
 
-    // Check phase
-    if (requirements.phase.length > 0 && !requirements.phase.includes(currentPhase || '')) {
-      errors.push({
-        type: 'PHASE',
-        required: requirements.phase,
-        current: currentPhase ?? null,
+      // Check phase
+      if (requirements.phase.length > 0 && !requirements.phase.includes(currentPhase || '')) {
+        errors.push({
+          type: 'PHASE',
+          required: requirements.phase,
+          current: currentPhase ?? null,
+        });
+      }
+
+      // Check state
+      if (requirements.state.length > 0 && !requirements.state.includes(currentState || '')) {
+        errors.push({
+          type: 'STATE',
+          required: requirements.state,
+          current: currentState ?? null,
+        });
+      }
+
+      // Check role (only if roles are specified and user has org context)
+      if (requirements.role.length > 0 && !requirements.role.includes(currentRole || '')) {
+        errors.push({
+          type: 'ROLE',
+          required: requirements.role,
+          current: currentRole ?? null,
+        });
+      }
+
+      if (errors.length > 0) {
+        const deniedFeatureId = truncateForPublicSurface(normalizedFeatureId);
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'FEATURE_ACCESS_DENIED',
+          feature: deniedFeatureId,
+          message: `Access to '${deniedFeatureId}' denied. Requirements not met.`,
+          requirements: {
+            phase: requirements.phase,
+            state: requirements.state,
+            role: requirements.role,
+          },
+          current: {
+            phase: currentPhase ?? null,
+            state: currentState ?? null,
+            role: currentRole ?? null,
+          },
+          violations: errors,
+        });
+        return;
+      }
+
+      invokeNext(next);
+    } catch (error) {
+      logger.error('[featureGate] Unexpected error in requireFeature handler', error);
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'FEATURE_GATE_INTERNAL',
+        message: 'Feature gate encountered an unexpected error. Contact support.',
       });
     }
-
-    // Check state
-    if (requirements.state.length > 0 && !requirements.state.includes(currentState || '')) {
-      errors.push({
-        type: 'STATE',
-        required: requirements.state,
-        current: currentState ?? null,
-      });
-    }
-
-    // Check role (only if roles are specified and user has org context)
-    if (requirements.role.length > 0 && !requirements.role.includes(currentRole || '')) {
-      errors.push({
-        type: 'ROLE',
-        required: requirements.role,
-        current: currentRole ?? null,
-      });
-    }
-
-    if (errors.length > 0) {
-      const deniedFeatureId = truncateForPublicSurface(normalizedFeatureId);
-      sendJsonIfHeadersOpen(res, 403, {
-        error: 'FEATURE_ACCESS_DENIED',
-        feature: deniedFeatureId,
-        message: `Access to '${deniedFeatureId}' denied. Requirements not met.`,
-        requirements: {
-          phase: requirements.phase,
-          state: requirements.state,
-          role: requirements.role,
-        },
-        current: {
-          phase: currentPhase ?? null,
-          state: currentState ?? null,
-          role: currentRole ?? null,
-        },
-        violations: errors,
-      });
-      return;
-    }
-
-    invokeNext(next);
   };
 }
 
@@ -305,124 +323,132 @@ export function requireFeature(featureId: string) {
  */
 export function requireAccess(requirements: FeatureRequirements) {
   return (req: FeatureRequest, res: Response, next: NextFunction): void => {
-    if (!requirements || typeof requirements !== 'object' || Array.isArray(requirements)) {
-      sendJsonIfHeadersOpen(res, 500, {
-        error: 'INVALID_FEATURE_REQUIREMENTS',
-        message: 'Feature requirements are not properly configured. Contact support.',
-      });
-      return;
-    }
+    try {
+      if (!requirements || typeof requirements !== 'object' || Array.isArray(requirements)) {
+        sendJsonIfHeadersOpen(res, 500, {
+          error: 'INVALID_FEATURE_REQUIREMENTS',
+          message: 'Feature requirements are not properly configured. Contact support.',
+        });
+        return;
+      }
 
-    const hasOwn = (key: 'phase' | 'state' | 'role') =>
-      Object.prototype.hasOwnProperty.call(requirements, key);
-    if (
-      (hasOwn('phase') && !Array.isArray(safeRead(() => requirements.phase, undefined as unknown))) ||
-      (hasOwn('state') && !Array.isArray(safeRead(() => requirements.state, undefined as unknown))) ||
-      (hasOwn('role') && !Array.isArray(safeRead(() => requirements.role, undefined as unknown)))
-    ) {
-      sendJsonIfHeadersOpen(res, 500, {
-        error: 'INVALID_FEATURE_REQUIREMENTS',
-        message:
-          'Feature requirements must use array values for phase, state, and role. Contact support.',
-      });
-      return;
-    }
+      const hasOwn = (key: 'phase' | 'state' | 'role') =>
+        Object.prototype.hasOwnProperty.call(requirements, key);
+      if (
+        (hasOwn('phase') && !Array.isArray(safeRead(() => requirements.phase, undefined as unknown))) ||
+        (hasOwn('state') && !Array.isArray(safeRead(() => requirements.state, undefined as unknown))) ||
+        (hasOwn('role') && !Array.isArray(safeRead(() => requirements.role, undefined as unknown)))
+      ) {
+        sendJsonIfHeadersOpen(res, 500, {
+          error: 'INVALID_FEATURE_REQUIREMENTS',
+          message:
+            'Feature requirements must use array values for phase, state, and role. Contact support.',
+        });
+        return;
+      }
 
-    const requiredPhases =
-      hasOwn('phase') && Array.isArray(safeRead(() => requirements.phase, undefined as unknown))
-        ? (safeRead(() => requirements.phase, [] as unknown) as unknown[])
+      const requiredPhases =
+        hasOwn('phase') && Array.isArray(safeRead(() => requirements.phase, undefined as unknown))
+          ? (safeRead(() => requirements.phase, [] as unknown) as unknown[])
+          : [];
+      const requiredStates =
+        hasOwn('state') && Array.isArray(safeRead(() => requirements.state, undefined as unknown))
+          ? (safeRead(() => requirements.state, [] as unknown) as unknown[])
+          : [];
+      const requiredRoles =
+        hasOwn('role') && Array.isArray(safeRead(() => requirements.role, undefined as unknown))
+          ? (safeRead(() => requirements.role, [] as unknown) as unknown[])
+          : [];
+      const phaseRules = Array.isArray(requiredPhases)
+        ? requiredPhases
+            .map((phaseRule) => normalizeOptionalString(phaseRule))
+            .filter((phaseRule): phaseRule is string => Boolean(phaseRule))
         : [];
-    const requiredStates =
-      hasOwn('state') && Array.isArray(safeRead(() => requirements.state, undefined as unknown))
-        ? (safeRead(() => requirements.state, [] as unknown) as unknown[])
+      const stateRules = Array.isArray(requiredStates)
+        ? requiredStates
+            .map((stateRule) => normalizeOptionalString(stateRule))
+            .filter((stateRule): stateRule is string => Boolean(stateRule))
         : [];
-    const requiredRoles =
-      hasOwn('role') && Array.isArray(safeRead(() => requirements.role, undefined as unknown))
-        ? (safeRead(() => requirements.role, [] as unknown) as unknown[])
-        : [];
-    const phaseRules = Array.isArray(requiredPhases)
-      ? requiredPhases
-          .map((phaseRule) => normalizeOptionalString(phaseRule))
-          .filter((phaseRule): phaseRule is string => Boolean(phaseRule))
-      : [];
-    const stateRules = Array.isArray(requiredStates)
-      ? requiredStates
-          .map((stateRule) => normalizeOptionalString(stateRule))
-          .filter((stateRule): stateRule is string => Boolean(stateRule))
-      : [];
-    const roleRules = Array.isArray(requiredRoles) ? requiredRoles : [];
-    const normalizedRoleRules = roleRules
-      .map((roleRule) => normalizeRole(roleRule))
-      .filter((roleRule): roleRule is string => Boolean(roleRule));
-    if (
-      phaseRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
-      stateRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
-      normalizedRoleRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES
-    ) {
+      const roleRules = Array.isArray(requiredRoles) ? requiredRoles : [];
+      const normalizedRoleRules = roleRules
+        .map((roleRule) => normalizeRole(roleRule))
+        .filter((roleRule): roleRule is string => Boolean(roleRule));
+      if (
+        phaseRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
+        stateRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
+        normalizedRoleRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES
+      ) {
+        sendJsonIfHeadersOpen(res, 500, {
+          error: 'INVALID_FEATURE_REQUIREMENTS',
+          message:
+            'Feature requirements exceed maximum supported rule count for phase, state, or role. Contact support.',
+        });
+        return;
+      }
+      const hasOversizedRuleToken =
+        phaseRules.some((phaseRule) => phaseRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
+        stateRules.some((stateRule) => stateRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
+        normalizedRoleRules.some((roleRule) => roleRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH);
+      if (hasOversizedRuleToken) {
+        sendJsonIfHeadersOpen(res, 500, {
+          error: 'INVALID_FEATURE_REQUIREMENTS',
+          message:
+            'Feature requirements contain oversized phase, state, or role values. Contact support.',
+        });
+        return;
+      }
+      if (phaseRules.length === 0 && stateRules.length === 0 && normalizedRoleRules.length === 0) {
+        sendJsonIfHeadersOpen(res, 500, {
+          error: 'INVALID_FEATURE_REQUIREMENTS',
+          message: 'Feature requirements must specify at least one of phase, state, or role. Contact support.',
+        });
+        return;
+      }
+
+      const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
+      const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
+      const currentRole =
+        normalizeRole(safeRead(() => req.userRole, undefined)) ||
+        normalizeRole(safeRead(() => req.user?.role, undefined));
+
+      // Phase check
+      if (phaseRules.length > 0 && !phaseRules.includes(currentPhase || '')) {
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'PHASE_REQUIRED',
+          required: phaseRules,
+          current: currentPhase ?? null,
+        });
+        return;
+      }
+
+      // State check
+      if (stateRules.length > 0 && !stateRules.includes(currentState || '')) {
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'STATE_REQUIRED',
+          required: stateRules,
+          current: currentState ?? null,
+        });
+        return;
+      }
+
+      // Role check
+      if (normalizedRoleRules.length > 0 && !normalizedRoleRules.includes(currentRole || '')) {
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'ROLE_REQUIRED',
+          required: normalizedRoleRules,
+          current: currentRole ?? null,
+        });
+        return;
+      }
+
+      invokeNext(next);
+    } catch (error) {
+      logger.error('[featureGate] Unexpected error in requireAccess handler', error);
       sendJsonIfHeadersOpen(res, 500, {
-        error: 'INVALID_FEATURE_REQUIREMENTS',
-        message:
-          'Feature requirements exceed maximum supported rule count for phase, state, or role. Contact support.',
+        error: 'FEATURE_GATE_INTERNAL',
+        message: 'Feature gate encountered an unexpected error. Contact support.',
       });
-      return;
     }
-    const hasOversizedRuleToken =
-      phaseRules.some((phaseRule) => phaseRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
-      stateRules.some((stateRule) => stateRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
-      normalizedRoleRules.some((roleRule) => roleRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH);
-    if (hasOversizedRuleToken) {
-      sendJsonIfHeadersOpen(res, 500, {
-        error: 'INVALID_FEATURE_REQUIREMENTS',
-        message:
-          'Feature requirements contain oversized phase, state, or role values. Contact support.',
-      });
-      return;
-    }
-    if (phaseRules.length === 0 && stateRules.length === 0 && normalizedRoleRules.length === 0) {
-      sendJsonIfHeadersOpen(res, 500, {
-        error: 'INVALID_FEATURE_REQUIREMENTS',
-        message: 'Feature requirements must specify at least one of phase, state, or role. Contact support.',
-      });
-      return;
-    }
-
-    const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
-    const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
-    const currentRole =
-      normalizeRole(safeRead(() => req.userRole, undefined)) ||
-      normalizeRole(safeRead(() => req.user?.role, undefined));
-
-    // Phase check
-    if (phaseRules.length > 0 && !phaseRules.includes(currentPhase || '')) {
-      sendJsonIfHeadersOpen(res, 403, {
-        error: 'PHASE_REQUIRED',
-        required: phaseRules,
-        current: currentPhase ?? null,
-      });
-      return;
-    }
-
-    // State check
-    if (stateRules.length > 0 && !stateRules.includes(currentState || '')) {
-      sendJsonIfHeadersOpen(res, 403, {
-        error: 'STATE_REQUIRED',
-        required: stateRules,
-        current: currentState ?? null,
-      });
-      return;
-    }
-
-    // Role check
-    if (normalizedRoleRules.length > 0 && !normalizedRoleRules.includes(currentRole || '')) {
-      sendJsonIfHeadersOpen(res, 403, {
-        error: 'ROLE_REQUIRED',
-        required: normalizedRoleRules,
-        current: currentRole ?? null,
-      });
-      return;
-    }
-
-    invokeNext(next);
   };
 }
 

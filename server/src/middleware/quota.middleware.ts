@@ -128,6 +128,40 @@ const finitePositiveRecordAmount = (value: number, max: number): number | undefi
   const normalized = Math.min(Math.floor(value), max);
   return normalized > 0 ? normalized : undefined;
 };
+const finitePositiveRecordAmountFromUnknown = (value: unknown, max: number): number | undefined => {
+  if (typeof value === 'number') return finitePositiveRecordAmount(value, max);
+  if (typeof value === 'string') {
+    const normalized = normalizeOptionalString(value);
+    if (!normalized) return undefined;
+    return finitePositiveRecordAmount(Number(normalized), max);
+  }
+  return undefined;
+};
+const toFiniteQuotaNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const normalized = normalizeOptionalString(value);
+    if (!normalized) return undefined;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+const normalizeQuotaPayloadShape = (value: unknown): unknown => {
+  if (!value || typeof value !== 'object') return value;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.allowed !== 'boolean') return value;
+  const used = toFiniteQuotaNumber(candidate.used);
+  const limit = toFiniteQuotaNumber(candidate.limit);
+  const percentage = toFiniteQuotaNumber(candidate.percentage);
+  if (used === undefined || limit === undefined || percentage === undefined) return value;
+  return {
+    ...candidate,
+    used,
+    limit,
+    percentage,
+  };
+};
 
 const bytesToGbString = (value: unknown): string =>
   (finiteNumberOrZero(value) / (1024 * 1024 * 1024)).toFixed(2);
@@ -256,7 +290,7 @@ export async function enforceTokenQuota(
       return;
     }
 
-    const quotaCandidate = await usageService.checkQuota(orgId, 'token');
+    const quotaCandidate = normalizeQuotaPayloadShape(await usageService.checkQuota(orgId, 'token'));
     if (!isValidQuotaInfo(quotaCandidate)) {
       logger.error('[QuotaMiddleware] Invalid token quota payload', { orgId });
       sendQuotaJson(
@@ -393,7 +427,7 @@ export async function enforceStorageQuota(
       return;
     }
 
-    const quotaCandidate = await usageService.checkQuota(orgId, 'storage');
+    const quotaCandidate = normalizeQuotaPayloadShape(await usageService.checkQuota(orgId, 'storage'));
     if (!isValidQuotaInfo(quotaCandidate)) {
       logger.error('[QuotaMiddleware] Invalid storage quota payload', { orgId });
       sendQuotaJson(
@@ -484,7 +518,7 @@ export async function recordTokenUsageAfterResponse(
       MAX_RECORD_METADATA_CHARS
     );
 
-    const safeTokens = finitePositiveRecordAmount(tokens, MAX_RECORDED_TOKENS);
+    const safeTokens = finitePositiveRecordAmountFromUnknown(tokens, MAX_RECORDED_TOKENS);
     if (orgId && safeTokens !== undefined) {
       await usageService.recordTokenUsage(orgId, userId, safeTokens, normalizedAction, {
         endpoint,
@@ -521,7 +555,7 @@ export async function recordStorageAfterUpload(
       MAX_RECORD_METADATA_CHARS
     );
 
-    const safeBytes = finitePositiveRecordAmount(bytes, MAX_RECORDED_BYTES);
+    const safeBytes = finitePositiveRecordAmountFromUnknown(bytes, MAX_RECORDED_BYTES);
     if (orgId && safeBytes !== undefined) {
       await usageService.recordStorageUsage(orgId, safeBytes, normalizedAction, {
         endpoint,

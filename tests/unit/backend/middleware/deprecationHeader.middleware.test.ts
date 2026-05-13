@@ -142,7 +142,7 @@ describe('deprecationHeader.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('still sets headers when headersSent is truthy but not strict true', () => {
+  it('skips setHeader calls when headersSent is truthy non-boolean', () => {
     const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-truthy-headers-sent' };
     const res: any = {
       headersSent: 'yes',
@@ -151,7 +151,22 @@ describe('deprecationHeader.middleware', () => {
     const next = vi.fn();
 
     expect(() => deprecationHeader('/api/v8/new')(req, res, next as any)).not.toThrow();
-    expect(res.setHeader).toHaveBeenCalledWith('Deprecation', 'true');
+    expect(res.setHeader).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps full Link header value length to hard limit', () => {
+    const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-link-cap' };
+    const res = makeRes();
+    const next = vi.fn();
+    const longReplacement = `/api/v8/${'x'.repeat(10000)}`;
+
+    deprecationHeader(longReplacement)(req, res as any, next as any);
+
+    const linkCall = (res.setHeader as any).mock.calls.find((call: unknown[]) => call[0] === 'Link');
+    const linkValue = String(linkCall?.[1] ?? '');
+    expect(linkValue.length).toBeLessThanOrEqual(4096);
+    expect(linkValue.endsWith('>; rel="successor-version"')).toBe(true);
     expect(next).toHaveBeenCalledTimes(1);
   });
 

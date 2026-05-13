@@ -1,125 +1,277 @@
-# APLIX North America - Interview Results Report (Gamma)
+# APLIX North America - Digital Transformation Findings and Initiative Report (Gamma)
+
+Version: Gamma Draft v2  
+Date: 2026-05-13  
+Language standard: US English (professional, executive audience)  
+Prepared by: Consultify Team
+
+---
 
 ## 1. Executive Summary
 
-Based on the current APLIX-only interview dataset, there is enough evidence to start building a credible initiative backlog and present first-wave findings.
+The current APLIX interview dataset is strong enough to support a first-wave transformation program, with one key caveat: the final business case should be confirmed after the last active APLIX session is submitted and KPI baselines are validated with Finance and Operations.
 
-Confidence level:
-- **Medium-High** for directional priorities,
-- **Medium** for quantified impact until the last active session is closed.
+### Key conclusion
+- **Proceed now** with wave-1 initiatives focused on execution visibility, cross-functional handoff discipline, and data trust.
+- **Do not overstate financial value yet**; current evidence supports direction and urgency, but not a finalized ROI commitment.
 
-## 2. Dataset Basis for Results
+### Confidence
+- Directional priorities: **Medium-High**
+- Operational impact hypotheses: **Medium**
+- Financial quantification: **Medium-Low to Medium** (pending baseline reconciliation)
 
-Analytical dataset:
-- Source: production interview sessions for `aplix-na`
-- Filter: only `@aplix.com` and `@aplixinc.com`
-- APLIX-only sessions considered: **10**
+---
+
+## 2. Scope, Dataset, and Data Integrity
+
+### Scope
+- Organization: `aplix-na` (APLIX North America)
+- Source systems: production interview runtime tables
+- Interview layer used: session and question-level records
+
+### Analytical population
+- Included domains: `@aplix.com`, `@aplixinc.com`
+- Excluded from analytics: non-APLIX users (e.g., DBR and non-corporate addresses)
+
+### Dataset status (APLIX-only)
+- Sessions: **10**
   - Submitted: **9**
   - Active: **1**
+- Question rows: **100**
+- Non-empty response rows: **90**
+- Response fill rate: **90%**
+- Average response length (non-empty): **169 characters**
 
-Excluded from analytical population:
-- `piotr.wisniewski@dbr77.com`
-- `sdfsf@gmail.com` (Pawel Mroczkowski)
+These quality indicators are sufficient for robust thematic synthesis.
 
-## 3. Preliminary Findings (Theme-Level)
+---
 
-Thematic findings below are framed as presentation-ready hypotheses that should be validated against final closed-session synthesis.
+## 3. What the Interviews Consistently Show
 
-### Theme A - Execution visibility and decision latency
+## 3.1 Insight 1 - Real-time operational visibility is materially underdeveloped
 
-Observed signal:
-- High completion in manager responses enables cross-session comparison of where decisions slow down.
+### Evidence from respondent statements
+- “We currently do not calculate an OEE.”  
+- “We rely heavily on manual reporting after the fact.”  
+- “Real-time production status is a problem today... most production decisions are made after the fact.”  
+- “Pretty much all KPIs in manufacturing are manually driven...”
 
-Business implication:
-- Delayed decisions likely amplify firefighting and reduce schedule reliability.
+### Interpretation
+Plant and management decisions are often made with delayed or manually assembled information. This drives slower response to disruptions and increases reactivity.
 
-### Theme B - Cross-functional handoff friction
+### Business implication
+Without real-time KPI visibility, escalation speed and corrective action quality remain constrained.
 
-Observed signal:
-- The current respondent pool spans multiple leadership roles, suitable for identifying handoff pain between functions.
+---
 
-Business implication:
-- Handoff quality appears to be a central leverage point for operational stability.
+## 3.2 Insight 2 - Cross-functional process control is inconsistent, especially around transaction and change discipline
 
-### Theme C - Data trust and reporting burden
+### Evidence from respondent statements
+- “Failure to consistently follow proper change management protocol...”  
+- “Work order and cycle counting issues... require much time and effort to investigate and reconcile.”  
+- “Finance spends too much time validating inputs... operates reactively instead of proactively.”  
+- “Reconciliations between Finance and Operations...”  
 
-Observed signal:
-- Interview structure strongly targets evidence and data usage patterns; the sample is large enough to identify recurring reporting bottlenecks.
+### Interpretation
+Core control loops (work orders, inventory integrity, change discipline, reconciliation) consume leadership bandwidth and reduce execution capacity for improvement work.
 
-Business implication:
-- Improving decision-grade data access should generate broad, multi-process impact.
+### Business implication
+The organization is likely paying an avoidable “coordination tax” in both operations and finance.
 
-## 4. Draft Initiative Portfolio (Wave 1)
+---
 
-### Initiative 1 - Decision Visibility Cockpit
+## 3.3 Insight 3 - Critical production risks are known but not systematically translated into fast, data-backed decisions
 
-Objective:
-- Reduce decision latency for critical operational issues.
+### Evidence from respondent statements
+- Persistent concerns in key extrusion lines (scrap, efficiency, quality stability)
+- Downtime and reliability exposure in aging equipment
+- Explicit mention of repeated disruption drivers (including frequent power blinks in one response)
+- Dependence on local experience in decisions (example response indicating roughly a “50-50” split between trusted data and local judgment)
 
-Expected outcomes:
-- Faster escalation-to-resolution cycle,
-- Better management synchronization.
+### Interpretation
+Risk awareness exists, but risk-to-action conversion is not yet institutionalized through a unified management system.
 
-Confidence:
-- Medium-High
+### Business implication
+Recurring operational instability can continue even when leadership understands the problem set.
 
-### Initiative 2 - Standardized Handoff Protocol
+---
 
-Objective:
-- Reduce ambiguity and rework across key functional handoffs.
+## 4. Wave-1 Initiative Portfolio (Digital Improvement and Transformation)
 
-Expected outcomes:
-- Fewer coordination losses,
-- Higher predictability in execution.
+The initiatives below are intentionally designed as transformation enablers, not isolated local fixes.
 
-Confidence:
-- Medium
+## 4.1 Initiative A - Operational Decision Visibility Cockpit
 
-### Initiative 3 - Trusted Operational Data Layer
+### Objective
+Build a decision-grade, near-real-time management cockpit for plant and leadership operations.
 
-Objective:
-- Establish one decision-ready reporting baseline for leadership and plant-level operations.
+### Scope
+- OEE / scrap / downtime / throughput / order-status visibility
+- Line/shift/order-level drill-down
+- Escalation triggers and ownership routing
 
-Expected outcomes:
-- Improved data trust,
-- Lower manual reporting overhead.
+### Expected operational effect (directional)
+- Faster detection-to-response cycle
+- Lower escalation ambiguity
+- Better short-interval control
 
-Confidence:
-- Medium
+### Confidence
+- **Medium-High** (strong multi-respondent support)
 
-## 5. Prioritization Logic (Current)
+---
 
-Scoring criteria to finalize in next iteration:
-- Operational pain intensity,
-- Cross-functional impact breadth,
-- Time-to-value (90-day feasibility),
-- Data/evidence confidence.
+## 4.2 Initiative B - Work Order and Inventory Integrity Stabilization
 
-Current recommendation:
-- Start with initiatives that combine high pain and short implementation cycle.
+### Objective
+Reduce reconciliation burden and improve transactional trust between Operations and Finance.
 
-## 6. Risks and Assumptions
+### Scope
+- Work order transaction standards
+- Cycle counting discipline and exception workflows
+- Automated variance detection and ownership assignment
 
-Current assumptions:
-- Submitted sessions represent stable patterns across interviewed APLIX roles.
-- One remaining active session will not fundamentally change theme hierarchy.
+### Expected operational effect (directional)
+- Reduced manual reconciliation effort
+- Improved inventory and production-cost integrity
+- Faster month-end close diagnostics
 
-Key risk:
-- If the remaining active session introduces contradictory evidence in a critical area, backlog ranking may shift.
+### Confidence
+- **Medium-High** (repeated explicit evidence from leadership responses)
 
-Mitigation:
-- Run a short re-rank step immediately after final session closure.
+---
 
-## 7. Next Milestone for Client Presentation
+## 4.3 Initiative C - Structured Change and Handoff Control Layer
 
-Before external presentation:
-1. Close last active APLIX session.
-2. Recompute APLIX-only evidence pack.
-3. Convert theme-level findings into:
-   - evidence statements,
-   - initiative charters,
-   - owner and KPI placeholders.
-4. Build slide-ready narrative:
-   - where we are,
-   - what matters most,
-   - what to do in next 90 days.
+### Objective
+Create a uniform operational contract for change execution and cross-functional handoffs.
+
+### Scope
+- Change protocol standardization
+- Handoff definition (who owns what, by when, with what evidence)
+- Exception governance and response SLAs
+
+### Expected operational effect (directional)
+- Lower rework from unclear handoffs
+- Fewer avoidable quality and schedule disruptions
+
+### Confidence
+- **Medium**
+
+---
+
+## 4.4 Initiative D - Reliability and Downtime Risk Intelligence
+
+### Objective
+Improve predictability and prioritization of downtime and spare-part risk.
+
+### Scope
+- Structured downtime reason coding
+- Critical asset risk ranking
+- Spare-part lead-time risk board tied to production criticality
+
+### Expected operational effect (directional)
+- Better maintenance prioritization
+- Reduced high-impact downtime surprise events
+
+### Confidence
+- **Medium**
+
+---
+
+## 5. Operational and Financial Improvement Estimates (No Fabrication)
+
+This section uses a strict rule:
+- No hard financial claim without validated baseline.
+- Scenario values are illustrative and must be replaced with client-approved baselines.
+
+## 5.1 What can be estimated now (directionally)
+
+Based on interview evidence, the following impact vectors are credible:
+- reduction in manual reporting/reconciliation effort,
+- shorter issue detection-to-decision cycle,
+- lower rework from handoff and transaction defects,
+- better control of scrap/efficiency volatility in critical processes.
+
+## 5.2 What cannot be credibly quantified yet
+
+The dataset does **not** currently provide validated baseline values for:
+- annualized scrap cost by process family,
+- full downtime cost per hour by line,
+- reconciliation labor cost envelope,
+- contribution margin sensitivity by service delay category.
+
+Therefore, no final USD value is asserted in this report.
+
+## 5.3 Scenario-based estimation frame (for CFO validation)
+
+Use this structure once baselines are confirmed:
+
+- **Operational improvement scenario**
+  - Baseline metric: `{{BASELINE_METRIC}}`
+  - Improvement assumption: `{{X%}}`
+  - Realized effect formula: `Baseline * Improvement%`
+
+- **Financial translation scenario**
+  - Value driver: `{{COST_OR_MARGIN_DRIVER}}`
+  - Unit economics: `{{$/unit or $/hour}}`
+  - Annualized value formula: `Operational effect * Unit economics`
+
+Example format (illustrative, not committed):
+- If reconciliation effort is reduced by `{{X%}}` from a validated baseline of `{{N hours/month}}`, labor savings = `N * X% * loaded hourly rate`.
+
+---
+
+## 6. Prioritization and Sequencing
+
+### Recommended sequence
+- **Wave 1 (0-90 days):** Initiatives A + B (highest control and data foundation value)
+- **Wave 2 (3-6 months):** Initiative C (institutionalize cross-functional execution discipline)
+- **Wave 3 (6-12 months):** Initiative D and advanced optimization layer
+
+### Prioritization logic
+- Frequency and consistency of evidence in interviews
+- Cross-functional leverage
+- Time-to-control improvement
+- Dependency ordering (data trust before advanced optimization)
+
+---
+
+## 7. Risks, Constraints, and Controls
+
+### Key risks
+1. Last active session may add nuance to ranking.
+2. KPI baseline quality may vary by process.
+3. Value capture may be delayed if ownership is not assigned early.
+
+### Controls
+- Freeze and re-rank after final active session closure.
+- Baseline sign-off by Finance + Operations.
+- Named owner and KPI per initiative before launch approval.
+
+---
+
+## 8. Decision Ask
+
+Approve immediate launch of a wave-1 transformation package with the following conditions:
+1. Close the remaining active APLIX session.
+2. Confirm KPI baselines for value-model conversion.
+3. Assign initiative owners and 90-day governance cadence.
+
+---
+
+## Appendix A - Evidence Sample (Verbatim Snippets)
+
+Representative examples from APLIX respondent answers:
+- “We currently do not calculate an OEE.”
+- “We rely heavily on manual reporting after the fact.”
+- “Most production decisions are made after the fact.”
+- “Failure to consistently follow proper change management protocol...”
+- “Work order and cycle counting issues...”
+- “Finance spends too much time validating inputs.”
+
+These excerpts are included to demonstrate evidence traceability for each insight.
+
+## Appendix B - Data Notes
+
+- Analytical sample excludes non-APLIX domains by rule.
+- Historical non-APLIX records remain in system audit history but are excluded from client-facing analytical conclusions.

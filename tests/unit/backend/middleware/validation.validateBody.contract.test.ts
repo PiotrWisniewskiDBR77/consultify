@@ -20,6 +20,8 @@ function makeRes() {
   const res: any = {};
   res.status = vi.fn(() => res);
   res.json = vi.fn(() => res);
+  res.type = vi.fn(() => res);
+  res.send = vi.fn(() => res);
   return res;
 }
 
@@ -108,6 +110,40 @@ describe('validation.middleware (L1 contract)', () => {
 
       mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(500);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 when schema is not Zod-like (missing safeParse)', () => {
+      const mw = validateBody(null as unknown as z.ZodSchema);
+      const req: any = { body: {}, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
+      expect(next).not.toHaveBeenCalled();
+      expect(loggerError).toHaveBeenCalled();
+    });
+
+    it('still completes 400 when res.json throws once (fallback send path)', () => {
+      const schema = z.object({ name: z.string().min(2) });
+      const mw = validateBody(schema);
+      const req: any = { body: { name: 'a' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      let jsonCalls = 0;
+      res.json = vi.fn(() => {
+        jsonCalls += 1;
+        if (jsonCalls === 1) throw new Error('json boom');
+        return res;
+      });
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
     });
 

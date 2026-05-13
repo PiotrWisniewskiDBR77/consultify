@@ -98,6 +98,34 @@ describe('planLimits.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 503 when dynamically imported access policy module export has no checkAccess', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+    vi.doMock('../../../../server/src/services/accessPolicyService.js', () => ({
+      default: {},
+    }));
+
+    const { checkPlanLimit, setAccessPolicyServiceForTests } = await import(
+      '../../../../server/src/middleware/planLimits.middleware.ts'
+    );
+    setAccessPolicyServiceForTests(null);
+    const middleware = checkPlanLimit('max_projects');
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Plan limit service unavailable',
+      errorCode: 'PLAN_LIMIT_CHECK_UNAVAILABLE',
+      code: 'PLAN_LIMIT_CHECK_UNAVAILABLE',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 503 for malformed checkAccess response shape', async () => {
     vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
     vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
@@ -417,5 +445,46 @@ describe('planLimits.middleware', () => {
     expect(next).not.toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when next is not a function on allow path', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const checkAccess = vi.fn().mockResolvedValue({ allowed: true });
+    const { checkPlanLimit, setAccessPolicyServiceForTests } = await import(
+      '../../../../server/src/middleware/planLimits.middleware.ts'
+    );
+    setAccessPolicyServiceForTests({ checkAccess } as any);
+    const middleware = checkPlanLimit('max_projects');
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+
+    await expect(middleware(req, res, 123 as any)).resolves.toBeUndefined();
+    expect(checkAccess).toHaveBeenCalledWith('org-1', 'create_project');
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when next throws synchronously on allow path', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const checkAccess = vi.fn().mockResolvedValue({ allowed: true });
+    const { checkPlanLimit, setAccessPolicyServiceForTests } = await import(
+      '../../../../server/src/middleware/planLimits.middleware.ts'
+    );
+    setAccessPolicyServiceForTests({ checkAccess } as any);
+    const middleware = checkPlanLimit('max_projects');
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn(() => {
+      throw new Error('next boom');
+    });
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+    expect(checkAccess).toHaveBeenCalledWith('org-1', 'create_project');
+    expect(res.status).not.toHaveBeenCalled();
   });
 });

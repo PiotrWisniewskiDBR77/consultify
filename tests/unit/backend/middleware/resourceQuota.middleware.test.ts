@@ -53,6 +53,26 @@ describe('Resource Quota Middleware', () => {
   });
 
   describe('checkMemoryQuota', () => {
+    it('should log async rejection from next() after successful memory check', async () => {
+      mockNext = vi.fn(() => Promise.reject(new Error('next async boom'))) as unknown as NextFunction;
+      vi.mocked(queryHelpers.queryOne)
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockResolvedValueOnce({ id: 'plan-123', memory_limit_mb: 1000 })
+        .mockResolvedValueOnce({
+          memory_usage_mb_current: 500,
+          cpu_usage_percent_avg: 25,
+        });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      await vi.waitFor(() =>
+        expect(logger.warn).toHaveBeenCalledWith(
+          '[ResourceQuota] next() rejected',
+          expect.objectContaining({ phase: 'memory-pass', error: expect.any(Error) })
+        )
+      );
+    });
+
     it('should swallow synchronous throws from next() after successful memory check', async () => {
       mockNext = vi.fn(() => {
         throw new Error('next sync boom');
@@ -167,6 +187,17 @@ describe('Resource Quota Middleware', () => {
       expect(statusSpy).not.toHaveBeenCalled();
     });
 
+    it('should pass when subscription plan id is whitespace-only', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy.mockResolvedValueOnce({ subscription_plan_id: '   \t' });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(1);
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+    });
+
     it('should pass when subscription plan has no memory limit', async () => {
       vi.mocked(queryHelpers.queryOne)
         .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
@@ -235,6 +266,23 @@ describe('Resource Quota Middleware', () => {
 
       await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
+    });
+
+    it('should stop before usage query when response commits after plan read', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockImplementationOnce(async () => {
+          (mockRes as any).headersSent = true;
+          return { id: 'plan-123', memory_limit_mb: 1000 };
+        });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(2);
       expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalled();
       expect(jsonSpy).not.toHaveBeenCalled();
@@ -339,6 +387,19 @@ describe('Resource Quota Middleware', () => {
       expect(statusSpy).not.toHaveBeenCalled();
     });
 
+    it('should log non-Error CPU failures with normalized message payload', async () => {
+      vi.mocked(queryHelpers.queryOne).mockRejectedValue('cpu-db-failure');
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[ResourceQuota] CPU quota check failed',
+        expect.objectContaining({ message: 'cpu-db-failure' })
+      );
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+    });
+
     it('should not call next on memory DB error when response is already committed', async () => {
       vi.mocked(queryHelpers.queryOne).mockImplementation(async () => {
         (mockRes as any).headersSent = true;
@@ -353,6 +414,23 @@ describe('Resource Quota Middleware', () => {
   });
 
   describe('checkCPUQuota', () => {
+    it('should log async rejection from next() after successful CPU check', async () => {
+      mockNext = vi.fn(() => Promise.reject(new Error('next cpu async boom'))) as unknown as NextFunction;
+      vi.mocked(queryHelpers.queryOne)
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockResolvedValueOnce({ id: 'plan-123', cpu_quota_percent: 75 })
+        .mockResolvedValueOnce({ cpu_usage_percent_avg: 50 });
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      await vi.waitFor(() =>
+        expect(logger.warn).toHaveBeenCalledWith(
+          '[ResourceQuota] next() rejected',
+          expect.objectContaining({ phase: 'cpu-pass', error: expect.any(Error) })
+        )
+      );
+    });
+
     it('should swallow synchronous throws from next() after successful CPU check', async () => {
       mockNext = vi.fn(() => {
         throw new Error('next cpu sync boom');
@@ -420,6 +498,17 @@ describe('Resource Quota Middleware', () => {
 
       await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should pass when subscription plan id is whitespace-only for CPU check', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy.mockResolvedValueOnce({ subscription_plan_id: '   ' });
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(1);
       expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalled();
     });
@@ -574,6 +663,19 @@ describe('Resource Quota Middleware', () => {
 
       await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should log non-Error budget failures with normalized message payload', async () => {
+      vi.mocked(queryHelpers.queryOne).mockRejectedValue('budget-db-failure');
+
+      await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[ResourceQuota] Budget quota check failed',
+        expect.objectContaining({ message: 'budget-db-failure' })
+      );
       expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalled();
     });

@@ -24,6 +24,22 @@ describe('piiEncryption.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('encryptRequestPII does not throw when next is not a function', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const req: any = {
+      path: '/api/users',
+      method: 'POST',
+      body: { email: 'user@example.com' },
+    };
+
+    expect(() => encryptRequestPII(req, {} as any, undefined as any)).not.toThrow();
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[PIIEncryption] next is not a function; skipping continuation',
+      expect.objectContaining({ context: expect.stringContaining('encryptRequestPII') })
+    );
+    errorSpy.mockRestore();
+  });
+
   it('decryptResponsePII continues when response json binder throws', () => {
     const req: any = { path: '/api/users' };
     const res: any = {};
@@ -37,6 +53,19 @@ describe('piiEncryption.middleware', () => {
 
     expect(() => decryptResponsePII(req, res, next)).not.toThrow();
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('decryptResponsePII does not throw when next is not a function', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const req: any = { path: '/api/users' };
+    const res: any = { json: vi.fn((payload: unknown) => payload) };
+
+    expect(() => decryptResponsePII(req, res, undefined as any)).not.toThrow();
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[PIIEncryption] next is not a function; skipping continuation',
+      expect.objectContaining({ context: expect.stringContaining('decryptResponsePII') })
+    );
+    errorSpy.mockRestore();
   });
 
   it('decryptResponsePII skips wrapping when res.json is non-callable value', () => {
@@ -142,6 +171,23 @@ describe('piiEncryption.middleware', () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(req.body.email).toMatch(/^enc:v[a-z0-9]+:/);
+  });
+
+  it('piiEncryptionMiddleware applies to route with duplicate slashes in path', () => {
+    const req: any = {
+      path: '//api/users',
+      method: 'POST',
+      body: { email: 'user@example.com' },
+    };
+    const originalJson = vi.fn((payload: unknown) => payload);
+    const res: any = { json: originalJson };
+    const next = vi.fn();
+
+    piiEncryptionMiddleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.body.email).toMatch(/^enc:v[a-z0-9]+:/);
+    expect(res.json).not.toBe(originalJson);
   });
 
   it('decryptResponsePII wraps response json only once per response', () => {

@@ -67,6 +67,10 @@ const responseWriteBlocked = (res: Response): boolean =>
   safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded, false);
 const MIN_API_KEY_CHARS = 12;
 const MAX_API_KEY_CHARS = 512;
+const MAX_API_KEY_TRANSPORT_SLACK_CHARS = 128;
+const MAX_BEARER_AUTHORIZATION_CHARS =
+  'Bearer '.length + MAX_API_KEY_CHARS + MAX_API_KEY_TRANSPORT_SLACK_CHARS;
+const MAX_X_API_KEY_HEADER_CHARS = MAX_API_KEY_CHARS + MAX_API_KEY_TRANSPORT_SLACK_CHARS;
 const DEFAULT_API_KEY_RATE_LIMIT = 60;
 const MAX_API_KEY_RATE_LIMIT = 1_000_000;
 const API_KEY_ATTEMPT_FINGERPRINT_CHARS = 16;
@@ -140,7 +144,7 @@ function checkRateLimit(
 }
 
 // Cleanup old entries periodically
-setInterval(() => {
+const rateLimitCleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [keyId, entry] of rateLimitStore.entries()) {
     if (entry.resetAt < now) {
@@ -148,6 +152,7 @@ setInterval(() => {
     }
   }
 }, 60 * 1000); // Every minute
+rateLimitCleanupTimer.unref?.();
 
 // ==========================================
 // MIDDLEWARE
@@ -484,27 +489,28 @@ function extractApiKey(req: Request): string | null {
     const normalized = normalizeOptionalString(value);
     return normalized?.startsWith('ck_') ? normalized : null;
   };
+  const extractBearerToken = (value: string): string | null => {
+    const match = /^Bearer\s+/i.exec(value);
+    if (!match) return null;
+    const bearerToken = normalizeOptionalString(value.slice(match[0].length));
+    return normalizeApiKeyCandidate(bearerToken);
+  };
 
   // Check Authorization header (Bearer token)
   const authHeader = safeRead(
     () => req.headers.authorization,
     undefined as string | string[] | undefined
   );
-  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
-    const bearerToken = normalizeOptionalString(authHeader.slice(7));
-    const normalizedBearer = normalizeApiKeyCandidate(bearerToken);
-    if (normalizedBearer) {
-      return normalizedBearer;
-    }
+  if (typeof authHeader === 'string' && authHeader.length <= MAX_BEARER_AUTHORIZATION_CHARS) {
+    const normalizedBearer = extractBearerToken(authHeader);
+    if (normalizedBearer) return normalizedBearer;
   }
   if (Array.isArray(authHeader)) {
     for (const headerValue of authHeader) {
       if (typeof headerValue !== 'string') continue;
-      if (headerValue.startsWith('Bearer ')) {
-        const bearerToken = normalizeOptionalString(headerValue.slice(7));
-        const normalizedBearer = normalizeApiKeyCandidate(bearerToken);
-        if (normalizedBearer) return normalizedBearer;
-      }
+      if (headerValue.length > MAX_BEARER_AUTHORIZATION_CHARS) continue;
+      const normalizedBearer = extractBearerToken(headerValue);
+      if (normalizedBearer) return normalizedBearer;
       const normalizedHeader = normalizeApiKeyCandidate(headerValue);
       if (normalizedHeader) return normalizedHeader;
     }
@@ -512,7 +518,7 @@ function extractApiKey(req: Request): string | null {
 
   // Check X-API-Key header
   const xApiKey = safeRead(() => req.headers['x-api-key'], undefined as unknown);
-  if (typeof xApiKey === 'string') {
+  if (typeof xApiKey === 'string' && xApiKey.length <= MAX_X_API_KEY_HEADER_CHARS) {
     const normalizedApiKey = normalizeApiKeyCandidate(xApiKey);
     if (normalizedApiKey) {
       return normalizedApiKey;
@@ -520,6 +526,9 @@ function extractApiKey(req: Request): string | null {
   }
   if (Array.isArray(xApiKey)) {
     for (const keyCandidate of xApiKey) {
+      if (typeof keyCandidate === 'string' && keyCandidate.length > MAX_X_API_KEY_HEADER_CHARS) {
+        continue;
+      }
       const normalizedApiKey = normalizeApiKeyCandidate(keyCandidate);
       if (normalizedApiKey) return normalizedApiKey;
     }
@@ -527,7 +536,7 @@ function extractApiKey(req: Request): string | null {
 
   // Check query parameter (not recommended, but supported)
   const queryKey = safeRead(() => req.query.api_key, undefined as unknown);
-  if (typeof queryKey === 'string') {
+  if (typeof queryKey === 'string' && queryKey.length <= MAX_X_API_KEY_HEADER_CHARS) {
     const normalizedQueryKey = normalizeApiKeyCandidate(queryKey);
     if (normalizedQueryKey) {
       return normalizedQueryKey;
@@ -535,6 +544,9 @@ function extractApiKey(req: Request): string | null {
   }
   if (Array.isArray(queryKey)) {
     for (const keyCandidate of queryKey) {
+      if (typeof keyCandidate === 'string' && keyCandidate.length > MAX_X_API_KEY_HEADER_CHARS) {
+        continue;
+      }
       const normalizedQueryKey = normalizeApiKeyCandidate(keyCandidate);
       if (normalizedQueryKey) return normalizedQueryKey;
     }

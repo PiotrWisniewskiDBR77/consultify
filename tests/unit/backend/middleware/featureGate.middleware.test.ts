@@ -343,6 +343,27 @@ describe('featureGate.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireFeature logs skip reason when deny response is skipped because headers are sent', () => {
+    const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const mw = requireFeature('benchmark_access');
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE' };
+    const res = makeRes();
+    res.headersSent = true;
+    const next = vi.fn();
+
+    mw(req, res as any, next as any);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[featureGate] Skipped JSON response write (response already finalized)',
+      expect.objectContaining({
+        skipReason: 'headersSent',
+        statusCode: 403,
+        errorCode: 'FEATURE_ACCESS_DENIED',
+      })
+    );
+    warnSpy.mockRestore();
+  });
+
   it('requireFeature rejects feature ids containing control characters with 500', () => {
     const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
     const mw = requireFeature('demo_view\u0000');
@@ -371,6 +392,35 @@ describe('featureGate.middleware', () => {
     expect(() => mw(req, res as any, 'not-a-function' as any)).not.toThrow();
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it('requireAccess returns 500 when role requirement getter throws unexpectedly', () => {
+    const requirements: any = { phase: ['G'], state: ['ECOSYSTEM_NODE'], role: ['ADMIN'] };
+    const normalizeRoleSpy = vi.spyOn(String.prototype, 'toUpperCase').mockImplementation(function () {
+      if (this.toString() === 'ADMIN') {
+        throw new Error('normalize role failed');
+      }
+      return this.toString();
+    });
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const mw = requireAccess(requirements);
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE', userRole: 'ADMIN' };
+    const res = makeRes();
+    const next = vi.fn();
+
+    try {
+      expect(() => mw(req, res as any, next as any)).not.toThrow();
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'FEATURE_GATE_INTERNAL',
+        })
+      );
+      expect(next).not.toHaveBeenCalled();
+    } finally {
+      normalizeRoleSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
   });
 
   it('requireAccess ignores inherited requirements and returns 500 when no own rule arrays exist', () => {

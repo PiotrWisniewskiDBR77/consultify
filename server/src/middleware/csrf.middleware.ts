@@ -72,6 +72,31 @@ function hasConflictingCsrfHeaderValues(req: Request): boolean {
   if (normalized.length <= 1) return false;
   return new Set(normalized).size > 1;
 }
+function hasConflictingCsrfHeaderKeySources(req: Request): boolean {
+  const normalizeHeaderValue = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      return normalized.length > 0 ? normalized : undefined;
+    }
+    if (Array.isArray(value) && value.length > 0) {
+      const first = value[0];
+      if (typeof first === 'string') {
+        const normalized = first.trim();
+        return normalized.length > 0 ? normalized : undefined;
+      }
+    }
+    return undefined;
+  };
+  const lower = safeRead(() => req.headers?.[CSRF_HEADER_NAME], undefined as unknown);
+  const upper = safeRead(
+    () => (req.headers as Record<string, unknown>)?.[CSRF_HEADER_NAME.toUpperCase()],
+    undefined as unknown
+  );
+  const normalizedLower = normalizeHeaderValue(lower);
+  const normalizedUpper = normalizeHeaderValue(upper);
+  if (!normalizedLower || !normalizedUpper) return false;
+  return normalizedLower !== normalizedUpper;
+}
 
 function isTestEnv() {
   return process.env.NODE_ENV === 'test' || !!process.env.VITEST;
@@ -137,6 +162,8 @@ function sendCsrfForbidden(
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.status(403).json(body);
 }
 
@@ -189,7 +216,7 @@ export const csrfValidationMiddleware = (req: Request, res: Response, next: Next
 
   const cookieTok = readCsrfCookieRaw(req);
   const headerTok = readCsrfHeader(req);
-  if (hasConflictingCsrfHeaderValues(req)) {
+  if (hasConflictingCsrfHeaderValues(req) || hasConflictingCsrfHeaderKeySources(req)) {
     sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
     return;
   }

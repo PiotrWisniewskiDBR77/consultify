@@ -78,11 +78,31 @@ const sendPlanLimitsJson = (
     return false;
   }
 };
+const invokeNext = (nextFn: NextFunction, error?: unknown): void => {
+  if (typeof nextFn !== 'function') {
+    logger.error('[PlanLimits] next is not a function; skipping');
+    return;
+  }
+  try {
+    if (error !== undefined) {
+      nextFn(error);
+      return;
+    }
+    nextFn();
+  } catch (syncError) {
+    logger.error('[PlanLimits] next() threw synchronously:', syncError);
+  }
+};
 
-async function getAccessPolicyService(): Promise<AccessPolicyServiceLike> {
+async function getAccessPolicyService(): Promise<AccessPolicyServiceLike | null> {
   if (accessPolicyService) return accessPolicyService;
   const mod = await import('../services/accessPolicyService.js');
-  accessPolicyService = (mod.default || mod) as AccessPolicyServiceLike;
+  const candidate = (mod.default || mod) as { checkAccess?: unknown };
+  if (typeof candidate !== 'object' || candidate === null || typeof candidate.checkAccess !== 'function') {
+    logger.error('[PlanLimits] Access policy module export missing checkAccess');
+    return null;
+  }
+  accessPolicyService = candidate as AccessPolicyServiceLike;
   return accessPolicyService;
 }
 
@@ -121,7 +141,7 @@ export const checkPlanLimit = (limitKey: string) => {
         );
         return;
       }
-      next();
+      invokeNext(next);
       return;
     }
 
@@ -142,6 +162,14 @@ export const checkPlanLimit = (limitKey: string) => {
 
     try {
       const service = await getAccessPolicyService();
+      if (!service) {
+        sendPlanLimitsJson(res, 503, {
+          error: 'Plan limit service unavailable',
+          errorCode: 'PLAN_LIMIT_CHECK_UNAVAILABLE',
+          code: 'PLAN_LIMIT_CHECK_UNAVAILABLE',
+        });
+        return;
+      }
       const checkAccess = safeRead(
         () => (service as { checkAccess?: unknown }).checkAccess,
         undefined
@@ -200,7 +228,7 @@ export const checkPlanLimit = (limitKey: string) => {
         logger.warn('[PlanLimits] Response already committed; skipping next() after allow');
         return;
       }
-      next();
+      invokeNext(next);
     } catch (error) {
       logger.error('[PlanLimits] Failed to enforce plan limit:', error);
       const sent = sendPlanLimitsJson(res, 503, {
@@ -209,7 +237,7 @@ export const checkPlanLimit = (limitKey: string) => {
         code: 'PLAN_LIMIT_CHECK_UNAVAILABLE',
       });
       if (!sent && !safeRead(() => res.headersSent, false)) {
-        next(error instanceof Error ? error : new Error('Plan limit enforcement failed'));
+        invokeNext(next, error instanceof Error ? error : new Error('Plan limit enforcement failed'));
       }
     }
   };

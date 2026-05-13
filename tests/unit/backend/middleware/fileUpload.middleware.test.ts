@@ -1,9 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
+import * as fs from 'fs';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildSafeUploadedFilename,
   FILE_UPLOAD_DISALLOWED_TYPE_CODE,
   FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE,
+  FILE_UPLOAD_INVALID_FILENAME_CODE,
+  FILE_UPLOAD_INVALID_FILENAME_MESSAGE,
+  FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE,
+  FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE,
   fileFilter,
   isPathInsideDir,
   resolveAssessmentUploadDir,
@@ -12,10 +17,19 @@ import {
 } from '../../../../server/src/middleware/fileUpload.middleware.ts';
 
 describe('fileUpload.middleware', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   const expectDisallowedTypeError = (err: unknown) => {
     expect(err).toBeInstanceOf(Error);
     expect((err as Error & { code?: string }).code).toBe(FILE_UPLOAD_DISALLOWED_TYPE_CODE);
     expect((err as Error).message).toBe(FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE);
+  };
+  const expectInvalidFilenameError = (err: unknown) => {
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error & { code?: string }).code).toBe(FILE_UPLOAD_INVALID_FILENAME_CODE);
+    expect((err as Error).message).toBe(FILE_UPLOAD_INVALID_FILENAME_MESSAGE);
   };
 
   it('rejects file safely when originalname accessor throws', () => {
@@ -68,7 +82,7 @@ describe('fileUpload.middleware', () => {
   it('buildSafeUploadedFilename truncates oversized client basenames', () => {
     const filename = buildSafeUploadedFilename(`${'a'.repeat(500)}.pdf`);
     expect(filename).toMatch(/\.pdf$/);
-    expect(filename.length).toBeLessThan(220);
+    expect(filename.length).toBeLessThanOrEqual(200);
   });
 
   it('buildSafeUploadedFilename uses non-decimal entropy segment', () => {
@@ -115,6 +129,36 @@ describe('fileUpload.middleware', () => {
     expect(cb).toHaveBeenCalledWith(null, true);
   });
 
+  it('rejects filenames containing null-byte control characters', () => {
+    const req: any = {};
+    const file: any = {
+      originalname: 'report\u0000.pdf',
+      mimetype: 'application/pdf',
+    };
+    const cb = vi.fn();
+
+    fileFilter(req, file, cb);
+
+    expect(cb).toHaveBeenCalledTimes(1);
+    expectInvalidFilenameError(cb.mock.calls[0][0]);
+    expect(cb.mock.calls[0][1]).toBe(false);
+  });
+
+  it('rejects filenames containing newline control characters', () => {
+    const req: any = {};
+    const file: any = {
+      originalname: 'report\n.pdf',
+      mimetype: 'application/pdf',
+    };
+    const cb = vi.fn();
+
+    fileFilter(req, file, cb);
+
+    expect(cb).toHaveBeenCalledTimes(1);
+    expectInvalidFilenameError(cb.mock.calls[0][0]);
+    expect(cb.mock.calls[0][1]).toBe(false);
+  });
+
   it('sanitizeOrgIdForUploadPath falls back to unknown for unsafe path-like values', () => {
     expect(sanitizeOrgIdForUploadPath('org-1')).toBe('org-1');
     expect(sanitizeOrgIdForUploadPath('../../../etc')).toBe('unknown');
@@ -129,6 +173,20 @@ describe('fileUpload.middleware', () => {
     } as any);
 
     expect(resolved).toContain('/uploads/assessments/unknown');
+  });
+
+  it('resolveAssessmentUploadDir returns canonical real path for organization directory', () => {
+    const resolved = resolveAssessmentUploadDir({
+      user: { organizationId: 'org-canonical' },
+    } as any);
+
+    expect(resolved).toContain('/uploads/assessments/org-canonical');
+    expect(resolved).toBe(fs.realpathSync(resolved));
+  });
+
+  it('exports stable workspace-unavailable error contract constants', () => {
+    expect(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE).toBe('Upload workspace unavailable');
+    expect(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE).toBe('FILE_UPLOAD_WORKSPACE_UNAVAILABLE');
   });
 
   it('isPathInsideDir accepts nested paths and rejects parent traversal', () => {

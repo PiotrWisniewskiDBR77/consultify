@@ -23,6 +23,8 @@ const WARNED_KEY_CAP = 2048;
 const WARNED_KEY_MAX_CHARS = 512;
 const SUNSET_INPUT_MAX_CHARS = 128;
 const LINK_TARGET_MAX_CHARS = 2048;
+const LINK_HEADER_MAX_CHARS = 4096;
+const LINK_REL_SUFFIX = '>; rel="successor-version"';
 
 const safeRead = <T>(reader: () => T, fallback: T): T => {
   try {
@@ -55,10 +57,10 @@ const evictWarnedKeysIfNeeded = (): void => {
 
 const safeSetHeader = (res: Response, key: string, value: string): void => {
   const alreadyCommitted = safeRead(() => {
-    if (res.headersSent === true) return true;
+    if (res.headersSent) return true;
     const writable = res as Response & { writableEnded?: boolean; writableFinished?: boolean };
-    if (writable.writableEnded === true) return true;
-    if (writable.writableFinished === true) return true;
+    if (writable.writableEnded) return true;
+    if (writable.writableFinished) return true;
     return false;
   }, true);
   if (alreadyCommitted) return;
@@ -92,12 +94,19 @@ export function deprecationHeader(v8Replacement: string, opts?: Partial<Deprecat
   if (successorPath.startsWith('//')) {
     successorPath = '/';
   }
+  const buildLinkHeader = (target: string): string => `<${target}${LINK_REL_SUFFIX}`;
+  let linkHeader = buildLinkHeader(successorPath);
+  if (linkHeader.length > LINK_HEADER_MAX_CHARS) {
+    const maxTargetChars = Math.max(0, LINK_HEADER_MAX_CHARS - (`<`.length + LINK_REL_SUFFIX.length));
+    successorPath = successorPath.slice(0, maxTargetChars);
+    linkHeader = buildLinkHeader(successorPath);
+  }
   const shouldLog = opts?.logFirstCall ?? true;
 
   return (req: Request, res: Response, next: NextFunction) => {
     safeSetHeader(res, 'Deprecation', 'true');
     safeSetHeader(res, 'Sunset', sunsetHeaderValue);
-    safeSetHeader(res, 'Link', `<${successorPath}>; rel="successor-version"`);
+    safeSetHeader(res, 'Link', linkHeader);
 
     if (shouldLog) {
       const method = stripControlChars(

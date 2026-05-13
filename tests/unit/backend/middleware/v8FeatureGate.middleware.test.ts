@@ -172,6 +172,28 @@ describe('v8FeatureGate.middleware', () => {
     else process.env.ENABLE_V8_GLOBAL = original;
   });
 
+  it('v8FeatureGate does not call next when headersSent accessor throws', () => {
+    const original = process.env.ENABLE_V8_GLOBAL;
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const req: any = {};
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+    Object.defineProperty(res, 'headersSent', {
+      configurable: true,
+      get: () => {
+        throw new Error('headersSent getter failed');
+      },
+    });
+    const next = vi.fn();
+
+    v8FeatureGate(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    if (original === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = original;
+  });
+
   it('v8FeatureGate logs warning when deny response writer throws', () => {
     const original = process.env.ENABLE_V8_GLOBAL;
     process.env.ENABLE_V8_GLOBAL = 'false';
@@ -253,6 +275,45 @@ describe('v8FeatureGate.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('v8OrgGate does not call next when headersSent accessor throws', async () => {
+    const req: any = { organizationId: 'org-ok' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+    Object.defineProperty(res, 'headersSent', {
+      configurable: true,
+      get: () => {
+        throw new Error('headersSent getter failed');
+      },
+    });
+    const next = vi.fn();
+
+    await v8OrgGate(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('v8OrgGate logs warning when missing-org response writer throws', async () => {
+    const req: any = { organizationId: 'undefined' };
+    const res: any = {
+      headersSent: false,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(() => {
+        throw new Error('json failed');
+      }),
+    };
+    const next = vi.fn();
+
+    await v8OrgGate(req, res, next);
+
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[v8:featureGate] V8 gate response write failed',
+      expect.objectContaining({
+        code: 'V8_GATE_RESPONSE_WRITE_FAILED',
+        statusCode: 400,
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('module gate returns 400 when organizationId exceeds max length', async () => {
     const req: any = { organizationId: 'o'.repeat(129) };
     const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
@@ -263,6 +324,32 @@ describe('v8FeatureGate.middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(mocks.isV8Enabled).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('module gate logs warning when disabled-org response writer throws', async () => {
+    mocks.isV8Enabled.mockResolvedValueOnce(false);
+    mocks.getV8Flags.mockResolvedValueOnce({ outputs: true });
+    const req: any = { organizationId: 'org-2' };
+    const res: any = {
+      headersSent: false,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(() => {
+        throw new Error('json failed');
+      }),
+    };
+    const next = vi.fn();
+    const moduleGate = createV8ModuleGate('outputs');
+
+    await moduleGate(req, res, next);
+
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[v8:featureGate] V8 gate response write failed',
+      expect.objectContaining({
+        code: 'V8_GATE_RESPONSE_WRITE_FAILED',
+        statusCode: 404,
+      })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 });

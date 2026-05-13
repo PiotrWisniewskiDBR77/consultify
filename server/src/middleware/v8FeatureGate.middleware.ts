@@ -46,7 +46,7 @@ const readOrgId = (req: AuthRequest): string | undefined =>
   normalizeOptionalString(safeRead(() => req.user?.organization_id, undefined));
 
 const safeNext = (res: Response, next: NextFunction): void => {
-  if (!safeRead(() => res.headersSent, false)) {
+  if (!safeRead(() => res.headersSent, true)) {
     try {
       next();
     } catch (error) {

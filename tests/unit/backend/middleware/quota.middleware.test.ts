@@ -231,6 +231,24 @@ describe('quota.middleware', () => {
     );
   });
 
+  it('records token usage when token count is numeric string', async () => {
+    const req: any = {
+      user: { organizationId: 'org-1', id: 'user-1' },
+      path: '/api/ai',
+      body: { model: 'gpt-5' },
+    };
+
+    await recordTokenUsageAfterResponse(req, {} as any, '42' as unknown as number, 'ai_call');
+
+    expect(mockUsageService.recordTokenUsage).toHaveBeenCalledWith(
+      'org-1',
+      'user-1',
+      42,
+      'ai_call',
+      expect.objectContaining({ endpoint: '/api/ai', model: 'gpt-5' })
+    );
+  });
+
   it('truncates recorded token usage action and metadata strings to safety caps', async () => {
     const req: any = {
       user: { organizationId: 'org-1', id: 'user-1' },
@@ -311,6 +329,23 @@ describe('quota.middleware', () => {
     expect(call[2].length).toBe(128);
     expect((call[3] as { endpoint: string; filename: string }).endpoint.length).toBe(512);
     expect((call[3] as { endpoint: string; filename: string }).filename.length).toBe(512);
+  });
+
+  it('records storage usage when bytes is numeric string', async () => {
+    const req: any = {
+      path: '/api/upload',
+      user: { organizationId: 'org-1' },
+      file: { originalname: 'file.txt' },
+    };
+
+    await recordStorageAfterUpload(req, ' 2048 ' as unknown as number, 'upload');
+
+    expect(mockUsageService.recordStorageUsage).toHaveBeenCalledWith(
+      'org-1',
+      2048,
+      'upload',
+      expect.objectContaining({ endpoint: '/api/upload', filename: 'file.txt' })
+    );
   });
 
   it('falls back to req.organizationId when req.user accessor throws in enforceStorageQuota', async () => {
@@ -545,6 +580,33 @@ describe('quota.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('accepts token quota payload when numeric fields are numeric strings', async () => {
+    mockUsageService.checkQuota.mockResolvedValueOnce({
+      allowed: true,
+      used: '90',
+      limit: '100',
+      percentage: '90',
+    } as any);
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.quotaInfo).toEqual({
+      allowed: true,
+      used: 90,
+      limit: 100,
+      percentage: 90,
+    });
+    expect(res.status).not.toHaveBeenCalledWith(503);
+  });
+
   it('returns 503 when token access policy payload is malformed', async () => {
     mockAccessPolicyService.checkAccess.mockResolvedValueOnce(null);
     const req: any = { user: { organizationId: 'org-1' } };
@@ -590,6 +652,42 @@ describe('quota.middleware', () => {
       expect.objectContaining({ orgId: 'org-1' })
     );
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('accepts storage quota payload when numeric fields are numeric strings', async () => {
+    mockUsageService.checkQuota.mockImplementation(async (_orgId: string, type: 'token' | 'storage') => {
+      if (type === 'storage') {
+        return {
+          allowed: true,
+          used: '900',
+          limit: '1000',
+          percentage: '90',
+        } as any;
+      }
+      return {
+        allowed: true,
+        used: 1,
+        limit: 100,
+        percentage: 1,
+      };
+    });
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.storageQuotaInfo).toEqual({
+      allowed: true,
+      used: 900,
+      limit: 1000,
+      percentage: 90,
+    });
+    expect(res.status).not.toHaveBeenCalledWith(503);
   });
 
   it('returns 503 when storage access policy payload is malformed', async () => {

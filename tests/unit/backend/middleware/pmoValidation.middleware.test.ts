@@ -71,6 +71,18 @@ describe('pmoValidation.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('validateInitiative returns 400 when owner id exceeds max allowed length', () => {
+    const req: any = { body: { ownerId: 'o'.repeat(129) } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    validateInitiative(req as any, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'OWNER_VALUE_TOO_LONG' }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('validateTask returns 400 when body accessor throws', async () => {
     const req: any = {};
     Object.defineProperty(req, 'body', {
@@ -96,6 +108,19 @@ describe('pmoValidation.middleware', () => {
     await validateTask(req as any, res, next as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  it('validateTask returns 400 when initiative id exceeds max allowed length', async () => {
+    const req: any = { body: { initiative_id: 'i'.repeat(129) } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateTask(req as any, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'INVALID_ENTITY_ID' }));
     expect(next).not.toHaveBeenCalled();
     expect(getMock).not.toHaveBeenCalled();
   });

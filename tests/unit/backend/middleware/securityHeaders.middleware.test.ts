@@ -96,6 +96,40 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('strips X-Powered-By when present', async () => {
+    vi.resetModules();
+    const { securityHeaders } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const req: any = {};
+    const res = mkRes();
+    res.removeHeader = vi.fn();
+    const next = vi.fn();
+
+    securityHeaders(req, res, next);
+
+    expect(res.removeHeader).toHaveBeenCalledWith('X-Powered-By');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('securityHeaders continues when removeHeader throws', async () => {
+    vi.resetModules();
+    const { securityHeaders } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const req: any = {};
+    const res = mkRes();
+    res.removeHeader = vi.fn(() => {
+      throw new Error('removeHeader failed');
+    });
+    const next = vi.fn();
+
+    expect(() => securityHeaders(req, res, next)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('securityHeaders does not throw when next throws', async () => {
     vi.resetModules();
     const { securityHeaders } = await import(
@@ -294,6 +328,31 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(nextB).not.toHaveBeenCalled();
   });
 
+  it('caps oversized ip key material so suffix-only differences share a limiter bucket', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-18T00:00:00.000Z'));
+    vi.resetModules();
+    const { createRateLimiter } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const limiter = createRateLimiter({ windowMs: 1000, max: 1, message: 'Limited' });
+    const sharedPrefix = '1.2.3.' + '9'.repeat(600);
+    const reqA: any = { ip: `${sharedPrefix}-a`, path: '/secure' };
+    const reqB: any = { ip: `${sharedPrefix}-b`, path: '/secure' };
+
+    const resA = mkRes();
+    const nextA = vi.fn();
+    limiter(reqA, resA, nextA);
+    expect(nextA).toHaveBeenCalledTimes(1);
+
+    const resB = mkRes();
+    const nextB = vi.fn();
+    limiter(reqB, resB, nextB);
+    expect(resB.status).toHaveBeenCalledWith(429);
+    expect(nextB).not.toHaveBeenCalled();
+  });
+
   it('validateRequest returns 400 with detailed errors', async () => {
     vi.resetModules();
     const { validateRequest } = await import(
@@ -332,11 +391,41 @@ describe('securityHeaders.middleware (L1)', () => {
 
     mw(req, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+    expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Validation failed',
         code: 'VALIDATION_ERROR',
         details: expect.any(Array),
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateRequest formats non-string enum values without throwing', async () => {
+    vi.resetModules();
+    const { validateRequest } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const mw = validateRequest({
+      mode: { type: 'number', enum: [1, 2, 3] },
+    });
+    const req: any = { body: { mode: 99 } };
+    const res = mkRes();
+    const next = vi.fn();
+
+    expect(() => mw(req, res, next)).not.toThrow();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        details: expect.arrayContaining([
+          expect.objectContaining({
+            field: 'mode',
+            message: expect.stringContaining('1, 2, 3'),
+          }),
+        ]),
       })
     );
     expect(next).not.toHaveBeenCalled();

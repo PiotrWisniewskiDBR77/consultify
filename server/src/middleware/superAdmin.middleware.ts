@@ -52,6 +52,7 @@ const MAX_SUPERADMIN_SUBJECT_ID_CHARS = 256;
 const MAX_SUPERADMIN_ORGANIZATION_ID_CHARS = 256;
 const MAX_SUPERADMIN_CAPABILITY_RAW_ARRAY_ENTRIES = 8192;
 const MAX_SUPERADMIN_CAPABILITY_CLAIM_ENTRIES = 64;
+const SUPERADMIN_JWS_COMPACT_TOKEN_PATTERN = /^[A-Za-z0-9._-]+$/;
 const SUPERADMIN_JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
   algorithms: ['HS256'],
   clockTolerance: 30,
@@ -247,6 +248,14 @@ export const verifySuperAdmin = async (
     });
     return;
   }
+  if (!SUPERADMIN_JWS_COMPACT_TOKEN_PATTERN.test(cleanToken)) {
+    res.status(401).json({
+      error: 'Unauthorized',
+      code: 'UNAUTHORIZED',
+      guidance: 'Refresh your session and retry.',
+    });
+    return;
+  }
 
   try {
     const decoded = await new Promise<JWTPayload>((resolve, reject) => {
@@ -280,6 +289,25 @@ export const verifySuperAdmin = async (
         guidance: 'Refresh your session and retry.',
       });
       return;
+    }
+    const decodedJwtSub = readOptionalStringClaim(decodedClaims, 'sub');
+    if (decodedJwtSub) {
+      if (decodedJwtSub.length > MAX_SUPERADMIN_SUBJECT_ID_CHARS) {
+        res.status(401).json({
+          error: 'Unauthorized',
+          code: 'UNAUTHORIZED',
+          guidance: 'Refresh your session and retry.',
+        });
+        return;
+      }
+      if (decodedJwtSub !== decodedUserId) {
+        res.status(401).json({
+          error: 'Unauthorized',
+          code: 'UNAUTHORIZED',
+          guidance: 'Refresh your session and retry.',
+        });
+        return;
+      }
     }
     const tokenRole = readOptionalStringClaim(decodedClaims, 'role');
     const tokenOrganizationId =
@@ -419,6 +447,36 @@ export const verifySuperAdmin = async (
 export const requireSuperAdminCapability =
   (...requiredCapabilities: SuperAdminCapability[]) =>
   (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (requiredCapabilities.length === 0) {
+      logger.error(
+        '[SuperAdmin Middleware] requireSuperAdminCapability invoked with empty capability list'
+      );
+      res.status(500).json({
+        error: 'Authentication policy misconfigured',
+        code: 'SUPERADMIN_CAPABILITY_GATE_MISCONFIGURED',
+        guidance: 'Contact platform support and retry after the policy is corrected.',
+      });
+      return;
+    }
+    const knownCapabilities = new Set<string>(SUPERADMIN_CAPABILITIES);
+    const unknownCapabilities = requiredCapabilities.filter(
+      (capability) => !knownCapabilities.has(capability)
+    );
+    if (unknownCapabilities.length > 0) {
+      logger.error(
+        '[SuperAdmin Middleware] requireSuperAdminCapability invoked with unknown capabilities',
+        {
+          code: 'SUPERADMIN_CAPABILITY_GATE_MISCONFIGURED',
+          unknownCapabilities,
+        }
+      );
+      res.status(500).json({
+        error: 'Authentication policy misconfigured',
+        code: 'SUPERADMIN_CAPABILITY_GATE_MISCONFIGURED',
+        guidance: 'Contact platform support and retry after the policy is corrected.',
+      });
+      return;
+    }
     const granted = new Set(
       getSuperAdminCapabilities(
         normalizeOptionalString(safeRead(() => req.userRole, undefined)) ||

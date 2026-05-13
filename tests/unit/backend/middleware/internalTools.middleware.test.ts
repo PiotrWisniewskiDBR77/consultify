@@ -204,6 +204,45 @@ describe('internalTools.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 404 when mailbox domain exceeds max supported length', () => {
+    const longDomain = 'a'.repeat(254);
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', longDomain);
+    const req: any = {
+      user: {
+        email: `admin@${longDomain}`,
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when email local-part exceeds max supported length', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', 'dbr77.com');
+    const req: any = {
+      user: {
+        email: `${'a'.repeat(65)}@dbr77.com`,
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 404 when role is a non-string object that stringifies to ADMIN', () => {
     const user: Record<string, unknown> = {
       email: 'admin@dbr77.com',

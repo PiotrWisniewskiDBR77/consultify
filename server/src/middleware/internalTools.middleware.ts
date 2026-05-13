@@ -5,6 +5,7 @@ import type { AuthRequest } from './auth.middleware.js';
 const DEFAULT_ALLOWED_EMAIL_DOMAINS = ['dbr77.com'];
 const DEFAULT_ALLOWED_ROLES = ['SUPERADMIN', 'ADMIN', 'OWNER'];
 const MAX_INTERNAL_TOOLS_EMAIL_CHARS = 254;
+const MAX_INTERNAL_TOOLS_EMAIL_LOCAL_PART_CHARS = 64;
 const MAX_INTERNAL_TOOLS_ORG_ID_CHARS = 128;
 const MAX_INTERNAL_TOOLS_ROLE_CHARS = 64;
 const MAX_INTERNAL_TOOLS_EMAIL_DOMAIN_CHARS = 253;
@@ -118,6 +119,20 @@ export function requireInternalToolsAccess(
     res.status(404).json({ error: 'Not found' });
     return;
   }
+  const atIndex = userEmail.lastIndexOf('@');
+  const localPart = atIndex > 0 ? userEmail.slice(0, atIndex) : '';
+  if (localPart.length > MAX_INTERNAL_TOOLS_EMAIL_LOCAL_PART_CHARS) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  const mailboxDomain = emailDomain(userEmail);
+  if (
+    mailboxDomain.length === 0 ||
+    mailboxDomain.length > MAX_INTERNAL_TOOLS_EMAIL_DOMAIN_CHARS
+  ) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
 
   const allowedDomains = csv(
     safeRead(() => process.env.INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS, undefined),
@@ -173,7 +188,7 @@ export function requireInternalToolsAccess(
     return;
   }
   const hasAllowedOrg = allowedOrgIds.length === 0 || allowedOrgIds.includes(orgId);
-  const hasAllowedDomain = allowedDomains.includes(emailDomain(userEmail));
+  const hasAllowedDomain = allowedDomains.includes(mailboxDomain);
   const hasAllowedRole = allowedRoles.includes(normalizeRole(roleRaw as string | null | undefined));
 
   if (!hasAllowedDomain || !hasAllowedRole || !hasAllowedOrg) {

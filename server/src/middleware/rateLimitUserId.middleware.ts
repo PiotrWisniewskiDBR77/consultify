@@ -9,7 +9,12 @@ import jwt from 'jsonwebtoken';
 
 const MAX_JWT_STRING_CHARS = 8192;
 const MAX_RATE_LIMIT_USER_ID_CHARS = 256;
-const DISALLOWED_TOKEN_CHARS = /[\u0000\r\n]/;
+const MAX_AUTHORIZATION_HEADER_VALUES = 16;
+const DISALLOWED_TOKEN_CHARS = /[\u0000-\u001F\u007F]/;
+const RATE_LIMIT_JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
+  algorithms: ['HS256'],
+  clockTolerance: 30,
+};
 
 const normalizeTokenCandidate = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -58,7 +63,8 @@ const extractToken = (req: Request): string | null => {
     if (normalizedHeaderToken) return normalizedHeaderToken;
   }
   if (Array.isArray(authHeader)) {
-    for (const headerValue of authHeader) {
+    const valuesToScan = authHeader.slice(0, MAX_AUTHORIZATION_HEADER_VALUES);
+    for (const headerValue of valuesToScan) {
       if (typeof headerValue !== 'string') continue;
       const bearerToken = stripBearerPrefix(headerValue);
       if (bearerToken) return bearerToken;
@@ -100,12 +106,14 @@ export function rateLimitUserIdMiddleware(req: Request, _res: Response, next: Ne
     const assignUserId = (decoded: unknown) => {
       const payload =
         decoded && typeof decoded === 'object'
-          ? (decoded as { id?: string; userId?: string; sub?: string })
+          ? (decoded as Record<string, unknown>)
           : null;
+      const readOwnClaim = (key: 'id' | 'userId' | 'sub'): string | undefined => {
+        if (!payload || !Object.hasOwn(payload, key)) return undefined;
+        return normalizeTokenCandidate(safeRead(() => payload[key], undefined));
+      };
       const candidate =
-        normalizeTokenCandidate(safeRead(() => payload?.id, undefined)) ||
-        normalizeTokenCandidate(safeRead(() => payload?.userId, undefined)) ||
-        normalizeTokenCandidate(safeRead(() => payload?.sub, undefined));
+        readOwnClaim('id') || readOwnClaim('userId') || readOwnClaim('sub');
       if (
         candidate &&
         candidate.length <= MAX_RATE_LIMIT_USER_ID_CHARS &&
@@ -119,7 +127,7 @@ export function rateLimitUserIdMiddleware(req: Request, _res: Response, next: Ne
 
     try {
       if (secret) {
-        assignUserId(jwt.verify(token, secret));
+        assignUserId(jwt.verify(token, secret, RATE_LIMIT_JWT_VERIFY_OPTIONS));
       } else {
         assignUserId(safeRead(() => jwt.decode(token), null));
       }

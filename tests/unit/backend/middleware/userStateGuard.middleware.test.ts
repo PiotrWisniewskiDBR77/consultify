@@ -256,6 +256,22 @@ describe('userStateGuard.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requirePermission denies when hasPermission throws', () => {
+    mockUserStateMachine.hasPermission.mockImplementation(() => {
+      throw new Error('machine boom');
+    });
+    const middleware = requirePermission('canWrite');
+    const req: any = { userState: 'ORG_MEMBER' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'PERMISSION_DENIED' }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('requirePermission returns 401 when user state is missing', () => {
     const middleware = requirePermission('canWrite');
     const req: any = {};
@@ -351,5 +367,19 @@ describe('userStateGuard.middleware', () => {
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/validation failed/i);
     expect(mockDb.run).not.toHaveBeenCalled();
+  });
+
+  it('transitionState still succeeds when getPhase throws only for fromState audit field', async () => {
+    mockUserStateMachine.validateTransition.mockReturnValue({ valid: true });
+    mockUserStateMachine.getPhase.mockImplementation((state: string) => {
+      if (state === 'ANON') throw new Error('getPhase boom');
+      return 'B';
+    });
+    mockDb.run.mockResolvedValue(undefined);
+
+    const result = await transitionState('u-1', 'ANON', 'TEAM_COLLAB');
+
+    expect(result.success).toBe(true);
+    expect(mockDb.run).toHaveBeenCalledTimes(1);
   });
 });

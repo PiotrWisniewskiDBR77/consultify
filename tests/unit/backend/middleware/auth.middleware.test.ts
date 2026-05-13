@@ -1101,6 +1101,34 @@ describe('AuthMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('rejects jti with control characters before revocation DB lookup', async () => {
+      mockReq.headers!['authorization'] = 'Bearer jti-control';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-jti-bad', jti: 'ok\u0000jti', iat: 1 });
+      });
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockDbGet).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('rejects jti with disallowed unicode before revocation DB lookup', async () => {
+      mockReq.headers!['authorization'] = 'Bearer jti-unicode';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-jti-unicode', jti: 'bad\u2028jti', iat: 1 });
+      });
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockDbGet).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('attaches user when jti present but no revoke-all marker exists', async () => {
       mockReq.headers!['authorization'] = 'Bearer ok-jti';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
@@ -1191,6 +1219,23 @@ describe('AuthMiddleware', () => {
       setDependencies({
         jwt: mockJwt as any,
         config: { JWT_SECRET: '   ' },
+        PermissionService: mockPermissionService,
+        dbGet: mockDbGet,
+      });
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should reject verification when JWT_SECRET is oversized', async () => {
+      mockReq.headers!['authorization'] = 'Bearer cfg-oversized';
+      setDependencies({
+        jwt: mockJwt as any,
+        config: { JWT_SECRET: 's'.repeat(4097) },
         PermissionService: mockPermissionService,
         dbGet: mockDbGet,
       });
@@ -1890,6 +1935,22 @@ describe('AuthMiddleware', () => {
       setDependencies({
         jwt: mockJwt as any,
         config: { JWT_SECRET: '   ' },
+        PermissionService: mockPermissionService,
+        dbGet: mockDbGet,
+      });
+
+      await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockReq.user).toBeUndefined();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('continues without user when optionalAuth JWT_SECRET is oversized', async () => {
+      mockReq.headers!['authorization'] = 'Bearer opt-oversized-secret';
+      setDependencies({
+        jwt: mockJwt as any,
+        config: { JWT_SECRET: 's'.repeat(4097) },
         PermissionService: mockPermissionService,
         dbGet: mockDbGet,
       });

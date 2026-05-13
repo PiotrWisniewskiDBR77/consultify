@@ -19,6 +19,7 @@ import logger from '../utils/Logger.js';
 const MAX_BODY_DEPTH = 10;
 const MAX_STRING_LENGTH = 50000; // 50KB per string field
 const MAX_ARRAY_ELEMENTS = 10000;
+const MAX_SUSPICIOUS_GRAPH_NODES = 5000;
 const isVitest = !!process.env.VITEST;
 
 function safeRead<T>(reader: () => T, fallback: T): T {
@@ -31,10 +32,10 @@ function safeRead<T>(reader: () => T, fallback: T): T {
 
 const normalizeContentTypeHeader = (req: Request): string => {
   const raw = safeRead(() => req.headers['content-type'], undefined as unknown);
-  if (typeof raw === 'string') return raw.toLowerCase();
+  if (typeof raw === 'string') return raw.trim().toLowerCase();
   if (Array.isArray(raw)) {
     const firstString = raw.find((item) => typeof item === 'string');
-    return typeof firstString === 'string' ? firstString.toLowerCase() : '';
+    return typeof firstString === 'string' ? firstString.trim().toLowerCase() : '';
   }
   return '';
 };
@@ -155,6 +156,8 @@ function checkForSuspiciousContent(
   rootField: string = 'body'
 ): void {
   if (!body || typeof body !== 'object') return;
+  const seen = new WeakSet<object>();
+  let visitedNodes = 0;
 
   const checkValue = (value: unknown, fieldPath: string): void => {
     if (typeof value === 'string' && isSuspicious(value)) {
@@ -162,7 +165,12 @@ function checkForSuspiciousContent(
         `[Security] Suspicious input detected: ${method} ${path} field="${fieldPath}" pattern="${value.substring(0, 100)}"`
       );
     } else if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return;
+      if (visitedNodes >= MAX_SUSPICIOUS_GRAPH_NODES) return;
+      seen.add(value);
+      visitedNodes += 1;
       for (const [key, val] of Object.entries(value)) {
+        if (visitedNodes >= MAX_SUSPICIOUS_GRAPH_NODES) return;
         checkValue(val, `${fieldPath}.${key}`);
       }
     }

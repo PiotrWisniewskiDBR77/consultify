@@ -176,26 +176,31 @@ export function performanceMetricsMiddleware(
 
   // Enable performance tracking for this request (if available)
   const metricsService = getMetricsService();
+  let performanceTrackingEnabled = false;
   if (typeof queryHelpers.enablePerformanceTracking === 'function') {
-    queryHelpers.enablePerformanceTracking((_queryType: string, duration: number) => {
-      try {
-        if (!Number.isFinite(duration) || duration < 0) {
-          return;
+    try {
+      queryHelpers.enablePerformanceTracking((_queryType: string, duration: number) => {
+        try {
+          if (!Number.isFinite(duration) || duration < 0) {
+            return;
+          }
+          if (req._performanceMetrics) {
+            req._performanceMetrics.dbQueryCount++;
+            req._performanceMetrics.dbQueryTime += duration;
+          }
+          // Record DB query metric for Prometheus
+          const dbType = process.env.DB_TYPE || 'postgres';
+          const queryType = sanitizeDbQueryType(_queryType);
+          metricsService.recordDbQuery(queryType, dbType, duration / 1000); // Convert to seconds
+        } catch (error) {
+          logger.warn('Performance middleware DB tracking callback failed', error);
         }
-        if (req._performanceMetrics) {
-          req._performanceMetrics.dbQueryCount++;
-          req._performanceMetrics.dbQueryTime += duration;
-        }
-        // Record DB query metric for Prometheus
-        const dbType = process.env.DB_TYPE || 'postgres';
-        const queryType = sanitizeDbQueryType(_queryType);
-        metricsService.recordDbQuery(queryType, dbType, duration / 1000); // Convert to seconds
-      } catch (error) {
-        logger.warn('Performance middleware DB tracking callback failed', error);
-      }
-    });
+      });
+      performanceTrackingEnabled = true;
+    } catch (error) {
+      logger.warn('Performance middleware enablePerformanceTracking failed', error);
+    }
   }
-  let performanceTrackingEnabled = typeof queryHelpers.enablePerformanceTracking === 'function';
   let trackingReleased = false;
   let finishObserved = false;
   const releasePerformanceTracking = (): void => {
@@ -260,12 +265,15 @@ export function performanceMetricsMiddleware(
           ) || null,
       };
 
-      metricsService.recordHttpRequest(requestMethod, routeLabel, statusCode, responseTime / 1000);
-
       // Store metric
       metricsStore.requests.push(metric);
       if (metricsStore.requests.length > MAX_ENTRIES) {
         metricsStore.requests.shift();
+      }
+      try {
+        metricsService.recordHttpRequest(requestMethod, routeLabel, statusCode, responseTime / 1000);
+      } catch (error) {
+        logger.warn('Performance middleware recordHttpRequest failed', error);
       }
 
       // Log slow requests or errors outside test mode.
@@ -290,8 +298,12 @@ export function performanceMetricsMiddleware(
 
       // Record error metric if status >= 400
       if (statusCode >= 400) {
-        const errorType = statusCode >= 500 ? 'server_error' : 'client_error';
-        metricsService.recordError(errorType, 'http');
+        try {
+          const errorType = statusCode >= 500 ? 'server_error' : 'client_error';
+          metricsService.recordError(errorType, 'http');
+        } catch (error) {
+          logger.warn('Performance middleware recordError failed', error);
+        }
       }
     } catch (error) {
       logger.warn('Performance middleware finish handler failed', error);
