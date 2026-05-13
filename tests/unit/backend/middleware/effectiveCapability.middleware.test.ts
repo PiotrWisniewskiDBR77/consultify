@@ -259,6 +259,36 @@ describe('effectiveCapability.middleware', () => {
     );
   });
 
+  it('does not attempt deny write when response finished is already true', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = {
+      headersSent: false,
+      finished: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[effectiveCapability] response already committed; skipping json write',
+      expect.objectContaining({ status: 403, phase: 'deny' })
+    );
+  });
+
   it('stays fail-open in shadow mode when capability is missing', async () => {
     process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
     process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
@@ -618,6 +648,39 @@ describe('effectiveCapability.middleware', () => {
       expect.objectContaining({ status: 403, phase: 'deny', path: '' })
     );
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('skips deny write when response becomes committed between pre-check and write attempt', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    let headersSentReads = 0;
+    const res: any = {
+      get headersSent() {
+        headersSentReads += 1;
+        return headersSentReads >= 2;
+      },
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[effectiveCapability] response committed before json write; skipping',
+      expect.objectContaining({ status: 403, phase: 'deny' })
+    );
   });
 
   it('logs and skips deny response when res.status is non-callable', async () => {

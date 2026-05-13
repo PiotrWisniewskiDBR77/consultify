@@ -248,6 +248,38 @@ describe('alertWatchdog.middleware', () => {
     expect(originalEnd).toHaveBeenCalledTimes(1);
   });
 
+  it('uses monotonic performance.now for duration when wall clock goes backward', async () => {
+    vi.resetModules();
+    const perfSpy = vi.spyOn(performance, 'now');
+    perfSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1025);
+    const nowSpy = vi.spyOn(Date, 'now');
+    let nowCall = 0;
+    nowSpy.mockImplementation(() => {
+      nowCall += 1;
+      if (nowCall === 1) return 5000;
+      if (nowCall === 2) return 1000;
+      return 5000;
+    });
+    const { default: alertWatchdog, getWatchdogStats } = await import(
+      '../../../../server/src/middleware/alertWatchdog.middleware.ts'
+    );
+    const before = getWatchdogStats();
+    const req: any = {};
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    alertWatchdog(req, res, next);
+    res.end();
+
+    const after = getWatchdogStats();
+    expect(after.totalRequests).toBe(before.totalRequests + 1);
+    expect(after.p95Ms).toBeGreaterThan(0);
+    expect(after.p95Ms).toBeLessThanOrEqual(25);
+
+    perfSpy.mockRestore();
+    nowSpy.mockRestore();
+  });
+
   it('still evaluates latency alert path when logger.error throws in 5xx alert branch', async () => {
     vi.resetModules();
     const { default: logger } = await import('../../../../server/src/utils/Logger.js');
@@ -255,6 +287,9 @@ describe('alertWatchdog.middleware', () => {
       throw new Error('logger.error failed');
     });
     const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const perfSpy = vi.spyOn(performance, 'now').mockImplementation(() => {
+      throw new Error('perf unavailable');
+    });
     const dateNowSpy = vi.spyOn(Date, 'now');
     let now = 1_000_000;
     dateNowSpy.mockImplementation(() => {
@@ -277,6 +312,7 @@ describe('alertWatchdog.middleware', () => {
 
     expect(errorSpy).toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalled();
+    perfSpy.mockRestore();
   });
 
   it('returns safe empty stats when stats computation throws', async () => {
@@ -337,5 +373,27 @@ describe('alertWatchdog.middleware', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('coalesces threshold checks to one scheduled immediate per synchronous burst', async () => {
+    vi.stubEnv('ALERT_WATCHDOG_CHECK_EVERY_N', '1');
+    vi.resetModules();
+    const setImmediateSpy = vi.spyOn(globalThis, 'setImmediate');
+    const { default: alertWatchdog } = await import(
+      '../../../../server/src/middleware/alertWatchdog.middleware.ts'
+    );
+
+    for (let i = 0; i < 25; i += 1) {
+      const req: any = {};
+      const res: any = { end: vi.fn(), statusCode: 200 };
+      const next = vi.fn();
+      alertWatchdog(req, res, next);
+      res.end();
+    }
+    await flushImmediate();
+
+    expect(setImmediateSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+    expect(setImmediateSpy.mock.calls.length).toBeLessThan(25);
+    setImmediateSpy.mockRestore();
   });
 });

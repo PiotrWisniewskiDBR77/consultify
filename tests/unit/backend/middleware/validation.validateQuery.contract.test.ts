@@ -48,4 +48,15 @@ describe('validateQuery (contract)', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect((req.query as any).limit).toBe(2);
   });
+
+  it('returns 500 when next is not a function on valid query payload', async () => {
+    const mw = validateQuery(schema);
+    const req: any = { query: { limit: '2' } };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+
+    mw(req, res, undefined as unknown as any);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
+  });
 });

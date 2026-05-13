@@ -100,6 +100,11 @@ const clampOptionalString = (value: string | undefined, maxChars: number): strin
 
 const readEntityId = (req: PMORequest): string | undefined =>
   normalizeOptionalString(safeRead(() => req.params?.id, undefined));
+const readTransitionErrorMessage = (reason: unknown): string => {
+  const normalized = normalizeOptionalString(reason);
+  if (!normalized) return 'Invalid status transition';
+  return clampOptionalString(normalized, MAX_PMO_TEXT_FIELD_CHARS) || 'Invalid status transition';
+};
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -252,7 +257,7 @@ export const validateInitiativeStatus = async (
 
     if (!validation.valid) {
       res.status(400).json({
-        error: validation.reason,
+        error: readTransitionErrorMessage(validation.reason),
         rule: 'INVALID_STATUS_TRANSITION',
         currentStatus: row.status,
         requestedStatus: status,
@@ -338,7 +343,7 @@ export const validateTaskStatus = async (
 
     if (!validation.valid) {
       res.status(400).json({
-        error: validation.reason,
+        error: readTransitionErrorMessage(validation.reason),
         rule: 'INVALID_STATUS_TRANSITION',
         currentStatus: row.status,
         requestedStatus: status,
@@ -367,60 +372,67 @@ export const logStatusChange = (entityType: string) => {
     }
 
     (res.json as any) = async (data: unknown) => {
-      const body = safeRead(() => req.body, {} as PMORequest['body']);
-      const nextStatus = normalizeOptionalString(body.status);
-      const organizationId = normalizeOptionalString(safeRead(() => req.organizationId, undefined));
-      const entityId = readEntityId(req);
-      const userId = normalizeOptionalString(safeRead(() => req.userId, undefined));
-      const previousStatus = normalizeOptionalString(safeRead(() => req.previousStatus, undefined));
-      const responseStatus = safeRead(() => res.statusCode, 500);
-      const entityIdWithinLimit = Boolean(
-        entityId && entityId.length > 0 && entityId.length <= MAX_PMO_ENTITY_ID_CHARS
-      );
+      try {
+        const body = safeRead(() => req.body, {} as PMORequest['body']);
+        const nextStatus = normalizeOptionalString(body.status);
+        const organizationId = normalizeOptionalString(safeRead(() => req.organizationId, undefined));
+        const entityId = readEntityId(req);
+        const userId = normalizeOptionalString(safeRead(() => req.userId, undefined));
+        const previousStatus = normalizeOptionalString(safeRead(() => req.previousStatus, undefined));
+        const responseStatus = safeRead(() => res.statusCode, 500);
+        const entityIdWithinLimit = Boolean(
+          entityId && entityId.length > 0 && entityId.length <= MAX_PMO_ENTITY_ID_CHARS
+        );
 
-      // Only log if successful and status changed, and we have a valid org context
-      if (
-        responseStatus < 400 &&
-        previousStatus &&
-        nextStatus &&
-        organizationId &&
-        entityIdWithinLimit
-      ) {
-        const logSql = `INSERT INTO activity_logs 
+        // Only log if successful and status changed, and we have a valid org context
+        if (
+          responseStatus < 400 &&
+          previousStatus &&
+          nextStatus &&
+          organizationId &&
+          entityIdWithinLimit
+        ) {
+          const logSql = `INSERT INTO activity_logs 
                     (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                     VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
 
-        try {
-          await DbPromise.run(logSql, [
-            uuidv4(),
-            organizationId,
-            userId,
-            entityType,
-            entityId,
-            JSON.stringify({ status: previousStatus }),
-            JSON.stringify({ status: nextStatus }),
-          ]);
-        } catch (err: any) {
-          // Log error but don't fail the request
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          const errorStack = err instanceof Error ? err.stack : undefined;
           try {
-            logger.error('[PMO Validation] Failed to log status change:', {
-              error: errorMessage,
-              stack: errorStack,
-              sql: logSql,
-              organizationId: organizationId || 'unknown',
-              userId: userId || null,
+            await DbPromise.run(logSql, [
+              uuidv4(),
+              organizationId,
+              userId,
               entityType,
-              entityId: entityId || '',
-            });
-          } catch (logErr) {
-            // Fallback if logging itself fails (e.g., circular reference)
-            logger.error('[PMO Validation] Failed to log status change:', errorMessage);
+              entityId,
+              JSON.stringify({ status: previousStatus }),
+              JSON.stringify({ status: nextStatus }),
+            ]);
+          } catch (err: any) {
+            // Log error but don't fail the request
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            const errorStack = err instanceof Error ? err.stack : undefined;
+            try {
+              logger.error('[PMO Validation] Failed to log status change:', {
+                error: errorMessage,
+                stack: errorStack,
+                sql: logSql,
+                organizationId: organizationId || 'unknown',
+                userId: userId || null,
+                entityType,
+                entityId: entityId || '',
+              });
+            } catch (logErr) {
+              // Fallback if logging itself fails (e.g., circular reference)
+              logger.error('[PMO Validation] Failed to log status change:', errorMessage);
+            }
           }
         }
+      } catch (wrapperError) {
+        try {
+          logger.error('[PMO Validation] logStatusChange wrapper failed', wrapperError);
+        } catch {
+          // fail-open: response must still be sent
+        }
       }
-
       return originalSend(data);
     };
 

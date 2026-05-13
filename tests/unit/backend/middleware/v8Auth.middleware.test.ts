@@ -51,6 +51,13 @@ describe('v8Auth.middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('requireV8OrgContext does not throw when next is not a function', () => {
+    const req: any = { organizationId: 'org-1' };
+    const res = makeRes();
+    expect(() => requireV8OrgContext(req, res as any, undefined as any)).not.toThrow();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('requireV8OrgContext denies when organizationId accessor throws', () => {
     const req: any = {};
     Object.defineProperty(req, 'organizationId', {
@@ -264,6 +271,41 @@ describe('v8Auth.middleware', () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(req.v8Context.userRole).toBe('ADMIN');
+  });
+
+  it('attachV8Context strips unicode line separator controls from userRole before attach', () => {
+    const req: any = {
+      organizationId: 'org-1',
+      userId: 'user-1',
+      userRole: '  ADM\u2028IN\u0085  ',
+    };
+    const res = makeRes();
+    const next = vi.fn();
+
+    attachV8Context(req, res as any, next as any);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.v8Context.userRole).toBe('ADMIN');
+  });
+
+  it('attachV8Context does not throw when next is not a function and context still attaches', () => {
+    const req: any = {
+      organizationId: 'org-1',
+      userId: 'user-1',
+      userRole: 'ADMIN',
+      user: { isSuperAdmin: false },
+    };
+    const res = makeRes();
+
+    expect(() => attachV8Context(req, res as any, undefined as any)).not.toThrow();
+    expect(req.v8Context).toEqual({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    expect(Object.isFrozen(req.v8Context)).toBe(true);
+    expect(res.status).not.toHaveBeenCalled();
   });
 
   it('attachV8Context sets empty userRole when role contains only control chars', () => {

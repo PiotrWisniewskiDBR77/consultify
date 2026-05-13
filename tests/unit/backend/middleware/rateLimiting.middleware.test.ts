@@ -41,6 +41,14 @@ describe('rateLimiting.middleware (L1)', () => {
     expect(mod.__private__.toSafeNonNegativeIntCount(12.9)).toBe(12);
     expect(mod.__private__.toSafeNonNegativeIntSeconds(Number.POSITIVE_INFINITY)).toBe(0);
     expect(mod.__private__.toSafeNonNegativeIntSeconds(1.1)).toBe(2);
+    expect(mod.__private__.resolveLimiterParams(365 * 24 * 60 * 60_000, 100)).toEqual({
+      windowMs: mod.__private__.MAX_RATE_LIMIT_WINDOW_MS,
+      max: 100,
+    });
+    expect(mod.__private__.resolveLimiterParams(60_000, 2_000_000_000)).toEqual({
+      windowMs: 60_000,
+      max: mod.__private__.MAX_RATE_LIMIT_MAX,
+    });
   });
 
   it('is a no-op in NODE_ENV=test', async () => {

@@ -289,13 +289,105 @@ describe('trialEntryGuard.middleware', () => {
 
     await trialEntryGuard(req, res, next);
 
-    expect(mockDbGet).toHaveBeenCalledTimes(1);
+    expect(mockDbGet).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'INVALID_HTTP_METHOD',
       })
     );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for active users when method normalizes to empty string without DB lookup', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'ACTIVE' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: '   ',
+      path: '/api/initiatives',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'INVALID_HTTP_METHOD',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when method exceeds max supported length without DB lookup', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: `P${'O'.repeat(100)}ST`,
+      path: '/api/initiatives',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'HTTP_METHOD_TOO_LONG',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('blocks organization invite route with single org segment', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'POST',
+      path: '/api/organizations/org-1/invite',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('blocks organization invite route with nested org segments', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'POST',
+      path: '/api/organizations/parent/child/invite',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('blocks reports export route for trial users', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'GET',
+      path: '/api/reports/r-1/export',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 

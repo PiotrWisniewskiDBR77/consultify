@@ -249,6 +249,36 @@ describe('validation.middleware (L1 contract)', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('caps validation path segment processing before joining into field string', () => {
+      const hugePath = Array.from({ length: 50_000 }, (_, i) => `s${i}`);
+      const schema: any = {
+        safeParse: () => ({
+          success: false,
+          error: {
+            issues: [
+              {
+                path: hugePath,
+                message: 'too deep',
+                code: 'custom',
+              },
+            ],
+          },
+        }),
+      };
+      const mw = validateBody(schema);
+      const req: any = { body: { any: 'x' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      const payload = (res.json as any).mock.calls[0][0];
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(payload.details[0].field).toContain('s63');
+      expect(payload.details[0].field).not.toContain('s1000');
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('logs bounded preview string for large validation error arrays', () => {
       loggerInfo.mockClear();
       const hugeIssues = Array.from({ length: 300 }, (_, index) => ({
@@ -320,6 +350,18 @@ describe('validation.middleware (L1 contract)', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 when next is not a function on valid body payload', () => {
+      const schema = z.object({ name: z.string().min(2) });
+      const mw = validateBody(schema);
+      const req: any = { body: { name: 'valid' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+
+      mw(req, res, undefined as unknown as any);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
     });
   });
 

@@ -28,6 +28,12 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
   const normalized = value.trim();
   return normalized || undefined;
 };
+const normalizeProjectIdInput = (value: unknown): string | undefined => {
+  const normalizedString = normalizeOptionalString(value);
+  if (normalizedString) return normalizedString;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return undefined;
+};
 
 const safeToFixed = (value: unknown, decimals: number, fallback: string): string => {
   const n = Number(value);
@@ -112,8 +118,8 @@ export async function enforceProjectQuota(
     const { usageService } = deps;
 
     const projectId =
-      normalizeOptionalString(safeRead(() => req.body?.project_id, undefined)) ||
-      normalizeOptionalString(safeRead(() => req.query?.projectId, undefined));
+      normalizeProjectIdInput(safeRead(() => req.body?.project_id, undefined)) ||
+      normalizeProjectIdInput(safeRead(() => req.query?.projectId, undefined));
 
     // If no project specified, skip project-level check (falls back to Org check)
     if (!projectId) {
@@ -147,8 +153,14 @@ export async function enforceProjectQuota(
       if (filePath) {
         try {
           if (canSafelyCleanupFilePath(filePath)) {
-            if (safeRead(() => fs.existsSync(filePath), false)) {
-              fs.unlinkSync(filePath);
+            if (canSafelyCleanupFilePath(filePath)) {
+              if (safeRead(() => fs.existsSync(filePath), false)) {
+                fs.unlinkSync(filePath);
+              }
+            } else {
+              logger.warn('Skipped project quota temp cleanup after path changed before unlink', {
+                filePath: path.basename(filePath),
+              });
             }
           } else {
             logger.warn('Skipped project quota temp cleanup outside upload root', {

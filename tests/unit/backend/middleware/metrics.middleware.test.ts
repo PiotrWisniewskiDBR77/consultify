@@ -224,6 +224,31 @@ describe('metrics.middleware', () => {
     expect(after.requests).toBe(before.requests);
   });
 
+  it('restores res.end and skips accounting when listener registration throws', () => {
+    const req: any = { method: 'GET' };
+    const originalEnd = vi.fn(function thisAwareEnd() {
+      return undefined;
+    });
+    const res: any = {
+      statusCode: 200,
+      end: originalEnd,
+      once: vi.fn(() => {
+        throw new Error('once failed');
+      }),
+    };
+    const next = vi.fn();
+    const before = getRequestMetrics();
+
+    expect(() => metricsMiddleware(req, res, next)).not.toThrow();
+    res.end();
+
+    const after = getRequestMetrics();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(typeof res.end).toBe('function');
+    expect(originalEnd).toHaveBeenCalledTimes(1);
+    expect(after.requests).toBe(before.requests);
+  });
+
   it('normalizes invalid statusCode values to 500', () => {
     const req: any = { method: 'GET' };
     const res: any = { end: vi.fn() };
@@ -314,6 +339,28 @@ describe('metrics.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(after.requests).toBe(before.requests + 1);
     expect((after.byStatus[200] || 0) - (before.byStatus[200] || 0)).toBe(1);
+  });
+
+  it('records final statusCode set during original end execution', () => {
+    const req: any = { method: 'GET' };
+    const innerEnd = vi.fn();
+    const res: any = {
+      statusCode: 200,
+      end: function (...args: any[]) {
+        this.statusCode = 404;
+        return innerEnd(...args);
+      },
+      once: vi.fn(),
+    };
+    const next = vi.fn();
+    const before = getRequestMetrics();
+
+    metricsMiddleware(req, res, next);
+    res.end();
+
+    const after = getRequestMetrics();
+    expect((after.byStatus[404] || 0) - (before.byStatus[404] || 0)).toBe(1);
+    expect((after.byStatus[200] || 0) - (before.byStatus[200] || 0)).toBe(0);
   });
 
   it('records completion metrics from finish event when end is not called', () => {

@@ -9,6 +9,16 @@ vi.mock('../../../../server/src/utils/v8MetricsStore.js', () => ({
 }));
 
 describe('v8Metrics.middleware', () => {
+  const flushNextTick = async (): Promise<void> =>
+    new Promise<void>((resolve) => {
+      process.nextTick(resolve);
+    });
+  const flushObservation = async (): Promise<void> => {
+    await Promise.resolve();
+    await new Promise((resolve) => setImmediate(resolve));
+    await flushNextTick();
+  };
+
   it('records metrics even when statusCode accessor throws', () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
@@ -61,15 +71,20 @@ describe('v8Metrics.middleware', () => {
     };
     const next = vi.fn();
     const now = vi.spyOn(Date, 'now');
+    const monotonicNow = vi.spyOn(performance, 'now');
     now.mockReturnValueOnce(1000);
     now.mockReturnValueOnce(500);
+    monotonicNow.mockImplementation(() => {
+      throw new Error('monotonic clock unavailable');
+    });
 
     v8MetricsMiddleware(req, res, next);
     finishHandlers[0]?.();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledWith(0, false);
     now.mockRestore();
+    monotonicNow.mockRestore();
   });
 
   it('registers finish listener only once for the same response object', async () => {
@@ -91,7 +106,7 @@ describe('v8Metrics.middleware', () => {
     expect(res.on).toHaveBeenCalledWith('close', expect.any(Function));
     expect(next).toHaveBeenCalledTimes(2);
     finishHandlers[0]?.();
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
@@ -110,7 +125,7 @@ describe('v8Metrics.middleware', () => {
     finishHandlers[0]?.();
     finishHandlers[0]?.();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
@@ -125,17 +140,22 @@ describe('v8Metrics.middleware', () => {
     };
     const next = vi.fn();
     const now = vi.spyOn(Date, 'now');
+    const monotonicNow = vi.spyOn(performance, 'now');
     now.mockImplementationOnce(() => {
       throw new Error('clock unavailable');
     });
     now.mockReturnValueOnce(1000);
+    monotonicNow.mockImplementation(() => {
+      throw new Error('monotonic clock unavailable');
+    });
 
     expect(() => v8MetricsMiddleware(req, res, next)).not.toThrow();
     expect(next).toHaveBeenCalledTimes(1);
     expect(() => finishHandlers[0]?.()).not.toThrow();
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledWith(0, false);
     now.mockRestore();
+    monotonicNow.mockRestore();
   });
 
   it('caps extremely large duration samples before recording', async () => {
@@ -149,15 +169,20 @@ describe('v8Metrics.middleware', () => {
     };
     const next = vi.fn();
     const now = vi.spyOn(Date, 'now');
+    const monotonicNow = vi.spyOn(performance, 'now');
     now.mockReturnValueOnce(0);
     now.mockReturnValueOnce(86_500_000);
+    monotonicNow.mockImplementation(() => {
+      throw new Error('monotonic clock unavailable');
+    });
 
     v8MetricsMiddleware(req, res, next);
     finishHandlers[0]?.();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledWith(86_400_000, true);
     now.mockRestore();
+    monotonicNow.mockRestore();
   });
 
   it('prefers res.once for finish registration when available', async () => {
@@ -179,7 +204,7 @@ describe('v8Metrics.middleware', () => {
     expect(res.once).toHaveBeenCalledWith('finish', expect.any(Function));
     expect(res.once).toHaveBeenCalledWith('close', expect.any(Function));
     expect(res.on).not.toHaveBeenCalled();
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
@@ -197,7 +222,7 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     handlers.close[0]?.();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
@@ -219,7 +244,7 @@ describe('v8Metrics.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(() => handlers.close[0]?.()).not.toThrow();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
@@ -238,7 +263,7 @@ describe('v8Metrics.middleware', () => {
     handlers.finish[0]?.();
     handlers.close[0]?.();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
@@ -258,7 +283,7 @@ describe('v8Metrics.middleware', () => {
 
     expect(res.once).toHaveBeenCalledWith('finish', expect.any(Function));
     expect(res.once).toHaveBeenCalledWith('close', expect.any(Function));
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
@@ -273,17 +298,22 @@ describe('v8Metrics.middleware', () => {
     };
     const next = vi.fn();
     const now = vi.spyOn(Date, 'now');
+    const monotonicNow = vi.spyOn(performance, 'now');
     now.mockReturnValueOnce(1000);
     now.mockImplementationOnce(() => {
       throw new Error('clock unavailable at finish');
+    });
+    monotonicNow.mockImplementation(() => {
+      throw new Error('monotonic clock unavailable');
     });
 
     v8MetricsMiddleware(req, res, next);
     expect(() => finishHandlers[0]?.()).not.toThrow();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledWith(0, false);
     now.mockRestore();
+    monotonicNow.mockRestore();
   });
 
   it('treats invalid statusCode values as non-error metrics classification', async () => {
@@ -303,7 +333,7 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     finishHandlers[0]?.();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledWith(expect.any(Number), false);
   });
 
@@ -325,7 +355,7 @@ describe('v8Metrics.middleware', () => {
     try {
       v8MetricsMiddleware(req, res, next);
       finishHandlers[0]?.();
-      await new Promise((resolve) => setImmediate(resolve));
+      await flushObservation();
       expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
       expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
     } finally {
@@ -357,13 +387,13 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     finishHandlers[0]?.();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(next).toHaveBeenCalledTimes(2);
     expect(res.on).toHaveBeenCalledTimes(4);
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
-  it('falls back to sync record path when queueMicrotask and setImmediate both throw', () => {
+  it('falls back past broken queueMicrotask/setImmediate via later scheduler', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -390,10 +420,101 @@ describe('v8Metrics.middleware', () => {
     try {
       v8MetricsMiddleware(req, res, next);
       finishHandlers[0]?.();
+      await flushNextTick();
       expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
     } finally {
       vi.stubGlobal('queueMicrotask', originalQueueMicrotask as any);
       vi.stubGlobal('setImmediate', originalSetImmediate as any);
+    }
+  });
+
+  it('uses nextTick scheduler when queueMicrotask and setImmediate are unavailable', async () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {};
+    const res: any = {
+      statusCode: 200,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    };
+    const next = vi.fn();
+    const originalQueueMicrotask = globalThis.queueMicrotask;
+    const originalSetImmediate = globalThis.setImmediate;
+    vi.stubGlobal(
+      'queueMicrotask',
+      vi.fn(() => {
+        throw new Error('queueMicrotask failed');
+      }) as any
+    );
+    vi.stubGlobal(
+      'setImmediate',
+      vi.fn(() => {
+        throw new Error('setImmediate failed');
+      }) as any
+    );
+    try {
+      v8MetricsMiddleware(req, res, next);
+      finishHandlers[0]?.();
+      expect(recordV8RequestMock).not.toHaveBeenCalled();
+      await flushNextTick();
+      expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.stubGlobal('queueMicrotask', originalQueueMicrotask as any);
+      vi.stubGlobal('setImmediate', originalSetImmediate as any);
+    }
+  });
+
+  it('prefers monotonic duration when performance.now is available', async () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {};
+    const res: any = {
+      statusCode: 500,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    };
+    const next = vi.fn();
+    const nowSpy = vi.spyOn(performance, 'now');
+    const dateNowSpy = vi.spyOn(Date, 'now');
+    dateNowSpy.mockReturnValueOnce(10_000);
+    dateNowSpy.mockReturnValueOnce(10_300);
+    nowSpy.mockReturnValueOnce(1_000);
+    nowSpy.mockReturnValueOnce(1_500);
+    try {
+      v8MetricsMiddleware(req, res, next);
+      finishHandlers[0]?.();
+      await flushObservation();
+      expect(recordV8RequestMock).toHaveBeenCalledWith(500, true);
+    } finally {
+      nowSpy.mockRestore();
+      dateNowSpy.mockRestore();
+    }
+  });
+
+  it('keeps monotonic duration stable when wall clock goes backwards', async () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {};
+    const res: any = {
+      statusCode: 200,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    };
+    const next = vi.fn();
+    const nowSpy = vi.spyOn(performance, 'now');
+    const dateNowSpy = vi.spyOn(Date, 'now');
+    dateNowSpy.mockReturnValueOnce(2_000);
+    dateNowSpy.mockReturnValueOnce(1_000);
+    nowSpy.mockReturnValueOnce(10);
+    nowSpy.mockReturnValueOnce(60);
+    try {
+      v8MetricsMiddleware(req, res, next);
+      finishHandlers[0]?.();
+      await flushObservation();
+      expect(recordV8RequestMock).toHaveBeenCalledWith(50, false);
+    } finally {
+      nowSpy.mockRestore();
+      dateNowSpy.mockRestore();
     }
   });
 
@@ -412,7 +533,7 @@ describe('v8Metrics.middleware', () => {
     finishHandlers[0]?.();
     expect(recordV8RequestMock).not.toHaveBeenCalled();
 
-    await Promise.resolve();
+    await flushObservation();
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 

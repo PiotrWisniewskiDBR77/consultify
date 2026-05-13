@@ -130,14 +130,16 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   safeSetHeader(
     res,
     'Permissions-Policy',
-    'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=()'
+    'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=()'
   );
 
   const isProduction = process.env.NODE_ENV === 'production';
 
   // HSTS (only in production with HTTPS)
   if (isProduction) {
-    safeSetHeader(res, 'Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    const hstsParts = ['max-age=31536000', 'includeSubDomains'];
+    if (process.env.HSTS_PRELOAD === '1') hstsParts.push('preload');
+    safeSetHeader(res, 'Strict-Transport-Security', hstsParts.join('; '));
   }
 
   // Content Security Policy (customize as needed)
@@ -151,6 +153,7 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
     "img-src 'self' data: https://www.transparenttextures.com; " +
     "connect-src 'self'; " +
     "font-src 'self' data:; " +
+    "worker-src 'self'; " +
     "object-src 'none'; " +
     "media-src 'self'; " +
     "frame-ancestors 'none'; " +
@@ -200,6 +203,8 @@ export const createRateLimiter = (options: RateLimitOptions = {}) => {
 
     if (requests.length >= max) {
       const retryAfter = Math.ceil((requests[0] + windowMs - now) / 1000);
+      safeSetHeader(res, 'X-Content-Type-Options', 'nosniff');
+      safeSetHeader(res, 'X-Frame-Options', 'DENY');
       safeSetHeader(res, 'Retry-After', retryAfter.toString());
       safeSetHeader(res, 'X-RateLimit-Limit', max.toString());
       safeSetHeader(res, 'X-RateLimit-Remaining', '0');
@@ -340,6 +345,8 @@ export const validateRequest = (schema: ValidationSchema) => {
     }
 
     if (errors.length > 0) {
+      safeSetHeader(res, 'X-Content-Type-Options', 'nosniff');
+      safeSetHeader(res, 'X-Frame-Options', 'DENY');
       safeSetHeader(res, 'Cache-Control', 'no-store');
       safeSetHeader(res, 'Pragma', 'no-cache');
       safeSendJson(res, 400, {

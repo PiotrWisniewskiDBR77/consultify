@@ -73,6 +73,8 @@ const sendAdminAccessRequired = (res: Response): boolean => {
   try {
     if (!res || typeof res.status !== 'function') return false;
     if (safeRead(() => Boolean(res.headersSent), false)) return false;
+    if (safeRead(() => Boolean((res as Response & { writableEnded?: boolean }).writableEnded), false))
+      return false;
     try {
       const setHeader = (res as Response & {
         setHeader?: (name: string, value: string) => Response;
@@ -85,6 +87,7 @@ const sendAdminAccessRequired = (res: Response): boolean => {
           ['X-Content-Type-Options', 'nosniff'],
           ['X-Frame-Options', 'DENY'],
           ['Referrer-Policy', 'no-referrer'],
+          ['Vary', 'Authorization'],
         ];
         for (const [headerName, headerValue] of denySecurityHeaders) {
           safeRead(() => {
@@ -122,6 +125,8 @@ const safeSendAdminAccessRequired = (res: Response): void => {
   if (sent) return;
   try {
     if (!res || safeRead(() => Boolean(res.headersSent), false)) return;
+    if (safeRead(() => Boolean((res as Response & { writableEnded?: boolean }).writableEnded), false))
+      return;
     if (typeof (res as Response & { end?: () => void }).end === 'function') {
       (res as Response & { end: () => void }).end();
     }

@@ -40,6 +40,7 @@ const RBAC_FORBIDDEN_CODES = {
   ORGANIZATION_ACCESS_REQUIRED: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
 } as const;
 const RBAC_MAX_ROLE_INPUT_CHARS = 1024;
+const RBAC_MAX_REQUIRED_ROLES = 64;
 const RBAC_MAX_ORG_ID_CHARS = 256;
 const responseWriteBlocked = (res: Response): boolean =>
   safeRead(() => res.headersSent, false) ||
@@ -49,7 +50,11 @@ const responseWriteBlocked = (res: Response): boolean =>
   safeRead(() => (res as Response & { destroyed?: boolean }).destroyed, false);
 const invokeNextIfFunction = (next: NextFunction): boolean => {
   if (typeof next !== 'function') return false;
-  next();
+  try {
+    next();
+  } catch {
+    return false;
+  }
   return true;
 };
 
@@ -159,14 +164,15 @@ export const requireRole = (...roles: UserRole[]) => {
       );
       return;
     }
-    if (!roles || roles.length === 0) {
+    const safeRoles: UserRole[] = Array.isArray(roles) ? roles.slice(0, RBAC_MAX_REQUIRED_ROLES) : [];
+    if (safeRoles.length === 0) {
       invokeNextIfFunction(next);
       return;
     }
 
     const userRole = getRequestRole(req);
     const required = safeRead(
-      () => roles.map(toCanonicalRole).filter(Boolean),
+      () => safeRoles.map(toCanonicalRole).filter(Boolean),
       [] as CanonicalRole[]
     );
     const allowed = safeRead(() => required.some((r) => roleSatisfies(userRole, r)), false);

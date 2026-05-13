@@ -385,6 +385,27 @@ describe('verifySuperAdmin', () => {
     expect(verify).not.toHaveBeenCalled();
   });
 
+  it('rejects and skips JWT verify when bearer token contains disallowed unicode separators', async () => {
+    const verify = vi.fn();
+    setDependencies({
+      jwt: { verify } as any,
+      config: { JWT_SECRET: 'test-secret' },
+    });
+    const req = mockReq({
+      headers: {
+        authorization: 'Bearer a.b\u2028c.d',
+      },
+    });
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(verify).not.toHaveBeenCalled();
+  });
+
   it('rejects and skips JWT verify when bearer token contains non-compact JWS characters', async () => {
     const verify = vi.fn();
     setDependencies({
@@ -415,6 +436,48 @@ describe('verifySuperAdmin', () => {
     const req = mockReq({
       headers: {
         authorization: 'Bearer a.b',
+      },
+    });
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(verify).not.toHaveBeenCalled();
+  });
+
+  it('rejects and skips JWT verify when bearer token has empty compact-jwt segment', async () => {
+    const verify = vi.fn();
+    setDependencies({
+      jwt: { verify } as any,
+      config: { JWT_SECRET: 'test-secret' },
+    });
+    const req = mockReq({
+      headers: {
+        authorization: 'Bearer a..c',
+      },
+    });
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(verify).not.toHaveBeenCalled();
+  });
+
+  it('rejects and skips JWT verify when bearer token has oversized compact-jwt segment', async () => {
+    const verify = vi.fn();
+    setDependencies({
+      jwt: { verify } as any,
+      config: { JWT_SECRET: 'test-secret' },
+    });
+    const req = mockReq({
+      headers: {
+        authorization: `Bearer ${'a'.repeat(6145)}.b.c`,
       },
     });
     const res = mockRes();
@@ -580,7 +643,7 @@ describe('superadmin capabilities', () => {
     const middleware = requireSuperAdminCapability('billing_ops');
     const req = mockReq({
       userRole: 'SUPERADMIN',
-      user: { superadminCapabilities: ['billing_ops', 'security_ops'] },
+      user: { isSuperAdmin: true, superadminCapabilities: ['billing_ops', 'security_ops'] },
     });
     const res = mockRes();
     const next = vi.fn();
@@ -594,7 +657,7 @@ describe('superadmin capabilities', () => {
     const middleware = requireSuperAdminCapability();
     const req = mockReq({
       userRole: 'SUPERADMIN',
-      user: { superadminCapabilities: ['billing_ops', 'platform_ops'] },
+      user: { isSuperAdmin: true, superadminCapabilities: ['billing_ops', 'platform_ops'] },
     });
     const res = mockRes();
     const next = vi.fn();
@@ -613,7 +676,7 @@ describe('superadmin capabilities', () => {
     const middleware = requireSuperAdminCapability('billing_ops', 'unknown_capability' as any);
     const req = mockReq({
       userRole: 'SUPERADMIN',
-      user: { superadminCapabilities: ['billing_ops', 'platform_ops'] },
+      user: { isSuperAdmin: true, superadminCapabilities: ['billing_ops', 'platform_ops'] },
     });
     const res = mockRes();
     const next = vi.fn();
@@ -637,7 +700,7 @@ describe('superadmin capabilities', () => {
     const middleware = requireSuperAdminCapability('support_ops');
     const req = mockReq({
       userRole: 'SUPERADMIN',
-      user: { superadminCapabilities: ['billing_ops'] },
+      user: { isSuperAdmin: true, superadminCapabilities: ['billing_ops'] },
     });
     const res = mockRes();
     const next = vi.fn();
@@ -670,6 +733,22 @@ describe('superadmin capabilities', () => {
 
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(403);
-    expect(res.body.code).toBe('INSUFFICIENT_PLATFORM_CAPABILITY');
+    expect(res.body.code).toBe('SUPERADMIN_CONTEXT_REQUIRED');
+  });
+
+  it('rejects capability checks when superadmin auth context is missing', () => {
+    const middleware = requireSuperAdminCapability('billing_ops');
+    const req = mockReq({
+      userRole: 'SUPERADMIN',
+      user: { isSuperAdmin: false, superadminCapabilities: ['billing_ops'] },
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('SUPERADMIN_CONTEXT_REQUIRED');
   });
 });

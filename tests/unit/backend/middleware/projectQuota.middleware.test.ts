@@ -58,6 +58,30 @@ describe('projectQuota.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('uses numeric body project_id to enforce project quota', async () => {
+    const req: any = { body: { project_id: 12345 } };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await enforceProjectQuota(req, res, next);
+
+    expect(checkProjectQuota).toHaveBeenCalledWith('12345');
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('uses numeric query projectId to enforce project quota', async () => {
+    const req: any = { query: { projectId: 9876 } };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await enforceProjectQuota(req, res, next);
+
+    expect(checkProjectQuota).toHaveBeenCalledWith('9876');
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('continues when req.file.path accessor throws during cleanup path read', async () => {
     checkProjectQuota.mockResolvedValueOnce({
       allowed: false,

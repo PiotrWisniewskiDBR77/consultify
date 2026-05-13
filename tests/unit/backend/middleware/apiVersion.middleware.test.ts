@@ -33,6 +33,24 @@ function makeRes() {
     res.statusCode = code;
     return res;
   });
+  res.append = vi.fn((k: string, v: string) => {
+    const headerKey = String(k).toLowerCase();
+    const incoming = String(v);
+    const current = res.headers[headerKey];
+    if (!current) {
+      res.headers[headerKey] = incoming;
+      return res;
+    }
+    const existingParts = String(current)
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (!existingParts.some((part) => part.toLowerCase() === incoming.toLowerCase())) {
+      existingParts.push(incoming);
+    }
+    res.headers[headerKey] = existingParts.join(', ');
+    return res;
+  });
   res.json = vi.fn((payload: any) => {
     res.body = payload;
     return res;
@@ -84,6 +102,22 @@ describe('apiVersion.middleware (L1)', () => {
     apiVersionMiddleware(req, res as any, next as any);
     expect(req.apiVersion).toEqual(API_VERSIONS['1']);
     expect(res.setHeader).toHaveBeenCalledWith('x-api-version', API_VERSIONS['1'].full);
+    expect(res.append).toHaveBeenCalledWith('Vary', 'X-API-Version');
+    expect(String(res.headers.vary || '')).toContain('X-API-Version');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('attaches a detached apiVersion object instead of mutating API_VERSIONS map entries', () => {
+    const req: any = { path: '/api/x', headers: {}, query: {} };
+    const res = makeRes();
+    const next = vi.fn();
+
+    apiVersionMiddleware(req, res as any, next as any);
+    req.apiVersion.full = '9.9.9';
+    req.apiVersion.major = 9;
+
+    expect(API_VERSIONS['1'].full).toBe('1.0.0');
+    expect(API_VERSIONS['1'].major).toBe(1);
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -189,6 +223,8 @@ describe('apiVersion.middleware (L1)', () => {
     );
     expect(res.headers['cache-control']).toBe('no-store');
     expect(res.headers['pragma']).toBe('no-cache');
+    expect(res.append).toHaveBeenCalledWith('Vary', 'X-API-Version');
+    expect(String(res.headers.vary || '')).toContain('X-API-Version');
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -266,6 +302,44 @@ describe('apiVersion.middleware (L1)', () => {
 
     expect(() => apiVersionMiddleware(req, res as any, next as any)).not.toThrow();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('ignores prototype-polluted API_VERSIONS keys and still rejects unknown versions', () => {
+    const pollutedKey = '77';
+    const originalPolluted = (Object.prototype as Record<string, unknown>)[pollutedKey];
+    Object.defineProperty(Object.prototype, pollutedKey, {
+      configurable: true,
+      writable: true,
+      value: {
+        major: 77,
+        minor: 0,
+        patch: 0,
+        full: '77.0.0',
+        deprecated: false,
+        sunsetDate: null,
+      },
+    });
+    try {
+      const req: any = { path: '/api/x', headers: { 'x-api-version': '77' }, query: {} };
+      const res = makeRes();
+      const next = vi.fn();
+
+      apiVersionMiddleware(req, res as any, next as any);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          error: 'Invalid API version',
+        })
+      );
+      expect(next).not.toHaveBeenCalled();
+    } finally {
+      if (originalPolluted === undefined) {
+        delete (Object.prototype as Record<string, unknown>)[pollutedKey];
+      } else {
+        (Object.prototype as Record<string, unknown>)[pollutedKey] = originalPolluted;
+      }
+    }
   });
 
   it('continues with next when invalid version is detected after headers are already sent', () => {
@@ -639,6 +713,27 @@ describe('apiVersion.middleware (L1)', () => {
       requireVersion('1.0.0')(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('stays non-throwing when req.apiVersion accessor throws inside requireVersion', () => {
+      const req: any = {};
+      Object.defineProperty(req, 'apiVersion', {
+        configurable: true,
+        get: () => {
+          throw new Error('apiVersion getter boom');
+        },
+      });
+      const res = makeRes();
+      const next = vi.fn();
+
+      expect(() => requireVersion('1')(req, res as any, next as any)).not.toThrow();
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        '[APIVersion] requireVersion error',
+        expect.objectContaining({
+          detail: expect.stringContaining('apiVersion getter boom'),
+        })
+      );
     });
 
     it('compares minor/patch versions (covers compareVersions branches)', () => {

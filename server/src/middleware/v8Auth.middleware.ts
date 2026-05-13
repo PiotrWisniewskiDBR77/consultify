@@ -11,7 +11,7 @@ export interface V8RequestContext {
 const MAX_V8_ORG_USER_ID_CHARS = 256;
 const MAX_V8_USER_ROLE_CHARS = 128;
 const DISALLOWED_V8_ID_CONTROL_CHARS = /[\u0000-\u001F\u007F\u0085\u2028\u2029]/;
-const DISALLOWED_V8_ROLE_CONTROL_CHARS_GLOBAL = /[\u0000-\u001F\u007F]/g;
+const DISALLOWED_V8_ROLE_CONTROL_CHARS_GLOBAL = /[\u0000-\u001F\u007F\u0085\u2028\u2029]/g;
 
 const normalizeOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -65,7 +65,7 @@ const responseWriteBlocked = (res: Response): boolean =>
   safeRead(() => (res as Response & { destroyed?: boolean }).destroyed, false);
 
 const safeNext = (res: Response, next: NextFunction): void => {
-  if (!responseWriteBlocked(res)) {
+  if (typeof next === 'function' && !responseWriteBlocked(res)) {
     next();
   }
 };

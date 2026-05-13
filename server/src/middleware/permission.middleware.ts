@@ -81,11 +81,15 @@ const getAuthContext = (
   req: AuthRequest
 ): { userId?: string; orgId?: string; userRole?: string } => {
   const requestRecord = req as unknown as Record<string, unknown>;
+  const requestUser = safeRead(
+    () => (requestRecord as Record<string, unknown>).user,
+    undefined as unknown
+  );
   const userRecord =
     Object.prototype.hasOwnProperty.call(requestRecord, 'user') &&
-    requestRecord.user &&
-    typeof requestRecord.user === 'object'
-      ? (requestRecord.user as Record<string, unknown>)
+    requestUser &&
+    typeof requestUser === 'object'
+      ? (requestUser as Record<string, unknown>)
       : undefined;
   const userId =
     readOwnOptionalString(requestRecord, 'userId') ||
@@ -161,6 +165,17 @@ const shouldSkipPermissionCheck = (
 const asPermissionKeyList = (permissionKeys: unknown): string[] =>
   Array.isArray(permissionKeys) ? permissionKeys : [];
 const isPermissionKeyWithinLimit = (key: string): boolean => key.length <= MAX_PERMISSION_KEY_LENGTH;
+const dedupePermissionKeys = (permissionKeys: string[]): string[] => {
+  if (permissionKeys.length <= 1) return permissionKeys;
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const permissionKey of permissionKeys) {
+    if (seen.has(permissionKey)) continue;
+    seen.add(permissionKey);
+    deduped.push(permissionKey);
+  }
+  return deduped;
+};
 
 const normalizeRoleForDb = (role?: string): string => {
   const sanitizedRole = sanitizeRoleInput(role);
@@ -322,9 +337,9 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
           inputType: typeof permissionKeys,
         });
       }
-      const normalizedPermissionKeys = permissionKeyList
+      const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
         .map((permissionKey) => normalizeOptionalString(permissionKey))
-        .filter((permissionKey): permissionKey is string => Boolean(permissionKey));
+        .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
       if (normalizedPermissionKeys.length === 0) {
         logger.info(
           `[PermissionMiddleware] Denied: requireAnyPermission invoked with no valid permission keys for user ${userId}`
@@ -423,9 +438,9 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
           inputType: typeof permissionKeys,
         });
       }
-      const normalizedPermissionKeys = permissionKeyList
+      const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
         .map((permissionKey) => normalizeOptionalString(permissionKey))
-        .filter((permissionKey): permissionKey is string => Boolean(permissionKey));
+        .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
       if (normalizedPermissionKeys.length === 0) {
         logger.info(
           `[PermissionMiddleware] Denied: requireAllPermissions invoked with no valid permission keys for user ${userId}`
@@ -553,8 +568,16 @@ export const auditAction = (options: AuditOptions) => {
 
     // Override json to intercept response
     res.json = (async (data: unknown) => {
+      const callOriginalJson = async (): Promise<unknown> => {
+        try {
+          return await Promise.resolve(originalJson(data));
+        } catch (error) {
+          logger.error('[AuditMiddleware] Response json handler failed', error);
+          throw error;
+        }
+      };
       if (safeRead(() => res.headersSent, false)) {
-        return originalJson(data);
+        return callOriginalJson();
       }
       const statusCode = safeRead(() => res.statusCode, 200);
       // Only audit on success (2xx status codes)
@@ -583,7 +606,7 @@ export const auditAction = (options: AuditOptions) => {
       }
 
       // Call original json method
-      return originalJson(data);
+      return callOriginalJson();
     }) as any;
 
     next();

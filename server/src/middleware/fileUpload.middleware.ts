@@ -88,12 +88,19 @@ const normalizeMimeType = (value: string): string => value.split(';')[0]?.trim()
 
 export const buildSafeUploadedFilename = (originalname: unknown): string => {
   const normalizedOriginalName = normalizeOptionalString(originalname) || 'upload.bin';
-  const ext = path.extname(normalizedOriginalName);
+  const extRaw = path.extname(normalizedOriginalName).toLowerCase();
+  const ext = EXTENSION_TO_ALLOWED_MIME.has(extRaw) ? extRaw : '.bin';
   const basename = path.basename(normalizedOriginalName, ext) || 'upload';
   let safeBasename =
     basename.length > MAX_UPLOAD_BASENAME_CHARS
       ? basename.slice(0, MAX_UPLOAD_BASENAME_CHARS)
       : basename;
+  safeBasename = safeBasename
+    .replace(/[\u0000-\u001F\u007F\u200B-\u200F\u2028-\u202E\uFEFF]/g, '_')
+    .trim();
+  if (!safeBasename || safeBasename === '.') {
+    safeBasename = 'upload';
+  }
   const entropy = randomBytes(8).toString('hex');
   const uniqueSuffix = `${Date.now()}-${entropy}`;
   const filenamePrefix = `${uniqueSuffix}-`;
@@ -104,6 +111,7 @@ export const buildSafeUploadedFilename = (originalname: unknown): string => {
   return `${filenamePrefix}${safeBasename}${ext}`;
 };
 const assessmentsUploadRoot = path.resolve(path.join(__dirname, '../../../uploads/assessments'));
+export const ASSESSMENTS_UPLOAD_ROOT = assessmentsUploadRoot;
 const isPathInsideDir = (baseDir: string, candidatePath: string): boolean => {
   const relative = path.relative(baseDir, candidatePath);
   return !relative.startsWith('..') && !path.isAbsolute(relative);
@@ -135,6 +143,19 @@ export const resolveAssessmentUploadDir = (req: Request): string => {
     throw err;
   }
 };
+export const resolveUploadDestinationForMulter = (
+  req: Request,
+  cb: (error: Error | null, destination: string) => void,
+  resolveDir: (request: Request) => string = resolveAssessmentUploadDir
+): void => {
+  try {
+    const dir = resolveDir(req);
+    cb(null, dir);
+  } catch (error) {
+    // Multer ignores destination when error is set, but keep a stable non-empty fallback.
+    cb(error instanceof Error ? error : new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE), assessmentsUploadRoot);
+  }
+};
 
 // ==========================================
 // STORAGE CONFIGURATION
@@ -149,12 +170,7 @@ const storage = multer.diskStorage({
     _file: Express.Multer.File,
     cb: (error: Error | null, destination: string) => void
   ) => {
-    try {
-      const dir = resolveAssessmentUploadDir(req);
-      cb(null, dir);
-    } catch (error) {
-      cb(error instanceof Error ? error : new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE), '');
-    }
+    resolveUploadDestinationForMulter(req, cb);
   },
   filename: (
     _req: Request,

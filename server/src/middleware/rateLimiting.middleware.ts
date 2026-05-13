@@ -21,6 +21,8 @@ const MAX_RATE_LIMIT_IP_KEY_LEN = 256;
 const MAX_RATE_LIMIT_JWT_DECODE_LEN = 16384;
 const MAX_RATE_LIMIT_STORE_KEYS = 50_000;
 const STORE_CAP_PRUNE_TARGET = 45_000;
+const MAX_RATE_LIMIT_WINDOW_MS = 7 * 24 * 60 * 60_000;
+const MAX_RATE_LIMIT_MAX = 1_000_000;
 const STORE_CLEANUP_INTERVAL_KEY = '__consultifyRateLimitStoreCleanup__';
 type RateLimitGlobal = typeof globalThis & { [STORE_CLEANUP_INTERVAL_KEY]?: ReturnType<typeof setInterval> };
 const globalRateLimit = globalThis as RateLimitGlobal;
@@ -78,21 +80,42 @@ function enforceStoreCap(now: number): void {
     if (now >= v.resetAt) store.delete(k);
   }
   if (store.size <= MAX_RATE_LIMIT_STORE_KEYS) return;
-
-  const byResetAt = [...store.entries()].sort((a, b) => a[1].resetAt - b[1].resetAt);
-  for (const [key] of byResetAt) {
+  let keysToDelete = store.size - STORE_CAP_PRUNE_TARGET;
+  if (keysToDelete <= 0) return;
+  const candidates: Array<{ key: string; resetAt: number }> = [];
+  for (const [key, entry] of store) {
+    if (keysToDelete <= 0) break;
+    if (candidates.length < keysToDelete) {
+      candidates.push({ key, resetAt: entry.resetAt });
+      continue;
+    }
+    let maxIndex = 0;
+    for (let i = 1; i < candidates.length; i += 1) {
+      if (candidates[i].resetAt > candidates[maxIndex].resetAt) {
+        maxIndex = i;
+      }
+    }
+    if (entry.resetAt < candidates[maxIndex].resetAt) {
+      candidates[maxIndex] = { key, resetAt: entry.resetAt };
+    }
+  }
+  for (const candidate of candidates) {
     if (store.size <= STORE_CAP_PRUNE_TARGET) break;
-    store.delete(key);
+    if (store.delete(candidate.key)) {
+      keysToDelete -= 1;
+    }
   }
 }
 
 function resolveLimiterParams(windowMs: number, max: number): { windowMs: number; max: number } {
-  const resolvedWindowMs =
+  const resolvedWindowMsRaw =
     typeof windowMs === 'number' && Number.isFinite(windowMs) && windowMs > 0
       ? Math.floor(windowMs)
       : 15 * 60_000;
-  const resolvedMax =
+  const resolvedMaxRaw =
     typeof max === 'number' && Number.isFinite(max) && max > 0 ? Math.floor(max) : 1;
+  const resolvedWindowMs = Math.min(resolvedWindowMsRaw, MAX_RATE_LIMIT_WINDOW_MS);
+  const resolvedMax = Math.min(resolvedMaxRaw, MAX_RATE_LIMIT_MAX);
   return { windowMs: resolvedWindowMs, max: resolvedMax };
 }
 
@@ -370,6 +393,8 @@ export const __private__ = {
   resolveLimiterParams,
   toSafeNonNegativeIntCount,
   toSafeNonNegativeIntSeconds,
+  MAX_RATE_LIMIT_WINDOW_MS,
+  MAX_RATE_LIMIT_MAX,
   getStoreSize: (): number => store.size,
 };
 

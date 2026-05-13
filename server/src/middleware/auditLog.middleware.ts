@@ -116,6 +116,7 @@ const AUDIT_REDACT_KEYS = new Set([
 ]);
 const MAX_AUDIT_BODY_REDACTION_DEPTH = 6;
 const MAX_AUDIT_BODY_ARRAY_ITEMS = 500;
+const MAX_AUDIT_BODY_KEYS_PER_OBJECT = 200;
 const isPlainObjectRecord = (value: unknown): value is Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const proto = Object.getPrototypeOf(value);
@@ -175,7 +176,13 @@ function redactAuditBody(
     }
     if (!isPlainObjectRecord(value)) return value;
     const redactedNode: Record<string, unknown> = {};
-    for (const key of Object.keys(value)) {
+    const keys = Object.keys(value);
+    const boundedKeys = keys.slice(0, MAX_AUDIT_BODY_KEYS_PER_OBJECT);
+    if (keys.length > MAX_AUDIT_BODY_KEYS_PER_OBJECT) {
+      redactedNode._auditKeysTruncated = true;
+      redactedNode.originalKeyCount = keys.length;
+    }
+    for (const key of boundedKeys) {
       if (AUDIT_REDACT_KEYS.has(key.toLowerCase())) {
         redactedNode[key] = '[REDACTED]';
       } else {
@@ -351,20 +358,27 @@ const auditLogMiddleware = async (
           normalizeOptionalString(safeRead(() => req.ip, undefined)),
           MAX_AUDIT_IP_CHARS
         );
-        const resolvedDb = resolveReachableDatabaseUrl({
-          databaseUrl: process.env.DATABASE_URL,
-          publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
-          env: process.env,
-        });
-        const databaseHost = resolvedDb.databaseUrl
-          ? (() => {
-              try {
-                return new URL(resolvedDb.databaseUrl).hostname;
-              } catch {
-                return null;
-              }
-            })()
-          : null;
+        const resolvedDb = safeRead(
+          () =>
+            resolveReachableDatabaseUrl({
+              databaseUrl: process.env.DATABASE_URL,
+              publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
+              env: process.env,
+            }),
+          {
+            databaseUrl: null,
+            source: 'unavailable',
+            reason: 'resolver_error',
+          } as {
+            databaseUrl: string | null;
+            source: string;
+            reason: string | null;
+          }
+        );
+        const databaseHost = safeRead(
+          () => (resolvedDb.databaseUrl ? new URL(resolvedDb.databaseUrl).hostname : null),
+          null as string | null
+        );
         getActivityService()
           .then((service) => {
             return service.log({

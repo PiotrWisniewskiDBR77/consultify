@@ -43,6 +43,7 @@ describe('Resource Quota Middleware', () => {
     mockRes = {
       status: statusSpy,
       json: jsonSpy,
+      setHeader: vi.fn(),
     } as Partial<Response>;
 
     mockNext = vi.fn();
@@ -173,6 +174,23 @@ describe('Resource Quota Middleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should reject oversized organization id before querying memory quota data', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      mockReq.user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'USER',
+        organizationId: 'o'.repeat(129),
+      } as any;
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Invalid organization context' });
+      expect(queryOneSpy).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should pass when user organizationId accessor throws but legacy organization_id exists', async () => {
       const user: Record<string, unknown> = { organization_id: 'org-legacy' };
       Object.defineProperty(user, 'organizationId', {
@@ -220,6 +238,18 @@ describe('Resource Quota Middleware', () => {
       expect(queryOneSpy).toHaveBeenCalledTimes(1);
       expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reject oversized subscription plan id before memory plan lookup', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy.mockResolvedValueOnce({ subscription_plan_id: 'p'.repeat(257) });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(1);
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Invalid billing context' });
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('should perform plan lookup when subscription plan id is finite number', async () => {
@@ -295,6 +325,7 @@ describe('Resource Quota Middleware', () => {
           message: 'Memory quota exceeded for this organization',
         },
       });
+      expect((mockRes as any).setHeader).toHaveBeenCalledWith('Retry-After', '60');
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -310,6 +341,21 @@ describe('Resource Quota Middleware', () => {
       await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not double-invoke next phase when response commits during no-plan branch', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy.mockImplementationOnce(async () => {
+        (mockRes as any).headersSent = true;
+        return { subscription_plan_id: null };
+      });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(1);
+      expect(mockNext).toHaveBeenCalledTimes(1);
       expect(statusSpy).not.toHaveBeenCalled();
       expect(jsonSpy).not.toHaveBeenCalled();
     });
@@ -536,6 +582,23 @@ describe('Resource Quota Middleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should reject oversized organization id before querying CPU quota data', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      mockReq.user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'USER',
+        organizationId: 'o'.repeat(129),
+      } as any;
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Invalid organization context' });
+      expect(queryOneSpy).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should pass when no subscription plan found', async () => {
       vi.mocked(queryHelpers.queryOne).mockResolvedValue(null);
 
@@ -554,6 +617,18 @@ describe('Resource Quota Middleware', () => {
       expect(queryOneSpy).toHaveBeenCalledTimes(1);
       expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reject oversized subscription plan id before cpu plan lookup', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy.mockResolvedValueOnce({ subscription_plan_id: 'p'.repeat(257) });
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(1);
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Invalid billing context' });
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('should pass when user organizationId accessor throws but legacy organization_id exists', async () => {
@@ -614,6 +689,7 @@ describe('Resource Quota Middleware', () => {
           message: 'CPU quota exceeded for this organization',
         },
       });
+      expect((mockRes as any).setHeader).toHaveBeenCalledWith('Retry-After', '60');
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -799,6 +875,23 @@ describe('Resource Quota Middleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should reject oversized organization id before querying budget data', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      mockReq.user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'USER',
+        organizationId: 'o'.repeat(129),
+      } as any;
+
+      await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(400);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Invalid organization context' });
+      expect(queryOneSpy).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should return error when organization not found', async () => {
       vi.mocked(queryHelpers.queryOne).mockResolvedValue(null);
 
@@ -942,6 +1035,7 @@ describe('Resource Quota Middleware', () => {
           message: 'Monthly budget quota exceeded for this organization',
         },
       });
+      expect((mockRes as any).setHeader).toHaveBeenCalledWith('Retry-After', '60');
       expect(mockNext).not.toHaveBeenCalled();
     });
 

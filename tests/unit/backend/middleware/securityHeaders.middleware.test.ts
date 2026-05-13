@@ -25,6 +25,7 @@ describe('securityHeaders.middleware (L1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NODE_ENV = 'test';
+    delete (process.env as any).HSTS_PRELOAD;
   });
 
   it('sets baseline security headers (no HSTS outside production)', async () => {
@@ -50,7 +51,7 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Origin-Agent-Cluster', '?1');
     expect(res.setHeader).toHaveBeenCalledWith(
       'Permissions-Policy',
-      'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=()'
+      'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=()'
     );
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Security-Policy',
@@ -70,11 +71,36 @@ describe('securityHeaders.middleware (L1)', () => {
     );
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Security-Policy',
+      expect.stringContaining("worker-src 'self'")
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
       expect.not.stringContaining('upgrade-insecure-requests')
     );
     expect(res.setHeader).not.toHaveBeenCalledWith(
       'Strict-Transport-Security',
       expect.any(String)
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds preload token to HSTS only when HSTS_PRELOAD is enabled', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.HSTS_PRELOAD = '1';
+    vi.resetModules();
+    const { securityHeaders } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const req: any = {};
+    const res = mkRes();
+    const next = vi.fn();
+
+    securityHeaders(req, res, next);
+
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload'
     );
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -204,6 +230,8 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(res3.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: 'Nope', code: 'RATE_LIMITED' })
     );
+    expect(res3.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+    expect(res3.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
     expect(res3.setHeader).toHaveBeenCalledWith('Retry-After', expect.any(String));
     expect(res3.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     expect(res3.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
@@ -425,6 +453,8 @@ describe('securityHeaders.middleware (L1)', () => {
 
     mw(req, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+    expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
     expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(res.json).toHaveBeenCalledWith(

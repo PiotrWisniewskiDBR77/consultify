@@ -57,6 +57,22 @@ const safeSetResponseHeader = (res: Response, header: string, value: string): vo
     return true;
   }, false);
 };
+const isResponseCommitted = (res: Response): boolean =>
+  safeRead(
+    () =>
+      Boolean(
+        res.headersSent ||
+          (res as Response & { writableEnded?: boolean; writableFinished?: boolean; finished?: boolean; destroyed?: boolean })
+            .writableEnded === true ||
+          (res as Response & { writableEnded?: boolean; writableFinished?: boolean; finished?: boolean; destroyed?: boolean })
+            .writableFinished === true ||
+          (res as Response & { writableEnded?: boolean; writableFinished?: boolean; finished?: boolean; destroyed?: boolean })
+            .finished === true ||
+          (res as Response & { writableEnded?: boolean; writableFinished?: boolean; finished?: boolean; destroyed?: boolean })
+            .destroyed === true
+      ),
+    false
+  );
 
 const SKIP_PATH_PREFIXES = [
   '/api/health',
@@ -76,6 +92,7 @@ const MAX_LOGGED_METHOD_CHARS = 32;
 const MAX_LOGGED_USER_ID_CHARS = 128;
 const MAX_LOGGED_ORGANIZATION_ID_CHARS = 128;
 const FALLBACK_CORRELATION_ID = '00000000-0000-4000-8000-000000000000';
+const CORRELATION_ID_SAFE_PATTERN = /^[A-Za-z0-9._~-]+$/;
 const sanitizeCorrelationId = (value: string): string =>
   value.replace(/[\u0000-\u001F\u007F]+/g, '');
 const sanitizeTelemetryText = (value: string): string =>
@@ -106,7 +123,7 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
     safeGetHeader(req, 'X-Correlation-ID') ||
     safeRead(() => uuidv4(), FALLBACK_CORRELATION_ID);
   let correlationId = sanitizeCorrelationId(correlationIdRaw).slice(0, MAX_CORRELATION_ID_CHARS);
-  if (!normalizeOptionalString(correlationId)) {
+  if (!normalizeOptionalString(correlationId) || !CORRELATION_ID_SAFE_PATTERN.test(correlationId)) {
     const regenerated = safeRead(() => uuidv4(), FALLBACK_CORRELATION_ID);
     correlationId = sanitizeCorrelationId(regenerated).slice(0, MAX_CORRELATION_ID_CHARS);
   }
@@ -114,8 +131,7 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
     (req as any).correlationId = correlationId;
     return true;
   }, false);
-  const headersSent = safeRead(() => Boolean(res.headersSent), false);
-  if (!headersSent && !safeGetResponseHeader(res, 'X-Correlation-ID')) {
+  if (!isResponseCommitted(res) && !safeGetResponseHeader(res, 'X-Correlation-ID')) {
     safeSetResponseHeader(res, 'X-Correlation-ID', correlationId);
   }
 
@@ -148,60 +164,77 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
     next();
     return;
   }
+  if (isResponseCommitted(res)) {
+    next();
+    return;
+  }
   let persisted = false;
+  const persistApiLog = (): void => {
+    if (persisted) return;
+    const responseTime = Math.min(MAX_LOGGED_RESPONSE_TIME_MS, Math.max(0, Date.now() - start));
+    const statusCode = coerceLoggedStatusCode(safeRead(() => res.statusCode, 200));
+    const shouldPersist =
+      readRequestMethod(req) !== 'GET' || statusCode >= 400 || responseTime >= 500;
+    if (!shouldPersist) return;
+    // Mark as persisted before assembly/writes to prevent duplicate insert attempts across end/finish handlers.
+    persisted = true;
+    const authReq = req as AuthRequest;
+    const userId = normalizeOptionalString(safeRead(() => authReq.user?.id, undefined)) || null;
+    const organizationId =
+      normalizeOptionalString(
+        safeRead(() => (req as Request & { organizationId?: string }).organizationId, undefined)
+      ) ||
+      normalizeOptionalString(safeRead(() => authReq.user?.organizationId, undefined)) ||
+      normalizeOptionalString(
+        safeRead(
+          () => (authReq.user as { organization_id?: string } | undefined)?.organization_id,
+          undefined
+        )
+      ) ||
+      null;
+    dbRun(
+      `INSERT INTO api_logs (id, endpoint, method, status_code, response_time_ms, user_id, organization_id, correlation_id, error_message, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        safeRead(() => uuidv4(), FALLBACK_CORRELATION_ID),
+        sanitizeTelemetryText(requestPath).substring(0, 255),
+        readRequestMethod(req).substring(0, MAX_LOGGED_METHOD_CHARS),
+        statusCode,
+        responseTime,
+        capLoggedString(userId, MAX_LOGGED_USER_ID_CHARS),
+        capLoggedString(organizationId, MAX_LOGGED_ORGANIZATION_ID_CHARS),
+        correlationId,
+        statusCode >= 400
+          ? (() => {
+              const normalizedStatusMessage =
+                normalizeOptionalString(safeRead(() => res.statusMessage, undefined)) || '';
+              const cleanedStatusMessage = sanitizeTelemetryText(normalizedStatusMessage).trim();
+              return cleanedStatusMessage ? cleanedStatusMessage.substring(0, 500) : null;
+            })()
+          : null,
+      ]
+    ).catch((err) => logger.warn('Failed to write api_log:', err));
+  };
   res.end = function (this: Response, ...args: any[]) {
     try {
-      if (!persisted) {
-        const responseTime = Math.min(MAX_LOGGED_RESPONSE_TIME_MS, Math.max(0, Date.now() - start));
-        const statusCode = coerceLoggedStatusCode(safeRead(() => res.statusCode, 200));
-        const shouldPersist =
-          readRequestMethod(req) !== 'GET' || statusCode >= 400 || responseTime >= 500;
-
-        if (shouldPersist) {
-          const authReq = req as AuthRequest;
-          const userId = normalizeOptionalString(safeRead(() => authReq.user?.id, undefined)) || null;
-          const organizationId =
-            normalizeOptionalString(
-              safeRead(() => (req as Request & { organizationId?: string }).organizationId, undefined)
-            ) ||
-            normalizeOptionalString(safeRead(() => authReq.user?.organizationId, undefined)) ||
-            normalizeOptionalString(
-              safeRead(
-                () => (authReq.user as { organization_id?: string } | undefined)?.organization_id,
-                undefined
-              )
-            ) ||
-            null;
-          dbRun(
-            `INSERT INTO api_logs (id, endpoint, method, status_code, response_time_ms, user_id, organization_id, correlation_id, error_message, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [
-              safeRead(() => uuidv4(), FALLBACK_CORRELATION_ID),
-              sanitizeTelemetryText(requestPath).substring(0, 255),
-              readRequestMethod(req).substring(0, MAX_LOGGED_METHOD_CHARS),
-              statusCode,
-              responseTime,
-              capLoggedString(userId, MAX_LOGGED_USER_ID_CHARS),
-              capLoggedString(organizationId, MAX_LOGGED_ORGANIZATION_ID_CHARS),
-              correlationId,
-              statusCode >= 400
-                ? (() => {
-                    const normalizedStatusMessage =
-                      normalizeOptionalString(safeRead(() => res.statusMessage, undefined)) || '';
-                    const cleanedStatusMessage = sanitizeTelemetryText(normalizedStatusMessage).trim();
-                    return cleanedStatusMessage ? cleanedStatusMessage.substring(0, 500) : null;
-                  })()
-                : null,
-            ]
-          ).catch((err) => logger.warn('Failed to write api_log:', err));
-          persisted = true;
-        }
-      }
+      persistApiLog();
     } catch {
       // Fail-open: observability must never break API responses.
     }
     return originalEnd.apply(res, args as any);
   } as any;
+  safeRead(() => {
+    if (typeof (res as Response & { once?: (event: string, listener: () => void) => unknown }).once !== 'function') {
+      return false;
+    }
+    (res as Response & { once: (event: string, listener: () => void) => unknown }).once('finish', () => {
+      safeRead(() => {
+        persistApiLog();
+        return true;
+      }, false);
+    });
+    return true;
+  }, false);
   next();
 }
 

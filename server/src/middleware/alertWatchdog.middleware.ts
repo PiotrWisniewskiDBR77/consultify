@@ -94,6 +94,7 @@ const records: RequestRecord[] = [];
 const lastAlerts: Map<string, number> = new Map();
 let totalRequests = 0;
 let totalFiveXx = 0;
+let thresholdCheckScheduled = false;
 
 const safeRead = <T>(reader: () => T, fallback: T): T => {
   try {
@@ -106,6 +107,21 @@ const sanitizeDurationMs = (value: unknown): number => {
   const numeric = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(numeric) || numeric < 0) return 0;
   return Math.min(numeric, 86_400_000);
+};
+const readMonotonicNow = (): number | undefined => {
+  try {
+    if (
+      typeof performance !== 'undefined' &&
+      performance &&
+      typeof performance.now === 'function'
+    ) {
+      const value = performance.now();
+      if (Number.isFinite(value)) return value;
+    }
+  } catch {
+    // ignore
+  }
+  return undefined;
 };
 
 const sanitizeStatusCode = (value: unknown): number => {
@@ -241,7 +257,8 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
     return;
   }
 
-  const start = Date.now();
+  const startMonotonic = readMonotonicNow();
+  const startWallClock = Date.now();
 
   const originalEnd = safeRead(() => res.end.bind(res), null as unknown as (...args: any[]) => any);
   if (!originalEnd) {
@@ -267,7 +284,12 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
     alreadyRecorded = true;
 
     try {
-      const duration = sanitizeDurationMs(Date.now() - start);
+      const endMonotonic = readMonotonicNow();
+      const duration = sanitizeDurationMs(
+        typeof startMonotonic === 'number' && typeof endMonotonic === 'number'
+          ? endMonotonic - startMonotonic
+          : Date.now() - startWallClock
+      );
       const statusCode = sanitizeStatusCode(safeRead(() => res.statusCode, 200));
 
       totalRequests += 1;
@@ -279,8 +301,10 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
         records.shift();
       }
 
-      if (records.length % EFFECTIVE_CONFIG.checkEveryN === 0) {
+      if (records.length % EFFECTIVE_CONFIG.checkEveryN === 0 && !thresholdCheckScheduled) {
+        thresholdCheckScheduled = true;
         setImmediate(() => {
+          thresholdCheckScheduled = false;
           try {
             checkThresholds(EFFECTIVE_CONFIG);
           } catch {

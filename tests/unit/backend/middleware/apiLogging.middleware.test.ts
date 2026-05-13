@@ -230,6 +230,34 @@ describe('apiLogging.middleware', () => {
     expect(insertParams[6]).toBe('org-top-level');
   });
 
+  it('does not patch response end when response is already committed', () => {
+    process.env.NODE_ENV = 'development';
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const originalEnd = vi.fn();
+    const res = {
+      headersSent: false,
+      writableEnded: true,
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: originalEnd,
+    } as unknown as MutableResponse;
+    const next = vi.fn();
+
+    apiLoggingMiddleware(req, res, next as unknown as NextFunction);
+    res.end();
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(originalEnd).toHaveBeenCalledTimes(1);
+    expect(runMock).not.toHaveBeenCalled();
+  });
+
   it('does not double-persist logs when middleware is mounted twice on same response', () => {
     process.env.NODE_ENV = 'development';
     const req = {
@@ -530,6 +558,60 @@ describe('apiLogging.middleware', () => {
     expect(insertParams[7]).toBe('abcdef');
   });
 
+  it('regenerates correlation id when provided header contains disallowed token characters', () => {
+    process.env.NODE_ENV = 'development';
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn((header: string) => (header === 'X-Correlation-ID' ? 'bad id/with@chars' : undefined)),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: vi.fn(),
+    } as unknown as MutableResponse;
+
+    apiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
+    res.end();
+
+    const generated = (res.setHeader as any).mock.calls.find(
+      (call: unknown[]) => call[0] === 'X-Correlation-ID'
+    )?.[1];
+    expect(generated).toBeTypeOf('string');
+    expect(generated).not.toBe('bad id/with@chars');
+    expect(String(generated)).toMatch(/^[A-Za-z0-9._~-]+$/);
+    const insertParams = runMock.mock.calls[0]?.[1] as unknown[];
+    expect(insertParams[7]).toBe(generated);
+  });
+
+  it('keeps safe correlation id characters unchanged', () => {
+    process.env.NODE_ENV = 'development';
+    const safeCorrelationId = 'abc-def_01.~';
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn((header: string) => (header === 'X-Correlation-ID' ? safeCorrelationId : undefined)),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: vi.fn(),
+    } as unknown as MutableResponse;
+
+    apiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
+    res.end();
+
+    expect(res.setHeader).toHaveBeenCalledWith('X-Correlation-ID', safeCorrelationId);
+    const insertParams = runMock.mock.calls[0]?.[1] as unknown[];
+    expect(insertParams[7]).toBe(safeCorrelationId);
+  });
+
   it('regenerates correlation id when sanitized header becomes empty', () => {
     process.env.NODE_ENV = 'development';
     const req = {
@@ -622,6 +704,36 @@ describe('apiLogging.middleware', () => {
     expect(runMock).toHaveBeenCalledTimes(1);
   });
 
+  it('persists at most once when finish event fires after end()', () => {
+    process.env.NODE_ENV = 'development';
+    const finishListeners: Array<() => void> = [];
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const originalEnd = vi.fn();
+    const res: any = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      once: vi.fn((event: string, listener: () => void) => {
+        if (event === 'finish') finishListeners.push(listener);
+        return res;
+      }),
+      end: originalEnd,
+    };
+
+    apiLoggingMiddleware(req, res as MutableResponse, vi.fn() as unknown as NextFunction);
+    res.end();
+    finishListeners.forEach((listener) => listener());
+
+    expect(originalEnd).toHaveBeenCalledTimes(1);
+    expect(runMock).toHaveBeenCalledTimes(1);
+  });
+
   it('still persists when first uuidv4 row id generation throws during initial end call', async () => {
     process.env.NODE_ENV = 'development';
     vi.resetModules();
@@ -655,6 +767,34 @@ describe('apiLogging.middleware', () => {
     } as unknown as MutableResponse;
 
     isolatedApiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
+    expect(() => res.end()).not.toThrow();
+    expect(() => res.end()).not.toThrow();
+
+    expect(originalEnd).toHaveBeenCalledTimes(2);
+    expect(runMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry api log insert on repeated end() when dbRun throws synchronously', () => {
+    process.env.NODE_ENV = 'development';
+    runMock.mockImplementationOnce(() => {
+      throw new Error('sync db failure');
+    });
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const originalEnd = vi.fn();
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: originalEnd,
+    } as unknown as MutableResponse;
+
+    apiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
     expect(() => res.end()).not.toThrow();
     expect(() => res.end()).not.toThrow();
 

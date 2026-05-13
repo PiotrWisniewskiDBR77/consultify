@@ -43,6 +43,18 @@ const scheduleObservation = (fn: () => void): void => {
       return;
     }
   } catch {
+    // Fall through to nextTick/sync fallback.
+  }
+  try {
+    if (
+      typeof process !== 'undefined' &&
+      process !== null &&
+      typeof process.nextTick === 'function'
+    ) {
+      process.nextTick(fn);
+      return;
+    }
+  } catch {
     // Fall through to sync fallback.
   }
   try {
@@ -51,13 +63,41 @@ const scheduleObservation = (fn: () => void): void => {
     // fail-open: telemetry must never break response flow
   }
 };
+const readMonotonicNow = (): number | null => {
+  const value = safeRead(
+    () =>
+      typeof performance !== 'undefined' &&
+      performance !== null &&
+      typeof performance.now === 'function'
+        ? performance.now()
+        : null,
+    null as number | null
+  );
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+};
+const readRecordedDuration = (
+  startWall: number,
+  endWall: number,
+  startMono: number | null,
+  endMono: number | null
+): number => {
+  let durationRaw: number | null = null;
+  if (typeof startMono === 'number' && typeof endMono === 'number') {
+    durationRaw = endMono - startMono;
+  } else if (Number.isFinite(startWall) && Number.isFinite(endWall)) {
+    durationRaw = endWall - startWall;
+  }
+  if (durationRaw == null || !Number.isFinite(durationRaw) || durationRaw < 0) return 0;
+  return Math.min(durationRaw, V8_METRICS_MAX_RECORDED_LATENCY_MS);
+};
 
 export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: NextFunction): void => {
   if (!res || typeof res !== 'object') {
     safeNext(next);
     return;
   }
-  const start = safeRead(() => Date.now(), Number.NaN);
+  const startWall = safeRead(() => Date.now(), Number.NaN);
+  const startMono = readMonotonicNow();
   let finishRecorded = false;
   try {
     const responseWithEvents = res as Response & {
@@ -91,14 +131,9 @@ export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: Next
         if (finishRecorded) return;
         finishRecorded = true;
         try {
-          const end = safeRead(() => Date.now(), Number.NaN);
-          let recordedDuration = 0;
-          if (Number.isFinite(start) && Number.isFinite(end)) {
-            const durationRaw = end - start;
-            const duration =
-              Number.isFinite(durationRaw) && durationRaw >= 0 ? durationRaw : 0;
-            recordedDuration = Math.min(duration, V8_METRICS_MAX_RECORDED_LATENCY_MS);
-          }
+          const endWall = safeRead(() => Date.now(), Number.NaN);
+          const endMono = readMonotonicNow();
+          const recordedDuration = readRecordedDuration(startWall, endWall, startMono, endMono);
           const statusCode = normalizeStatusCode(safeRead(() => res.statusCode, 200));
           const isError = statusCode >= 400;
           scheduleObservation(() => {

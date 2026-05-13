@@ -76,6 +76,11 @@ const invokeNext = (next: NextFunction): void => {
   }
   next();
 };
+const responseIsFinalized = (res: Response): boolean =>
+  safeRead(() => res.headersSent, false) ||
+  safeRead(() => (res as { writableEnded?: boolean }).writableEnded, false) ||
+  safeRead(() => (res as { destroyed?: boolean }).destroyed, false) ||
+  safeRead(() => (res as { finished?: boolean }).finished, false);
 
 const normalizeOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -304,6 +309,12 @@ export function requireFeature(featureId: string) {
         });
         return;
       }
+      if (responseIsFinalized(res)) {
+        logger.warn('[featureGate] Skipped next() (response already finalized)', {
+          featureId: truncateForPublicSurface(normalizedFeatureId),
+        });
+        return;
+      }
 
       invokeNext(next);
     } catch (error) {
@@ -411,6 +422,20 @@ export function requireAccess(requirements: FeatureRequirements) {
       });
     };
   }
+  const hasDisallowedRuleChars =
+    phaseRules.some((phaseRule) => hasDisallowedFeatureIdChars(phaseRule)) ||
+    stateRules.some((stateRule) => hasDisallowedFeatureIdChars(stateRule)) ||
+    normalizedRoleRules.some((roleRule) => hasDisallowedFeatureIdChars(roleRule));
+  if (hasDisallowedRuleChars) {
+    logger.error('[featureGate] requireAccess rejected requirements with disallowed control characters');
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements contain invalid control characters in phase, state, or role values. Contact support.',
+      });
+    };
+  }
   if (phaseRules.length === 0 && stateRules.length === 0 && normalizedRoleRules.length === 0) {
     return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
       sendJsonIfHeadersOpen(res, 500, {
@@ -458,6 +483,12 @@ export function requireAccess(requirements: FeatureRequirements) {
           error: 'ROLE_REQUIRED',
           required: roleRulesSnapshot,
           current: currentRole ?? null,
+        });
+        return;
+      }
+      if (responseIsFinalized(res)) {
+        logger.warn('[featureGate] Skipped next() (response already finalized)', {
+          featureId: 'requireAccess',
         });
         return;
       }

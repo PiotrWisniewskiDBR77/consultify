@@ -23,6 +23,7 @@ const MAX_SHADOW_JWT_DECODE_CHARS = 8192;
 const MAX_SHADOW_ORG_ID_CHARS = 256;
 const MAX_SHADOW_AUTHORIZATION_HEADER_CHARS = 8256;
 const MAX_SHADOW_ORG_SOURCE_READ_CHARS = 1024;
+const MAX_SHADOW_LOG_FRAGMENT_CHARS = 512;
 const isLikelyJwsCompact = (token: string): boolean => {
   const parts = token.split('.');
   return parts.length === 3 && parts.every((part) => part.length > 0);
@@ -34,6 +35,8 @@ const normalizeOptionalOrgCandidate = (value: unknown): string | undefined => {
   const normalized = value.trim();
   return normalized || undefined;
 };
+const sanitizeLogFragment = (value: string, maxLen: number): string =>
+  value.replace(/[\u0000-\u001F\u007F\r\n]+/g, ' ').trim().slice(0, maxLen);
 
 /**
  * Lightweight middleware that checks if shadow mode is active for the org
@@ -78,7 +81,7 @@ export async function v8ShadowModeCheck(
           token.length <= MAX_SHADOW_JWT_DECODE_CHARS &&
           isLikelyJwsCompact(token)
         ) {
-          const decodedRaw = jwt.decode(token);
+          const decodedRaw = safeRead(() => jwt.decode(token), null as unknown);
           if (decodedRaw && typeof decodedRaw === 'object' && !Array.isArray(decodedRaw)) {
             const decoded = decodedRaw as
               | { organizationId?: string; organization_id?: string }
@@ -110,7 +113,12 @@ export async function v8ShadowModeCheck(
     (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = await isV8ShadowMode(orgId);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    Logger.warn(`[v8:shadow-check] Failed to check shadow mode for ${orgId}: ${msg}`);
+    Logger.warn(
+      `[v8:shadow-check] Failed to check shadow mode orgId=${sanitizeLogFragment(
+        orgId,
+        MAX_SHADOW_ORG_ID_CHARS
+      )} err=${sanitizeLogFragment(msg, MAX_SHADOW_LOG_FRAGMENT_CHARS)}`
+    );
     (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = false;
   }
 

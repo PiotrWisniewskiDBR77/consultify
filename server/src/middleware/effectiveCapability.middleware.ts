@@ -77,6 +77,7 @@ const responseWriteBlocked = (res: Response): boolean =>
   safeRead(
     () =>
       res.headersSent ||
+      (res as Response & { finished?: boolean }).finished === true ||
       (res as Response & { writableFinished?: boolean }).writableFinished === true ||
       (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
       (res as Response & { writableEnded?: boolean; destroyed?: boolean }).destroyed === true,
@@ -137,6 +138,14 @@ const sendJsonIfOpen = (
     return;
   }
   try {
+    if (responseWriteBlocked(res)) {
+      logger.warn('[effectiveCapability] response committed before json write; skipping', {
+        status,
+        path: getRequestPath(req),
+        ...logContext,
+      });
+      return;
+    }
     res.status(status).json(payload);
   } catch (err) {
     logger.error('[effectiveCapability] failed to write json response', {

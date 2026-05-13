@@ -35,6 +35,22 @@ describe('rbac.middleware (L1)', () => {
     expect(res.json).not.toHaveBeenCalled();
   });
 
+  it('requireRole: caps oversized required role list deterministically (admin beyond cap stays denied)', () => {
+    const req: any = { user: { role: 'admin' } };
+    const res = makeRes();
+    const next = vi.fn();
+    const requiredRoles = Array.from({ length: 200 }, (_, i) => `role_${i}`);
+    requiredRoles.push('admin');
+
+    expect(() => requireRole(...requiredRoles)(req, res as any, next as any)).not.toThrow();
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Insufficient role',
+      code: 'RBAC_INSUFFICIENT_ROLE',
+    });
+  });
+
   it('requireRole: does not throw when next is not a function on deny path', () => {
     const req: any = { user: { role: 'guest' } };
     const res = makeRes();
@@ -482,6 +498,18 @@ describe('rbac.middleware (L1)', () => {
 
     expect(() => requireRole('admin')(req, null as any, next as any)).not.toThrow();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: swallows downstream next throws on allow path', () => {
+    const req: any = { user: { role: 'admin' } };
+    const res = makeRes();
+    const next = vi.fn(() => {
+      throw new Error('next failed');
+    });
+
+    expect(() => requireRole('admin')(req, res as any, next as any)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
   });
 });
 

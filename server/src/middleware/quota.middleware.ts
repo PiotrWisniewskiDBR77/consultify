@@ -62,6 +62,7 @@ const MAX_RECORDED_BYTES = 5 * 1024 * 1024 * 1024;
 const MAX_ACCESS_POLICY_STRING_CHARS = 512;
 const MAX_RECORD_ACTION_CHARS = 128;
 const MAX_RECORD_METADATA_CHARS = 512;
+const MAX_QUOTA_ORG_ID_CHARS = 256;
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -102,7 +103,19 @@ const sendQuotaJson = (
   payload: Record<string, unknown>,
   writeErrorLogLabel: string
 ): boolean => {
-  if (safeRead(() => res.headersSent, false)) return false;
+  if (
+    safeRead(
+      () =>
+        Boolean(
+          res.headersSent ||
+            (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
+            (res as Response & { writableEnded?: boolean; destroyed?: boolean }).destroyed === true
+        ),
+      false
+    )
+  ) {
+    return false;
+  }
   try {
     if (typeof res.status !== 'function') {
       logger.error(writeErrorLogLabel);
@@ -173,7 +186,7 @@ const normalizeQuotaPayloadShape = (value: unknown): unknown => {
   const percentage = toFiniteQuotaNumber(candidate.percentage);
   if (used === undefined || limit === undefined || percentage === undefined) return value;
   return {
-    ...candidate,
+    allowed: candidate.allowed,
     used,
     limit,
     percentage,
@@ -211,6 +224,7 @@ const readOrgId = (req: QuotaRequest): string | undefined =>
     safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined as unknown)
   ) ||
   normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown));
+const isSafeQuotaOrgId = (orgId: string): boolean => orgId.length <= MAX_QUOTA_ORG_ID_CHARS;
 
 const readUserId = (req: QuotaRequest): string | undefined =>
   normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown)) ||
@@ -246,7 +260,7 @@ export async function enforceTokenQuota(
     const { usageService } = deps;
     const orgId = readOrgId(req);
 
-    if (!orgId) {
+    if (!orgId || !isSafeQuotaOrgId(orgId)) {
       const wroteResponse = sendQuotaJson(
         res,
         401,
@@ -364,7 +378,7 @@ export async function enforceTokenQuota(
       safeSetHeader(res, 'X-Quota-Percentage', String(Math.round(warningPercentage)));
     }
 
-    next();
+    callNextIfFunction(next);
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
     const wroteResponse = sendQuotaJson(
@@ -394,7 +408,7 @@ export async function enforceStorageQuota(
     const { usageService } = deps;
     const orgId = readOrgId(req);
 
-    if (!orgId) {
+    if (!orgId || !isSafeQuotaOrgId(orgId)) {
       const wroteResponse = sendQuotaJson(
         res,
         401,
@@ -502,7 +516,7 @@ export async function enforceStorageQuota(
       return;
     }
 
-    next();
+    callNextIfFunction(next);
   } catch (error: unknown) {
     logger.error('Storage quota check error:', error);
     const wroteResponse = sendQuotaJson(
@@ -550,7 +564,7 @@ export async function recordTokenUsageAfterResponse(
     );
 
     const safeTokens = finitePositiveRecordAmountFromUnknown(tokens, MAX_RECORDED_TOKENS);
-    if (orgId && safeTokens !== undefined) {
+    if (orgId && isSafeQuotaOrgId(orgId) && safeTokens !== undefined) {
       await usageService.recordTokenUsage(orgId, userId, safeTokens, normalizedAction, {
         endpoint,
         model,
@@ -587,7 +601,7 @@ export async function recordStorageAfterUpload(
     );
 
     const safeBytes = finitePositiveRecordAmountFromUnknown(bytes, MAX_RECORDED_BYTES);
-    if (orgId && safeBytes !== undefined) {
+    if (orgId && isSafeQuotaOrgId(orgId) && safeBytes !== undefined) {
       await usageService.recordStorageUsage(orgId, safeBytes, normalizedAction, {
         endpoint,
         filename: filename || undefined,

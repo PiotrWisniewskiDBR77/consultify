@@ -120,6 +120,40 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 401 when user id exceeds safety limit and required=true', async () => {
+    const mw = orgContextMiddleware({ required: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org1' },
+      headers: {},
+      user: { id: 'u'.repeat(129) },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when user id contains control characters and required=true', async () => {
+    const mw = orgContextMiddleware({ required: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org1' },
+      headers: {},
+      user: { id: 'u1\u0000x' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 401 when req.user accessor throws and required=true', async () => {
     const mw = orgContextMiddleware({ required: true });
     const req: any = {
@@ -190,7 +224,7 @@ describeIfDb('orgContext.middleware (L1)', () => {
     await db.run(
       `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      ['m1', 'org1', 'u1', 'ADMIN', 'ACTIVE', JSON.stringify({ a: 1 })]
+      ['m1', 'org1', 'u1', 'ADMIN', 'ACTIVE', JSON.stringify({ a: { b: 1 } })]
     );
 
     const mw = orgContextMiddleware();
@@ -217,6 +251,13 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(Object.isFrozen(req.org)).toBe(true);
     expect(Object.isFrozen(req.orgContext)).toBe(true);
     expect(Object.isFrozen(req.org?.permissionScope)).toBe(true);
+    expect(Object.isFrozen(req.org?.permissionScope?.a as object)).toBe(true);
+    expect((req.org?.permissionScope as any)?.a?.b).toBe(1);
+    expect(() => {
+      'use strict';
+      (req.org?.permissionScope as any).a.b = 2;
+    }).toThrow();
+    expect((req.org?.permissionScope as any)?.a?.b).toBe(1);
     expect(next).toHaveBeenCalledTimes(1);
   });
 

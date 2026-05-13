@@ -54,7 +54,8 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
   { method: 'DELETE', path: /^\/api\/initiatives/ },
 
   // Team invitations
-  { method: 'POST', path: /^\/api\/organizations\/.*\/invite/ },
+  // Avoid unbounded wildcard path matching.
+  { method: 'POST', path: /^\/api\/organizations(?:\/[^/]+)+\/invite(?:\/|$)/ },
   { method: 'POST', path: /^\/api\/invitations/ },
 
   // Data upload
@@ -63,7 +64,8 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
 
   // Report generation
   { method: 'POST', path: /^\/api\/reports/ },
-  { method: 'GET', path: /^\/api\/reports\/.*\/export/ },
+  // Avoid unbounded wildcard path matching.
+  { method: 'GET', path: /^\/api\/reports(?:\/[^/]+)+\/export(?:\/|$)/ },
 
   // Roadmap creation
   { method: 'POST', path: /^\/api\/roadmap/ },
@@ -77,6 +79,7 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
 ];
 const MAX_TRIAL_GUARD_PATH_LEN = 8192;
 const MAX_TRIAL_GUARD_USER_ID_LEN = 512;
+const MAX_TRIAL_GUARD_METHOD_LEN = 64;
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -141,6 +144,8 @@ const readRequestPathForRouting = (req: Request): string => {
 const normalizePathForRouteMatch = (path: string): string => path.replace(/\/+/g, '/');
 const normalizeMethodForRouteMatch = (value: unknown): string | undefined =>
   normalizeOptionalString(value)?.toUpperCase();
+const isRequestMethodLengthSafe = (value: unknown): boolean =>
+  typeof value !== 'string' || value.length <= MAX_TRIAL_GUARD_METHOD_LEN;
 const isSkippableTrialGuardMethod = (method: string | undefined): boolean =>
   method === 'OPTIONS' || method === 'HEAD' || method === 'TRACE';
 const stripRouteQueryAndFragment = (path: string): string => path.split('?')[0]?.split('#')[0] || '';
@@ -216,6 +221,28 @@ export const trialEntryGuard = async (
       next();
       return;
     }
+    if (!isRequestMethodLengthSafe(safeRead(() => req.method, undefined as unknown))) {
+      const sent = sendTrialGuardJson(res, 400, {
+        error: 'HTTP_METHOD_TOO_LONG',
+        message: 'Metoda HTTP jest zbyt długa.',
+        messageEn: 'The HTTP method is too long.',
+      });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
+      return;
+    }
+    if (!requestMethod) {
+      const sent = sendTrialGuardJson(res, 400, {
+        error: 'INVALID_HTTP_METHOD',
+        message: 'Nieprawidłowa metoda HTTP.',
+        messageEn: 'The HTTP method is invalid.',
+      });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
+      return;
+    }
     const requestPathCandidates = getCandidateTrialRoutePaths(req);
     if (requestPathCandidates.some((candidatePath) => candidatePath.length > MAX_TRIAL_GUARD_PATH_LEN)) {
       const sent = sendTrialGuardJson(res, 400, {
@@ -240,17 +267,6 @@ export const trialEntryGuard = async (
     // Attach flag for downstream use
     req.isTrialEntry = true;
 
-    if (!requestMethod) {
-      const sent = sendTrialGuardJson(res, 400, {
-        error: 'INVALID_HTTP_METHOD',
-        message: 'Nieprawidłowa metoda HTTP.',
-        messageEn: 'The HTTP method is invalid.',
-      });
-      if (!sent && !safeRead(() => res.headersSent, false)) {
-        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
-      }
-      return;
-    }
     if (requestPathCandidates.some((candidatePath) => isBlockedRoute(requestMethod, candidatePath))) {
       const sent = sendTrialGuardJson(res, 403, {
         error: 'TRIAL_ENTRY_RESTRICTION',

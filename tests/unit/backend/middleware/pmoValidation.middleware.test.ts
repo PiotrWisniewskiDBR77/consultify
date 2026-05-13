@@ -203,6 +203,30 @@ describe('pmoValidation.middleware', () => {
     expect(runMock).not.toHaveBeenCalled();
   });
 
+  it('logStatusChange still sends response when stringify throws during audit payload assembly', async () => {
+    const req: any = {
+      body: { status: 'DONE' },
+      previousStatus: 'IN_PROGRESS',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      params: { id: 'task-1' },
+    };
+    const res: any = { statusCode: 200, json: vi.fn((payload: unknown) => payload) };
+    const next = vi.fn();
+    const stringifySpy = vi.spyOn(JSON, 'stringify');
+    stringifySpy.mockImplementationOnce(() => {
+      throw new Error('stringify boom');
+    });
+
+    const middleware = logStatusChange('task');
+    middleware(req, res as Response, next as unknown as NextFunction);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    await expect((res.json as any)({ ok: true })).resolves.toEqual({ ok: true });
+    expect(runMock).not.toHaveBeenCalled();
+    stringifySpy.mockRestore();
+  });
+
   it('logStatusChange skips audit insert when entity id exceeds max allowed length', async () => {
     const req: any = {
       body: { status: 'DONE' },
@@ -376,6 +400,25 @@ describe('pmoValidation.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('validateInitiativeStatus returns fallback error when transition reason is missing', async () => {
+    statusMachineMock.validateInitiativeTransition.mockReturnValueOnce({ valid: false });
+    getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rule: 'INVALID_STATUS_TRANSITION',
+        error: 'Invalid status transition',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('validateTaskStatus returns 500 when StatusMachine throws', async () => {
     statusMachineMock.validateTaskTransition.mockImplementationOnce(() => {
       throw new Error('status machine failed');
@@ -388,6 +431,25 @@ describe('pmoValidation.middleware', () => {
     await validateTaskStatus(req, res, next as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(500);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateTaskStatus returns fallback error when transition reason is non-string', async () => {
+    statusMachineMock.validateTaskTransition.mockReturnValueOnce({ valid: false, reason: 123 as any });
+    getMock.mockResolvedValueOnce({ status: 'TODO', initiative_id: 'init-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'task-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateTaskStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rule: 'INVALID_STATUS_TRANSITION',
+        error: 'Invalid status transition',
+      })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 

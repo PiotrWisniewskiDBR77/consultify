@@ -225,10 +225,12 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
     next();
     return;
   }
-  const wrappedEnd = function (...args: any[]) {
-    recordCompletion();
-
-    return originalEnd(...args);
+  const wrappedEnd = function (this: unknown, ...args: any[]) {
+    try {
+      return originalEnd.apply(this, args);
+    } finally {
+      recordCompletion();
+    }
   };
   const installed = safeRead(() => {
     (res as any).end = wrappedEnd as typeof res.end;
@@ -242,7 +244,8 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
     (res as any)[METRICS_MW_INSTALLED] = true;
     return true;
   }, false);
-  safeRead(() => {
+  let listenerAttachFailed = false;
+  try {
     if (typeof (res as any).once === 'function') {
       (res as any).once('finish', onFinish);
       (res as any).once('close', onClose);
@@ -250,8 +253,18 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
       (res as any).on('finish', onFinish);
       (res as any).on('close', onClose);
     }
-    return true;
-  }, false);
+  } catch {
+    listenerAttachFailed = true;
+  }
+  if (listenerAttachFailed) {
+    safeRead(() => {
+      (res as any).end = originalEnd as typeof res.end;
+      delete (res as any)[METRICS_MW_INSTALLED];
+      return true;
+    }, false);
+    next();
+    return;
+  }
 
   metrics.requests = addBoundedMetric(metrics.requests, 1);
   metrics.byMethod[method] = addBoundedMetric(metrics.byMethod[method], 1);

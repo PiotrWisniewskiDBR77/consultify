@@ -436,6 +436,19 @@ describe('Permission Middleware - Real Production Tests', () => {
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('dedupes normalized keys before evaluating requireAny permissions', async () => {
+      mockReq.user.role = 'USER';
+      mockPermissionService.hasPermission
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      const middleware = requireAnyPermission(['A', '  A  ', 'A']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
   describe('requireAllPermissions', () => {
@@ -594,6 +607,19 @@ describe('Permission Middleware - Real Production Tests', () => {
         })
       );
       expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('dedupes normalized keys before evaluating requireAll permissions', async () => {
+      mockReq.user.role = 'USER';
+      mockPermissionService.hasPermission
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      const middleware = requireAllPermissions(['PROJECT_VIEW', '  PROJECT_VIEW  ']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -990,6 +1016,44 @@ describe('Permission Middleware - Real Production Tests', () => {
         expect.objectContaining({ actorId: 'user-123' })
       );
       expect(originalJson).toHaveBeenCalledTimes(1);
+    });
+
+    it('logs and propagates when wrapped original json rejects', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const res: any = {
+        statusCode: 200,
+        json: vi.fn().mockReturnValue(Promise.reject(new Error('serialize failed'))),
+      };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await expect(res.json({ ok: true })).rejects.toThrow('serialize failed');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        '[AuditMiddleware] Response json handler failed',
+        expect.any(Error)
+      );
+    });
+
+    it('logs and propagates when wrapped original json throws synchronously', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const res: any = {
+        statusCode: 200,
+        json: vi.fn(() => {
+          throw new Error('sync serialize failed');
+        }),
+      };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      await expect(res.json({ ok: true })).rejects.toThrow('sync serialize failed');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        '[AuditMiddleware] Response json handler failed',
+        expect.any(Error)
+      );
     });
 
     it('keeps audit logging when getResourceId accessor throws', async () => {

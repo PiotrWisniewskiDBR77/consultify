@@ -137,6 +137,7 @@ describe('admin.middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
       expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
       expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
+      expect(res.setHeader).toHaveBeenCalledWith('Vary', 'Authorization');
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -155,6 +156,7 @@ describe('admin.middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
       expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
       expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
+      expect(res.setHeader).toHaveBeenCalledWith('Vary', 'Authorization');
     });
 
     it('allows when req.user.role is admin', () => {
@@ -180,6 +182,7 @@ describe('admin.middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
       expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
       expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
+      expect(res.setHeader).toHaveBeenCalledWith('Vary', 'Authorization');
     });
 
     it('allows when req.userRole is admin (legacy)', () => {
@@ -279,8 +282,24 @@ describe('admin.middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
       expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
       expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
+      expect(res.setHeader).toHaveBeenCalledWith('Vary', 'Authorization');
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith({ error: 'Admin access required' });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('does not attempt deny response writes when response is already writableEnded', async () => {
+      const req: any = { user: { role: 'user' } };
+      const res: any = makeRes();
+      res.headersSent = false;
+      res.writableEnded = true;
+      const next = vi.fn();
+
+      await verifyAdmin(req, res, next);
+
+      expect(res.setHeader).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
     });
 

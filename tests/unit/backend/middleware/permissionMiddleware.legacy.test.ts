@@ -232,6 +232,21 @@ describe('permissionMiddleware.ts', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireAnyPermission dedupes normalized keys before evaluating permissions', async () => {
+    mockPermissionService.hasPermission
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    const middleware = requireAnyPermission(['PROJECT_READ', '  PROJECT_READ  ']);
+    const req: any = { user: { id: 'u-1', organizationId: 'org-1', role: 'USER' } };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(mockPermissionService.hasPermission).toHaveBeenCalledTimes(2);
+    expect(next).toHaveBeenCalled();
+  });
+
   it('auditAction tolerates throwing resource accessors and logs null snapshots', async () => {
     const middleware = auditAction({
       action: 'UPDATE' as any,
@@ -283,5 +298,21 @@ describe('permissionMiddleware.ts', () => {
 
     expect(next).toHaveBeenCalledTimes(2);
     expect(mockAuditService.logAudit).toHaveBeenCalledTimes(1);
+  });
+
+  it('auditAction logs and propagates when wrapped original json rejects', async () => {
+    const middleware = auditAction({ action: 'UPDATE' as any, resourceType: 'PROJECT' as any });
+    const req: any = {
+      user: { id: 'u-1', organizationId: 'org-1', role: 'ADMIN' },
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const res: any = {
+      statusCode: 200,
+      json: vi.fn().mockReturnValue(Promise.reject(new Error('legacy serialize failed'))),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+    await expect(res.json({ ok: true })).rejects.toThrow('legacy serialize failed');
   });
 });

@@ -77,9 +77,12 @@ interface Dependencies {
   // No longer needed - using DbPromise directly
 }
 const MAX_ORG_CONTEXT_ID_CHARS = 128;
+const MAX_ORG_CONTEXT_USER_ID_CHARS = 128;
 const MAX_PERMISSION_SCOPE_JSON_CHARS = 65_536;
 const MAX_ORG_CONTEXT_OPTION_NAME_CHARS = 64;
 const MAX_ORG_CONTEXT_ROLE_CHARS = 64;
+const MAX_PERMISSION_SCOPE_FREEZE_DEPTH = 8;
+const MAX_PERMISSION_SCOPE_FREEZE_KEYS = 2000;
 const PERMISSION_SCOPE_DISALLOWED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const SAFE_ORG_CONTEXT_OPTION_NAME = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
 
@@ -189,6 +192,34 @@ const isSafeOrgContextId = (orgId: string): boolean => {
   if (/[,;|]/.test(orgId)) return false;
   if (orgId.includes('..') || orgId.includes('/') || orgId.includes('\\')) return false;
   return true;
+};
+const isSafeOrgContextUserId = (userId: string): boolean => {
+  if (!userId || userId.length > MAX_ORG_CONTEXT_USER_ID_CHARS) return false;
+  if (/[\u0000-\u001F\u007F]/.test(userId)) return false;
+  if (/\s/u.test(userId)) return false;
+  if (/[,;|]/.test(userId)) return false;
+  if (userId.includes('..') || userId.includes('/') || userId.includes('\\')) return false;
+  return true;
+};
+const deepFreezePermissionScope = (value: unknown): Record<string, unknown> => {
+  let visitedKeys = 0;
+  const walk = (node: unknown, depth: number): unknown => {
+    if (!node || typeof node !== 'object' || Array.isArray(node)) return node;
+    if (depth > MAX_PERMISSION_SCOPE_FREEZE_DEPTH) return Object.freeze({});
+    const source = node as Record<string, unknown>;
+    const target: Record<string, unknown> = {};
+    for (const key of Object.keys(source)) {
+      visitedKeys += 1;
+      if (visitedKeys > MAX_PERMISSION_SCOPE_FREEZE_KEYS) break;
+      if (PERMISSION_SCOPE_DISALLOWED_KEYS.has(key)) continue;
+      target[key] = walk(source[key], depth + 1);
+    }
+    return Object.freeze(target);
+  };
+  const frozen = walk(value, 0);
+  return frozen && typeof frozen === 'object' && !Array.isArray(frozen)
+    ? (frozen as Record<string, unknown>)
+    : Object.freeze({});
 };
 const sanitizeOrgContextRole = (role: unknown, isConsultant: boolean): string => {
   if (isConsultant) return 'CONSULTANT';
@@ -486,6 +517,15 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         next();
         return;
       }
+      if (!isSafeOrgContextUserId(userId)) {
+        if (required) {
+          res.status(401).json({ error: 'Authentication required' });
+          return;
+        }
+        req.org = null;
+        next();
+        return;
+      }
 
       // CRITICAL: Validate access from DB (always fresh, no cache)
       const access = await resolveUserOrgAccess(userId, orgId);
@@ -505,7 +545,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         isMember: access.isMember || false,
         isConsultant: access.isConsultant || false,
         role: sanitizeOrgContextRole(access.role, access.isConsultant === true),
-        permissionScope: Object.freeze({ ...(access.permissionScope || {}) }),
+        permissionScope: deepFreezePermissionScope(access.permissionScope || {}),
         membershipId: access.membershipId || access.linkId,
       };
       req.org = Object.freeze(resolvedOrgContext);

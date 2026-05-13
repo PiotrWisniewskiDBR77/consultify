@@ -13,6 +13,15 @@ vi.mock('../../../../server/src/services/v8/featureFlagService.js', () => ({
 vi.mock('../../../../server/src/services/v8/shadowModeService.js', () => ({
   recordShadowComparison: recordShadowComparisonMock,
 }));
+const loggerWarnMock = vi.hoisted(() => vi.fn());
+vi.mock('../../../../server/src/utils/Logger.js', () => ({
+  default: {
+    warn: loggerWarnMock,
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 import { v8ShadowModeCheck } from '../../../../server/src/middleware/v8ShadowModeCheck.middleware.ts';
 import { v8ShadowInterceptor } from '../../../../server/src/middleware/v8ShadowInterceptor.middleware.ts';
@@ -152,6 +161,46 @@ describe('v8 shadow middlewares', () => {
     } finally {
       decodeSpy.mockRestore();
     }
+  });
+
+  it('v8ShadowModeCheck continues when jwt.decode throws', async () => {
+    const decodeSpy = vi.spyOn(jwt, 'decode').mockImplementationOnce(() => {
+      throw new Error('decode boom');
+    });
+    const req: any = {
+      headers: {
+        authorization: 'Bearer a.b.c',
+      },
+    };
+    const res: any = {};
+    const next = vi.fn();
+    try {
+      await v8ShadowModeCheck(req, res, next);
+
+      expect(isV8ShadowModeMock).not.toHaveBeenCalled();
+      expect(req.v8ShadowMode).toBe(false);
+      expect(next).toHaveBeenCalledTimes(1);
+    } finally {
+      decodeSpy.mockRestore();
+    }
+  });
+
+  it('v8ShadowModeCheck logs single-line sanitized warning when shadow lookup fails', async () => {
+    isV8ShadowModeMock.mockRejectedValueOnce(new Error('evil\nsecond-line'));
+    const req: any = { organizationId: 'org-1' };
+    const res: any = {};
+    const next = vi.fn();
+
+    await v8ShadowModeCheck(req, res, next);
+
+    expect(loggerWarnMock).toHaveBeenCalledTimes(1);
+    const logMessage = loggerWarnMock.mock.calls[0]?.[0];
+    expect(typeof logMessage).toBe('string');
+    expect(String(logMessage)).not.toContain('\n');
+    expect(String(logMessage)).toContain('orgId=org-1');
+    expect(String(logMessage)).toContain('err=evil second-line');
+    expect(req.v8ShadowMode).toBe(false);
+    expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('v8ShadowInterceptor skips JWT decode for malformed non-compact bearer token', () => {

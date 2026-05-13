@@ -53,10 +53,18 @@ const MAX_SUPERADMIN_ORGANIZATION_ID_CHARS = 256;
 const MAX_SUPERADMIN_ROLE_CLAIM_CHARS = 128;
 const MAX_SUPERADMIN_CAPABILITY_RAW_ARRAY_ENTRIES = 8192;
 const MAX_SUPERADMIN_CAPABILITY_CLAIM_ENTRIES = 64;
+const MAX_SUPERADMIN_JWT_SEGMENT_CHARS = 6144;
 const SUPERADMIN_JWS_COMPACT_TOKEN_PATTERN = /^[A-Za-z0-9._-]+$/;
+const SUPERADMIN_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
+const SUPERADMIN_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
 const SUPERADMIN_JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
   algorithms: ['HS256'],
   clockTolerance: 30,
+};
+const isSuperAdminCompactJwtShape = (value: string): boolean => {
+  const segments = value.split('.');
+  if (segments.length !== 3) return false;
+  return segments.every((segment) => segment.length > 0 && segment.length <= MAX_SUPERADMIN_JWT_SEGMENT_CHARS);
 };
 
 const normalizeSuperAdminRole = (role?: string): string => {
@@ -241,7 +249,7 @@ export const verifySuperAdmin = async (
     });
     return;
   }
-  if (/[\r\n\x00]/.test(cleanToken)) {
+  if (SUPERADMIN_TOKEN_CONTROL_CHARS.test(cleanToken) || SUPERADMIN_TOKEN_DISALLOWED_UNICODE.test(cleanToken)) {
     res.status(401).json({
       error: 'Unauthorized',
       code: 'UNAUTHORIZED',
@@ -257,7 +265,7 @@ export const verifySuperAdmin = async (
     });
     return;
   }
-  if (cleanToken.split('.').length !== 3) {
+  if (!isSuperAdminCompactJwtShape(cleanToken)) {
     res.status(401).json({
       error: 'Unauthorized',
       code: 'UNAUTHORIZED',
@@ -491,6 +499,14 @@ export const requireSuperAdminCapability =
         error: 'Authentication policy misconfigured',
         code: 'SUPERADMIN_CAPABILITY_GATE_MISCONFIGURED',
         guidance: 'Contact platform support and retry after the policy is corrected.',
+      });
+      return;
+    }
+    if (!safeRead(() => req.user?.isSuperAdmin === true, false)) {
+      res.status(403).json({
+        error: 'Requires platform superadmin authentication context',
+        code: 'SUPERADMIN_CONTEXT_REQUIRED',
+        guidance: 'Complete superadmin authentication before accessing capability-gated routes.',
       });
       return;
     }

@@ -41,6 +41,7 @@ const MAX_VALIDATION_FIELD_CHARS = 256;
 const MAX_VALIDATION_MESSAGE_CHARS = 2048;
 const MAX_VALIDATION_LOG_PREVIEW_CHARS = 8000;
 const MAX_VALIDATION_DETAILS_ITEMS = 50;
+const MAX_VALIDATION_PATH_SEGMENTS = 64;
 const truncateValidationString = (value: string, maxChars: number): string =>
   value.length <= maxChars ? value : `${value.slice(0, maxChars)}...`;
 const safeJsonPreview = (value: unknown, maxChars: number): string => {
@@ -58,7 +59,10 @@ const readValidationErrors = (result: unknown): Array<{ field: string; message: 
       const issue = rawIssue as { path?: unknown; message?: unknown; code?: unknown };
       const pathValue = issue.path;
       const field = Array.isArray(pathValue)
-        ? pathValue.map((segment) => (segment === undefined || segment === null ? '' : String(segment))).join('.')
+        ? pathValue
+            .slice(0, MAX_VALIDATION_PATH_SEGMENTS)
+            .map((segment) => (segment === undefined || segment === null ? '' : String(segment)))
+            .join('.')
         : typeof pathValue === 'string'
           ? pathValue
           : '';
@@ -170,6 +174,14 @@ export const validateBody = (schema: z.ZodSchema) => {
           configurable: true,
         });
       }
+      if (typeof next !== 'function') {
+        safeRead(() => {
+          logger.error('[ValidationMiddleware] next is not a function (body validator)');
+          return true;
+        }, false);
+        respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+        return;
+      }
       next();
     } catch (error: unknown) {
       safeRead(() => {
@@ -229,6 +241,14 @@ export const validateQuery = (schema: z.ZodSchema) => {
           configurable: true,
         });
       }
+      if (typeof next !== 'function') {
+        safeRead(() => {
+          logger.error('[ValidationMiddleware] next is not a function (query validator)');
+          return true;
+        }, false);
+        respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+        return;
+      }
       next();
     } catch (error: unknown) {
       safeRead(() => {
@@ -287,6 +307,14 @@ export const validateParams = (schema: z.ZodSchema) => {
           writable: true,
           configurable: true,
         });
+      }
+      if (typeof next !== 'function') {
+        safeRead(() => {
+          logger.error('[ValidationMiddleware] next is not a function (params validator)');
+          return true;
+        }, false);
+        respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+        return;
       }
       next();
     } catch (error: unknown) {

@@ -71,6 +71,31 @@ const safeSetHeader = (res: Response, name: string, value: string): void => {
     return true;
   }, false);
 };
+const safeAppendVaryHeader = (res: Response, value: string): void => {
+  const appendResult = safeRead(() => {
+    const append = (res as Response & { append?: (name: string, value: string) => unknown }).append;
+    if (typeof append !== 'function') return false;
+    append.call(res, 'Vary', value);
+    return true;
+  }, false);
+  if (appendResult) return;
+  safeRead(() => {
+    const current = res.getHeader('Vary');
+    const normalizedValue = sanitizeHeaderValue(value);
+    const existingValues = Array.isArray(current)
+      ? current.map((entry) => String(entry))
+      : typeof current === 'string'
+        ? current.split(',')
+        : [];
+    const normalizedExisting = existingValues
+      .map((entry) => entry.trim())
+      .filter((entry) => Boolean(entry));
+    const hasValue = normalizedExisting.some((entry) => entry.toLowerCase() === normalizedValue.toLowerCase());
+    if (!hasValue) normalizedExisting.push(normalizedValue);
+    safeSetHeader(res, 'Vary', normalizedExisting.join(', '));
+    return true;
+  }, false);
+};
 
 // ==========================================
 // CONFIGURATION
@@ -156,7 +181,22 @@ const getSupportedMajorVersionsForError = (): string[] =>
 const applyNoStoreHeaders = (res: Response): void => {
   safeSetHeader(res, 'Cache-Control', 'no-store');
   safeSetHeader(res, 'Pragma', 'no-cache');
+  safeAppendVaryHeader(res, 'X-API-Version');
 };
+const hasOwnVersionEntry = (value: string): boolean =>
+  Object.prototype.hasOwnProperty.call(API_VERSIONS, value);
+const cloneApiVersionInfo = (info: ApiVersionInfo): ApiVersionInfo => ({
+  major: safeRead(() => info.major, 0),
+  minor: safeRead(() => info.minor, 0),
+  patch: safeRead(() => info.patch, 0),
+  full: String(safeRead(() => info.full, '')),
+  deprecated: safeRead(() => info.deprecated === true, false),
+  sunsetDate:
+    safeRead(() => info.sunsetDate instanceof Date, false) &&
+    Number.isFinite(safeRead(() => info.sunsetDate?.getTime(), Number.NaN))
+      ? new Date(safeRead(() => info.sunsetDate!.getTime(), Date.now()))
+      : null,
+});
 
 const safeStatusJson = (
   res: Response,
@@ -228,7 +268,9 @@ export function apiVersionMiddleware(
 
     // Normalize version
     const normalizedVersion = normalizeVersion(stripAsciiControlChars(clampVersionInput(version)));
-    const versionInfo = API_VERSIONS[normalizedVersion];
+    const versionInfo = hasOwnVersionEntry(normalizedVersion)
+      ? API_VERSIONS[normalizedVersion]
+      : undefined;
 
     if (!versionInfo) {
       const headersAlreadySent = safeRead(() => res.headersSent, false);
@@ -259,9 +301,10 @@ export function apiVersionMiddleware(
     }
 
     // Attach version info to request
-    req.apiVersion = versionInfo;
+    req.apiVersion = cloneApiVersionInfo(versionInfo);
 
     // Set response header
+    safeAppendVaryHeader(res, 'X-API-Version');
     safeSetHeader(res, API_VERSION_RESPONSE_HEADER, sanitizeHeaderValue(versionInfo.full));
 
     // Handle deprecated versions
@@ -306,69 +349,87 @@ export function apiVersionMiddleware(
  */
 export function requireVersion(minVersion: string) {
   return (req: VersionedRequest, res: Response, next: NextFunction): void => {
-    if (!req.apiVersion) {
-      if (safeRead(() => res.headersSent, false)) {
-        logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
-          reason: 'missing_api_version',
-        });
-        safeRead(() => {
-          next();
-          return true;
-        }, false);
+    try {
+      if (!req.apiVersion) {
+        if (safeRead(() => res.headersSent, false)) {
+          logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
+            reason: 'missing_api_version',
+          });
+          safeRead(() => {
+            next();
+            return true;
+          }, false);
+          return;
+        }
+        applyNoStoreHeaders(res);
+        if (
+          !safeStatusJson(res, 400, {
+          error: 'API version required',
+          message: 'This endpoint requires explicit API version.',
+          })
+        ) {
+          logger.warn('[APIVersion] Failed to send missing api version response body');
+        }
         return;
       }
-      applyNoStoreHeaders(res);
-      if (
-        !safeStatusJson(res, 400, {
-        error: 'API version required',
-        message: 'This endpoint requires explicit API version.',
-        })
-      ) {
-        logger.warn('[APIVersion] Failed to send missing api version response body');
-      }
-      return;
-    }
 
-    const normalizedMinVersionInput = stripAsciiControlChars(clampVersionInput(String(minVersion ?? '')));
-    const minInfo = API_VERSIONS[normalizeVersion(normalizedMinVersionInput)];
-    if (!minInfo) {
+      const normalizedMinVersionInput = stripAsciiControlChars(clampVersionInput(String(minVersion ?? '')));
+      const normalizedMinVersion = normalizeVersion(normalizedMinVersionInput);
+      const minInfo = hasOwnVersionEntry(normalizedMinVersion)
+        ? API_VERSIONS[normalizedMinVersion]
+        : undefined;
+      if (!minInfo) {
+        next();
+        return;
+      }
+
+      if (compareVersions(req.apiVersion, minInfo) < 0) {
+        if (safeRead(() => res.headersSent, false)) {
+          logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
+            reason: 'api_version_too_old',
+            requiredVersion: minInfo.full,
+            currentVersion: req.apiVersion.full,
+          });
+          safeRead(() => {
+            next();
+            return true;
+          }, false);
+          return;
+        }
+        applyNoStoreHeaders(res);
+        if (
+          !safeStatusJson(res, 400, {
+          error: 'API version too old',
+          message: `This endpoint requires API version ${formatVersionForError(
+            normalizedMinVersionInput
+          )} or higher.`,
+          yourVersion: sanitizeVersionTokenForPayload(req.apiVersion.full),
+          requiredVersion: sanitizeVersionTokenForPayload(minInfo.full),
+          })
+        ) {
+          logger.warn('[APIVersion] Failed to send outdated api version response body', {
+            requiredVersion: minInfo.full,
+            currentVersion: req.apiVersion.full,
+          });
+        }
+        return;
+      }
+
       next();
-      return;
-    }
-
-    if (compareVersions(req.apiVersion, minInfo) < 0) {
-      if (safeRead(() => res.headersSent, false)) {
-        logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
-          reason: 'api_version_too_old',
-          requiredVersion: minInfo.full,
-          currentVersion: req.apiVersion.full,
-        });
-        safeRead(() => {
-          next();
-          return true;
-        }, false);
-        return;
-      }
-      applyNoStoreHeaders(res);
-      if (
-        !safeStatusJson(res, 400, {
-        error: 'API version too old',
-        message: `This endpoint requires API version ${formatVersionForError(
-          normalizedMinVersionInput
-        )} or higher.`,
-        yourVersion: sanitizeVersionTokenForPayload(req.apiVersion.full),
-        requiredVersion: sanitizeVersionTokenForPayload(minInfo.full),
-        })
-      ) {
-        logger.warn('[APIVersion] Failed to send outdated api version response body', {
-          requiredVersion: minInfo.full,
-          currentVersion: req.apiVersion.full,
+    } catch (error) {
+      logger.error('[APIVersion] requireVersion error', {
+        detail: formatErrorForLog(error),
+      });
+      const nextSucceeded = safeRead(() => {
+        next();
+        return true;
+      }, false);
+      if (!nextSucceeded) {
+        logger.warn('[APIVersion] Failed to invoke next after requireVersion error', {
+          detail: formatErrorForLog(error),
         });
       }
-      return;
     }
-
-    next();
   };
 }
 
@@ -449,7 +510,7 @@ function normalizeVersion(version: string): string {
   if (!cleaned) return '';
 
   // Return as-is if it's a known format
-  if (API_VERSIONS[cleaned]) {
+  if (hasOwnVersionEntry(cleaned)) {
     return cleaned;
   }
 

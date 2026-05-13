@@ -277,6 +277,10 @@ export async function apiKeyAuth(
     req.apiKey = validatedKey;
     req.organizationId = validatedKey.organizationId;
     req.userId = validatedKey.userId;
+    if (responseWriteBlocked(res)) {
+      logger.warn('[APIKeyAuth] Response already committed before downstream handlers', { ip });
+      return;
+    }
 
     next();
   } catch (error) {
@@ -291,7 +295,7 @@ export async function apiKeyAuth(
       },
       { noStore: true }
     );
-    if (!sent) {
+    if (!sent && !responseWriteBlocked(res)) {
       next(error instanceof Error ? error : new Error('API key authentication failed'));
     }
   }

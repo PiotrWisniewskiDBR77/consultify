@@ -11,6 +11,8 @@ const safeRead = <T>(reader: () => T, fallback: T): T => {
     return fallback;
   }
 };
+const MAX_RESOURCE_QUOTA_ORG_ID_CHARS = 128;
+const MAX_RESOURCE_QUOTA_PLAN_ID_CHARS = 256;
 
 const normalizeOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -73,6 +75,10 @@ const shouldSkipCommittedResponse = (res: Response, next: NextFunction): boolean
   }
   return false;
 };
+const invokeNextIfStillWritable = (res: Response, next: NextFunction, phase: string): void => {
+  if (shouldSkipCommittedResponse(res, next)) return;
+  invokeNext(next, phase);
+};
 const sendJsonIfOpen = (
   res: Response,
   next: NextFunction,
@@ -82,6 +88,12 @@ const sendJsonIfOpen = (
 ): boolean => {
   if (shouldSkipCommittedResponse(res, next)) return false;
   try {
+    if (statusCode === 429) {
+      safeRead(() => {
+        res.setHeader('Retry-After', '60');
+        return true;
+      }, false);
+    }
     res.status(statusCode).json(payload);
     return true;
   } catch (error) {
@@ -124,6 +136,10 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
     sendJsonIfOpen(res, next, 403, { error: 'No organization found' }, 'auth');
     return;
   }
+  if (orgId.length > MAX_RESOURCE_QUOTA_ORG_ID_CHARS) {
+    sendJsonIfOpen(res, next, 400, { error: 'Invalid organization context' }, 'auth');
+    return;
+  }
 
   try {
     const orgPlan = await queryOne(
@@ -132,7 +148,11 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
     );
     const subscriptionPlanId = readSubscriptionPlanId(orgPlan as Record<string, unknown> | null);
     if (!subscriptionPlanId) {
-      invokeNext(next, 'memory-no-plan');
+      invokeNextIfStillWritable(res, next, 'memory-no-plan');
+      return;
+    }
+    if (subscriptionPlanId.length > MAX_RESOURCE_QUOTA_PLAN_ID_CHARS) {
+      sendJsonIfOpen(res, next, 400, { error: 'Invalid billing context' }, 'auth');
       return;
     }
 
@@ -144,7 +164,7 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       (plan as Record<string, unknown> | null)?.memory_limit_mb as unknown
     );
     if (memoryLimit === undefined || memoryLimit < 0) {
-      invokeNext(next, 'memory-invalid-limit');
+      invokeNextIfStillWritable(res, next, 'memory-invalid-limit');
       return;
     }
 
@@ -160,7 +180,7 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
 
     const current = readFiniteNumber((usage as Record<string, unknown>).memory_usage_mb_current);
     if (current === undefined) {
-      invokeNext(next, 'memory-invalid-current');
+      invokeNextIfStillWritable(res, next, 'memory-invalid-current');
       return;
     }
     if (current > memoryLimit) {
@@ -182,7 +202,7 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       return;
     }
 
-    invokeNext(next, 'memory-pass');
+    invokeNextIfStillWritable(res, next, 'memory-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] Memory quota check failed', toLoggableError(error));
     if (responseAlreadyCommitted(res)) return;
@@ -197,6 +217,10 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
     sendJsonIfOpen(res, next, 403, { error: 'No organization found' }, 'auth');
     return;
   }
+  if (orgId.length > MAX_RESOURCE_QUOTA_ORG_ID_CHARS) {
+    sendJsonIfOpen(res, next, 400, { error: 'Invalid organization context' }, 'auth');
+    return;
+  }
 
   try {
     const orgPlan = await queryOne(
@@ -205,7 +229,11 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
     );
     const subscriptionPlanId = readSubscriptionPlanId(orgPlan as Record<string, unknown> | null);
     if (!subscriptionPlanId) {
-      invokeNext(next, 'cpu-no-plan');
+      invokeNextIfStillWritable(res, next, 'cpu-no-plan');
+      return;
+    }
+    if (subscriptionPlanId.length > MAX_RESOURCE_QUOTA_PLAN_ID_CHARS) {
+      sendJsonIfOpen(res, next, 400, { error: 'Invalid billing context' }, 'auth');
       return;
     }
 
@@ -218,7 +246,7 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       (plan as Record<string, unknown> | null)?.cpu_quota_percent as unknown
     );
     if (cpuLimit === undefined || cpuLimit < 0) {
-      invokeNext(next, 'cpu-invalid-limit');
+      invokeNextIfStillWritable(res, next, 'cpu-invalid-limit');
       return;
     }
 
@@ -234,7 +262,7 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
 
     const current = readFiniteNumber((usage as Record<string, unknown>).cpu_usage_percent_avg);
     if (current === undefined) {
-      invokeNext(next, 'cpu-invalid-current');
+      invokeNextIfStillWritable(res, next, 'cpu-invalid-current');
       return;
     }
     if (current > cpuLimit) {
@@ -256,7 +284,7 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       return;
     }
 
-    invokeNext(next, 'cpu-pass');
+    invokeNextIfStillWritable(res, next, 'cpu-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] CPU quota check failed', toLoggableError(error));
     if (responseAlreadyCommitted(res)) return;
@@ -269,6 +297,10 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
   const orgId = getOrgId(req);
   if (!orgId) {
     sendJsonIfOpen(res, next, 403, { error: 'No organization found' }, 'auth');
+    return;
+  }
+  if (orgId.length > MAX_RESOURCE_QUOTA_ORG_ID_CHARS) {
+    sendJsonIfOpen(res, next, 400, { error: 'Invalid organization context' }, 'auth');
     return;
   }
 
@@ -290,7 +322,7 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
     const spent = spentRaw ?? 0;
 
     if (monthlyBudget === undefined) {
-      invokeNext(next, 'budget-missing-limit');
+      invokeNextIfStillWritable(res, next, 'budget-missing-limit');
       return;
     }
 
@@ -313,7 +345,7 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
       return;
     }
 
-    invokeNext(next, 'budget-pass');
+    invokeNextIfStillWritable(res, next, 'budget-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] Budget quota check failed', toLoggableError(error));
     if (responseAlreadyCommitted(res)) return;

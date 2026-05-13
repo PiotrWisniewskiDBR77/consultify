@@ -384,6 +384,25 @@ describe('quota.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('does not attempt token 503 response when response is already writableEnded', async () => {
+    mockUsageService.checkQuota.mockRejectedValue(new Error('quota service down'));
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: false,
+      writableEnded: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(503);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('does not attempt storage 503 response when headers are already sent', async () => {
     mockUsageService.checkQuota.mockImplementation(
       async (_orgId: string, type: 'token' | 'storage') => {
@@ -405,6 +424,62 @@ describe('quota.middleware', () => {
     expect(res.status).not.toHaveBeenCalledWith(503);
     expect(res.json).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not attempt storage 503 response when response is already writableEnded', async () => {
+    mockUsageService.checkQuota.mockImplementation(
+      async (_orgId: string, type: 'token' | 'storage') => {
+        if (type === 'storage') throw new Error('storage quota service down');
+        return { allowed: true, used: 1, limit: 100, percentage: 1 };
+      }
+    );
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: false,
+      writableEnded: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(503);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 401 when token quota org id exceeds max supported length', async () => {
+    const req: any = { user: { organizationId: 'o'.repeat(257) } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(mockAccessPolicyService.checkAccess).not.toHaveBeenCalled();
+    expect(mockUsageService.checkQuota).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when storage quota org id exceeds max supported length', async () => {
+    const req: any = { user: { organizationId: 'o'.repeat(257) } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(mockAccessPolicyService.checkAccess).not.toHaveBeenCalled();
+    expect(mockUsageService.checkQuota).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('returns finite storage usage values when quota payload contains NaN numbers', async () => {
@@ -647,6 +722,40 @@ describe('quota.middleware', () => {
     expect(res.status).not.toHaveBeenCalledWith(503);
   });
 
+  it('ignores throwing extra getters on token quota payload and continues allow path', async () => {
+    const payload: any = {
+      allowed: true,
+      used: 90,
+      limit: 100,
+      percentage: 90,
+    };
+    Object.defineProperty(payload, 'trap', {
+      enumerable: true,
+      get: () => {
+        throw new Error('quota trap getter should not run');
+      },
+    });
+    mockUsageService.checkQuota.mockResolvedValueOnce(payload);
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.quotaInfo).toEqual({
+      allowed: true,
+      used: 90,
+      limit: 100,
+      percentage: 90,
+    });
+    expect(res.status).not.toHaveBeenCalledWith(503);
+  });
+
   it('returns 503 when token access policy payload is malformed', async () => {
     mockAccessPolicyService.checkAccess.mockResolvedValueOnce(null);
     const req: any = { user: { organizationId: 'org-1' } };
@@ -796,5 +905,62 @@ describe('quota.middleware', () => {
       'upload',
       expect.objectContaining({ endpoint: '/api/upload' })
     );
+  });
+
+  it('skips token usage recording when org id exceeds max supported length', async () => {
+    const req: any = {
+      user: { organizationId: 'o'.repeat(257), id: 'user-1' },
+      path: '/api/ai',
+      body: { model: 'gpt-5' },
+    };
+
+    await recordTokenUsageAfterResponse(req, {} as any, 25, 'ai_call');
+
+    expect(mockUsageService.recordTokenUsage).not.toHaveBeenCalled();
+  });
+
+  it('skips storage usage recording when org id exceeds max supported length', async () => {
+    const req: any = {
+      user: { organizationId: 'o'.repeat(257) },
+      path: '/api/upload',
+      file: { originalname: 'file.txt' },
+    };
+
+    await recordStorageAfterUpload(req, 1024, 'upload');
+
+    expect(mockUsageService.recordStorageUsage).not.toHaveBeenCalled();
+  });
+
+  it('swallows downstream next throws on token allow path without returning 503', async () => {
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn(() => {
+      throw new Error('downstream token next failed');
+    });
+
+    await expect(enforceTokenQuota(req, res, next)).resolves.toBeUndefined();
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalledWith(503);
+  });
+
+  it('swallows downstream next throws on storage allow path without returning 503', async () => {
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn(() => {
+      throw new Error('downstream storage next failed');
+    });
+
+    await expect(enforceStorageQuota(req, res, next)).resolves.toBeUndefined();
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalledWith(503);
   });
 });

@@ -50,4 +50,16 @@ describe('validateParams (contract)', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect((req.params as any).id).toBe(uuid);
   });
+
+  it('returns 500 when next is not a function on valid params payload', async () => {
+    const uuid = '11111111-1111-4111-8111-111111111111';
+    const mw = validateParams(schema);
+    const req: any = { params: { id: uuid } };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+
+    mw(req, res, undefined as unknown as any);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
+  });
 });

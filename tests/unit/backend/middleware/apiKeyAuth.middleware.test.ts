@@ -147,6 +147,40 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
   });
 
+  it('apiKeyAuth does not forward error to next when response is already committed', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn().mockRejectedValue(new Error('db down'));
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: { authorization: 'Bearer ck_valid-key' },
+      query: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      headersSent: true,
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => {
+        throw new Error('json failed');
+      }),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('apiKeyAuth rejects oversized API key before validation', async () => {
     vi.resetModules();
     const validateKey = vi.fn();
@@ -323,6 +357,45 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
     expect(validateKey).toHaveBeenCalledWith('ck_valid-lower-bearer-key', '127.0.0.1');
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalledWith(401);
+  });
+
+  it('apiKeyAuth skips downstream next when response is already committed after successful validation', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn().mockResolvedValue({
+      kind: 'org',
+      id: 'k-committed',
+      organizationId: 'org-1',
+      permissions: ['read_projects'],
+      rateLimit: 100,
+    });
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+        READ_PROJECTS: 'read_projects',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: { authorization: 'Bearer ck_valid-lower-bearer-key' },
+      query: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      headersSent: true,
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(validateKey).toHaveBeenCalledTimes(1);
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('apiKeyAuth rejects too-short API key before validation', async () => {

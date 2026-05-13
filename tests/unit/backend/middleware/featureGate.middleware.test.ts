@@ -427,6 +427,26 @@ describe('featureGate.middleware', () => {
     expect(res.json).not.toHaveBeenCalled();
   });
 
+  it('requireFeature skips next on allow path when response is already finalized', () => {
+    const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const mw = requireFeature('demo_view');
+    const req: any = { currentPhase: 'B', userState: 'DEMO_SESSION' };
+    const res = makeRes();
+    res.headersSent = true;
+    const next = vi.fn();
+
+    mw(req, res as any, next as any);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[featureGate] Skipped next() (response already finalized)',
+      expect.objectContaining({ featureId: 'demo_view' })
+    );
+    warnSpy.mockRestore();
+  });
+
   it('requireAccess returns 500 when role requirement getter throws unexpectedly', () => {
     const requirements: any = { phase: ['G'], state: ['ECOSYSTEM_NODE'], role: ['ADMIN'] };
     const normalizeRoleSpy = vi.spyOn(String.prototype, 'toUpperCase').mockImplementation(function () {
@@ -454,6 +474,52 @@ describe('featureGate.middleware', () => {
       normalizeRoleSpy.mockRestore();
       errorSpy.mockRestore();
     }
+  });
+
+  it('requireAccess rejects requirements containing control characters', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const mw = requireAccess({
+      phase: ['G'],
+      state: ['ECOSYSTEM_NODE\u0000'],
+      role: ['ADMIN'],
+    } as any);
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE', userRole: 'ADMIN' };
+    const res = makeRes();
+    const next = vi.fn();
+
+    mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[featureGate] requireAccess rejected requirements with disallowed control characters'
+    );
+    errorSpy.mockRestore();
+  });
+
+  it('requireAccess skips next on allow path when response is already finalized', () => {
+    const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const mw = requireAccess({ phase: ['G'], state: ['ECOSYSTEM_NODE'], role: ['ADMIN'] });
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE', userRole: 'ADMIN' };
+    const res = makeRes();
+    res.finished = true;
+    const next = vi.fn();
+
+    mw(req, res as any, next as any);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[featureGate] Skipped next() (response already finalized)',
+      expect.objectContaining({ featureId: 'requireAccess' })
+    );
+    warnSpy.mockRestore();
   });
 
   it('requireAccess ignores inherited requirements and returns 500 when no own rule arrays exist', () => {

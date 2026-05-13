@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  ASSESSMENTS_UPLOAD_ROOT,
   buildSafeUploadedFilename,
   FILE_UPLOAD_DISALLOWED_TYPE_CODE,
   FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE,
@@ -12,6 +13,7 @@ import {
   fileFilter,
   isPathInsideDir,
   resolveAssessmentUploadDir,
+  resolveUploadDestinationForMulter,
   sanitizeOrgIdForUploadPath,
   uploadLimits,
 } from '../../../../server/src/middleware/fileUpload.middleware.ts';
@@ -77,6 +79,16 @@ describe('fileUpload.middleware', () => {
     } as unknown;
     const filenameFromObject = buildSafeUploadedFilename(throwingName);
     expect(filenameFromObject).toContain('-upload.bin');
+
+    const filenameUpperExt = buildSafeUploadedFilename('Report.PDF');
+    expect(filenameUpperExt).toMatch(/\.pdf$/);
+
+    const filenameInvalidUnicode = buildSafeUploadedFilename('report\u200B\n.pdf');
+    expect(filenameInvalidUnicode).not.toContain('\u200B');
+    expect(filenameInvalidUnicode).not.toContain('\n');
+
+    const filenameUnknownExt = buildSafeUploadedFilename('report.TXT');
+    expect(filenameUnknownExt).toMatch(/\.bin$/);
   });
 
   it('buildSafeUploadedFilename truncates oversized client basenames', () => {
@@ -241,6 +253,22 @@ describe('fileUpload.middleware', () => {
 
     expect(resolved).toContain('/uploads/assessments/org-canonical');
     expect(resolved).toBe(fs.realpathSync(resolved));
+  });
+
+  it('resolveUploadDestinationForMulter passes non-empty fallback destination when resolver throws', () => {
+    const cb = vi.fn();
+    const resolver = () => {
+      throw new Error(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE);
+    };
+
+    resolveUploadDestinationForMulter({} as any, cb, resolver as any);
+
+    expect(cb).toHaveBeenCalledTimes(1);
+    const [err, destination] = cb.mock.calls[0];
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toBe(FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE);
+    expect(destination).toBe(ASSESSMENTS_UPLOAD_ROOT);
+    expect(destination.length).toBeGreaterThan(0);
   });
 
   it('exports stable workspace-unavailable error contract constants', () => {
