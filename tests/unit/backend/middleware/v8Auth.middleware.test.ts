@@ -293,6 +293,7 @@ describe('v8Auth.middleware', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
     expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json; charset=utf-8');
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
@@ -309,10 +310,41 @@ describe('v8Auth.middleware', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
     expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json; charset=utf-8');
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ code: 'V8_MISSING_USER_CONTEXT' })
     );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireV8OrgContext does not write deny response when headers are already sent', () => {
+    const req: any = { organizationId: '' };
+    const res: any = makeRes();
+    res.headersSent = true;
+    res.setHeader = vi.fn();
+    const next = vi.fn();
+
+    requireV8OrgContext(req, res as any, next as any);
+
+    expect(res.setHeader).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('attachV8Context does not write deny response when headers are already sent', () => {
+    const req: any = { organizationId: 'org-1' };
+    const res: any = makeRes();
+    res.headersSent = true;
+    res.setHeader = vi.fn();
+    const next = vi.fn();
+
+    attachV8Context(req, res as any, next as any);
+
+    expect(res.setHeader).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
 

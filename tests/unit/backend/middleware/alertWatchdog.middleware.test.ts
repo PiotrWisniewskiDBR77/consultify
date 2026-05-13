@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const flushImmediate = () => new Promise<void>((resolve) => setImmediate(resolve));
+
 describe('alertWatchdog.middleware', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -107,6 +109,22 @@ describe('alertWatchdog.middleware', () => {
     expect(originalEnd).toHaveBeenCalledTimes(1);
     expect(getWatchdogStats().totalRequests).toBe(1);
     expect(getWatchdogStats().windowRequests).toBe(1);
+  });
+
+  it('does not increment totalRequests until response completion is recorded', async () => {
+    vi.resetModules();
+    const { default: alertWatchdog, getWatchdogStats } = await import(
+      '../../../../server/src/middleware/alertWatchdog.middleware.ts'
+    );
+    const req: any = {};
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    alertWatchdog(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(getWatchdogStats().totalRequests).toBe(0);
+    expect(getWatchdogStats().windowRequests).toBe(0);
   });
 
   it('caps in-memory window records by ALERT_WATCHDOG_MAX_RECORDS', async () => {
@@ -255,6 +273,7 @@ describe('alertWatchdog.middleware', () => {
       alertWatchdog(req, res, next);
       res.end();
     }
+    await flushImmediate();
 
     expect(errorSpy).toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalled();

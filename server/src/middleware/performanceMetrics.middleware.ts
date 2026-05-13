@@ -62,6 +62,16 @@ interface EndpointMetrics {
   avgTime: number;
   errorCount: number;
 }
+interface MetricsServiceShape {
+  recordDbQuery: (queryType: string, dbType: string, durationSeconds: number) => void;
+  recordHttpRequest: (
+    method: string,
+    routeLabel: string,
+    statusCode: number,
+    durationSeconds: number
+  ) => void;
+  recordError: (errorType: string, source: string) => void;
+}
 
 interface MetricsSummary {
   totalRequests: number;
@@ -141,6 +151,9 @@ function getRouteLabel(req: Request): string {
 function clampMetricText(value: string, maxChars: number): string {
   return value.length > maxChars ? value.slice(0, maxChars) : value;
 }
+function finiteOrZero(value: number): number {
+  return Number.isFinite(value) ? value : 0;
+}
 
 function sanitizeDbQueryType(value: unknown): string {
   const normalized = normalizeOptionalString(value);
@@ -175,7 +188,12 @@ export function performanceMetricsMiddleware(
   };
 
   // Enable performance tracking for this request (if available)
-  const metricsService = getMetricsService();
+  let metricsService: MetricsServiceShape | null = null;
+  try {
+    metricsService = getMetricsService() as MetricsServiceShape;
+  } catch (error) {
+    logger.warn('Performance middleware getMetricsService failed', error);
+  }
   let performanceTrackingEnabled = false;
   if (typeof queryHelpers.enablePerformanceTracking === 'function') {
     try {
@@ -191,7 +209,7 @@ export function performanceMetricsMiddleware(
           // Record DB query metric for Prometheus
           const dbType = process.env.DB_TYPE || 'postgres';
           const queryType = sanitizeDbQueryType(_queryType);
-          metricsService.recordDbQuery(queryType, dbType, duration / 1000); // Convert to seconds
+          metricsService?.recordDbQuery(queryType, dbType, duration / 1000); // Convert to seconds
         } catch (error) {
           logger.warn('Performance middleware DB tracking callback failed', error);
         }
@@ -228,9 +246,9 @@ export function performanceMetricsMiddleware(
       const routeLabel = clampMetricText(getRouteLabel(req), MAX_METRIC_PATH_CHARS);
       const endMemory = safeRead(() => process.memoryUsage(), startMemory);
       const memoryDelta = {
-        heapUsed: endMemory.heapUsed - startMemory.heapUsed,
-        external: endMemory.external - startMemory.external,
-        rss: endMemory.rss - startMemory.rss,
+        heapUsed: finiteOrZero(endMemory.heapUsed - startMemory.heapUsed),
+        external: finiteOrZero(endMemory.external - startMemory.external),
+        rss: finiteOrZero(endMemory.rss - startMemory.rss),
       };
 
       const metrics = safeRead(
@@ -271,7 +289,7 @@ export function performanceMetricsMiddleware(
         metricsStore.requests.shift();
       }
       try {
-        metricsService.recordHttpRequest(requestMethod, routeLabel, statusCode, responseTime / 1000);
+        metricsService?.recordHttpRequest(requestMethod, routeLabel, statusCode, responseTime / 1000);
       } catch (error) {
         logger.warn('Performance middleware recordHttpRequest failed', error);
       }
@@ -300,7 +318,7 @@ export function performanceMetricsMiddleware(
       if (statusCode >= 400) {
         try {
           const errorType = statusCode >= 500 ? 'server_error' : 'client_error';
-          metricsService.recordError(errorType, 'http');
+          metricsService?.recordError(errorType, 'http');
         } catch (error) {
           logger.warn('Performance middleware recordError failed', error);
         }

@@ -24,6 +24,7 @@ const MAX_AUTH_CAPABILITY_CHARS = 128;
 const MAX_JWT_SECRET_CHARS = 4096;
 const AUTH_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 const AUTH_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
+const MAX_AUTH_ORG_CONTEXT_ID_CHARS = 128;
 const ALLOWED_AUTH_JWT_ALGORITHM = 'HS256';
 const JWT_CLOCK_TOLERANCE_SEC = 30;
 const JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
@@ -45,6 +46,13 @@ const normalizeTokenCandidate = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized || null;
+};
+const isRejectedAuthTokenCandidate = (token: string): boolean => {
+  if (token.length > MAX_AUTH_JWT_CHARS) return true;
+  if (AUTH_TOKEN_CONTROL_CHARS.test(token)) return true;
+  if (AUTH_TOKEN_DISALLOWED_UNICODE.test(token)) return true;
+  if (!isCompactJwtShape(token)) return true;
+  return false;
 };
 
 const normalizeJwtSecret = (value: unknown): string | null => {
@@ -91,6 +99,12 @@ const normalizeOptionalStringClaim = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim();
   return normalized || undefined;
+};
+const normalizeBoundedOrgContextId = (value: unknown): string | undefined => {
+  const normalized = normalizeOptionalStringClaim(value);
+  if (!normalized) return undefined;
+  if (normalized.length > MAX_AUTH_ORG_CONTEXT_ID_CHARS) return undefined;
+  return normalized;
 };
 
 const readClaimValue = (
@@ -394,6 +408,9 @@ const extractToken = (req: AuthRequest): string | null => {
   } catch {
     cookieToken = null;
   }
+  if (cookieToken && isRejectedAuthTokenCandidate(cookieToken)) {
+    cookieToken = null;
+  }
   if (cookieToken) return cookieToken;
 
   // Try body or query (legacy support), but keep production strict.
@@ -502,14 +519,14 @@ const attachUser = async (
   res: Response
 ): Promise<void> => {
   const { PermissionService, dbGet } = await getDeps();
-  const requestedDemoSessionOrgId = normalizeOptionalStringClaim(
+  const requestedDemoSessionOrgId = normalizeBoundedOrgContextId(
     safeGetHeader(req, DEMO_SESSION_ORG_HEADER)
   );
   const isDemoHeader =
     normalizeOptionalStringClaim(safeGetHeader(req, 'X-Demo-Mode'))?.toLowerCase() === 'true';
   const requestedOrgContextId =
-    normalizeOptionalStringClaim(safeGetHeader(req, 'x-org-context')) ||
-    normalizeOptionalStringClaim(safeGetHeader(req, 'x-organization-id')) ||
+    normalizeBoundedOrgContextId(safeGetHeader(req, 'x-org-context')) ||
+    normalizeBoundedOrgContextId(safeGetHeader(req, 'x-organization-id')) ||
     '';
   const decodedClaims = decoded as unknown as Record<string, unknown>;
   const decodedUserId = readOptionalStringClaim(decodedClaims, 'id');

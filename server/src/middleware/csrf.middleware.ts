@@ -142,9 +142,14 @@ function cookieOptions(req: Request) {
 }
 
 function safeEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
+  if (a.length !== CSRF_TOKEN_CANONICAL_CHARS || b.length !== CSRF_TOKEN_CANONICAL_CHARS) {
+    return false;
+  }
   try {
-    return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+    const aBuffer = Buffer.from(a, 'hex');
+    const bBuffer = Buffer.from(b, 'hex');
+    if (aBuffer.length !== 32 || bBuffer.length !== 32) return false;
+    return crypto.timingSafeEqual(aBuffer, bBuffer);
   } catch {
     return false;
   }
@@ -163,6 +168,8 @@ function sendCsrfForbidden(
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.status(403).json(body);
 }

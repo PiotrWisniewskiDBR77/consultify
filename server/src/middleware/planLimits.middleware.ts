@@ -72,7 +72,21 @@ const sendPlanLimitsJson = (
 ): boolean => {
   if (safeRead(() => res.headersSent, false)) return false;
   try {
-    res.status(statusCode).json(payload);
+    const statusBinder = safeRead(() => (res as Response & { status?: unknown }).status, undefined);
+    if (typeof statusBinder !== 'function') {
+      logger.warn('[PlanLimits] Response status writer unavailable');
+      return false;
+    }
+    const statusResult = (statusBinder as (code: number) => unknown).call(res, statusCode);
+    const jsonWriter = safeRead(
+      () => (statusResult as { json?: unknown } | undefined)?.json,
+      undefined
+    );
+    if (typeof jsonWriter !== 'function') {
+      logger.warn('[PlanLimits] Response json writer unavailable');
+      return false;
+    }
+    (jsonWriter as (payload: Record<string, unknown>) => unknown).call(statusResult, payload);
     return true;
   } catch {
     return false;
@@ -148,6 +162,10 @@ export const checkPlanLimit = (limitKey: string) => {
     const authReq = req as AuthRequest;
     const organizationId = readOrganizationId(authReq);
     if (!organizationId || organizationId.length > MAX_PLAN_LIMIT_ORG_ID_CHARS) {
+      if (safeRead(() => res.headersSent || res.writableEnded, false)) {
+        logger.warn('[PlanLimits] Organization context missing but response already committed');
+        return;
+      }
       sendPlanLimitsJson(res, 401, {
         error: 'Unauthorized',
         errorCode: 'ORG_CONTEXT_REQUIRED',

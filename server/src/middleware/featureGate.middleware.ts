@@ -322,89 +322,110 @@ export function requireFeature(featureId: string) {
  * @returns Express middleware
  */
 export function requireAccess(requirements: FeatureRequirements) {
+  if (!requirements || typeof requirements !== 'object' || Array.isArray(requirements)) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message: 'Feature requirements are not properly configured. Contact support.',
+      });
+    };
+  }
+  const hasOwn = (key: 'phase' | 'state' | 'role') =>
+    Object.prototype.hasOwnProperty.call(requirements, key);
+  if (
+    (hasOwn('phase') && !Array.isArray(safeRead(() => requirements.phase, undefined as unknown))) ||
+    (hasOwn('state') && !Array.isArray(safeRead(() => requirements.state, undefined as unknown))) ||
+    (hasOwn('role') && !Array.isArray(safeRead(() => requirements.role, undefined as unknown)))
+  ) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements must use array values for phase, state, and role. Contact support.',
+      });
+    };
+  }
+
+  const requiredPhases =
+    hasOwn('phase') && Array.isArray(safeRead(() => requirements.phase, undefined as unknown))
+      ? (safeRead(() => requirements.phase, [] as unknown) as unknown[])
+      : [];
+  const requiredStates =
+    hasOwn('state') && Array.isArray(safeRead(() => requirements.state, undefined as unknown))
+      ? (safeRead(() => requirements.state, [] as unknown) as unknown[])
+      : [];
+  const requiredRoles =
+    hasOwn('role') && Array.isArray(safeRead(() => requirements.role, undefined as unknown))
+      ? (safeRead(() => requirements.role, [] as unknown) as unknown[])
+      : [];
+
+  const phaseRules = Array.isArray(requiredPhases)
+    ? requiredPhases
+        .map((phaseRule) => normalizeOptionalString(phaseRule))
+        .filter((phaseRule): phaseRule is string => Boolean(phaseRule))
+    : [];
+  const stateRules = Array.isArray(requiredStates)
+    ? requiredStates
+        .map((stateRule) => normalizeOptionalString(stateRule))
+        .filter((stateRule): stateRule is string => Boolean(stateRule))
+    : [];
+  const roleRules = Array.isArray(requiredRoles) ? requiredRoles : [];
+  let normalizedRoleRules: string[];
+  try {
+    normalizedRoleRules = roleRules
+      .map((roleRule) => normalizeRole(roleRule))
+      .filter((roleRule): roleRule is string => Boolean(roleRule));
+  } catch {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements contain invalid role values. Contact support.',
+      });
+    };
+  }
+
+  if (
+    phaseRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
+    stateRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
+    normalizedRoleRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES
+  ) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements exceed maximum supported rule count for phase, state, or role. Contact support.',
+      });
+    };
+  }
+  const hasOversizedRuleToken =
+    phaseRules.some((phaseRule) => phaseRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
+    stateRules.some((stateRule) => stateRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
+    normalizedRoleRules.some((roleRule) => roleRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH);
+  if (hasOversizedRuleToken) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message:
+          'Feature requirements contain oversized phase, state, or role values. Contact support.',
+      });
+    };
+  }
+  if (phaseRules.length === 0 && stateRules.length === 0 && normalizedRoleRules.length === 0) {
+    return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_REQUIREMENTS',
+        message: 'Feature requirements must specify at least one of phase, state, or role. Contact support.',
+      });
+    };
+  }
+
+  const phaseRulesSnapshot = Object.freeze([...phaseRules]);
+  const stateRulesSnapshot = Object.freeze([...stateRules]);
+  const roleRulesSnapshot = Object.freeze([...normalizedRoleRules]);
+
   return (req: FeatureRequest, res: Response, next: NextFunction): void => {
     try {
-      if (!requirements || typeof requirements !== 'object' || Array.isArray(requirements)) {
-        sendJsonIfHeadersOpen(res, 500, {
-          error: 'INVALID_FEATURE_REQUIREMENTS',
-          message: 'Feature requirements are not properly configured. Contact support.',
-        });
-        return;
-      }
-
-      const hasOwn = (key: 'phase' | 'state' | 'role') =>
-        Object.prototype.hasOwnProperty.call(requirements, key);
-      if (
-        (hasOwn('phase') && !Array.isArray(safeRead(() => requirements.phase, undefined as unknown))) ||
-        (hasOwn('state') && !Array.isArray(safeRead(() => requirements.state, undefined as unknown))) ||
-        (hasOwn('role') && !Array.isArray(safeRead(() => requirements.role, undefined as unknown)))
-      ) {
-        sendJsonIfHeadersOpen(res, 500, {
-          error: 'INVALID_FEATURE_REQUIREMENTS',
-          message:
-            'Feature requirements must use array values for phase, state, and role. Contact support.',
-        });
-        return;
-      }
-
-      const requiredPhases =
-        hasOwn('phase') && Array.isArray(safeRead(() => requirements.phase, undefined as unknown))
-          ? (safeRead(() => requirements.phase, [] as unknown) as unknown[])
-          : [];
-      const requiredStates =
-        hasOwn('state') && Array.isArray(safeRead(() => requirements.state, undefined as unknown))
-          ? (safeRead(() => requirements.state, [] as unknown) as unknown[])
-          : [];
-      const requiredRoles =
-        hasOwn('role') && Array.isArray(safeRead(() => requirements.role, undefined as unknown))
-          ? (safeRead(() => requirements.role, [] as unknown) as unknown[])
-          : [];
-      const phaseRules = Array.isArray(requiredPhases)
-        ? requiredPhases
-            .map((phaseRule) => normalizeOptionalString(phaseRule))
-            .filter((phaseRule): phaseRule is string => Boolean(phaseRule))
-        : [];
-      const stateRules = Array.isArray(requiredStates)
-        ? requiredStates
-            .map((stateRule) => normalizeOptionalString(stateRule))
-            .filter((stateRule): stateRule is string => Boolean(stateRule))
-        : [];
-      const roleRules = Array.isArray(requiredRoles) ? requiredRoles : [];
-      const normalizedRoleRules = roleRules
-        .map((roleRule) => normalizeRole(roleRule))
-        .filter((roleRule): roleRule is string => Boolean(roleRule));
-      if (
-        phaseRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
-        stateRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES ||
-        normalizedRoleRules.length > MAX_REQUIRE_ACCESS_RULE_ENTRIES
-      ) {
-        sendJsonIfHeadersOpen(res, 500, {
-          error: 'INVALID_FEATURE_REQUIREMENTS',
-          message:
-            'Feature requirements exceed maximum supported rule count for phase, state, or role. Contact support.',
-        });
-        return;
-      }
-      const hasOversizedRuleToken =
-        phaseRules.some((phaseRule) => phaseRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
-        stateRules.some((stateRule) => stateRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH) ||
-        normalizedRoleRules.some((roleRule) => roleRule.length > MAX_REQUIRE_ACCESS_TOKEN_LENGTH);
-      if (hasOversizedRuleToken) {
-        sendJsonIfHeadersOpen(res, 500, {
-          error: 'INVALID_FEATURE_REQUIREMENTS',
-          message:
-            'Feature requirements contain oversized phase, state, or role values. Contact support.',
-        });
-        return;
-      }
-      if (phaseRules.length === 0 && stateRules.length === 0 && normalizedRoleRules.length === 0) {
-        sendJsonIfHeadersOpen(res, 500, {
-          error: 'INVALID_FEATURE_REQUIREMENTS',
-          message: 'Feature requirements must specify at least one of phase, state, or role. Contact support.',
-        });
-        return;
-      }
-
       const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
       const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
       const currentRole =
@@ -412,30 +433,30 @@ export function requireAccess(requirements: FeatureRequirements) {
         normalizeRole(safeRead(() => req.user?.role, undefined));
 
       // Phase check
-      if (phaseRules.length > 0 && !phaseRules.includes(currentPhase || '')) {
+      if (phaseRulesSnapshot.length > 0 && !phaseRulesSnapshot.includes(currentPhase || '')) {
         sendJsonIfHeadersOpen(res, 403, {
           error: 'PHASE_REQUIRED',
-          required: phaseRules,
+          required: phaseRulesSnapshot,
           current: currentPhase ?? null,
         });
         return;
       }
 
       // State check
-      if (stateRules.length > 0 && !stateRules.includes(currentState || '')) {
+      if (stateRulesSnapshot.length > 0 && !stateRulesSnapshot.includes(currentState || '')) {
         sendJsonIfHeadersOpen(res, 403, {
           error: 'STATE_REQUIRED',
-          required: stateRules,
+          required: stateRulesSnapshot,
           current: currentState ?? null,
         });
         return;
       }
 
       // Role check
-      if (normalizedRoleRules.length > 0 && !normalizedRoleRules.includes(currentRole || '')) {
+      if (roleRulesSnapshot.length > 0 && !roleRulesSnapshot.includes(currentRole || '')) {
         sendJsonIfHeadersOpen(res, 403, {
           error: 'ROLE_REQUIRED',
-          required: normalizedRoleRules,
+          required: roleRulesSnapshot,
           current: currentRole ?? null,
         });
         return;

@@ -121,19 +121,58 @@ export const demoContextMiddleware = (req: Request, _res: Response, next: NextFu
       safeRead(() => req.get?.(DEMO_SESSION_ORG_HEADER), '')
     );
     const effectiveOrgId = requestedSessionOrgId || DEMO_ORG_ID;
-    (req as DemoRequest).demo = { enabled: true, organizationId: effectiveOrgId };
-    // Legacy compatibility: many routes read org context from req/user.
-    safeWrite(() => {
-      (req as any).organizationId = effectiveOrgId;
-    });
     const requestUser = safeRead(() => (req as any).user, undefined as unknown);
-    if (requestUser && typeof requestUser === 'object') {
-      safeWrite(() => {
+    const previousDemo = safeRead(() => (req as DemoRequest).demo, undefined as unknown);
+    const previousOrgId = safeRead(() => (req as any).organizationId, undefined as unknown);
+    const previousUserOrgId =
+      requestUser && typeof requestUser === 'object'
+        ? safeRead(() => (requestUser as any).organizationId, undefined as unknown)
+        : undefined;
+    const previousUserLegacyOrgId =
+      requestUser && typeof requestUser === 'object'
+        ? safeRead(() => (requestUser as any).organization_id, undefined as unknown)
+        : undefined;
+
+    const applied = safeWrite(() => {
+      (req as DemoRequest).demo = { enabled: true, organizationId: effectiveOrgId };
+      // Legacy compatibility: many routes read org context from req/user.
+      (req as any).organizationId = effectiveOrgId;
+      if (requestUser && typeof requestUser === 'object') {
         (requestUser as any).organizationId = effectiveOrgId;
+        (requestUser as any).organization_id = effectiveOrgId;
+      }
+    });
+    if (!applied) {
+      safeWrite(() => {
+        if (previousDemo === undefined) {
+          delete (req as DemoRequest).demo;
+        } else {
+          (req as DemoRequest).demo = previousDemo as DemoRequest['demo'];
+        }
       });
       safeWrite(() => {
-        (requestUser as any).organization_id = effectiveOrgId;
+        if (previousOrgId === undefined) {
+          delete (req as any).organizationId;
+        } else {
+          (req as any).organizationId = previousOrgId;
+        }
       });
+      if (requestUser && typeof requestUser === 'object') {
+        safeWrite(() => {
+          if (previousUserOrgId === undefined) {
+            delete (requestUser as any).organizationId;
+          } else {
+            (requestUser as any).organizationId = previousUserOrgId;
+          }
+        });
+        safeWrite(() => {
+          if (previousUserLegacyOrgId === undefined) {
+            delete (requestUser as any).organization_id;
+          } else {
+            (requestUser as any).organization_id = previousUserLegacyOrgId;
+          }
+        });
+      }
     }
   }
   next();
@@ -181,19 +220,43 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
         next();
         return;
       }
-      try {
-        safeWrite(() => {
-          res.setHeader('Cache-Control', 'no-store');
-        });
-        safeWrite(() => {
-          res.setHeader('Pragma', 'no-cache');
-        });
-        res.status(403).json({
+      const wroteResponse = safeWrite(() => {
+        const setHeaderWriter = safeRead(
+          () => (res as Response & { setHeader?: unknown }).setHeader,
+          undefined
+        );
+        if (typeof setHeaderWriter === 'function') {
+          (setHeaderWriter as (name: string, value: string) => unknown).call(
+            res,
+            'Cache-Control',
+            'no-store'
+          );
+          (setHeaderWriter as (name: string, value: string) => unknown).call(res, 'Pragma', 'no-cache');
+        }
+
+        const statusWriter = safeRead(
+          () => (res as Response & { status?: unknown }).status,
+          undefined
+        );
+        if (typeof statusWriter !== 'function') {
+          throw new Error('Demo guard response status writer unavailable');
+        }
+        const statusResult = (statusWriter as (code: number) => unknown).call(res, 403);
+        const jsonWriter = safeRead(
+          () => (statusResult as { json?: unknown } | undefined)?.json,
+          undefined
+        );
+        if (typeof jsonWriter !== 'function') {
+          throw new Error('Demo guard response json writer unavailable');
+        }
+        (jsonWriter as (payload: { error: string; code: string }) => unknown).call(statusResult, {
           error: 'Demo mode is read-only',
           code: 'DEMO_READ_ONLY',
         });
-      } catch (error) {
-        next(error as Error);
+      });
+      if (!wroteResponse && !responseWriteBlocked(res)) {
+        next(new Error('Failed to write demo read-only response'));
+        return;
       }
       return;
     }

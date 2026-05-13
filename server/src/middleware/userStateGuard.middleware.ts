@@ -111,6 +111,10 @@ export async function attachUserState(
     if (!userId) {
       req.userState = UserStateMachine.USER_STATES.ANON;
       req.currentPhase = UserStateMachine.PHASES.A;
+      req.statePermissions = safeRead(
+        () => UserStateMachine.getPermissions(req.userState as string),
+        getAnonPermissions(UserStateMachine)
+      );
       next();
       return;
     }
@@ -119,6 +123,10 @@ export async function attachUserState(
     if (!db) {
       req.userState = UserStateMachine.USER_STATES.ANON;
       req.currentPhase = UserStateMachine.PHASES.A;
+      req.statePermissions = safeRead(
+        () => UserStateMachine.getPermissions(req.userState as string),
+        getAnonPermissions(UserStateMachine)
+      );
       next();
       return;
     }
@@ -138,7 +146,7 @@ export async function attachUserState(
       const knownPhases = Object.values(UserStateMachine.PHASES);
       const normalizedPhase = knownPhases.includes(rawPhase)
         ? rawPhase
-        : UserStateMachine.getPhase(normalizedState);
+        : safeRead(() => UserStateMachine.getPhase(normalizedState), UserStateMachine.PHASES.A);
       req.userState = normalizedState;
       req.currentPhase = normalizedPhase;
     } else {
@@ -321,6 +329,10 @@ export async function transitionState(
   if (!normalizedFromState || !normalizedToState) {
     return { success: false, error: 'Invalid state' };
   }
+  const knownStates = new Set(Object.values(UserStateMachine.USER_STATES));
+  if (!knownStates.has(normalizedFromState) || !knownStates.has(normalizedToState)) {
+    return { success: false, error: 'Unknown user state' };
+  }
 
   // Validate transition
   let validation: { valid: boolean; reason?: string };
@@ -335,7 +347,13 @@ export async function transitionState(
   }
 
   // Get new phase
-  const newPhase = UserStateMachine.getPhase(normalizedToState);
+  let newPhase: string;
+  try {
+    newPhase = UserStateMachine.getPhase(normalizedToState);
+  } catch (error: unknown) {
+    logger.error('transitionState getPhase error:', error);
+    return { success: false, error: 'State transition phase resolution failed' };
+  }
 
   if (!db) {
     return { success: false, error: 'Database not available' };

@@ -56,6 +56,7 @@ const applyV8NoStoreHeaders = (res: Response): void => {
   safeSetHeader(res, 'Pragma', 'no-cache');
   safeSetHeader(res, 'Expires', '0');
   safeSetHeader(res, 'X-Content-Type-Options', 'nosniff');
+  safeSetHeader(res, 'Content-Type', 'application/json; charset=utf-8');
 };
 
 const responseWriteBlocked = (res: Response): boolean =>
@@ -110,6 +111,7 @@ const resolveUserId = (req: AuthRequest): string | undefined =>
 export const requireV8OrgContext = (req: AuthRequest, res: Response, next: NextFunction): void => {
   const organizationId = resolveOrganizationId(req);
   if (!organizationId) {
+    if (responseWriteBlocked(res)) return;
     sendV8Forbidden(res, {
       error: 'V8 operations require organization context',
       code: 'V8_MISSING_ORG_CONTEXT',
@@ -130,6 +132,7 @@ export const attachV8Context = (req: AuthRequest, res: Response, next: NextFunct
   const isSuperAdmin = safeRead(() => req.user?.isSuperAdmin === true, false);
 
   if (!organizationId) {
+    if (responseWriteBlocked(res)) return;
     sendV8Forbidden(res, {
       error: 'V8 operations require organization context',
       code: 'V8_MISSING_ORG_CONTEXT',
@@ -137,6 +140,7 @@ export const attachV8Context = (req: AuthRequest, res: Response, next: NextFunct
     return;
   }
   if (!userId) {
+    if (responseWriteBlocked(res)) return;
     sendV8Forbidden(res, {
       error: 'V8 operations require user context',
       code: 'V8_MISSING_USER_CONTEXT',
@@ -156,6 +160,7 @@ export const attachV8Context = (req: AuthRequest, res: Response, next: NextFunct
     return true;
   }, false);
   if (!attached) {
+    if (responseWriteBlocked(res)) return;
     sendV8Forbidden(res, {
       error: 'V8 context could not be attached to the request',
       code: 'V8_CONTEXT_ATTACH_FAILED',

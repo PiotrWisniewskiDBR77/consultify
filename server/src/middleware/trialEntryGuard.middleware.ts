@@ -216,19 +216,6 @@ export const trialEntryGuard = async (
       next();
       return;
     }
-
-    // Check if user is in Trial Entry
-    const isTrialEntry = await isTrialEntryUser(userId);
-
-    if (!isTrialEntry) {
-      next();
-      return;
-    }
-
-    // Attach flag for downstream use
-    req.isTrialEntry = true;
-
-    // Check if this route is blocked
     const requestPathCandidates = getCandidateTrialRoutePaths(req);
     if (requestPathCandidates.some((candidatePath) => candidatePath.length > MAX_TRIAL_GUARD_PATH_LEN)) {
       const sent = sendTrialGuardJson(res, 400, {
@@ -241,10 +228,30 @@ export const trialEntryGuard = async (
       }
       return;
     }
-    if (
-      requestMethod &&
-      requestPathCandidates.some((candidatePath) => isBlockedRoute(requestMethod, candidatePath))
-    ) {
+
+    // Check if user is in Trial Entry
+    const isTrialEntry = await isTrialEntryUser(userId);
+
+    if (!isTrialEntry) {
+      next();
+      return;
+    }
+
+    // Attach flag for downstream use
+    req.isTrialEntry = true;
+
+    if (!requestMethod) {
+      const sent = sendTrialGuardJson(res, 400, {
+        error: 'INVALID_HTTP_METHOD',
+        message: 'Nieprawidłowa metoda HTTP.',
+        messageEn: 'The HTTP method is invalid.',
+      });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
+      return;
+    }
+    if (requestPathCandidates.some((candidatePath) => isBlockedRoute(requestMethod, candidatePath))) {
       const sent = sendTrialGuardJson(res, 403, {
         error: 'TRIAL_ENTRY_RESTRICTION',
         message: 'Ta funkcja nie jest dostępna w Trial Entry. Załóż organizację, aby kontynuować.',

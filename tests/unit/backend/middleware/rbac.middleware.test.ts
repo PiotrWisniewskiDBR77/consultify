@@ -39,8 +39,11 @@ describe('rbac.middleware (L1)', () => {
     const req: any = { user: { role: 'guest' } };
     const res = makeRes();
     expect(() => requireRole('admin')(req, res as any, undefined as any)).not.toThrow();
-    expect(res.status).not.toHaveBeenCalled();
-    expect(res.json).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Insufficient role',
+      code: 'RBAC_INSUFFICIENT_ROLE',
+    });
   });
 
   it('requireRole: denies when role not allowed', () => {
@@ -128,6 +131,17 @@ describe('rbac.middleware (L1)', () => {
     expect(() => requireOrgAccess()(req, res as any, undefined as any)).not.toThrow();
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgAccess: denies when next is not a function on deny path', () => {
+    const req: any = { user: { organizationId: '' } };
+    const res = makeRes();
+    expect(() => requireOrgAccess()(req, res as any, undefined as any)).not.toThrow();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Organization access required',
+      code: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
+    });
   });
 
   it('requireOrgAccess: allows when only legacy organization_id exists', () => {
@@ -459,6 +473,14 @@ describe('rbac.middleware (L1)', () => {
 
     expect(() => requireRole('admin')(req, res as any, next as any)).not.toThrow();
     expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: does not throw when deny path receives missing response object', () => {
+    const req: any = { user: { role: 'guest' } };
+    const next = vi.fn();
+
+    expect(() => requireRole('admin')(req, null as any, next as any)).not.toThrow();
     expect(next).not.toHaveBeenCalled();
   });
 });

@@ -129,6 +129,24 @@ describe('piiEncryption.middleware', () => {
     expect(res.json).toBe(originalJson);
   });
 
+  it('piiEncryptionMiddleware does not throw when next is not a function on non-applicable route', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const req: any = {
+      path: '/api/usersConfidential',
+      method: 'POST',
+      body: { email: 'user@example.com' },
+    };
+    const originalJson = vi.fn((payload: unknown) => payload);
+    const res: any = { json: originalJson };
+
+    expect(() => piiEncryptionMiddleware(req, res, undefined as any)).not.toThrow();
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[PIIEncryption] next is not a function; skipping continuation',
+      expect.objectContaining({ context: 'piiEncryptionMiddleware:notApplicable' })
+    );
+    errorSpy.mockRestore();
+  });
+
   it('getPiiRouteConfigIssues returns empty list for default middleware route manifests', () => {
     expect(getPiiRouteConfigIssues()).toEqual([]);
   });

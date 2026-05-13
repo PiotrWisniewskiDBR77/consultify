@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { checkAccessMock } = vi.hoisted(() => ({
   checkAccessMock: vi.fn(),
@@ -23,6 +23,10 @@ function makeRes() {
 }
 
 describe('frameworkEntitlement.middleware', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     checkAccessMock.mockResolvedValue({
@@ -280,6 +284,79 @@ describe('frameworkEntitlement.middleware', () => {
 
     expect(checkAccessMock).toHaveBeenCalledWith('org-1', 'CMMI');
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores inherited framework id from body prototype chain', async () => {
+    const protoBody = { frameworkId: 'cmmi' };
+    const req: any = {
+      user: { organizationId: 'org-1' },
+      params: {},
+      body: Object.create(protoBody),
+    };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'BAD_REQUEST', message: 'Framework ID required' })
+    );
+    expect(checkAccessMock).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when static entitlement check times out', async () => {
+    vi.useFakeTimers();
+    checkAccessMock.mockImplementationOnce(() => new Promise(() => undefined));
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireFrameworkAccess('DRD');
+
+    const pending = mw(req, res as any, next as any);
+    await vi.advanceTimersByTimeAsync(8001);
+    await pending;
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE', framework: 'DRD' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('returns 400 when dynamic framework id body source is a non-object string', async () => {
+    const req: any = { user: { organizationId: 'org-1' }, params: {}, body: 'cmmi' };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'BAD_REQUEST', message: 'Framework ID required' })
+    );
+    expect(checkAccessMock).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when dynamic framework id body source is an array', async () => {
+    const req: any = { user: { organizationId: 'org-1' }, params: {}, body: ['cmmi'] };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'BAD_REQUEST', message: 'Framework ID required' })
+    );
+    expect(checkAccessMock).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('returns 400 when dynamic framework id exceeds max length', async () => {

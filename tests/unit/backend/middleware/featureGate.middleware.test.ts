@@ -108,6 +108,26 @@ describe('featureGate.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireAccess snapshots requirements at creation time and ignores later mutations', () => {
+    const requirements = {
+      phase: ['G'],
+      state: ['ECOSYSTEM_NODE'],
+      role: ['ADMIN'],
+    };
+    const mw = requireAccess(requirements);
+    requirements.phase.length = 0;
+    requirements.state.length = 0;
+    requirements.role.length = 0;
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE', userRole: 'ADMIN' };
+    const res = makeRes();
+    const next = vi.fn();
+
+    mw(req, res as any, next as any);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('requireAccess returns 500 when requirements fields are not arrays', () => {
     const mw = requireAccess({ phase: 'G' as any, state: ['ECOSYSTEM_NODE'], role: [] } as any);
     const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE', userRole: 'ADMIN' };
@@ -304,6 +324,19 @@ describe('featureGate.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireAccess does not throw when headers are already sent on deny path', () => {
+    const mw = requireAccess({ phase: ['G'], state: ['ECOSYSTEM_NODE'], role: ['ADMIN'] });
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE' };
+    const res = makeRes();
+    res.headersSent = true;
+    const next = vi.fn();
+
+    expect(() => mw(req, res as any, next as any)).not.toThrow();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('requireFeature does not write deny response when stream already ended', () => {
     const mw = requireFeature('benchmark_access');
     const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE' };
@@ -413,7 +446,7 @@ describe('featureGate.middleware', () => {
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: 'FEATURE_GATE_INTERNAL',
+          error: 'INVALID_FEATURE_REQUIREMENTS',
         })
       );
       expect(next).not.toHaveBeenCalled();

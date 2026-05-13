@@ -127,20 +127,21 @@ const readUserDefaultOrgId = (req: OrgRequest, requestUser?: AuthRequest['user']
   const organizationId = normalizeOptionalString(
     safeRead(() => user?.organizationId, undefined as unknown as string | undefined)
   );
-  if (organizationId) return organizationId;
+  if (organizationId && isSafeOrgContextId(organizationId)) return organizationId;
   const legacyOrganizationId = normalizeOptionalString(
     safeRead(
       () => (user as { organization_id?: string } | undefined)?.organization_id,
       undefined as unknown as string | undefined
     )
   );
-  if (legacyOrganizationId) return legacyOrganizationId;
-  return normalizeOptionalString(
+  if (legacyOrganizationId && isSafeOrgContextId(legacyOrganizationId)) return legacyOrganizationId;
+  const lastSelectedOrg = normalizeOptionalString(
     safeRead(
       () => (user as { last_selected_org?: string } | undefined)?.last_selected_org,
       undefined as unknown as string | undefined
     )
   );
+  return lastSelectedOrg && isSafeOrgContextId(lastSelectedOrg) ? lastSelectedOrg : null;
 };
 
 const readOrgIdFromParam = (req: Request, paramName: string): string | null => {
@@ -504,7 +505,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         isMember: access.isMember || false,
         isConsultant: access.isConsultant || false,
         role: sanitizeOrgContextRole(access.role, access.isConsultant === true),
-        permissionScope: access.permissionScope,
+        permissionScope: Object.freeze({ ...(access.permissionScope || {}) }),
         membershipId: access.membershipId || access.linkId,
       };
       req.org = Object.freeze(resolvedOrgContext);

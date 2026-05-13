@@ -65,6 +65,25 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ]);
+const EXTENSION_TO_ALLOWED_MIME = new Map<string, Set<string>>([
+  ['.pdf', new Set(['application/pdf'])],
+  [
+    '.doc',
+    new Set(['application/msword']),
+  ],
+  [
+    '.docx',
+    new Set(['application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
+  ],
+  [
+    '.xls',
+    new Set(['application/vnd.ms-excel']),
+  ],
+  [
+    '.xlsx',
+    new Set(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']),
+  ],
+]);
 const normalizeMimeType = (value: string): string => value.split(';')[0]?.trim().toLowerCase() || '';
 
 export const buildSafeUploadedFilename = (originalname: unknown): string => {
@@ -155,21 +174,21 @@ const fileFilter = (
   file: Express.Multer.File,
   cb: (error: Error | null, acceptFile: boolean) => void
 ): void => {
-  const allowedExts = /pdf|xlsx|xls|docx|doc/;
-  const allowedMimes = /pdf|spreadsheet|document|msword|ms-excel/;
-
   const originalName =
     normalizeOptionalString(safeRead(() => file.originalname, undefined)) || 'unknown.file';
-  if (/[\u0000-\u001F\u007F]/.test(originalName)) {
+  if (/[\u0000-\u001F\u007F\u200B-\u200F\u2028-\u202E\uFEFF]/.test(originalName)) {
     cb(createInvalidFilenameError(), false);
     return;
   }
   const mimeType =
     normalizeMimeType(normalizeOptionalString(safeRead(() => file.mimetype, undefined)) || '');
-  const extname = safeRead(() => allowedExts.test(path.extname(originalName).toLowerCase()), false);
+  const ext = safeRead(() => path.extname(originalName).toLowerCase(), '');
+  const extensionAllowedMimes = EXTENSION_TO_ALLOWED_MIME.get(ext);
+  const extname = Boolean(extensionAllowedMimes);
   const mimetype = safeRead(() => ALLOWED_MIME_TYPES.has(mimeType), false);
+  const mimeMatchesExtension = Boolean(extensionAllowedMimes?.has(mimeType));
 
-  if (extname && mimetype) {
+  if (extname && mimetype && mimeMatchesExtension) {
     return cb(null, true);
   }
 

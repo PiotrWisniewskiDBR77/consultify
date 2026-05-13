@@ -281,7 +281,7 @@ export async function apiKeyAuth(
     next();
   } catch (error) {
     logger.error('[APIKeyAuth] Authentication error:', error);
-    sendApiKeyJsonIfOpen(
+    const sent = sendApiKeyJsonIfOpen(
       res,
       500,
       {
@@ -291,6 +291,9 @@ export async function apiKeyAuth(
       },
       { noStore: true }
     );
+    if (!sent) {
+      next(error instanceof Error ? error : new Error('API key authentication failed'));
+    }
   }
 }
 
@@ -559,11 +562,17 @@ function extractApiKey(req: Request): string | null {
  * Get client IP address
  */
 function getClientIp(req: Request): string {
+  const stripIpv4Port = (value: string): string => {
+    if (!/^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$/.test(value)) return value;
+    const [host] = value.split(':');
+    return host || value;
+  };
   const normalizeClientIp = (value: string): string => {
     const normalized = normalizeOptionalString(value) || '';
     if (!normalized) return '';
     const lower = normalized.toLowerCase();
-    return lower.startsWith('::ffff:') ? normalized.slice('::ffff:'.length) : normalized;
+    const unwrapped = lower.startsWith('::ffff:') ? normalized.slice('::ffff:'.length) : normalized;
+    return stripIpv4Port(unwrapped);
   };
 
   const forwarded = safeRead(() => req.headers['x-forwarded-for'], undefined as unknown);

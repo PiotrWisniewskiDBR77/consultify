@@ -605,6 +605,28 @@ describe('AuthMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('should ignore oversized cookie token and treat request as missing token', async () => {
+      mockReq.cookies!['access_token'] = 'x'.repeat(9000);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should ignore cookie token with control characters and treat request as missing token', async () => {
+      mockReq.cookies!['access_token'] = 'cookie-\u0000-token';
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should not accept non-string query.token values', async () => {
       mockReq.query = { token: ['x'] } as any;
 
@@ -658,6 +680,23 @@ describe('AuthMiddleware', () => {
       expect(mockReq.organizationId).toBeUndefined();
       expect(mockReq.user?.organizationId).toBe('');
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('ignores oversized x-org-context header for org override membership lookup', async () => {
+      mockReq.headers!['authorization'] = 'Bearer oversized-org-context-header';
+      mockReq.headers!['x-org-context'] = 'o'.repeat(200);
+      mockReq.get = vi.fn((header: string) => mockReq.headers?.[header.toLowerCase()] || null) as any;
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-ctx-oversized', role: 'ADMIN', organizationId: 'token-org' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.organizationId).toBe('token-org');
+      expect(mockReq.user?.organizationId).toBe('token-org');
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockDbGet).not.toHaveBeenCalledWith(expect.any(String), ['user-ctx-oversized', 'o'.repeat(200)]);
     });
 
     it('should reject verified payloads with missing id', async () => {

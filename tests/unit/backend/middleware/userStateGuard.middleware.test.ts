@@ -49,6 +49,37 @@ describe('userStateGuard.middleware', () => {
 
     expect(req.userState).toBe('ANON');
     expect(req.currentPhase).toBe('A');
+    expect(req.statePermissions).toEqual({ canRead: true });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('attachUserState sets statePermissions on no-user early return path', async () => {
+    const req: any = { user: {} };
+    const res: any = {};
+    const next = vi.fn();
+
+    await attachUserState(req, res, next);
+
+    expect(req.userState).toBe('ANON');
+    expect(req.currentPhase).toBe('A');
+    expect(req.statePermissions).toEqual({ canRead: true });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('attachUserState sets statePermissions when database dependency is unavailable', async () => {
+    setDependencies({
+      UserStateMachine: mockUserStateMachine as any,
+      db: null as any,
+    });
+    const req: any = { user: { id: 'u-1' } };
+    const res: any = {};
+    const next = vi.fn();
+
+    await attachUserState(req, res, next);
+
+    expect(req.userState).toBe('ANON');
+    expect(req.currentPhase).toBe('A');
+    expect(req.statePermissions).toEqual({ canRead: true });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -130,6 +161,22 @@ describe('userStateGuard.middleware', () => {
 
     expect(req.userState).toBe('TEAM_COLLAB');
     expect(req.currentPhase).toBe('B');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('attachUserState falls back to default phase when unknown-phase repair getPhase throws', async () => {
+    mockDb.getAsync.mockResolvedValue({ user_journey_state: 'TEAM_COLLAB', current_phase: 'Z' });
+    mockUserStateMachine.getPhase.mockImplementationOnce(() => {
+      throw new Error('phase mapper failed');
+    });
+    const req: any = { user: { id: 'u-1' } };
+    const res: any = {};
+    const next = vi.fn();
+
+    await attachUserState(req, res, next);
+
+    expect(req.userState).toBe('TEAM_COLLAB');
+    expect(req.currentPhase).toBe('A');
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -346,6 +393,24 @@ describe('userStateGuard.middleware', () => {
     expect(mockDb.run).not.toHaveBeenCalled();
   });
 
+  it('transitionState rejects unknown fromState without validation or DB', async () => {
+    const result = await transitionState('u-1', 'INVALID_STATE', 'TEAM_COLLAB');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Unknown user state/i);
+    expect(mockUserStateMachine.validateTransition).not.toHaveBeenCalled();
+    expect(mockDb.run).not.toHaveBeenCalled();
+  });
+
+  it('transitionState rejects unknown toState without validation or DB', async () => {
+    const result = await transitionState('u-1', 'ANON', 'INVALID_STATE');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Unknown user state/i);
+    expect(mockUserStateMachine.validateTransition).not.toHaveBeenCalled();
+    expect(mockDb.run).not.toHaveBeenCalled();
+  });
+
   it('transitionState returns failure when DB update affects zero rows', async () => {
     mockUserStateMachine.validateTransition.mockReturnValue({ valid: true });
     mockDb.run.mockResolvedValue({ changes: 0 });
@@ -381,5 +446,22 @@ describe('userStateGuard.middleware', () => {
 
     expect(result.success).toBe(true);
     expect(mockDb.run).toHaveBeenCalledTimes(1);
+  });
+
+  it('transitionState returns failure when getPhase throws for target state', async () => {
+    mockUserStateMachine.validateTransition.mockReturnValue({ valid: true });
+    mockUserStateMachine.getPhase.mockImplementation((state: string) => {
+      if (state === 'TEAM_COLLAB') {
+        throw new Error('phase resolution failed');
+      }
+      return 'A';
+    });
+    mockDb.run.mockResolvedValue(undefined);
+
+    const result = await transitionState('u-1', 'ANON', 'TEAM_COLLAB');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/phase resolution failed/i);
+    expect(mockDb.run).not.toHaveBeenCalled();
   });
 });

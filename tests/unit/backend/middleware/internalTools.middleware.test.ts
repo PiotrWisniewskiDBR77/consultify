@@ -166,6 +166,25 @@ describe('internalTools.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 404 when mailbox domain contains non-ascii confusable punctuation', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', 'dbr77.com');
+    const req: any = {
+      user: {
+        email: 'admin@dbr77‐com',
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 404 when email local-part contains whitespace before @', () => {
     vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', 'dbr77.com');
     const req: any = {
@@ -419,6 +438,63 @@ describe('internalTools.middleware', () => {
 
   it('returns 404 when INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS contains control characters', () => {
     vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', `dbr77.com,db${String.fromCharCode(7)}r77.com`);
+    const req: any = {
+      user: {
+        email: 'admin@dbr77.com',
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS contains malformed dns token', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', 'dbr77.com,.dbr77.com');
+    const req: any = {
+      user: {
+        email: 'admin@dbr77.com',
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when user organization id contains unsafe token characters', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_ORG_IDS', 'org-1');
+    const req: any = {
+      user: {
+        email: 'admin@dbr77.com',
+        role: 'ADMIN',
+        organizationId: 'org-1/../other',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when INTERNAL_TOOLS_ALLOWED_ORG_IDS contains unsafe token characters', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_ORG_IDS', 'org-1,bad/org');
     const req: any = {
       user: {
         email: 'admin@dbr77.com',

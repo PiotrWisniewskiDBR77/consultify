@@ -54,6 +54,8 @@ const invokeNextIfFunction = (next: NextFunction): boolean => {
 };
 
 const sendRbacForbidden = (res: Response, error: string, code: string): void => {
+  if (!res || typeof (res as Response & { status?: unknown }).status !== 'function') return;
+  if (typeof (res as Response & { json?: unknown }).json !== 'function') return;
   if (responseWriteBlocked(res)) return;
   try {
     res.status(403);
@@ -149,7 +151,6 @@ const roleSatisfies = (userRole: CanonicalRole, requiredRole: CanonicalRole): bo
  */
 export const requireRole = (...roles: UserRole[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (typeof next !== 'function') return;
     if (req == null) {
       sendRbacForbidden(
         res,
@@ -188,7 +189,6 @@ export const requireRole = (...roles: UserRole[]) => {
  */
 export const requireOrgAccess = () => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (typeof next !== 'function') return;
     if (req == null) {
       sendRbacForbidden(
         res,

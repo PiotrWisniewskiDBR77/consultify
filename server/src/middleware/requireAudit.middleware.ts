@@ -54,6 +54,7 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
   const MAX_AUDIT_RESOURCE_ID = 256;
   const MAX_AUDIT_ACTOR_ID = 128;
   const MAX_AUDIT_ORGANIZATION_ID = 128;
+  const MAX_AUDIT_JSON_FIELD_CHARS = 131072;
   const VALID_ACTOR_TYPES: ReadonlySet<ActorType> = new Set([
     'USER',
     'SYSTEM',
@@ -87,11 +88,25 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
 
   const assertJsonSerializableAuditPayload = (field: string, value: unknown): void => {
     if (value === undefined) return;
+    const assertWithinBounds = (jsonValue: string): void => {
+      if (jsonValue.length > MAX_AUDIT_JSON_FIELD_CHARS) {
+        throw new TypeError(
+          `emitAuditEvent ${field} exceeds maximum serialized size of ${MAX_AUDIT_JSON_FIELD_CHARS} chars`
+        );
+      }
+    };
     try {
-      JSON.stringify(value);
+      const serialized = JSON.stringify(value);
+      if (serialized !== undefined) {
+        assertWithinBounds(serialized);
+      }
     } catch {
       throw new TypeError(`emitAuditEvent ${field} must be JSON-serializable`);
     }
+  };
+  const isEmitAuditValidationError = (error: unknown): boolean => {
+    if (!(error instanceof TypeError)) return false;
+    return normalizeOptionalString(error.message)?.startsWith('emitAuditEvent') === true;
   };
 
   const requireAuditField = (value: unknown, field: string, maxLength: number): string => {
@@ -179,7 +194,11 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
       }
       return eventId.trim();
     } catch (err) {
-      logger.error('[requireAudit] Audit write failed — fail-closed:', err);
+      if (isEmitAuditValidationError(err)) {
+        logger.warn('[requireAudit] emitAuditEvent validation rejected', err);
+      } else {
+        logger.error('[requireAudit] Audit write failed — fail-closed:', err);
+      }
       throw err;
     }
   };

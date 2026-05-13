@@ -19,6 +19,7 @@ import logger from '../utils/Logger.js';
 const MAX_BODY_DEPTH = 10;
 const MAX_STRING_LENGTH = 50000; // 50KB per string field
 const MAX_ARRAY_ELEMENTS = 10000;
+const MAX_OBJECT_KEYS = 10000;
 const MAX_SUSPICIOUS_GRAPH_NODES = 5000;
 const isVitest = !!process.env.VITEST;
 
@@ -45,7 +46,7 @@ let securityUtilsPromise: Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>> |
 
 async function loadSecurityUtils(): Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>> {
   if (!securityUtilsPromise) {
-    securityUtilsPromise = (async () => {
+    const loaderPromise = (async () => {
       // IMPORTANT:
       // - In Vitest we want TS source (stable + direct coverage).
       // - In built runtime (dist/) we must import JS (there is no *.ts in dist/).
@@ -67,6 +68,10 @@ async function loadSecurityUtils(): Promise<Pick<SecurityUtilsModule, 'sanitizeO
         return m as Pick<SecurityUtilsModule, 'sanitizeObject'>;
       }
     })();
+    securityUtilsPromise = loaderPromise.catch((error) => {
+      securityUtilsPromise = null;
+      throw error;
+    });
   }
   return securityUtilsPromise;
 }
@@ -111,8 +116,10 @@ function truncateStrings(
 
   if (typeof obj === 'object') {
     const result: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      result[key] = truncateStrings(value, maxLen, depth - 1);
+    const keys = Object.keys(obj as Record<string, unknown>);
+    const boundedKeys = keys.length > MAX_OBJECT_KEYS ? keys.slice(0, MAX_OBJECT_KEYS) : keys;
+    for (const key of boundedKeys) {
+      result[key] = truncateStrings((obj as Record<string, unknown>)[key], maxLen, depth - 1);
     }
     return result;
   }

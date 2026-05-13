@@ -247,6 +247,8 @@ describe('metrics.middleware', () => {
     expect(output).toContain('http_errors_total ');
     expect(output).toContain('http_request_duration_ms_sum ');
     expect(output).toContain('http_requests_by_method_total');
+    expect(output).toContain('# TYPE http_requests_by_status counter');
+    expect(output).toContain('# HELP http_requests_by_status');
     expect(output).not.toContain('NaN');
     expect(output).not.toContain('Infinity');
   });
@@ -334,5 +336,33 @@ describe('metrics.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(after.requests).toBe(before.requests + 1);
     expect((after.byStatus[204] || 0) - (before.byStatus[204] || 0)).toBe(1);
+  });
+
+  it('detaches finish/close listeners after first completion when using on listeners', () => {
+    const finishHandlers: Array<() => void> = [];
+    const closeHandlers: Array<() => void> = [];
+    const req: any = { method: 'GET' };
+    const res: any = {
+      statusCode: 200,
+      end: vi.fn(),
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+        if (event === 'close') closeHandlers.push(cb);
+      }),
+      removeListener: vi.fn(),
+    };
+    const next = vi.fn();
+    const before = getRequestMetrics();
+
+    metricsMiddleware(req, res, next);
+    finishHandlers[0]?.();
+    finishHandlers[0]?.();
+    closeHandlers[0]?.();
+
+    const after = getRequestMetrics();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect((after.byStatus[200] || 0) - (before.byStatus[200] || 0)).toBe(1);
+    expect(res.removeListener).toHaveBeenCalledWith('finish', finishHandlers[0]);
+    expect(res.removeListener).toHaveBeenCalledWith('close', closeHandlers[0]);
   });
 });

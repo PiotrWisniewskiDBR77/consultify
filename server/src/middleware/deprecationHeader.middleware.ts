@@ -56,6 +56,21 @@ const evictWarnedKeysIfNeeded = (): void => {
 };
 
 const safeSetHeader = (res: Response, key: string, value: string): void => {
+  const getIsResponseCommitted = (): boolean => {
+    const headersSentCommitted = safeRead(() => Boolean(res.headersSent), true);
+    const writable = res as Response & { writableEnded?: boolean; writableFinished?: boolean };
+    const writableEndedCommitted = safeRead(() => Boolean(writable.writableEnded), false);
+    const writableFinishedCommitted = safeRead(() => Boolean(writable.writableFinished), false);
+    return headersSentCommitted || writableEndedCommitted || writableFinishedCommitted;
+  };
+  if (getIsResponseCommitted()) return;
+  safeRead(() => {
+    res.setHeader(key, value);
+    return true;
+  }, false);
+};
+
+const safeSetOrAppendLinkHeader = (res: Response, linkValue: string): void => {
   const headersSentCommitted = safeRead(() => Boolean(res.headersSent), true);
   const writable = res as Response & { writableEnded?: boolean; writableFinished?: boolean };
   const writableEndedCommitted = safeRead(() => Boolean(writable.writableEnded), false);
@@ -63,8 +78,43 @@ const safeSetHeader = (res: Response, key: string, value: string): void => {
   const alreadyCommitted =
     headersSentCommitted || writableEndedCommitted || writableFinishedCommitted;
   if (alreadyCommitted) return;
+
+  const existingLinkHeader = safeRead(
+    () => (res as Response & { getHeader?: (name: string) => unknown }).getHeader?.('Link'),
+    undefined
+  );
+  if (typeof existingLinkHeader === 'string' && existingLinkHeader.trim().length > 0) {
+    const append = safeRead(
+      () => (res as Response & { append?: unknown }).append,
+      undefined
+    );
+    if (typeof append === 'function') {
+      safeRead(() => {
+        (append as (name: string, value: string) => unknown).call(res, 'Link', linkValue);
+        return true;
+      }, false);
+      return;
+    }
+    safeRead(() => {
+      res.setHeader('Link', `${existingLinkHeader}, ${linkValue}`);
+      return true;
+    }, false);
+    return;
+  }
+  if (
+    Array.isArray(existingLinkHeader) &&
+    existingLinkHeader.every((entry) => typeof entry === 'string') &&
+    existingLinkHeader.length > 0
+  ) {
+    safeRead(() => {
+      res.setHeader('Link', [...existingLinkHeader, linkValue].join(', '));
+      return true;
+    }, false);
+    return;
+  }
+
   safeRead(() => {
-    res.setHeader(key, value);
+    res.setHeader('Link', linkValue);
     return true;
   }, false);
 };
@@ -105,7 +155,7 @@ export function deprecationHeader(v8Replacement: string, opts?: Partial<Deprecat
   return (req: Request, res: Response, next: NextFunction) => {
     safeSetHeader(res, 'Deprecation', 'true');
     safeSetHeader(res, 'Sunset', sunsetHeaderValue);
-    safeSetHeader(res, 'Link', linkHeader);
+    safeSetOrAppendLinkHeader(res, linkHeader);
 
     if (shouldLog) {
       const method = stripControlChars(
@@ -121,17 +171,19 @@ export function deprecationHeader(v8Replacement: string, opts?: Partial<Deprecat
       );
       const key = `${method} ${baseUrl}${path}`.slice(0, WARNED_KEY_MAX_CHARS);
       if (!warned.has(key)) {
-        safeRead(() => {
+        const registered = safeRead(() => {
           evictWarnedKeysIfNeeded();
           warned.add(key);
           return true;
         }, false);
-        safeRead(() => {
-          logger.info(
-            `[Deprecation] First call to legacy route: ${key} → migrate to ${successorPath}`
-          );
-          return true;
-        }, false);
+        if (registered && warned.has(key)) {
+          safeRead(() => {
+            logger.info(
+              `[Deprecation] First call to legacy route: ${key} → migrate to ${successorPath}`
+            );
+            return true;
+          }, false);
+        }
       }
     }
 

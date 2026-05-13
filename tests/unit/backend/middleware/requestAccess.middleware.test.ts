@@ -6,6 +6,7 @@ import {
   isRequestSuperAdmin,
   normalizeAccessRole,
 } from '../../../../server/src/middleware/requestAccess.ts';
+import { __private__ as permissionPrivate } from '../../../../server/src/middleware/permission.middleware.ts';
 
 describe('requestAccess middleware helpers', () => {
   it('normalizeAccessRole maps common aliases', () => {
@@ -228,5 +229,38 @@ describe('requestAccess middleware helpers', () => {
 
     expect(getSettingsActorRole(req)).toBe('admin');
     expect(reads).toBe(1);
+  });
+});
+
+describe('permission middleware role normalization parity', () => {
+  it('normalizes confusable/invisible role inputs to ADMIN', () => {
+    expect(permissionPrivate.normalizeRoleForDb('ADMIN\u202E')).toBe('ADMIN');
+    expect(permissionPrivate.normalizeRoleForDb('\u200BADMIN\uFEFF')).toBe('ADMIN');
+  });
+
+  it('normalizes full-width aliases to ADMIN and SUPERADMIN', () => {
+    expect(permissionPrivate.normalizeRoleForDb('\uFF21\uFF24\uFF2D\uFF29\uFF2E')).toBe('ADMIN');
+    expect(
+      permissionPrivate.normalizeRoleForDb(
+        '\uFF33\uFF35\uFF30\uFF25\uFF32\uFF3F\uFF21\uFF24\uFF2D\uFF29\uFF2E'
+      )
+    ).toBe('SUPERADMIN');
+  });
+
+  it('falls back safely when NFKC normalization throws', () => {
+    const normalizeSpy = vi
+      .spyOn(String.prototype, 'normalize')
+      .mockImplementation(function () {
+        if (this.toString() === 'ADMIN') {
+          throw new Error('normalize failed');
+        }
+        return this.toString();
+      });
+
+    try {
+      expect(permissionPrivate.normalizeRoleForDb('ADMIN')).toBe('ADMIN');
+    } finally {
+      normalizeSpy.mockRestore();
+    }
   });
 });

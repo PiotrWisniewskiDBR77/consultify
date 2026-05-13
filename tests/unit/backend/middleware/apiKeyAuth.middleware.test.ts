@@ -113,6 +113,40 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('apiKeyAuth forwards error to next when 500 response body cannot be written', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn().mockRejectedValue(new Error('db down'));
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: { authorization: 'Bearer ck_valid-key' },
+      query: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => {
+        throw new Error('json failed');
+      }),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
   it('apiKeyAuth rejects oversized API key before validation', async () => {
     vi.resetModules();
     const validateKey = vi.fn();
@@ -523,6 +557,47 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
       headers: {
         authorization: 'Bearer ck_valid-length-key',
         'x-forwarded-for': `1.2.3.4,${'a'.repeat(20_000)}`,
+      },
+      query: {},
+      ip: '',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(validateKey).toHaveBeenCalledWith('ck_valid-length-key', '1.2.3.4');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('apiKeyAuth strips ipv4 port suffix from x-forwarded-for before validation', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn().mockResolvedValue({
+      kind: 'org',
+      id: 'key-forwarded-port',
+      organizationId: 'org-forwarded-port',
+      permissions: ['read_projects'],
+      rateLimit: 100,
+    });
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+        READ_PROJECTS: 'read_projects',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: {
+        authorization: 'Bearer ck_valid-length-key',
+        'x-forwarded-for': '1.2.3.4:5678',
       },
       query: {},
       ip: '',

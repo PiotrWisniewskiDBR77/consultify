@@ -78,8 +78,8 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
       rawBody && typeof rawBody === 'object' && !Array.isArray(rawBody)
         ? (rawBody as Record<string, unknown>)
         : ({} as Record<string, unknown>);
-    const rawConfirmation = body.confirmation;
-    const rawReason = body.reason;
+    const rawConfirmation = Object.hasOwn(body, 'confirmation') ? body.confirmation : undefined;
+    const rawReason = Object.hasOwn(body, 'reason') ? body.reason : undefined;
     if (
       rawConfirmation !== undefined &&
       rawConfirmation !== null &&
@@ -94,7 +94,7 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
       });
       return;
     }
-    const confirmation = isExplicitConfirmation(body.confirmation);
+    const confirmation = isExplicitConfirmation(rawConfirmation);
     if (rawReason !== undefined && typeof rawReason !== 'string') {
       respondJson(res, 422, {
         error: 'Reason must be a string',
@@ -135,8 +135,15 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
 
     const adminId =
       normalizeOptionalString(safeRead(() => req.userId, undefined)) ||
-      normalizeOptionalString(safeRead(() => req.user?.id, undefined)) ||
-      'unknown';
+      normalizeOptionalString(safeRead(() => req.user?.id, undefined));
+    if (!adminId) {
+      respondJson(res, 401, {
+        error: 'Authenticated admin identity is required for confirmed actions',
+        code: 'ADMIN_IDENTITY_REQUIRED',
+        actionType: normalizedActionType,
+      });
+      return;
+    }
     const targetType =
       normalizeOptionalString(safeRead(() => req.params?.targetType, undefined)) ||
       normalizeOptionalString(safeRead(() => req.params?.id, undefined))

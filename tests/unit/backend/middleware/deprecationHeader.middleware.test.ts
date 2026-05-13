@@ -355,4 +355,45 @@ describe('deprecationHeader.middleware', () => {
     expect(callsAfterB).toBe(callsAfterA);
     infoSpy.mockRestore();
   });
+
+  it('appends successor Link relation when response already has Link header', () => {
+    const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-link-append' };
+    const res: any = {
+      setHeader: vi.fn(),
+      getHeader: vi.fn(() => '</api/current>; rel="alternate"'),
+      append: vi.fn(),
+    };
+    const next = vi.fn();
+
+    deprecationHeader('/api/v8/new')(req, res, next as any);
+
+    expect(res.append).toHaveBeenCalledWith('Link', '</api/v8/new>; rel="successor-version"');
+    expect(res.setHeader).not.toHaveBeenCalledWith(
+      'Link',
+      '</api/v8/new>; rel="successor-version"'
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not log first-hit message when warned.add throws', () => {
+    const infoSpy = vi.spyOn(logger, 'info').mockImplementation(() => undefined);
+    const originalAdd = Set.prototype.add;
+    const addSpy = vi.spyOn(Set.prototype, 'add').mockImplementation(function (value: string) {
+      if (typeof value === 'string' && value.includes('/route-add-throws')) {
+        throw new Error('warned add failed');
+      }
+      return originalAdd.call(this, value);
+    });
+    const middleware = deprecationHeader('/api/v8/new');
+    const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-add-throws' };
+    const res = makeRes();
+    const next = vi.fn();
+
+    expect(() => middleware(req, res as any, next as any)).not.toThrow();
+
+    expect(infoSpy).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+    addSpy.mockRestore();
+    infoSpy.mockRestore();
+  });
 });

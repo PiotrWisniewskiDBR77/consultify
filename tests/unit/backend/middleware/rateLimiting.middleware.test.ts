@@ -588,6 +588,76 @@ describe('rateLimiting.middleware (L1)', () => {
     }
   });
 
+  it('ignores x-forwarded-for spoofing when trust proxy is disabled', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      const reqA: any = {
+        method: 'GET',
+        ip: undefined,
+        headers: { 'x-forwarded-for': '9.9.9.9' },
+        socket: { remoteAddress: '10.0.0.1' },
+        app: { get: () => false },
+      };
+      const reqB: any = {
+        method: 'GET',
+        ip: undefined,
+        headers: { 'x-forwarded-for': '8.8.8.8' },
+        socket: { remoteAddress: '10.0.0.1' },
+        app: { get: () => false },
+      };
+
+      const resA = makeRes();
+      const resB = makeRes();
+      mod.defaultRateLimiter(reqA, resA as any, vi.fn() as any);
+      mod.defaultRateLimiter(reqB, resB as any, vi.fn() as any);
+
+      expect(Number(resB.headers['x-ratelimit-remaining'])).toBeLessThan(
+        Number(resA.headers['x-ratelimit-remaining'])
+      );
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('uses x-forwarded-for when trust proxy is enabled', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      const reqA: any = {
+        method: 'GET',
+        ip: undefined,
+        headers: { 'x-forwarded-for': '9.9.9.9' },
+        socket: { remoteAddress: '10.0.0.1' },
+        app: { get: () => true },
+      };
+      const reqB: any = {
+        method: 'GET',
+        ip: undefined,
+        headers: { 'x-forwarded-for': '8.8.8.8' },
+        socket: { remoteAddress: '10.0.0.1' },
+        app: { get: () => true },
+      };
+
+      const resA = makeRes();
+      const resB = makeRes();
+      mod.defaultRateLimiter(reqA, resA as any, vi.fn() as any);
+      mod.defaultRateLimiter(reqB, resB as any, vi.fn() as any);
+
+      expect(Number(resB.headers['x-ratelimit-remaining'])).toBe(
+        Number(resA.headers['x-ratelimit-remaining'])
+      );
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
   it('continues when setHeader throws', async () => {
     const prev = process.env.NODE_ENV;
     try {
@@ -635,6 +705,31 @@ describe('rateLimiting.middleware (L1)', () => {
       );
       expect(lastRes.headers['retry-after']).toBe(String(lastRes.body.retryAfter));
       expect(lastRes.body.retryAfter).toBeGreaterThanOrEqual(1);
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('keeps over-limit counter clamped after first 429 burst', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const req: any = { method: 'POST', ip: '33.33.33.33', headers: {}, socket: {} };
+
+      for (let i = 0; i < 16; i++) {
+        mod.authRateLimiter(req, makeRes() as any, vi.fn() as any);
+      }
+      const baseline = mod.__private__.getStoreSize();
+
+      for (let i = 0; i < 200; i++) {
+        const res = makeRes();
+        mod.authRateLimiter(req, res as any, vi.fn() as any);
+        expect(res.statusCode).toBe(429);
+      }
+
+      expect(mod.__private__.getStoreSize()).toBe(baseline);
     } finally {
       process.env.NODE_ENV = prev;
     }

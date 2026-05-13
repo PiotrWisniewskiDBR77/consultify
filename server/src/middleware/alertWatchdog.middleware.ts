@@ -248,7 +248,6 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
     next();
     return;
   }
-  totalRequests++;
   let completedInWrapper = false;
   (res as any).end = function (...args: any[]) {
     let alreadyRecorded =
@@ -271,6 +270,7 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
       const duration = sanitizeDurationMs(Date.now() - start);
       const statusCode = sanitizeStatusCode(safeRead(() => res.statusCode, 200));
 
+      totalRequests += 1;
       if (statusCode >= 500) totalFiveXx++;
 
       records.push({ timestamp: Date.now(), statusCode, durationMs: duration });
@@ -280,11 +280,13 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
       }
 
       if (records.length % EFFECTIVE_CONFIG.checkEveryN === 0) {
-        try {
-          checkThresholds(EFFECTIVE_CONFIG);
-        } catch {
-          /* fail-open */
-        }
+        setImmediate(() => {
+          try {
+            checkThresholds(EFFECTIVE_CONFIG);
+          } catch {
+            /* fail-open */
+          }
+        });
       }
     } catch {
       // fail-open

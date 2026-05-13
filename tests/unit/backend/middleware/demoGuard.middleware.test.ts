@@ -52,6 +52,33 @@ describe('demoGuard.middleware runtime safety', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('demoContextMiddleware does not attach partial demo context when user org assignment throws', () => {
+    const req: any = { user: {} };
+    Object.defineProperty(req.user, 'organizationId', {
+      configurable: true,
+      set: () => {
+        throw new Error('organizationId setter failed');
+      },
+    });
+    Object.defineProperty(req, 'get', {
+      configurable: true,
+      value: (header: string) => {
+        if (header === 'X-Demo-Mode') return 'true';
+        if (header === 'X-Demo-Session-Org') return 'demo-session-org';
+        return null;
+      },
+    });
+    const res = {} as Response;
+    const next = vi.fn();
+
+    expect(() =>
+      demoContextMiddleware(req as Request, res, next as unknown as NextFunction)
+    ).not.toThrow();
+    expect((req as any).demo).toBeUndefined();
+    expect((req as any).organizationId).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('demoContextMiddleware enables demo mode for whitespace-padded X-Demo-Mode header', () => {
     const req: any = {};
     Object.defineProperty(req, 'get', {
@@ -355,12 +382,47 @@ describe('demoGuard.middleware runtime safety', () => {
         throw new Error('json failed');
       }),
     } as unknown as Response;
+    const statusSpy = vi.spyOn(res as any, 'status');
     const next = vi.fn();
 
     middleware(req as Request, res, next as unknown as NextFunction);
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+    expect(statusSpy).toHaveBeenCalledWith(403);
+  });
+
+  it('demoWriteProtection forwards error when response header write fails before status/json', () => {
+    const middleware = demoWriteProtection();
+    const req: any = { organizationId: DEMO_ORG_ID };
+    Object.defineProperty(req, 'method', {
+      configurable: true,
+      get: () => 'POST',
+    });
+    Object.defineProperty(req, 'originalUrl', {
+      configurable: true,
+      get: () => '/api/protected',
+    });
+    Object.defineProperty(req, 'get', {
+      configurable: true,
+      value: () => null,
+    });
+
+    const res = {
+      setHeader: vi.fn(() => {
+        throw new Error('setHeader failed');
+      }),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    } as unknown as Response;
+    const next = vi.fn();
+
+    middleware(req as Request, res, next as unknown as NextFunction);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+    expect((res as any).status).not.toHaveBeenCalled();
+    expect((res as any).json).not.toHaveBeenCalled();
   });
 
   it('demoWriteProtection blocks writes when org id matches DEMO_ORG_ID after trimming', () => {

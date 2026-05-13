@@ -63,6 +63,15 @@ function increment(key: string, windowMs: number): { count: number; resetAt: num
   return { count: entry.count, resetAt: entry.resetAt };
 }
 
+function clampOverLimitCount(key: string, max: number): void {
+  const entry = store.get(key);
+  if (!entry) return;
+  const clamped = Math.max(1, max + 1);
+  if (entry.count > clamped) {
+    entry.count = clamped;
+  }
+}
+
 function enforceStoreCap(now: number): void {
   if (store.size <= MAX_RATE_LIMIT_STORE_KEYS) return;
   for (const [k, v] of store) {
@@ -184,7 +193,15 @@ function extractKey(req: Request): string {
   );
   const ipFromSocket = ipFromSocketRaw ? capKeySegment(ipFromSocketRaw) : null;
   const forwardedHeader = safeRead(() => req.headers['x-forwarded-for'], undefined as unknown);
+  const trustProxy = Boolean(
+    safeRead(
+      () =>
+        (req as Request & { app?: { get?: (name: string) => unknown } }).app?.get?.('trust proxy'),
+      false
+    )
+  );
   const ipFromForwarded = (() => {
+    if (!trustProxy) return null;
     if (typeof forwardedHeader === 'string') {
       const candidate = normalizeOptionalString(forwardedHeader.split(',')[0]);
       return candidate ? capKeySegment(candidate) : null;
@@ -198,7 +215,7 @@ function extractKey(req: Request): string {
     }
     return null;
   })();
-  const ip = capKeySegment(ipFromReq || ipFromSocket || ipFromForwarded || 'unknown');
+  const ip = capKeySegment(ipFromReq || ipFromForwarded || ipFromSocket || 'unknown');
   return `ip:${ip}`;
 }
 
@@ -229,6 +246,7 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
       safeSetHeader(res, 'X-RateLimit-Reset', String(resetSeconds));
 
       if (count > max) {
+        clampOverLimitCount(key, max);
         const retryAfter = Math.max(
           1,
           toSafeNonNegativeIntSeconds((resetAt - Date.now()) / 1000, 0)

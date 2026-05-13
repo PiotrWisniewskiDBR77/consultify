@@ -31,6 +31,7 @@ function createRes() {
     cookie: vi.fn((n: string, v: string, o: any) => {
       cookies[n] = { value: v, options: o };
     }),
+    setHeader: vi.fn(),
     status: vi.fn().mockReturnThis(),
     json: vi.fn(),
     _cookies: cookies,
@@ -159,6 +160,8 @@ describe('CSRF + Sanitization Pipeline (L3)', () => {
       const next = vi.fn();
       csrfValidationMiddleware(req, res, next);
       expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
+      expect(res.setHeader).toHaveBeenCalledWith('X-DNS-Prefetch-Control', 'off');
     });
 
     it('GET never requires CSRF', () => {

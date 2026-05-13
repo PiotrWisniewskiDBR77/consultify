@@ -196,6 +196,16 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(out.length).toBe(10000);
   });
 
+  it('truncateStrings caps oversized plain object key counts', () => {
+    const oversized = Object.fromEntries(
+      Array.from({ length: 10001 }, (_, i) => [`k${i}`, i === 0 ? 'x'.repeat(10) : 'x'])
+    );
+    const out = __private__.truncateStrings(oversized, 5) as Record<string, unknown>;
+    expect(Object.keys(out).length).toBe(10000);
+    expect(out.k0).toBe('x'.repeat(5));
+    expect(out.k10000).toBeUndefined();
+  });
+
   it('truncateStrings stops recursion at depth boundary (private helper)', () => {
     const deep = { a: { b: { c: 'x'.repeat(10) } } };
     const out = __private__.truncateStrings(deep, 5, 2) as any;
@@ -496,6 +506,41 @@ describe('inputSanitizationMiddleware (L1)', () => {
       expect(next1).toHaveBeenCalled();
       expect(next2).toHaveBeenCalled();
       expect(loads).toBe(1);
+    } finally {
+      vi.unmock('../../../../server/src/utils/security.utils.ts');
+    }
+  });
+
+  it('loadSecurityUtils clears failed cache and retries import successfully on next request', async () => {
+    vi.resetModules();
+
+    const sanitizeObject = vi.fn((x: unknown) => x);
+    let loads = 0;
+
+    vi.doMock('../../../../server/src/utils/security.utils.ts', () => {
+      loads++;
+      if (loads === 1) {
+        throw new Error('transient import failure');
+      }
+      return { sanitizeObject };
+    });
+
+    try {
+      const mod = await import(
+        '../../../../server/src/middleware/inputSanitization.middleware.ts?loader_retry_after_failure'
+      );
+      const req1 = createReq({ body: { x: '<b>one</b>' } });
+      const req2 = createReq({ body: { x: '<i>two</i>' } });
+      const next1 = vi.fn();
+      const next2 = vi.fn();
+
+      await mod.inputSanitizationMiddleware(req1, {} as any, next1);
+      expect(next1).toHaveBeenCalled();
+
+      await mod.inputSanitizationMiddleware(req2, {} as any, next2);
+      expect(next2).toHaveBeenCalled();
+      expect(sanitizeObject).toHaveBeenCalled();
+      expect(loads).toBeGreaterThanOrEqual(2);
     } finally {
       vi.unmock('../../../../server/src/utils/security.utils.ts');
     }

@@ -1,20 +1,30 @@
 import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as queryHelpers from '../../../../server/src/utils/queryHelpers.js';
+import { getMetricsService } from '../../../../server/src/services/metricsService.js';
 
-const { recordDbQueryMock, recordHttpRequestMock, recordErrorMock, loggerWarnMock } = vi.hoisted(() => ({
+const {
+  recordDbQueryMock,
+  recordHttpRequestMock,
+  recordErrorMock,
+  loggerWarnMock,
+  getMetricsServiceMock,
+} = vi.hoisted(() => ({
   recordDbQueryMock: vi.fn(),
   recordHttpRequestMock: vi.fn(),
   recordErrorMock: vi.fn(),
   loggerWarnMock: vi.fn(),
+  getMetricsServiceMock: vi.fn(),
+}));
+
+getMetricsServiceMock.mockImplementation(() => ({
+  recordDbQuery: recordDbQueryMock,
+  recordHttpRequest: recordHttpRequestMock,
+  recordError: recordErrorMock,
 }));
 
 vi.mock('../../../../server/src/services/metricsService.js', () => ({
-  getMetricsService: () => ({
-    recordDbQuery: recordDbQueryMock,
-    recordHttpRequest: recordHttpRequestMock,
-    recordError: recordErrorMock,
-  }),
+  getMetricsService: getMetricsServiceMock,
 }));
 
 vi.mock('../../../../server/src/utils/Logger.js', () => ({
@@ -132,6 +142,33 @@ describe('performanceMetrics.middleware', () => {
     );
 
     enableSpy.mockRestore();
+  });
+
+  it('continues request pipeline when getMetricsService throws', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/example',
+      originalUrl: '/api/example',
+      user: { id: 'u-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 200,
+      on: vi.fn(),
+    } as unknown as Response;
+    const next = vi.fn();
+    const getMetricsServiceSpy = vi.mocked(getMetricsService);
+    getMetricsServiceSpy.mockImplementationOnce(() => {
+      throw new Error('metrics service init failed');
+    });
+
+    expect(() =>
+      performanceMetricsMiddleware(req as any, res, next as unknown as NextFunction)
+    ).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      'Performance middleware getMetricsService failed',
+      expect.any(Error)
+    );
   });
 
   it('stores metric and logs when recordError fails for error status', () => {
@@ -433,6 +470,52 @@ describe('performanceMetrics.middleware', () => {
     expect(metricsStore.requests).toHaveLength(1);
     expect(metricsStore.requests[0]?.responseTime).toBe(0);
     nowSpy.mockRestore();
+  });
+
+  it('stores finite memory delta values when memory usage fields are non-finite', () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {
+      method: 'GET',
+      path: '/api/example',
+      originalUrl: '/api/example',
+      user: { id: 'u-1', organizationId: 'org-1' },
+    };
+    const res: any = {
+      statusCode: 200,
+      once: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    };
+    const memorySpy = vi.spyOn(process, 'memoryUsage');
+    memorySpy
+      .mockReturnValueOnce({
+        rss: 10,
+        heapTotal: 10,
+        heapUsed: 10,
+        external: 10,
+        arrayBuffers: 10,
+      } as unknown as NodeJS.MemoryUsage)
+      .mockReturnValueOnce({
+        rss: Number.POSITIVE_INFINITY,
+        heapTotal: 10,
+        heapUsed: Number.NaN,
+        external: Number.NaN,
+        arrayBuffers: 10,
+      } as unknown as NodeJS.MemoryUsage);
+
+    performanceMetricsMiddleware(req, res as unknown as Response, vi.fn() as unknown as NextFunction);
+    finishHandlers[0]?.();
+
+    expect(metricsStore.requests).toHaveLength(1);
+    expect(metricsStore.requests[0]?.memoryDelta).toEqual({
+      heapUsed: 0,
+      external: 0,
+      rss: 0,
+    });
+    memorySpy.mockRestore();
   });
 
   it('releases performance tracking when next throws synchronously', () => {

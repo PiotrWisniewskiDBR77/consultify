@@ -15,6 +15,12 @@ const RATE_LIMIT_JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
   algorithms: ['HS256'],
   clockTolerance: 30,
 };
+const RATE_LIMIT_STRICT_JWT_FALLBACK_ENV = 'RATE_LIMIT_KEY_STRICT_JWT';
+
+const isLikelyJwsCompact = (token: string): boolean => {
+  const parts = token.split('.');
+  return parts.length === 3 && parts.every((part) => part.length > 0);
+};
 
 const normalizeTokenCandidate = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -98,10 +104,14 @@ export function rateLimitUserIdMiddleware(req: Request, _res: Response, next: Ne
     const secret = normalizeTokenCandidate(
       safeRead(() => process.env.JWT_SECRET as string | undefined, undefined)
     );
+    const strictJwtFallback = normalizeTokenCandidate(
+      safeRead(() => process.env[RATE_LIMIT_STRICT_JWT_FALLBACK_ENV], '')
+    ) === '1';
 
     if (!token) return;
     if (token.length > MAX_JWT_STRING_CHARS) return;
     if (DISALLOWED_TOKEN_CHARS.test(token)) return;
+    if (!isLikelyJwsCompact(token)) return;
 
     const assignUserId = (decoded: unknown) => {
       const payload =
@@ -134,7 +144,9 @@ export function rateLimitUserIdMiddleware(req: Request, _res: Response, next: Ne
     } catch {
       // Rate-limit partitioning should remain stable even for tokens that are no longer verifiable.
       // This fallback is only used to derive a per-user throttle key, not for authorization.
-      assignUserId(safeRead(() => jwt.decode(token), null));
+      if (!strictJwtFallback) {
+        assignUserId(safeRead(() => jwt.decode(token), null));
+      }
     }
   } catch {
     // Fail-open: rate limit keying fallback should never block request flow.

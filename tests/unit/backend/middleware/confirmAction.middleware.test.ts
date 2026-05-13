@@ -79,6 +79,18 @@ describe('requireConfirmation', () => {
     expect(res.body.code).toBe('CONFIRMATION_REQUIRED');
   });
 
+  it('ignores inherited confirmation and reason properties from prototype chain', async () => {
+    const prototypeBody = { confirmation: true, reason: 'prototype reason should be ignored' };
+    const req = mockReq({}, { body: Object.create(prototypeBody) });
+    const res = mockRes();
+
+    await middleware(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(428);
+    expect(res.body.code).toBe('CONFIRMATION_REQUIRED');
+  });
+
   it('rejects without reason', async () => {
     const req = mockReq({ confirmation: true });
     const res = mockRes();
@@ -218,6 +230,22 @@ describe('requireConfirmation', () => {
       expect.any(String),
       expect.arrayContaining(['admin-1', 'delete_organization'])
     );
+  });
+
+  it('blocks confirmed action when admin identity cannot be resolved', async () => {
+    const { run: mockRun } = await import('../../../../server/src/utils/DbPromise.js');
+    const req = mockReq(
+      { confirmation: true, reason: 'Identity is required for audit binding' },
+      { userId: '   ', user: undefined }
+    );
+    const res = mockRes();
+
+    await middleware(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('ADMIN_IDENTITY_REQUIRED');
+    expect(mockRun).not.toHaveBeenCalled();
   });
 
   it('does not crash when req.params accessor throws', async () => {

@@ -129,6 +129,50 @@ describe('fileUpload.middleware', () => {
     expect(cb).toHaveBeenCalledWith(null, true);
   });
 
+  it('rejects extension/mimetype mismatch when both values are individually allowed', () => {
+    const req: any = {};
+    const file: any = {
+      originalname: 'report.docx',
+      mimetype: 'application/pdf',
+    };
+    const cb = vi.fn();
+
+    fileFilter(req, file, cb);
+
+    expect(cb).toHaveBeenCalledTimes(1);
+    expectDisallowedTypeError(cb.mock.calls[0][0]);
+    expect(cb.mock.calls[0][1]).toBe(false);
+  });
+
+  it('accepts matching Word and Excel extension/mimetype pairs', () => {
+    const req: any = {};
+    const wordCb = vi.fn();
+    const xlsCb = vi.fn();
+    const xlsxCb = vi.fn();
+
+    fileFilter(
+      req,
+      {
+        originalname: 'report.docx',
+        mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      } as any,
+      wordCb
+    );
+    fileFilter(req, { originalname: 'report.xls', mimetype: 'application/vnd.ms-excel' } as any, xlsCb);
+    fileFilter(
+      req,
+      {
+        originalname: 'report.xlsx',
+        mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      } as any,
+      xlsxCb
+    );
+
+    expect(wordCb).toHaveBeenCalledWith(null, true);
+    expect(xlsCb).toHaveBeenCalledWith(null, true);
+    expect(xlsxCb).toHaveBeenCalledWith(null, true);
+  });
+
   it('rejects filenames containing null-byte control characters', () => {
     const req: any = {};
     const file: any = {
@@ -148,6 +192,21 @@ describe('fileUpload.middleware', () => {
     const req: any = {};
     const file: any = {
       originalname: 'report\n.pdf',
+      mimetype: 'application/pdf',
+    };
+    const cb = vi.fn();
+
+    fileFilter(req, file, cb);
+
+    expect(cb).toHaveBeenCalledTimes(1);
+    expectInvalidFilenameError(cb.mock.calls[0][0]);
+    expect(cb.mock.calls[0][1]).toBe(false);
+  });
+
+  it('rejects filenames containing zero-width Unicode characters', () => {
+    const req: any = {};
+    const file: any = {
+      originalname: 'report\u200B.pdf',
       mimetype: 'application/pdf',
     };
     const cb = vi.fn();

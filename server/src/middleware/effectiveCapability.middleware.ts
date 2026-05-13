@@ -77,10 +77,39 @@ const responseWriteBlocked = (res: Response): boolean =>
   safeRead(
     () =>
       res.headersSent ||
+      (res as Response & { writableFinished?: boolean }).writableFinished === true ||
       (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
       (res as Response & { writableEnded?: boolean; destroyed?: boolean }).destroyed === true,
     false
   );
+
+const invokeNextSafely = (
+  req: AuthRequest,
+  next: NextFunction,
+  logContext: Record<string, unknown>
+): void => {
+  if (typeof next !== 'function') {
+    logger.error('[effectiveCapability] invalid next handler', {
+      path: getRequestPath(req),
+      ...logContext,
+    });
+    return;
+  }
+  try {
+    next();
+  } catch (err) {
+    logger.error('[effectiveCapability] next() threw synchronously', {
+      err,
+      path: getRequestPath(req),
+      ...logContext,
+    });
+    try {
+      next(err as Error);
+    } catch {
+      // Do not throw from access middleware on downstream next-handler failures.
+    }
+  }
+};
 
 const sendJsonIfOpen = (
   req: AuthRequest,
@@ -89,6 +118,16 @@ const sendJsonIfOpen = (
   payload: Record<string, unknown>,
   logContext: Record<string, unknown>
 ): void => {
+  const statusWriter = safeRead(() => (res as Response & { status?: unknown }).status, undefined);
+  const jsonWriter = safeRead(() => (res as Response & { json?: unknown }).json, undefined);
+  if (typeof statusWriter !== 'function' || typeof jsonWriter !== 'function') {
+    logger.error('[effectiveCapability] response object missing status/json handlers', {
+      status,
+      path: getRequestPath(req),
+      ...logContext,
+    });
+    return;
+  }
   if (responseWriteBlocked(res)) {
     logger.warn('[effectiveCapability] response already committed; skipping json write', {
       status,
@@ -232,8 +271,10 @@ export function requireProjectCapability(
       sendJsonIfOpen(req, res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, {});
       return;
     }
-    if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
-      next();
+    const enforce = shouldEnforceEffectiveAccess();
+    const shadow = shouldShadowEffectiveAccess();
+    if (!enforce && !shadow) {
+      invokeNextSafely(req, next, { phase: 'bypass', capability: normalizedCapability });
       return;
     }
 
@@ -246,7 +287,7 @@ export function requireProjectCapability(
         capability: normalizedCapability,
         path: getRequestPath(req),
       });
-      if (shouldEnforceEffectiveAccess()) {
+      if (enforce) {
         sendJsonIfOpen(
           req,
           res,
@@ -259,16 +300,16 @@ export function requireProjectCapability(
         );
         return;
       }
-      next();
+      invokeNextSafely(req, next, { phase: 'resolveProjectId_shadow', capability: normalizedCapability });
       return;
     }
     if (!projectId && !options.allowWithoutProject) {
-      if (!shouldEnforceEffectiveAccess()) {
+      if (!enforce) {
         logger.warn('[effectiveCapability] shadow missing project context', {
           capability: normalizedCapability,
           path: getRequestPath(req),
         });
-        next();
+        invokeNextSafely(req, next, { phase: 'missingProject_shadow', capability: normalizedCapability });
         return;
       }
       sendJsonIfOpen(
@@ -302,7 +343,7 @@ export function requireProjectCapability(
         projectId,
         path: getRequestPath(req),
       });
-      if (shouldEnforceEffectiveAccess()) {
+      if (enforce) {
         sendJsonIfOpen(
           req,
           res,
@@ -315,7 +356,7 @@ export function requireProjectCapability(
         );
         return;
       }
-      next();
+      invokeNextSafely(req, next, { phase: 'resolveAccess_shadow', capability: normalizedCapability });
       return;
     }
 
@@ -329,7 +370,7 @@ export function requireProjectCapability(
         projectId,
         path: getRequestPath(req),
       });
-      if (shouldEnforceEffectiveAccess()) {
+      if (enforce) {
         sendJsonIfOpen(
           req,
           res,
@@ -342,19 +383,19 @@ export function requireProjectCapability(
         );
         return;
       }
-      next();
+      invokeNextSafely(req, next, { phase: 'capabilityCheck_shadow', capability: normalizedCapability });
       return;
     }
 
     if (!hasCapability) {
-      if (!shouldEnforceEffectiveAccess()) {
+      if (!enforce) {
         logger.warn('[effectiveCapability] shadow capability mismatch', {
           capability: normalizedCapability,
           projectId,
           path: getRequestPath(req),
         });
         (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-        next();
+        invokeNextSafely(req, next, { phase: 'deny_shadow', capability: normalizedCapability, projectId });
         return;
       }
       sendJsonIfOpen(
@@ -374,7 +415,7 @@ export function requireProjectCapability(
     }
 
     (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-    next();
+    invokeNextSafely(req, next, { phase: 'allow', capability: normalizedCapability, projectId });
   };
 }
 
@@ -411,8 +452,10 @@ export function requireAnyProjectCapability(
       sendJsonIfOpen(req, res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, {});
       return;
     }
-    if (!shouldEnforceEffectiveAccess() && !shouldShadowEffectiveAccess()) {
-      next();
+    const enforce = shouldEnforceEffectiveAccess();
+    const shadow = shouldShadowEffectiveAccess();
+    if (!enforce && !shadow) {
+      invokeNextSafely(req, next, { phase: 'bypass', capabilities: normalizedCapabilities });
       return;
     }
 
@@ -425,7 +468,7 @@ export function requireAnyProjectCapability(
         capabilities: normalizedCapabilities,
         path: getRequestPath(req),
       });
-      if (shouldEnforceEffectiveAccess()) {
+      if (enforce) {
         sendJsonIfOpen(
           req,
           res,
@@ -438,16 +481,19 @@ export function requireAnyProjectCapability(
         );
         return;
       }
-      next();
+      invokeNextSafely(req, next, {
+        phase: 'resolveProjectId_shadow',
+        capabilities: normalizedCapabilities,
+      });
       return;
     }
     if (!projectId && !options.allowWithoutProject) {
-      if (!shouldEnforceEffectiveAccess()) {
+      if (!enforce) {
         logger.warn('[effectiveCapability] shadow missing project context', {
           capabilities: normalizedCapabilities,
           path: getRequestPath(req),
         });
-        next();
+        invokeNextSafely(req, next, { phase: 'missingProject_shadow', capabilities: normalizedCapabilities });
         return;
       }
       sendJsonIfOpen(
@@ -481,7 +527,7 @@ export function requireAnyProjectCapability(
         projectId,
         path: getRequestPath(req),
       });
-      if (shouldEnforceEffectiveAccess()) {
+      if (enforce) {
         sendJsonIfOpen(
           req,
           res,
@@ -494,7 +540,7 @@ export function requireAnyProjectCapability(
         );
         return;
       }
-      next();
+      invokeNextSafely(req, next, { phase: 'resolveAccess_shadow', capabilities: normalizedCapabilities });
       return;
     }
 
@@ -510,7 +556,7 @@ export function requireAnyProjectCapability(
         projectId,
         path: getRequestPath(req),
       });
-      if (shouldEnforceEffectiveAccess()) {
+      if (enforce) {
         sendJsonIfOpen(
           req,
           res,
@@ -523,19 +569,26 @@ export function requireAnyProjectCapability(
         );
         return;
       }
-      next();
+      invokeNextSafely(req, next, {
+        phase: 'capabilityCheck_shadow',
+        capabilities: normalizedCapabilities,
+      });
       return;
     }
 
     if (!hasAnyCapability) {
-      if (!shouldEnforceEffectiveAccess()) {
+      if (!enforce) {
         logger.warn('[effectiveCapability] shadow capability mismatch', {
           capabilities: normalizedCapabilities,
           projectId,
           path: getRequestPath(req),
         });
         (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-        next();
+        invokeNextSafely(req, next, {
+          phase: 'deny_shadow',
+          capabilities: normalizedCapabilities,
+          projectId,
+        });
         return;
       }
       sendJsonIfOpen(
@@ -555,7 +608,7 @@ export function requireAnyProjectCapability(
     }
 
     (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = access;
-    next();
+    invokeNextSafely(req, next, { phase: 'allow', capabilities: normalizedCapabilities, projectId });
   };
 }
 

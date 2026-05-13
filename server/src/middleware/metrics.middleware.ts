@@ -151,6 +151,8 @@ export function getPrometheusMetrics(): string {
       );
     }
 
+    lines.push(`# HELP http_requests_by_status HTTP requests by normalized response status`);
+    lines.push(`# TYPE http_requests_by_status counter`);
     for (const [status, count] of Object.entries(metrics.byStatus)) {
       lines.push(
         `http_requests_by_status{status="${escapePrometheusLabelValue(status)}"} ${toPrometheusCounter(count)}`
@@ -172,6 +174,18 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
   const start = Date.now();
   const method = safeMethod(req);
   let completionRecorded = false;
+  let listenersDetached = false;
+  const detachCompletionListeners = () => {
+    if (listenersDetached) return;
+    listenersDetached = true;
+    safeRead(() => {
+      if (typeof (res as any).removeListener === 'function') {
+        (res as any).removeListener('finish', onFinish);
+        (res as any).removeListener('close', onClose);
+      }
+      return true;
+    }, false);
+  };
   const recordCompletion = () => {
     if (completionRecorded) return;
     completionRecorded = true;
@@ -197,6 +211,13 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
     } catch {
       // Never break the response path due to metrics accounting.
     }
+    detachCompletionListeners();
+  };
+  const onFinish = () => {
+    recordCompletion();
+  };
+  const onClose = () => {
+    recordCompletion();
   };
 
   const originalEnd = safeRead(() => res.end.bind(res), null as unknown as ((...args: any[]) => any));
@@ -223,11 +244,11 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
   }, false);
   safeRead(() => {
     if (typeof (res as any).once === 'function') {
-      (res as any).once('finish', recordCompletion);
-      (res as any).once('close', recordCompletion);
+      (res as any).once('finish', onFinish);
+      (res as any).once('close', onClose);
     } else if (typeof (res as any).on === 'function') {
-      (res as any).on('finish', recordCompletion);
-      (res as any).on('close', recordCompletion);
+      (res as any).on('finish', onFinish);
+      (res as any).on('close', onClose);
     }
     return true;
   }, false);

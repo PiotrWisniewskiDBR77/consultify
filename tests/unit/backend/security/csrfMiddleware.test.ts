@@ -244,6 +244,8 @@ describe('CSRF middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
       expect(res.setHeader).toHaveBeenCalledWith('Surrogate-Control', 'no-store');
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+      expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
+      expect(res.setHeader).toHaveBeenCalledWith('X-DNS-Prefetch-Control', 'off');
       expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json; charset=utf-8');
       expect(next).not.toHaveBeenCalled();
     });

@@ -19,6 +19,18 @@ const safeRead = <T>(reader: () => T, fallback: T): T => {
     return fallback;
   }
 };
+const invokeNext = (next: NextFunction, error?: unknown): void => {
+  if (typeof next !== 'function') return;
+  try {
+    if (error !== undefined) {
+      next(error as Error);
+      return;
+    }
+    next();
+  } catch (caught) {
+    logger.warn('[FrameworkGate] next() threw', caught);
+  }
+};
 
 const normalizeOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -33,6 +45,7 @@ const FRAMEWORK_REASON_MAX_LEN = 512;
 const FRAMEWORK_UPGRADE_CTA_MAX_LEN = 512;
 const VALID_FRAMEWORK_ACCESS_LEVELS = new Set(['locked', 'trial', 'full', 'educational']);
 const FRAMEWORK_ID_PATTERN = /^[A-Z0-9][A-Z0-9._-]*$/;
+const FRAMEWORK_CHECK_TIMEOUT_MS = 8000;
 
 const sendJsonIfHeadersOpen = (
   res: Response,
@@ -49,6 +62,21 @@ const sendJsonIfHeadersOpen = (
   }
 };
 
+const withTimeout = async <T>(operation: Promise<T>, timeoutMs: number): Promise<T> => {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error('FRAMEWORK_CHECK_TIMEOUT'));
+    }, timeoutMs);
+    timeoutHandle.unref?.();
+  });
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+  }
+};
+
 const respondOrNextOnWriteFailure = (
   res: Response,
   next: NextFunction,
@@ -58,7 +86,7 @@ const respondOrNextOnWriteFailure = (
 ): void => {
   const sent = sendJsonIfHeadersOpen(res, statusCode, payload);
   if (!sent && !safeRead(() => res.headersSent, false)) {
-    next(new Error(fallbackMessage));
+    invokeNext(next, new Error(fallbackMessage));
   }
 };
 
@@ -107,6 +135,11 @@ const readBoundedOrgId = (req: AuthRequest): string | undefined => {
   if (orgId.length > ORG_ID_MAX_LEN) return undefined;
   return orgId;
 };
+const readOwnBodyValue = (body: unknown, key: string): unknown => {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined;
+  if (!Object.prototype.hasOwnProperty.call(body, key)) return undefined;
+  return (body as Record<string, unknown>)[key];
+};
 
 export function requireFrameworkAccess(frameworkId: string) {
   const normalizedFrameworkId = normalizeOptionalString(frameworkId);
@@ -143,7 +176,10 @@ export function requireFrameworkAccess(frameworkId: string) {
       return;
     }
     try {
-      const result = await FrameworkEntitlementService.checkAccess(orgId, canonicalFrameworkId);
+      const result = await withTimeout(
+        FrameworkEntitlementService.checkAccess(orgId, canonicalFrameworkId),
+        FRAMEWORK_CHECK_TIMEOUT_MS
+      );
       if (!isEntitlementResultRecord(result)) {
         logger.warn('[FrameworkGate] checkAccess returned non-object result', {
           framework: canonicalFrameworkId,
@@ -153,7 +189,7 @@ export function requireFrameworkAccess(frameworkId: string) {
           framework: canonicalFrameworkId,
         });
         if (!sent && !safeRead(() => res.headersSent, false)) {
-          next(new Error('Framework access check returned invalid payload'));
+          invokeNext(next, new Error('Framework access check returned invalid payload'));
         }
         return;
       }
@@ -166,7 +202,7 @@ export function requireFrameworkAccess(frameworkId: string) {
           framework: canonicalFrameworkId,
         });
         if (!sent && !safeRead(() => res.headersSent, false)) {
-          next(new Error('Framework access check returned invalid payload'));
+          invokeNext(next, new Error('Framework access check returned invalid payload'));
         }
         return;
       }
@@ -188,7 +224,7 @@ export function requireFrameworkAccess(frameworkId: string) {
         return;
       }
       req.frameworkAccess = buildFrameworkAccessAttachment(result);
-      next();
+      invokeNext(next);
     } catch (error) {
       logger.warn('[FrameworkGate] checkAccess failed', error);
       const sent = sendJsonIfHeadersOpen(res, 503, {
@@ -196,7 +232,7 @@ export function requireFrameworkAccess(frameworkId: string) {
         framework: canonicalFrameworkId,
       });
       if (!sent && !safeRead(() => res.headersSent, false)) {
-        next(error instanceof Error ? error : new Error('Framework access check failed'));
+        invokeNext(next, error instanceof Error ? error : new Error('Framework access check failed'));
       }
     }
   };
@@ -223,9 +259,8 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
       normalizeOptionalString(safeRead(() => req.params?.[normalizedParamName], undefined)) ||
       normalizeOptionalString(
         safeRead(() => {
-          const body = req.body as Record<string, unknown> | undefined;
-          if (!body) return undefined;
-          return body[normalizedParamName] ?? body.frameworkId;
+          const body = req.body;
+          return readOwnBodyValue(body, normalizedParamName) ?? readOwnBodyValue(body, 'frameworkId');
         }, undefined)
       );
     if (!orgId) {
@@ -264,7 +299,10 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
       return;
     }
     try {
-      const result = await FrameworkEntitlementService.checkAccess(orgId, canonicalFwId);
+      const result = await withTimeout(
+        FrameworkEntitlementService.checkAccess(orgId, canonicalFwId),
+        FRAMEWORK_CHECK_TIMEOUT_MS
+      );
       if (!isEntitlementResultRecord(result)) {
         logger.warn('[FrameworkGate] dynamic checkAccess returned non-object result', {
           framework: canonicalFwId,
@@ -274,7 +312,7 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
           framework: canonicalFwId,
         });
         if (!sent && !safeRead(() => res.headersSent, false)) {
-          next(new Error('Dynamic framework access check returned invalid payload'));
+          invokeNext(next, new Error('Dynamic framework access check returned invalid payload'));
         }
         return;
       }
@@ -287,7 +325,7 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
           framework: canonicalFwId,
         });
         if (!sent && !safeRead(() => res.headersSent, false)) {
-          next(new Error('Dynamic framework access check returned invalid payload'));
+          invokeNext(next, new Error('Dynamic framework access check returned invalid payload'));
         }
         return;
       }
@@ -309,7 +347,7 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
         return;
       }
       req.frameworkAccess = buildFrameworkAccessAttachment(result);
-      next();
+      invokeNext(next);
     } catch (error) {
       logger.warn('[FrameworkGate] dynamic checkAccess failed', error);
       const sent = sendJsonIfHeadersOpen(res, 503, {
@@ -317,7 +355,7 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
         framework: canonicalFwId,
       });
       if (!sent && !safeRead(() => res.headersSent, false)) {
-        next(error instanceof Error ? error : new Error('Dynamic framework access check failed'));
+        invokeNext(next, error instanceof Error ? error : new Error('Dynamic framework access check failed'));
       }
     }
   };

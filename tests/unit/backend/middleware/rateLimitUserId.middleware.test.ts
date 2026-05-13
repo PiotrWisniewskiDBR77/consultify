@@ -37,6 +37,8 @@ describe('rateLimitUserIdMiddleware', () => {
     } as any;
   }
 
+  const makeCompactJws = (tokenId: string): string => `header.${tokenId}.sig`;
+
   it('calls next when no token exists (even if secret is set)', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     const req = makeReq({});
@@ -52,7 +54,7 @@ describe('rateLimitUserIdMiddleware', () => {
   it('calls next when secret is missing (even if token exists)', () => {
     // Ensure we don't inherit a JWT secret from the test environment
     vi.stubEnv('JWT_SECRET', '');
-    const req = makeReq({ authorization: 'Bearer token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -60,19 +62,19 @@ describe('rateLimitUserIdMiddleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(req._rateLimitUserId).toBeUndefined();
     expect(verifyMock).not.toHaveBeenCalled();
-    expect(decodeMock).toHaveBeenCalledWith('token');
+    expect(decodeMock).toHaveBeenCalledWith(makeCompactJws('token'));
   });
 
   it('treats whitespace-only JWT_SECRET as missing and uses decode path', () => {
     vi.stubEnv('JWT_SECRET', '   ');
     decodeMock.mockReturnValue({ id: 'u-whitespace-secret' });
-    const req = makeReq({ authorization: 'Bearer token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(verifyMock).not.toHaveBeenCalled();
-    expect(decodeMock).toHaveBeenCalledWith('token');
+    expect(decodeMock).toHaveBeenCalledWith(makeCompactJws('token'));
     expect(req._rateLimitUserId).toBe('u-whitespace-secret');
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -80,12 +82,16 @@ describe('rateLimitUserIdMiddleware', () => {
   it('extracts Bearer token and sets _rateLimitUserId when decoded contains id', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-123' });
-    const req = makeReq({ authorization: 'Bearer jwt-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('jwt-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
-    expect(verifyMock).toHaveBeenCalledWith('jwt-token', 'secret', EXPECTED_VERIFY_OPTIONS);
+    expect(verifyMock).toHaveBeenCalledWith(
+      makeCompactJws('jwt-token'),
+      'secret',
+      EXPECTED_VERIFY_OPTIONS
+    );
     expect(req._rateLimitUserId).toBe('u-123');
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -93,12 +99,16 @@ describe('rateLimitUserIdMiddleware', () => {
   it('extracts bearer token case-insensitively', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-ci' });
-    const req = makeReq({ authorization: 'bearer jwt-token-ci' });
+    const req = makeReq({ authorization: `bearer ${makeCompactJws('jwt-token-ci')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
-    expect(verifyMock).toHaveBeenCalledWith('jwt-token-ci', 'secret', EXPECTED_VERIFY_OPTIONS);
+    expect(verifyMock).toHaveBeenCalledWith(
+      makeCompactJws('jwt-token-ci'),
+      'secret',
+      EXPECTED_VERIFY_OPTIONS
+    );
     expect(req._rateLimitUserId).toBe('u-ci');
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -106,12 +116,16 @@ describe('rateLimitUserIdMiddleware', () => {
   it('uses raw Authorization header value when it is not Bearer-prefixed', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-raw' });
-    const req = makeReq({ authorization: 'raw-jwt-token' });
+    const req = makeReq({ authorization: makeCompactJws('raw-jwt-token') });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
-    expect(verifyMock).toHaveBeenCalledWith('raw-jwt-token', 'secret', EXPECTED_VERIFY_OPTIONS);
+    expect(verifyMock).toHaveBeenCalledWith(
+      makeCompactJws('raw-jwt-token'),
+      'secret',
+      EXPECTED_VERIFY_OPTIONS
+    );
     expect(req._rateLimitUserId).toBe('u-raw');
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -121,15 +135,23 @@ describe('rateLimitUserIdMiddleware', () => {
     verifyMock.mockReturnValue({ id: 'u-cookie' });
     const next = vi.fn();
 
-    const req1 = makeReq({ cookies: { access_token: 'cookie-access' } });
+    const req1 = makeReq({ cookies: { access_token: makeCompactJws('cookie-access') } });
     rateLimitUserIdMiddleware(req1, {} as Response, next);
-    expect(verifyMock).toHaveBeenCalledWith('cookie-access', 'secret', EXPECTED_VERIFY_OPTIONS);
+    expect(verifyMock).toHaveBeenCalledWith(
+      makeCompactJws('cookie-access'),
+      'secret',
+      EXPECTED_VERIFY_OPTIONS
+    );
     expect(req1._rateLimitUserId).toBe('u-cookie');
 
     verifyMock.mockClear();
-    const req2 = makeReq({ cookies: { token: 'cookie-token' } });
+    const req2 = makeReq({ cookies: { token: makeCompactJws('cookie-token') } });
     rateLimitUserIdMiddleware(req2, {} as Response, next);
-    expect(verifyMock).toHaveBeenCalledWith('cookie-token', 'secret', EXPECTED_VERIFY_OPTIONS);
+    expect(verifyMock).toHaveBeenCalledWith(
+      makeCompactJws('cookie-token'),
+      'secret',
+      EXPECTED_VERIFY_OPTIONS
+    );
     expect(req2._rateLimitUserId).toBe('u-cookie');
   });
 
@@ -145,7 +167,7 @@ describe('rateLimitUserIdMiddleware', () => {
     });
     Object.defineProperty(cookies, 'token', {
       configurable: true,
-      get: () => 'cookie-token-fallback',
+      get: () => makeCompactJws('cookie-token-fallback'),
     });
     const req = makeReq({ cookies });
     const next = vi.fn();
@@ -153,7 +175,7 @@ describe('rateLimitUserIdMiddleware', () => {
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(verifyMock).toHaveBeenCalledWith(
-      'cookie-token-fallback',
+      makeCompactJws('cookie-token-fallback'),
       'secret',
       EXPECTED_VERIFY_OPTIONS
     );
@@ -161,10 +183,36 @@ describe('rateLimitUserIdMiddleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('skips parsing when token is not compact JWS shape', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    const req = makeReq({ authorization: 'Bearer not-a-jwt' });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req._rateLimitUserId).toBeUndefined();
+    expect(verifyMock).not.toHaveBeenCalled();
+    expect(decodeMock).not.toHaveBeenCalled();
+  });
+
+  it('skips parsing when compact token contains empty segment', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    const req = makeReq({ authorization: 'Bearer header..sig' });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req._rateLimitUserId).toBeUndefined();
+    expect(verifyMock).not.toHaveBeenCalled();
+    expect(decodeMock).not.toHaveBeenCalled();
+  });
+
   it('uses sub as a fallback identifier', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ sub: 'u-1' });
-    const req = makeReq({ authorization: 'Bearer jwt-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('jwt-sub-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -176,7 +224,7 @@ describe('rateLimitUserIdMiddleware', () => {
   it('does not set user id when decoded payload has no supported identifier', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ email: 'user@example.com' });
-    const req = makeReq({ authorization: 'Bearer jwt-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('no-id-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -190,7 +238,7 @@ describe('rateLimitUserIdMiddleware', () => {
     verifyMock.mockImplementation(() => {
       throw new Error('invalid token');
     });
-    const req = makeReq({ authorization: 'Bearer bad-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('bad-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -205,27 +253,44 @@ describe('rateLimitUserIdMiddleware', () => {
       throw new Error('invalid token');
     });
     decodeMock.mockReturnValue({ id: 'u-decoded' });
-    const req = makeReq({ authorization: 'Bearer expired-jwt' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('expired-jwt')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(req._rateLimitUserId).toBe('u-decoded');
-    expect(decodeMock).toHaveBeenCalledWith('expired-jwt');
+    expect(decodeMock).toHaveBeenCalledWith(makeCompactJws('expired-jwt'));
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips decode fallback when strict jwt fallback env is enabled', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    vi.stubEnv('RATE_LIMIT_KEY_STRICT_JWT', '1');
+    verifyMock.mockImplementation(() => {
+      throw new Error('invalid token');
+    });
+    decodeMock.mockReturnValue({ id: 'u-decoded-strict' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('expired-strict')}` });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(req._rateLimitUserId).toBeUndefined();
+    expect(decodeMock).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('uses decoded userId when secret is unavailable', () => {
     vi.stubEnv('JWT_SECRET', '');
     decodeMock.mockReturnValue({ userId: 'u-fallback' });
-    const req = makeReq({ authorization: 'Bearer token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(req._rateLimitUserId).toBe('u-fallback');
     expect(verifyMock).not.toHaveBeenCalled();
-    expect(decodeMock).toHaveBeenCalledWith('token');
+    expect(decodeMock).toHaveBeenCalledWith(makeCompactJws('token'));
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -234,7 +299,7 @@ describe('rateLimitUserIdMiddleware', () => {
     decodeMock.mockImplementation(() => {
       throw new Error('decode failed');
     });
-    const req = makeReq({ authorization: 'Bearer token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -258,13 +323,15 @@ describe('rateLimitUserIdMiddleware', () => {
   it('trims bearer token and normalized decoded id before assigning rate limit user id', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: '  u-trimmed  ' });
-    const req = makeReq({ authorization: 'Bearer   token-with-spaces   ' });
+    const req = makeReq({
+      authorization: `Bearer   ${makeCompactJws('token-with-spaces')}   `,
+    });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(verifyMock).toHaveBeenCalledWith(
-      'token-with-spaces',
+      makeCompactJws('token-with-spaces'),
       'secret',
       EXPECTED_VERIFY_OPTIONS
     );
@@ -275,7 +342,7 @@ describe('rateLimitUserIdMiddleware', () => {
   it('continues extraction from cookies when authorization header accessor throws', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-cookie-fallback' });
-    const req = makeReq({ cookies: { token: 'cookie-token-fallback' } });
+    const req = makeReq({ cookies: { token: makeCompactJws('cookie-token-fallback') } });
     Object.defineProperty(req, 'headers', {
       configurable: true,
       get: () => {
@@ -287,7 +354,7 @@ describe('rateLimitUserIdMiddleware', () => {
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(verifyMock).toHaveBeenCalledWith(
-      'cookie-token-fallback',
+      makeCompactJws('cookie-token-fallback'),
       'secret',
       EXPECTED_VERIFY_OPTIONS
     );
@@ -299,13 +366,17 @@ describe('rateLimitUserIdMiddleware', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-array' });
     const req: any = {
-      headers: { authorization: ['Bearer array-token', 'Bearer ignored'] },
+      headers: { authorization: [`Bearer ${makeCompactJws('array-token')}`, 'Bearer ignored'] },
     };
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
-    expect(verifyMock).toHaveBeenCalledWith('array-token', 'secret', EXPECTED_VERIFY_OPTIONS);
+    expect(verifyMock).toHaveBeenCalledWith(
+      makeCompactJws('array-token'),
+      'secret',
+      EXPECTED_VERIFY_OPTIONS
+    );
     expect(req._rateLimitUserId).toBe('u-array');
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -397,13 +468,13 @@ describe('rateLimitUserIdMiddleware', () => {
   it('does not assign _rateLimitUserId when decoded id contains disallowed control characters', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-\n1' });
-    const req = makeReq({ authorization: 'Bearer control-id-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('control-id-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
 
     expect(verifyMock).toHaveBeenCalledWith(
-      'control-id-token',
+      makeCompactJws('control-id-token'),
       'secret',
       EXPECTED_VERIFY_OPTIONS
     );
@@ -414,7 +485,7 @@ describe('rateLimitUserIdMiddleware', () => {
   it('assigns _rateLimitUserId when decoded id is exactly max length boundary', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'x'.repeat(256) });
-    const req = makeReq({ authorization: 'Bearer boundary-id-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('boundary-id-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -446,7 +517,7 @@ describe('rateLimitUserIdMiddleware', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     const decoded = Object.create({ id: 'u-from-prototype' });
     verifyMock.mockReturnValue(decoded);
-    const req = makeReq({ authorization: 'Bearer jwt-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('jwt-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -460,7 +531,7 @@ describe('rateLimitUserIdMiddleware', () => {
     const decoded = Object.create({ id: 'u-from-prototype' });
     Object.defineProperty(decoded, 'id', { value: 'u-own', enumerable: true, configurable: true });
     verifyMock.mockReturnValue(decoded);
-    const req = makeReq({ authorization: 'Bearer jwt-token' });
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('jwt-token')}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);

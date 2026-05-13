@@ -221,6 +221,21 @@ describe('v8FeatureGate.middleware', () => {
     else process.env.ENABLE_V8_GLOBAL = original;
   });
 
+  it('v8FeatureGate logs warning when next is not callable', () => {
+    const original = process.env.ENABLE_V8_GLOBAL;
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    const req: any = {};
+    const res: any = { headersSent: false, status: vi.fn().mockReturnThis(), json: vi.fn() };
+
+    expect(() => v8FeatureGate(req, res, undefined as any)).not.toThrow();
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[v8:featureGate] next is not callable',
+      expect.objectContaining({ code: 'V8_GATE_NEXT_INVALID' })
+    );
+    if (original === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = original;
+  });
+
   it('v8OrgGate forwards synchronous next errors to next(error)', async () => {
     const err = new Error('downstream sync failure');
     const req: any = { organizationId: 'org-ok' };
@@ -351,5 +366,51 @@ describe('v8FeatureGate.middleware', () => {
       })
     );
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('v8FeatureGate logs warning when response status writer is invalid', () => {
+    const original = process.env.ENABLE_V8_GLOBAL;
+    process.env.ENABLE_V8_GLOBAL = 'false';
+    const req: any = {};
+    const res: any = {
+      headersSent: false,
+      status: 'invalid-status-writer',
+      json: vi.fn(),
+    };
+    const next = vi.fn();
+
+    expect(() => v8FeatureGate(req, res, next)).not.toThrow();
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[v8:featureGate] V8 gate response invalid',
+      expect.objectContaining({
+        code: 'V8_GATE_RESPONSE_INVALID',
+        statusCode: 404,
+      })
+    );
+    if (original === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = original;
+  });
+
+  it('v8FeatureGate logs warning when status return has no json writer', () => {
+    const original = process.env.ENABLE_V8_GLOBAL;
+    process.env.ENABLE_V8_GLOBAL = 'false';
+    const req: any = {};
+    const res: any = {
+      headersSent: false,
+      status: vi.fn(() => ({})),
+      json: vi.fn(),
+    };
+    const next = vi.fn();
+
+    expect(() => v8FeatureGate(req, res, next)).not.toThrow();
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[v8:featureGate] V8 gate response invalid',
+      expect.objectContaining({
+        code: 'V8_GATE_RESPONSE_INVALID',
+        statusCode: 404,
+      })
+    );
+    if (original === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = original;
   });
 });

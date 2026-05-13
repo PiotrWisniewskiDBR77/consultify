@@ -290,6 +290,80 @@ describe('planLimits.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('does not write 401 org-context error when response is already committed', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const checkAccess = vi.fn().mockResolvedValue({ allowed: true });
+    const { checkPlanLimit, setAccessPolicyServiceForTests } = await import(
+      '../../../../server/src/middleware/planLimits.middleware.ts'
+    );
+    setAccessPolicyServiceForTests({ checkAccess } as any);
+    const middleware = checkPlanLimit('max_projects');
+
+    const req: any = {};
+    const res: any = {
+      headersSent: true,
+      writableEnded: false,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(checkAccess).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when response status writer is not callable', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const checkAccess = vi.fn().mockResolvedValue({ allowed: false });
+    const { checkPlanLimit, setAccessPolicyServiceForTests } = await import(
+      '../../../../server/src/middleware/planLimits.middleware.ts'
+    );
+    setAccessPolicyServiceForTests({ checkAccess } as any);
+    const middleware = checkPlanLimit('max_projects');
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = {
+      headersSent: false,
+      status: 'invalid-status-writer',
+      json: vi.fn(),
+    };
+    const next = vi.fn();
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when status return object has no json writer', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const checkAccess = vi.fn().mockResolvedValue({ allowed: false });
+    const { checkPlanLimit, setAccessPolicyServiceForTests } = await import(
+      '../../../../server/src/middleware/planLimits.middleware.ts'
+    );
+    setAccessPolicyServiceForTests({ checkAccess } as any);
+    const middleware = checkPlanLimit('max_projects');
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = {
+      headersSent: false,
+      status: vi.fn(() => ({})),
+      json: vi.fn(),
+    };
+    const next = vi.fn();
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('does not throw when json writer fails on terminal response path', async () => {
     vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
     vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');

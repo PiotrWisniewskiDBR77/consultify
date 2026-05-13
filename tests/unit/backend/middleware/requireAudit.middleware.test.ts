@@ -4,9 +4,23 @@ const { logMock } = vi.hoisted(() => ({
   logMock: vi.fn(),
 }));
 
+const { loggerErrorMock, loggerWarnMock } = vi.hoisted(() => ({
+  loggerErrorMock: vi.fn(),
+  loggerWarnMock: vi.fn(),
+}));
+
 vi.mock('../../../../server/src/services/AuditEventsService.js', () => ({
   default: {
     log: logMock,
+  },
+}));
+
+vi.mock('../../../../server/src/utils/Logger.js', () => ({
+  default: {
+    error: loggerErrorMock,
+    warn: loggerWarnMock,
+    info: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
@@ -268,6 +282,8 @@ describe('requireAudit.middleware', () => {
     await expect(req.emitAuditEvent(null)).rejects.toThrow(TypeError);
     await expect(req.emitAuditEvent([])).rejects.toThrow(TypeError);
     expect(logMock).not.toHaveBeenCalled();
+    expect(loggerWarnMock).toHaveBeenCalled();
+    expect(loggerErrorMock).not.toHaveBeenCalled();
   });
 
   it('rejects missing action or resourceType before logging', async () => {
@@ -284,6 +300,31 @@ describe('requireAudit.middleware', () => {
     await expect(req.emitAuditEvent({ action: 'CREATE' })).rejects.toThrow(TypeError);
     await expect(req.emitAuditEvent({ resourceType: 'task' })).rejects.toThrow(TypeError);
     expect(logMock).not.toHaveBeenCalled();
+    expect(loggerWarnMock).toHaveBeenCalled();
+    expect(loggerErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects oversized serialized metadata payload before logging', async () => {
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+
+    await expect(
+      req.emitAuditEvent({
+        action: 'CREATE',
+        resourceType: 'task',
+        metadata: { payload: 'x'.repeat(131072) },
+      })
+    ).rejects.toThrow(TypeError);
+    expect(logMock).not.toHaveBeenCalled();
+    expect(loggerWarnMock).toHaveBeenCalled();
+    expect(loggerErrorMock).not.toHaveBeenCalled();
   });
 
   it('normalizes invalid actorType values to USER', async () => {
@@ -325,6 +366,8 @@ describe('requireAudit.middleware', () => {
       TypeError
     );
     expect(logMock).toHaveBeenCalledTimes(1);
+    expect(loggerWarnMock).toHaveBeenCalled();
+    expect(loggerErrorMock).not.toHaveBeenCalled();
   });
 
   it('rejects blank audit event ids returned by persistence layer', async () => {
@@ -343,6 +386,26 @@ describe('requireAudit.middleware', () => {
       TypeError
     );
     expect(logMock).toHaveBeenCalledTimes(1);
+    expect(loggerWarnMock).toHaveBeenCalled();
+    expect(loggerErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('logs persistence failures as errors (not validation warnings)', async () => {
+    logMock.mockRejectedValueOnce(new Error('db down'));
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+
+    await expect(req.emitAuditEvent({ action: 'UPDATE', resourceType: 'initiative' })).rejects.toThrow(
+      Error
+    );
+    expect(loggerErrorMock).toHaveBeenCalled();
   });
 
   it('does not forward arbitrary caller properties to auditEventsService.log', async () => {

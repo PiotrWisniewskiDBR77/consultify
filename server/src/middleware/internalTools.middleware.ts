@@ -12,6 +12,9 @@ const MAX_INTERNAL_TOOLS_EMAIL_DOMAIN_CHARS = 253;
 const MAX_INTERNAL_TOOLS_ALLOWED_ROLE_TOKEN_CHARS = 64;
 const MAX_INTERNAL_TOOLS_ENV_CSV_CHARS = 4096;
 const INTERNAL_TOOLS_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
+const INTERNAL_TOOLS_ASCII_DOMAIN_PATTERN =
+  /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
+const INTERNAL_TOOLS_ORG_ID_TOKEN_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
 
 function normalizeOptionalString(value: unknown): string {
   if (typeof value !== 'string') return '';
@@ -68,6 +71,18 @@ function hasPlausibleMailboxHost(email: string): boolean {
   const isHostMalformed =
     /\s/.test(hostPart) || hostPart.includes('..') || hostPart.startsWith('.') || hostPart.endsWith('.');
   return localPart.length > 0 && hostPart.length > 0 && !isHostMalformed;
+}
+function isAsciiDnsLikeDomain(value: string): boolean {
+  if (!value) return false;
+  if (value.startsWith('.') || value.endsWith('.') || value.startsWith('-') || value.endsWith('-')) {
+    return false;
+  }
+  if (value.includes('..')) return false;
+  return INTERNAL_TOOLS_ASCII_DOMAIN_PATTERN.test(value);
+}
+function isSafeOrgIdToken(value: string): boolean {
+  if (!value) return false;
+  return INTERNAL_TOOLS_ORG_ID_TOKEN_PATTERN.test(value);
 }
 
 function readOrganizationId(req: AuthRequest): string {
@@ -128,7 +143,8 @@ export function requireInternalToolsAccess(
   const mailboxDomain = emailDomain(userEmail);
   if (
     mailboxDomain.length === 0 ||
-    mailboxDomain.length > MAX_INTERNAL_TOOLS_EMAIL_DOMAIN_CHARS
+    mailboxDomain.length > MAX_INTERNAL_TOOLS_EMAIL_DOMAIN_CHARS ||
+    !isAsciiDnsLikeDomain(mailboxDomain)
   ) {
     res.status(404).json({ error: 'Not found' });
     return;
@@ -150,7 +166,8 @@ export function requireInternalToolsAccess(
     allowedDomains.some(
       (allowedDomain) =>
         allowedDomain.length > MAX_INTERNAL_TOOLS_EMAIL_DOMAIN_CHARS ||
-        INTERNAL_TOOLS_CONTROL_CHARS.test(allowedDomain)
+        INTERNAL_TOOLS_CONTROL_CHARS.test(allowedDomain) ||
+        !isAsciiDnsLikeDomain(allowedDomain)
     )
   ) {
     res.status(404).json({ error: 'Not found' });
@@ -170,7 +187,8 @@ export function requireInternalToolsAccess(
     allowedOrgIds.some(
       (allowedOrgId) =>
         allowedOrgId.length > MAX_INTERNAL_TOOLS_ORG_ID_CHARS ||
-        INTERNAL_TOOLS_CONTROL_CHARS.test(allowedOrgId)
+        INTERNAL_TOOLS_CONTROL_CHARS.test(allowedOrgId) ||
+        !isSafeOrgIdToken(allowedOrgId)
     )
   ) {
     res.status(404).json({ error: 'Not found' });
@@ -178,7 +196,12 @@ export function requireInternalToolsAccess(
   }
 
   const orgId = readOrganizationId(req);
-  if (orgId && (orgId.length > MAX_INTERNAL_TOOLS_ORG_ID_CHARS || INTERNAL_TOOLS_CONTROL_CHARS.test(orgId))) {
+  if (
+    orgId &&
+    (orgId.length > MAX_INTERNAL_TOOLS_ORG_ID_CHARS ||
+      INTERNAL_TOOLS_CONTROL_CHARS.test(orgId) ||
+      !isSafeOrgIdToken(orgId))
+  ) {
     res.status(404).json({ error: 'Not found' });
     return;
   }

@@ -216,7 +216,32 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(req.orgContext).toEqual(req.org);
     expect(Object.isFrozen(req.org)).toBe(true);
     expect(Object.isFrozen(req.orgContext)).toBe(true);
+    expect(Object.isFrozen(req.org?.permissionScope)).toBe(true);
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores unsafe user default org id and returns 400 when required context is missing', async () => {
+    const mw = orgContextMiddleware({ allowHeader: false, strictWrite: true, required: true });
+    const req: any = {
+      method: 'GET',
+      params: {},
+      headers: {},
+      user: { id: 'u1', organizationId: 'org with-space' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Organization context required',
+      })
+    );
+    expect(req.org).toBeNull();
+    expect(req.orgContext).toBeNull();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('sanitizes whitespace-padded membership role before attaching org context', async () => {

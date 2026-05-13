@@ -251,6 +251,51 @@ describe('trialEntryGuard.middleware', () => {
         error: 'REQUEST_URI_TOO_LONG',
       })
     );
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for oversized request path without trial lookup for active users', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'ACTIVE' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'POST',
+      path: `/${'b'.repeat(8200)}`,
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'REQUEST_URI_TOO_LONG',
+      })
+    );
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for trial users when method normalizes to empty string', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: '   ',
+      path: '/api/initiatives',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(mockDbGet).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'INVALID_HTTP_METHOD',
+      })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 

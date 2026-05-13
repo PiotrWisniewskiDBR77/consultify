@@ -43,6 +43,10 @@ const hasExplicitPermissionGrant = (value: unknown): boolean => value === true;
 const AUDIT_JSON_WRAPPED = Symbol.for('consultify.permissionMiddleware.auditActionWrapped');
 const MAX_PERMISSION_KEY_LENGTH = 128;
 const MAX_PERMISSION_KEYS_PER_REQUEST = 32;
+const MAX_PERMISSION_ROLE_INPUT_LENGTH = 128;
+const ROLE_CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
+const ROLE_INVISIBLE_FORMAT_CHARS =
+  /[\u200B-\u200D\uFEFF\u202A-\u202E\u2066-\u2069\u2060\u2061\u2062\u2063]/g;
 
 const readOptionalString = (reader: () => unknown): string | undefined => {
   try {
@@ -52,18 +56,50 @@ const readOptionalString = (reader: () => unknown): string | undefined => {
   }
 };
 
+const readOwnOptionalString = (
+  record: unknown,
+  key: string
+): string | undefined => {
+  if (!record || typeof record !== 'object') return undefined;
+  if (!Object.prototype.hasOwnProperty.call(record, key)) return undefined;
+  return readOptionalString(() => (record as Record<string, unknown>)[key]);
+};
+
+const sanitizeRoleInput = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const bounded = value.length > MAX_PERMISSION_ROLE_INPUT_LENGTH
+    ? value.slice(0, MAX_PERMISSION_ROLE_INPUT_LENGTH)
+    : value;
+  const normalized = safeRead(() => bounded.normalize('NFKC'), bounded);
+  const stripped = normalized
+    .replace(ROLE_CONTROL_CHARS, '')
+    .replace(ROLE_INVISIBLE_FORMAT_CHARS, '');
+  return normalizeOptionalString(stripped);
+};
+
 const getAuthContext = (
   req: AuthRequest
 ): { userId?: string; orgId?: string; userRole?: string } => {
+  const requestRecord = req as unknown as Record<string, unknown>;
+  const userRecord =
+    Object.prototype.hasOwnProperty.call(requestRecord, 'user') &&
+    requestRecord.user &&
+    typeof requestRecord.user === 'object'
+      ? (requestRecord.user as Record<string, unknown>)
+      : undefined;
   const userId =
-    readOptionalString(() => req.userId) || readOptionalString(() => req.user?.id) || undefined;
+    readOwnOptionalString(requestRecord, 'userId') ||
+    readOwnOptionalString(userRecord, 'id') ||
+    undefined;
   const orgId =
-    readOptionalString(() => req.organizationId) ||
-    readOptionalString(() => (req.user as { organization_id?: string } | undefined)?.organization_id) ||
-    readOptionalString(() => req.user?.organizationId) ||
+    readOwnOptionalString(requestRecord, 'organizationId') ||
+    readOwnOptionalString(userRecord, 'organization_id') ||
+    readOwnOptionalString(userRecord, 'organizationId') ||
     undefined;
   const userRole =
-    readOptionalString(() => req.userRole) || readOptionalString(() => req.user?.role) || undefined;
+    sanitizeRoleInput(readOwnOptionalString(requestRecord, 'userRole')) ||
+    sanitizeRoleInput(readOwnOptionalString(userRecord, 'role')) ||
+    undefined;
   return { userId, orgId, userRole };
 };
 
@@ -127,8 +163,9 @@ const asPermissionKeyList = (permissionKeys: unknown): string[] =>
 const isPermissionKeyWithinLimit = (key: string): boolean => key.length <= MAX_PERMISSION_KEY_LENGTH;
 
 const normalizeRoleForDb = (role?: string): string => {
-  if (!role) return 'VIEWER';
-  const r = role.toString().trim();
+  const sanitizedRole = sanitizeRoleInput(role);
+  if (!sanitizedRole) return 'VIEWER';
+  const r = sanitizedRole.toString().trim();
   const upper = r.toUpperCase();
   if (!upper) return 'VIEWER';
 

@@ -152,8 +152,8 @@ const logPiiRouteManifestIssuesOnce = (): void => {
  * Applied before route handlers
  */
 export function encryptRequestPII(req: Request, _res: Response, next: NextFunction): void {
-  logPiiRouteManifestIssuesOnce();
   try {
+    logPiiRouteManifestIssuesOnce();
     const requestPath = readPath(req);
     // Skip for non-applicable routes
     if (SKIP_ROUTES.some((route) => matchesConfiguredRoute(requestPath, route))) {
@@ -189,7 +189,11 @@ export function encryptRequestPII(req: Request, _res: Response, next: NextFuncti
  * Uses response interceptor pattern
  */
 export function decryptResponsePII(req: Request, res: Response, next: NextFunction): void {
-  logPiiRouteManifestIssuesOnce();
+  try {
+    logPiiRouteManifestIssuesOnce();
+  } catch (error) {
+    logger.error('[PIIEncryption] Route manifest logging failed:', error);
+  }
   const requestPath = readPath(req);
   // Skip for non-applicable routes
   if (SKIP_ROUTES.some((route) => matchesConfiguredRoute(requestPath, route))) {
@@ -272,7 +276,8 @@ export function piiEncryptionMiddleware(req: Request, res: Response, next: NextF
   );
 
   if (!shouldApply) {
-    return next();
+    safeCallNext(next, 'piiEncryptionMiddleware:notApplicable');
+    return;
   }
 
   // Apply response decryption interceptor

@@ -229,6 +229,36 @@ describe('effectiveCapability.middleware', () => {
     );
   });
 
+  it('does not attempt deny write when response writableFinished is already true', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = {
+      headersSent: false,
+      writableFinished: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[effectiveCapability] response already committed; skipping json write',
+      expect.objectContaining({ status: 403, phase: 'deny' })
+    );
+  });
+
   it('stays fail-open in shadow mode when capability is missing', async () => {
     process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
     process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
@@ -249,6 +279,34 @@ describe('effectiveCapability.middleware', () => {
 
     expect(mockLoggerWarn).toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs next() sync throws on allow path without rethrowing', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('next sync throw');
+      })
+      .mockImplementationOnce(() => undefined);
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(next.mock.calls[1]?.[0]).toBeInstanceOf(Error);
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] next() threw synchronously',
+      expect.objectContaining({ phase: 'allow', capability: 'PROJECT_READ' })
+    );
   });
 
   it('enables shadow mode when EFFECTIVE_ACCESS_SHADOW has mixed casing', async () => {
@@ -558,6 +616,32 @@ describe('effectiveCapability.middleware', () => {
     expect(mockLoggerError).toHaveBeenCalledWith(
       '[effectiveCapability] failed to write json response',
       expect.objectContaining({ status: 403, phase: 'deny', path: '' })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('logs and skips deny response when res.status is non-callable', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = {
+      headersSent: false,
+      status: 123,
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] response object missing status/json handlers',
+      expect.objectContaining({ status: 403, phase: 'deny' })
     );
     expect(next).not.toHaveBeenCalled();
   });

@@ -22,7 +22,27 @@ const isInvalidOrgToken = (value: string): boolean => {
 const sendV8Json = (res: Response, statusCode: number, payload: Record<string, unknown>): void => {
   if (safeRead(() => res.headersSent, false)) return;
   try {
-    res.status(statusCode).json(payload);
+    const statusBinder = safeRead(() => (res as Response & { status?: unknown }).status, undefined);
+    if (typeof statusBinder !== 'function') {
+      Logger.warn('[v8:featureGate] V8 gate response invalid', {
+        code: 'V8_GATE_RESPONSE_INVALID',
+        statusCode,
+      });
+      return;
+    }
+    const statusResult = (statusBinder as (code: number) => unknown).call(res, statusCode);
+    const jsonWriter = safeRead(
+      () => (statusResult as { json?: unknown } | undefined)?.json,
+      undefined
+    );
+    if (typeof jsonWriter !== 'function') {
+      Logger.warn('[v8:featureGate] V8 gate response invalid', {
+        code: 'V8_GATE_RESPONSE_INVALID',
+        statusCode,
+      });
+      return;
+    }
+    (jsonWriter as (payload: Record<string, unknown>) => unknown).call(statusResult, payload);
   } catch (error) {
     Logger.warn('[v8:featureGate] V8 gate response write failed', {
       code: 'V8_GATE_RESPONSE_WRITE_FAILED',
@@ -47,6 +67,10 @@ const readOrgId = (req: AuthRequest): string | undefined =>
 
 const safeNext = (res: Response, next: NextFunction): void => {
   if (!safeRead(() => res.headersSent, true)) {
+    if (typeof next !== 'function') {
+      Logger.warn('[v8:featureGate] next is not callable', { code: 'V8_GATE_NEXT_INVALID' });
+      return;
+    }
     try {
       next();
     } catch (error) {
