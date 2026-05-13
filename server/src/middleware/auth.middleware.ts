@@ -15,6 +15,18 @@ import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = process.env.NODE_ENV === 'production';
+const isTestEnv = process.env.NODE_ENV === 'test';
+const MAX_AUTH_JWT_CHARS = 8192;
+const MAX_AUTH_JWT_SEGMENT_CHARS = 6144;
+const MAX_AUTH_JTI_CHARS = 256;
+const AUTH_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
+const AUTH_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
+const ALLOWED_AUTH_JWT_ALGORITHM = 'HS256';
+const JWT_CLOCK_TOLERANCE_SEC = 30;
+const JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
+  algorithms: [ALLOWED_AUTH_JWT_ALGORITHM],
+  clockTolerance: JWT_CLOCK_TOLERANCE_SEC,
+};
 
 const getForcedSuperAdminEmails = (): Set<string> => {
   const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
@@ -26,9 +38,190 @@ const getForcedSuperAdminEmails = (): Set<string> => {
   );
 };
 
+const normalizeTokenCandidate = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized || null;
+};
+
+const normalizeJwtSecret = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized || null;
+};
+const isCompactJwtShape = (value: string): boolean => {
+  if (!value.includes('.')) return true;
+  const segments = value.split('.');
+  if (segments.length !== 3) return false;
+  return segments.every(
+    (segment) => segment.length > 0 && segment.length <= MAX_AUTH_JWT_SEGMENT_CHARS
+  );
+};
+const isPlainJwtPayload = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+const verifyJwt = (
+  jwtLib: Dependencies['jwt'],
+  token: string,
+  jwtSecret: string,
+  callback: (err: any, decoded: any) => void
+): void => {
+  const verifyFn = jwtLib.verify as unknown as (
+    token: string,
+    secret: string,
+    optionsOrCallback: jwt.VerifyOptions | ((err: any, decoded: any) => void),
+    maybeCallback?: (err: any, decoded: any) => void
+  ) => void;
+  if (verifyFn.length >= 4) {
+    verifyFn(token, jwtSecret, JWT_VERIFY_OPTIONS, callback);
+    return;
+  }
+  verifyFn(token, jwtSecret, callback);
+};
+
+const normalizeRoleClaim = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const normalizeOptionalStringClaim = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readClaimValue = (
+  payload: Record<string, unknown> | null | undefined,
+  claimKey: string
+): unknown => {
+  if (!payload) return undefined;
+  try {
+    return payload[claimKey];
+  } catch {
+    return undefined;
+  }
+};
+
+const readOptionalStringClaim = (
+  payload: Record<string, unknown> | null | undefined,
+  claimKey: string
+): string | undefined => {
+  return normalizeOptionalStringClaim(readClaimValue(payload, claimKey));
+};
+
+const readBooleanTrueClaim = (
+  payload: Record<string, unknown> | null | undefined,
+  claimKey: string
+): boolean => {
+  return readClaimValue(payload, claimKey) === true;
+};
+
+const readFiniteNumberClaim = (
+  payload: Record<string, unknown> | null | undefined,
+  claimKey: string
+): number | undefined => {
+  const value = readClaimValue(payload, claimKey);
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+};
+
+const sanitizeJwtPayload = (payload: unknown): Partial<JWTPayload> => {
+  const source =
+    payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : undefined;
+
+  const id = readOptionalStringClaim(source, 'id');
+  const email = readOptionalStringClaim(source, 'email');
+  const name = readOptionalStringClaim(source, 'name');
+  const role = readOptionalStringClaim(source, 'role');
+  const userRole = readOptionalStringClaim(source, 'userRole');
+  const organizationId = readOptionalStringClaim(source, 'organizationId');
+  const organization_id = readOptionalStringClaim(source, 'organization_id');
+  const isSuperAdmin = readBooleanTrueClaim(source, 'isSuperAdmin');
+  const isDemo = readBooleanTrueClaim(source, 'isDemo');
+  const impersonatorId = readOptionalStringClaim(source, 'impersonatorId');
+  const impersonator_id = readOptionalStringClaim(source, 'impersonator_id');
+  const impersonationSessionId = readOptionalStringClaim(source, 'impersonationSessionId');
+  const jti = readOptionalStringClaim(source, 'jti');
+  const iat = readFiniteNumberClaim(source, 'iat');
+  const exp = readFiniteNumberClaim(source, 'exp');
+
+  return {
+    ...(id ? { id } : {}),
+    ...(email ? { email } : {}),
+    ...(name ? { name } : {}),
+    ...(role ? { role } : {}),
+    ...(userRole ? { userRole } : {}),
+    ...(organizationId ? { organizationId } : {}),
+    ...(organization_id ? { organization_id } : {}),
+    ...(isSuperAdmin ? { isSuperAdmin } : {}),
+    ...(isDemo ? { isDemo } : {}),
+    ...(impersonatorId ? { impersonatorId } : {}),
+    ...(impersonator_id ? { impersonator_id } : {}),
+    ...(impersonationSessionId ? { impersonationSessionId } : {}),
+    ...(jti ? { jti } : {}),
+    ...(iat !== undefined ? { iat } : {}),
+    ...(exp !== undefined ? { exp } : {}),
+  };
+};
+
+const safeGetHeader = (req: AuthRequest, headerName: string): unknown => {
+  try {
+    return req.get?.(headerName);
+  } catch {
+    return undefined;
+  }
+};
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const safeWrite = (writer: () => void): boolean => {
+  try {
+    writer();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const safeReadRequestPath = (req: AuthRequest): string => {
+  try {
+    return typeof req.path === 'string' ? req.path : '';
+  } catch {
+    return '';
+  }
+};
+
 type UserSessionCompatibility = {
   activityColumn: 'last_activity_at' | 'last_active_at' | 'created_at';
   hasIsActive: boolean;
+};
+
+const buildSessionActivityUpdateSql = (
+  activityColumn: UserSessionCompatibility['activityColumn']
+): string => `UPDATE user_sessions SET ${activityColumn} = CURRENT_TIMESTAMP WHERE id = ?`;
+const buildRevokeAllLookupSql = (): string =>
+  "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > CURRENT_TIMESTAMP";
+
+const extractIssuedAtSeconds = (payload: JWTPayload): number => {
+  try {
+    return typeof payload.iat === 'number' && Number.isFinite(payload.iat) ? payload.iat : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const parseRevokeAllTimestamp = (markerJti: unknown): number | null => {
+  const marker = normalizeOptionalStringClaim(markerJti);
+  if (!marker) return null;
+  const timestampRaw = marker.split('-').pop() || '';
+  if (!/^\d+$/.test(timestampRaw)) return null;
+  const parsed = Number.parseInt(timestampRaw, 10);
+  return Number.isFinite(parsed) ? parsed : null;
 };
 
 let userSessionCompatibilityPromise: Promise<UserSessionCompatibility> | null = null;
@@ -138,28 +331,80 @@ const getDeps = async (): Promise<Dependencies> => {
  * Extract token from request
  */
 const extractToken = (req: AuthRequest): string | null => {
-  const authHeader = req.headers['authorization'];
+  let authHeaderRaw: unknown;
+  try {
+    authHeaderRaw = req.headers?.['authorization'];
+  } catch {
+    authHeaderRaw = undefined;
+  }
+  const parseAuthorizationValue = (
+    value: unknown
+  ): { kind: 'token'; token: string } | { kind: 'bare' } | { kind: 'none' } => {
+    const normalized = normalizeTokenCandidate(value);
+    if (!normalized) return { kind: 'none' };
+
+    if (/^bearer\s*$/i.test(normalized)) {
+      return { kind: 'bare' };
+    }
+
+    const bearerMatch = normalized.match(/^bearer\s+(.+)$/i);
+    if (bearerMatch) {
+      const token = normalizeTokenCandidate(bearerMatch[1]);
+      if (token) return { kind: 'token', token };
+      return { kind: 'none' };
+    }
+
+    if (/^bearer$/i.test(normalized)) {
+      return { kind: 'bare' };
+    }
+
+    return { kind: 'token', token: normalized };
+  };
 
   // Try Authorization header first
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.slice(7);
-  }
-  if (authHeader) {
-    return authHeader;
+  if (Array.isArray(authHeaderRaw)) {
+    let sawBareBearer = false;
+    for (const headerValue of authHeaderRaw) {
+      const parsed = parseAuthorizationValue(headerValue);
+      if (parsed.kind === 'token') return parsed.token;
+      if (parsed.kind === 'bare') sawBareBearer = true;
+    }
+    if (sawBareBearer) return null;
+  } else {
+    const parsed = parseAuthorizationValue(authHeaderRaw);
+    if (parsed.kind === 'token') return parsed.token;
+    if (parsed.kind === 'bare') return null;
   }
 
   // Try cookie (common browser auth)
   // NOTE: cookie-parser (or compatible) should populate `req.cookies`.
   // This gate is enforced by scripts/security/verify-security-integrity.ts
-  const cookieToken = (req as any).cookies?.access_token || (req as any).cookies?.token;
-  if (typeof cookieToken === 'string' && cookieToken.length > 0) return cookieToken;
+  let cookieToken: string | null = null;
+  try {
+    cookieToken =
+      normalizeTokenCandidate((req as any).cookies?.access_token) ||
+      normalizeTokenCandidate((req as any).cookies?.token);
+  } catch {
+    cookieToken = null;
+  }
+  if (cookieToken) return cookieToken;
 
   // Try body or query (legacy support)
-  const bodyToken = req.body?.token;
+  let bodyToken: string | null = null;
+  try {
+    bodyToken = normalizeTokenCandidate(req.body?.token);
+  } catch {
+    bodyToken = null;
+  }
   if (bodyToken) return bodyToken;
 
-  const queryToken = req.query?.token;
-  if (typeof queryToken === 'string') return queryToken;
+  let queryToken: string | null = null;
+  try {
+    queryToken = normalizeTokenCandidate(req.query?.token);
+  } catch {
+    queryToken = null;
+  }
+  if (queryToken) return queryToken;
 
   return null;
 };
@@ -168,8 +413,10 @@ const extractToken = (req: AuthRequest): string | null => {
  * Map legacy role strings to standardized UserRole enum
  */
 const mapRole = (role?: string): UserRole => {
-  if (!role) return 'team_member';
-  const r = role.toLowerCase();
+  if (typeof role !== 'string') return 'team_member';
+  const normalizedRole = role.trim();
+  if (!normalizedRole) return 'team_member';
+  const r = normalizedRole.toLowerCase();
   switch (r) {
     case 'admin':
       return 'administrator';
@@ -187,13 +434,14 @@ const mapRole = (role?: string): UserRole => {
     case 'manager':
       return 'project_manager';
     default:
-      return role as UserRole;
+      return normalizedRole as UserRole;
   }
 };
 
 const normalizePermissionRole = (role?: string): string => {
-  if (!role) return 'VIEWER';
-  const r = role.toString().trim().toUpperCase();
+  if (typeof role !== 'string') return 'VIEWER';
+  const r = role.trim().toUpperCase();
+  if (!r) return 'VIEWER';
   switch (r) {
     case 'SUPER_ADMIN':
     case 'SUPERADMIN':
@@ -245,16 +493,38 @@ const attachUser = async (
   res?: Response
 ): Promise<void> => {
   const { PermissionService, dbGet } = await getDeps();
-  const requestedDemoSessionOrgId = String(req.get?.(DEMO_SESSION_ORG_HEADER) || '').trim();
-  const isDemoHeader = String(req.get?.('X-Demo-Mode') || '').toLowerCase() === 'true';
-  const requestedOrgContextId = String(
-    req.get?.('x-org-context') || req.get?.('x-organization-id') || ''
-  ).trim();
+  const requestedDemoSessionOrgId = normalizeOptionalStringClaim(
+    safeGetHeader(req, DEMO_SESSION_ORG_HEADER)
+  );
+  const isDemoHeader =
+    normalizeOptionalStringClaim(safeGetHeader(req, 'X-Demo-Mode'))?.toLowerCase() === 'true';
+  const requestedOrgContextId =
+    normalizeOptionalStringClaim(safeGetHeader(req, 'x-org-context')) ||
+    normalizeOptionalStringClaim(safeGetHeader(req, 'x-organization-id')) ||
+    '';
+  const decodedClaims = decoded as unknown as Record<string, unknown>;
+  const decodedUserId = readOptionalStringClaim(decodedClaims, 'id');
+  if (!decodedUserId) {
+    if (res) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    next();
+    return;
+  }
+  const tokenOrganizationId =
+    readOptionalStringClaim(decodedClaims, 'organizationId') ||
+    readOptionalStringClaim(decodedClaims, 'organization_id');
   let resolvedOrganizationId =
     isDemoHeader && requestedDemoSessionOrgId
       ? requestedDemoSessionOrgId
-      : decoded.organizationId || (decoded as any).organization_id;
-  let resolvedUserRole = decoded.role || decoded.userRole;
+      : tokenOrganizationId;
+  let resolvedUserRole =
+    readOptionalStringClaim(decodedClaims, 'role') ||
+    readOptionalStringClaim(decodedClaims, 'userRole');
+  let resolvedIsSuperAdmin = readBooleanTrueClaim(decodedClaims, 'isSuperAdmin');
+  const normalizedDisplayName = readOptionalStringClaim(decodedClaims, 'name') || 'User';
+  const normalizedEmail = readOptionalStringClaim(decodedClaims, 'email') || '';
 
   // Respect the UI-selected organization when the user is a valid active member.
   if (!isDemoHeader && requestedOrgContextId) {
@@ -264,12 +534,13 @@ const attachUser = async (
          FROM organization_members
          WHERE user_id = ? AND organization_id = ?
          LIMIT 1`,
-        [decoded.id, requestedOrgContextId]
+        [decodedUserId, requestedOrgContextId]
       );
       if (membership && String(membership.status || '').toUpperCase() === 'ACTIVE') {
         resolvedOrganizationId = requestedOrgContextId;
-        if (membership.role) {
-          resolvedUserRole = membership.role;
+        const membershipRole = normalizeRoleClaim(membership.role);
+        if (membershipRole) {
+          resolvedUserRole = membershipRole;
         }
       }
     } catch {
@@ -277,45 +548,55 @@ const attachUser = async (
     }
   }
 
-  req.userId = decoded.id;
+  req.userId = decodedUserId;
   req.userRole = resolvedUserRole;
   req.organizationId = resolvedOrganizationId;
 
   // Permanent role fix for selected internal accounts:
   // even if a stale token says ADMIN, treat them as SUPERADMIN for authorization.
   try {
-    const normalizedEmail = String(decoded.email || '')
-      .trim()
-      .toLowerCase();
+    const normalizedEmailForOverride = normalizedEmail.toLowerCase();
     const forcedEmails = getForcedSuperAdminEmails();
-    if (!isProductionEnv && normalizedEmail && forcedEmails.has(normalizedEmail)) {
+    if (!isProductionEnv && normalizedEmailForOverride && forcedEmails.has(normalizedEmailForOverride)) {
       req.userRole = 'SUPERADMIN';
-      decoded.isSuperAdmin = true;
+      resolvedIsSuperAdmin = true;
     }
   } catch {
     // ignore
   }
 
   const user: AuthenticatedUser = {
-    id: decoded.id,
-    email: decoded.email || '',
-    name: decoded.name || 'User',
-    ...splitDisplayName(decoded.name || 'User'),
+    id: decodedUserId,
+    email: normalizedEmail,
+    name: normalizedDisplayName,
+    ...splitDisplayName(normalizedDisplayName),
     role: mapRole(req.userRole),
     organizationId: req.organizationId || '',
-    isSuperAdmin: decoded.isSuperAdmin || false,
-    isDemo: Boolean(decoded.isDemo) || isDemoHeader,
-    impersonatorId: decoded.impersonatorId || decoded.impersonator_id,
-    impersonationSessionId: decoded.impersonationSessionId,
+    isSuperAdmin: resolvedIsSuperAdmin,
+    isDemo: readBooleanTrueClaim(decodedClaims, 'isDemo') || isDemoHeader,
+    impersonatorId:
+      readOptionalStringClaim(decodedClaims, 'impersonatorId') ||
+      readOptionalStringClaim(decodedClaims, 'impersonator_id'),
+    impersonationSessionId: readOptionalStringClaim(decodedClaims, 'impersonationSessionId'),
   };
 
   req.user = user;
 
   const isImpersonating = Boolean(user.impersonatorId);
-  const isReadOnlyMethod = READ_ONLY_IMPERSONATION_METHODS.has(
-    String(req.method || '').toUpperCase()
-  );
-  const isAllowedImpersonationWrite = READ_ONLY_IMPERSONATION_PATHS.has(req.path);
+  let requestMethod = '';
+  let requestPath = '';
+  try {
+    requestMethod = String(req.method || '').toUpperCase();
+  } catch {
+    requestMethod = '';
+  }
+  try {
+    requestPath = typeof req.path === 'string' ? req.path : '';
+  } catch {
+    requestPath = '';
+  }
+  const isReadOnlyMethod = READ_ONLY_IMPERSONATION_METHODS.has(requestMethod);
+  const isAllowedImpersonationWrite = READ_ONLY_IMPERSONATION_PATHS.has(requestPath);
   if (isImpersonating && !isReadOnlyMethod && !isAllowedImpersonationWrite) {
     if (res) {
       res.status(403).json({
@@ -328,7 +609,12 @@ const attachUser = async (
   }
 
   // Attach permission helper
-  const permissionRole = normalizePermissionRole(decoded.role || decoded.userRole || user.role);
+  const permissionRoleSource =
+    readOptionalStringClaim(decodedClaims, 'role') ||
+    readOptionalStringClaim(decodedClaims, 'userRole') ||
+    user.role;
+  const permissionRole =
+    req.userRole === 'SUPERADMIN' ? 'SUPERADMIN' : normalizePermissionRole(permissionRoleSource);
   req.can = (capability: string): boolean => {
     return PermissionService.can(
       {
@@ -350,8 +636,13 @@ const attachUser = async (
  * Runs fire-and-forget after attachUser so it doesn't add latency.
  */
 const trackSessionActivity = (req: AuthRequest, res: Response): void => {
-  if (!req.userId) return;
-  const userId = req.userId;
+  let userId = '';
+  try {
+    userId = typeof req.userId === 'string' ? req.userId : '';
+  } catch {
+    userId = '';
+  }
+  if (!userId) return;
 
   (async () => {
     try {
@@ -368,11 +659,13 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
 
       if (session) {
         if (hasIsActive && session.is_active !== true && session.is_active !== 1) return;
-        res.setHeader('X-Session-Id', session.id);
+        try {
+          res.setHeader('X-Session-Id', session.id);
+        } catch {
+          // Non-critical — don't break auth flow on header write errors
+        }
         if (activityColumn !== 'created_at') {
-          await dbRun(`UPDATE user_sessions SET ${activityColumn} = NOW() WHERE id = ?`, [
-            session.id,
-          ]);
+          await dbRun(buildSessionActivityUpdateSql(activityColumn), [session.id]);
         }
       }
     } catch {
@@ -424,32 +717,38 @@ const checkTokenRevocation = async (
   next: NextFunction
 ): Promise<void> => {
   const { dbGet } = await getDeps();
+  const decodedClaims = decoded as unknown as Record<string, unknown>;
+  const tokenJti = readOptionalStringClaim(decodedClaims, 'jti');
 
-  if (!decoded.jti) {
+  if (!tokenJti) {
     await attachUser(decoded, req, next, res);
+    return;
+  }
+  if (tokenJti.length > MAX_AUTH_JTI_CHARS) {
+    res.status(401).json({ error: 'Unauthorized' });
     return;
   }
 
   try {
     // Check if specific token is revoked (with cache + in-flight dedup)
-    let isRevoked = getCachedRevoke(decoded.jti);
+    let isRevoked = getCachedRevoke(tokenJti);
     if (isRevoked === undefined) {
-      let inflight = _revokeInflight.get(decoded.jti);
+      let inflight = _revokeInflight.get(tokenJti);
       if (!inflight) {
         inflight = dbGet<{ jti: string }>('SELECT jti FROM revoked_tokens WHERE jti = ?', [
-          decoded.jti,
+          tokenJti,
         ])
           .then((row) => {
             const revoked = !!row;
-            _revokeCache.set(decoded.jti!, { revoked, ts: Date.now() });
-            _revokeInflight.delete(decoded.jti!);
+            _revokeCache.set(tokenJti, { revoked, ts: Date.now() });
+            _revokeInflight.delete(tokenJti);
             return revoked;
           })
           .catch((err) => {
-            _revokeInflight.delete(decoded.jti!);
+            _revokeInflight.delete(tokenJti);
             throw err;
           });
-        _revokeInflight.set(decoded.jti, inflight);
+        _revokeInflight.set(tokenJti, inflight);
       }
       isRevoked = await inflight;
     }
@@ -460,32 +759,40 @@ const checkTokenRevocation = async (
     }
 
     // Check for "revoke-all" marker for this user (with cache + in-flight dedup)
-    let revokeAllEntry = getCachedRevokeAll(decoded.id);
+    const userIdForRevokeAll = readOptionalStringClaim(decodedClaims, 'id');
+    if (!userIdForRevokeAll) {
+      await attachUser(decoded, req, next, res);
+      return;
+    }
+
+    let revokeAllEntry = getCachedRevokeAll(userIdForRevokeAll);
     if (revokeAllEntry === undefined) {
-      let inflight = _revokeAllInflight.get(decoded.id);
+      let inflight = _revokeAllInflight.get(userIdForRevokeAll);
       if (!inflight) {
-        inflight = dbGet<{ jti: string }>(
-          "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > NOW()",
-          [decoded.id]
-        )
+        inflight = dbGet<{ jti: string }>(buildRevokeAllLookupSql(), [userIdForRevokeAll])
           .then((row) => {
             const entry = { jti: row?.jti ?? null };
-            _revokeAllCache.set(decoded.id, { jti: entry.jti, ts: Date.now() });
-            _revokeAllInflight.delete(decoded.id);
+            _revokeAllCache.set(userIdForRevokeAll, { jti: entry.jti, ts: Date.now() });
+            _revokeAllInflight.delete(userIdForRevokeAll);
             return entry;
           })
           .catch((err) => {
-            _revokeAllInflight.delete(decoded.id);
+            _revokeAllInflight.delete(userIdForRevokeAll);
             throw err;
           });
-        _revokeAllInflight.set(decoded.id, inflight);
+        _revokeAllInflight.set(userIdForRevokeAll, inflight);
       }
       revokeAllEntry = await inflight;
     }
 
     if (revokeAllEntry.jti) {
-      const revokeTime = parseInt(revokeAllEntry.jti.split('-').pop() || '0', 10);
-      const tokenIssuedAt = (decoded.iat || 0) * 1000;
+      const revokeTime = parseRevokeAllTimestamp(revokeAllEntry.jti);
+      if (revokeTime === null) {
+        await attachUser(decoded, req, next, res);
+        return;
+      }
+      const tokenIssuedAtSeconds = extractIssuedAtSeconds(decoded);
+      const tokenIssuedAt = tokenIssuedAtSeconds * 1000;
 
       if (tokenIssuedAt < revokeTime) {
         res.status(401).json({
@@ -512,33 +819,60 @@ const checkTokenRevocation = async (
  */
 export const verifyToken = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    logger.debug(`[AuthMiddleware] Verifying token for path: ${req.path}`);
+    if (!isTestEnv) {
+      logger.debug(`[AuthMiddleware] Verifying token for path: ${safeReadRequestPath(req)}`);
+    }
     const { jwt: jwtLib, config } = await getDeps();
 
     const token = extractToken(req);
-    logger.debug(`[AuthMiddleware] Token extracted: ${token ? 'YES' : 'NO'}`);
+    if (!isTestEnv) {
+      logger.debug(`[AuthMiddleware] Token extracted: ${token ? 'YES' : 'NO'}`);
+    }
 
     if (!token) {
       // Test mode bypass
       if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_AUTH_BYPASS === 'true') {
+        const existingUser = safeRead(() => req.user, undefined as AuthRequest['user']);
         // Only set default test user if not already set by another middleware
-        if (!req.user) {
-          req.user = {
-            id: 'test-user-id',
-            name: 'Test User',
-            email: 'test@example.com',
-            role: 'guest',
-            organizationId: 'test-org-id',
-            isSuperAdmin: false,
-            isDemo: false,
-          };
-          req.userId = 'test-user-id';
-          req.organizationId = 'test-org-id';
+        if (!existingUser) {
+          const attached = safeWrite(() => {
+            req.user = {
+              id: 'test-user-id',
+              name: 'Test User',
+              email: 'test@example.com',
+              role: 'guest',
+              organizationId: 'test-org-id',
+              isSuperAdmin: false,
+              isDemo: false,
+            };
+            req.userId = 'test-user-id';
+            req.organizationId = 'test-org-id';
+          });
+          if (!attached) {
+            res.status(401).json({ error: 'No token provided' });
+            return;
+          }
         }
         return next();
       }
 
       res.status(401).json({ error: 'No token provided' });
+      return;
+    }
+    if (token.length > MAX_AUTH_JWT_CHARS) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (AUTH_TOKEN_CONTROL_CHARS.test(token)) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (AUTH_TOKEN_DISALLOWED_UNICODE.test(token)) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!isCompactJwtShape(token)) {
+      res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
@@ -554,16 +888,44 @@ export const verifyToken = asyncHandler(
     // credentials or secrets in CI.
     if (!isProductionEnv && process.env.E2E_MODE === 'true') {
       try {
-        const decoded = jwtLib.decode(token) as JWTPayload | null;
-        if (decoded && (decoded as any).e2e === true && decoded.id) {
+        const decodedRaw = jwtLib.decode(token);
+        const decodedClaims =
+          isPlainJwtPayload(decodedRaw)
+            ? (decodedRaw as Record<string, unknown>)
+            : undefined;
+        const decodedUserId = normalizeContextIdentifier(readOptionalStringClaim(decodedClaims, 'id'));
+        if (decodedClaims && readBooleanTrueClaim(decodedClaims, 'e2e') && decodedUserId) {
+          const normalizedE2EOrgId =
+            readOptionalStringClaim(decodedClaims, 'organizationId') ||
+            readOptionalStringClaim(decodedClaims, 'organization_id') ||
+            'e2e-org-id';
+          const normalizedE2ERole =
+            readOptionalStringClaim(decodedClaims, 'role') ||
+            readOptionalStringClaim(decodedClaims, 'userRole') ||
+            'ADMIN';
+          const normalizedDecoded: JWTPayload = {
+            ...(sanitizeJwtPayload(decodedClaims) as Partial<JWTPayload>),
+            id: decodedUserId,
+            organizationId: normalizedE2EOrgId,
+            organization_id: normalizedE2EOrgId,
+            role: normalizedE2ERole,
+          };
+          if (!normalizedDecoded.userRole) normalizedDecoded.userRole = normalizedE2ERole;
+          if (!normalizedDecoded.email) normalizedDecoded.email = 'e2e@local.test';
+          if (!normalizedDecoded.name) normalizedDecoded.name = 'E2E User';
           // Best-effort: ensure the E2E user/org exist in DB so that
           // downstream routes that rely on FK / joins (e.g. conversations)
           // can operate normally during runtime tests.
           try {
             const { run } = await import('../utils/DbPromise.js');
-            const orgId =
-              decoded.organizationId || (decoded as any).organization_id || 'e2e-org-id';
-            const userRole = (decoded.role || decoded.userRole || 'ADMIN').toString().toUpperCase();
+            const orgId = normalizedE2EOrgId;
+            const userRole = normalizedE2ERole.toUpperCase();
+            const normalizedE2EName =
+              readOptionalStringClaim(
+                normalizedDecoded as unknown as Record<string, unknown>,
+                'name'
+              ) || 'E2E User';
+            const [firstName, ...lastNameParts] = normalizedE2EName.split(/\s+/);
             await run(
               `
                 INSERT INTO organizations (id, name, plan, status)
@@ -579,15 +941,15 @@ export const verifyToken = asyncHandler(
                 ON CONFLICT(id) DO NOTHING
               `,
               [
-                decoded.id,
+                normalizedDecoded.id,
                 orgId,
-                decoded.email || 'e2e@local.test',
+                normalizedDecoded.email || 'e2e@local.test',
                 // Not used in E2E token mode (no login), but keep schema happy.
                 'e2e-not-used',
                 userRole,
                 'active',
-                (decoded.name || 'E2E').toString().split(' ')[0] || 'E2E',
-                (decoded.name || 'User').toString().split(' ').slice(1).join(' ') || 'User',
+                firstName || 'E2E',
+                lastNameParts.join(' ') || 'User',
               ]
             );
           } catch (seedErr) {
@@ -595,7 +957,7 @@ export const verifyToken = asyncHandler(
           }
 
           // Attach without signature verification / revocation checks
-          await attachUser(decoded, req, next, res);
+          await attachUser(normalizedDecoded, req, next, res);
           return;
         }
       } catch (e) {
@@ -606,26 +968,44 @@ export const verifyToken = asyncHandler(
     try {
       const { jwt: jwtLib, config } = await getDeps();
 
-      const jwtSecret =
-        (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET;
+      const jwtSecret = normalizeJwtSecret(
+        (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET
+      );
       if (!config || !jwtSecret) {
         logger.error(
           `[AuthMiddleware] CRITICAL: config object is ${typeof config}, keys: ${config ? Object.keys(config) : 'none'}, JWT_SECRET is ${config?.JWT_SECRET ? 'present' : 'missing'}`
         );
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
       }
 
-      logger.debug(
-        `[AuthMiddleware] Verifying token: ${token.substring(0, 10)}... with secret length: ${jwtSecret?.length}`
-      );
-
+      if (!isTestEnv) {
+        logger.debug(
+          `[AuthMiddleware] Verifying token: ${token.substring(0, 10)}... with secret length: ${jwtSecret?.length}`
+        );
+      }
       const decoded = await new Promise<JWTPayload>((resolve, reject) => {
-        jwtLib.verify(token, jwtSecret, (err: any, decoded: any) => {
+        verifyJwt(jwtLib, token, jwtSecret, (err: any, decoded: any) => {
           if (err) return reject(err);
           resolve(decoded as JWTPayload);
         });
       });
+      if (!isPlainJwtPayload(decoded)) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const sanitizedDecoded = sanitizeJwtPayload(decoded);
+      const decodedId = readOptionalStringClaim(
+        sanitizedDecoded as unknown as Record<string, unknown>,
+        'id'
+      );
+      if (!decodedId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedId };
 
-      await checkTokenRevocation(decoded, req, res, next);
+      await checkTokenRevocation(normalizedDecoded, req, res, next);
       trackSessionActivity(req, res);
     } catch (err: any) {
       logger.error('[AuthMiddleware] Verification failed:', err.message);
@@ -644,7 +1024,15 @@ export const verifyToken = asyncHandler(
  * Assumes `verifyToken` (or another auth layer) already attached `req.user`.
  */
 export const isAuthenticated = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.user) {
+  let userId = '';
+  try {
+    userId =
+      normalizeContextIdentifier(safeRead(() => req.userId, undefined)) ||
+      normalizeContextIdentifier(safeRead(() => req.user?.id, undefined));
+  } catch {
+    userId = '';
+  }
+  if (userId) {
     next();
     return;
   }
@@ -657,23 +1045,69 @@ export const isAuthenticated = (req: AuthRequest, res: Response, next: NextFunct
 export const optionalAuth = asyncHandler(
   async (req: AuthRequest, _res: Response, next: NextFunction): Promise<void> => {
     const { jwt: jwtLib, config } = await getDeps();
-    const jwtSecret = (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET;
+    const jwtSecret = normalizeJwtSecret(
+      (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET
+    );
 
     const token = extractToken(req);
 
     if (!token || !jwtSecret) {
       return next();
     }
+    if (token.length > MAX_AUTH_JWT_CHARS) {
+      return next();
+    }
+    if (AUTH_TOKEN_CONTROL_CHARS.test(token)) {
+      return next();
+    }
+    if (AUTH_TOKEN_DISALLOWED_UNICODE.test(token)) {
+      return next();
+    }
+    if (!isCompactJwtShape(token)) {
+      return next();
+    }
+    let decoded: JWTPayload | null = null;
+    try {
+      decoded = await new Promise<JWTPayload | null>((resolve) => {
+        verifyJwt(jwtLib, token, jwtSecret, (err: any, verified: any) => {
+          if (err) {
+            // Invalid token, but optional - continue without user.
+            resolve(null);
+            return;
+          }
+          resolve(verified as JWTPayload);
+        });
+      });
+    } catch {
+      // Optional auth must stay fail-open even if jwt.verify throws synchronously.
+      return next();
+    }
 
-    jwtLib.verify(token, jwtSecret, async (err: any, decoded: any) => {
-      if (err) {
-        // Invalid token, but optional - continue without user
-        return next();
-      }
+    if (!decoded) {
+      return next();
+    }
+    if (!isPlainJwtPayload(decoded)) {
+      return next();
+    }
+    const sanitizedDecoded = sanitizeJwtPayload(decoded);
+    const decodedUserId = readOptionalStringClaim(
+      sanitizedDecoded as unknown as Record<string, unknown>,
+      'id'
+    );
 
-      // Attach user without revocation check for optional auth
-      await attachUser(decoded as JWTPayload, req, next, _res);
-    });
+    if (!decodedUserId) {
+      // Optional auth stays non-blocking on malformed token payloads.
+      return next();
+    }
+
+    try {
+      const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedUserId };
+      // Attach user without revocation check for optional auth.
+      await attachUser(normalizedDecoded, req, next, _res);
+    } catch {
+      // Optional auth must remain non-blocking even if user hydration fails.
+      return next();
+    }
   }
 );
 
@@ -682,17 +1116,36 @@ export const optionalAuth = asyncHandler(
  */
 export const requireRole = (...roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user) {
+    const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
+    const normalizedRequiredRoles = roles
+      .map((role) => (typeof role === 'string' ? role.trim().toLowerCase() : ''))
+      .filter(Boolean);
+
+    if (!requestUser) {
       res.status(401).json({ error: 'Authentication required' });
       return;
     }
+    if (normalizedRequiredRoles.length === 0) {
+      res.status(403).json({ error: 'Insufficient permissions' });
+      return;
+    }
 
-    const effectiveRole = String(req.userRole || req.user.role || '');
-    const grantedRoles = req.user.isSuperAdmin
-      ? Array.from(new Set([effectiveRole, req.user.role, 'SUPERADMIN', 'superadmin']))
-      : [effectiveRole, req.user.role];
+    const effectiveRole =
+      normalizeRoleClaim(safeRead(() => req.userRole, undefined)) ||
+      normalizeRoleClaim(safeRead(() => requestUser.role, undefined)) ||
+      '';
+    const fallbackUserRole = normalizeRoleClaim(safeRead(() => requestUser.role, undefined)) || '';
+    const isSuperAdmin = safeRead(() => requestUser.isSuperAdmin === true, false);
 
-    if (!roles.some((role) => grantedRoles.includes(role))) {
+    const grantedRoles = (
+      isSuperAdmin
+        ? [effectiveRole, fallbackUserRole, 'SUPERADMIN', 'superadmin']
+        : [effectiveRole, fallbackUserRole]
+    )
+      .map((role) => (typeof role === 'string' ? role.trim().toLowerCase() : ''))
+      .filter(Boolean);
+
+    if (!normalizedRequiredRoles.some((role) => grantedRoles.includes(role))) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }
@@ -705,12 +1158,15 @@ export const requireRole = (...roles: string[]) => {
  * Require super admin
  */
 export const requireSuperAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (!req.user) {
+  const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
+  if (!requestUser) {
     res.status(401).json({ error: 'Authentication required' });
     return;
   }
 
-  if (!req.user.isSuperAdmin) {
+  const isSuperAdmin = safeRead(() => requestUser.isSuperAdmin === true, false);
+
+  if (!isSuperAdmin) {
     res.status(403).json({ error: 'Super admin access required' });
     return;
   }
@@ -722,11 +1178,23 @@ export const requireSuperAdmin = (req: AuthRequest, res: Response, next: NextFun
  * Require organization context
  */
 export const requireOrganization = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (!req.organizationId) {
+  let normalizedOrganizationId = '';
+  try {
+    normalizedOrganizationId = typeof req.organizationId === 'string' ? req.organizationId.trim() : '';
+  } catch {
+    normalizedOrganizationId = '';
+  }
+  if (!normalizedOrganizationId) {
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
 
+  try {
+    req.organizationId = normalizedOrganizationId;
+  } catch {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
   next();
 };
 
@@ -736,22 +1204,51 @@ export const requireOrganization = (req: AuthRequest, res: Response, next: NextF
  */
 const _membershipCache = new Map<string, { valid: boolean; ts: number }>();
 const MEMBERSHIP_CACHE_TTL_MS = 60_000;
+const normalizeMembershipStatus = (value: unknown): string =>
+  String(value || '')
+    .trim()
+    .toUpperCase();
+const normalizeContextIdentifier = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+const buildMembershipCacheKey = (userId: string, orgId: string): string =>
+  JSON.stringify([userId, orgId]);
 
 export const validateOrgMembership = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const userId = req.userId || req.user?.id;
-    const orgId = req.organizationId;
+    let userId = '';
+    let orgId = '';
+    try {
+      const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
+      userId =
+        normalizeContextIdentifier(safeRead(() => req.userId, undefined)) ||
+        normalizeContextIdentifier(safeRead(() => requestUser?.id, undefined));
+      orgId = normalizeContextIdentifier(safeRead(() => req.organizationId, undefined));
+    } catch {
+      // If context accessors throw, fail-open to preserve middleware contract.
+      return next();
+    }
 
     if (!userId || !orgId) {
       return next();
     }
-
-    // SuperAdmins bypass membership checks
-    if (req.user?.isSuperAdmin) {
+    try {
+      req.organizationId = orgId;
+    } catch {
       return next();
     }
 
-    const cacheKey = `${userId}:${orgId}`;
+    // SuperAdmins bypass membership checks only when explicitly true.
+    let isSuperAdmin = false;
+    try {
+      isSuperAdmin = req.user?.isSuperAdmin === true;
+    } catch {
+      isSuperAdmin = false;
+    }
+    if (isSuperAdmin) {
+      return next();
+    }
+
+    const cacheKey = buildMembershipCacheKey(userId, orgId);
     const cached = _membershipCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < MEMBERSHIP_CACHE_TTL_MS) {
       if (!cached.valid) {
@@ -765,12 +1262,13 @@ export const validateOrgMembership = asyncHandler(
     }
 
     try {
-      const membership = await dbGet<{ status: string }>(
+      const { dbGet: dbGetFromDeps } = await getDeps();
+      const membership = await dbGetFromDeps<{ status: string }>(
         `SELECT status FROM organization_members WHERE user_id = ? AND organization_id = ?`,
         [userId, orgId]
       );
 
-      const valid = !!membership && membership.status === 'ACTIVE';
+      const valid = !!membership && normalizeMembershipStatus(membership.status) === 'ACTIVE';
       _membershipCache.set(cacheKey, { valid, ts: Date.now() });
 
       if (!valid) {
@@ -782,8 +1280,13 @@ export const validateOrgMembership = asyncHandler(
       }
 
       next();
-    } catch {
+    } catch (error) {
       // On DB error, allow request through (fail-open) to avoid blocking all requests
+      logger.warn('[AuthMiddleware] org membership check failed; failing open', {
+        code: 'ORG_MEMBERSHIP_LOOKUP_FAIL_OPEN',
+        path: safeReadRequestPath(req),
+        reason: error instanceof Error ? error.message : 'unknown_error',
+      });
       next();
     }
   }
@@ -794,15 +1297,32 @@ export const validateOrgMembership = asyncHandler(
  */
 export const requirePermission = (capability: string) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user) {
+    const requestUser = safeRead(() => req.user, undefined as AuthRequest['user']);
+    const normalizedCapability = typeof capability === 'string' ? capability.trim() : '';
+
+    if (!requestUser) {
       res.status(401).json({ error: 'Authentication required' });
       return;
     }
-
-    if (!req.can || !req.can(capability)) {
+    if (!normalizedCapability) {
       res.status(403).json({
         error: 'Permission denied',
-        required: capability,
+        required: normalizedCapability,
+      });
+      return;
+    }
+
+    let hasPermission = false;
+    try {
+      hasPermission = req.can?.(normalizedCapability) === true;
+    } catch {
+      hasPermission = false;
+    }
+
+    if (!hasPermission) {
+      res.status(403).json({
+        error: 'Permission denied',
+        required: normalizedCapability,
       });
       return;
     }
@@ -834,11 +1354,25 @@ export const __private__ = {
   resetRevocationCachesForTests: () => {
     _revokeCache.clear();
     _revokeAllCache.clear();
+    _revokeInflight.clear();
+    _revokeAllInflight.clear();
+  },
+  resetMembershipCacheForTests: () => {
+    _membershipCache.clear();
   },
   resetDepsForTests: () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     deps = undefined as any;
   },
+  normalizeMembershipStatus,
+  normalizeContextIdentifier,
+  buildMembershipCacheKey,
+  buildSessionActivityUpdateSql,
+  buildRevokeAllLookupSql,
+  extractIssuedAtSeconds,
+  parseRevokeAllTimestamp,
+  readOptionalStringClaim,
+  readBooleanTrueClaim,
 };
 
 // ==========================================

@@ -242,7 +242,8 @@ export function getArtifactIcon(type: ArtifactType): string {
 export function getArtifactLabel(type: ArtifactType, lang: string = 'en'): string {
   const identity = ARTIFACT_IDENTITY[type];
   if (!identity) return type;
-  return lang.startsWith('pl') ? identity.labelPl : identity.labelEn;
+  const normalizedLang = String(lang || 'en').toLowerCase();
+  return normalizedLang.startsWith('pl') ? identity.labelPl : identity.labelEn;
 }
 
 const ARTIFACT_PREFIX: Record<string, string> = Object.fromEntries(
@@ -258,6 +259,7 @@ function normalizeId(rawId: string): string {
 }
 
 function getBasePath(type: ArtifactType, id: string): string {
+  const encodedId = encodeURIComponent(id);
   switch (type) {
     case 'task':
     case 'process':
@@ -270,15 +272,15 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'initiative':
       return '/initiatives';
     case 'project':
-      return `/projects/${id}`;
+      return `/projects/${encodedId}`;
     case 'report':
-      return `/wordy?artifactId=${id}`;
+      return `/presentations?tab=documents&artifactId=${encodedId}`;
     case 'assessment':
       return '/assessment';
     case 'tool':
       return '/discovery-tools/strategic';
     case 'tool_session':
-      return `/my-work?session=${id}`;
+      return `/my-work?session=${encodedId}`;
     case 'insight':
       return '/interview';
     case 'risk':
@@ -288,20 +290,20 @@ function getBasePath(type: ArtifactType, id: string): string {
     case 'notebook':
       return '/my-work';
     case 'presentation':
-      return `/prezentacje?artifactId=${id}`;
+      return `/presentations?tab=presentations&artifactId=${encodedId}`;
     case 'sheet':
-      return `/excele?artifactId=${id}`;
+      return `/presentations?tab=sheets&artifactId=${encodedId}`;
     case 'meeting':
       return '/meeting';
     // V5-IDEA-34: Finance artifact parity
     case 'financial_model':
-      return `/economics?tab=models&open=${id}`;
+      return `/economics?tab=models&open=${encodedId}`;
     case 'budget':
-      return `/economics?tab=prediction&open=${id}`;
+      return `/economics?tab=prediction&open=${encodedId}`;
     case 'valuation':
-      return `/economics?tab=valuation&open=${id}`;
+      return `/economics?tab=valuation&open=${encodedId}`;
     case 'analysis':
-      return `/economics?tab=analysis&open=${id}`;
+      return `/economics?tab=analysis&open=${encodedId}`;
     case 'external':
     default:
       return '/my-work';
@@ -359,10 +361,11 @@ export function parseArtifactRef(value: string | null | undefined): ParsedArtifa
   if (!raw) return null;
   const separatorIndex = raw.indexOf(':');
   if (separatorIndex <= 0) return null;
-  const type = raw.slice(0, separatorIndex).trim().toLowerCase() as ArtifactType;
+  const type = raw.slice(0, separatorIndex).trim().toLowerCase();
   const id = raw.slice(separatorIndex + 1).trim();
+  if (!Object.prototype.hasOwnProperty.call(ARTIFACT_IDENTITY, type)) return null;
   if (!id) return null;
-  return { type, id };
+  return { type: type as ArtifactType, id };
 }
 
 // ── V5-IDEA-32: Workspace object attachment helpers ─────────────────────────
@@ -450,8 +453,12 @@ export function getNodeArtifactLinks(
   node: NodeLikeWithArtifacts | null | undefined
 ): ArtifactLink[] {
   if (!node) return [];
-  if (Array.isArray(node.data?.artifactLinks)) return node.data.artifactLinks;
-  if (Array.isArray(node.artifactLinks)) return node.artifactLinks;
+  const dataLinks = Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks : null;
+  const rootLinks = Array.isArray(node.artifactLinks) ? node.artifactLinks : null;
+  if (dataLinks && dataLinks.length > 0) return dataLinks;
+  if (rootLinks && rootLinks.length > 0) return rootLinks;
+  if (dataLinks) return dataLinks;
+  if (rootLinks) return rootLinks;
   return [];
 }
 
@@ -469,7 +476,7 @@ export function withNormalizedArtifactLinks<T extends NodeLikeWithArtifacts>(nod
 }
 
 export function buildArtifactPermalink(type: ArtifactType, id: string): string {
-  const origin = window.location.origin;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   return `${origin}${getArtifactPath(type, id)}`;
 }
 
@@ -478,7 +485,7 @@ export function buildArtifactPermalink(type: ArtifactType, id: string): string {
  * Useful when UI needs a single "primary" artifact to highlight.
  */
 export function getPrimaryArtifactLink(links: ArtifactLink[]): ArtifactLink | null {
-  if (!links || links.length === 0) return null;
+  if (!Array.isArray(links) || links.length === 0) return null;
   return links.find((l) => l.pinned) || links[0];
 }
 
@@ -490,10 +497,15 @@ export function artifactLinkToOpenPayload(link: ArtifactLink): {
   id: string;
   name: string;
 } {
+  const ref = link?.artifactRef;
+  const type = typeof ref?.type === 'string' ? ref.type : 'unknown';
+  const id = typeof ref?.id === 'string' ? ref.id : '';
+  const fallbackName = id || type ? `${type}:${id}` : 'artifact';
+  const name = typeof link?.label === 'string' && link.label.trim() ? link.label : fallbackName;
   return {
-    type: link.artifactRef.type,
-    id: link.artifactRef.id,
-    name: link.label || `${link.artifactRef.type}:${link.artifactRef.id}`,
+    type,
+    id,
+    name,
   };
 }
 
@@ -504,4 +516,73 @@ export function legacyRefToArtifactLinks(ref: string | null | undefined): Artifa
   const parsed = parseArtifactRef(ref);
   if (!parsed) return [];
   return [buildArtifactLink(parsed.type, parsed.id, 'related')];
+}
+
+export const CORE_RUNTIME_HANDOFF_TRACE_STORAGE_KEY = 'consultify.runtime.handoff-trace.v1';
+
+export type CoreRuntimeHandoffTarget = 'my_work' | 'interview';
+
+export type CoreRuntimeHandoffTrace = {
+  target: CoreRuntimeHandoffTarget;
+  source: string;
+  tab: string | null;
+  pathname: string;
+  kickoffMessage: string | null;
+  capturedAt: string;
+};
+
+export function buildCoreRuntimeHandoffTrace(
+  target: CoreRuntimeHandoffTarget,
+  pathname: string,
+  searchParams: URLSearchParams,
+  kickoffMessage?: string | null
+): CoreRuntimeHandoffTrace | null {
+  const source = String(searchParams.get('source') || '')
+    .trim()
+    .toLowerCase();
+  if (!source) return null;
+
+  return {
+    target,
+    source,
+    tab: searchParams.get('tab'),
+    pathname,
+    kickoffMessage: String(kickoffMessage || '').trim() || null,
+    capturedAt: new Date().toISOString(),
+  };
+}
+
+type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
+
+export function appendCoreRuntimeHandoffTrace(
+  storage: StorageLike,
+  trace: CoreRuntimeHandoffTrace,
+  limit = 20
+): CoreRuntimeHandoffTrace[] {
+  let existing: CoreRuntimeHandoffTrace[] = [];
+  try {
+    const raw = storage.getItem(CORE_RUNTIME_HANDOFF_TRACE_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(parsed)) {
+      existing = parsed.filter(
+        (entry) =>
+          entry &&
+          typeof entry === 'object' &&
+          typeof entry.target === 'string' &&
+          typeof entry.source === 'string' &&
+          typeof entry.pathname === 'string' &&
+          typeof entry.capturedAt === 'string'
+      ) as CoreRuntimeHandoffTrace[];
+    }
+  } catch {
+    existing = [];
+  }
+
+  const next = [...existing, trace].slice(-Math.max(1, limit));
+  try {
+    storage.setItem(CORE_RUNTIME_HANDOFF_TRACE_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Session storage can fail in private/restricted contexts; keep runtime flow non-blocking.
+  }
+  return next;
 }

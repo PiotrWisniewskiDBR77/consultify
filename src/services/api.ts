@@ -876,13 +876,13 @@ export const Api = {
     return data;
   },
 
-  updateUser: async (id: string, updates: any): Promise<void> => {
+  updateUser: async (id: string, updates: any): Promise<User> => {
     const res = await fetch(`${API_URL}/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    return handleResponse(res, 'Failed to update user');
   },
 
   deleteUser: async (id: string): Promise<void> => {

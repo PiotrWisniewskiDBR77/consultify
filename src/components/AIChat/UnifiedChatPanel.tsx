@@ -149,6 +149,16 @@ const isUuidLike = (value: unknown): value is string =>
   typeof value === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
 
+const extractIdeaIdFromPath = (pathname: string): string | null => {
+  const match = pathname.match(/^\/my-work\/ideas\/([^/]+)/i);
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+};
+
 const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   const raw = String(rawContent || '').trim();
   if (!raw) return null;
@@ -196,11 +206,68 @@ const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   return null;
 };
 
+type CoreNavigationTarget = 'my_work' | 'interview' | 'portfolio' | 'benefits';
+
+type CoreNavigationIntent = {
+  target: CoreNavigationTarget;
+  route: string;
+};
+
+const resolveMyWorkTabFromIntent = (text: string): string => {
+  if (/\b(inbox|skrzynk|powiadomieni|notifications?)\b/i.test(text)) return 'inbox';
+  if (/\b(tasks?|zadani[ae])\b/i.test(text)) return 'tasks';
+  if (/\b(decisions?|decyzj[ae])\b/i.test(text)) return 'decisions';
+  if (/\b(ideas?|pomysl|pomysł)\b/i.test(text)) return 'ideas';
+  if (/\b(notebook|notatnik|notatk[ai])\b/i.test(text)) return 'notebook';
+  return 'home';
+};
+
+const resolveInterviewTabFromIntent = (text: string): string => {
+  if (/\b(insights?|insighty?)\b/i.test(text)) return 'insights';
+  if (/\b(templates?|szablon[ya])\b/i.test(text)) return 'templates';
+  if (/\b(managed|assigned|przydzielon[ea])\b/i.test(text)) return 'managed';
+  if (/\b(sessions?|sesj[ae]|sesji)\b/i.test(text)) return 'sessions';
+  return 'my_assignments';
+};
+
+const detectCoreNavigationIntent = (rawContent: string): CoreNavigationIntent | null => {
+  const text = String(rawContent || '').trim();
+  if (!text) return null;
+
+  const hasOpenVerb =
+    /\b(open|go to|take me to|show me|switch to|navigate to|otw[oó]rz|przejd[źz]|przenie[śs]|poka[żz])\b/i.test(
+      text
+    );
+  if (!hasOpenVerb) return null;
+
+  if (/\b(benefits?|świadczenia|swiadczenia)\b/i.test(text)) {
+    return { target: 'benefits', route: '/benefits?source=teresa' };
+  }
+  if (/\b(portfolio|portfel)\b/i.test(text)) {
+    return { target: 'portfolio', route: '/portfolio?source=teresa' };
+  }
+  if (/\b(interview|wywiad|assignment|assignments|sesj[ae]|sesji|insights?)\b/i.test(text)) {
+    const interviewTab = resolveInterviewTabFromIntent(text);
+    return { target: 'interview', route: `/interview?source=teresa&tab=${interviewTab}` };
+  }
+  if (
+    /\b(my[\s-]?work|moja[\s-]?praca|radar|inbox|tasks?|zadani[ae]|notebook|notatnik)\b/i.test(text)
+  ) {
+    const myWorkTab = resolveMyWorkTabFromIntent(text);
+    return { target: 'my_work', route: `/my-work?source=teresa&tab=${myWorkTab}` };
+  }
+
+  return null;
+};
+
 export const __private__ = {
   firstMatchIndex,
   isLikelyAiFailureText,
   extractSlashPayload,
   parseChatSaveIntent,
+  detectCoreNavigationIntent,
+  resolveMyWorkTabFromIntent,
+  resolveInterviewTabFromIntent,
 };
 
 interface UnifiedChatPanelProps {
@@ -370,6 +437,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [signalsOpen, setSignalsOpen] = useState(false);
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
+  const [tableBuilderWorkspaceId, setTableBuilderWorkspaceId] = useState<string>('');
   const lastKickoffSentRef = useRef<string | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
@@ -437,6 +505,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [abortFeedback, setAbortFeedback] = useState<'partial' | 'cancelled' | null>(null);
   const [dtSavingDecision, setDtSavingDecision] = useState<string | null>(null);
   const [dtDecisionSaved, setDtDecisionSaved] = useState<Set<string>>(new Set());
+
+  const resolvedIdeaWorkspaceId = useMemo(() => {
+    const tableCtx = workspaceContext?.entityData?.tableContext as
+      | { workspaceId?: string }
+      | undefined;
+    if (tableCtx?.workspaceId) return String(tableCtx.workspaceId);
+
+    const openEntity = (workspaceContext?.entityData as any)?.open as
+      | { type?: string; id?: string }
+      | undefined;
+    if (openEntity?.type === 'idea' && openEntity?.id) return String(openEntity.id);
+
+    const fromPath = extractIdeaIdFromPath(route.pathname);
+    if (fromPath) return fromPath;
+
+    const params = new URLSearchParams(route.search);
+    const fromQuery = params.get('ideaId') || params.get('idea');
+    if (fromQuery) return fromQuery;
+
+    if (workspaceContext?.type === 'general' && workspaceContext?.entityId) {
+      return String(workspaceContext.entityId);
+    }
+
+    return '';
+  }, [route.pathname, route.search, workspaceContext]);
   const [dtPendingConfirm, setDtPendingConfirm] = useState<
     | (DeepThinkingPendingConfirmBase & {
         attachments?: any[];
@@ -570,6 +663,33 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
+  const contextActionPrompts = useMemo(() => {
+    if (!workspaceContext || workspaceContext.type === 'empty') return [];
+    const contextName =
+      workspaceContext.entityName || workspaceContext.projectName || workspaceContext.type;
+    return [
+      {
+        id: 'summarize-screen',
+        label: t('aiChat.contextActions.summarize', 'Summarize screen'),
+        prompt: `Summarize the current ${workspaceContext.type} context "${contextName}" and list the most important next actions.`,
+      },
+      {
+        id: 'find-risks',
+        label: t('aiChat.contextActions.risks', 'Find risks'),
+        prompt: `Review the current ${workspaceContext.type} context "${contextName}" and identify risks, blockers, missing data, and assumptions.`,
+      },
+      {
+        id: 'task-candidate',
+        label: t('aiChat.contextActions.task', 'Task candidate'),
+        prompt: `Create task candidates from the current ${workspaceContext.type} context "${contextName}". Do not execute or save anything without approval.`,
+      },
+      {
+        id: 'decision-candidate',
+        label: t('aiChat.contextActions.decision', 'Decision candidate'),
+        prompt: `Draft decision candidates for the current ${workspaceContext.type} context "${contextName}". Include owner, rationale, evidence needed, and approval status.`,
+      },
+    ];
+  }, [t, workspaceContext]);
 
   // ========================================================================
   // AI Stream hook
@@ -1561,9 +1681,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const outputTool = useAppStore.getState().chatOutputTool;
       if (outputTool !== 'auto') {
         const routeMap: Record<string, string> = {
-          wordy: '/wordy',
-          excele: '/excele',
-          prezentacje: '/prezentacje',
+          wordy: '/presentations?tab=documents&source=teresa',
+          excele: '/presentations?tab=sheets&source=teresa',
+          prezentacje: '/presentations/wizard?source=teresa',
         };
         const uiLangExplicit = (i18n.language || 'en').split('-')[0];
         const labelMap: Record<string, { pl: string; en: string }> = {
@@ -1599,14 +1719,75 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content:
             uiLangExplicit === 'pl'
-              ? `Otwieram ${label} — zaraz zaczynam pracę.`
-              : `Opening ${label} — starting work now.`,
+              ? `Otwieram ${label} — przenoszę kontekst rozmowy do właściwego obszaru pracy.`
+              : `Opening ${label} — carrying this conversation context into the right workspace.`,
           timestamp: new Date(),
         });
 
         useAppStore.getState().setChatKickoffMessage(text);
         useAppStore.getState().setChatOutputTool('auto');
         navigateToRoute(routeMap[outputTool]);
+        onMessageSent?.(content);
+        return;
+      }
+
+      const coreNavigationIntent = detectCoreNavigationIntent(text);
+      if (coreNavigationIntent) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        const labels =
+          uiLang === 'pl'
+            ? {
+                my_work: 'Moją Pracę',
+                interview: 'Wywiad',
+                portfolio: 'Portfolio',
+                benefits: 'Benefits',
+              }
+            : {
+                my_work: 'My Work',
+                interview: 'Interview',
+                portfolio: 'Portfolio',
+                benefits: 'Benefits',
+              };
+
+        addChatMessage({
+          id: `core-nav-redirect-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLang === 'pl'
+              ? `Otwieram ${labels[coreNavigationIntent.target]} — przenoszę kontekst rozmowy do odpowiedniego modułu.`
+              : `Opening ${labels[coreNavigationIntent.target]} — carrying this conversation context into the target module.`,
+          timestamp: new Date(),
+        });
+
+        if (
+          coreNavigationIntent.target === 'my_work' ||
+          coreNavigationIntent.target === 'interview'
+        ) {
+          useAppStore.getState().setChatKickoffMessage(text);
+        }
+
+        navigateToRoute(coreNavigationIntent.route);
         onMessageSent?.(content);
         return;
       }
@@ -1640,13 +1821,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content:
             uiLang === 'pl'
-              ? 'Otwieram Tabele \u2014 zaraz przygotuję Twój skoroszyt.'
-              : "Opening Tables \u2014 I'll prepare your workbook.",
+              ? 'Otwieram Tabele \u2014 przenoszę kontekst do aktywnej biblioteki Outputs (zakładka Sheets).'
+              : 'Opening Tables \u2014 carrying context to the active Outputs workspace (Sheets tab).',
           timestamp: new Date(),
         });
 
         useAppStore.getState().setChatKickoffMessage(text);
-        navigateToRoute('/excele');
+        navigateToRoute('/presentations?tab=sheets&source=teresa');
         onMessageSent?.(content);
         return;
       }
@@ -1680,13 +1861,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content:
             uiLangDoc === 'pl'
-              ? 'Otwieram Dokumenty \u2014 zaraz zaczynam pracę nad dokumentem.'
-              : "Opening Documents \u2014 I'll start working on your document.",
+              ? 'Otwieram Dokumenty \u2014 przenoszę kontekst do aktywnej biblioteki Outputs (zakładka Documents).'
+              : 'Opening Documents \u2014 carrying context to the active Outputs workspace (Documents tab).',
           timestamp: new Date(),
         });
 
         useAppStore.getState().setChatKickoffMessage(text);
-        navigateToRoute('/wordy');
+        navigateToRoute('/presentations?tab=documents&source=teresa');
         onMessageSent?.(content);
         return;
       }
@@ -1720,13 +1901,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content:
             uiLangPrez === 'pl'
-              ? 'Otwieram Prezentacje \u2014 zaraz przygotuję deck.'
-              : "Opening Presentations \u2014 I'll prepare your deck.",
+              ? 'Otwieram Prezentacje \u2014 przenoszę kontekst do aktywnego kreatora decków.'
+              : 'Opening Presentations \u2014 carrying context to the active deck creation workspace.',
           timestamp: new Date(),
         });
 
         useAppStore.getState().setChatKickoffMessage(text);
-        navigateToRoute('/prezentacje');
+        navigateToRoute('/presentations/wizard?source=teresa');
         onMessageSent?.(content);
         return;
       }
@@ -1756,16 +1937,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
 
         const uiLang = (i18n.language || 'en').split('-')[0];
+        if (!resolvedIdeaWorkspaceId) {
+          addChatMessage({
+            id: `table-builder-missing-workspace-${Date.now()}`,
+            role: 'ai',
+            content:
+              uiLang === 'pl'
+                ? 'Aby zbudować tabelę, otwórz najpierw konkretny pomysł w My Work -> Ideas.'
+                : 'To build a table, open a specific idea in My Work -> Ideas first.',
+            timestamp: new Date(),
+          });
+          onMessageSent?.(content);
+          return;
+        }
+
         addChatMessage({
           id: `table-builder-${Date.now()}`,
           role: 'ai',
           content:
             uiLang === 'pl'
-              ? 'Otwieram AI Kreator Tabel \u2014 zaraz przygotuję propozycję struktury.'
-              : "Opening AI Table Builder \u2014 I'll prepare a structure proposal for you.",
+              ? 'Otwieram AI Kreator Tabel \u2014 przygotuję roboczą propozycję struktury do Twojej akceptacji.'
+              : "Opening AI Table Builder \u2014 I'll prepare a draft structure proposal for your approval.",
           timestamp: new Date(),
         });
 
+        setTableBuilderWorkspaceId(resolvedIdeaWorkspaceId);
         setTableBuilderInitialMsg(text);
         setTableBuilderOpen(true);
 
@@ -2336,6 +2532,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       dtConfirmBusy,
       addMessageToConversation,
       i18n.language,
+      resolvedIdeaWorkspaceId,
       setIsBotTyping,
     ]
   );
@@ -3556,6 +3753,49 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         />
       </div>
 
+      {isSplitMode && workspaceContext && workspaceContext.type !== 'empty' && (
+        <div className={`${isCompact ? 'px-2 pt-2' : 'px-3 pt-3'}`}>
+          <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/80 dark:bg-navy-900/50 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {t('aiChat.contextCard.title', 'Teresa context')}
+                </div>
+                <div className="mt-1 truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                  {workspaceContext.entityName ||
+                    workspaceContext.projectName ||
+                    String(workspaceContext.type)}
+                </div>
+                <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  {t(
+                    'aiChat.contextCard.boundary',
+                    'Suggestions only. Mutations require approval.'
+                  )}
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300">
+                {String(workspaceContext.type)}
+              </span>
+            </div>
+            {contextActionPrompts.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {contextActionPrompts.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={() => handleSendMessage(action.prompt)}
+                    disabled={isDisabled || isStreaming}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:border-primary-700 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Organization Memory panel removed — unused / WIP feature */}
 
       {/* Messages Area */}
@@ -3778,6 +4018,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         )}
         <EnhancedChatInput
           onSend={handleSendMessage}
+          onToolSelect={(tool) => {
+            if (tool.startsWith('toggle:')) {
+              console.debug('[UnifiedChatPanel] Chat tool toggled', {
+                tool,
+                view: workspaceContext?.view,
+                type: workspaceContext?.type,
+              });
+            }
+          }}
           onStopGenerating={() => {
             const hadPartial = abortStream();
             setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
@@ -3833,35 +4082,58 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       {/* AI Table Builder slide-over panel */}
       {tableBuilderOpen && (
         <ChatToSchemaPanel
-          workspaceId={
-            (workspaceContext?.entityData?.tableContext as { baseId?: string } | undefined)
-              ?.baseId ||
-            workspaceContext?.entityId ||
-            ''
-          }
+          workspaceId={tableBuilderWorkspaceId || resolvedIdeaWorkspaceId}
           initialMessage={tableBuilderInitialMsg}
           slideOver
           companyContext={{
             workspaceName: workspaceContext?.entityName || workspaceContext?.projectName,
             moduleName: workspaceContext?.type || undefined,
           }}
-          onExecuted={() => {
+          onExecuted={(result) => {
             const uiLang = (i18n.language || 'en').split('-')[0];
+            const payload = (result ?? {}) as {
+              createdIds?: Record<string, string>;
+              status?: string;
+            };
+            const createdIds = payload.createdIds ?? {};
+            const createdEntries = Object.entries(createdIds);
+            const createdTableEntry =
+              createdEntries.find(([key]) => key.toLowerCase().includes('table')) || null;
+            const createdBaseEntry =
+              createdEntries.find(([key]) => key.toLowerCase().includes('base')) || null;
+            const createdTableId = createdTableEntry?.[1];
+            const createdBaseId = createdBaseEntry?.[1];
+            const targetWorkspace = tableBuilderWorkspaceId || resolvedIdeaWorkspaceId;
+            const deepLink =
+              createdTableId && targetWorkspace
+                ? `/my-work/ideas/${encodeURIComponent(targetWorkspace)}/workspace/table?tpTable=${encodeURIComponent(createdTableId)}`
+                : '/my-work/ideas';
+
             addChatMessage({
               id: `table-created-${Date.now()}`,
               role: 'ai',
               content:
                 uiLang === 'pl'
-                  ? 'Tabela została utworzona pomyślnie! Możesz ją teraz znaleźć w zakładce My Work.'
-                  : 'Table created successfully! You can find it in the My Work tab.',
+                  ? `Tabela została utworzona${createdTableId ? ` (ID: ${createdTableId})` : ''}. Otwieram ją teraz w My Work.`
+                  : `Table created${createdTableId ? ` (ID: ${createdTableId})` : ''}. Opening it in My Work now.`,
               timestamp: new Date(),
+              metadata: {
+                type: 'table_builder_execution',
+                createdTableId: createdTableId ?? null,
+                createdBaseId: createdBaseId ?? null,
+                deepLink,
+                status: payload.status ?? null,
+              },
             });
+            navigateToRoute(deepLink);
             setTableBuilderOpen(false);
             setTableBuilderInitialMsg(undefined);
+            setTableBuilderWorkspaceId('');
           }}
           onClose={() => {
             setTableBuilderOpen(false);
             setTableBuilderInitialMsg(undefined);
+            setTableBuilderWorkspaceId('');
           }}
         />
       )}

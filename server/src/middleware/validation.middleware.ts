@@ -10,6 +10,76 @@ import { z } from 'zod';
 
 import logger from '../utils/Logger.js';
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readMethod = (req: Request): string =>
+  normalizeOptionalString(safeRead(() => req.method, undefined)) || 'UNKNOWN';
+
+const readPath = (req: Request): string =>
+  normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+  normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+  'unknown';
+
+const readValidationIssues = (result: unknown): unknown[] => {
+  const issues = (result as { error?: { issues?: unknown } } | undefined)?.error?.issues;
+  return Array.isArray(issues) ? issues : [];
+};
+
+const readValidationErrors = (result: unknown): Array<{ field: string; message: string; code: string }> =>
+  readValidationIssues(result).map((rawIssue) => {
+    try {
+      const issue = rawIssue as { path?: unknown; message?: unknown; code?: unknown };
+      const pathValue = issue.path;
+      const field = Array.isArray(pathValue)
+        ? pathValue.map((segment) => (segment === undefined || segment === null ? '' : String(segment))).join('.')
+        : typeof pathValue === 'string'
+          ? pathValue
+          : '';
+      return {
+        field,
+        message: typeof issue.message === 'string' ? issue.message : 'Invalid value',
+        code: typeof issue.code === 'string' ? issue.code : 'custom',
+      };
+    } catch {
+      return {
+        field: '',
+        message: 'Invalid value',
+        code: 'custom',
+      };
+    }
+  });
+
+const respondIfHeadersOpen = (
+  req: Request,
+  res: Response,
+  statusCode: 400 | 500,
+  payload: Record<string, unknown>
+): boolean => {
+  if (safeRead(() => res.headersSent, false)) {
+    safeRead(() => {
+      logger.warn(
+        `[ValidationMiddleware] Skipped ${statusCode} response; headers already sent (${readMethod(req)} ${readPath(req)})`
+      );
+      return true;
+    }, false);
+    return false;
+  }
+  res.status(statusCode).json(payload);
+  return true;
+};
+
 // ==========================================
 // MIDDLEWARE
 // ==========================================
@@ -22,28 +92,24 @@ import logger from '../utils/Logger.js';
 export const validateBody = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const result = schema.safeParse(req.body);
+      const result = schema.safeParse(safeRead(() => req.body, undefined));
       if (!result.success) {
-        // Format Zod errors into a readable structure
-        const errors =
-          result.error?.issues?.map((err: any) => ({
-            field: err.path.join('.'),
-            message: err.message,
-            code: err.code,
-          })) || [];
-
-        logger.info(
-          `[ValidationMiddleware] Validation failed for ${req.method} ${req.path}:`,
-          JSON.stringify(errors, null, 2)
-        );
-
+        const errors = readValidationErrors(result);
         const firstError = errors[0];
         const errorMessage = firstError ? firstError.message : 'Validation Error';
 
-        res.status(400).json({
+        respondIfHeadersOpen(req, res, 400, {
           error: errorMessage,
           details: errors,
         });
+
+        safeRead(() => {
+          logger.info(
+            `[ValidationMiddleware] Validation failed for ${readMethod(req)} ${readPath(req)}:`,
+            JSON.stringify(errors, null, 2)
+          );
+          return true;
+        }, false);
         return;
       }
 
@@ -61,7 +127,7 @@ export const validateBody = (schema: z.ZodSchema) => {
       next();
     } catch (error: any) {
       logger.error('Validation Middleware Error:', error);
-      res.status(500).json({ error: 'Internal Server Error during validation' });
+      respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
     }
   };
 };
@@ -74,22 +140,24 @@ export const validateBody = (schema: z.ZodSchema) => {
 export const validateQuery = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const result = schema.safeParse(req.query);
+      const result = schema.safeParse(safeRead(() => req.query, undefined));
       if (!result.success) {
-        const errors =
-          result.error?.issues?.map((err: any) => ({
-            field: err.path.join('.'),
-            message: err.message,
-            code: err.code,
-          })) || [];
+        const errors = readValidationErrors(result);
 
         const firstError = errors[0];
         const errorMessage = firstError ? firstError.message : 'Validation Error';
 
-        res.status(400).json({
+        respondIfHeadersOpen(req, res, 400, {
           error: errorMessage,
           details: errors,
         });
+        safeRead(() => {
+          logger.info(
+            `[ValidationMiddleware] Validation failed for ${readMethod(req)} ${readPath(req)} (query):`,
+            JSON.stringify(errors, null, 2)
+          );
+          return true;
+        }, false);
         return;
       }
 
@@ -106,7 +174,7 @@ export const validateQuery = (schema: z.ZodSchema) => {
       next();
     } catch (error: any) {
       logger.error('Validation Middleware Error:', error);
-      res.status(500).json({ error: 'Internal Server Error during validation' });
+      respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
     }
   };
 };
@@ -119,22 +187,24 @@ export const validateQuery = (schema: z.ZodSchema) => {
 export const validateParams = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const result = schema.safeParse(req.params);
+      const result = schema.safeParse(safeRead(() => req.params, undefined));
       if (!result.success) {
-        const errors =
-          result.error?.issues?.map((err: any) => ({
-            field: err.path.join('.'),
-            message: err.message,
-            code: err.code,
-          })) || [];
+        const errors = readValidationErrors(result);
 
         const firstError = errors[0];
         const errorMessage = firstError ? firstError.message : 'Validation Error';
 
-        res.status(400).json({
+        respondIfHeadersOpen(req, res, 400, {
           error: errorMessage,
           details: errors,
         });
+        safeRead(() => {
+          logger.info(
+            `[ValidationMiddleware] Validation failed for ${readMethod(req)} ${readPath(req)} (params):`,
+            JSON.stringify(errors, null, 2)
+          );
+          return true;
+        }, false);
         return;
       }
 
@@ -151,7 +221,7 @@ export const validateParams = (schema: z.ZodSchema) => {
       next();
     } catch (error: any) {
       logger.error('Validation Middleware Error:', error);
-      res.status(500).json({ error: 'Internal Server Error during validation' });
+      respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
     }
   };
 };

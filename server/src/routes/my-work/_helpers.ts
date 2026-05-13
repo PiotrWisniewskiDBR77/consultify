@@ -3,12 +3,33 @@ import type { Response } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized || null;
+};
+
 export const requireUser = (
   req: AuthRequest,
   res: Response
 ): { userId: string; orgId: string } | null => {
-  const userId = (req as any).userId || req.user?.id;
-  const orgId = req.user?.organizationId;
+  const userId =
+    normalizeOptionalString(safeRead(() => (req as any).userId, undefined as unknown)) ||
+    normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown));
+  const orgId =
+    normalizeOptionalString(safeRead(() => (req as any).organizationId, undefined as unknown)) ||
+    normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
+    normalizeOptionalString(
+      safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
+    );
   if (!userId || !orgId) {
     res.status(401).json({ error: 'Unauthorized' });
     return null;

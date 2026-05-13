@@ -26,6 +26,10 @@ Osobiste centrum pracy użytkownika: home, inbox/radar, bieżące artefakty, zad
 - `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
+- `IMPLEMENTATION_PLAN_STABILIZATION_AND_COMPLETION.md` — execution plan for module stabilization and completion by priority.
+- `WHITEBOARD_RAW_GAP_ANALYSIS_AND_ROADMAP.md` — RAW-to-roadmap gap analysis for Whiteboard (`P0-P2`).
+- `IMPLEMENTATION_TASK_BOARD.md` — module-level task index; detailed deployable scope remains in `function-cards/*_EXECUTION_CARD.md`.
+- `function-cards/` — function-level execution cards with immutable `scope_anchor`, P0/P1/P2 backlog, evidence plan and impact.
 
 ## Function Coverage (Current)
 

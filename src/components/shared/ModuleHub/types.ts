@@ -66,6 +66,7 @@ export type ModuleTab =
   | 'my_assignments'
   | 'managed'
   | 'insights'
+  | 'initiatives'
   | 'pending_review';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';

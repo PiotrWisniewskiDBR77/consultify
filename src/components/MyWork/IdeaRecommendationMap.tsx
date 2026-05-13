@@ -10,12 +10,14 @@ import {
   FileText,
   Flower2,
   GitBranch,
+  Hand,
   Lightbulb,
   Link2,
   Loader2,
   Paperclip,
   Pencil,
   Plus,
+  MousePointer2,
   Sparkles,
   StickyNote,
   X,
@@ -4751,6 +4753,42 @@ function MindMapInner({
     if (interactionMode === 'connect') return isPolish ? 'Tryb: łączenie' : 'Mode: connect';
     return isPolish ? 'Tryb: zaznaczanie' : 'Mode: select';
   }, [interactionMode, isPolish]);
+  const interactionModeHelp = useMemo(() => {
+    if (interactionMode === 'pan') {
+      return isPolish
+        ? 'Przeciągaj puste płótno, aby przesuwać mapę. Przełącz na Zaznacz, aby edytować węzły.'
+        : 'Drag the empty canvas to move the map. Switch to Select to edit nodes.';
+    }
+    if (interactionMode === 'connect') {
+      return isPolish
+        ? 'Przeciągnij połączenie z uchwytu jednego węzła do drugiego. Kliknij Zaznacz, aby wyjść.'
+        : 'Drag from one node handle to another. Click Select to exit.';
+    }
+    return isPolish
+      ? 'Klikaj węzły, przeciągaj je i zaznaczaj obszary. Użyj Przesuń, aby poruszać mapą.'
+      : 'Click nodes, drag them, and box-select areas. Use Pan to move the map.';
+  }, [interactionMode, isPolish]);
+  const interactionModeControls = useMemo(
+    () =>
+      [
+        {
+          id: 'select' as MindMapInteractionMode,
+          label: isPolish ? 'Zaznacz' : 'Select',
+          icon: MousePointer2,
+        },
+        {
+          id: 'pan' as MindMapInteractionMode,
+          label: isPolish ? 'Przesuń' : 'Pan',
+          icon: Hand,
+        },
+        {
+          id: 'connect' as MindMapInteractionMode,
+          label: isPolish ? 'Połącz' : 'Connect',
+          icon: Link2,
+        },
+      ] as const,
+    [isPolish]
+  );
 
   const containerClassName =
     variant === 'overlay'
@@ -5004,6 +5042,40 @@ function MindMapInner({
           <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0">
             {savedLabel}
           </span>
+        </div>
+      </div>
+
+      <div className="absolute bottom-4 left-1/2 z-[90] flex -translate-x-1/2 flex-col items-center gap-2">
+        <div
+          className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/70 bg-white/90 p-1 shadow-lg backdrop-blur-md dark:border-navy-700/70 dark:bg-navy-900/90"
+          role="radiogroup"
+          aria-label={isPolish ? 'Tryb pracy mapy' : 'Map interaction mode'}
+          data-testid="mindmap-interaction-mode-controls"
+        >
+          {interactionModeControls.map(({ id, label, icon: Icon }) => {
+            const active = interactionMode === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => updateInteractionMode(id)}
+                role="radio"
+                aria-checked={active}
+                title={label}
+                className={`inline-flex h-8 items-center gap-1.5 rounded-xl px-2.5 text-[11px] font-semibold transition-colors ${
+                  active
+                    ? 'bg-primary-500/12 text-primary-700 dark:text-primary-300'
+                    : 'text-slate-500 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:bg-white/[0.06]'
+                }`}
+              >
+                <Icon size={13} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="max-w-[34rem] rounded-full border border-slate-200/60 bg-white/80 px-3 py-1 text-center text-[10px] font-medium text-slate-500 shadow-sm backdrop-blur dark:border-navy-700/60 dark:bg-navy-900/80 dark:text-slate-300">
+          {interactionModeHelp}
         </div>
       </div>
 

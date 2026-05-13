@@ -72,7 +72,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
-import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
+import {
+  appendCoreRuntimeHandoffTrace,
+  buildCoreRuntimeHandoffTrace,
+  buildMyWorkSheetTableOpenPath,
+  getArtifactPath,
+} from '@/utils/artifactLinks';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
   dispatchPilotAccessBlocked,
@@ -162,6 +167,22 @@ type ModuleTab =
   | 'tasks'
   | 'decisions'
   | 'manager';
+
+const MODULE_TABS: readonly ModuleTab[] = [
+  'home',
+  'ideas',
+  'notebook',
+  'inbox',
+  'calendar',
+  'tasks',
+  'decisions',
+  'manager',
+];
+
+function isModuleTab(value: string): value is ModuleTab {
+  return MODULE_TABS.includes(value as ModuleTab);
+}
+
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'table' | 'grid';
@@ -169,6 +190,100 @@ type DecisionsViewMode = 'table' | 'kanban' | 'timeline';
 type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+
+function normalizeItemStatus(value: unknown, fallback: ItemStatus): ItemStatus {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim().toLowerCase();
+  return (normalized || fallback) as ItemStatus;
+}
+
+async function safeResponseJson<T>(response: { json: () => Promise<T> }): Promise<T | null> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+type MyWorkOpenItemType = 'task' | 'idea' | 'decision' | 'notification' | 'notebook';
+
+function normalizeMyWorkOpenItemType(value: unknown): MyWorkOpenItemType | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (
+    normalized === 'task' ||
+    normalized === 'idea' ||
+    normalized === 'decision' ||
+    normalized === 'notification' ||
+    normalized === 'notebook'
+  ) {
+    return normalized;
+  }
+  return null;
+}
+
+function normalizeMyWorkEntityId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized || null;
+}
+
+function getMyWorkOpenItemStatus(type: Exclude<MyWorkOpenItemType, 'notebook'>): ItemStatus {
+  if (type === 'notification') return 'unread';
+  if (type === 'decision') return 'pending';
+  if (type === 'idea') return 'idea';
+  return 'todo';
+}
+
+function getWorkspaceSelectionSummary(
+  selection: { type?: string | null; count?: number | null } | null | undefined
+): string | null {
+  const selectionType = typeof selection?.type === 'string' ? selection.type.trim() : '';
+  if (!selectionType || selectionType === 'none') return null;
+  const selectionCount =
+    typeof selection?.count === 'number' && Number.isFinite(selection.count) && selection.count > 0
+      ? selection.count
+      : 0;
+  return `Selection: ${selectionCount} ${selectionType}(s) selected`;
+}
+
+function getInboxPresetCounts(
+  inboxCounts: { counts?: { open?: number; saved?: number } } | null | undefined,
+  fallbackAllCount: number
+): { all: number; saved: number } {
+  return {
+    all: inboxCounts?.counts?.open ?? fallbackAllCount,
+    saved: inboxCounts?.counts?.saved ?? 0,
+  };
+}
+
+function getNotebookPageIdForListView(
+  activeDocumentId: string | null,
+  openDocuments: OpenDocument[]
+): string | null {
+  if (!activeDocumentId) return null;
+  const activeDocument = openDocuments.find((doc) => doc.id === activeDocumentId);
+  return activeDocument?.type === 'notebook' ? activeDocument.id : null;
+}
+
+export function getMyWorkMainContentClassName({
+  activeDocumentId,
+  activeTab,
+  ideasViewMode,
+}: {
+  activeDocumentId?: string | null;
+  activeTab: ModuleTab;
+  ideasViewMode: IdeasViewMode;
+}): string {
+  const workspaceOwnsScroll =
+    Boolean(activeDocumentId) ||
+    activeTab === 'calendar' ||
+    (activeTab === 'ideas' && ideasViewMode === 'table');
+
+  return `flex-1 min-h-0 ${
+    workspaceOwnsScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
+  }`;
+}
 
 // Q1: Per-tab system prompts for contextual chat
 const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
@@ -317,7 +432,8 @@ function isOpenDocument(value: unknown): value is OpenDocument {
     (doc.type === 'task' ||
       doc.type === 'idea' ||
       doc.type === 'decision' ||
-      doc.type === 'notification')
+      doc.type === 'notification' ||
+      doc.type === 'notebook')
   );
 }
 
@@ -368,24 +484,94 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
       return 'inbox';
     case 'notebook':
       return 'notebook';
+    default:
+      return 'home';
   }
 }
 
 function getInitialMyWorkTab(
   searchParams: URLSearchParams,
-  _canViewManager: boolean,
+  canViewManager: boolean,
   allowIdeas = true
 ): ModuleTab {
+  const tabParam = String(searchParams.get('tab') || '')
+    .trim()
+    .toLowerCase();
+  const tabFromQuery =
+    isModuleTab(tabParam) &&
+    (allowIdeas || tabParam !== 'ideas') &&
+    (canViewManager || tabParam !== 'manager')
+      ? tabParam
+      : null;
+
   if (allowIdeas && (searchParams.get('ideaId') || searchParams.get('idea'))) return 'ideas';
   if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
   if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
+  if (tabFromQuery) return tabFromQuery;
 
   return 'home';
 }
 
+function resolveEntityDeepLinkIntent(
+  searchParams: URLSearchParams,
+  isPolish: boolean,
+  allowIdeas = true
+): {
+  tab: Extract<ModuleTab, 'tasks' | 'decisions' | 'ideas'>;
+  document: OpenDocument;
+  cleanupKeys: string[];
+} | null {
+  const taskId = searchParams.get('taskId') || searchParams.get('task');
+  if (taskId) {
+    return {
+      tab: 'tasks',
+      document: {
+        id: taskId,
+        type: 'task',
+        name: isPolish ? 'Zadanie' : 'Task',
+        status: 'todo',
+      },
+      cleanupKeys: ['taskId', 'task'],
+    };
+  }
+
+  const decisionId = searchParams.get('decisionId') || searchParams.get('decision');
+  if (decisionId) {
+    return {
+      tab: 'decisions',
+      document: {
+        id: decisionId,
+        type: 'decision',
+        name: isPolish ? 'Decyzja' : 'Decision',
+        status: 'pending',
+      },
+      cleanupKeys: ['decisionId', 'decision'],
+    };
+  }
+
+  const ideaId = searchParams.get('ideaId') || searchParams.get('idea');
+  if (ideaId) {
+    if (!allowIdeas) return null;
+    return {
+      tab: 'ideas',
+      document: {
+        id: ideaId,
+        type: 'idea',
+        name: isPolish ? 'Pomysł' : 'Idea',
+        status: 'idea',
+      },
+      cleanupKeys: ['ideaId', 'idea'],
+    };
+  }
+
+  return null;
+}
+
 function parseMyWorkPathIntent(
   pathname: string,
-  isPolish: boolean
+  isPolish: boolean,
+  canViewManager = true,
+  allowIdeas = true
 ): { tab: ModuleTab; doc?: OpenDocument } | null {
   const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
     switch (segment) {
@@ -404,61 +590,73 @@ function parseMyWorkPathIntent(
         return undefined;
     }
   };
-  const normalized = pathname.replace(/\/+$/, '');
-  if (!normalized.startsWith('/my-work')) return null;
-  const segments = normalized.split('/').filter(Boolean);
-  if (segments.length < 2) return null;
+  try {
+    const normalized = pathname.replace(/\/+$/, '');
+    if (!normalized.startsWith('/my-work')) return null;
+    const segments = normalized.split('/').filter(Boolean);
+    if (segments.length < 2) return null;
 
-  if (segments[1] === 'ideas' && segments[2]) {
-    const ideaId = decodeURIComponent(segments[2]);
-    const openMap = segments[3] === 'workspace';
-    const initialTool = openMap ? parseIdeaTool(segments[4]) : undefined;
-    return {
-      tab: 'ideas',
-      doc: {
-        id: ideaId,
-        type: 'idea',
-        name: isPolish ? 'Pomysł' : 'Idea',
-        status: 'idea',
-        data: { openMap, initialTool },
-      },
-    };
+    if (segments[1] === 'ideas' && segments[2]) {
+      if (!allowIdeas) return { tab: 'home' };
+      const ideaId = decodeURIComponent(segments[2]);
+      const openMap = segments[3] === 'workspace';
+      const initialTool = openMap ? parseIdeaTool(segments[4]) : undefined;
+      return {
+        tab: 'ideas',
+        doc: {
+          id: ideaId,
+          type: 'idea',
+          name: isPolish ? 'Pomysł' : 'Idea',
+          status: 'idea',
+          data: { openMap, initialTool },
+        },
+      };
+    }
+
+    if (segments[1] === 'tasks' && segments[2]) {
+      return {
+        tab: 'tasks',
+        doc: {
+          id: decodeURIComponent(segments[2]),
+          type: 'task',
+          name: isPolish ? 'Zadanie' : 'Task',
+          status: 'todo',
+        },
+      };
+    }
+
+    if (segments[1] === 'decisions' && segments[2]) {
+      return {
+        tab: 'decisions',
+        doc: {
+          id: decodeURIComponent(segments[2]),
+          type: 'decision',
+          name: isPolish ? 'Decyzja' : 'Decision',
+          status: 'pending',
+        },
+      };
+    }
+
+    if (segments[1] === 'home') return { tab: 'home' };
+    if (segments[1] === 'ideas') return { tab: allowIdeas ? 'ideas' : 'home' };
+    if (segments[1] === 'tasks') return { tab: 'tasks' };
+    if (segments[1] === 'decisions') return { tab: 'decisions' };
+    if (segments[1] === 'notebook') return { tab: 'notebook' };
+    if (segments[1] === 'inbox') return { tab: 'inbox' };
+    if (segments[1] === 'calendar') return { tab: 'calendar' };
+    if (segments[1] === 'manager') return { tab: canViewManager ? 'manager' : 'home' };
+
+    return null;
+  } catch {
+    return null;
   }
+}
 
-  if (segments[1] === 'tasks' && segments[2]) {
-    return {
-      tab: 'tasks',
-      doc: {
-        id: decodeURIComponent(segments[2]),
-        type: 'task',
-        name: isPolish ? 'Zadanie' : 'Task',
-        status: 'todo',
-      },
-    };
-  }
-
-  if (segments[1] === 'decisions' && segments[2]) {
-    return {
-      tab: 'decisions',
-      doc: {
-        id: decodeURIComponent(segments[2]),
-        type: 'decision',
-        name: isPolish ? 'Decyzja' : 'Decision',
-        status: 'pending',
-      },
-    };
-  }
-
-  if (segments[1] === 'home') return { tab: 'home' };
-  if (segments[1] === 'ideas') return { tab: 'ideas' };
-  if (segments[1] === 'tasks') return { tab: 'tasks' };
-  if (segments[1] === 'decisions') return { tab: 'decisions' };
-  if (segments[1] === 'notebook') return { tab: 'notebook' };
-  if (segments[1] === 'inbox') return { tab: 'inbox' };
-  if (segments[1] === 'calendar') return { tab: 'calendar' };
-  if (segments[1] === 'manager') return { tab: 'manager' };
-
-  return null;
+function readCoreRuntimeHandoff(
+  pathname: string,
+  searchParams: URLSearchParams
+): ReturnType<typeof buildCoreRuntimeHandoffTrace> {
+  return buildCoreRuntimeHandoffTrace('my_work', pathname, searchParams);
 }
 
 // Shared button styles (KANON v3): pill buttons, h-9, hover = bg-only.
@@ -860,7 +1058,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (res.ok) setContextSummary(await res.json());
+        if (res.ok) {
+          const summary = await safeResponseJson<Record<string, any>>(res);
+          if (summary && typeof summary === 'object') {
+            setContextSummary(summary);
+          }
+        }
 
         // L7: Restore previous session context for continuity
         try {
@@ -871,7 +1074,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             },
           });
           if (sessionRes.ok) {
-            const { context } = await sessionRes.json();
+            const payload = await safeResponseJson<{ context?: { lastViewedItems?: unknown[] } }>(
+              sessionRes
+            );
+            const context = payload?.context;
             if (context?.lastViewedItems?.length) {
               // Could append to system prompt: "In your last session, you worked on..."
             }
@@ -1018,14 +1224,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           ? 'Stage: spark (not yet accepted)'
           : 'Stage: active (accepted)'
       );
-      if (
-        activeIdeaWorkspaceState?.selection.type &&
-        activeIdeaWorkspaceState.selection.type !== 'none'
-      ) {
-        wsCtx.push(
-          `Selection: ${activeIdeaWorkspaceState.selection.count} ${activeIdeaWorkspaceState.selection.type}(s) selected`
-        );
-      }
+      const selectionSummary = getWorkspaceSelectionSummary(activeIdeaWorkspaceState?.selection);
+      if (selectionSummary) wsCtx.push(selectionSummary);
       if (ideaGraphSummary) {
         wsCtx.push(`Graph state: ${ideaGraphSummary}`);
       }
@@ -1074,7 +1274,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (!myWorkIntent) return;
     if (myWorkIntent.tab) {
       // Block navigation to manager tab for unauthorized users
-      const targetTab = myWorkIntent.tab as ModuleTab;
+      const targetTab = myWorkIntent.tab;
       if (targetTab === 'manager' && !canViewManager) {
         clearMyWorkIntent();
         return;
@@ -1118,7 +1318,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }
     }
     clearMyWorkIntent();
-  }, [activeTab, myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
+  }, [activeTab, myWorkIntent, canViewManager, clearMyWorkIntent, handleOpenDocument]);
 
   // L7: Save session context for cross-session continuity
   useEffect(() => {
@@ -1157,11 +1357,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isEnabled } = useFeatureFlagsContext();
   useEffect(() => {
     const handler = (e: Event) => {
-      const { type, id, name } = (e as CustomEvent).detail || {};
+      const detail = (e as CustomEvent).detail || {};
+      const type = String(detail.type || '').trim().toLowerCase();
+      const id = String(detail.id || '').trim();
+      const name = typeof detail.name === 'string' ? detail.name : '';
       if (!type || !id) return;
       if (type === 'sheet') {
         void (async () => {
-          const tableId = String(id);
+          const tableId = id;
           if (isEnabled('tablePlatformMetadataFirst')) {
             const ws = await resolveTablePlatformWorkspaceIdForTable(tableId);
             if (ws) {
@@ -1197,33 +1400,26 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         navigate(getArtifactPath(type as any, String(id)));
         return;
       }
-      const tabMap: Record<string, ModuleTab> = {
+      const normalizedOpenType = normalizeMyWorkOpenItemType(type);
+      if (!normalizedOpenType) return;
+      const tabMap: Record<MyWorkOpenItemType, ModuleTab> = {
         task: 'tasks',
         decision: 'decisions',
         idea: 'ideas',
         notification: 'inbox',
         notebook: 'notebook',
       };
-      if (tabMap[type]) setActiveTab(tabMap[type]);
-      if (type === 'notebook') {
-        setNotebookOpenPageId(String(id));
+      setActiveTab(tabMap[normalizedOpenType]);
+      if (normalizedOpenType === 'notebook') {
+        setNotebookOpenPageId(id);
         return;
       }
-      if (type !== 'notebook') {
-        handleOpenDocument({
-          id,
-          type: type as 'task' | 'idea' | 'decision' | 'notification',
-          name: name || type,
-          status:
-            type === 'notification'
-              ? ('unread' as const)
-              : type === 'decision'
-                ? ('pending' as const)
-                : type === 'idea'
-                  ? ('idea' as const)
-                  : ('todo' as const),
-        });
-      }
+      handleOpenDocument({
+        id,
+        type: normalizedOpenType,
+        name: name || normalizedOpenType,
+        status: getMyWorkOpenItemStatus(normalizedOpenType),
+      });
     };
     window.addEventListener('mywork-open-item', handler);
     return () => window.removeEventListener('mywork-open-item', handler);
@@ -1237,63 +1433,27 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // - /my-work?decision=...  (used by backend notification actionUrl)
   // - /my-work?task=...      (legacy/manual links)
   useEffect(() => {
-    const taskId = searchParams.get('taskId') || searchParams.get('task');
-    const decisionId = searchParams.get('decisionId') || searchParams.get('decision');
-    const ideaId = searchParams.get('ideaId') || searchParams.get('idea');
-    if (!taskId && !decisionId && !ideaId) return;
+    const intent = resolveEntityDeepLinkIntent(searchParams, isPolish, !isPilotParticipant);
+    if (!intent) return;
 
-    if (taskId) {
-      const nextDoc: OpenDocument = {
-        id: taskId,
-        type: 'task',
-        name: isPolish ? 'Zadanie' : 'Task',
-        status: 'todo',
-      };
-      setActiveTab('tasks');
-      if (activeTab === 'tasks') handleOpenDocument(nextDoc);
-      else setPendingDocument(nextDoc);
-      setPendingUrlCleanup({ documentId: taskId, keys: ['taskId', 'task'] });
-    }
-
-    if (decisionId) {
-      const nextDoc: OpenDocument = {
-        id: decisionId,
-        type: 'decision',
-        name: isPolish ? 'Decyzja' : 'Decision',
-        status: 'pending',
-      };
-      setActiveTab('decisions');
-      if (activeTab === 'decisions') handleOpenDocument(nextDoc);
-      else setPendingDocument(nextDoc);
-      setPendingUrlCleanup({ documentId: decisionId, keys: ['decisionId', 'decision'] });
-    }
-
-    if (ideaId) {
-      const nextDoc: OpenDocument = {
-        id: ideaId,
-        type: 'idea',
-        name: isPolish ? 'Pomysł' : 'Idea',
-        status: 'idea',
-      };
-      setActiveTab('ideas');
-      if (activeTab === 'ideas') handleOpenDocument(nextDoc);
-      else setPendingDocument(nextDoc);
-      setPendingUrlCleanup({ documentId: ideaId, keys: ['ideaId', 'idea'] });
-    }
-  }, [activeTab, handleOpenDocument, searchParams, isPolish]);
+    setActiveTab(intent.tab);
+    setPendingDocument(intent.document);
+    setPendingUrlCleanup({ documentId: intent.document.id, keys: intent.cleanupKeys });
+  }, [searchParams, isPolish, isPilotParticipant]);
 
   useEffect(() => {
-    const intent = parseMyWorkPathIntent(location.pathname, isPolish);
+    const intent = parseMyWorkPathIntent(
+      location.pathname,
+      isPolish,
+      canViewManager,
+      !isPilotParticipant
+    );
     if (!intent) return;
     setActiveTab(intent.tab);
     const nextDoc = intent.doc;
     if (!nextDoc) return;
     if (nextDoc.type === 'idea' && nextDoc.data?.initialTool) {
       setIdeaActiveTool(nextDoc.data.initialTool as CanvasToolType);
-    }
-    if (activeTab === intent.tab) {
-      handleOpenDocument(nextDoc);
-      return;
     }
     setPendingDocument((prev) => {
       if (
@@ -1306,7 +1466,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }
       return nextDoc;
     });
-  }, [activeTab, handleOpenDocument, location.pathname, isPolish]);
+  }, [location.pathname, isPolish, canViewManager, isPilotParticipant]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const trace = readCoreRuntimeHandoff(location.pathname, searchParams);
+    if (!trace || trace.source !== 'teresa') return;
+    appendCoreRuntimeHandoffTrace(window.sessionStorage, trace);
+  }, [location.pathname, searchParams]);
 
   // Tab configuration — new order: Home > Ideas > Notebook > Inbox > Calendar > Tasks > Decisions > Manager
   const tabs = useMemo(() => {
@@ -1472,18 +1639,26 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const handleCloseDocument = useCallback(
     (id: string) => {
+      const nextNotebookPageId = getNotebookPageIdForListView(activeDocumentId, openDocuments);
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
       setIdeaWorkspaceStateById((prev) => removeIdeaWorkspaceState(prev, id));
       if (activeDocumentId === id) {
+        if (nextNotebookPageId) {
+          setNotebookOpenPageId(nextNotebookPageId);
+        }
         setActiveDocumentId(null);
       }
     },
-    [activeDocumentId]
+    [activeDocumentId, openDocuments]
   );
 
   const handleShowList = useCallback(() => {
+    const nextNotebookPageId = getNotebookPageIdForListView(activeDocumentId, openDocuments);
+    if (nextNotebookPageId) {
+      setNotebookOpenPageId(nextNotebookPageId);
+    }
     setActiveDocumentId(null);
-  }, []);
+  }, [activeDocumentId, openDocuments]);
 
   // Task handlers
   const handleCreateTask = useCallback(() => {
@@ -1500,11 +1675,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const handleTaskClick = useCallback(
     (taskId: string, taskData?: any) => {
+      const normalizedTaskId = normalizeMyWorkEntityId(taskId);
+      if (!normalizedTaskId) return;
       handleOpenDocument({
-        id: taskId,
+        id: normalizedTaskId,
         type: 'task',
         name: taskData?.title || 'Task',
-        status: (taskData?.status?.toLowerCase() || 'todo') as ItemStatus,
+        status: normalizeItemStatus(taskData?.status, 'todo'),
         data: taskData,
       });
     },
@@ -1601,11 +1778,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const handleDecisionClick = useCallback(
     (decisionId: string, decisionData?: any) => {
+      const normalizedDecisionId = normalizeMyWorkEntityId(decisionId);
+      if (!normalizedDecisionId) return;
       handleOpenDocument({
-        id: decisionId,
+        id: normalizedDecisionId,
         type: 'decision',
         name: decisionData?.title || 'Decision',
-        status: (decisionData?.status?.toLowerCase() || 'pending') as ItemStatus,
+        status: normalizeItemStatus(decisionData?.status, 'pending'),
         data: decisionData,
       });
     },
@@ -2350,6 +2529,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // Inbox: render all controls as a single Command Row (SSOT: module-hub + app-table).
     if (activeTab === 'inbox') {
       const c = inboxCounts;
+      const presetCounts = getInboxPresetCounts(c, tabCounts.inbox);
       const presets: Array<{
         id: InboxPreset;
         label: string;
@@ -2358,10 +2538,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'all',
           label: isPolish ? 'Wszystkie' : 'ALL',
-          count: c?.counts.open ?? tabCounts.inbox,
+          count: presetCounts.all,
         },
         { id: 'overdue', label: isPolish ? 'Zaległe' : 'Overdue', count: c?.overdue ?? 0 },
-        { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: c?.counts.saved ?? 0 },
+        { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: presetCounts.saved },
         { id: 'ai', label: isPolish ? 'AI' : 'AI', count: c?.ai ?? 0 },
         { id: 'critical', label: isPolish ? 'Krytyczne' : 'Critical', count: c?.critical ?? 0 },
         {
@@ -2866,12 +3046,51 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               notificationId={activeDoc.id}
               onClose={() => handleCloseDocument(activeDoc.id)}
               onNavigateToSource={(type, id) => {
+                const normalizedEntityId = normalizeMyWorkEntityId(id);
+                if (!normalizedEntityId) return;
                 if (type === 'task') {
-                  handleTaskClick(id);
+                  handleTaskClick(normalizedEntityId);
                 } else if (type === 'decision') {
-                  handleDecisionClick(id);
+                  handleDecisionClick(normalizedEntityId);
                 }
               }}
+            />
+          </React.Suspense>
+        );
+      case 'notebook':
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <NotebookContent
+              projectId={null}
+              searchQuery={searchQuery}
+              openPageId={activeDoc.id}
+              linkedIdeasOpen={notebookLinkedIdeasOpen}
+              onLinkedIdeasOpenChange={(v) => {
+                setNotebookLinkedIdeasOpen(v);
+                if (v) {
+                  setNotebookTopicsOpen(false);
+                  setNotebookChatOpen(false);
+                }
+              }}
+              topicsOpen={notebookTopicsOpen}
+              onTopicsOpenChange={(v) => {
+                setNotebookTopicsOpen(v);
+                if (v) {
+                  setNotebookLinkedIdeasOpen(false);
+                  setNotebookChatOpen(false);
+                }
+              }}
+              chatOpen={notebookChatOpen}
+              onChatOpenChange={(v) => {
+                setNotebookChatOpen(v);
+                if (v) {
+                  setNotebookLinkedIdeasOpen(false);
+                  setNotebookTopicsOpen(false);
+                }
+              }}
+              createPageRequestId={notebookCreateReqId}
+              onCountsChange={handleNotebookCountsChange}
+              refreshTrigger={refreshTrigger}
             />
           </React.Suspense>
         );
@@ -3499,13 +3718,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {/* Command Row (search | dynamic tabs | counters) */}
       {renderCommandRow()}
 
-      {/* Main Content Area — calendar needs overflow-hidden + flex-col so FC owns the scroll (sticky headers) */}
+      {/* Main Content Area — canvas/detail workspaces must own scroll and gestures. */}
       <div
-        className={`flex-1 min-h-0 ${
-          activeTab === 'calendar' || (activeTab === 'ideas' && ideasViewMode === 'table')
-            ? 'overflow-hidden flex flex-col'
-            : 'overflow-y-auto'
-        }`}
+        className={getMyWorkMainContentClassName({
+          activeDocumentId,
+          activeTab,
+          ideasViewMode,
+        })}
+        data-testid="mywork-main-content"
+        data-workspace-open={activeDocumentId ? 'true' : 'false'}
       >
         {renderContent()}
       </div>
@@ -3518,6 +3739,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       />
     </div>
   );
+};
+
+export const __private__ = {
+  readStoredMyWorkDocuments,
+  getInitialMyWorkTab,
+  resolveEntityDeepLinkIntent,
+  parseMyWorkPathIntent,
+  normalizeItemStatus,
+  normalizeMyWorkOpenItemType,
+  getMyWorkOpenItemStatus,
+  getWorkspaceSelectionSummary,
+  getInboxPresetCounts,
+  getDocumentTab,
+  safeResponseJson,
+  normalizeMyWorkEntityId,
+  getNotebookPageIdForListView,
+  readCoreRuntimeHandoff,
+  isTransientDocumentId,
 };
 
 export default MyWorkHub;

@@ -60,6 +60,10 @@ const HTTP = {
   SERVICE_UNAVAILABLE: 503,
 } as const;
 
+const MAX_ID_LENGTH = 128;
+const SAFE_ID_PATTERN = /^[a-zA-Z0-9._-]+$/;
+const MAX_LABEL_LENGTH = 4000;
+
 function pfMeta(extra?: Record<string, unknown>) {
   return { version: 'v8' as const, surface: 'process_flow' as const, ...extra };
 }
@@ -69,6 +73,25 @@ function opStatus(code?: string): number {
   if (code === 'NOT_FOUND') return HTTP.NOT_FOUND;
   if (code === 'INVALID_MESSAGE_FLOW' || code === 'INVALID_STATE') return HTTP.CONFLICT;
   return HTTP.BAD_REQUEST;
+}
+
+function isValidSafeId(value: string | undefined): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= MAX_ID_LENGTH &&
+    SAFE_ID_PATTERN.test(value)
+  );
+}
+
+function toTrimmedString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -116,15 +139,32 @@ router.post(
   '/:processId/nodes',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    if (!isValidSafeId(req.params.processId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid processId', code: 'VALIDATION', meta: pfMeta() });
+    }
     const body = req.body ?? {};
     if (!body.object_type || !isValidSemanticObject(body.object_type)) {
       return res
         .status(HTTP.BAD_REQUEST)
         .json({ error: 'Valid object_type required', code: 'VALIDATION', meta: pfMeta() });
     }
+    if (
+      (body.position_x !== undefined && !isFiniteNumber(body.position_x)) ||
+      (body.position_y !== undefined && !isFiniteNumber(body.position_y))
+    ) {
+      return res.status(HTTP.BAD_REQUEST).json({
+        error: 'position_x and position_y must be finite numbers',
+        code: 'VALIDATION',
+        meta: pfMeta(),
+      });
+    }
+
+    const label = typeof body.label === 'string' ? body.label.slice(0, MAX_LABEL_LENGTH) : '';
     const result = await pfService.createNode(req.params.processId, organizationId, {
       object_type: body.object_type,
-      label: body.label ?? '',
+      label,
       lane_id: body.lane_id,
       pool_id: body.pool_id,
       parent_subprocess_id: body.parent_subprocess_id,
@@ -150,13 +190,22 @@ router.put(
   '/nodes/:nodeId/label',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    if (!isValidSafeId(req.params.nodeId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid nodeId', code: 'VALIDATION', meta: pfMeta() });
+    }
     const label = req.body?.label;
     if (typeof label !== 'string') {
       return res
         .status(HTTP.BAD_REQUEST)
         .json({ error: 'label required', code: 'VALIDATION', meta: pfMeta() });
     }
-    const result = await pfService.updateNodeLabel(req.params.nodeId, organizationId, label);
+    const result = await pfService.updateNodeLabel(
+      req.params.nodeId,
+      organizationId,
+      label.slice(0, MAX_LABEL_LENGTH)
+    );
     if (!result.success)
       return res
         .status(opStatus(result.error_code))
@@ -173,9 +222,14 @@ router.put(
   '/nodes/:nodeId/move',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    if (!isValidSafeId(req.params.nodeId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid nodeId', code: 'VALIDATION', meta: pfMeta() });
+    }
     const x = req.body?.position_x;
     const y = req.body?.position_y;
-    if (typeof x !== 'number' || typeof y !== 'number') {
+    if (!isFiniteNumber(x) || !isFiniteNumber(y)) {
       return res
         .status(HTTP.BAD_REQUEST)
         .json({ error: 'position_x and position_y required', code: 'VALIDATION', meta: pfMeta() });
@@ -220,7 +274,18 @@ router.put(
   '/nodes/:nodeId/lane',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const laneId = req.body?.lane_id ?? null;
+    if (!isValidSafeId(req.params.nodeId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid nodeId', code: 'VALIDATION', meta: pfMeta() });
+    }
+    const laneRaw = req.body?.lane_id;
+    if (laneRaw !== undefined && laneRaw !== null && typeof laneRaw !== 'string') {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'lane_id must be a string or null', code: 'VALIDATION', meta: pfMeta() });
+    }
+    const laneId = toTrimmedString(laneRaw) ?? null;
     const result = await pfService.setLane(req.params.nodeId, organizationId, laneId);
     if (!result.success)
       return res
@@ -255,8 +320,15 @@ router.post(
   '/:processId/edges',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    if (!isValidSafeId(req.params.processId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid processId', code: 'VALIDATION', meta: pfMeta() });
+    }
     const body = req.body ?? {};
-    if (!body.source_node_id || !body.target_node_id) {
+    const sourceNodeId = toTrimmedString(body.source_node_id);
+    const targetNodeId = toTrimmedString(body.target_node_id);
+    if (!sourceNodeId || !targetNodeId) {
       return res.status(HTTP.BAD_REQUEST).json({
         error: 'source_node_id and target_node_id required',
         code: 'VALIDATION',
@@ -265,9 +337,9 @@ router.post(
     }
     const result = await pfService.createEdge(req.params.processId, organizationId, {
       edge_type: body.edge_type ?? 'sequence_flow',
-      source_node_id: body.source_node_id,
-      target_node_id: body.target_node_id,
-      label: body.label,
+      source_node_id: sourceNodeId,
+      target_node_id: targetNodeId,
+      label: typeof body.label === 'string' ? body.label.slice(0, MAX_LABEL_LENGTH) : body.label,
     });
     if (!result.success)
       return res
@@ -287,13 +359,22 @@ router.put(
   '/edges/:edgeId/label',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    if (!isValidSafeId(req.params.edgeId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid edgeId', code: 'VALIDATION', meta: pfMeta() });
+    }
     const label = req.body?.label;
     if (typeof label !== 'string') {
       return res
         .status(HTTP.BAD_REQUEST)
         .json({ error: 'label required', code: 'VALIDATION', meta: pfMeta() });
     }
-    const result = await pfService.updateEdgeLabel(req.params.edgeId, organizationId, label);
+    const result = await pfService.updateEdgeLabel(
+      req.params.edgeId,
+      organizationId,
+      label.slice(0, MAX_LABEL_LENGTH)
+    );
     if (!result.success)
       return res
         .status(opStatus(result.error_code))
@@ -327,6 +408,11 @@ router.post(
   '/:processId/validate',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    if (!isValidSafeId(req.params.processId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid processId', code: 'VALIDATION', meta: pfMeta() });
+    }
     const result = await pfService.validateProcess(req.params.processId, organizationId);
 
     organizationContextService
@@ -340,7 +426,7 @@ router.post(
         content: {
           processId: req.params.processId,
           valid: result.valid,
-          issueCount: (result as any).issues?.length ?? 0,
+          issueCount: result.errors.length + result.warnings.length,
         },
         metadata: { surface: 'process_flow', action: 'validate' },
       })
@@ -358,6 +444,11 @@ router.get(
   '/:processId/readback',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    if (!isValidSafeId(req.params.processId)) {
+      return res
+        .status(HTTP.BAD_REQUEST)
+        .json({ error: 'Invalid processId', code: 'VALIDATION', meta: pfMeta() });
+    }
     const result = await pfService.semanticReadback(req.params.processId, organizationId);
 
     organizationContextService
@@ -370,11 +461,17 @@ router.get(
         sourceLabel: 'Process Flow Readback',
         content: {
           processId: req.params.processId,
-          readbackText: typeof result === 'string' ? (result as string).slice(0, 500) : '',
+          readbackChars: typeof result === 'string' ? result.length : 0,
         },
         metadata: { surface: 'process_flow', action: 'readback' },
       })
-      .catch((err: unknown) => logger.warn('[ProcessFlow] context recording failed', err));
+      .catch((err: unknown) =>
+        logger.warn('[ProcessFlow] context recording failed', {
+          code: 'PROCESS_FLOW_CONTEXT_RECORD_FAILED',
+          message: err instanceof Error ? err.message : 'unknown_error',
+          channel: 'process_flow_readback',
+        })
+      );
 
     return res.json({ data: result, meta: pfMeta({ action: 'readback' }) });
   })
@@ -443,7 +540,8 @@ router.post(
 router.get(
   '/ai-proposals/:proposalId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const proposal = pfService.getAIProposal(req.params.proposalId);
+    const { organizationId } = getV8Context(req);
+    const proposal = pfService.getAIProposal(req.params.proposalId, organizationId);
     if (!proposal) {
       return res
         .status(HTTP.NOT_FOUND)
@@ -460,13 +558,14 @@ router.get(
 router.post(
   '/ai-proposals/:proposalId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
     const action = req.body?.action;
     if (action !== 'accept' && action !== 'reject') {
       return res
         .status(HTTP.BAD_REQUEST)
         .json({ error: "action must be 'accept' or 'reject'", code: 'VALIDATION', meta: pfMeta() });
     }
-    const result = await pfService.resolveAIProposal(req.params.proposalId, action);
+    const result = await pfService.resolveAIProposal(req.params.proposalId, action, organizationId);
     if (!result.success) {
       const status =
         result.error_code === 'PROPOSAL_NOT_FOUND'

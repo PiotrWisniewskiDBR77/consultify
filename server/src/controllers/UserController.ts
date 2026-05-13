@@ -39,13 +39,17 @@ export class UserController {
       // Select only columns that exist in the users table
       // Note: 'title' column doesn't exist - use 'job_title' if needed, or get from user_profiles table
       let sql = `
-        SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.status, u.avatar_url, u.last_login
+        SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.status, u.avatar_url, u.last_login,
+               u.job_title, u.department, u.site_location, u.seniority_level, u.tenure_years,
+               u.manages_team, u.team_size, u.expertise_tags, u.engagement_level
           FROM users u
          WHERE u.organization_id = ?
         UNION
         SELECT u.id, u.email, u.first_name, u.last_name,
                COALESCE(om.role, u.role) AS role,
-               u.status, u.avatar_url, u.last_login
+               u.status, u.avatar_url, u.last_login,
+               u.job_title, u.department, u.site_location, u.seniority_level, u.tenure_years,
+               u.manages_team, u.team_size, u.expertise_tags, u.engagement_level
           FROM organization_members om
           JOIN users u ON u.id = om.user_id
          WHERE om.organization_id = ?
@@ -72,7 +76,22 @@ export class UserController {
         status: u.status || 'active',
         avatarUrl: u.avatar_url,
         lastLogin: u.last_login,
-        title: null, // title column doesn't exist in users table
+        title: u.job_title,
+        jobTitle: u.job_title,
+        department: u.department,
+        siteLocation: u.site_location,
+        seniorityLevel: u.seniority_level,
+        tenureYears: u.tenure_years,
+        managesTeam: u.manages_team === true || u.manages_team === 1,
+        teamSize: u.team_size,
+        expertiseTags: (() => {
+          try {
+            return u.expertise_tags ? JSON.parse(String(u.expertise_tags)) : [];
+          } catch {
+            return [];
+          }
+        })(),
+        engagementLevel: u.engagement_level,
         // Default values for columns that may not exist
         aiConfig: {},
         licensePlanId: null,
@@ -130,8 +149,37 @@ export class UserController {
         return;
       }
 
-      const { firstName, lastName, email, status, role, title, phone, avatarUrl, licensePlanId } =
-        req.body;
+      const {
+        firstName,
+        lastName,
+        email,
+        status,
+        role,
+        title,
+        phone,
+        avatarUrl,
+        licensePlanId,
+        jobTitle,
+        department,
+        siteLocation,
+        seniorityLevel,
+        tenureYears,
+        managesTeam,
+        teamSize,
+        expertiseTags,
+        engagementLevel,
+        displayName,
+        pronouns,
+        statusMessage,
+        isOutOfOffice,
+        outOfOfficeUntil,
+        linkedinId,
+        timezone,
+        location,
+        profileSurveyCompletedAt,
+        profileSurveyDismissedCount,
+        profileSurveyLastDismissedAt,
+      } = req.body;
 
       // Build dynamic update query
       const updates: string[] = [];
@@ -167,9 +215,30 @@ export class UserController {
         updates.push('role = ?');
         params.push(role);
       }
-      if (title !== undefined) {
-        updates.push('title = ?');
-        params.push(title);
+      const canUpdateTarget =
+        id === currentUserId ||
+        currentUserRole === 'SUPERADMIN' ||
+        (await queryHelpers.queryOne(
+          `SELECT 1 FROM users WHERE id = ? AND organization_id = ?
+           UNION
+           SELECT 1
+             FROM organization_members
+            WHERE user_id = ?
+              AND organization_id = ?
+              AND (status IS NULL OR UPPER(status) = 'ACTIVE')
+            LIMIT 1`,
+          [id, orgId, id, orgId]
+        ));
+
+      if (!canUpdateTarget) {
+        res.status(404).json({ error: 'User not found in this organization' });
+        return;
+      }
+
+      const nextJobTitle = jobTitle !== undefined ? jobTitle : title;
+      if (nextJobTitle !== undefined) {
+        updates.push('job_title = ?');
+        params.push(nextJobTitle || null);
       }
       if (phone !== undefined) {
         updates.push('phone = ?');
@@ -183,6 +252,82 @@ export class UserController {
         updates.push('license_plan_id = ?');
         params.push(licensePlanId);
       }
+      if (department !== undefined) {
+        updates.push('department = ?');
+        params.push(department || null);
+      }
+      if (siteLocation !== undefined) {
+        updates.push('site_location = ?');
+        params.push(siteLocation || null);
+      }
+      if (seniorityLevel !== undefined) {
+        updates.push('seniority_level = ?');
+        params.push(seniorityLevel || null);
+      }
+      if (tenureYears !== undefined) {
+        updates.push('tenure_years = ?');
+        params.push(tenureYears || null);
+      }
+      if (managesTeam !== undefined) {
+        updates.push('manages_team = ?');
+        params.push(managesTeam ? '1' : '0');
+      }
+      if (teamSize !== undefined) {
+        updates.push('team_size = ?');
+        params.push(teamSize || null);
+      }
+      if (expertiseTags !== undefined) {
+        updates.push('expertise_tags = ?');
+        params.push(JSON.stringify(Array.isArray(expertiseTags) ? expertiseTags : []));
+      }
+      if (engagementLevel !== undefined) {
+        updates.push('engagement_level = ?');
+        params.push(engagementLevel || null);
+      }
+      if (displayName !== undefined) {
+        updates.push('display_name = ?');
+        params.push(displayName || null);
+      }
+      if (pronouns !== undefined) {
+        updates.push('pronouns = ?');
+        params.push(pronouns || null);
+      }
+      if (statusMessage !== undefined) {
+        updates.push('status_message = ?');
+        params.push(statusMessage || null);
+      }
+      if (isOutOfOffice !== undefined) {
+        updates.push('out_of_office = ?');
+        params.push(isOutOfOffice ? '1' : '0');
+      }
+      if (outOfOfficeUntil !== undefined) {
+        updates.push('vacation_end = ?');
+        params.push(outOfOfficeUntil || null);
+      }
+      if (linkedinId !== undefined) {
+        updates.push('linkedin_id = ?');
+        params.push(linkedinId || null);
+      }
+      if (timezone !== undefined) {
+        updates.push('timezone = ?');
+        params.push(timezone || null);
+      }
+      if (location !== undefined) {
+        updates.push('location = ?');
+        params.push(location || null);
+      }
+      if (profileSurveyCompletedAt !== undefined) {
+        updates.push('profile_survey_completed_at = ?');
+        params.push(profileSurveyCompletedAt || null);
+      }
+      if (profileSurveyDismissedCount !== undefined) {
+        updates.push('profile_survey_dismissed_count = ?');
+        params.push(String(profileSurveyDismissedCount));
+      }
+      if (profileSurveyLastDismissedAt !== undefined) {
+        updates.push('profile_survey_last_dismissed_at = ?');
+        params.push(profileSurveyLastDismissedAt || null);
+      }
 
       if (updates.length === 0) {
         res.status(400).json({ error: 'No fields to update' });
@@ -192,14 +337,65 @@ export class UserController {
       updates.push('updated_at = ?');
       params.push(new Date().toISOString());
 
-      // Add WHERE clause params
       params.push(id);
-      params.push(orgId);
 
-      const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
+      const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
       await queryHelpers.queryRun(sql, params);
 
-      res.json({ id, message: 'User updated successfully' });
+      const updated = (await queryHelpers.queryOne(
+        `SELECT id, email, first_name, last_name, role, status, avatar_url,
+                job_title, department, site_location, seniority_level, tenure_years,
+                manages_team, team_size, expertise_tags, engagement_level,
+                display_name, pronouns, status_message, out_of_office,
+                vacation_end, linkedin_id, timezone, location, license_plan_id
+           FROM users
+          WHERE id = ?`,
+        [id]
+      )) as Record<string, any> | null;
+
+      if (!updated) {
+        res.status(404).json({ error: 'User not found after update' });
+        return;
+      }
+
+      let parsedExpertiseTags: string[] = [];
+      try {
+        parsedExpertiseTags = updated.expertise_tags
+          ? JSON.parse(String(updated.expertise_tags))
+          : [];
+      } catch {
+        parsedExpertiseTags = [];
+      }
+
+      res.json({
+        id: updated.id,
+        email: updated.email,
+        firstName: updated.first_name,
+        lastName: updated.last_name,
+        role: updated.role,
+        status: updated.status,
+        avatarUrl: updated.avatar_url,
+        title: updated.job_title,
+        jobTitle: updated.job_title,
+        department: updated.department,
+        siteLocation: updated.site_location,
+        seniorityLevel: updated.seniority_level,
+        tenureYears: updated.tenure_years,
+        managesTeam: updated.manages_team === true || updated.manages_team === 1,
+        teamSize: updated.team_size,
+        expertiseTags: parsedExpertiseTags,
+        engagementLevel: updated.engagement_level,
+        displayName: updated.display_name,
+        pronouns: updated.pronouns,
+        statusMessage: updated.status_message,
+        isOutOfOffice: updated.out_of_office === true || updated.out_of_office === 1,
+        outOfOfficeUntil: updated.vacation_end,
+        linkedinId: updated.linkedin_id,
+        timezone: updated.timezone,
+        location: updated.location,
+        licensePlanId: updated.license_plan_id,
+        message: 'User updated successfully',
+      });
     }
   );
 

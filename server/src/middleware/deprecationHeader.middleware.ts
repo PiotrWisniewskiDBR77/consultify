@@ -19,23 +19,108 @@ interface DeprecationOptions {
 }
 
 const warned = new Set<string>();
+const WARNED_KEY_CAP = 2048;
+const WARNED_KEY_MAX_CHARS = 512;
+const SUNSET_INPUT_MAX_CHARS = 128;
+const LINK_TARGET_MAX_CHARS = 2048;
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+const stripControlChars = (value: string): string =>
+  value.replace(/[\u0000-\u001F\u007F]/g, '');
+const sanitizeLinkTargetPath = (value: string): string =>
+  stripControlChars(value).replace(/ /g, '%20').replace(/[<>"\\]/g, '');
+
+const evictWarnedKeysIfNeeded = (): void => {
+  if (warned.size < WARNED_KEY_CAP) return;
+  const toDelete = Math.floor(WARNED_KEY_CAP / 2);
+  let deleted = 0;
+  for (const key of warned) {
+    warned.delete(key);
+    deleted += 1;
+    if (deleted >= toDelete) break;
+  }
+};
+
+const safeSetHeader = (res: Response, key: string, value: string): void => {
+  const alreadyCommitted = safeRead(() => {
+    if (res.headersSent === true) return true;
+    const writable = res as Response & { writableEnded?: boolean; writableFinished?: boolean };
+    if (writable.writableEnded === true) return true;
+    if (writable.writableFinished === true) return true;
+    return false;
+  }, true);
+  if (alreadyCommitted) return;
+  safeRead(() => {
+    res.setHeader(key, value);
+    return true;
+  }, false);
+};
 
 export function deprecationHeader(v8Replacement: string, opts?: Partial<DeprecationOptions>) {
-  const sunset = opts?.sunsetDate ?? '2026-09-01';
+  const defaultSunset = '2026-09-01';
+  const rawSunsetDate = normalizeOptionalString(opts?.sunsetDate);
+  const sunset = stripControlChars(
+    (rawSunsetDate && rawSunsetDate.slice(0, SUNSET_INPUT_MAX_CHARS)) || defaultSunset
+  );
+  const parsedSunset = new Date(sunset);
+  const sunsetHeaderValue = Number.isNaN(parsedSunset.getTime())
+    ? new Date(defaultSunset).toUTCString()
+    : parsedSunset.toUTCString();
+  let successorPath = sanitizeLinkTargetPath(normalizeOptionalString(v8Replacement) || '/').slice(
+    0,
+    LINK_TARGET_MAX_CHARS
+  );
+  if (
+    successorPath.length > 0 &&
+    !successorPath.startsWith('/') &&
+    !/^https?:\/\//i.test(successorPath)
+  ) {
+    successorPath = `/${successorPath}`;
+  }
+  if (successorPath.startsWith('//')) {
+    successorPath = '/';
+  }
   const shouldLog = opts?.logFirstCall ?? true;
 
   return (req: Request, res: Response, next: NextFunction) => {
-    res.setHeader('Deprecation', 'true');
-    res.setHeader('Sunset', new Date(sunset).toUTCString());
-    res.setHeader('Link', `<${v8Replacement}>; rel="successor-version"`);
+    safeSetHeader(res, 'Deprecation', 'true');
+    safeSetHeader(res, 'Sunset', sunsetHeaderValue);
+    safeSetHeader(res, 'Link', `<${successorPath}>; rel="successor-version"`);
 
     if (shouldLog) {
-      const key = `${req.method} ${req.baseUrl}${req.path}`;
+      const method = stripControlChars(
+        normalizeOptionalString(safeRead(() => req.method, undefined)) || 'UNKNOWN'
+      );
+      const baseUrl = stripControlChars(
+        normalizeOptionalString(safeRead(() => req.baseUrl, undefined)) || ''
+      );
+      const path = stripControlChars(
+        normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+          normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+          ''
+      );
+      const key = `${method} ${baseUrl}${path}`.slice(0, WARNED_KEY_MAX_CHARS);
       if (!warned.has(key)) {
-        warned.add(key);
-        logger.info(
-          `[Deprecation] First call to legacy route: ${key} → migrate to ${v8Replacement}`
-        );
+        safeRead(() => {
+          evictWarnedKeysIfNeeded();
+          warned.add(key);
+          logger.info(
+            `[Deprecation] First call to legacy route: ${key} → migrate to ${successorPath}`
+          );
+          return true;
+        }, false);
       }
     }
 

@@ -17,6 +17,9 @@ const TABLE_INTENT_PATTERNS = [
   /\bpotrzebuję\s+(tabel[eęi]|arkusz[a]?)\b/i,
   /\b(dodaj|zmień|usuń|modyfikuj)\s+(kolumnę|pole|widok|rekord)\b/i,
   /\b(add|modify|change|remove|delete)\s+(column|field|view|record)\b/i,
+  // Planning/ops table intents
+  /\b(risk\s*register|decision\s*log|action\s*tracker|kanban\s*table|status\s*matrix)\b/i,
+  /\b(rejestr\s*ryzyk|dziennik\s*decyzji|tracker\s*zadań|tablica\s*zadań|macierz\s*status[uó])\b/i,
 ];
 
 const EXCELE_INTENT_PATTERNS = [

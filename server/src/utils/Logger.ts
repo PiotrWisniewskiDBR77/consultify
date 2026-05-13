@@ -34,8 +34,10 @@ const level = () => {
   }
 
   const env = process.env.NODE_ENV || 'development';
-  const isDevelopment = env === 'development' || env === 'test';
-  return isDevelopment ? 'debug' : 'warn';
+  if (env === 'test') {
+    return 'warn';
+  }
+  return env === 'development' ? 'debug' : 'warn';
 };
 
 const colors = {

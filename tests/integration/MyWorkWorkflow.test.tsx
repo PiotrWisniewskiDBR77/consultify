@@ -20,13 +20,27 @@ describe('MyWork Workflow (gatePolicy) - REAL_CODE', () => {
     );
   });
 
-  it('denies SUBMIT_INTERVIEW when status is not in_progress', () => {
-    const decision = evaluateGatePolicy({
+  it('allows SUBMIT_INTERVIEW from submitted/sent_back but denies terminal states', () => {
+    const submittedDecision = evaluateGatePolicy({
       ...base,
       action: 'SUBMIT_INTERVIEW',
       context: { assignment: { session_id: 's-1', status: 'submitted' } },
     });
-    expect(decision).toEqual(
+    expect(submittedDecision).toEqual({ allow: true });
+
+    const sentBackDecision = evaluateGatePolicy({
+      ...base,
+      action: 'SUBMIT_INTERVIEW',
+      context: { assignment: { session_id: 's-1', status: 'sent_back' } },
+    });
+    expect(sentBackDecision).toEqual({ allow: true });
+
+    const completedDecision = evaluateGatePolicy({
+      ...base,
+      action: 'SUBMIT_INTERVIEW',
+      context: { assignment: { session_id: 's-1', status: 'completed' } },
+    });
+    expect(completedDecision).toEqual(
       expect.objectContaining({ allow: false, code: 'INVALID_STATE', error: expect.any(String) })
     );
   });

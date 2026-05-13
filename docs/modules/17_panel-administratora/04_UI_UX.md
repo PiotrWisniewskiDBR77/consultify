@@ -1,10 +1,10 @@
 ---
 module_id: MODULE_ADMIN_PANEL
 doc_kind: UI_UX
-version: 1.0
+version: 2.0
 owner: user
 status: canonical
-last_updated: 2026-05-09
+last_updated: 2026-05-11
 ---
 
 # UI/UX — Panel Administratora
@@ -48,23 +48,36 @@ Destructive/high-impact admin actions require explicit approval/review before ex
 - Raw internal identifiers as the only user-facing explanation.
 - AI actions duplicated in canvas and Menu 3.
 - Confusing `/admin/*` with `/superadmin/*`.
+- Implicit role escalation (for example platform operator inheriting tenant-admin action path without explicit policy and UX disclosure).
 
 ## 9. As-Is Gaps
 
 - Existing docs confirm active secured admin workspace and route ownership, but not the full state/copy matrix for every admin surface.
 - Diff/impact evidence for all admin mutations remains to be validated.
+- Boundary contradiction remains open: guard hierarchy allows superadmin through admin guard (`ADM-RAW-P0-001`).
 
-## 10. Acceptance Criteria
+## 10. Critical Chain Ledger (source -> decision -> evidence)
+
+| Claim | Source | Decision | Evidence / Status |
+| --- | --- | --- | --- |
+| Admin UI is tenant control plane | enterprise P32 contract + runtime mount | `KEEP` | `FINAL_IMPLEMENTATION_PLAN_32_ADMIN_ENTERPRISE_2026-04-11.md`, `AdminSettingsModule.tsx` |
+| Personal preferences are not owned by module 17 | P32 ownership matrix + settings runtime | `KEEP` | `FINAL_IMPLEMENTATION_PLAN_32_ADMIN_2026-03-29.md`, `SettingsView.tsx` |
+| Platform controls belong to superadmin | superadmin SSOT + route mount | `KEEP` | `SUPERADMIN_V8_SSOT.md`, `SuperAdminView.tsx` |
+| Plane separation is fully enforced in UX and access | security doctrine | `DEFER` | `NOT_DONE` while `ADM-RAW-P0-001` is unresolved |
+| High-impact admin actions always show auditable diff evidence | contract requirement | `ENHANCE` | `NOT_DONE` (runtime evidence packet missing) |
+
+## 10A. Acceptance Criteria
 
 - `/admin/*` is documented as tenant admin control plane; `/superadmin/*` remains separate.
 - Loading, empty, error, degraded and success states are visible and actionable.
 - AI/admin assist actions use Menu 3/right-side placement without duplication.
 - Tenant/ACL/security state and evidence are visible.
 - High-impact admin actions require approval/review and audit.
+- Boundary risk `ADM-RAW-P0-001` is explicitly visible as open (`NEEDS_OWNER_DECISION`), not masked as PASS.
 
 ## 11. Function Annex — Admin Functions
 
 | Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
 | --- | --- | --- | --- | --- | --- |
 | `ADM_ADMIN_WORKSPACE` | Admin Workspace | `/admin/*` | real | `AdminView` + `ProtectedRoute(requiredRole="ADMIN")` | `functions/ADM_ADMIN_WORKSPACE.md` |
-| `ADM_SUPERADMIN_BOUNDARY` | SuperAdmin Boundary | `/admin/*` vs `/superadmin/*` | partial | route and role boundary rules | `functions/ADM_SUPERADMIN_BOUNDARY.md` |
+| `ADM_SUPERADMIN_BOUNDARY` | SuperAdmin Boundary | `/admin/*` vs `/superadmin/*` | partial (`P0 open`) | route and role boundary rules | `functions/ADM_SUPERADMIN_BOUNDARY.md` |

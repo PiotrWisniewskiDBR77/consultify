@@ -64,14 +64,48 @@ router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readOptionalString = (reader: () => unknown): string | undefined =>
+  normalizeOptionalString(safeRead(reader, undefined));
+
+const readAssessmentId = (req: any): string | undefined =>
+  readOptionalString(() => req.params?.assessmentId);
+
+const safeGetHeader = (req: any, headerName: string): string | undefined =>
+  readOptionalString(() => req.get?.(headerName));
+
+const safeGetIp = (req: any): string | undefined =>
+  readOptionalString(() => req.ip) ||
+  readOptionalString(() => req.connection?.remoteAddress) ||
+  readOptionalString(() => req.socket?.remoteAddress);
+
 function getAuthContext(req: any): {
   userId: string | null;
   organizationId: string;
   globalRole: string;
 } {
-  const userId = req?.user?.id || req?.userId || null;
-  const organizationId = req?.user?.organizationId || req?.organizationId || 'org-default';
-  const globalRole = String(req?.user?.role || req?.userRole || '').toUpperCase();
+  const userId = readOptionalString(() => req.user?.id) || readOptionalString(() => req.userId) || null;
+  const organizationId =
+    readOptionalString(() => req.user?.organizationId) ||
+    readOptionalString(() => req.user?.organization_id) ||
+    readOptionalString(() => req.organizationId) ||
+    'org-default';
+  const globalRole =
+    (readOptionalString(() => req.user?.role) || readOptionalString(() => req.userRole) || '')
+      .toUpperCase();
   return { userId, organizationId, globalRole };
 }
 
@@ -86,7 +120,11 @@ function isGlobalAdminRole(globalRole: string): boolean {
 }
 
 async function requireAssessmentFlag(req: any, res: any, flag: keyof any): Promise<boolean> {
-  const { assessmentId } = req.params as any;
+  const assessmentId = readAssessmentId(req);
+  if (!assessmentId) {
+    res.status(400).json({ error: 'assessmentId is required' });
+    return false;
+  }
   const { userId, organizationId, globalRole } = getAuthContext(req);
 
   if (!userId) {
@@ -123,7 +161,11 @@ async function requireAssessmentPermission(
   res: any,
   permission: 'canManage' | 'canManageTeam'
 ): Promise<boolean> {
-  const { assessmentId } = req.params as any;
+  const assessmentId = readAssessmentId(req);
+  if (!assessmentId) {
+    res.status(400).json({ error: 'assessmentId is required' });
+    return false;
+  }
   const { userId, organizationId, globalRole } = getAuthContext(req);
 
   if (!userId) {
@@ -166,14 +208,15 @@ router.get('/sessions', AssessmentController.getOpenSessions);
  */
 router.get('/:assessmentId/users', async (req, res) => {
   try {
-    const { assessmentId } = req.params as any;
+    const assessmentId = readAssessmentId(req);
+    if (!assessmentId) return res.status(400).json({ error: 'assessmentId is required' });
     const { userId, organizationId } = getAuthContext(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const ok = await requireAssessmentPermission(req, res, 'canManageTeam');
     if (!ok) return;
 
-    const q = String((req.query as any)?.query || '')
+    const q = String(safeRead(() => (req.query as any)?.query, '') || '')
       .trim()
       .toLowerCase();
     const db = getDatabase();
@@ -843,8 +886,8 @@ router.post('/:assessmentId/roles', validateBody(AssignAssessmentRoleSchema), as
         entityType: 'ASSESSMENT',
         entityId: String(assessmentId),
         metadata: { targetUserId: String(userId), role },
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent') || undefined,
+        ipAddress: safeGetIp(req),
+        userAgent: safeGetHeader(req, 'user-agent'),
       })
       .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
 
@@ -891,8 +934,8 @@ router.put(
           entityType: 'ASSESSMENT',
           entityId: String(assessmentId),
           metadata: { targetUserId: String(userId), role },
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent') || undefined,
+          ipAddress: safeGetIp(req),
+          userAgent: safeGetHeader(req, 'user-agent'),
         })
         .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
 
@@ -933,8 +976,8 @@ router.delete('/:assessmentId/roles/:userId', async (req, res) => {
           entityType: 'ASSESSMENT',
           entityId: String(assessmentId),
           metadata: { targetUserId: String(userId) },
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent') || undefined,
+          ipAddress: safeGetIp(req),
+          userAgent: safeGetHeader(req, 'user-agent'),
         })
         .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
     }

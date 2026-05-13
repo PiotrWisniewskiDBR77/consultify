@@ -73,15 +73,16 @@ describe('P10 Interview Insight Artifact Canon', () => {
 
   // ── §2.3.2 Confidence semantics ────────────────────────────────
   describe('Confidence semantics (§2.3.2)', () => {
-    it('has exactly 4 core confidence levels', () => {
-      expect(P10_CONFIDENCE_LEVELS).toHaveLength(4);
+    it('has exactly 5 core confidence levels', () => {
+      expect(P10_CONFIDENCE_LEVELS).toHaveLength(5);
     });
 
-    it('includes high, medium, low, insufficient', () => {
+    it('includes high, medium, low, insufficient and contradicted', () => {
       expect(P10_CONFIDENCE_LEVELS).toContain('high');
       expect(P10_CONFIDENCE_LEVELS).toContain('medium');
       expect(P10_CONFIDENCE_LEVELS).toContain('low');
       expect(P10_CONFIDENCE_LEVELS).toContain('insufficient');
+      expect(P10_CONFIDENCE_LEVELS).toContain('contradicted');
     });
 
     it('has extended levels including unknown and contradicted', () => {

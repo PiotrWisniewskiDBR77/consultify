@@ -43,18 +43,72 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
     expect(res.setHeader).toHaveBeenCalledWith('X-XSS-Protection', '1; mode=block');
     expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'strict-origin-when-cross-origin');
+    expect(res.setHeader).toHaveBeenCalledWith('X-DNS-Prefetch-Control', 'off');
+    expect(res.setHeader).toHaveBeenCalledWith('X-Permitted-Cross-Domain-Policies', 'none');
+    expect(res.setHeader).toHaveBeenCalledWith('Cross-Origin-Opener-Policy', 'same-origin');
+    expect(res.setHeader).toHaveBeenCalledWith('Cross-Origin-Resource-Policy', 'same-site');
+    expect(res.setHeader).toHaveBeenCalledWith('Origin-Agent-Cluster', '?1');
     expect(res.setHeader).toHaveBeenCalledWith(
       'Permissions-Policy',
-      'geolocation=(), microphone=(self), camera=()'
+      'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=()'
     );
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Security-Policy',
       expect.stringContaining("default-src 'self'")
     );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.stringContaining("base-uri 'self'")
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.stringContaining("form-action 'self'")
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.stringContaining("frame-ancestors 'none'")
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.not.stringContaining('upgrade-insecure-requests')
+    );
     expect(res.setHeader).not.toHaveBeenCalledWith(
       'Strict-Transport-Security',
       expect.any(String)
     );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('securityHeaders continues when setHeader throws', async () => {
+    vi.resetModules();
+    const { securityHeaders } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const req: any = {};
+    const res = mkRes();
+    res.setHeader = vi.fn(() => {
+      throw new Error('setHeader failed');
+    });
+    const next = vi.fn();
+
+    expect(() => securityHeaders(req, res, next)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('securityHeaders does not throw when next throws', async () => {
+    vi.resetModules();
+    const { securityHeaders } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const req: any = {};
+    const res = mkRes();
+    const next = vi.fn(() => {
+      throw new Error('next failed');
+    });
+
+    expect(() => securityHeaders(req, res, next)).not.toThrow();
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -75,6 +129,10 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(res.setHeader).toHaveBeenCalledWith(
       'Strict-Transport-Security',
       'max-age=31536000; includeSubDomains'
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.stringContaining('upgrade-insecure-requests')
     );
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -112,6 +170,8 @@ describe('securityHeaders.middleware (L1)', () => {
       expect.objectContaining({ error: 'Nope', code: 'RATE_LIMITED' })
     );
     expect(res3.setHeader).toHaveBeenCalledWith('Retry-After', expect.any(String));
+    expect(res3.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+    expect(res3.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(next3).not.toHaveBeenCalled();
 
     vi.setSystemTime(new Date('2026-02-18T00:00:01.001Z'));
@@ -121,6 +181,34 @@ describe('securityHeaders.middleware (L1)', () => {
     const next4 = vi.fn();
     limiter({ ...reqBase }, res4, next4);
     expect(next4).toHaveBeenCalledTimes(1);
+  });
+
+  it('createRateLimiter does not throw when status/json accessors fail on 429 response', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-18T00:00:00.000Z'));
+    vi.resetModules();
+    const { createRateLimiter } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const limiter = createRateLimiter({ windowMs: 1000, max: 1, message: 'Nope' });
+    const reqBase: any = { ip: '5.5.5.5', path: '/limited' };
+
+    const res1 = mkRes();
+    limiter({ ...reqBase }, res1, vi.fn());
+
+    const res2: any = mkRes();
+    res2.status = vi.fn(() => {
+      throw new Error('status failed');
+    });
+    expect(() => limiter({ ...reqBase }, res2, vi.fn())).not.toThrow();
+
+    const res3: any = mkRes();
+    res3.status = vi.fn(() => res3);
+    res3.json = vi.fn(() => {
+      throw new Error('json failed');
+    });
+    expect(() => limiter({ ...reqBase }, res3, vi.fn())).not.toThrow();
   });
 
   it('rateLimitPresets expose working limiter functions', async () => {
@@ -162,6 +250,48 @@ describe('securityHeaders.middleware (L1)', () => {
 
     // Advance beyond maxAge (1h) so the cleanup interval will delete this key.
     await vi.advanceTimersByTimeAsync(3_600_001);
+  });
+
+  it('unrefs cleanup interval so it does not pin event loop', async () => {
+    const prev = process.env.NODE_ENV;
+    const unrefSpy = vi.fn();
+    const handle = { unref: unrefSpy } as unknown as NodeJS.Timeout;
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockReturnValue(handle);
+    try {
+      process.env.NODE_ENV = 'test';
+      vi.resetModules();
+      await import('../../../../server/src/middleware/securityHeaders.middleware.ts');
+      expect(setIntervalSpy).toHaveBeenCalled();
+      expect(unrefSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      setIntervalSpy.mockRestore();
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('caps oversized path key material so suffix-only differences share a limiter bucket', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-18T00:00:00.000Z'));
+    vi.resetModules();
+    const { createRateLimiter } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const limiter = createRateLimiter({ windowMs: 1000, max: 1, message: 'Limited' });
+    const sharedPrefix = '/secure/' + 'x'.repeat(600);
+    const reqA: any = { ip: '1.2.3.4', path: `${sharedPrefix}-a` };
+    const reqB: any = { ip: '1.2.3.4', path: `${sharedPrefix}-b` };
+
+    const resA = mkRes();
+    const nextA = vi.fn();
+    limiter(reqA, resA, nextA);
+    expect(nextA).toHaveBeenCalledTimes(1);
+
+    const resB = mkRes();
+    const nextB = vi.fn();
+    limiter(reqB, resB, nextB);
+    expect(resB.status).toHaveBeenCalledWith(429);
+    expect(nextB).not.toHaveBeenCalled();
   });
 
   it('validateRequest returns 400 with detailed errors', async () => {
@@ -234,5 +364,69 @@ describe('securityHeaders.middleware (L1)', () => {
     mw(req, res, next);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('validateRequest returns 400 when req.body accessor throws and required field missing', async () => {
+    vi.resetModules();
+    const { validateRequest } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const mw = validateRequest({
+      email: { required: true, type: 'string' },
+    });
+
+    const req: any = {};
+    Object.defineProperty(req, 'body', {
+      configurable: true,
+      get: () => {
+        throw new Error('body getter failed');
+      },
+    });
+
+    const res = mkRes();
+    const next = vi.fn();
+
+    mw(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateRequest does not throw when req.body is null and required field is missing', async () => {
+    vi.resetModules();
+    const { validateRequest } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const mw = validateRequest({
+      email: { required: true, type: 'string' },
+    });
+
+    const req: any = { body: null };
+    const res = mkRes();
+    const next = vi.fn();
+
+    expect(() => mw(req, res, next)).not.toThrow();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateRequest does not throw when next throws in success path', async () => {
+    vi.resetModules();
+    const { validateRequest } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const mw = validateRequest({
+      email: { required: true, type: 'string' },
+    });
+    const req: any = { body: { email: 'test@example.com' } };
+    const res = mkRes();
+    const next = vi.fn(() => {
+      throw new Error('next failed');
+    });
+
+    expect(() => mw(req, res, next)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
   });
 });

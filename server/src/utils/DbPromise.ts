@@ -378,6 +378,8 @@ export function run(
       dbLogger.warn('Statement timeout', { sql: sql.substring(0, 100), timeout });
       if (fallback) {
         resolve({ success: false, error: 'timeout' });
+      } else {
+        reject(new Error(`Database statement timeout after ${timeout}ms`));
       }
     }, timeout);
 
@@ -533,6 +535,10 @@ export const DbPromise = {
   safeAll,
   count,
   logger: dbLogger,
+};
+
+export const __private__ = {
+  translatePlaceholders,
 };
 
 export default DbPromise;

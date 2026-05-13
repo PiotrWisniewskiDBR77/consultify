@@ -162,11 +162,21 @@ export class InvitationController {
    */
   static acceptInvitation = asyncHandler(
     async (req: AuthenticatedRequest<AcceptInvitationRequest>, res: Response): Promise<void> => {
-      const { token, email, firstName, lastName, password } = req.body;
+      const { token, email, firstName, lastName, password, jobTitle, department, siteLocation } =
+        req.body;
 
       const { acceptInvitation } = await import('../services/invitationService.js');
       try {
-        const result = await acceptInvitation({ token, email, firstName, lastName, password });
+        const result = await acceptInvitation({
+          token,
+          email,
+          firstName,
+          lastName,
+          password,
+          jobTitle,
+          department,
+          siteLocation,
+        });
         res.json(result);
       } catch (error: any) {
         const status =

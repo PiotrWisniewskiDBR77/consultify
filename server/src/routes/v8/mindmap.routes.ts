@@ -108,6 +108,7 @@ router.get(
 router.post(
   '/ai-proposals/:proposalId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
     const action = req.body?.action;
     if (action !== 'accept' && action !== 'reject') {
       return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
@@ -116,7 +117,7 @@ router.post(
         meta: mindmapMeta(),
       });
     }
-    const result = await mindmapService.resolveAIProposal(req.params.proposalId, action);
+    const result = await mindmapService.resolveAIProposal(req.params.proposalId, action, organizationId);
     if (!result.success) {
       const code = result.error_code ?? 'UNKNOWN';
       const status =
@@ -167,21 +168,19 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const raw = req.body?.new_parent_id;
-    if (raw !== null && (typeof raw !== 'string' || raw === '')) {
+    if (raw === null || raw === undefined) {
+      const result = await mindmapService.moveNode(req.params.nodeId, organizationId, null);
+      if (!result.success) return sendOpFailure(res, result);
+      return res.json({ data: result, meta: mindmapMeta({ action: 'moved' }) });
+    }
+    if (typeof raw !== 'string' || raw.trim() === '') {
       return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
         error: 'new_parent_id must be a non-empty string (target parent node id)',
         code: 'VALIDATION',
         meta: mindmapMeta(),
       });
     }
-    if (typeof raw !== 'string') {
-      return res.status(P12_MINDMAP_HTTP_STATUSES.BAD_REQUEST).json({
-        error: 'new_parent_id required',
-        code: 'VALIDATION',
-        meta: mindmapMeta(),
-      });
-    }
-    const result = await mindmapService.moveNode(req.params.nodeId, organizationId, raw);
+    const result = await mindmapService.moveNode(req.params.nodeId, organizationId, raw.trim());
     if (!result.success) return sendOpFailure(res, result);
     return res.json({ data: result, meta: mindmapMeta({ action: 'moved' }) });
   })

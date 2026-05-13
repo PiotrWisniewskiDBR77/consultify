@@ -17,12 +17,29 @@ interface Entry {
   resetAt: number;
 }
 const store = new Map<string, Entry>();
-setInterval(() => {
+const MAX_RATE_LIMIT_IP_KEY_LEN = 256;
+const MAX_RATE_LIMIT_JWT_DECODE_LEN = 16384;
+const storeCleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [k, v] of store) {
     if (now >= v.resetAt) store.delete(k);
   }
 }, 60_000);
+storeCleanupInterval.unref?.();
+
+function safeInvokeNext(next: NextFunction): void {
+  if (typeof next !== 'function') return;
+  try {
+    next();
+  } catch {
+    // Rate limiter must never crash due to downstream handler failures.
+  }
+}
+
+function capKeySegment(value: string): string {
+  if (value.length <= MAX_RATE_LIMIT_IP_KEY_LEN) return value;
+  return value.slice(0, MAX_RATE_LIMIT_IP_KEY_LEN);
+}
 
 function increment(key: string, windowMs: number): { count: number; resetAt: number } {
   const now = Date.now();
@@ -36,14 +53,67 @@ function increment(key: string, windowMs: number): { count: number; resetAt: num
   return { count: entry.count, resetAt: entry.resetAt };
 }
 
-function extractToken(req: Request): string | null {
-  const authHeader = req.headers['authorization'];
-  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer '))
-    return authHeader.slice(7);
-  if (typeof authHeader === 'string' && authHeader.length > 0) return authHeader;
+function resolveLimiterParams(windowMs: number, max: number): { windowMs: number; max: number } {
+  const resolvedWindowMs =
+    typeof windowMs === 'number' && Number.isFinite(windowMs) && windowMs > 0
+      ? Math.floor(windowMs)
+      : 15 * 60_000;
+  const resolvedMax =
+    typeof max === 'number' && Number.isFinite(max) && max > 0 ? Math.floor(max) : 1;
+  return { windowMs: resolvedWindowMs, max: resolvedMax };
+}
 
-  const cookieToken = (req as any).cookies?.access_token || (req as any).cookies?.token;
-  if (typeof cookieToken === 'string' && cookieToken.length > 0) return cookieToken;
+function normalizeOptionalString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized || null;
+}
+
+function safeRead<T>(reader: () => T, fallback: T): T {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+}
+
+function safeSetHeader(res: Response, headerName: string, value: string): void {
+  try {
+    res.setHeader(headerName, value);
+  } catch {
+    // Best effort only; limiter still functions without headers.
+  }
+}
+
+function extractToken(req: Request): string | null {
+  const authHeader = safeRead(() => req.headers['authorization'], undefined as unknown);
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    const bearerToken = normalizeOptionalString(authHeader.slice(7));
+    if (bearerToken) return bearerToken;
+  }
+  if (typeof authHeader === 'string') {
+    const normalizedAuthHeader = normalizeOptionalString(authHeader);
+    if (normalizedAuthHeader) return normalizedAuthHeader;
+  }
+  if (Array.isArray(authHeader)) {
+    for (const authHeaderValue of authHeader) {
+      if (typeof authHeaderValue !== 'string') continue;
+      if (authHeaderValue.startsWith('Bearer ')) {
+        const bearerToken = normalizeOptionalString(authHeaderValue.slice(7));
+        if (bearerToken) return bearerToken;
+      }
+      const normalizedAuthHeader = normalizeOptionalString(authHeaderValue);
+      if (normalizedAuthHeader) return normalizedAuthHeader;
+    }
+  }
+
+  const cookieToken =
+    safeRead(() => (req as any).cookies?.access_token, undefined as unknown) ||
+    safeRead(() => (req as any).cookies?.token, undefined as unknown);
+  if (typeof cookieToken === 'string') {
+    const normalizedCookieToken = normalizeOptionalString(cookieToken);
+    if (normalizedCookieToken) return normalizedCookieToken;
+  }
 
   return null;
 }
@@ -51,26 +121,50 @@ function extractToken(req: Request): string | null {
 function tryExtractUserIdFromToken(req: Request): string | null {
   const token = extractToken(req);
   if (!token) return null;
+  if (token.length > MAX_RATE_LIMIT_JWT_DECODE_LEN) return null;
 
   try {
     const decoded = jwt.decode(token) as { id?: string; userId?: string; sub?: string } | null;
-    const candidate = decoded?.id || decoded?.userId || decoded?.sub;
-    return typeof candidate === 'string' && candidate.length > 0 ? candidate : null;
+    const candidate =
+      normalizeOptionalString(safeRead(() => decoded?.id, undefined as unknown)) ||
+      normalizeOptionalString(safeRead(() => decoded?.userId, undefined as unknown)) ||
+      normalizeOptionalString(safeRead(() => decoded?.sub, undefined as unknown));
+    return candidate;
   } catch {
     return null;
   }
 }
 
 function extractKey(req: Request): string {
-  const uid = (req as any).userId || (req as any).user?.id;
-  if (uid) return `u:${uid}`;
+  const uid =
+    normalizeOptionalString(safeRead(() => (req as any)._rateLimitUserId, undefined as unknown)) ||
+    normalizeOptionalString(safeRead(() => (req as any).userId, undefined as unknown)) ||
+    normalizeOptionalString(safeRead(() => (req as any).user?.id, undefined as unknown));
+  if (uid) return `u:${capKeySegment(uid)}`;
   const tokenUid = tryExtractUserIdFromToken(req);
-  if (tokenUid) return `u:${tokenUid}`;
-  const ip =
-    req.ip ||
-    req.socket?.remoteAddress ||
-    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-    'unknown';
+  if (tokenUid) return `u:${capKeySegment(tokenUid)}`;
+  const ipFromReqRaw = normalizeOptionalString(safeRead(() => req.ip, undefined as unknown));
+  const ipFromReq = ipFromReqRaw ? capKeySegment(ipFromReqRaw) : null;
+  const ipFromSocketRaw = normalizeOptionalString(
+    safeRead(() => req.socket?.remoteAddress, undefined as unknown)
+  );
+  const ipFromSocket = ipFromSocketRaw ? capKeySegment(ipFromSocketRaw) : null;
+  const forwardedHeader = safeRead(() => req.headers['x-forwarded-for'], undefined as unknown);
+  const ipFromForwarded = (() => {
+    if (typeof forwardedHeader === 'string') {
+      const candidate = normalizeOptionalString(forwardedHeader.split(',')[0]);
+      return candidate ? capKeySegment(candidate) : null;
+    }
+    if (Array.isArray(forwardedHeader)) {
+      for (const forwardedEntry of forwardedHeader) {
+        if (typeof forwardedEntry !== 'string') continue;
+        const candidate = normalizeOptionalString(forwardedEntry.split(',')[0]);
+        if (candidate) return capKeySegment(candidate);
+      }
+    }
+    return null;
+  })();
+  const ip = capKeySegment(ipFromReq || ipFromSocket || ipFromForwarded || 'unknown');
   return `ip:${ip}`;
 }
 
@@ -78,24 +172,42 @@ function extractKey(req: Request): string {
 // Factory
 // ---------------------------------------------------------------------------
 function createLimiter(opts: { windowMs: number; max: number; prefix: string; message?: string }) {
-  const { windowMs, max, prefix, message = 'Too many requests, please try again later.' } = opts;
+  const { prefix, message = 'Too many requests, please try again later.' } = opts;
+  const { windowMs, max } = resolveLimiterParams(opts.windowMs, opts.max);
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true') return next();
-    if (req.method === 'OPTIONS') return next();
-    const key = `rl:${prefix}:${extractKey(req)}`;
-    const { count, resetAt } = increment(key, windowMs);
-    res.setHeader('X-RateLimit-Limit', max);
-    res.setHeader('X-RateLimit-Remaining', Math.max(0, max - count));
-    res.setHeader('X-RateLimit-Reset', Math.ceil(resetAt / 1000));
-    if (count > max) {
-      res.status(429).json({
-        error: message,
-        code: 'RATE_LIMIT_EXCEEDED',
-        retryAfter: Math.ceil((resetAt - Date.now()) / 1000),
-      });
+    if (process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true') {
+      safeInvokeNext(next);
       return;
     }
-    next();
+    const method = normalizeOptionalString(safeRead(() => req.method, undefined as unknown));
+    if (method?.toUpperCase() === 'OPTIONS') {
+      safeInvokeNext(next);
+      return;
+    }
+    const key = `rl:${prefix}:${extractKey(req)}`;
+    const { count, resetAt } = increment(key, windowMs);
+    safeSetHeader(res, 'X-RateLimit-Limit', String(max));
+    safeSetHeader(res, 'X-RateLimit-Remaining', String(Math.max(0, max - count)));
+    safeSetHeader(res, 'X-RateLimit-Reset', String(Math.ceil(resetAt / 1000)));
+    if (count > max) {
+      const retryAfter = Math.max(0, Math.ceil((resetAt - Date.now()) / 1000));
+      safeSetHeader(res, 'Retry-After', String(retryAfter));
+      if (safeRead(() => res.headersSent, false)) {
+        safeInvokeNext(next);
+        return;
+      }
+      try {
+        res.status(429).json({
+          error: message,
+          code: 'RATE_LIMIT_EXCEEDED',
+          retryAfter,
+        });
+      } catch {
+        safeInvokeNext(next);
+      }
+      return;
+    }
+    safeInvokeNext(next);
   };
 }
 
@@ -174,5 +286,9 @@ export const feedbackRateLimiter = createLimiter({
   prefix: 'feedback',
   message: 'Feedback submission rate limit exceeded. Please try again in a moment.',
 });
+
+export const __private__ = {
+  resolveLimiterParams,
+};
 
 export default defaultRateLimiter;

@@ -786,7 +786,15 @@ router.post(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    await resolveError(String(req.params.errorId));
+    const errorId = typeof req.params.errorId === 'string' ? req.params.errorId.trim() : '';
+    if (!errorId) {
+      return res.status(400).json({ error: 'errorId is required', code: 'INVALID_PARAM' });
+    }
+
+    const resolved = await resolveError(errorId, orgId);
+    if (!resolved) {
+      return res.status(404).json({ error: 'Error not found', code: 'NOT_FOUND' });
+    }
     return res.json({ success: true });
   })
 );

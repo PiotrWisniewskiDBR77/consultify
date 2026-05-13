@@ -266,11 +266,11 @@ describe('P10 canon validators', () => {
     expect(isValidP10ConfidenceLevel('medium')).toBe(true);
     expect(isValidP10ConfidenceLevel('low')).toBe(true);
     expect(isValidP10ConfidenceLevel('insufficient')).toBe(true);
+    expect(isValidP10ConfidenceLevel('contradicted')).toBe(true);
   });
 
   it('rejects invalid confidence levels', () => {
     expect(isValidP10ConfidenceLevel('very_high')).toBe(false);
-    expect(isValidP10ConfidenceLevel('contradicted')).toBe(false);
     expect(isValidP10ConfidenceLevel('')).toBe(false);
   });
 

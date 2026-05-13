@@ -42,21 +42,31 @@ last_updated: 2026-05-10
 ## 5. Inputs, Data Contracts, and Dependencies
 
 - Input objects/fields: portfolio health aggregates, KPI summaries, team-level signals.
-- Upstream modules/services: tasks/decisions/focus/inbox summaries.
+- Upstream modules/services: summaries from `MW_TASKS`, `MW_DECISIONS`, and `MW_CALENDAR` with manager aggregation context.
 - APIs/models: shared API and executive aggregation models.
 - Data freshness assumptions: metrics can be eventually consistent across source modules.
+- Dependency posture: all dependency usage is impact-only; manager view does not become canonical owner for dependency-module objects.
+
+| Dependency | Usage in `MW_MANAGER` | Boundary |
+| --- | --- | --- |
+| `MW_TASKS` | execution follow-up orientation and navigate-to-action | no task lifecycle mutation from manager dashboard |
+| `MW_DECISIONS` | decision steering and review follow-up orientation | no decision lifecycle mutation from manager dashboard |
+| `MW_CALENDAR` | schedule and timeline context for management steering | no direct calendar canonical mutation |
+| `06_realizacja` | impact visibility for execution governance read-back | no PMO ownership transfer to manager surface |
 
 ## 6. Outputs and Side Effects
 
 - Produced objects/artifacts: no canonical object ownership; emits management navigation intents.
-- Downstream handoff: to tabs `tasks`, `decisions`, `home`, `inbox` via `onNavigate`.
+- Downstream handoff: to source tabs `tasks`, `decisions`, `calendar` (and contextual fallback paths) via explicit `onNavigate`.
 - Side effects visible to user: executive cards and jump-to-action transitions.
+- Handoff success rule: navigation success is not equal to owner-module mutation success; canonical completion is confirmed only after owner-module read-back.
 
 ## 7. Ownership and Handoff Boundaries
 
 - Canonical owner of mutated objects: source owner modules.
 - Handoff contract (`from -> to`): `ExecutiveDashboard -> MyWorkHub tab switch -> source workflow`.
 - Forbidden ownership: manager view cannot directly mutate canonical records outside approved owner flow.
+- Governance chain for high-impact follow-up: `proposal -> approval -> explicit handoff -> owner review/read-back`.
 
 ## 8. Runtime States and UX Behavior
 
@@ -64,12 +74,13 @@ last_updated: 2026-05-10
 - Empty: explicit no-data management state with guidance.
 - Error: safe failure state, no raw internals.
 - Degraded: partial metrics clearly flagged.
+- Access denied: explicit restricted-access state for non-privileged roles.
 - Success: users can jump into concrete execution or decision tabs.
 - Next action guidance per state: route to source tab for action, or retry.
 
 ## 9. AI, Source, Evidence, Approval
 
-- AI action placement: command-row/Menu 3 standards.
+- AI action placement: contextual manager AI actions must live in command-row/Menu 3 right-side slot only.
 - Source/provenance visibility: executive metrics should map back to source domains.
 - Approval/diff/review requirements: high-impact actions happen in owner modules with review policies.
 - Audit trail/evidence: role gating and navigation handoffs are observable.
@@ -85,12 +96,15 @@ last_updated: 2026-05-10
 
 - Acceptance checks:
   - Unauthorized users cannot operate manager function and see explicit restriction state.
-  - Authorized users can open manager dashboard and jump to tasks/decisions/inbox/home.
+  - Authorized users can open manager dashboard and jump to source tabs (`tasks`, `decisions`, `calendar`) with preserved context.
   - Manager function does not perform hidden direct writes in foreign domains.
+  - Dependency usage remains impact-only for `MW_TASKS`, `MW_DECISIONS`, `MW_CALENDAR`, and `06_realizacja`.
+  - Manager AI actions are not duplicated outside Menu 3 for the same context.
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/Executive/ExecutiveDashboard.tsx`
 - Known `doc_gap`: exact role matrix wording in docs should be unified globally.
-- Known `code_gap`: dedicated manager-role e2e coverage not documented here.
+- Known `code_gap`: dedicated manager navigation and owner read-back e2e chain is not yet documented as complete.
+- Backlog linkage: implementation tasks are tracked as `MW-MGR-*` in `IMPLEMENTATION_TASK_BOARD.md`.
 
 - Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
 - Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
@@ -100,5 +114,5 @@ last_updated: 2026-05-10
 ## 12. Open Risks and Change Log
 
 - Risks/assumptions: role semantics can drift between docs and backend ACL checks.
-- Open decisions: finalize "manager role set" wording across all contracts.
-- Change log: initial function contract created.
+- Open decisions: finalize canonical role set and mandatory executive-card provenance fields.
+- Change log: contract hardened for impact-only dependency scope, handoff/read-back semantics, and manager acceptance gate alignment.

@@ -3,7 +3,7 @@ module_id: MODULE_INITIATIVES
 function_id: IN_PORTFOLIO_VIEW
 function_name: Initiatives — Portfolio Route View
 doc_kind: FUNCTION_CONTRACT
-status: active
+status: review
 owner: user
 owner_business: user
 owner_tech: user
@@ -29,12 +29,22 @@ last_updated: 2026-05-10
 
 ## 5. Inputs, Data Contracts, and Dependencies
 - Inputs: initiative portfolio datasets and value/status metadata.
+- Portfolio rollups, initiative health, value/prioritization metadata and allowed drill-through context.
+- Backend initiative list/status APIs and capability context for any material action.
 
 ## 6. Outputs and Side Effects
 - Outputs: explicit move to initiative/action lanes.
+- Portfolio projections, prioritization context and bounded drill-through links.
+- No duplicate portfolio initiative source of truth.
 
 ## 7. Ownership and Handoff Boundaries
 - Boundaries: view surface, not hidden write owner for other modules.
+
+| Handoff | Owner boundary |
+| --- | --- |
+| From `IN_PORTFOLIO_HUB` | Reads initiative truth and portfolio-level metadata. |
+| To `IN_PORTFOLIO_HUB` | Drill-through or action requests return to canonical initiative identity. |
+| To outputs/reporting | Rollups can be packaged downstream but do not become new initiative artefacts. |
 
 ## 8. Runtime States and UX Behavior
 - Runtime behavior must keep loading/empty/error/degraded/success states explicit with next-step guidance.
@@ -49,10 +59,12 @@ last_updated: 2026-05-10
 
 - Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
 
-- Route evidence: module route/view scope for `05_inicjatywy` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
-- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `05_inicjatywy` function surface.
-- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
-- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `05_inicjatywy` user flows.
+| Evidence type | Pointer | Gate |
+| --- | --- | --- |
+| Route evidence | `/portfolio`; `src/routes/routeConfig.ts`; `src/routes/AppRoutes.tsx`. | `PASS_DOC` |
+| Component evidence | `src/views/PortfolioView.tsx`. | `PASS_DOC` |
+| API evidence | `src/services/api.ts`; initiative list/status APIs. | `PASS_DOC` |
+| Test evidence | No lane-specific smoke/regression bound in this module contract. | `NOT_DONE` |
 
 ## 12. Open Risks and Change Log
 - Risk: overlap confusion with `/initiatives` entry if labels drift.

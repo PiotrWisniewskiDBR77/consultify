@@ -425,7 +425,8 @@ export class InvitationServiceClass {
     projectId?: string | null;
     role: string;
   }> {
-    const { token, email, firstName, lastName, password } = params;
+    const { token, email, firstName, lastName, password, jobTitle, department, siteLocation } =
+      params;
 
     const invitation = await this.getByToken(token);
     if (!invitation) throw new Error('Invalid invitation token');
@@ -474,8 +475,11 @@ export class InvitationServiceClass {
     const role = invitation.role_to_assign || invitation.role;
 
     await this.deps.db.run(
-      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
+      `INSERT INTO users (
+         id, organization_id, email, password, first_name, last_name, role, status,
+         job_title, department, site_location
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
       [
         userId,
         invitation.organization_id,
@@ -484,6 +488,9 @@ export class InvitationServiceClass {
         firstName,
         lastName,
         role,
+        jobTitle || null,
+        department || null,
+        siteLocation || null,
       ]
     );
 

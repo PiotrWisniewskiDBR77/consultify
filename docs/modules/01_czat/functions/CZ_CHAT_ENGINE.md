@@ -36,12 +36,14 @@ last_updated: 2026-05-10
 
 - Top-level container/view components: `AIChatWelcomeView`, `UnifiedChatPanel`.
 - Message/runtime components: `MessageRenderer`, `EnhancedChatInput`, `ChatSlidingPanel`, `SmartSuggestions`.
+- Input action bar components: `WorkModeMenu`, `AddFilesMenu`, `ToolsMenu`, `CoThinkerMenu`, `ActiveModeStrip`, `NextModelChip`.
 - Governance/evidence components: `CitationList`, `TeresaProposalCard`, `V8ArtifactRunControl`, `V8ContextIndicator`.
 - Component ownership notes: chat UI is module-owned; layout shell is shared (`MainLayout`).
 
 ## 5. Inputs, Data Contracts, and Dependencies
 
-- Input objects/fields: user messages, conversation history, workspace context, selected language/voice settings.
+- Input objects/fields: user messages, conversation history, workspace context, selected language/voice settings, selected work mode preset, AI mode flags (`webSearch`, `deepResearch`, `showReasoning`, `multiAgent`, `privateMode`), co-thinker mode and response style.
+- Target/deferred input objects: project instructions, shared conversation participants, source/knowledge destination, agent run plan, source health/freshness, meeting transcript/recap payload, consulting playbook selection and cross-conversation search filters.
 - Upstream modules/services: `useConversationStore`, `useAIStream`, `Api` chat/runtime calls.
 - APIs/models: `src/services/api.ts`, chat/domain types in `src/types/*`.
 - Data freshness assumptions: streaming and persistence can complete asynchronously.
@@ -49,6 +51,7 @@ last_updated: 2026-05-10
 ## 6. Outputs and Side Effects
 
 - Produced objects/artifacts: AI messages, proposals, citations, conversation metadata.
+- Target/deferred outputs: run-plan candidates, source-health summaries, meeting recap candidates, project recap candidates, knowledge promotion candidates and playbook-guided output drafts.
 - Downstream handoff: approvals and proposal actions route to owner workflows.
 - Side effects visible to user: streamed responses, suggestions, citations, proposal cards, toasts.
 
@@ -65,7 +68,9 @@ last_updated: 2026-05-10
 - Error: guarded failure messages (no raw internals).
 - Degraded: explicit degraded/empty-response messaging.
 - Success: clear AI response with next-action options.
+- Pre-send: active mode/source strip shows preset, web/private/deep/multi-agent/model posture before the prompt is sent.
 - Next action guidance per state: continue chat, approve/review, inspect citations, retry.
+- Target advanced states: run-plan pending, source-health warning, knowledge-promotion review, meeting-recap extraction and cross-conversation recap must be compact cards/dropdowns, not persistent toolbars.
 
 ## 9. AI, Source, Evidence, Approval
 
@@ -73,6 +78,7 @@ last_updated: 2026-05-10
 - Source/provenance visibility: claims and recommendations must expose citations or explicit no-source state.
 - Approval/diff/review requirements: destructive/governance actions require explicit review.
 - Audit trail/evidence: proposal lifecycle and chat metadata persistence.
+- Target market-parity rule: project instructions, shared project chat, agent run plans, source health, meeting recap and knowledge lifecycle remain target/deferred until backed by implementation evidence and permission/write guards.
 
 ## 10. Security, Roles, and Tenancy
 
@@ -80,6 +86,7 @@ last_updated: 2026-05-10
 - Denied/restricted roles: ACL denied users.
 - ACL/tenant scope: chat context and persisted conversation remain tenant-scoped.
 - Sensitive data masking/redaction: enforced by policy and runtime guards.
+- Source/attachment knowledge writes must respect selected destination (`conversation-only`, `personal`, `project/team`, `organization`, `no-retention`) once implemented; current contract forbids hidden promotion as a target invariant.
 
 ## 11. Acceptance Criteria and Test Evidence
 
@@ -87,17 +94,30 @@ last_updated: 2026-05-10
   - `"/chat"` renders `AIChatWelcomeView`.
   - `"/chat/:conversationId"` renders `UnifiedChatPanel` with route sync.
   - citations/proposals/approval flow are visible in runtime.
+- Route evidence:
+  - `src/routes/routeConfig.ts`
+  - `src/routes/AppRoutes.tsx`
+- Component evidence:
   - `src/views/AIChatWelcomeView.tsx`
   - `src/components/AIChat/UnifiedChatPanel.tsx`
   - `src/components/AIChat/ConversationRouteSync.tsx`
   - `src/components/AIChat/MessageRenderer.tsx`
-- Known `doc_gap`: message-level state matrix per component is still high-level.
-- Known `code_gap`: no dedicated module-level route acceptance suite for chat routes.
-
-- Route evidence: module route/view scope for `01_czat` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
-- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `01_czat` function surface.
-- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
-- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `01_czat` user flows.
+  - `src/components/AIChat/EnhancedChatInput.tsx`
+  - `src/components/AIChat/WorkModeMenu.tsx`
+  - `src/components/AIChat/ToolsMenu.tsx`
+  - `src/components/AIChat/ActiveModeStrip.tsx`
+- API evidence:
+  - `src/services/api.ts`
+  - `server/src/routes/ai.routes.ts`
+  - `server/src/routes/conversations.routes.ts`
+- Test evidence:
+  - `tests/components/AppRoutes.ai-chat-routing.test.tsx`
+  - `tests/components/AIChat/UnifiedChatPanel.test.tsx`
+  - `tests/integration/ai/ai-chat.routes.test.ts`
+  - `server/src/services/ai/__tests__/chatPolicyGateway.contract.test.ts`
+- Known `doc_gap`: message-level Menu 3 slot mapping per sub-state is not enumerated component-by-component.
+- Known `code_gap`: no dedicated e2e suite covering full chat-to-canvas bridge lifecycle from this function boundary.
+- Known `implementation_gap`: no shipped evidence yet for project instructions, shared project chat, agent run plan, source health UI, meeting recap pipeline, knowledge lifecycle or connector catalog as complete capabilities.
 
 ## 12. Open Risks and Change Log
 

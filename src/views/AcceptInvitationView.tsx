@@ -27,6 +27,9 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   // Form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [department, setDepartment] = useState('');
+  const [siteLocation, setSiteLocation] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -72,6 +75,11 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
       return;
     }
 
+    if (!jobTitle.trim() || !department.trim()) {
+      setError('Please provide your function and department in the organization');
+      return;
+    }
+
     if (!acceptedTerms) {
       setError('You must accept the terms and conditions');
       return;
@@ -91,6 +99,9 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           email: invitation?.email,
           firstName,
           lastName,
+          jobTitle: jobTitle.trim(),
+          department: department.trim(),
+          siteLocation: siteLocation.trim() || undefined,
           password,
         }),
       });
@@ -252,6 +263,60 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="jobTitle"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Function / Job Title *
+              </label>
+              <input
+                type="text"
+                id="jobTitle"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Production Manager"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="department"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Department *
+              </label>
+              <input
+                type="text"
+                id="department"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                placeholder="e.g. Operations"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="siteLocation"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Site / Location
+            </label>
+            <input
+              type="text"
+              id="siteLocation"
+              value={siteLocation}
+              onChange={(e) => setSiteLocation(e.target.value)}
+              placeholder="Optional"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+
           <div>
             <label
               htmlFor="password"
@@ -319,7 +384,15 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             </a>
             <button
               type="submit"
-              disabled={submitting || !firstName || !lastName || !password || !acceptedTerms}
+              disabled={
+                submitting ||
+                !firstName ||
+                !lastName ||
+                !jobTitle ||
+                !department ||
+                !password ||
+                !acceptedTerms
+              }
               className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (

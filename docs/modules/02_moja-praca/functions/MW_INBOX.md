@@ -24,7 +24,7 @@ last_updated: 2026-05-10
 
 - User job: triage incoming work and route to proper execution/decision surfaces.
 - Business outcome: lower attention debt and faster response to critical items.
-- Non-goals: inbox is not canonical owner of source task/decision artifacts.
+- Non-goals: inbox is not canonical owner of source task/decision artifacts and does not perform hidden owner-module mutations.
 
 ## 3. Trigger and Entry Points
 
@@ -43,20 +43,21 @@ last_updated: 2026-05-10
 
 - Input objects/fields: inbox item status, priority, AI/action-required markers, search query.
 - Upstream modules/services: notifications and cross-module item references.
+- Dispatch dependency scope (impact-only): `01_czat`, `MW_TASKS`, `MW_DECISIONS`.
 - APIs/models: shared API client and notification/task/decision object shape.
 - Data freshness assumptions: counts and list payload update on refresh trigger.
 
 ## 6. Outputs and Side Effects
 
-- Produced objects/artifacts: inbox processing states (open/saved/done), triage actions.
-- Downstream handoff: open related `task`/`decision` detail or owner module route.
-- Side effects visible to user: counts update, item status change, opened detail tabs.
+- Produced objects/artifacts: inbox processing states (open/saved/done), triage actions, and explicit handoff intents.
+- Downstream handoff: `inbox -> owner detail -> owner mutation/read-back` for related `task`/`decision` objects.
+- Side effects visible to user: counts update, item status change, opened detail tabs, and read-back-aware confirmation state.
 
 ## 7. Ownership and Handoff Boundaries
 
-- Canonical owner of mutated objects: source domain owner (task/decision/etc.) for canonical records.
-- Handoff contract (`from -> to`): `Inbox -> detail handler -> owner workflow`.
-- Forbidden ownership: inbox cannot replace owner-module approval logic.
+- Canonical owner of mutated objects: source domain owner (`MW_TASKS`, `MW_DECISIONS`, etc.) for canonical records.
+- Handoff contract (`from -> to`): `Inbox -> owner detail handler -> owner workflow -> read-back -> inbox confirmation`.
+- Forbidden ownership: inbox cannot replace owner-module approval logic or claim canonical success without owner read-back.
 
 ## 8. Runtime States and UX Behavior
 
@@ -65,14 +66,14 @@ last_updated: 2026-05-10
 - Error: safe failure state with retry options.
 - Degraded: partial counters/filters can degrade while core list remains visible.
 - Success: triage actions and open-detail transitions show immediate user feedback.
-- Next action guidance per state: process, defer, open source, or retry.
+- Next action guidance per state: process, defer, open owner source, verify read-back, or retry.
 
 ## 9. AI, Source, Evidence, Approval
 
 - AI action placement: command row / Menu 3 only.
-- Source/provenance visibility: every inbox item must keep source object identity visible.
-- Approval/diff/review requirements: mutating high-impact records goes through owner module review.
-- Audit trail/evidence: item status transitions and route hops are observable.
+- Source/provenance visibility: every inbox item must keep source object identity and evidence posture (`source-backed` or explicit `assumption`) visible.
+- Approval/diff/review requirements: mutating high-impact records goes through owner module review with explicit read-back before Inbox reports success.
+- Audit trail/evidence: item status transitions and route hops are observable and tied to owner confirmation.
 
 ## 10. Security, Roles, and Tenancy
 
@@ -85,13 +86,14 @@ last_updated: 2026-05-10
 
 - Acceptance checks:
   - Inbox tab supports filter presets and view modes.
-  - Triage actions preserve source context and route correctly.
-  - Inbox does not claim ownership over source records.
+  - Triage actions preserve source context and route correctly to owner detail flows.
+  - Inbox does not claim ownership over source records and does not report canonical success without owner read-back.
+  - Menu 3 is the single placement for contextual AI actions in Inbox scope.
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/InboxContent.tsx`
   - `src/components/MyWork/NotificationDetailView.tsx`
-- Known `doc_gap`: complete preset semantics matrix still needs deeper formalization.
-- Known `code_gap`: no dedicated inbox triage end-to-end suite in module docs.
+- Known `doc_gap`: complete preset semantics matrix (`priority`, `section`, `action-required`) still needs deeper formalization.
+- Known `code_gap`: no dedicated inbox triage end-to-end suite proving full read-back chain across task/decision owner flows.
 
 - Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
 - Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
@@ -100,6 +102,6 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 
-- Risks/assumptions: high filter complexity can hide urgent items if defaults drift.
-- Open decisions: standard naming for inbox presets across locales.
-- Change log: initial function contract created.
+- Risks/assumptions: high filter complexity can hide urgent items if defaults drift; degraded owner read-back can create false confidence without strict messaging.
+- Open decisions: standard naming for inbox presets across locales and minimum required read-back payload fields.
+- Change log: ownership/read-back and provenance constraints tightened for docs-only function cycle.

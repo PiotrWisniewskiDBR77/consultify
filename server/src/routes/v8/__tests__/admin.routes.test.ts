@@ -131,7 +131,8 @@ describe('V8 admin routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.v8_enabled).toBe(true);
-    expect(res.body.meta.organizationId).toBe(ORG);
+    expect(res.body.meta).toEqual({ version: 'v8' });
+    expect(res.headers['cache-control']).toMatch(/no-store/i);
     expect(mockGetV8Flags).toHaveBeenCalledWith(ORG);
   });
 
@@ -140,6 +141,7 @@ describe('V8 admin routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
+    expect(res.headers['cache-control']).toMatch(/no-store/i);
     expect(mockGetAllOrgFlags).toHaveBeenCalled();
   });
 
@@ -149,6 +151,7 @@ describe('V8 admin routes', () => {
       .send({ enabled: false });
 
     expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toMatch(/no-store/i);
     expect(mockSetV8OrgFlag).toHaveBeenCalledWith(ORG, 'prompt_os_enabled', false, UID);
     expect(mockGetV8Flags).toHaveBeenCalledWith(ORG);
     expect(res.body.meta.updated).toBe('prompt_os_enabled');

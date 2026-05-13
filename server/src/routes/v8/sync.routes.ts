@@ -1896,15 +1896,25 @@ router.post(
         },
         meta: syncMutationMeta(),
       });
-    } catch (error) {
-      const errorMessage = (error as Error).message || 'Sync failed';
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : typeof error === 'string' ? error : 'Sync failed';
       await dbRun(
         `UPDATE integration_sync_runs
          SET status = 'failed', error_summary = ?, duration_ms = ?, completed_at = NOW()
          WHERE id = ?`,
         [errorMessage, Date.now() - startedAt.getTime(), runId]
       );
-      await logSyncError(organizationId, integrationId, error as Error, runId);
+      try {
+        await logSyncError(
+          organizationId,
+          integrationId,
+          error instanceof Error ? error : errorMessage,
+          runId
+        );
+      } catch {
+        // Telemetry is best-effort; request flow must still return.
+      }
 
       return res.status(500).json({ error: errorMessage, syncRunId: runId, code: 'SYNC_FAILED' });
     }
@@ -2206,6 +2216,7 @@ router.get(
 router.post(
   '/errors/:errorId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
     const errorId = typeof req.params.errorId === 'string' ? req.params.errorId.trim() : '';
     if (!errorId) {
       return res.status(400).json({
@@ -2214,7 +2225,10 @@ router.post(
       });
     }
 
-    await resolveError(errorId);
+    const resolved = await resolveError(errorId, organizationId);
+    if (!resolved) {
+      return res.status(404).json({ error: 'Error not found', code: 'NOT_FOUND' });
+    }
     return res.json({
       data: { success: true as const },
       meta: syncMutationMeta(),

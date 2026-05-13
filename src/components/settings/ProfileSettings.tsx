@@ -247,8 +247,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await Api.updateUser(currentUser.id, formState as any);
-      onUpdateUser(formState as any);
+      const updatedUser = await Api.updateUser(currentUser.id, formState as any);
+      onUpdateUser({ ...formState, ...updatedUser } as any);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {

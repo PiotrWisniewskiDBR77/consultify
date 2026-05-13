@@ -57,3 +57,5 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 - Risk: tab/route sync regressions without module-local tests.
+- Stage 1.5 update: docs now distinguish canonical shell `AppView.PRESENTATIONS -> /presentations` from builder entry `AppView.FULL_STEP6_REPORTS -> /reports/builder`.
+- Risk: direct builder entry can still be read as bypassing the canonical library shell unless owner/runtime semantics are validated in navigation and evidence packs.

@@ -6,33 +6,144 @@ import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+const MAX_ACTION_TYPE_LENGTH = 128;
+const MAX_REASON_LENGTH = 4000;
+const MAX_METADATA_METHOD_LENGTH = 16;
+const MAX_METADATA_PATH_LENGTH = 2048;
+const RISK_LEVELS: readonly RiskLevel[] = ['low', 'medium', 'high', 'critical'];
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+const normalizeOptionalHeaderValue = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return normalizeOptionalString(value);
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const normalized = normalizeOptionalString(entry);
+      if (normalized) return normalized;
+    }
+  }
+  return undefined;
+};
+
+const isExplicitConfirmation = (value: unknown): boolean => {
+  if (value === true) return true;
+  if (typeof value === 'string') return value.trim().toLowerCase() === 'true';
+  return false;
+};
 
 export function requireConfirmation(actionType: string, riskLevel: RiskLevel = 'high') {
+  const normalizedActionType = normalizeOptionalString(actionType);
+  if (!normalizedActionType || normalizedActionType.length > MAX_ACTION_TYPE_LENGTH) {
+    throw new Error(
+      `[ConfirmAction] actionType must be a non-empty string up to ${MAX_ACTION_TYPE_LENGTH} chars`
+    );
+  }
+  if (!RISK_LEVELS.includes(riskLevel)) {
+    throw new Error(`[ConfirmAction] riskLevel must be one of: ${RISK_LEVELS.join(', ')}`);
+  }
+
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { confirmation, reason } = req.body || {};
+    if (safeRead(() => res.headersSent, false)) {
+      return;
+    }
+    const rawBody = safeRead(() => req.body, {} as Record<string, unknown>);
+    const body =
+      rawBody && typeof rawBody === 'object' && !Array.isArray(rawBody)
+        ? (rawBody as Record<string, unknown>)
+        : ({} as Record<string, unknown>);
+    const rawConfirmation = body.confirmation;
+    const rawReason = body.reason;
+    if (
+      rawConfirmation !== undefined &&
+      rawConfirmation !== null &&
+      typeof rawConfirmation !== 'boolean' &&
+      typeof rawConfirmation !== 'string'
+    ) {
+      res.status(428).json({
+        error: 'Confirmation must be a boolean or the string "true"',
+        code: 'CONFIRMATION_INVALID_TYPE',
+        actionType: normalizedActionType,
+        riskLevel,
+      });
+      return;
+    }
+    const confirmation = isExplicitConfirmation(body.confirmation);
+    if (rawReason !== undefined && typeof rawReason !== 'string') {
+      res.status(422).json({
+        error: 'Reason must be a string',
+        code: 'REASON_INVALID_TYPE',
+        actionType: normalizedActionType,
+      });
+      return;
+    }
+    const reason = normalizeOptionalString(rawReason);
 
     if (!confirmation) {
       res.status(428).json({
         error: 'Action requires explicit confirmation',
         code: 'CONFIRMATION_REQUIRED',
-        actionType,
+        actionType: normalizedActionType,
         riskLevel,
       });
       return;
     }
 
-    if (!reason || typeof reason !== 'string' || reason.trim().length < 3) {
+    if (!reason || reason.length < 3) {
       res.status(422).json({
         error: 'A reason must be provided for this action (minimum 3 characters)',
         code: 'REASON_REQUIRED',
-        actionType,
+        actionType: normalizedActionType,
       });
       return;
     }
 
-    const adminId = req.userId || req.user?.id || 'unknown';
-    const targetType = req.params.targetType || req.params.id ? 'resource' : undefined;
-    const targetId = req.params.id || req.params.targetId || undefined;
+    if (reason.length > MAX_REASON_LENGTH) {
+      res.status(422).json({
+        error: `A reason must be at most ${MAX_REASON_LENGTH} characters`,
+        code: 'REASON_TOO_LONG',
+        actionType: normalizedActionType,
+      });
+      return;
+    }
+
+    const adminId =
+      normalizeOptionalString(safeRead(() => req.userId, undefined)) ||
+      normalizeOptionalString(safeRead(() => req.user?.id, undefined)) ||
+      'unknown';
+    const targetType =
+      normalizeOptionalString(safeRead(() => req.params?.targetType, undefined)) ||
+      normalizeOptionalString(safeRead(() => req.params?.id, undefined))
+        ? 'resource'
+        : undefined;
+    const targetId =
+      normalizeOptionalString(safeRead(() => req.params?.id, undefined)) ||
+      normalizeOptionalString(safeRead(() => req.params?.targetId, undefined)) ||
+      undefined;
+    const metadataJson = safeRead(
+      () =>
+        JSON.stringify({
+          method: (
+            normalizeOptionalString(safeRead(() => req.method, undefined)) || 'UNKNOWN'
+          ).slice(0, MAX_METADATA_METHOD_LENGTH),
+          path: (
+            normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+            normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+            ''
+          ).slice(0, MAX_METADATA_PATH_LENGTH),
+        }),
+      '{"method":"UNKNOWN","path":""}'
+    );
 
     try {
       await dbRun(
@@ -42,32 +153,36 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
         [
           uuidv4(),
           adminId,
-          actionType,
+          normalizedActionType,
           targetType || null,
           targetId || null,
-          reason.trim(),
+          reason,
           riskLevel,
-          req.ip || null,
-          req.headers['user-agent']?.substring(0, 255) || null,
-          JSON.stringify({ method: req.method, path: req.originalUrl }),
+          normalizeOptionalString(safeRead(() => req.ip, undefined)) || null,
+          normalizeOptionalHeaderValue(safeRead(() => req.headers?.['user-agent'], undefined))
+            ?.substring(0, 255) || null,
+          metadataJson,
         ]
       );
     } catch (err) {
       logger.error('[ConfirmAction] FAIL-CLOSED: Audit write failed, blocking action', {
         err,
-        actionType,
+        actionType: normalizedActionType,
         adminId,
       });
       res.status(503).json({
         error:
           'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
         code: 'AUDIT_UNAVAILABLE',
-        actionType,
+        actionType: normalizedActionType,
         guidance: 'Retry the action. If the problem persists, contact platform support.',
       });
       return;
     }
 
+    if (safeRead(() => res.headersSent, false)) {
+      return;
+    }
     next();
   };
 }

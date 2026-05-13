@@ -56,14 +56,27 @@ vi.mock('../../services/v8/pmSyncTruthService.js', () => ({
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
     const role = req.headers['x-user-role'] || 'member';
+    const overrideOrg = req.headers['x-override-org-id'];
+    const effectiveOrg = typeof overrideOrg === 'string' && overrideOrg.trim() ? overrideOrg : 'org-1';
+    const skipUser = req.headers['x-test-skip-user'] === '1';
+    const pinnedUserId =
+      typeof req.headers['x-test-pin-user-id'] === 'string' &&
+      req.headers['x-test-pin-user-id'].trim()
+        ? req.headers['x-test-pin-user-id'].trim()
+        : 'user-1';
     req.user = {
       id: 'user-1',
-      organizationId: 'org-1',
+      organizationId: effectiveOrg,
       role,
       isSuperAdmin: String(role).toLowerCase() === 'superadmin',
     };
+    req.userId = pinnedUserId;
+    if (skipUser) {
+      req.user = undefined;
+      req.userId = undefined;
+    }
     req.userRole = role;
-    req.organizationId = 'org-1';
+    req.organizationId = effectiveOrg;
     next();
   },
 }));
@@ -258,6 +271,16 @@ describe('settings integrations authority continuity', () => {
     expect(res.body.connectedCount).toBe(0);
   });
 
+  it('GET /api/settings/integrations honors x-override-org-id for governed inventory lookup', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/integrations').set('x-override-org-id', 'org-override');
+
+    expect(res.status).toBe(200);
+    expect(mockListGovernedIntegrations).toHaveBeenCalledWith('org-override');
+  });
+
   it('POST /api/settings/integrations/:provider/connect reuses governed connect initiation authority', async () => {
     const app = express();
     app.use(express.json());
@@ -309,6 +332,31 @@ describe('settings integrations authority continuity', () => {
           (call[1] as unknown[]).includes('pending')
       )
     ).toBe(true);
+  });
+
+  it('POST /api/settings/integrations/:provider/connect prefers req.userId over req.user.id for transitionedBy', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .post('/api/settings/integrations/jira/connect')
+      .set('x-test-pin-user-id', 'user-from-req-user-id')
+      .send({
+        config: {
+          site_url: 'https://acme.atlassian.net',
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockSetConnectorAuthState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transitionedBy: 'user-from-req-user-id',
+      })
+    );
   });
 
   it('DELETE /api/settings/integrations/:provider reuses governed disconnect authority', async () => {
@@ -797,6 +845,46 @@ describe('settings registry contract endpoints', () => {
     );
   });
 
+  it('GET /api/settings/registry/:key/resolve fails closed with 401 when user identity is missing', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .get('/api/settings/registry/recording_auto_start/resolve')
+      .set('x-test-skip-user', '1');
+
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: 'User not authenticated' });
+    expect(mockDbGet).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/settings/registry/:key/resolve prefers top-level req.organizationId over req.user.organizationId', async () => {
+    mockDbGet.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (
+        sql.includes('FROM settings') &&
+        params[0] === 'module:org-override:interview:recording_auto_start'
+      ) {
+        return { value: 'true' };
+      }
+      return undefined;
+    });
+
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .get('/api/settings/registry/recording_auto_start/resolve')
+      .set('x-override-org-id', 'org-override');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.objectContaining({ source: 'module', value: true }));
+    expect(mockDbGet).toHaveBeenCalledWith(
+      expect.stringContaining('FROM settings'),
+      ['module:org-override:interview:recording_auto_start'],
+      { fallback: true }
+    );
+  });
+
   it('PUT /api/settings/registry/:key returns 403 guidance for Admin-owned keys', async () => {
     const app = express();
     app.use(express.json());
@@ -867,6 +955,29 @@ describe('settings registry contract endpoints', () => {
     expect(mockDbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT OR REPLACE INTO settings'),
       ['module:org-1:interview:recording_auto_start', 'true'],
+      { fallback: false }
+    );
+  });
+
+  it('PUT /api/settings/registry/:key uses req.organizationId when writing module scope', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .put('/api/settings/registry/recording_auto_start')
+      .set('x-user-role', 'admin')
+      .set('x-override-org-id', 'org-override')
+      .send({
+        value: true,
+        confirmed: true,
+        targetScope: 'module',
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT OR REPLACE INTO settings'),
+      ['module:org-override:interview:recording_auto_start', 'true'],
       { fallback: false }
     );
   });

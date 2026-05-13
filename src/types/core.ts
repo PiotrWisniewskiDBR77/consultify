@@ -3760,6 +3760,13 @@ export interface User {
   displayName?: string;
   pronouns?: 'he/him' | 'she/her' | 'they/them' | 'other' | '';
   department?: string;
+  siteLocation?: string;
+  seniorityLevel?: string;
+  tenureYears?: string;
+  managesTeam?: boolean;
+  teamSize?: string;
+  expertiseTags?: string[];
+  engagementLevel?: string;
   isOutOfOffice?: boolean;
   outOfOfficeUntil?: string;
   outOfOfficeMessage?: string;

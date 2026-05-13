@@ -11,7 +11,7 @@ import {
   getAtelierToysReports,
   getAtelierToysToolCoverage,
 } from './atelierToysDemoTemplate.js';
-import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
+import { type DemoLocale } from './demoLocale.js';
 import { getDemoAnchorDate, materializeRelativeIso } from './demoRelativeDate.js';
 
 export interface SeedDemoDatasetInput {
@@ -37,14 +37,124 @@ export interface SeedDemoDatasetResult {
   };
   scenarios: ReturnType<typeof getAtelierToysDemoScenarios>;
   toolCoverage: ReturnType<typeof getAtelierToysToolCoverage>;
+  resultsCoverage?: {
+    kpis: number;
+    kpiTimeSeries: number;
+    kpiMappings: number;
+    roiAssumptions: number;
+    roiRealized: number;
+    deviations: number;
+    deviationActions: number;
+    reportSnapshots: number;
+    v8Kpis: number;
+    v8Deviations: number;
+    v8RoiEntries: number;
+  };
 }
 
 type UserMap = Record<string, { id: string; email: string }>;
 type ProjectMap = Record<string, string>;
 type InitiativeMap = Record<string, string>;
+type ResultsSeedCounts = NonNullable<SeedDemoDatasetResult['resultsCoverage']>;
 
 function makeId(orgId: string, entity: string, slug: string): string {
   return `${orgId}--${entity}--${slug}`;
+}
+
+function assertPortfolioSanity(
+  initiatives: ReturnType<typeof getAtelierToysInitiatives>,
+  locale: DemoLocale
+): void {
+  const total = initiatives.length;
+  const draftCount = initiatives.filter((item) => String(item.status || '') === 'DRAFT').length;
+  const inProgressCount = initiatives.filter((item) =>
+    ['in_progress', 'EXECUTING'].includes(String(item.status || ''))
+  ).length;
+
+  const parseRelDay = (value: string): number | null => {
+    const match = String(value || '').trim().match(/^([+-])(\d+)d$/);
+    if (!match) return null;
+    const sign = match[1] === '-' ? -1 : 1;
+    return sign * Number(match[2]);
+  };
+
+  const transitionStageStatuses = new Set(['APPROVED', 'SCHEDULED']);
+  const mustHaveThreeTasks = (status: string) => !['DONE', 'CANCELLED', 'DRAFT'].includes(status);
+
+  const hardErrors: string[] = [];
+  if (total !== 20) {
+    hardErrors.push(`Expected exactly 20 initiatives, got ${total}.`);
+  }
+  if (draftCount < 3) {
+    hardErrors.push(`Expected at least 3 DRAFT initiatives, got ${draftCount}.`);
+  }
+  if (inProgressCount < 5) {
+    hardErrors.push(`Expected at least 5 in_progress initiatives, got ${inProgressCount}.`);
+  }
+
+  for (const initiative of initiatives) {
+    const status = String(initiative.status || '');
+    const slug = initiative.slug;
+    const tasks = Array.isArray(initiative.tasks) ? initiative.tasks : [];
+    const decisions = Array.isArray(initiative.decisions) ? initiative.decisions : [];
+    const milestones = Array.isArray(initiative.milestones) ? initiative.milestones : [];
+    const successCriteria = Array.isArray(initiative.successCriteria) ? initiative.successCriteria : [];
+
+    if (mustHaveThreeTasks(status) && tasks.length < 3) {
+      hardErrors.push(`Initiative ${slug} (${status}) must have >=3 tasks, got ${tasks.length}.`);
+    }
+    if (decisions.length < 1) {
+      hardErrors.push(`Initiative ${slug} must have >=1 decision.`);
+    }
+    if (milestones.length < 1) {
+      hardErrors.push(`Initiative ${slug} must have >=1 milestone.`);
+    }
+    if (successCriteria.length < 3) {
+      hardErrors.push(
+        `Initiative ${slug} must have >=3 successCriteria (KPI expectations), got ${successCriteria.length}.`
+      );
+    }
+    if (
+      typeof initiative.budgetCapex !== 'number' ||
+      typeof initiative.budgetOpex !== 'number' ||
+      initiative.budgetCapex < 0 ||
+      initiative.budgetOpex < 0
+    ) {
+      hardErrors.push(`Initiative ${slug} has invalid budget numbers.`);
+    }
+    if (typeof initiative.expectedRoi !== 'number' || initiative.expectedRoi <= 0) {
+      hardErrors.push(`Initiative ${slug} must have positive expectedRoi.`);
+    }
+    if (!initiative.ownerBusiness || !initiative.ownerExecution || !initiative.sponsor) {
+      hardErrors.push(`Initiative ${slug} is missing ownerBusiness/ownerExecution/sponsor.`);
+    }
+
+    const startRel = parseRelDay(String(initiative.plannedStart || ''));
+    const endRel = parseRelDay(String(initiative.plannedEnd || ''));
+    if (startRel !== null && endRel !== null && endRel <= startRel) {
+      hardErrors.push(
+        `Initiative ${slug} has invalid timeline: plannedEnd (${initiative.plannedEnd}) <= plannedStart (${initiative.plannedStart}).`
+      );
+    }
+
+    if (status === 'DRAFT' && tasks.some((task) => task.status === 'in_progress')) {
+      hardErrors.push(`Initiative ${slug} is DRAFT but has in_progress tasks.`);
+    }
+
+    if (transitionStageStatuses.has(status) && tasks.some((task) => task.status === 'in_progress')) {
+      hardErrors.push(
+        `Initiative ${slug} is ${status} but has in_progress tasks (expected todo/done in transition stages).`
+      );
+    }
+  }
+
+  if (hardErrors.length > 0) {
+    const header =
+      locale === 'pl'
+        ? 'Portfolio sanity-check failed for Atelier demo initiatives:'
+        : 'Portfolio sanity-check failed for Atelier demo initiatives:';
+    throw new Error(`${header}\n- ${hardErrors.join('\n- ')}`);
+  }
 }
 
 function markdownBlocksToDocJson(markdown: string) {
@@ -2977,6 +3087,340 @@ async function upsertDrdAssessment(
       { fallback: true }
     );
   }
+
+  if (!(await tableExists('assessment_sessions'))) return;
+
+  const respondentContextBySlug: Record<
+    string,
+    { functionName: string; operatingSurface: string; recurringConstraint: string; leveragePoint: string }
+  > = {
+    'antoine-laurent': {
+      functionName: 'CEO',
+      operatingSurface: 'executive portfolio cadence',
+      recurringConstraint: 'inconsistent value evidence across workstreams',
+      leveragePoint: 'one decision rhythm tied to measurable outcomes',
+    },
+    'claire-laurent': {
+      functionName: 'CFO & Head of People',
+      operatingSurface: 'finance and capability planning',
+      recurringConstraint: 'manual reconciliation between cost and impact views',
+      leveragePoint: 'faster confidence-weighted ROI governance',
+    },
+    'julien-moreau': {
+      functionName: 'CTO',
+      operatingSurface: 'digital platform and OT integration',
+      recurringConstraint: 'handoff gaps between product and plant teams',
+      leveragePoint: 'clear ownership for platform hardening and rollout quality',
+    },
+    'marc-dubois': {
+      functionName: 'Plant Manager',
+      operatingSurface: 'shop-floor throughput and escalation',
+      recurringConstraint: 'changeover variance and downtime response delays',
+      leveragePoint: 'daily routines anchored in line-level telemetry',
+    },
+    'isabelle-leroy': {
+      functionName: 'Procurement Director',
+      operatingSurface: 'supplier risk and inventory resilience',
+      recurringConstraint: 'volatile lead times on critical components',
+      leveragePoint: 'scenario-driven sourcing decisions with board visibility',
+    },
+    'luc-rousseau': {
+      functionName: 'Maintenance Lead',
+      operatingSurface: 'predictive maintenance operations',
+      recurringConstraint: 'alert noise and limited technician bandwidth',
+      leveragePoint: 'higher signal quality and clearer intervention priority',
+    },
+    'sophie-bernard': {
+      functionName: 'QA Director',
+      operatingSurface: 'quality closure loop',
+      recurringConstraint: 'slow cross-plant corrective action closure',
+      leveragePoint: 'faster root-cause governance with shared taxonomy',
+    },
+    'thomas-viau': {
+      functionName: 'VP Sales',
+      operatingSurface: 'partner-led growth motion',
+      recurringConstraint: 'inconsistent conversion story across regions',
+      leveragePoint: 'playbooks tied to activation and renewal signals',
+    },
+    'camille-dubois': {
+      functionName: 'Marketing Director',
+      operatingSurface: 'go-to-market narrative and enablement',
+      recurringConstraint: 'message drift between launch and field execution',
+      leveragePoint: 'evidence-backed positioning linked to adoption outcomes',
+    },
+    'jean-claude-laurent': {
+      functionName: 'Senior Advisor',
+      operatingSurface: 'board oversight',
+      recurringConstraint: 'weak continuity of follow-up after strategic decisions',
+      leveragePoint: 'explicit accountability by decision cycle',
+    },
+    'amelie-girard': {
+      functionName: 'PMO Director',
+      operatingSurface: 'initiative governance',
+      recurringConstraint: 'dependency conflicts discovered too late',
+      leveragePoint: 'earlier risk signaling and stage-gate discipline',
+    },
+    'nicolas-faure': {
+      functionName: 'Head of Product',
+      operatingSurface: 'roadmap trade-off decisions',
+      recurringConstraint: 'fragmented demand signals from partners and customers',
+      leveragePoint: 'evidence hierarchy for prioritization',
+    },
+    'lea-martin': {
+      functionName: 'Customer Success Lead',
+      operatingSurface: 'onboarding and activation',
+      recurringConstraint: 'inconsistent first-30-day execution',
+      leveragePoint: 'repeatable adoption interventions and early warning indicators',
+    },
+    'paul-lambert': {
+      functionName: 'Industrial Data Lead',
+      operatingSurface: 'telemetry and KPI integrity',
+      recurringConstraint: 'definition drift between teams',
+      leveragePoint: 'single metric contract with confidence labels',
+    },
+    'elise-robert': {
+      functionName: 'Finance Controller',
+      operatingSurface: 'value tracking and reporting',
+      recurringConstraint: 'late validation of realized benefits',
+      leveragePoint: 'faster evidence chain from initiative to margin impact',
+    },
+    'mathieu-chevalier': {
+      functionName: 'Supply Planner',
+      operatingSurface: 'demand and capacity planning',
+      recurringConstraint: 'short-horizon fire-fighting due to supplier shocks',
+      leveragePoint: 'linked scenario planning across planning and procurement',
+    },
+    'zoe-perrin': {
+      functionName: 'Partner Program Manager',
+      operatingSurface: 'partner onboarding funnel',
+      recurringConstraint: 'drop-off after initial training completion',
+      leveragePoint: 'milestone-based partner activation governance',
+    },
+    'hugo-bernard': {
+      functionName: 'Transformation Analyst',
+      operatingSurface: 'executive insight synthesis',
+      recurringConstraint: 'evidence scattered across tools and cadences',
+      leveragePoint: 'single narrative with explicit confidence and ownership',
+    },
+    'emma-noel': {
+      functionName: 'Learning Experience Manager',
+      operatingSurface: 'educator enablement programs',
+      recurringConstraint: 'content completion without behavior change',
+      leveragePoint: 'learning journeys tied to operational outcomes',
+    },
+    'damien-petit': {
+      functionName: 'Manufacturing Excellence Lead',
+      operatingSurface: 'standard work deployment',
+      recurringConstraint: 'line-to-line variation despite shared SOPs',
+      leveragePoint: 'coached routine adoption and exception analytics',
+    },
+    'ines-garnier': {
+      functionName: 'Revenue Operations Analyst',
+      operatingSurface: 'pipeline and renewal intelligence',
+      recurringConstraint: 'weak traceability from activity to revenue quality',
+      leveragePoint: 'unified funnel metrics with leading risk indicators',
+    },
+    'victor-morin': {
+      functionName: 'OT Security Program Lead',
+      operatingSurface: 'plant cyber risk hardening',
+      recurringConstraint: 'uneven control maturity across facilities',
+      leveragePoint: 'site-by-site control roadmap with measurable closure',
+    },
+  };
+
+  const questionThemes: Record<string, { pl: string; en: string; signal: string }> = {
+    q01_strategy_focus: {
+      pl: 'spójność strategicznych priorytetów z codziennym execution',
+      en: 'alignment between strategy priorities and daily execution',
+      signal: 'decision clarity',
+    },
+    q02_value_evidence: {
+      pl: 'jakość dowodzenia wartości i twardych efektów',
+      en: 'quality of value evidence and hard outcomes',
+      signal: 'value confidence',
+    },
+    q03_portfolio_governance: {
+      pl: 'governance portfela i praca na zależnościach',
+      en: 'portfolio governance and dependency management',
+      signal: 'portfolio control',
+    },
+    q04_execution_rhythm: {
+      pl: 'rytm delivery, eskalacje i decyzje operacyjne',
+      en: 'delivery rhythm, escalations, and operating decisions',
+      signal: 'execution tempo',
+    },
+    q05_data_quality: {
+      pl: 'jakość danych i spójność metryk między zespołami',
+      en: 'data quality and metric consistency across teams',
+      signal: 'data reliability',
+    },
+    q06_ot_cyber_discipline: {
+      pl: 'dyscyplina OT/cyber i domykanie luk kontroli',
+      en: 'OT/cyber discipline and control-gap closure',
+      signal: 'risk containment',
+    },
+    q07_ai_operating_model: {
+      pl: 'operacyjny model wykorzystania AI w procesach',
+      en: 'operating model for AI in business processes',
+      signal: 'AI adoption quality',
+    },
+    q08_change_adoption: {
+      pl: 'adopcję zmian na poziomie ludzi i rutyn',
+      en: 'change adoption at people-and-routine level',
+      signal: 'behavioral adoption',
+    },
+    q09_partner_growth: {
+      pl: 'wzrost partnerów i powtarzalność ekspansji',
+      en: 'partner growth and repeatability of expansion',
+      signal: 'commercial scalability',
+    },
+    q10_risk_management: {
+      pl: 'zarządzanie ryzykiem i jakość działań korygujących',
+      en: 'risk management and quality of corrective actions',
+      signal: 'resilience readiness',
+    },
+  };
+
+  function buildNarrative(
+    respondentSlug: string,
+    questionId: string,
+    questionIndex: number,
+    seriesIndex: number
+  ): string {
+    const ctx = respondentContextBySlug[respondentSlug] || {
+      functionName: 'Cross-functional contributor',
+      operatingSurface: 'transformation execution',
+      recurringConstraint: 'fragmented evidence and uneven operating discipline',
+      leveragePoint: 'clear ownership and measurable outcomes',
+    };
+    const theme = questionThemes[questionId] || {
+      pl: 'spójność operacyjną i decyzyjną',
+      en: 'operating and decision alignment',
+      signal: 'operating confidence',
+    };
+
+    const maturityShiftPl =
+      seriesIndex === 1
+        ? 'W pierwszej serii odpowiedzi widać bardziej diagnostyczny obraz i mocne zaakcentowanie ograniczeń.'
+        : 'W drugiej serii widać już bardziej dojrzałą narrację: mniej opisu objawów, więcej konkretnych mechanizmów poprawy.';
+    const maturityShiftEn =
+      seriesIndex === 1
+        ? 'In series one the answer keeps a diagnostic tone and highlights constraints more strongly.'
+        : 'In series two the narrative is more mature: fewer symptoms, more concrete improvement mechanisms.';
+
+    if (locale === 'pl') {
+      return [
+        `Jako ${ctx.functionName} patrzę na ${theme.pl} przez pryzmat obszaru ${ctx.operatingSurface}, gdzie najsilniej odczuwamy ${ctx.recurringConstraint}.`,
+        `W praktyce problem nie polega na braku pojedynczego dashboardu, tylko na tym, że sygnały z planowania, realizacji i review boardowego docierają do ludzi w innym tempie i z różnym poziomem zaufania.`,
+        `W tym pytaniu obserwujemy powtarzalny wzorzec: gdy rośnie presja na termin, zespoły skracają pętlę uczenia i decyzje są szybsze, ale słabiej uzasadnione dowodami.`,
+        `Najbardziej użytecznym findingiem jest to, że dźwignia poprawy leży w ${ctx.leveragePoint}, a nie w dokładaniu kolejnych artefaktów bez właściciela i bez rytmu przeglądów.`,
+        `${maturityShiftPl}`,
+        `To daje nam konkretny materiał pod insighty i inicjatywy: można mapować ryzyko na właścicieli, przypinać confidence do decyzji i mierzyć czy sygnał "${theme.signal}" realnie poprawia jakość execution miesiąc do miesiąca.`,
+        `Dodatkowo respondent wskazuje, że odpowiedź ${questionIndex + 1} powinna być czytana razem z kontekstem zależności między zespołami, bo tam najczęściej powstaje ukryty koszt opóźnień i reworku.`,
+      ].join(' ');
+    }
+
+    return [
+      `As ${ctx.functionName}, I evaluate ${theme.en} through the lens of ${ctx.operatingSurface}, where we most clearly feel ${ctx.recurringConstraint}.`,
+      `In practice, the issue is not a missing dashboard; it is that planning, delivery, and board review signals move at different speeds and carry different trust levels.`,
+      `For this question we see a recurring pattern: whenever deadline pressure rises, teams shorten the learning loop and decisions become faster but less evidence-backed.`,
+      `The most useful finding is that the real leverage sits in ${ctx.leveragePoint}, not in producing more artifacts without clear owners and operating cadence.`,
+      `${maturityShiftEn}`,
+      `This gives strong raw material for later insights and initiatives: we can map risk to accountable owners, attach confidence to decisions, and test whether the "${theme.signal}" signal actually improves execution quality month over month.`,
+      `The respondent also emphasizes that answer ${questionIndex + 1} should be interpreted with cross-team dependency context, because that is where hidden delay and rework costs usually emerge.`,
+    ].join(' ');
+  }
+
+  const respondentSlugs = Object.keys(userMap).sort();
+  const baseQuestionIds = [
+    'q01_strategy_focus',
+    'q02_value_evidence',
+    'q03_portfolio_governance',
+    'q04_execution_rhythm',
+    'q05_data_quality',
+    'q06_ot_cyber_discipline',
+    'q07_ai_operating_model',
+    'q08_change_adoption',
+    'q09_partner_growth',
+    'q10_risk_management',
+  ];
+
+  // Build two independent 10-question series per user (20 total answers/user)
+  // and persist them in assessment sessions + per-user state.
+  for (const respondentSlug of respondentSlugs) {
+    const respondentUserId = userMap[respondentSlug]?.id;
+    if (!respondentUserId) continue;
+    const seriesRuns: Array<Record<string, unknown>> = [];
+
+    for (let seriesIndex = 1; seriesIndex <= 2; seriesIndex += 1) {
+      const sessionId = makeId(
+        organizationId,
+        'assessment-session',
+        `${respondentSlug}-series-${seriesIndex}`
+      );
+      const openedAt = materializeRelativeIso(`-${18 - seriesIndex}d`, { anchorDate });
+      const closedAt = materializeRelativeIso(`-${17 - seriesIndex}d`, { anchorDate });
+
+      await DbPromise.run(
+        `INSERT INTO assessment_sessions (id, assessment_id, user_id, opened_at, closed_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           opened_at=excluded.opened_at,
+           closed_at=excluded.closed_at`,
+        [sessionId, assessmentId, respondentUserId, openedAt, closedAt],
+        { fallback: true }
+      );
+
+      const seriesAnswers = baseQuestionIds.reduce<Record<string, unknown>>((acc, questionId, idx) => {
+        const weightedBase = (idx % 5) + 1;
+        const score = Math.min(5, weightedBase + (seriesIndex === 2 ? 1 : 0));
+        const confidence = Number((0.58 + idx * 0.03 + seriesIndex * 0.04).toFixed(2));
+        acc[questionId] = {
+          score,
+          confidence: Math.min(0.95, confidence),
+          note: buildNarrative(respondentSlug, questionId, idx, seriesIndex),
+        };
+        return acc;
+      }, {});
+
+      seriesRuns.push({
+        seriesVersion: seriesIndex,
+        questionSet: baseQuestionIds,
+        responses: seriesAnswers,
+        completedQuestions: baseQuestionIds.length,
+        totalQuestions: baseQuestionIds.length,
+        completedAt: closedAt,
+      });
+    }
+
+    if (await tableExists('assessment_user_state')) {
+      const latestRun = seriesRuns[seriesRuns.length - 1] || null;
+      const navigationJson = {
+        seriesRuns,
+        seriesVersion: 2,
+        questionSet: baseQuestionIds,
+        responses: latestRun ? (latestRun.responses as Record<string, unknown>) : {},
+        completedQuestions: baseQuestionIds.length * 2,
+        totalQuestions: baseQuestionIds.length * 2,
+        completedAt: latestRun ? latestRun.completedAt : null,
+      };
+
+      await DbPromise.run(
+        `INSERT INTO assessment_user_state (assessment_id, user_id, navigation_json, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (assessment_id, user_id) DO UPDATE SET
+           navigation_json=excluded.navigation_json,
+           updated_at=excluded.updated_at`,
+        [
+          assessmentId,
+          respondentUserId,
+          JSON.stringify(navigationJson),
+          latestRun ? latestRun.completedAt : new Date().toISOString(),
+        ],
+        { fallback: true }
+      );
+    }
+  }
 }
 
 async function upsertNotifications(
@@ -3117,15 +3561,2034 @@ async function upsertActivityLogs(
   }
 }
 
+async function upsertResultsLayer(
+  organizationId: string,
+  ownerUserId: string,
+  anchorDate: Date,
+  initiativeMap: InitiativeMap
+): Promise<ResultsSeedCounts> {
+  const counts: ResultsSeedCounts = {
+    kpis: 0,
+    kpiTimeSeries: 0,
+    kpiMappings: 0,
+    roiAssumptions: 0,
+    roiRealized: 0,
+    deviations: 0,
+    deviationActions: 0,
+    reportSnapshots: 0,
+    v8Kpis: 0,
+    v8Deviations: 0,
+    v8RoiEntries: 0,
+  };
+
+  const hasInitiativeKpis = await tableExists('initiative_kpis');
+  const hasKpiTimeSeries = await tableExists('kpi_time_series');
+  const hasKpiMappings = await tableExists('initiative_kpi_mappings');
+  const hasRoiAssumptions = await tableExists('roi_assumptions');
+  const hasRoiRealized = await tableExists('roi_realized_values');
+  const hasDeviationCases = await tableExists('kpi_deviation_cases');
+  const hasDeviationActions = await tableExists('kpi_deviation_actions');
+  const hasSnapshots = await tableExists('results_kpi_report_snapshots');
+  const hasV8Kpis = await tableExists('v8_kpi_definitions');
+  const hasV8Deviations = await tableExists('v8_deviation_records');
+  const hasV8Roi = await tableExists('v8_roi_realization_entries');
+
+  const kpis = [
+    {
+      slug: 'oee',
+      name: 'OEE (Overall Equipment Effectiveness)',
+      description: 'Measures equipment utilization, performance, and quality.',
+      unit: '%',
+      baseline: 64,
+      target: 82,
+      values: [66, 67.5, 69, 71, 73, 75],
+      direction: 'HIGHER_IS_BETTER',
+      cadence: 'MONTHLY',
+    },
+    {
+      slug: 'changeover',
+      name: 'Changeover Duration',
+      description: 'Average duration of changeover on flagship lines.',
+      unit: 'min',
+      baseline: 19,
+      target: 10,
+      values: [18.5, 18, 17.2, 16.3, 15.7, 14.9],
+      direction: 'LOWER_IS_BETTER',
+      cadence: 'MONTHLY',
+    },
+    {
+      slug: 'renewal',
+      name: 'Atelier Digital Gross Renewal',
+      description: 'Gross renewal of premium digital subscriptions.',
+      unit: '%',
+      baseline: 78,
+      target: 90,
+      values: [79, 79.5, 80, 81, 82.5, 84],
+      direction: 'HIGHER_IS_BETTER',
+      cadence: 'MONTHLY',
+    },
+    {
+      slug: 'partner-activation',
+      name: 'Partner First-90-Day Activation',
+      description: 'Share of newly signed partners reaching first productivity milestone.',
+      unit: '%',
+      baseline: 50,
+      target: 75,
+      values: [51, 53, 55, 56, 58, 61],
+      direction: 'HIGHER_IS_BETTER',
+      cadence: 'MONTHLY',
+    },
+    {
+      slug: 'defect-recurrence',
+      name: 'Repeat Defect Rate',
+      description: 'Rate of recurring quality defects on top families.',
+      unit: '%',
+      baseline: 11,
+      target: 4,
+      values: [10.8, 10.2, 9.6, 9, 8.3, 7.7],
+      direction: 'LOWER_IS_BETTER',
+      cadence: 'MONTHLY',
+    },
+    {
+      slug: 'decision-cycle',
+      name: 'Decision Cycle Time',
+      description: 'Median number of days from issue signal to executive decision.',
+      unit: 'days',
+      baseline: 14,
+      target: 6,
+      values: [13.8, 13.2, 12.5, 11.7, 10.9, 10.1],
+      direction: 'LOWER_IS_BETTER',
+      cadence: 'MONTHLY',
+    },
+  ];
+
+  const kpiIds: Record<string, string> = {};
+  const periodMonth = (offsetMonths: number) => {
+    const d = new Date(Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() + offsetMonths, 1));
+    return d.toISOString().slice(0, 10);
+  };
+
+  if (hasInitiativeKpis) {
+    const kpiCols = await getTableColumns('initiative_kpis');
+    for (const kpi of kpis) {
+      const id = makeId(organizationId, 'kpi', kpi.slug);
+      kpiIds[kpi.slug] = id;
+
+      const cols: string[] = ['id', 'organization_id', 'name', 'description', 'unit'];
+      const vals: Array<string | number | null> = [
+        id,
+        organizationId,
+        kpi.name,
+        kpi.description,
+        kpi.unit,
+      ];
+      if (kpiCols.has('baseline_value')) {
+        cols.push('baseline_value');
+        vals.push(kpi.baseline);
+      }
+      if (kpiCols.has('target_value')) {
+        cols.push('target_value');
+        vals.push(kpi.target);
+      }
+      if (kpiCols.has('current_value')) {
+        cols.push('current_value');
+        vals.push(kpi.values[kpi.values.length - 1]);
+      }
+      if (kpiCols.has('measurement_frequency')) {
+        cols.push('measurement_frequency');
+        vals.push(kpi.cadence);
+      }
+      if (kpiCols.has('direction')) {
+        cols.push('direction');
+        vals.push(kpi.direction);
+      }
+      if (kpiCols.has('owner_user_id')) {
+        cols.push('owner_user_id');
+        vals.push(ownerUserId);
+      }
+      if (kpiCols.has('created_at')) {
+        cols.push('created_at');
+        vals.push(new Date().toISOString());
+      }
+      if (kpiCols.has('updated_at')) {
+        cols.push('updated_at');
+        vals.push(new Date().toISOString());
+      }
+
+      const ph = cols.map((_, i) => `$${i + 1}`).join(', ');
+      await DbPromise.run(
+        `INSERT INTO initiative_kpis (${cols.join(', ')})
+         VALUES (${ph})
+         ON CONFLICT(id) DO UPDATE SET name=excluded.name, description=excluded.description`,
+        vals,
+        { fallback: true }
+      );
+      counts.kpis += 1;
+    }
+  }
+
+  if (hasKpiTimeSeries && Object.keys(kpiIds).length > 0) {
+    for (const kpi of kpis) {
+      const kpiId = kpiIds[kpi.slug];
+      if (!kpiId) continue;
+      for (let i = 0; i < kpi.values.length; i += 1) {
+        const offset = i - (kpi.values.length - 1);
+        await DbPromise.run(
+          `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, source, notes, recorded_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET value=excluded.value, notes=excluded.notes`,
+          [
+            makeId(organizationId, 'kpi-ts', `${kpi.slug}-${String(i + 1).padStart(2, '0')}`),
+            kpiId,
+            organizationId,
+            kpi.values[i],
+            periodMonth(offset),
+            'demo_seed',
+            `Seeded ${kpi.name} trend point ${i + 1}`,
+            ownerUserId,
+            new Date().toISOString(),
+          ],
+          { fallback: true }
+        );
+        counts.kpiTimeSeries += 1;
+      }
+    }
+  }
+
+  if (hasKpiMappings && Object.keys(kpiIds).length > 0) {
+    const mappings = [
+      ['line-3-digital-twin', 'oee', 1.0, 'increase', 'high'],
+      ['line-3-digital-twin', 'changeover', 0.9, 'decrease', 'high'],
+      ['atelier-digital-growth', 'renewal', 1.0, 'increase', 'high'],
+      ['partner-onboarding-excellence', 'partner-activation', 1.0, 'increase', 'medium'],
+      ['qa-defect-closing-loop', 'defect-recurrence', 1.0, 'decrease', 'high'],
+      ['board-value-tracking', 'decision-cycle', 0.8, 'decrease', 'medium'],
+      ['enterprise-data-contract-control-plane', 'decision-cycle', 0.7, 'decrease', 'medium'],
+    ] as const;
+
+    for (const [initiativeSlug, kpiSlug, weight, direction, confidence] of mappings) {
+      const initiativeId = initiativeMap[initiativeSlug];
+      const kpiId = kpiIds[kpiSlug];
+      if (!initiativeId || !kpiId) continue;
+      await DbPromise.run(
+        `INSERT INTO initiative_kpi_mappings
+           (id, initiative_id, kpi_id, organization_id, impact_weight, impact_direction, confidence, notes, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(initiative_id, kpi_id) DO UPDATE SET
+           impact_weight=excluded.impact_weight,
+           impact_direction=excluded.impact_direction,
+           confidence=excluded.confidence,
+           updated_at=excluded.updated_at`,
+        [
+          makeId(organizationId, 'kpi-map', `${initiativeSlug}-${kpiSlug}`),
+          initiativeId,
+          kpiId,
+          organizationId,
+          weight,
+          direction,
+          confidence,
+          `Atelier mapping: ${initiativeSlug} -> ${kpiSlug}`,
+          ownerUserId,
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ],
+        { fallback: true }
+      );
+      counts.kpiMappings += 1;
+    }
+  }
+
+  if (hasRoiAssumptions) {
+    const assumptions = [
+      ['line-3-digital-twin', 480000, 160000, 42, 390000, 10, 36, 2900000, 1780000, 140000, -110000, 'high'],
+      ['procurement-control-tower', 220000, 190000, 31, 220000, 14, 36, 2900000, 1780000, 70000, -90000, 'high'],
+      ['atelier-digital-growth', 260000, 380000, 36, 310000, 12, 36, 2900000, 1780000, 260000, -35000, 'medium'],
+      ['qa-defect-closing-loop', 180000, 120000, 24, 130000, 18, 36, 2900000, 1780000, 40000, -70000, 'medium'],
+    ] as const;
+    for (const item of assumptions) {
+      const initiativeId = initiativeMap[item[0]];
+      if (!initiativeId) continue;
+      await DbPromise.run(
+        `INSERT INTO roi_assumptions (
+          id, initiative_id, organization_id, capex, opex_annual, expected_roi_percent, expected_npv,
+          expected_payback_months, horizon_months, baseline_revenue, baseline_cost, expected_revenue_delta,
+          expected_cost_delta, effect_start_date, assumptions_text, assumptions_owner, confidence, last_updated_by,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(initiative_id) DO UPDATE SET
+          capex=excluded.capex,
+          opex_annual=excluded.opex_annual,
+          expected_roi_percent=excluded.expected_roi_percent,
+          expected_npv=excluded.expected_npv,
+          expected_payback_months=excluded.expected_payback_months,
+          expected_revenue_delta=excluded.expected_revenue_delta,
+          expected_cost_delta=excluded.expected_cost_delta,
+          confidence=excluded.confidence,
+          updated_at=excluded.updated_at`,
+        [
+          makeId(organizationId, 'roi-assumption', item[0]),
+          initiativeId,
+          organizationId,
+          item[1],
+          item[2],
+          item[3],
+          item[4],
+          item[5],
+          item[6],
+          item[7],
+          item[8],
+          item[9],
+          item[10],
+          periodMonth(-6),
+          `Atelier Wave 1 assumption for ${item[0]}`,
+          'CFO Office',
+          item[11],
+          ownerUserId,
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ],
+        { fallback: true }
+      );
+      counts.roiAssumptions += 1;
+    }
+  }
+
+  if (hasRoiRealized) {
+    const realized = [
+      ['line-3-digital-twin', -5, 12000, -9000, 21000],
+      ['line-3-digital-twin', -4, 16000, -11000, 26000],
+      ['line-3-digital-twin', -3, 18000, -13000, 29000],
+      ['line-3-digital-twin', -2, 21000, -15000, 33000],
+      ['line-3-digital-twin', -1, 24000, -17000, 36000],
+      ['procurement-control-tower', -4, 7000, -6000, 13000],
+      ['procurement-control-tower', -3, 9000, -7500, 16500],
+      ['procurement-control-tower', -2, 11000, -9000, 20000],
+      ['procurement-control-tower', -1, 12000, -9500, 21500],
+      ['atelier-digital-growth', -3, 28000, -3000, 8000],
+      ['atelier-digital-growth', -2, 34000, -3500, 9500],
+      ['atelier-digital-growth', -1, 41000, -4000, 11000],
+      ['qa-defect-closing-loop', -2, 5000, -9000, 15000],
+      ['qa-defect-closing-loop', -1, 7000, -11000, 19000],
+    ] as const;
+    for (const [slug, monthOffset, revDelta, costDelta, savings] of realized) {
+      const initiativeId = initiativeMap[slug];
+      if (!initiativeId) continue;
+      await DbPromise.run(
+        `INSERT INTO roi_realized_values
+          (id, initiative_id, organization_id, period_month, realized_revenue_delta, realized_cost_delta, realized_savings, source, variance_notes, recorded_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           realized_revenue_delta=excluded.realized_revenue_delta,
+           realized_cost_delta=excluded.realized_cost_delta,
+           realized_savings=excluded.realized_savings,
+           variance_notes=excluded.variance_notes`,
+        [
+          makeId(organizationId, 'roi-realized', `${slug}-${monthOffset}`),
+          initiativeId,
+          organizationId,
+          periodMonth(monthOffset),
+          revDelta,
+          costDelta,
+          savings,
+          'demo_seed',
+          `Atelier monthly realized value for ${slug}`,
+          ownerUserId,
+          new Date().toISOString(),
+        ],
+        { fallback: true }
+      );
+      counts.roiRealized += 1;
+    }
+  }
+
+  if (hasDeviationCases) {
+    const deviations = [
+      ['defect-recurrence', 'RED', 'ACKNOWLEDGED', 'Repeat defect rate still above target despite cockpit rollout.'],
+      ['changeover', 'AMBER', 'IN_PROGRESS', 'Changeover duration trend is improving but below target velocity.'],
+      ['partner-activation', 'AMBER', 'OPEN', 'Partner first-90-day activation is under expected ramp pace.'],
+    ] as const;
+    for (let idx = 0; idx < deviations.length; idx += 1) {
+      const [kpiSlug, severity, status, summary] = deviations[idx];
+      const kpiId = kpiIds[kpiSlug];
+      if (!kpiId) continue;
+      const caseId = makeId(organizationId, 'kpi-dev', `${kpiSlug}-${idx + 1}`);
+      await DbPromise.run(
+        `INSERT INTO kpi_deviation_cases
+          (id, kpi_id, organization_id, period_start, severity, status, owner_user_id, deviation_summary, rca_text, detected_at, detected_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(organization_id, kpi_id, period_start) DO UPDATE SET
+           severity=excluded.severity,
+           status=excluded.status,
+           deviation_summary=excluded.deviation_summary,
+           rca_text=excluded.rca_text,
+           updated_at=excluded.updated_at`,
+        [
+          caseId,
+          kpiId,
+          organizationId,
+          periodMonth(0),
+          severity,
+          status,
+          ownerUserId,
+          summary,
+          `Root cause review for ${kpiSlug} in Atelier operating cadence.`,
+          new Date().toISOString(),
+          'system',
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ],
+        { fallback: true }
+      );
+      counts.deviations += 1;
+
+      if (hasDeviationActions) {
+        await DbPromise.run(
+          `INSERT INTO kpi_deviation_actions (id, case_id, title, owner_user_id, due_date, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET title=excluded.title, status=excluded.status, updated_at=excluded.updated_at`,
+          [
+            makeId(organizationId, 'kpi-dev-action', `${kpiSlug}-${idx + 1}`),
+            caseId,
+            `Mitigation plan for ${kpiSlug}`,
+            ownerUserId,
+            periodMonth(1),
+            idx === 0 ? 'OPEN' : 'IN_PROGRESS',
+            new Date().toISOString(),
+            new Date().toISOString(),
+          ],
+          { fallback: true }
+        );
+        counts.deviationActions += 1;
+      }
+    }
+  }
+
+  if (hasSnapshots) {
+    const snapshot = {
+      title: 'Atelier Toys Wave 1 KPI Review',
+      periodStart: periodMonth(-3),
+      periodEnd: periodMonth(0),
+      kpis: kpis.map((k) => ({
+        id: kpiIds[k.slug] || k.slug,
+        name: k.name,
+        unit: k.unit,
+        target: k.target,
+        baseline: k.baseline,
+        current: k.values[k.values.length - 1],
+      })),
+      stats: {
+        totalKpis: kpis.length,
+        deviationCases: counts.deviations,
+      },
+    };
+    await DbPromise.run(
+      `INSERT INTO results_kpi_report_snapshots (id, organization_id, period_start, period_end, title, snapshot_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json, title=excluded.title`,
+      [
+        makeId(organizationId, 'kpi-snapshot', 'wave1'),
+        organizationId,
+        periodMonth(-3),
+        periodMonth(0),
+        'Atelier Toys Wave 1 KPI Review',
+        JSON.stringify(snapshot),
+        ownerUserId,
+        new Date().toISOString(),
+      ],
+      { fallback: true }
+    );
+    counts.reportSnapshots += 1;
+  }
+
+  if (hasV8Kpis) {
+    const v8Defs = [
+      ['OEE', 'initiative_linked', 'line-3-digital-twin', 'percentage', 64, 82, 75, 'monthly', 'active'],
+      ['Changeover Duration', 'initiative_linked', 'line-3-digital-twin', 'duration', 19, 10, 14.9, 'monthly', 'active'],
+      ['Atelier Digital Renewal', 'initiative_linked', 'atelier-digital-growth', 'percentage', 78, 90, 84, 'monthly', 'active'],
+      ['Partner Activation', 'initiative_linked', 'partner-onboarding-excellence', 'percentage', 50, 75, 61, 'monthly', 'improvement'],
+    ] as const;
+
+    for (const def of v8Defs) {
+      const [name, mode, initiativeSlug, metricType, baseline, target, current, cadence, status] = def;
+      const initiativeId = initiativeMap[initiativeSlug] || null;
+      await DbPromise.run(
+        `INSERT INTO v8_kpi_definitions
+          (kpi_id, organization_id, name, mode, initiative_id, metric_type, baseline_value, target_value, current_value, measurement_cadence, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(kpi_id) DO UPDATE SET
+           current_value=excluded.current_value,
+           target_value=excluded.target_value,
+           status=excluded.status,
+           updated_at=excluded.updated_at`,
+        [
+          makeId(organizationId, 'v8-kpi', name.toLowerCase().replace(/\s+/g, '-')),
+          organizationId,
+          name,
+          mode,
+          initiativeId,
+          metricType,
+          baseline,
+          target,
+          current,
+          cadence,
+          status,
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ],
+        { fallback: true }
+      );
+      counts.v8Kpis += 1;
+    }
+  }
+
+  if (hasV8Deviations && hasV8Kpis) {
+    const v8DeviationRows = [
+      ['oee', 'underperformance', 'medium', 75, 82, 'Supervisor adoption not yet at target velocity'],
+      ['changeover-duration', 'underperformance', 'high', 14.9, 10, 'SMED discipline uneven across shifts'],
+    ] as const;
+    for (const [slug, type, severity, actual, target, action] of v8DeviationRows) {
+      await DbPromise.run(
+        `INSERT INTO v8_deviation_records
+          (deviation_id, organization_id, kpi_id, deviation_type, severity, action_required, created_at, observed_actual, observed_target)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          makeId(organizationId, 'v8-dev', slug),
+          organizationId,
+          makeId(organizationId, 'v8-kpi', slug),
+          type,
+          severity,
+          action,
+          new Date().toISOString(),
+          actual,
+          target,
+        ],
+        { fallback: true }
+      );
+      counts.v8Deviations += 1;
+    }
+  }
+
+  if (hasV8Roi && hasV8Kpis) {
+    const entries = [
+      ['oee', 'line-3-digital-twin', 118000, -1],
+      ['oee', 'line-3-digital-twin', 131000, 0],
+      ['atelier-digital-renewal', 'atelier-digital-growth', 72000, 0],
+      ['partner-activation', 'partner-onboarding-excellence', 41000, 0],
+    ] as const;
+    for (const [kpiSlug, initiativeSlug, value, monthOffset] of entries) {
+      const initiativeId = initiativeMap[initiativeSlug] || null;
+      await DbPromise.run(
+        `INSERT INTO v8_roi_realization_entries (entry_id, organization_id, kpi_id, initiative_id, realized_value, period, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          makeId(organizationId, 'v8-roi', `${kpiSlug}-${monthOffset}`),
+          organizationId,
+          makeId(organizationId, 'v8-kpi', kpiSlug),
+          initiativeId,
+          value,
+          periodMonth(monthOffset),
+          new Date().toISOString(),
+        ],
+        { fallback: true }
+      );
+      counts.v8RoiEntries += 1;
+    }
+  }
+
+  return counts;
+}
+
+async function upsertInterviewInsightDemoArtifacts(
+  organizationId: string,
+  userMap: UserMap,
+  anchorDate: Date,
+  locale: DemoLocale
+): Promise<void> {
+  if (!(await tableExists('interview_insights'))) return;
+
+  const interviewSessionMap: Record<string, string> = {
+    operations: makeId(organizationId, 'interview-session', 'ops-control-tower'),
+    quality: makeId(organizationId, 'interview-session', 'quality-close-loop'),
+    supply: makeId(organizationId, 'interview-session', 'supplier-risk-cadence'),
+    digital: makeId(organizationId, 'interview-session', 'digital-product-scale'),
+    governance: makeId(organizationId, 'interview-session', 'board-value-governance'),
+    partner: makeId(organizationId, 'interview-session', 'partner-activation-path'),
+  };
+
+  if (await tableExists('interview_sessions')) {
+    const sessions = [
+      {
+        slug: 'operations',
+        title:
+          locale === 'pl'
+            ? 'Ops Control Tower - rytm operacyjny'
+            : 'Ops Control Tower - operating cadence',
+        owner: 'marc-dubois',
+      },
+      {
+        slug: 'quality',
+        title:
+          locale === 'pl'
+            ? 'Quality Close Loop - governance jakości'
+            : 'Quality Close Loop - quality governance',
+        owner: 'sophie-bernard',
+      },
+      {
+        slug: 'supply',
+        title:
+          locale === 'pl'
+            ? 'Supplier Risk Cadence - odporność dostaw'
+            : 'Supplier Risk Cadence - supply resilience',
+        owner: 'isabelle-leroy',
+      },
+      {
+        slug: 'digital',
+        title:
+          locale === 'pl'
+            ? 'Digital Product Scale - produkt i adopcja'
+            : 'Digital Product Scale - product and adoption',
+        owner: 'julien-moreau',
+      },
+      {
+        slug: 'governance',
+        title:
+          locale === 'pl'
+            ? 'Board Value Governance - decyzje i dowody'
+            : 'Board Value Governance - decisions and evidence',
+        owner: 'antoine-laurent',
+      },
+      {
+        slug: 'partner',
+        title:
+          locale === 'pl'
+            ? 'Partner Activation Path - kanał i onboarding'
+            : 'Partner Activation Path - channel and onboarding',
+        owner: 'thomas-viau',
+      },
+    ];
+
+    const sessionCols = await getTableColumns('interview_sessions');
+    for (const session of sessions) {
+      const cols = ['id'];
+      const vals: Array<string | number | null> = [interviewSessionMap[session.slug]];
+
+      if (sessionCols.has('organization_id')) {
+        cols.push('organization_id');
+        vals.push(organizationId);
+      }
+      if (sessionCols.has('title')) {
+        cols.push('title');
+        vals.push(session.title);
+      }
+      if (sessionCols.has('status')) {
+        cols.push('status');
+        vals.push('completed');
+      }
+      if (sessionCols.has('workflow_status')) {
+        cols.push('workflow_status');
+        vals.push('completed');
+      }
+      if (sessionCols.has('progress')) {
+        cols.push('progress');
+        vals.push(100);
+      }
+      if (sessionCols.has('completed_at')) {
+        cols.push('completed_at');
+        vals.push(materializeRelativeIso('-2d', { anchorDate }));
+      }
+      if (sessionCols.has('started_at')) {
+        cols.push('started_at');
+        vals.push(materializeRelativeIso('-10d', { anchorDate }));
+      }
+      if (sessionCols.has('created_by')) {
+        cols.push('created_by');
+        vals.push(userMap[session.owner]?.id || userMap['antoine-laurent']?.id || null);
+      }
+      if (sessionCols.has('created_at')) {
+        cols.push('created_at');
+        vals.push(materializeRelativeIso('-12d', { anchorDate }));
+      }
+      if (sessionCols.has('updated_at')) {
+        cols.push('updated_at');
+        vals.push(materializeRelativeIso('-1d', { anchorDate }));
+      }
+
+      await DbPromise.run(
+        `INSERT INTO interview_sessions (${cols.join(', ')})
+         VALUES (${cols.map(() => '?').join(', ')})
+         ON CONFLICT(id) DO UPDATE SET updated_at=excluded.updated_at`,
+        vals,
+        { fallback: true }
+      );
+    }
+  }
+
+  const insightBlueprints = [
+    {
+      slug: 'ops-telemetry-latency',
+      title:
+        locale === 'pl'
+          ? 'Latency telemetry osłabia decyzje na zmianie'
+          : 'Telemetry latency weakens shift decisions',
+      category: 'operations',
+      promptType: 'problems',
+      insightType: 'constraint',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'operations',
+      sessionSlug: 'operations',
+      ownerSlug: 'marc-dubois',
+      initiativeSlug: 'line-3-digital-twin',
+    },
+    {
+      slug: 'ops-changeover-sequence-drift',
+      title:
+        locale === 'pl'
+          ? 'Drift sekwencji changeover zwiększa straty OEE'
+          : 'Changeover sequence drift drives OEE loss',
+      category: 'operations',
+      promptType: 'trends',
+      insightType: 'pain_point',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'operations',
+      sessionSlug: 'operations',
+      ownerSlug: 'luc-rousseau',
+      initiativeSlug: 'line-3-digital-twin',
+    },
+    {
+      slug: 'quality-root-cause-closure-gap',
+      title:
+        locale === 'pl'
+          ? 'Root-cause closure jest zbyt wolny między zakładami'
+          : 'Root-cause closure is too slow across plants',
+      category: 'quality',
+      promptType: 'problems',
+      insightType: 'gap',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'quality',
+      sessionSlug: 'quality',
+      ownerSlug: 'sophie-bernard',
+      initiativeSlug: 'qa-defect-closing-loop',
+    },
+    {
+      slug: 'quality-defect-taxonomy-fragmentation',
+      title:
+        locale === 'pl'
+          ? 'Rozproszona taksonomia defektów zniekształca priorytety'
+          : 'Fragmented defect taxonomy distorts priorities',
+      category: 'quality',
+      promptType: 'gaps',
+      insightType: 'gap',
+      impactLevel: 'medium',
+      confidence: 'medium',
+      pmoDomain: 'quality',
+      sessionSlug: 'quality',
+      ownerSlug: 'paul-lambert',
+      initiativeSlug: 'qa-defect-closing-loop',
+    },
+    {
+      slug: 'supply-leadtime-volatility-cascade',
+      title:
+        locale === 'pl'
+          ? 'Zmienność lead time kaskaduje do marży i OTIF'
+          : 'Lead-time volatility cascades into margin and OTIF',
+      category: 'supply',
+      promptType: 'risk_assessment',
+      insightType: 'risk',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'supply-chain',
+      sessionSlug: 'supply',
+      ownerSlug: 'isabelle-leroy',
+      initiativeSlug: 'procurement-control-tower',
+    },
+    {
+      slug: 'supply-buffer-policy-ambiguity',
+      title:
+        locale === 'pl'
+          ? 'Niejasna polityka buforów utrudnia decyzje zakupowe'
+          : 'Ambiguous buffer policy blocks sourcing decisions',
+      category: 'supply',
+      promptType: 'gaps',
+      insightType: 'constraint',
+      impactLevel: 'medium',
+      confidence: 'medium',
+      pmoDomain: 'supply-chain',
+      sessionSlug: 'supply',
+      ownerSlug: 'mathieu-chevalier',
+      initiativeSlug: 'supplier-risk-war-room',
+    },
+    {
+      slug: 'digital-renewal-risk-signal-gap',
+      title:
+        locale === 'pl'
+          ? 'Brakuje wczesnego sygnału ryzyka odnowień'
+          : 'Early renewal-risk signal is missing',
+      category: 'digital',
+      promptType: 'risk_assessment',
+      insightType: 'gap',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'product',
+      sessionSlug: 'digital',
+      ownerSlug: 'julien-moreau',
+      initiativeSlug: 'atelier-digital-growth',
+    },
+    {
+      slug: 'digital-roadmap-tradeoff-opacity',
+      title:
+        locale === 'pl'
+          ? 'Trade-offy roadmapy są słabo transparentne'
+          : 'Roadmap trade-offs are weakly transparent',
+      category: 'digital',
+      promptType: 'comparison',
+      insightType: 'constraint',
+      impactLevel: 'medium',
+      confidence: 'medium',
+      pmoDomain: 'product',
+      sessionSlug: 'digital',
+      ownerSlug: 'nicolas-faure',
+      initiativeSlug: 'product-roadmap-sync',
+    },
+    {
+      slug: 'governance-value-proof-lag',
+      title:
+        locale === 'pl'
+          ? 'Lag dowodzenia wartości ogranicza tempo decyzji zarządu'
+          : 'Value-proof lag limits board decision speed',
+      category: 'governance',
+      promptType: 'summary',
+      insightType: 'gap',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'governance',
+      sessionSlug: 'governance',
+      ownerSlug: 'hugo-bernard',
+      initiativeSlug: 'board-value-tracking',
+    },
+    {
+      slug: 'governance-followup-accountability-drift',
+      title:
+        locale === 'pl'
+          ? 'Drift odpowiedzialności po decyzjach boardowych'
+          : 'Post-board follow-up accountability drifts',
+      category: 'governance',
+      promptType: 'trends',
+      insightType: 'pain_point',
+      impactLevel: 'medium',
+      confidence: 'high',
+      pmoDomain: 'governance',
+      sessionSlug: 'governance',
+      ownerSlug: 'amelie-girard',
+      initiativeSlug: 'board-value-tracking',
+    },
+    {
+      slug: 'partner-enablement-activation-gap',
+      title:
+        locale === 'pl'
+          ? 'Enablement partnerów nie przekłada się na aktywację'
+          : 'Partner enablement does not convert to activation',
+      category: 'partner',
+      promptType: 'opportunity_scan',
+      insightType: 'opportunity',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'commercial',
+      sessionSlug: 'partner',
+      ownerSlug: 'zoe-perrin',
+      initiativeSlug: 'partner-onboarding-excellence',
+    },
+    {
+      slug: 'partner-story-evidence-inconsistency',
+      title:
+        locale === 'pl'
+          ? 'Niespójna historia evidence osłabia partner close-rate'
+          : 'Inconsistent evidence story lowers partner close-rate',
+      category: 'partner',
+      promptType: 'problems',
+      insightType: 'pain_point',
+      impactLevel: 'medium',
+      confidence: 'medium',
+      pmoDomain: 'commercial',
+      sessionSlug: 'partner',
+      ownerSlug: 'camille-dubois',
+      initiativeSlug: 'partner-onboarding-excellence',
+    },
+    {
+      slug: 'ot-cyber-control-maturity-variance',
+      title:
+        locale === 'pl'
+          ? 'Nierówna dojrzałość kontroli OT/cyber między lokalizacjami'
+          : 'OT/cyber control maturity varies by site',
+      category: 'cybersecurity',
+      promptType: 'risk_assessment',
+      insightType: 'risk',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'security',
+      sessionSlug: 'governance',
+      ownerSlug: 'victor-morin',
+      initiativeSlug: 'ot-cyber-hardening',
+    },
+    {
+      slug: 'ot-segmentation-priority-conflict',
+      title:
+        locale === 'pl'
+          ? 'Konflikt priorytetów między segmentacją OT a delivery'
+          : 'Priority conflict between OT segmentation and delivery',
+      category: 'cybersecurity',
+      promptType: 'comparison',
+      insightType: 'constraint',
+      impactLevel: 'medium',
+      confidence: 'medium',
+      pmoDomain: 'security',
+      sessionSlug: 'governance',
+      ownerSlug: 'claire-laurent',
+      initiativeSlug: 'ot-cyber-hardening',
+    },
+    {
+      slug: 'capability-academy-behavior-transfer-gap',
+      title:
+        locale === 'pl'
+          ? 'Academy podnosi wiedzę, ale transfer do rutyn jest nierówny'
+          : 'Academy improves knowledge, but transfer to routines is uneven',
+      category: 'people',
+      promptType: 'maturity',
+      insightType: 'gap',
+      impactLevel: 'medium',
+      confidence: 'high',
+      pmoDomain: 'people',
+      sessionSlug: 'operations',
+      ownerSlug: 'emma-noel',
+      initiativeSlug: 'supervisor-capability-academy',
+    },
+    {
+      slug: 'capability-manager-coaching-capacity',
+      title:
+        locale === 'pl'
+          ? 'Ograniczona pojemność coachingu managerów'
+          : 'Manager coaching capacity is constrained',
+      category: 'people',
+      promptType: 'gaps',
+      insightType: 'constraint',
+      impactLevel: 'medium',
+      confidence: 'medium',
+      pmoDomain: 'people',
+      sessionSlug: 'operations',
+      ownerSlug: 'damien-petit',
+      initiativeSlug: 'supervisor-capability-academy',
+    },
+    {
+      slug: 'finance-confidence-band-missing',
+      title:
+        locale === 'pl'
+          ? 'Brak confidence-band dla ROI utrudnia alokację kapitału'
+          : 'Missing confidence bands for ROI hurt capital allocation',
+      category: 'finance',
+      promptType: 'summary',
+      insightType: 'gap',
+      impactLevel: 'high',
+      confidence: 'high',
+      pmoDomain: 'finance',
+      sessionSlug: 'governance',
+      ownerSlug: 'elise-robert',
+      initiativeSlug: 'board-value-tracking',
+    },
+    {
+      slug: 'revops-funnel-signal-fragmentation',
+      title:
+        locale === 'pl'
+          ? 'Fragmentacja sygnałów funnelu zaciera priorytety handlowe'
+          : 'Funnel signal fragmentation blurs commercial priorities',
+      category: 'commercial',
+      promptType: 'trends',
+      insightType: 'gap',
+      impactLevel: 'medium',
+      confidence: 'high',
+      pmoDomain: 'commercial',
+      sessionSlug: 'partner',
+      ownerSlug: 'ines-garnier',
+      initiativeSlug: 'atelier-core-onboarding-revamp',
+    },
+  ] as const;
+
+  const insightCols = await getTableColumns('interview_insights');
+  const findingTablesEnabled =
+    (await tableExists('interview_insight_findings')) &&
+    (await tableExists('interview_insight_evidence_pointers')) &&
+    (await tableExists('interview_insight_handoffs')) &&
+    (await tableExists('interview_insight_audit_log'));
+  const candidatesEnabled = await tableExists('interview_insight_candidates');
+
+  type InsightNarrativeProfile = {
+    decisionFocus: string;
+    execThesis: string;
+    themeTitleA: string;
+    themeA: string;
+    themeTitleB: string;
+    themeB: string;
+    themeDivergence: string;
+    issueTitleA: string;
+    issueA: string;
+    issueTitleB: string;
+    issueB: string;
+    opportunityTitleA: string;
+    opportunityA: string;
+    opportunityTitleB: string;
+    opportunityB: string;
+    signalTitleA: string;
+    signalA: string;
+    signalTitleB: string;
+    signalB: string;
+    evidenceQuestionA: string;
+    evidenceSnippetA: string;
+    evidenceQuestionB: string;
+    evidenceSnippetB: string;
+    missingData: [string, string];
+    sourceQuote: string;
+  };
+
+  const insightProfiles: Record<string, InsightNarrativeProfile> = {
+    operations: {
+      decisionFocus: 'shift-level telemetry, supervisor routines, and line-loss economics',
+      execThesis:
+        'an operating-system issue, not a dashboard issue: value leakage appears when telemetry, escalation routines, and supervisor decisions are not synchronized',
+      themeTitleA: 'Late signal arrival at shift level',
+      themeA:
+        'Line teams receive enough machine data, but latency and inconsistent event naming prevent supervisors from using the signal inside the same shift decision window.',
+      themeTitleB: 'Changeover discipline is the economic lever',
+      themeB:
+        'The strongest OEE upside sits in converting Digital Twin recommendations into standard work for changeovers, handovers, and maintenance dispatch.',
+      themeDivergence:
+        'Operations frame the gap as response speed, while digital teams frame it as telemetry semantics and adoption discipline.',
+      issueTitleA: 'Telemetry-to-action lag',
+      issueA:
+        'Alerts are still interpreted outside a governed escalation path, so root-cause decisions arrive after the economic loss has already compounded.',
+      issueTitleB: 'Supervisor routine variance',
+      issueB:
+        'Shift teams do not yet execute the same sequence for changeover validation, exception capture, and follow-up ownership.',
+      opportunityTitleA: 'Shift decision contract',
+      opportunityA:
+        'Create a shift decision contract that binds each high-value telemetry event to owner, SLA, escalation rule, and expected avoided-loss metric.',
+      opportunityTitleB: 'Digital Twin value cadence',
+      opportunityB:
+        'Use the Digital Twin as a weekly value-cadence artifact that proves avoided downtime, not only as a technical visualization layer.',
+      signalTitleA: 'OEE upside is concentrated',
+      signalA:
+        'The same few changeover and handover moments explain a disproportionate share of loss, making the improvement case focused and investable.',
+      signalTitleB: 'Adoption is behavior-led',
+      signalB:
+        'Telemetry quality matters, but the adoption breakpoint is whether supervisors trust and repeat the recommendation routine.',
+      evidenceQuestionA: 'Which operating moments create the largest avoidable loss?',
+      evidenceSnippetA:
+        'Supervisors repeatedly point to changeover handoff and late maintenance dispatch as the moments where telemetry arrives too late to protect throughput.',
+      evidenceQuestionB: 'What would make the Digital Twin credible enough to scale?',
+      evidenceSnippetB:
+        'Teams want a traceable connection from alert to action to avoided downtime, with ownership visible in the same operating review.',
+      missingData: [
+        'Line-level avoided-loss attribution by event type and shift is still incomplete.',
+        'Supervisor adherence data is not yet linked to the Digital Twin recommendation log.',
+      ],
+      sourceQuote:
+        'The problem is not whether the twin can show the loss; it is whether the shift can act before the loss becomes irreversible.',
+    },
+    quality: {
+      decisionFocus: 'defect taxonomy, root-cause workflow, and cross-plant corrective-action closure',
+      execThesis:
+        'a closure-system issue: quality data exists, but inconsistent taxonomy and weak owner handoffs delay validated countermeasures across plants',
+      themeTitleA: 'Defect language is not yet board-grade',
+      themeA:
+        'Customer, plant, and supplier quality events are captured, but inconsistent classification makes recurrence and severity harder to compare across plants.',
+      themeTitleB: 'Corrective actions lack closed-loop proof',
+      themeB:
+        'The QA workflow tracks actions, yet it does not always prove that countermeasures eliminated recurrence after launch and production conditions changed.',
+      themeDivergence:
+        'QA sees the gap as taxonomy discipline, while operations sees it as speed of containment and engineering sees it as unclear ownership.',
+      issueTitleA: 'Root-cause closure lag',
+      issueA:
+        'Recurring defects remain open too long because ownership changes when an issue crosses plant, supplier, and software-release boundaries.',
+      issueTitleB: 'Weak recurrence evidence',
+      issueB:
+        'Close-rate metrics can overstate progress when verification data is not tied to subsequent defect recurrence and warranty signals.',
+      opportunityTitleA: 'Closed-loop quality cockpit',
+      opportunityA:
+        'Build a quality cockpit that connects defect taxonomy, corrective-action owner, verification evidence, and recurrence watch window.',
+      opportunityTitleB: 'Engineering ownership protocol',
+      opportunityB:
+        'Introduce an engineering ownership protocol for cross-plant defect patterns so root causes are resolved once and reused across launches.',
+      signalTitleA: 'Taxonomy stabilization is underway',
+      signalA:
+        'Teams increasingly agree that one defect language is the prerequisite for credible analytics and faster escalation.',
+      signalTitleB: 'Launch readiness is a quality risk',
+      signalB:
+        'Digital bundle launches expose quality gaps that sit outside factory-only metrics, especially support readiness and customer-facing defect closure.',
+      evidenceQuestionA: 'Where does the quality loop currently slow down?',
+      evidenceSnippetA:
+        'Respondents cite handoffs between plant QA, supplier quality, and product engineering as the main source of repeated closure delay.',
+      evidenceQuestionB: 'What proof is needed before leaders trust quality progress?',
+      evidenceSnippetB:
+        'Leaders want recurrence-free evidence after corrective actions, not only a higher count of closed tickets.',
+      missingData: [
+        'Validated recurrence windows are not consistently stored with corrective-action records.',
+        'Supplier, plant, and product defect identifiers are not fully reconciled in one taxonomy.',
+      ],
+      sourceQuote:
+        'We close actions, but leadership still asks whether the defect is truly gone or only closed in the workflow.',
+    },
+    supply: {
+      decisionFocus: 'supplier volatility, inventory policy, and margin-at-risk governance',
+      execThesis:
+        'a resilience-governance issue: supplier signals are visible, but buffer decisions and margin exposure are not governed with one scenario model',
+      themeTitleA: 'Lead-time volatility is financially material',
+      themeA:
+        'Supplier risk now affects delivery credibility and margin, yet exposure is still interpreted differently by procurement, finance, and commercial teams.',
+      themeTitleB: 'Buffer policy is not decision-ready',
+      themeB:
+        'The organization has heatmaps and supplier scorecards, but lacks a shared rule for when inventory buffers are justified against cash and margin trade-offs.',
+      themeDivergence:
+        'Procurement sees supplier continuity risk, finance sees working-capital exposure, and commercial teams see promise-risk to partners.',
+      issueTitleA: 'Scenario ownership gap',
+      issueA:
+        'Supplier scenarios are reviewed, but mitigation ownership and commercial impact are not consistently locked in the same decision cycle.',
+      issueTitleB: 'Margin exposure reconciliation',
+      issueB:
+        'Rush freight, late substitutions, and delivery promise risk are not always reconciled into one margin-at-risk view before executive review.',
+      opportunityTitleA: 'Supplier risk war-room contract',
+      opportunityA:
+        'Formalize the supplier war room around a weekly contract: risk signal, margin exposure, mitigation owner, and decision required.',
+      opportunityTitleB: 'Board-ready buffer policy',
+      opportunityB:
+        'Approve a bounded buffer policy for critical components with explicit cash, service, and margin thresholds.',
+      signalTitleA: 'Commercial credibility depends on supply transparency',
+      signalA:
+        'Partner promises become more credible when supply risk is visible early enough to change commitment language or mitigation plans.',
+      signalTitleB: 'Finance is ready for scenario governance',
+      signalB:
+        'Finance engagement is high because the risk is now measurable in margin volatility, not only in operational inconvenience.',
+      evidenceQuestionA: 'Which supplier risks most affect business outcomes?',
+      evidenceSnippetA:
+        'Critical component volatility is repeatedly linked to delivery promise risk, expedite cost, and board-level margin variance.',
+      evidenceQuestionB: 'What decision is missing from the current control tower?',
+      evidenceSnippetB:
+        'Teams need one approved rule for when to pay for buffers and when to accept delivery-risk exposure.',
+      missingData: [
+        'Supplier risk heatmaps do not yet include a standardized margin-at-risk calculation.',
+        'Commercial promise exposure is only partially linked to component shortage scenarios.',
+      ],
+      sourceQuote:
+        'The heatmap tells us where the pain is; it does not yet tell us which trade-off leadership has approved.',
+    },
+    digital: {
+      decisionFocus: 'product analytics, renewal health, and roadmap trade-off governance',
+      execThesis:
+        'a product-operating-model issue: usage and partner signals exist, but they are not yet translated into renewal-risk action and roadmap capital allocation',
+      themeTitleA: 'Renewal risk is detected too late',
+      themeA:
+        'Activation, usage, and support signals are available, but they are not fused early enough to intervene before renewal risk becomes commercial escalation.',
+      themeTitleB: 'Roadmap trade-offs lack transparent economics',
+      themeB:
+        'Product requests are numerous, but prioritization does not consistently show revenue upside, adoption burden, and operational complexity in one view.',
+      themeDivergence:
+        'Product sees feature trade-offs, commercial teams see conversion friction, and customer success sees adoption risk.',
+      issueTitleA: 'Weak signal fusion for renewals',
+      issueA:
+        'Renewal health is inferred from fragmented data rather than from a governed score that combines usage depth, support burden, and partner activation.',
+      issueTitleB: 'Backlog pressure masks strategic bets',
+      issueB:
+        'Too many inputs enter roadmap debates without a shared evidence hierarchy, creating weak transparency on what is deliberately not funded.',
+      opportunityTitleA: 'Renewal-risk action system',
+      opportunityA:
+        'Create a renewal-risk action system that converts product telemetry into named customer-success interventions and partner coaching moments.',
+      opportunityTitleB: 'Evidence-based roadmap council',
+      opportunityB:
+        'Run roadmap decisions through an evidence hierarchy that separates strategic bets, adoption fixes, and analytical depth investments.',
+      signalTitleA: 'Subscription growth is reachable',
+      signalA:
+        'Attach-rate performance improves where the value story, onboarding flow, and usage proof are presented together.',
+      signalTitleB: 'Customer success is the adoption control point',
+      signalB:
+        'The strongest leading indicators sit in the first 30 days after onboarding, before renewal risk is visible in lagging metrics.',
+      evidenceQuestionA: 'What signal would most improve renewal confidence?',
+      evidenceSnippetA:
+        'Respondents ask for one early score that combines activation, usage frequency, and support friction into a customer-success action queue.',
+      evidenceQuestionB: 'Why are roadmap decisions slow?',
+      evidenceSnippetB:
+        'Teams describe roadmap debates as evidence-rich but decision-poor because the economics of trade-offs are not visible in one artifact.',
+      missingData: [
+        'Usage telemetry is not yet normalized into a renewal-risk score by cohort and partner.',
+        'Roadmap options do not consistently include comparable revenue, effort, and adoption-impact fields.',
+      ],
+      sourceQuote:
+        'We have many product signals, but not yet the one signal that tells customer success what to do this week.',
+    },
+    governance: {
+      decisionFocus: 'board cadence, value evidence, and accountable follow-up',
+      execThesis:
+        'a decision-quality issue: the transformation has momentum, but board cycles still rely on manually assembled evidence and uneven follow-through',
+      themeTitleA: 'Value proof arrives late in the cycle',
+      themeA:
+        'Realized-value evidence is compiled close to board review, which leaves limited time to challenge assumptions and improve decision confidence.',
+      themeTitleB: 'Post-board follow-up is not fully institutionalized',
+      themeB:
+        'Decisions are visible, but action ownership, due dates, and confidence changes are not always carried into the next operating review.',
+      themeDivergence:
+        'The board wants a single value narrative, finance wants confidence bands, and PMO wants enforceable follow-up mechanics.',
+      issueTitleA: 'Manual value reconciliation',
+      issueA:
+        'ROI, risk, and delivery evidence are still reconciled manually across PMO, finance, and operations before executive review.',
+      issueTitleB: 'Follow-up accountability drift',
+      issueB:
+        'Some board decisions lose force after the meeting because the next owner, timing, and evidence requirement are not fixed at decision time.',
+      opportunityTitleA: 'Board-grade value scorecard',
+      opportunityA:
+        'Institutionalize one board scorecard that shows expected value, realized value, confidence band, risk movement, and decision ask.',
+      opportunityTitleB: 'Decision follow-up ledger',
+      opportunityB:
+        'Create a decision follow-up ledger that carries every board ask into accountable execution with evidence required for closure.',
+      signalTitleA: 'Leadership appetite for discipline is high',
+      signalA:
+        'Senior leaders are asking for fewer artifacts and stronger evidence, indicating readiness for a tighter governance operating model.',
+      signalTitleB: 'Confidence bands change the conversation',
+      signalB:
+        'When confidence is explicit, board debates move from defending numbers to choosing the next evidence-building action.',
+      evidenceQuestionA: 'What makes board preparation slower than it should be?',
+      evidenceSnippetA:
+        'Respondents describe late reconciliation of ROI assumptions, risk movements, and initiative status as the biggest drag on board readiness.',
+      evidenceQuestionB: 'Where does follow-up weaken after decisions?',
+      evidenceSnippetB:
+        'The next owner is often clear informally, but the evidence required for closure is not always documented at the decision moment.',
+      missingData: [
+        'Historical board decisions are not fully backfilled with owner, deadline, and closure evidence.',
+        'ROI confidence bands are not consistently attached to initiative-level value tracking.',
+      ],
+      sourceQuote:
+        'The board does not need more slides; it needs one version of the truth with accountable follow-through.',
+    },
+    partner: {
+      decisionFocus: 'partner activation, enablement conversion, and commercial proof assets',
+      execThesis:
+        'a channel-conversion issue: enablement activity is visible, but it does not consistently convert into first-value behavior and reusable partner proof',
+      themeTitleA: 'Enablement completion is not activation',
+      themeA:
+        'Partners complete training, but completion does not reliably predict demo readiness, first bundle sale, or confidence in the recurring value story.',
+      themeTitleB: 'Evidence story varies across regions',
+      themeB:
+        'Commercial teams use different proof points for Atelier Digital, which weakens partner confidence and slows objection handling.',
+      themeDivergence:
+        'Sales sees close-rate friction, marketing sees message inconsistency, and partner managers see missing first-90-day governance.',
+      issueTitleA: 'First-value ownership gap',
+      issueA:
+        'The handoff from signed partner to active digital-bundle seller is not governed with clear milestones and named owners.',
+      issueTitleB: 'Reusable proof is under-packaged',
+      issueB:
+        'Strong case evidence exists, but it is not packaged into a partner-ready story that can be repeated without central support.',
+      opportunityTitleA: 'First-90-day partner scorecard',
+      opportunityA:
+        'Manage partner onboarding through a first-90-day scorecard that tracks readiness, activation, first sale, and renewal story adoption.',
+      opportunityTitleB: 'Partner evidence asset system',
+      opportunityB:
+        'Convert Atelier Toys proof points into modular partner assets that support demo, ROI, objection handling, and renewal conversations.',
+      signalTitleA: 'Activation depends on milestone governance',
+      signalA:
+        'Partners advance faster when the first 90 days are managed as a journey with explicit conversion milestones.',
+      signalTitleB: 'Proof improves attach-rate quality',
+      signalB:
+        'Where the Digital Twin proof appears early, partners tell a more credible hardware-to-SaaS story.',
+      evidenceQuestionA: 'Why does partner enablement not always convert?',
+      evidenceSnippetA:
+        'Respondents distinguish training completion from demo readiness and first-bundle conversion, especially in new partner cohorts.',
+      evidenceQuestionB: 'What proof do partners need most?',
+      evidenceSnippetB:
+        'Partners ask for a repeatable value story that links operational proof, educator outcomes, and recurring usage.',
+      missingData: [
+        'Partner training completion is not fully tied to first-sale and first-renewal outcomes.',
+        'Proof assets are not versioned by buyer role, region, and partner maturity.',
+      ],
+      sourceQuote:
+        'Our best partners do not need more content; they need a sharper sequence from proof to first sale.',
+    },
+    cybersecurity: {
+      decisionFocus: 'OT control maturity, segmentation sequencing, and risk-based execution governance',
+      execThesis:
+        'a risk-execution issue: OT controls are improving, but uneven maturity and delivery conflicts make cyber hardening vulnerable to deferral',
+      themeTitleA: 'Control maturity varies by site',
+      themeA:
+        'Plant security controls are not yet consistent enough to support a single enterprise risk posture across segmentation, access, and monitoring.',
+      themeTitleB: 'Cyber work competes with delivery windows',
+      themeB:
+        'Security tasks are funded, but segmentation and control changes still compete with plant downtime windows and transformation delivery pressure.',
+      themeDivergence:
+        'Security frames the work as risk reduction, operations frames it as downtime exposure, and finance frames it as necessary resilience investment.',
+      issueTitleA: 'Segmentation priority conflict',
+      issueA:
+        'OT segmentation can be delayed when it is not explicitly sequenced with production windows, fallback controls, and value-enabling dependencies.',
+      issueTitleB: 'Weak evidence of control closure',
+      issueB:
+        'Control remediation is tracked, but site-level evidence is not yet consistent enough for audit-grade assurance.',
+      opportunityTitleA: 'Risk-based OT hardening roadmap',
+      opportunityA:
+        'Sequence OT hardening by risk, downtime constraint, and dependency on Digital Twin expansion rather than by generic control checklist.',
+      opportunityTitleB: 'Audit-ready control evidence pack',
+      opportunityB:
+        'Create a control evidence pack that shows baseline maturity, closure owner, verification result, and residual risk by site.',
+      signalTitleA: 'Cyber is an enabler of scale',
+      signalA:
+        'The strongest argument for OT cyber funding is its role in making telemetry, automation, and Digital Twin scale credible.',
+      signalTitleB: 'Operations needs predictable implementation windows',
+      signalB:
+        'Plant leaders accept the risk case when implementation windows, fallback controls, and escalation roles are explicit.',
+      evidenceQuestionA: 'Where does OT cyber maturity vary most?',
+      evidenceSnippetA:
+        'Respondents point to uneven segmentation, privileged access discipline, and monitoring coverage across plant environments.',
+      evidenceQuestionB: 'What blocks faster hardening execution?',
+      evidenceSnippetB:
+        'Teams describe conflicts between security work, production windows, and transformation delivery commitments.',
+      missingData: [
+        'Site-level OT control evidence is not yet standardized for audit and board review.',
+        'Downtime windows and fallback controls are not fully linked to the segmentation roadmap.',
+      ],
+      sourceQuote:
+        'Cyber hardening is not optional, but it needs an execution plan the plant can actually live with.',
+    },
+    people: {
+      decisionFocus: 'capability transfer, manager coaching capacity, and routine adoption evidence',
+      execThesis:
+        'a behavior-transfer issue: capability content is strong, but operating routines will not scale without coaching capacity and adoption proof',
+      themeTitleA: 'Learning does not yet equal routine change',
+      themeA:
+        'Supervisors complete training, but the organization has not yet proven consistent transfer into daily management, escalation, and review routines.',
+      themeTitleB: 'Manager coaching is the bottleneck',
+      themeB:
+        'The academy can scale content faster than managers can coach new behaviors, creating a risk of knowledge without operating change.',
+      themeDivergence:
+        'People teams track capability uplift, operations track routine adherence, and executives track whether the transformation becomes self-sustaining.',
+      issueTitleA: 'Uneven behavior transfer',
+      issueA:
+        'Routine adoption varies by manager and line, which makes capability uplift fragile when strong local sponsors are absent.',
+      issueTitleB: 'Coaching capacity constraint',
+      issueB:
+        'Managers do not have enough protected capacity to observe routines, coach gaps, and reinforce the new operating model.',
+      opportunityTitleA: 'Routine adoption dashboard',
+      opportunityA:
+        'Track academy outcomes through routine adherence, escalation quality, action closure, and observed coaching moments by cohort.',
+      opportunityTitleB: 'Manager coaching operating model',
+      opportunityB:
+        'Define a lightweight coaching model that tells managers which routines to observe, what evidence to capture, and when to escalate.',
+      signalTitleA: 'Capability energy is high',
+      signalA:
+        'Participants see the academy as practical when content is anchored in current transformation routines rather than generic training.',
+      signalTitleB: 'Adoption risk is local',
+      signalB:
+        'Variance appears most clearly between teams with strong manager sponsorship and teams treating the academy as optional learning.',
+      evidenceQuestionA: 'What proves that capability building is working?',
+      evidenceSnippetA:
+        'Respondents ask for evidence that supervisors use new escalation and review routines after training, not only attendance metrics.',
+      evidenceQuestionB: 'Where does the academy risk stalling?',
+      evidenceSnippetB:
+        'The most common concern is manager bandwidth for coaching and reinforcement during daily operations.',
+      missingData: [
+        'Academy participation is not yet linked to observed routine adherence by team.',
+        'Manager coaching capacity and follow-up quality are not measured consistently.',
+      ],
+      sourceQuote:
+        'The academy is credible only if it changes what supervisors do on Monday morning.',
+    },
+    finance: {
+      decisionFocus: 'ROI confidence bands, realized-value tracking, and capital allocation discipline',
+      execThesis:
+        'a capital-allocation issue: expected ROI is visible, but confidence bands and realized-value evidence are not mature enough for fast prioritization',
+      themeTitleA: 'ROI confidence is under-specified',
+      themeA:
+        'Initiatives have expected ROI, but assumptions, confidence ranges, and evidence maturity are not consistently visible at portfolio-review time.',
+      themeTitleB: 'Realized value evidence is uneven',
+      themeB:
+        'Finance can track spend and baselines, but realized benefits are not always tied back to operational evidence with enough auditability.',
+      themeDivergence:
+        'Finance wants defensible confidence ranges, PMO wants a simple executive narrative, and initiative owners want faster funding decisions.',
+      issueTitleA: 'Capital allocation lacks comparable confidence',
+      issueA:
+        'Leadership can compare expected ROI, but cannot reliably compare confidence level, evidence maturity, and downside risk across initiatives.',
+      issueTitleB: 'Benefits realization lag',
+      issueB:
+        'Realized value is validated after operating decisions are made, limiting its usefulness for near-term reprioritization.',
+      opportunityTitleA: 'Portfolio confidence-band model',
+      opportunityA:
+        'Attach confidence bands to top initiatives using evidence quality, assumption volatility, and realized-value validation stage.',
+      opportunityTitleB: 'Finance evidence chain',
+      opportunityB:
+        'Create a finance evidence chain from operational signal to benefit claim, reviewer, confidence level, and board pack reference.',
+      signalTitleA: 'Finance can accelerate, not only control',
+      signalA:
+        'Better confidence architecture would let finance speed up good bets and challenge weak ones earlier.',
+      signalTitleB: 'Evidence quality is becoming a portfolio metric',
+      signalB:
+        'The organization is ready to discuss value claims by confidence and evidence maturity, not only by headline ROI.',
+      evidenceQuestionA: 'What prevents faster capital allocation?',
+      evidenceSnippetA:
+        'Finance respondents point to missing confidence bands and inconsistent evidence maturity across competing initiatives.',
+      evidenceQuestionB: 'What would make value tracking board-ready?',
+      evidenceSnippetB:
+        'Leaders want each value claim tied to an operational signal, owner, assumption set, and confidence level.',
+      missingData: [
+        'Initiative ROI assumptions are not fully stored with confidence bands and evidence maturity.',
+        'Realized-value claims are not consistently linked to operational source signals.',
+      ],
+      sourceQuote:
+        'The debate is not whether an initiative has ROI; it is how much confidence we should assign before allocating the next euro.',
+    },
+    commercial: {
+      decisionFocus: 'funnel signal quality, renewal intelligence, and revenue-priority governance',
+      execThesis:
+        'a revenue-intelligence issue: pipeline activity is visible, but leading indicators do not yet distinguish high-quality growth from activity volume',
+      themeTitleA: 'Funnel signals are fragmented',
+      themeA:
+        'Commercial activity, partner readiness, renewal risk, and product usage are tracked separately, obscuring which accounts deserve priority action.',
+      themeTitleB: 'Activity metrics overstate revenue quality',
+      themeB:
+        'The funnel can look active while renewal exposure, onboarding friction, or weak partner proof lowers the quality of future revenue.',
+      themeDivergence:
+        'Sales sees pipeline volume, revenue operations sees signal fragmentation, and customer success sees early adoption risk.',
+      issueTitleA: 'Priority logic is not governed',
+      issueA:
+        'Teams do not yet share one rule for ranking opportunities by revenue quality, renewal risk, and readiness to convert.',
+      issueTitleB: 'Weak traceability from action to outcome',
+      issueB:
+        'Commercial actions are not consistently tied to later attach-rate, renewal, and activation outcomes.',
+      opportunityTitleA: 'Revenue-quality score',
+      opportunityA:
+        'Create a revenue-quality score that combines pipeline stage, partner readiness, activation signal, renewal risk, and proof-asset usage.',
+      opportunityTitleB: 'Commercial action ledger',
+      opportunityB:
+        'Track the actions taken on priority accounts and connect them to downstream attach, adoption, and renewal outcomes.',
+      signalTitleA: 'Pipeline quality can be made explicit',
+      signalA:
+        'The data needed for a better priority model exists, but it needs a governed score and ownership cadence.',
+      signalTitleB: 'Renewal risk should shape growth motions',
+      signalB:
+        'The same signals that flag renewal exposure can improve sales focus before accounts become rescue cases.',
+      evidenceQuestionA: 'Why are commercial priorities hard to compare?',
+      evidenceSnippetA:
+        'Respondents describe pipeline, renewal, partner readiness, and usage signals living in separate views with no single ranking logic.',
+      evidenceQuestionB: 'What would improve revenue-quality governance?',
+      evidenceSnippetB:
+        'Revenue operations wants one score that explains which accounts deserve action and which intervention was taken.',
+      missingData: [
+        'Commercial actions are not fully linked to attach-rate and renewal outcomes by account.',
+        'Partner readiness and usage health are not yet part of one revenue-quality score.',
+      ],
+      sourceQuote:
+        'The funnel is busy, but busy is not the same as high-quality recurring revenue.',
+    },
+    default: {
+      decisionFocus: 'cross-functional evidence, governed ownership, and measurable value realization',
+      execThesis:
+        'a governance-system issue: the organization has useful signals, but needs stronger evidence discipline to convert them into accountable execution',
+      themeTitleA: 'Evidence exists but is not standardized',
+      themeA:
+        'Teams can identify the right signals, but labels, timing, and confidence levels are not standardized across functions.',
+      themeTitleB: 'Ownership is clearer in meetings than in systems',
+      themeB:
+        'Accountability is often understood informally, but is not always encoded in workflows with due dates and closure evidence.',
+      themeDivergence:
+        'Functions agree on the direction of travel, but differ on which evidence should trigger action.',
+      issueTitleA: 'Weak insight-to-action handoff',
+      issueA:
+        'Insights do not always become governed work with explicit owner, deadline, and measurable outcome.',
+      issueTitleB: 'Decision evidence is manually reconciled',
+      issueB:
+        'Teams still spend too much time reconciling evidence before reviews instead of using it to decide.',
+      opportunityTitleA: 'Evidence-to-action operating model',
+      opportunityA:
+        'Standardize how each promoted insight becomes an initiative task, decision, or risk with owner and confidence level.',
+      opportunityTitleB: 'Executive evidence chain',
+      opportunityB:
+        'Connect operating signals to board-level decisions through one auditable evidence chain.',
+      signalTitleA: 'Standardization appetite is rising',
+      signalA:
+        'Teams increasingly ask for fewer artifacts and stronger common rules for evidence and ownership.',
+      signalTitleB: 'Governance can unlock speed',
+      signalB:
+        'Better evidence structure would reduce review friction and improve execution confidence.',
+      evidenceQuestionA: 'Where is decision evidence currently weakest?',
+      evidenceSnippetA:
+        'Respondents describe fragmented evidence across PMO, finance, and operating reviews.',
+      evidenceQuestionB: 'What would make handoffs more reliable?',
+      evidenceSnippetB:
+        'Teams want every promoted insight tied to an owner, next action, confidence level, and closure metric.',
+      missingData: [
+        'Evidence maturity is not consistently attached to insight handoffs.',
+        'Outcome ownership is not always stored in the same place as the original signal.',
+      ],
+      sourceQuote:
+        'The signal is useful only when it lands as accountable work with a measurable outcome.',
+    },
+  };
+
+  for (const [index, blueprint] of insightBlueprints.entries()) {
+    const insightId = makeId(organizationId, 'insight', blueprint.slug);
+    const createdBy = userMap[blueprint.ownerSlug]?.id || userMap['antoine-laurent']?.id || null;
+    const sessionId = interviewSessionMap[blueprint.sessionSlug];
+    const primaryEvidenceRef = `session:${sessionId}:q${String((index % 10) + 1).padStart(2, '0')}`;
+    const secondaryEvidenceRef = `session:${sessionId}:q${String(((index + 3) % 10) + 1).padStart(2, '0')}`;
+    const relatedInitiativeId = makeId(organizationId, 'initiative', blueprint.initiativeSlug);
+    const createdAt = materializeRelativeIso(`-${14 - (index % 6)}d`, { anchorDate });
+    const updatedAt = materializeRelativeIso(`-${2 - (index % 2)}d`, { anchorDate });
+    const profile = insightProfiles[blueprint.category] || insightProfiles.default;
+    const promptFocus = `This insight tracks ${profile.decisionFocus} and converts it into an accountable technology-enabled intervention.`;
+    const themeA = profile.themeA;
+    const themeB = profile.themeB;
+    const issueA = profile.issueA;
+    const issueB = profile.issueB;
+    const oppA = profile.opportunityA;
+    const oppB = profile.opportunityB;
+    const executiveSummary = `Atelier Toys should treat "${blueprint.title}" as ${profile.execThesis}. The implication is practical: the insight should not remain an observation, but should be governed through ${blueprint.initiativeSlug} with a named owner, evidence trace, success metric, and review cadence. The expected management value is faster prioritization, lower execution ambiguity, and a clearer board-level story about why this technology move matters now.`;
+
+    const content = [
+      '## Executive Summary',
+      executiveSummary,
+      '',
+      '## Technology Findings',
+      `- ${themeA}`,
+      `- ${themeB}`,
+      '',
+      '## Risks',
+      `- ${issueA}`,
+      `- ${issueB}`,
+      '',
+      '## Recommended Move',
+      `- ${oppA}`,
+      `- ${oppB}`,
+      '',
+      `## Connected Initiative`,
+      `- ${blueprint.initiativeSlug}`,
+      '',
+      '## Evidence',
+      `- ${primaryEvidenceRef}`,
+      `- ${secondaryEvidenceRef}`,
+    ].join('\n');
+
+    const themes = [
+      {
+        id: `${blueprint.slug}:theme:primary`,
+        title: profile.themeTitleA,
+        description: themeA,
+        evidence_refs: [primaryEvidenceRef],
+        strength: 'strong',
+        confidence: blueprint.confidence,
+        crossSessionPattern: true,
+        perspective_labels: [blueprint.category, blueprint.pmoDomain, blueprint.ownerSlug],
+        divergence_note: profile.themeDivergence,
+      },
+      {
+        id: `${blueprint.slug}:theme:secondary`,
+        title: profile.themeTitleB,
+        description: themeB,
+        evidence_refs: [secondaryEvidenceRef],
+        strength: 'moderate',
+        confidence: blueprint.confidence,
+        crossSessionPattern: true,
+        perspective_labels: [blueprint.category, 'governance'],
+      },
+    ];
+
+    const issues = [
+      {
+        id: `${blueprint.slug}:issue:primary`,
+        title: profile.issueTitleA,
+        description: issueA,
+        severity: 'high',
+        confidence: blueprint.confidence,
+        evidence_refs: [primaryEvidenceRef],
+        crossSessionPattern: true,
+        perspective_labels: ['pmo', blueprint.category],
+      },
+      {
+        id: `${blueprint.slug}:issue:secondary`,
+        title: profile.issueTitleB,
+        description: issueB,
+        severity: blueprint.impactLevel === 'high' ? 'high' : 'medium',
+        confidence: blueprint.confidence,
+        evidence_refs: [secondaryEvidenceRef],
+        crossSessionPattern: true,
+        perspective_labels: ['finance', 'operations', 'governance'],
+      },
+    ];
+
+    const opportunities = [
+      {
+        id: `${blueprint.slug}:opportunity:primary`,
+        title: profile.opportunityTitleA,
+        description: oppA,
+        impact: 'high',
+        confidence: blueprint.confidence,
+        evidence_refs: [primaryEvidenceRef, secondaryEvidenceRef],
+        crossSessionPattern: true,
+        perspective_labels: ['technology', 'governance'],
+      },
+      {
+        id: `${blueprint.slug}:opportunity:secondary`,
+        title: profile.opportunityTitleB,
+        description: oppB,
+        impact: blueprint.impactLevel === 'high' ? 'high' : 'medium',
+        confidence: blueprint.confidence,
+        evidence_refs: [secondaryEvidenceRef],
+        crossSessionPattern: true,
+        perspective_labels: ['board', 'pmo', 'operations'],
+      },
+    ];
+
+    const signals = [
+      {
+        id: `${blueprint.slug}:signal:primary`,
+        title: profile.signalTitleA,
+        description: profile.signalA,
+        type: 'tension',
+      },
+      {
+        id: `${blueprint.slug}:signal:secondary`,
+        title: profile.signalTitleB,
+        description: profile.signalB,
+        type: 'emerging_pattern',
+      },
+    ];
+
+    const evidenceMap = [
+      {
+        answer_id: `${blueprint.slug}-a1`,
+        question_text: profile.evidenceQuestionA,
+        answer_snippet: profile.evidenceSnippetA,
+        linked_themes: [`${blueprint.slug}:theme:primary`],
+        linked_issues: [`${blueprint.slug}:issue:primary`],
+      },
+      {
+        answer_id: `${blueprint.slug}-a2`,
+        question_text: profile.evidenceQuestionB,
+        answer_snippet: profile.evidenceSnippetB,
+        linked_themes: [`${blueprint.slug}:theme:secondary`],
+        linked_issues: [`${blueprint.slug}:issue:secondary`],
+      },
+    ];
+
+    const missingData = profile.missingData;
+
+    const filters = {
+      module: 'atelier-demo-interview-insights',
+      technologyScope: ['telemetry', 'data-contracts', 'workflow-automation', 'governance'],
+      linkedInitiative: blueprint.initiativeSlug,
+      customPrompt: promptFocus,
+    };
+
+    const structuredContent = {
+      architectureLayer:
+        locale === 'pl'
+          ? 'signal -> interpretation -> governed action'
+          : 'signal -> interpretation -> governed action',
+      findingGraph: {
+        themes,
+        issues,
+        opportunities,
+        signals,
+      },
+      linkedInitiativeId: relatedInitiativeId,
+      processingNotes:
+        locale === 'pl'
+          ? 'Wszystkie findingi zostały zmapowane do działania z ownerem i śladem evidence.'
+          : 'All findings are mapped to owner-bound action with evidence trace.',
+    };
+
+    const cols = ['id', 'organization_id', 'title', 'status'];
+    const vals: Array<string | number | null> = [insightId, organizationId, blueprint.title, 'published'];
+
+    if (insightCols.has('session_id')) {
+      cols.push('session_id');
+      vals.push(sessionId);
+    }
+    if (insightCols.has('category')) {
+      cols.push('category');
+      vals.push(blueprint.category);
+    }
+    if (insightCols.has('prompt_type')) {
+      cols.push('prompt_type');
+      vals.push(blueprint.promptType);
+    }
+    if (insightCols.has('source_session_ids')) {
+      cols.push('source_session_ids');
+      vals.push(JSON.stringify([sessionId]));
+    }
+    if (insightCols.has('filters')) {
+      cols.push('filters');
+      vals.push(JSON.stringify(filters));
+    }
+    if (insightCols.has('description')) {
+      cols.push('description');
+      vals.push(executiveSummary);
+    }
+    if (insightCols.has('source_quote')) {
+      cols.push('source_quote');
+      vals.push(profile.sourceQuote);
+    }
+    if (insightCols.has('insight_type')) {
+      cols.push('insight_type');
+      vals.push(blueprint.insightType);
+    }
+    if (insightCols.has('impact_level')) {
+      cols.push('impact_level');
+      vals.push(blueprint.impactLevel);
+    }
+    if (insightCols.has('confidence')) {
+      cols.push('confidence');
+      vals.push(blueprint.confidence);
+    }
+    if (insightCols.has('pmo_domain')) {
+      cols.push('pmo_domain');
+      vals.push(blueprint.pmoDomain);
+    }
+    if (insightCols.has('actionable')) {
+      cols.push('actionable');
+      vals.push(1);
+    }
+    if (insightCols.has('content')) {
+      cols.push('content');
+      vals.push(content);
+    }
+    if (insightCols.has('executive_summary')) {
+      cols.push('executive_summary');
+      vals.push(executiveSummary);
+    }
+    if (insightCols.has('themes_json')) {
+      cols.push('themes_json');
+      vals.push(JSON.stringify(themes));
+    }
+    if (insightCols.has('issues_json')) {
+      cols.push('issues_json');
+      vals.push(JSON.stringify(issues));
+    }
+    if (insightCols.has('opportunities_json')) {
+      cols.push('opportunities_json');
+      vals.push(JSON.stringify(opportunities));
+    }
+    if (insightCols.has('signals_json')) {
+      cols.push('signals_json');
+      vals.push(JSON.stringify(signals));
+    }
+    if (insightCols.has('evidence_map_json')) {
+      cols.push('evidence_map_json');
+      vals.push(JSON.stringify(evidenceMap));
+    }
+    if (insightCols.has('missing_data_json')) {
+      cols.push('missing_data_json');
+      vals.push(JSON.stringify(missingData));
+    }
+    if (insightCols.has('structured_content')) {
+      cols.push('structured_content');
+      vals.push(JSON.stringify(structuredContent));
+    }
+    if (insightCols.has('evidence_links')) {
+      cols.push('evidence_links');
+      vals.push(JSON.stringify([primaryEvidenceRef, secondaryEvidenceRef]));
+    }
+    if (insightCols.has('unknowns')) {
+      cols.push('unknowns');
+      vals.push(JSON.stringify(missingData));
+    }
+    if (insightCols.has('counterpoints')) {
+      cols.push('counterpoints');
+      vals.push(
+        JSON.stringify([
+          `Some teams may argue that ${blueprint.initiativeSlug} can progress with existing dashboards and informal ownership; this should be tested against the evidence gaps before scale funding.`,
+        ])
+      );
+    }
+    if (insightCols.has('assumptions')) {
+      cols.push('assumptions');
+      vals.push(
+        JSON.stringify([
+          `Assumes ${profile.decisionFocus} can be measured with sufficient data freshness and assigned to accountable owners.`,
+        ])
+      );
+    }
+    if (insightCols.has('confidence_score')) {
+      cols.push('confidence_score');
+      vals.push(78 + (index % 18));
+    }
+    if (insightCols.has('inference_run_id')) {
+      cols.push('inference_run_id');
+      vals.push(makeId(organizationId, 'inference-run', blueprint.slug));
+    }
+    if (insightCols.has('insight_category')) {
+      cols.push('insight_category');
+      vals.push(`${blueprint.category}_technology`);
+    }
+    if (insightCols.has('source_session_count')) {
+      cols.push('source_session_count');
+      vals.push(1);
+    }
+    if (insightCols.has('tokens_used')) {
+      cols.push('tokens_used');
+      vals.push(4200 + index * 115);
+    }
+    if (insightCols.has('generation_time_ms')) {
+      cols.push('generation_time_ms');
+      vals.push(1800 + index * 37);
+    }
+    if (insightCols.has('review_status')) {
+      cols.push('review_status');
+      vals.push('published');
+    }
+    if (insightCols.has('published_at')) {
+      cols.push('published_at');
+      vals.push(materializeRelativeIso('-1d', { anchorDate }));
+    }
+    if (insightCols.has('reviewed_by')) {
+      cols.push('reviewed_by');
+      vals.push(userMap['antoine-laurent']?.id || createdBy);
+    }
+    if (insightCols.has('exported_to_tools')) {
+      cols.push('exported_to_tools');
+      vals.push(1);
+    }
+    if (insightCols.has('exported_to_assessment')) {
+      cols.push('exported_to_assessment');
+      vals.push(1);
+    }
+    if (insightCols.has('error_message')) {
+      cols.push('error_message');
+      vals.push(null);
+    }
+    if (insightCols.has('created_by')) {
+      cols.push('created_by');
+      vals.push(createdBy);
+    }
+    if (insightCols.has('created_at')) {
+      cols.push('created_at');
+      vals.push(createdAt);
+    }
+    if (insightCols.has('updated_at')) {
+      cols.push('updated_at');
+      vals.push(updatedAt);
+    }
+
+    await DbPromise.run(
+      `INSERT INTO interview_insights (${cols.join(', ')})
+       VALUES (${cols.map(() => '?').join(', ')})
+       ON CONFLICT(id) DO UPDATE SET
+         title=excluded.title,
+         status=excluded.status${
+           cols.includes('content') ? ', content=excluded.content' : ''
+         }${
+           cols.includes('executive_summary')
+             ? ', executive_summary=excluded.executive_summary'
+             : ''
+         }${
+           cols.includes('themes_json') ? ', themes_json=excluded.themes_json' : ''
+         }${
+           cols.includes('issues_json') ? ', issues_json=excluded.issues_json' : ''
+         }${
+           cols.includes('opportunities_json')
+             ? ', opportunities_json=excluded.opportunities_json'
+             : ''
+         }${
+           cols.includes('signals_json') ? ', signals_json=excluded.signals_json' : ''
+         }${
+           cols.includes('evidence_map_json')
+             ? ', evidence_map_json=excluded.evidence_map_json'
+             : ''
+         }${
+           cols.includes('missing_data_json')
+             ? ', missing_data_json=excluded.missing_data_json'
+             : ''
+         }${
+           cols.includes('structured_content')
+             ? ', structured_content=excluded.structured_content'
+             : ''
+         }${
+           cols.includes('updated_at') ? ', updated_at=excluded.updated_at' : ''
+         }`,
+      vals,
+      { fallback: true }
+    );
+
+    if (findingTablesEnabled) {
+      const findingId = makeId(organizationId, 'insight-finding', `${blueprint.slug}-f1`);
+      const findingStatement = `Technology finding: ${blueprint.title} materially affects ${profile.decisionFocus} and should be managed through ${blueprint.initiativeSlug} rather than left as interview context.`;
+      const limits = `Finding scope is based on the current demo operating cycle; ${profile.missingData[0].toLowerCase()}`;
+      const nextAction = `Move the finding into PMO review, assign ${blueprint.ownerSlug} as accountable owner, and attach the next initiative task to a quantified success metric.`;
+
+      await DbPromise.run(
+        `INSERT INTO interview_insight_findings
+         (id, organization_id, insight_id, source_section_type, source_section_index, source_key, finding_statement, confidence_level, limits_text, limits_json, next_action_text, next_action_json, review_status, created_by, updated_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           finding_statement=excluded.finding_statement,
+           confidence_level=excluded.confidence_level,
+           limits_text=excluded.limits_text,
+           next_action_text=excluded.next_action_text,
+           review_status=excluded.review_status,
+           updated_at=excluded.updated_at`,
+        [
+          findingId,
+          organizationId,
+          insightId,
+          'theme',
+          0,
+          `theme:0:${blueprint.slug}`,
+          findingStatement,
+          blueprint.confidence,
+          limits,
+          JSON.stringify([limits]),
+          nextAction,
+          JSON.stringify([nextAction]),
+          'published',
+          createdBy,
+          createdBy,
+          createdAt,
+          updatedAt,
+        ],
+        { fallback: true }
+      );
+
+      const pointerId = makeId(organizationId, 'insight-pointer', `${blueprint.slug}-p1`);
+      await DbPromise.run(
+        `INSERT INTO interview_insight_evidence_pointers
+         (id, organization_id, insight_id, finding_id, pointer_type, source_ref, source_fingerprint, captured_excerpt, captured_at, pointer_state, duplicate_observed_count, metadata_json, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           captured_excerpt=excluded.captured_excerpt,
+           updated_at=excluded.updated_at`,
+        [
+          pointerId,
+          organizationId,
+          insightId,
+          findingId,
+          'interview_session',
+          primaryEvidenceRef,
+          `${blueprint.slug}:f1:e1`,
+          profile.evidenceSnippetA,
+          updatedAt,
+          'active',
+          0,
+          JSON.stringify({ initiative: blueprint.initiativeSlug, category: blueprint.category }),
+          createdBy,
+          createdAt,
+          updatedAt,
+        ],
+        { fallback: true }
+      );
+
+      const handoffId = makeId(organizationId, 'insight-handoff', `${blueprint.slug}-h1`);
+      const handoffPayload = {
+        source: {
+          insightId,
+          findingId,
+          confidenceLevel: blueprint.confidence,
+        },
+        recommendation: nextAction,
+        links: {
+          initiativeId: relatedInitiativeId,
+        },
+      };
+      await DbPromise.run(
+        `INSERT INTO interview_insight_handoffs
+         (id, organization_id, insight_id, finding_id, target_kind, target_id, target_ref_type, status, payload_json, operator_decision_json, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           status=excluded.status,
+           payload_json=excluded.payload_json,
+           updated_at=excluded.updated_at`,
+        [
+          handoffId,
+          organizationId,
+          insightId,
+          findingId,
+          'initiative',
+          relatedInitiativeId,
+          'linked',
+          'accepted',
+          JSON.stringify(handoffPayload),
+          JSON.stringify({ decision: 'accepted', by: createdBy }),
+          createdBy,
+          createdAt,
+          updatedAt,
+        ],
+        { fallback: true }
+      );
+
+      const auditId = makeId(organizationId, 'insight-audit', `${blueprint.slug}-a1`);
+      await DbPromise.run(
+        `INSERT INTO interview_insight_audit_log
+         (id, organization_id, insight_id, finding_id, entity_type, entity_id, action, actor_user_id, detail_json, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           detail_json=excluded.detail_json`,
+        [
+          auditId,
+          organizationId,
+          insightId,
+          findingId,
+          'handoff',
+          handoffId,
+          'seeded_publish_and_handoff',
+          createdBy,
+          JSON.stringify({
+            linkedInitiative: blueprint.initiativeSlug,
+            impactLevel: blueprint.impactLevel,
+            technologyCategory: blueprint.category,
+          }),
+          updatedAt,
+        ],
+        { fallback: true }
+      );
+    }
+
+    if (candidatesEnabled) {
+      const candidateId = makeId(organizationId, 'insight-candidate', `${blueprint.slug}-c1`);
+      await DbPromise.run(
+        `INSERT INTO interview_insight_candidates
+         (id, organization_id, insight_id, source_section_type, source_section_index, source_key, candidate_statement, rationale_text, confidence_hint, triage_status, followup_type, followup_recommendation, linked_finding_id, created_by, updated_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           triage_status=excluded.triage_status,
+           followup_recommendation=excluded.followup_recommendation,
+           updated_at=excluded.updated_at`,
+        [
+          candidateId,
+          organizationId,
+          insightId,
+          'theme',
+          0,
+          `theme:0:${blueprint.slug}`,
+          `Candidate: ${blueprint.title} should be retained as a PMO-governed monitored finding.`,
+          `Cross-session pattern, strong evidence, and direct impact on ${profile.decisionFocus}.`,
+          blueprint.confidence,
+          'promoted',
+          'publish',
+          `Candidate promoted to finding and linked to ${blueprint.initiativeSlug}.`,
+          makeId(organizationId, 'insight-finding', `${blueprint.slug}-f1`),
+          createdBy,
+          createdBy,
+          createdAt,
+          updatedAt,
+        ],
+        { fallback: true }
+      );
+    }
+  }
+}
+
 export async function seedAtelierToysDemoDataset(
   input: SeedDemoDatasetInput
 ): Promise<SeedDemoDatasetResult> {
   const organizationId = input.organizationId;
   const anchorDate = getDemoAnchorDate(input.anchorDate);
-  const locale = normalizeDemoLocale(input.locale);
+  // The Atelier board demo is intentionally English-only so executive narratives,
+  // insight artifacts, and initiative evidence never mix languages.
+  const locale: DemoLocale = 'en';
   const leaders = getAtelierToysLeadership(locale);
   const projects = getAtelierToysProjects(locale);
   const initiatives = getAtelierToysInitiatives(locale);
+  assertPortfolioSanity(initiatives, locale);
   const scenarios = getAtelierToysDemoScenarios(locale);
   const toolCoverage = getAtelierToysToolCoverage(locale);
 
@@ -3134,7 +5597,7 @@ export async function seedAtelierToysDemoDataset(
   await upsertTeams(organizationId, userMap, locale);
   const projectMap = await upsertProjects(organizationId, userMap, locale);
   await upsertProjectUsers(projectMap, userMap, locale);
-  const { taskCount, decisionCount } = await upsertInitiatives(
+  const { initiativeMap, taskCount, decisionCount } = await upsertInitiatives(
     organizationId,
     userMap,
     projectMap,
@@ -3145,6 +5608,12 @@ export async function seedAtelierToysDemoDataset(
   const docCount = await upsertKnowledgeDocs(organizationId, locale);
   await upsertPrompts(organizationId, userMap, locale);
   await upsertToolSessions(organizationId, projectMap, userMap, locale);
+  const resultsCoverage = await upsertResultsLayer(
+    organizationId,
+    userMap['claire-laurent']?.id || userMap['antoine-laurent']?.id || '',
+    anchorDate,
+    initiativeMap
+  );
   const workspaceOwnerUserId = input.viewerUserId || userMap['antoine-laurent']?.id;
   if (workspaceOwnerUserId) {
     await upsertNotebookPages(
@@ -3158,6 +5627,7 @@ export async function seedAtelierToysDemoDataset(
   await upsertDrdAssessment(organizationId, userMap, projectMap, anchorDate, locale);
   await upsertNotifications(organizationId, userMap, locale);
   await upsertActivityLogs(organizationId, userMap, locale);
+  await upsertInterviewInsightDemoArtifacts(organizationId, userMap, anchorDate, locale);
 
   return {
     organizationId,
@@ -3174,6 +5644,7 @@ export async function seedAtelierToysDemoDataset(
     },
     scenarios,
     toolCoverage,
+    resultsCoverage,
   };
 }
 
@@ -3231,8 +5702,64 @@ export async function getDemoDatasetStats(organizationId: string): Promise<{
   };
 }
 
+export async function verifyCanonicalDemoDataset(organizationId: string): Promise<{
+  organizationId: string;
+  ready: boolean;
+  checks: Record<string, { ok: boolean; actual: number; min: number }>;
+  missingTables: string[];
+}> {
+  const checks: Record<string, { ok: boolean; actual: number; min: number }> = {};
+  const missingTables: string[] = [];
+
+  const probe = async (label: string, table: string, min: number) => {
+    if (!(await tableExists(table))) {
+      missingTables.push(table);
+      checks[label] = { ok: false, actual: 0, min };
+      return;
+    }
+    const row = await DbPromise.get<{ count: number }>(
+      `SELECT COUNT(*) as count FROM ${table} WHERE organization_id = ?`,
+      [organizationId],
+      { fallback: true }
+    );
+    const actual = Number(row?.count || 0);
+    checks[label] = { ok: actual >= min, actual, min };
+  };
+
+  await probe('initiatives', 'initiatives', 20);
+  await probe('tasks', 'tasks', 50);
+  await probe('decisions', 'decisions', 20);
+  await probe('reports', 'status_reports', 6);
+  await probe('knowledgeDocs', 'knowledge_docs', 6);
+  await probe('kpis', 'initiative_kpis', 6);
+  await probe('kpiTimeSeries', 'kpi_time_series', 30);
+  await probe('kpiMappings', 'initiative_kpi_mappings', 5);
+  await probe('roiAssumptions', 'roi_assumptions', 4);
+  await probe('roiRealized', 'roi_realized_values', 10);
+  await probe('deviationCases', 'kpi_deviation_cases', 2);
+
+  const ready = Object.values(checks).every((c) => c.ok) && missingTables.length === 0;
+  return {
+    organizationId,
+    ready,
+    checks,
+    missingTables,
+  };
+}
+
 export async function deleteDemoDatasetForOrganization(organizationId: string): Promise<void> {
   const deleteQueries = [
+    ['v8_roi_realization_entries', 'organization_id'],
+    ['v8_deviation_records', 'organization_id'],
+    ['v8_kpi_definitions', 'organization_id'],
+    ['results_kpi_report_snapshots', 'organization_id'],
+    ['kpi_deviation_actions', 'case_id', 'kpi_deviation_cases', 'organization_id'],
+    ['kpi_deviation_cases', 'organization_id'],
+    ['roi_realized_values', 'organization_id'],
+    ['roi_assumptions', 'organization_id'],
+    ['initiative_kpi_mappings', 'organization_id'],
+    ['kpi_time_series', 'organization_id'],
+    ['initiative_kpis', 'organization_id'],
     ['initiative_dependencies', 'organization_id'],
     ['initiative_milestones', 'organization_id'],
     ['decisions', 'organization_id'],

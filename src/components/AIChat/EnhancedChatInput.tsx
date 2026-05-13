@@ -34,6 +34,7 @@ import { CloudFile, CloudProviderId, useCloudIntegrations } from '../../hooks/us
 import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
+import { ActiveModeStrip } from './ActiveModeStrip';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CoThinkerMenu } from './CoThinkerMenu';
@@ -44,6 +45,7 @@ import { MoveToProjectModal } from './MoveToProjectModal';
 import { NextModelChip } from './NextModelChip';
 import { ToolsMenu } from './ToolsMenu';
 import { VoiceModeLegend } from './VoiceModeLegend';
+import { WorkModeMenu } from './WorkModeMenu';
 
 // ============================================================================
 // Types
@@ -833,12 +835,15 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     `}
         />
 
+        <ActiveModeStrip />
+
         {/* Action Bar */}
         <div
           className={`flex items-center justify-between px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
         >
           {/* Left Actions */}
           <div className="flex items-center gap-1">
+            <WorkModeMenu disabled={isInputDisabled} />
             <AddFilesMenu
               onFileSelect={handleFileSelect}
               onUrlAdd={handleUrlAdd}

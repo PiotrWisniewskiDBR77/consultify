@@ -5,6 +5,55 @@ import Logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 const allowImplicitOrgRowsFallback = () => process.env.NODE_ENV !== 'production';
+const MAX_V8_ORG_ID_CHARS = 128;
+const V8_ORG_ID_CONTROL_CHARS = /[\x00-\x1f\x7f]/;
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+const isInvalidOrgToken = (value: string): boolean => {
+  const normalized = value.trim().toLowerCase();
+  return normalized === 'null' || normalized === 'undefined' || normalized === 'none';
+};
+const sendV8Json = (res: Response, statusCode: number, payload: Record<string, unknown>): void => {
+  if (safeRead(() => res.headersSent, false)) return;
+  try {
+    res.status(statusCode).json(payload);
+  } catch (error) {
+    Logger.warn('[v8:featureGate] V8 gate response write failed', {
+      code: 'V8_GATE_RESPONSE_WRITE_FAILED',
+      statusCode,
+      error,
+    });
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+const isUnsafeOrgId = (value: string): boolean =>
+  value.length > MAX_V8_ORG_ID_CHARS || V8_ORG_ID_CONTROL_CHARS.test(value);
+
+const readOrgId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.organizationId, undefined)) ||
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
+  normalizeOptionalString(safeRead(() => req.user?.organization_id, undefined));
+
+const safeNext = (res: Response, next: NextFunction): void => {
+  if (!safeRead(() => res.headersSent, false)) {
+    try {
+      next();
+    } catch (error) {
+      next(error as Error);
+    }
+  }
+};
 
 /**
  * Pre-auth gate: checks only the global V8 toggle.
@@ -14,10 +63,10 @@ const allowImplicitOrgRowsFallback = () => process.env.NODE_ENV !== 'production'
 export const v8FeatureGate = (_req: AuthRequest, res: Response, next: NextFunction): void => {
   const globalEnabled = process.env.ENABLE_V8_GLOBAL === 'true';
   if (!globalEnabled) {
-    res.status(404).json({ error: 'V8 features not available', code: 'V8_DISABLED' });
+    sendV8Json(res, 404, { error: 'V8 features not available', code: 'V8_DISABLED' });
     return;
   }
-  next();
+  safeNext(res, next);
 };
 
 /**
@@ -29,9 +78,9 @@ export const v8OrgGate = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const orgId = req.organizationId;
-  if (!orgId) {
-    res.status(400).json({ error: 'Organization context required for V8', code: 'V8_MISSING_ORG' });
+  const orgId = readOrgId(req);
+  if (!orgId || isInvalidOrgToken(orgId) || isUnsafeOrgId(orgId)) {
+    sendV8Json(res, 400, { error: 'Organization context required for V8', code: 'V8_MISSING_ORG' });
     return;
   }
 
@@ -44,11 +93,11 @@ export const v8OrgGate = async (
           organizationId: orgId,
         });
         (req as any).v8ShadowMode = await isV8ShadowMode(orgId);
-        next();
+        safeNext(res, next);
         return;
       }
 
-      res.status(404).json({
+      sendV8Json(res, 404, {
         error: 'V8 not enabled for this organization',
         code: 'V8_ORG_DISABLED',
       });
@@ -56,11 +105,16 @@ export const v8OrgGate = async (
     }
 
     (req as any).v8ShadowMode = await isV8ShadowMode(orgId);
-  } catch {
+  } catch (error) {
     (req as any).v8ShadowMode = false;
+    Logger.warn('[v8:featureGate] V8 org gate evaluation failed', {
+      organizationId: orgId,
+      code: 'V8_GATE_EVAL_FAILED',
+      error,
+    });
   }
 
-  next();
+  safeNext(res, next);
 };
 
 /**
@@ -71,11 +125,9 @@ export const v8OrgGate = async (
 export const createV8ModuleGate =
   (module: string) =>
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const orgId = req.organizationId;
-    if (!orgId) {
-      res
-        .status(400)
-        .json({ error: 'Organization context required for V8', code: 'V8_MISSING_ORG' });
+    const orgId = readOrgId(req);
+    if (!orgId || isInvalidOrgToken(orgId) || isUnsafeOrgId(orgId)) {
+      sendV8Json(res, 400, { error: 'Organization context required for V8', code: 'V8_MISSING_ORG' });
       return;
     }
 
@@ -89,11 +141,11 @@ export const createV8ModuleGate =
             module,
           });
           (req as any).v8ShadowMode = await isV8ShadowMode(orgId);
-          next();
+          safeNext(res, next);
           return;
         }
 
-        res.status(404).json({
+        sendV8Json(res, 404, {
           error: `V8 module "${module}" not enabled for this organization`,
           code: 'V8_MODULE_DISABLED',
         });
@@ -101,11 +153,17 @@ export const createV8ModuleGate =
       }
 
       (req as any).v8ShadowMode = await isV8ShadowMode(orgId);
-    } catch {
+    } catch (error) {
       (req as any).v8ShadowMode = false;
+      Logger.warn('[v8:featureGate] V8 module gate evaluation failed', {
+        organizationId: orgId,
+        module,
+        code: 'V8_MODULE_GATE_EVAL_FAILED',
+        error,
+      });
     }
 
-    next();
+    safeNext(res, next);
   };
 
 export const v8OutputsGate = createV8ModuleGate('outputs');

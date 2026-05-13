@@ -11,7 +11,7 @@ last_updated: 2026-05-09
 
 ## 1. Main Screen
 
-As-Is: `/settings/*` is the active user/workspace preference surface with nested settings sections. The screen job is configuration of user/workspace preferences and settings.
+As-Is: `/settings/*` is the active user/workspace preference surface with nested settings sections. The screen job is configuration of user/workspace preferences and boundary-safe handoff to admin-owned policy controls.
 
 ## 2. Runtime States
 
@@ -37,6 +37,12 @@ Settings UX must tell the user whether to save, retry, revert, request admin acc
 
 Settings that affect workspace behavior must show whether the value comes from user preference, workspace policy, tenant policy or default configuration. Policy/ACL locks must be visible.
 
+## 6A. Ownership Boundary UX
+
+- Tenant/admin-owned controls in settings must be read-only with explicit handoff CTA (for example: open Organization, open Admin Security).
+- Superadmin/platform ownership must be explicit in wording when relevant, without exposing platform internals or role details to unauthorized users.
+- Handoff copy must explain ownership, not expose hidden capability or raw ACL internals.
+
 ## 7. Approval / Diff / Review
 
 High-impact settings changes require confirmation/review. Save state and lifecycle/governance state must remain separate; `Saved` only means persisted, not approved.
@@ -51,8 +57,9 @@ High-impact settings changes require confirmation/review. Save state and lifecyc
 
 ## 9. As-Is Gaps
 
-- Existing docs confirm active nested settings module and route ownership, but not every section's loading/empty/error/degraded copy.
-- Persistence/read-back evidence for all high-impact settings remains to be validated.
+- Existing docs confirm active nested settings module and route ownership, but acceptance evidence was previously shallow.
+- Superadmin boundary is enforced by routing, but settings-level handoff doctrine is under-specified.
+- V8 memory controls require explicit user/admin/operator semantics not fully covered by current settings UX.
 
 ## 10. Acceptance Criteria
 
@@ -61,10 +68,13 @@ High-impact settings changes require confirmation/review. Save state and lifecyc
 - AI/help actions use Menu 3/right-side placement without duplication.
 - Preference source and policy/ACL state are visible.
 - High-impact settings changes require confirmation and successful persistence feedback.
+- Admin ownership handoff is explicit and leak-safe.
+- Superadmin ownership boundary is explicit in contract; runtime exposure policy is documented (`NOT_DONE` if not mounted).
+- Memory controls do not over-promise privacy semantics and clearly distinguish user vs admin controls.
 
 ## 11. Function Annex — Settings Functions
 
 | Function ID | Function | Entry / Route | As-Is state | UI Component Footprint (key) | Contract |
 | --- | --- | --- | --- | --- | --- |
 | `SET_SETTINGS_WORKSPACE` | Settings Workspace | `/settings/*` | real | `SettingsView` | `functions/SET_SETTINGS_WORKSPACE.md` |
-| `SET_POLICY_BOUNDARY_LINKS` | Policy Boundary and Admin Links | settings vs admin policy ownership boundary | partial | lock/deeplink boundary behavior | `functions/SET_POLICY_BOUNDARY_LINKS.md` |
+| `SET_POLICY_BOUNDARY_LINKS` | Policy Boundary and Admin Links | settings vs admin/superadmin policy ownership boundary | partial | lock/deeplink boundary behavior | `functions/SET_POLICY_BOUNDARY_LINKS.md` |

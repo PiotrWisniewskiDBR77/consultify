@@ -158,7 +158,15 @@ const CHAT_ACTION_KEYWORDS: Array<{
     handoffIntent: 'open',
     patterns: [
       /\b(insight|insights|interview|findings|generate.?insight|review.?insight|publish.?insight|evidence.?map|completed.?session)\b/i,
-      /\b(wnioski|wywiad|wywiady|wygeneruj.?wnioski|recenzja|recenzuj|opublikuj.?wnioski|mapa.?dowodów|zakończon.?sesj)\b/i,
+      /\b(wywiad|wywiady|insight|wygeneruj.?insight|recenzja|recenzuj|mapa.?dowodów|zakończon.?sesj)\b/i,
+    ],
+  },
+  {
+    targetModule: 'ideas_table',
+    handoffIntent: 'create',
+    patterns: [
+      /\b(table|tables|tracker|matrix|risk\s*register|decision\s*log|kanban\s*table|schema)\b/i,
+      /\b(tabela|tabelę|tabele|rejestr\s*ryzyk|dziennik\s*decyzji|macierz|schemat\s*tabeli)\b/i,
     ],
   },
   {
@@ -177,6 +185,7 @@ const TARGET_LABELS: Record<HandoffTargetModule, string> = {
   calendar: 'Calendar',
   notebook: 'Notebook',
   interview: 'Interview Insights',
+  ideas_table: 'Ideas Table',
   excele: 'Excele Workbooks',
 };
 
@@ -367,7 +376,15 @@ function extractResultRef(detail: Record<string, unknown> | null | undefined): s
   if (!detail || typeof detail !== 'object') return null;
   const handoff = detail.handoff_result;
   if (!handoff || typeof handoff !== 'object') return null;
-  const keys = ['signal_id', 'initiative_ref', 'calendar_ref', 'note_ref', 'insight_ref'];
+  const keys = [
+    'signal_id',
+    'initiative_ref',
+    'calendar_ref',
+    'note_ref',
+    'insight_ref',
+    'table_ref',
+    'deep_link',
+  ];
   for (const key of keys) {
     const value = (handoff as Record<string, unknown>)[key];
     if (typeof value === 'string' && value.trim().length > 0) return value.trim();
@@ -401,6 +418,10 @@ function buildPreviewLines(
     const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
     lines.push(trimPreview(interviewCtx.title || proposal.handoff_context.user_intent, 120));
     lines.push(trimPreview(interviewCtx.action || 'Open Interview Insights module', 120));
+  } else if (target === 'ideas_table') {
+    const tableIntent = (payload.ideas_table_intent || {}) as Record<string, unknown>;
+    lines.push(trimPreview(tableIntent.message || proposal.handoff_context.user_intent, 120));
+    lines.push(trimPreview(tableIntent.workspace_id || 'My Work Ideas workspace', 120));
   } else {
     lines.push(trimPreview(payload.why_now || proposal.handoff_context.user_intent, 120));
     lines.push(
@@ -551,6 +572,12 @@ function inferTargetModuleFromChatRegex(
   if (moduleHint.includes('interview') || moduleHint.includes('insight'))
     return { targetModule: 'interview', handoffIntent: 'open' };
   if (
+    moduleHint.includes('my_work') ||
+    moduleHint.includes('ideas') ||
+    moduleHint.includes('table')
+  )
+    return { targetModule: 'ideas_table', handoffIntent: 'create' };
+  if (
     moduleHint.includes('excele') ||
     moduleHint.includes('spreadsheet') ||
     moduleHint.includes('workbook')
@@ -567,9 +594,10 @@ Given a user message, determine if it contains an actionable intent for one of t
 - calendar: meetings, scheduling, appointments, availability, deadlines
 - notebook: notes, summaries, minutes, drafts, memos, documentation
 - interview: insights from interviews, generate insights, review insights, findings, evidence map, completed sessions
+- ideas_table: idea tables, trackers, matrices, risk registers, decision logs in My Work Ideas
 - excele: spreadsheets, workbooks, Excel files, financial models, budgets, P&L, balance sheets, cash flow forecasts, multi-sheet calculations, xlsx generation
 
-Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"excele"|null,"intent":"string describing the action"}
+Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"ideas_table"|"excele"|null,"intent":"string describing the action"}
 If the message is conversational or has no actionable intent, respond: {"module":null,"intent":"none"}`;
 
 async function inferTargetModuleWithLLM(
@@ -645,12 +673,33 @@ function buildBoundedContextPack(
   return pack.slice(0, 5);
 }
 
+function resolveIdeaWorkspaceId(context: Record<string, unknown>): string | null {
+  const workspace = (context.workspaceContext || {}) as Record<string, unknown>;
+  const screen = (context.screenContext || {}) as Record<string, unknown>;
+  const open = (workspace.entityData as Record<string, unknown> | undefined)?.open as
+    | Record<string, unknown>
+    | undefined;
+
+  if (open?.type === 'idea' && typeof open.id === 'string' && open.id.trim()) {
+    return open.id.trim();
+  }
+  if (typeof workspace.entityId === 'string' && workspace.entityId.trim() && workspace.type === 'general') {
+    return workspace.entityId.trim();
+  }
+  if (String(screen.selectedObjectType || '').toLowerCase() === 'idea') {
+    const id = String(screen.selectedObjectId || '').trim();
+    if (id) return id;
+  }
+  return null;
+}
+
 function buildTargetPayloadForChat(params: {
   targetModule: HandoffTargetModule;
   userMessage: string;
   assistantMessage: string;
+  context?: Record<string, unknown>;
 }): Record<string, unknown> {
-  const { targetModule, userMessage, assistantMessage } = params;
+  const { targetModule, userMessage, assistantMessage, context } = params;
   const preview = trimPreview(assistantMessage || userMessage, 220);
   const title = deriveProposalTitle(userMessage, targetModule);
 
@@ -703,6 +752,22 @@ function buildTargetPayloadForChat(params: {
         title: title || 'Interview insight from Teresa',
       },
       evidence_pointers: ['chat:teresa'],
+    };
+  }
+
+  if (targetModule === 'ideas_table') {
+    return {
+      ideas_table_intent: {
+        workspace_id: resolveIdeaWorkspaceId(context || {}) || '',
+        message: trimPreview(userMessage, 220),
+      },
+      proposal_only: true,
+    };
+  }
+
+  if (targetModule === 'excele') {
+    return {
+      prompt: trimPreview(userMessage, 220),
     };
   }
 
@@ -791,6 +856,7 @@ export async function createChatProposal(params: {
       targetModule: intent.targetModule,
       userMessage,
       assistantMessage,
+      context,
     }),
   });
 
@@ -1335,7 +1401,7 @@ async function performHandoff(params: {
   handoffContext: TeresaHandoffContext;
   targetPayload: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const { proposalId, organizationId, targetModule, handoffContext, targetPayload } = params;
+  const { proposalId, organizationId, userId, targetModule, handoffContext, targetPayload } = params;
 
   // Each target module has its own write lane.
   // Teresa initiates, module writes — per P08_WRITE_OWNERSHIP.
@@ -1350,6 +1416,8 @@ async function performHandoff(params: {
       return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'interview':
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
+    case 'ideas_table':
+      return handleIdeasTableHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
     case 'excele':
       return handleExceleHandoff(proposalId, organizationId, handoffContext, targetPayload);
     default:
@@ -1584,6 +1652,90 @@ async function handleInterviewHandoff(
     insight_ref: ref,
     real_entity: Boolean(realInsightRef),
     interview_context: payload.interview_handoff_context,
+    user_intent: context.user_intent,
+  };
+}
+
+async function handleIdeasTableHandoff(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const intent = (payload.ideas_table_intent || {}) as Record<string, unknown>;
+  const workspaceId = String(intent.workspace_id || '').trim();
+  const message = String(intent.message || context.user_intent || '').trim();
+  const targetTableId = String(intent.target_table_id || '').trim();
+
+  if (!workspaceId) {
+    throw new TeresaCopilotError(
+      'Missing ideas_table_intent.workspace_id. Open a My Work idea before executing.',
+      'P08_IDEAS_TABLE_WORKSPACE_REQUIRED',
+      400
+    );
+  }
+  if (!message) {
+    throw new TeresaCopilotError(
+      'Missing ideas_table_intent.message for table generation.',
+      'P08_IDEAS_TABLE_MESSAGE_REQUIRED',
+      400
+    );
+  }
+
+  const ProjectionService = (await import('../tablePlatform/ProjectionService.js')).default;
+  const ChatToSchemaService = (await import('../tablePlatform/ChatToSchemaService.js')).default;
+
+  const resolved = await ProjectionService.resolveBaseId(workspaceId, organizationId, userId);
+  const proposal = await ChatToSchemaService.generateProposal(
+    workspaceId,
+    message,
+    undefined,
+    'en',
+    userId,
+    {
+      baseId: resolved?.baseId,
+      tableId: targetTableId || resolved?.tableId || undefined,
+    }
+  );
+  const execution = await ChatToSchemaService.executeProposal(
+    String((proposal as Record<string, unknown>)?.id || ''),
+    undefined,
+    userId,
+    { organizationId }
+  );
+
+  const createdIds = ((execution as Record<string, unknown>)?.createdIds || {}) as Record<
+    string,
+    string
+  >;
+  const createdEntries = Object.entries(createdIds);
+  const createdTableId =
+    createdEntries.find(([key]) => key.toLowerCase().includes('table'))?.[1] || null;
+  const createdBaseId =
+    createdEntries.find(([key]) => key.toLowerCase().includes('base'))?.[1] ||
+    resolved?.baseId ||
+    null;
+  const tableRef = createdTableId || targetTableId || resolved?.tableId || null;
+  const deepLink = tableRef
+    ? `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table?tpTable=${encodeURIComponent(tableRef)}`
+    : `/my-work/ideas/${encodeURIComponent(workspaceId)}/workspace/table`;
+
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'ideas_table', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, tableRef || deepLink, new Date().toISOString()],
+    { fallback: true }
+  );
+
+  return {
+    handoff: 'ideas_table',
+    proposal_ref: (proposal as Record<string, unknown>)?.id || null,
+    table_ref: tableRef,
+    base_ref: createdBaseId,
+    deep_link: deepLink,
+    workspace_id: workspaceId,
+    schema_execution: execution,
     user_intent: context.user_intent,
   };
 }

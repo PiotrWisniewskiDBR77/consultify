@@ -64,8 +64,10 @@ class KeyManager {
     const primaryKey = process.env.ENCRYPTION_KEY || process.env.DATA_ENCRYPTION_KEY;
 
     if (!primaryKey) {
-      logger.warn('[Encryption] No ENCRYPTION_KEY set. Using development fallback key.');
-      logger.warn('[Encryption] SET ENCRYPTION_KEY in production!');
+      const log =
+        process.env.NODE_ENV === 'test' ? logger.info.bind(logger) : logger.warn.bind(logger);
+      log('[Encryption] No ENCRYPTION_KEY set. Using development fallback key.');
+      log('[Encryption] SET ENCRYPTION_KEY in production!');
     }
 
     const masterKey = primaryKey || this.generateDevelopmentKey();

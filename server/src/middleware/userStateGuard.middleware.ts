@@ -10,7 +10,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import UserStateMachine from '../../services/userStateMachine.js';
+import UserStateMachine from '../services/userStateMachine.js';
 import { getDatabase as getDb } from '../database/Database.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
@@ -21,7 +21,7 @@ import type { AuthRequest } from './auth.middleware.js';
 
 interface Database {
   getAsync: (sql: string, params: unknown[]) => Promise<unknown>;
-  run: (sql: string, params: unknown[]) => Promise<void>;
+  run: (sql: string, params: unknown[]) => Promise<void | { changes?: number }>;
 }
 
 interface UserRow {
@@ -62,6 +62,34 @@ let deps: Dependencies = {
   db: getDb() as unknown as Database,
 };
 
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeAllowList = (allowed: string | string[]): string[] => {
+  const items = Array.isArray(allowed) ? allowed : [allowed];
+  return items
+    .map((item) => normalizeOptionalString(item))
+    .filter((item): item is string => Boolean(item));
+};
+const isPlainObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+const getAnonPermissions = (machine: UserStateMachine): Record<string, unknown> =>
+  safeRead(
+    () => machine.getPermissions(machine.USER_STATES.ANON),
+    {}
+  );
+
 // ==========================================
 // MIDDLEWARE
 // ==========================================
@@ -79,7 +107,8 @@ export async function attachUserState(
     const { UserStateMachine, db } = deps;
 
     // Skip if no user
-    if (!req.user?.id) {
+    const userId = normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown));
+    if (!userId) {
       req.userState = UserStateMachine.USER_STATES.ANON;
       req.currentPhase = UserStateMachine.PHASES.A;
       next();
@@ -94,21 +123,34 @@ export async function attachUserState(
       return;
     }
 
-    const user = (await db.getAsync(
+    const user = await db.getAsync(
       'SELECT user_journey_state, current_phase FROM users WHERE id = ?',
-      [req.user.id]
-    )) as UserRow | null;
+      [userId]
+    );
 
-    if (user) {
-      req.userState = user.user_journey_state || UserStateMachine.USER_STATES.ANON;
-      req.currentPhase = user.current_phase || UserStateMachine.PHASES.A;
+    if (isPlainObjectRecord(user)) {
+      const rawState =
+        normalizeOptionalString((user as UserRow).user_journey_state) ??
+        UserStateMachine.USER_STATES.ANON;
+      const knownStates = Object.values(UserStateMachine.USER_STATES);
+      const normalizedState = knownStates.includes(rawState) ? rawState : UserStateMachine.USER_STATES.ANON;
+      const rawPhase = normalizeOptionalString((user as UserRow).current_phase) ?? UserStateMachine.PHASES.A;
+      const knownPhases = Object.values(UserStateMachine.PHASES);
+      const normalizedPhase = knownPhases.includes(rawPhase)
+        ? rawPhase
+        : UserStateMachine.getPhase(normalizedState);
+      req.userState = normalizedState;
+      req.currentPhase = normalizedPhase;
     } else {
       req.userState = UserStateMachine.USER_STATES.ANON;
       req.currentPhase = UserStateMachine.PHASES.A;
     }
 
     // Attach permissions for convenience
-    req.statePermissions = UserStateMachine.getPermissions(req.userState);
+    req.statePermissions = safeRead(
+      () => UserStateMachine.getPermissions(req.userState as string),
+      getAnonPermissions(UserStateMachine)
+    );
 
     next();
   } catch (error: unknown) {
@@ -117,7 +159,7 @@ export async function attachUserState(
     // Fail closed - treat as ANON
     req.userState = UserStateMachine.USER_STATES.ANON;
     req.currentPhase = UserStateMachine.PHASES.A;
-    req.statePermissions = UserStateMachine.getPermissions(UserStateMachine.USER_STATES.ANON);
+    req.statePermissions = getAnonPermissions(UserStateMachine);
     next();
   }
 }
@@ -128,10 +170,18 @@ export async function attachUserState(
  * @returns Express middleware
  */
 export function requireState(allowedStates: string | string[]) {
-  const states = Array.isArray(allowedStates) ? allowedStates : [allowedStates];
+  const states = normalizeAllowList(allowedStates);
+  if (states.length === 0) {
+    return (_req: UserStateRequest, res: Response, _next: NextFunction): void => {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: 'requireState was configured with no valid allowed states.',
+      });
+    };
+  }
 
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-    const currentState = req.userState;
+    const currentState = normalizeOptionalString(req.userState);
 
     if (!currentState) {
       res.status(401).json({
@@ -162,12 +212,28 @@ export function requireState(allowedStates: string | string[]) {
  * @returns Express middleware
  */
 export function requirePhase(allowedPhases: string | string[]) {
-  const phases = Array.isArray(allowedPhases) ? allowedPhases : [allowedPhases];
+  const phases = normalizeAllowList(allowedPhases);
+  if (phases.length === 0) {
+    return (_req: UserStateRequest, res: Response, _next: NextFunction): void => {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: 'requirePhase was configured with no valid allowed phases.',
+      });
+    };
+  }
 
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-    const currentPhase = req.currentPhase;
+    const currentPhase = normalizeOptionalString(req.currentPhase);
 
-    if (!phases.includes(currentPhase || '')) {
+    if (!currentPhase) {
+      res.status(401).json({
+        error: 'USER_PHASE_UNKNOWN',
+        message: 'User phase not determined. Are you logged in?',
+      });
+      return;
+    }
+
+    if (!phases.includes(currentPhase)) {
       res.status(403).json({
         error: 'INVALID_PHASE',
         message: `This action requires phase: ${phases.join(' or ')}. Current phase: ${currentPhase}`,
@@ -187,17 +253,36 @@ export function requirePhase(allowedPhases: string | string[]) {
  * @returns Express middleware
  */
 export function requirePermission(permission: string) {
+  const normalizedPermission = normalizeOptionalString(permission);
+  if (!normalizedPermission) {
+    return (_req: UserStateRequest, res: Response, _next: NextFunction): void => {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: 'requirePermission was configured with no valid permission key.',
+      });
+    };
+  }
+
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
     const { UserStateMachine } = deps;
+    const currentState = normalizeOptionalString(req.userState);
 
-    const hasPermission = UserStateMachine.hasPermission(req.userState || '', permission);
+    if (!currentState) {
+      res.status(401).json({
+        error: 'USER_STATE_UNKNOWN',
+        message: 'User state not determined. Are you logged in?',
+      });
+      return;
+    }
+
+    const hasPermission = UserStateMachine.hasPermission(currentState, normalizedPermission);
 
     if (!hasPermission) {
       res.status(403).json({
         error: 'PERMISSION_DENIED',
-        message: `Permission '${permission}' not available in state: ${req.userState}`,
-        currentState: req.userState,
-        requiredPermission: permission,
+        message: `Permission '${normalizedPermission}' not available in state: ${currentState}`,
+        currentState,
+        requiredPermission: normalizedPermission,
       });
       return;
     }
@@ -221,43 +306,66 @@ export async function transitionState(
   context: Record<string, unknown> = {}
 ): Promise<{ success: boolean; error?: string }> {
   const { UserStateMachine, db } = deps;
+  const normalizedUserId = normalizeOptionalString(userId);
+  const normalizedFromState = normalizeOptionalString(fromState);
+  const normalizedToState = normalizeOptionalString(toState);
+  if (!normalizedUserId) {
+    return { success: false, error: 'Invalid user id' };
+  }
+  if (!normalizedFromState || !normalizedToState) {
+    return { success: false, error: 'Invalid state' };
+  }
 
   // Validate transition
-  const validation = UserStateMachine.validateTransition(fromState, toState, context);
+  let validation: { valid: boolean; reason?: string };
+  try {
+    validation = UserStateMachine.validateTransition(normalizedFromState, normalizedToState, context);
+  } catch (error: unknown) {
+    logger.error('transitionState validateTransition error:', error);
+    return { success: false, error: 'State transition validation failed' };
+  }
   if (!validation.valid) {
     return { success: false, error: validation.reason };
   }
 
   // Get new phase
-  const newPhase = UserStateMachine.getPhase(toState);
+  const newPhase = UserStateMachine.getPhase(normalizedToState);
 
   if (!db) {
     return { success: false, error: 'Database not available' };
   }
 
   try {
-    await db.run(
+    const runResult = await db.run(
       `UPDATE users 
              SET user_journey_state = ?, 
                  current_phase = ?,
                  journey_state_changed_at = datetime('now'),
                  phase_changed_at = datetime('now')
              WHERE id = ?`,
-      [toState, newPhase, userId]
+      [normalizedToState, newPhase, normalizedUserId]
     );
+    if (
+      runResult &&
+      typeof runResult === 'object' &&
+      typeof (runResult as { changes?: unknown }).changes === 'number' &&
+      (runResult as { changes: number }).changes === 0
+    ) {
+      return { success: false, error: 'User not found or state not updated' };
+    }
 
     // Log to audit (if auditService available)
     try {
-      const AuditService = await import('../../services/auditService.js').then(
+      const AuditService = await import('../services/auditService.js').then(
         (m) => m.default || m
       );
       await (AuditService as any).log({
         eventType: 'USER_STATE_TRANSITION',
-        userId,
+        userId: normalizedUserId,
         metadata: {
-          fromState,
-          toState,
-          fromPhase: UserStateMachine.getPhase(fromState),
+          fromState: normalizedFromState,
+          toState: normalizedToState,
+          fromPhase: UserStateMachine.getPhase(normalizedFromState),
           toPhase: newPhase,
           context: { ...context, timestamp: new Date().toISOString() },
         },

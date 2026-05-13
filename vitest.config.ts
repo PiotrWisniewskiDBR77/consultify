@@ -42,6 +42,10 @@ export default defineConfig({
         find: '@aws-sdk/client-s3',
         replacement: path.resolve(__dirname, './tests/__mocks__/aws-sdk-client-s3.js'),
       },
+      {
+        find: 'node-cron',
+        replacement: path.resolve(__dirname, './tests/__mocks__/node-cron.ts'),
+      },
 
       // 1. KEEP Legacy JS files as JS (exclude from TS mapping)
       // Database module - redirect to TypeScript version

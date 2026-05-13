@@ -75,6 +75,32 @@ interface Dependencies {
   StatusMachine: StatusMachine;
 }
 
+const MAX_PMO_TEXT_FIELD_CHARS = 8192;
+const MAX_PMO_STATUS_CHARS = 128;
+const MAX_PMO_ENTITY_ID_CHARS = 128;
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+const clampOptionalString = (value: string | undefined, maxChars: number): string | undefined => {
+  if (!value) return undefined;
+  if (value.length <= maxChars) return value;
+  return value.slice(0, maxChars);
+};
+
+const readEntityId = (req: PMORequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.params?.id, undefined));
+
 // ==========================================
 // DEPENDENCIES (injectable for testing)
 // ==========================================
@@ -92,8 +118,12 @@ let deps: Dependencies = {
  * Validate initiative creation (owner required)
  */
 export const validateInitiative = (req: PMORequest, res: Response, next: NextFunction): void => {
-  const { ownerId, owner_business_id, ownerBusinessId } = req.body;
-  const owner = ownerId || owner_business_id || ownerBusinessId;
+  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const { ownerId, owner_business_id, ownerBusinessId } = body;
+  const owner =
+    normalizeOptionalString(ownerId) ||
+    normalizeOptionalString(owner_business_id) ||
+    normalizeOptionalString(ownerBusinessId);
 
   if (!owner) {
     res.status(400).json({
@@ -114,8 +144,9 @@ export const validateTask = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { initiativeId, initiative_id } = req.body;
-  const initId = initiativeId || initiative_id;
+  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const { initiativeId, initiative_id } = body;
+  const initId = normalizeOptionalString(initiativeId) || normalizeOptionalString(initiative_id);
 
   if (!initId) {
     res.status(400).json({
@@ -139,8 +170,8 @@ export const validateTask = async (
     }
     next();
   } catch (err: any) {
-    const error = err as Error;
-    res.status(500).json({ error: error.message });
+    logger.error('[PMO Validation] validateTask failed', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -154,26 +185,56 @@ export const validateInitiativeStatus = async (
 ): Promise<void> => {
   const { StatusMachine } = deps;
 
-  const { status, blockedReason, blocked_reason } = req.body;
+  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const { blockedReason, blocked_reason } = body;
+  const blockedReasonValue = clampOptionalString(
+    normalizeOptionalString(blockedReason) || normalizeOptionalString(blocked_reason),
+    MAX_PMO_TEXT_FIELD_CHARS
+  );
+  const status = normalizeOptionalString(body.status);
+  if (status && status.length > MAX_PMO_STATUS_CHARS) {
+    res.status(400).json({
+      error: 'Status value is too long',
+      rule: 'STATUS_VALUE_TOO_LONG',
+    });
+    return;
+  }
 
   if (!status) {
     next();
     return;
   }
 
+  const initiativeId = readEntityId(req);
+  if (!initiativeId) {
+    res.status(400).json({ error: 'Initiative id is required' });
+    return;
+  }
+  if (initiativeId.length > MAX_PMO_ENTITY_ID_CHARS) {
+    res.status(400).json({ error: 'Invalid initiative id', rule: 'INVALID_ENTITY_ID' });
+    return;
+  }
+
   try {
     const row = await DbPromise.get<InitiativeRow>(
       `SELECT status, project_id FROM initiatives WHERE id = ?`,
-      [req.params.id]
+      [initiativeId]
     );
     if (!row) {
       res.status(404).json({ error: 'Initiative not found' });
       return;
     }
 
-    const validation = StatusMachine.validateInitiativeTransition(row.status, status, {
-      blockedReason: blockedReason || blocked_reason,
-    });
+    let validation: { valid: boolean; reason?: string };
+    try {
+      validation = StatusMachine.validateInitiativeTransition(row.status, status, {
+        blockedReason: blockedReasonValue,
+      });
+    } catch (validationError: any) {
+      logger.error('[PMO Validation] validateInitiativeStatus: StatusMachine threw', validationError);
+      res.status(500).json({ error: 'Internal server error' });
+      return;
+    }
 
     if (!validation.valid) {
       res.status(400).json({
@@ -190,8 +251,8 @@ export const validateInitiativeStatus = async (
     req.projectId = row.project_id;
     next();
   } catch (err: any) {
-    const error = err as Error;
-    res.status(500).json({ error: error.message });
+    logger.error('[PMO Validation] validateInitiativeStatus failed', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -205,27 +266,61 @@ export const validateTaskStatus = async (
 ): Promise<void> => {
   const { StatusMachine } = deps;
 
-  const { status, blockedReason, blocked_reason, blockerType, blocker_type } = req.body;
+  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const { blockedReason, blocked_reason, blockerType, blocker_type } = body;
+  const blockedReasonValue = clampOptionalString(
+    normalizeOptionalString(blockedReason) || normalizeOptionalString(blocked_reason),
+    MAX_PMO_TEXT_FIELD_CHARS
+  );
+  const blockerTypeValue = clampOptionalString(
+    normalizeOptionalString(blockerType) || normalizeOptionalString(blocker_type),
+    MAX_PMO_TEXT_FIELD_CHARS
+  );
+  const status = normalizeOptionalString(body.status);
+  if (status && status.length > MAX_PMO_STATUS_CHARS) {
+    res.status(400).json({
+      error: 'Status value is too long',
+      rule: 'STATUS_VALUE_TOO_LONG',
+    });
+    return;
+  }
 
   if (!status) {
     next();
     return;
   }
 
+  const taskId = readEntityId(req);
+  if (!taskId) {
+    res.status(400).json({ error: 'Task id is required' });
+    return;
+  }
+  if (taskId.length > MAX_PMO_ENTITY_ID_CHARS) {
+    res.status(400).json({ error: 'Invalid task id', rule: 'INVALID_ENTITY_ID' });
+    return;
+  }
+
   try {
     const row = await DbPromise.get<TaskRow>(
       `SELECT status, initiative_id FROM tasks WHERE id = ?`,
-      [req.params.id]
+      [taskId]
     );
     if (!row) {
       res.status(404).json({ error: 'Task not found' });
       return;
     }
 
-    const validation = StatusMachine.validateTaskTransition(row.status, status, {
-      blockedReason: blockedReason || blocked_reason,
-      blockerType: blockerType || blocker_type,
-    });
+    let validation: { valid: boolean; reason?: string };
+    try {
+      validation = StatusMachine.validateTaskTransition(row.status, status, {
+        blockedReason: blockedReasonValue,
+        blockerType: blockerTypeValue,
+      });
+    } catch (validationError: any) {
+      logger.error('[PMO Validation] validateTaskStatus: StatusMachine threw', validationError);
+      res.status(500).json({ error: 'Internal server error' });
+      return;
+    }
 
     if (!validation.valid) {
       res.status(400).json({
@@ -241,8 +336,8 @@ export const validateTaskStatus = async (
     req.initiativeId = row.initiative_id;
     next();
   } catch (err: any) {
-    const error = err as Error;
-    res.status(500).json({ error: error.message });
+    logger.error('[PMO Validation] validateTaskStatus failed', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -251,11 +346,22 @@ export const validateTaskStatus = async (
  */
 export const logStatusChange = (entityType: string) => {
   return (req: PMORequest, res: Response, next: NextFunction): void => {
-    const originalSend = res.json.bind(res);
+    const originalSend = safeRead(() => res.json.bind(res), null as unknown as Response['json']);
+    if (!originalSend) {
+      next();
+      return;
+    }
 
     (res.json as any) = async (data: unknown) => {
+      const body = safeRead(() => req.body, {} as PMORequest['body']);
+      const nextStatus = normalizeOptionalString(body.status);
+      const organizationId = normalizeOptionalString(safeRead(() => req.organizationId, undefined));
+      const entityId = normalizeOptionalString(safeRead(() => req.params?.id, undefined));
+      const userId = normalizeOptionalString(safeRead(() => req.userId, undefined));
+      const responseStatus = safeRead(() => res.statusCode, 500);
+
       // Only log if successful and status changed, and we have a valid org context
-      if (res.statusCode < 400 && req.previousStatus && req.body.status && req.organizationId) {
+      if (responseStatus < 400 && req.previousStatus && nextStatus && organizationId && entityId) {
         const logSql = `INSERT INTO activity_logs 
                     (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                     VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
@@ -263,12 +369,12 @@ export const logStatusChange = (entityType: string) => {
         try {
           await DbPromise.run(logSql, [
             uuidv4(),
-            req.organizationId,
-            req.userId,
+            organizationId,
+            userId,
             entityType,
-            req.params.id,
+            entityId,
             JSON.stringify({ status: req.previousStatus }),
-            JSON.stringify({ status: req.body.status }),
+            JSON.stringify({ status: nextStatus }),
           ]);
         } catch (err: any) {
           // Log error but don't fail the request
@@ -279,10 +385,10 @@ export const logStatusChange = (entityType: string) => {
               error: errorMessage,
               stack: errorStack,
               sql: logSql,
-              organizationId: req.organizationId || 'unknown',
-              userId: req.userId || null,
+              organizationId: organizationId || 'unknown',
+              userId: userId || null,
               entityType,
-              entityId: req.params.id,
+              entityId: entityId || '',
             });
           } catch (logErr) {
             // Fallback if logging itself fails (e.g., circular reference)

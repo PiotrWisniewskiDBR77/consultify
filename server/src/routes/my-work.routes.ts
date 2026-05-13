@@ -8186,6 +8186,31 @@ router.get(
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
 
     try {
+      // Prefer metadata-first table-platform export when a base/table exists
+      // for this idea workspace. Fall back to legacy graph CSV otherwise.
+      try {
+        const ProjectionService = (await import('../services/tablePlatform/ProjectionService.js'))
+          .default;
+        const resolved = await ProjectionService.resolveBaseId(ideaId, orgId, userId);
+        const tableId = resolved?.tableId ? String(resolved.tableId) : '';
+        if (tableId) {
+          const ExportService = (await import('../services/tablePlatform/ExportService.js')).default;
+          const tableName = await ExportService.getTableName(tableId);
+          const safeName = String(tableName || `idea-table-${ideaId}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+
+          res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+          res.setHeader('Content-Disposition', `attachment; filename="${safeName}.csv"`);
+          res.write('\uFEFF');
+          await ExportService.streamCsvExport({ tableId }, res);
+          return;
+        }
+      } catch (platformErr) {
+        logger.warn('[export-csv] table-platform export unavailable; using legacy fallback', {
+          ideaId,
+          error: (platformErr as Error)?.message,
+        });
+      }
+
       const mapRow = await queryHelpers.queryOne<any>(
         `SELECT nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
         [ideaId, userId, orgId]

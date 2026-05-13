@@ -34,6 +34,7 @@ Moduł pozyskiwania jakościowych informacji: szablony wywiadów, odpowiedzi, zg
 - `WY_SESSIONS`
 - `WY_TEMPLATES`
 - `WY_INSIGHTS`
+- `WY_INITIATIVES`
 - `WY_PENDING_REVIEW`
 
 Function contracts live in `functions/` and are mandatory for gate completeness.

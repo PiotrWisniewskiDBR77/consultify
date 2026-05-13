@@ -15,6 +15,52 @@ import type { NextFunction, Request, Response } from 'express';
 const CSRF_COOKIE_NAME = 'csrf_token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_CSRF_TOKEN_CHARS = 256;
+const CSRF_TOKEN_CANONICAL_CHARS = 64;
+const CSRF_TOKEN_CANONICAL_RE = /^[a-f0-9]{64}$/;
+
+function safeRead<T>(reader: () => T, fallback: T): T {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+}
+
+function readCsrfCookieRaw(req: Request): unknown {
+  return safeRead(() => req.cookies?.[CSRF_COOKIE_NAME], undefined as unknown);
+}
+
+function readCsrfCookie(req: Request): string | undefined {
+  const raw = readCsrfCookieRaw(req);
+  return typeof raw === 'string' && raw.length > 0 ? raw : undefined;
+}
+
+function readCsrfHeader(req: Request): string | undefined {
+  const normalizeHeaderValue = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      return normalized.length > 0 ? normalized : undefined;
+    }
+    if (Array.isArray(value) && value.length > 0) {
+      const first = value[0];
+      if (typeof first === 'string') {
+        const normalized = first.trim();
+        return normalized.length > 0 ? normalized : undefined;
+      }
+    }
+    return undefined;
+  };
+
+  const lower = safeRead(() => req.headers?.[CSRF_HEADER_NAME], undefined as unknown);
+  const normalizedLower = normalizeHeaderValue(lower);
+  if (normalizedLower) return normalizedLower;
+  const upper = safeRead(
+    () => (req.headers as Record<string, unknown>)?.[CSRF_HEADER_NAME.toUpperCase()],
+    undefined as unknown
+  );
+  return normalizeHeaderValue(upper);
+}
 
 function isTestEnv() {
   return process.env.NODE_ENV === 'test' || !!process.env.VITEST;
@@ -30,12 +76,24 @@ function generateToken() {
   // 32 bytes -> 64 hex chars
   return crypto.randomBytes(32).toString('hex');
 }
+function isCanonicalCsrfToken(value: string | undefined): boolean {
+  if (!value) return false;
+  if (value.length !== CSRF_TOKEN_CANONICAL_CHARS) return false;
+  return CSRF_TOKEN_CANONICAL_RE.test(value);
+}
 
 function cookieOptions(req: Request) {
+  const readForwardedProto = (): string | undefined => {
+    const raw = safeRead(() => req.headers['x-forwarded-proto'], undefined as unknown);
+    if (typeof raw !== 'string') return undefined;
+    const firstHop = raw.split(',')[0]?.trim().toLowerCase();
+    return firstHop || undefined;
+  };
+
   // In production behind HTTPS we want secure cookies; in tests/dev allow http.
   const isSecure =
-    req.secure ||
-    req.headers['x-forwarded-proto'] === 'https' ||
+    safeRead(() => req.secure, false) ||
+    readForwardedProto() === 'https' ||
     process.env.NODE_ENV === 'production';
 
   return {
@@ -58,6 +116,15 @@ function safeEqual(a: string, b: string) {
 
 function isSafeMethod(method: string | undefined) {
   return method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+}
+
+function sendCsrfForbidden(
+  res: Response,
+  body: { code: 'CSRF_MISSING' | 'CSRF_INVALID'; message: string }
+): void {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Pragma', 'no-cache');
+  res.status(403).json(body);
 }
 
 function isExemptPath(path: string | undefined) {
@@ -88,8 +155,8 @@ function isExemptPath(path: string | undefined) {
 export const csrfTokenMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   if (!shouldEnforceInCurrentEnv()) return next();
 
-  const existing = req.cookies?.[CSRF_COOKIE_NAME];
-  if (typeof existing === 'string' && existing.length > 0) return next();
+  const existing = readCsrfCookie(req);
+  if (isCanonicalCsrfToken(existing)) return next();
 
   const token = generateToken();
   res.cookie(CSRF_COOKIE_NAME, token, cookieOptions(req));
@@ -101,21 +168,34 @@ export const csrfTokenMiddleware = (req: Request, res: Response, next: NextFunct
  */
 export const csrfValidationMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   if (!shouldEnforceInCurrentEnv()) return next();
-  if (isSafeMethod(req.method)) return next();
-  if (isExemptPath(req.path)) return next();
+  const rawRequestMethod = safeRead(() => req.method, undefined as unknown as string | undefined);
+  const requestMethod = typeof rawRequestMethod === 'string' ? rawRequestMethod.trim().toUpperCase() : undefined;
+  const requestPath = safeRead(() => req.path, undefined as unknown as string | undefined);
+  if (isSafeMethod(requestMethod)) return next();
+  if (isExemptPath(requestPath)) return next();
 
-  const cookieTok = req.cookies?.[CSRF_COOKIE_NAME];
-  const headerTok = (req.headers?.[CSRF_HEADER_NAME] ??
-    // Some frameworks provide non-lowercased header access
-    (req.headers as any)?.[CSRF_HEADER_NAME.toUpperCase()]) as string | undefined;
+  const cookieTok = readCsrfCookieRaw(req);
+  const headerTok = readCsrfHeader(req);
 
-  if (!cookieTok || !headerTok) {
-    res.status(403).json({ code: 'CSRF_MISSING', message: 'CSRF token missing' });
+  if (cookieTok === undefined || cookieTok === null || !headerTok) {
+    sendCsrfForbidden(res, { code: 'CSRF_MISSING', message: 'CSRF token missing' });
+    return;
+  }
+  if (typeof cookieTok !== 'string') {
+    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
+    return;
+  }
+  if (cookieTok.length > MAX_CSRF_TOKEN_CHARS || headerTok.length > MAX_CSRF_TOKEN_CHARS) {
+    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
+    return;
+  }
+  if (!isCanonicalCsrfToken(cookieTok) || !isCanonicalCsrfToken(headerTok)) {
+    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
     return;
   }
 
-  if (!safeEqual(String(cookieTok), String(headerTok))) {
-    res.status(403).json({ code: 'CSRF_INVALID', message: 'CSRF token invalid' });
+  if (!safeEqual(cookieTok, headerTok)) {
+    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
     return;
   }
 
@@ -129,8 +209,8 @@ export const getCsrfTokenHandler = (req: Request, res: Response): void => {
   if (!shouldEnforceInCurrentEnv()) {
     // In test mode with CSRF disabled, still provide a token so the frontend can mount.
     // Do NOT use a static token (security integrity gate).
-    const existing = req.cookies?.[CSRF_COOKIE_NAME];
-    if (typeof existing === 'string' && existing.length > 0) {
+    const existing = readCsrfCookie(req);
+    if (isCanonicalCsrfToken(existing)) {
       res.json({ token: existing });
       return;
     }
@@ -138,8 +218,8 @@ export const getCsrfTokenHandler = (req: Request, res: Response): void => {
     return;
   }
 
-  const existing = req.cookies?.[CSRF_COOKIE_NAME];
-  if (typeof existing === 'string' && existing.length > 0) {
+  const existing = readCsrfCookie(req);
+  if (isCanonicalCsrfToken(existing)) {
     res.json({ token: existing });
     return;
   }

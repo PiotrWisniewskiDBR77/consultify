@@ -4,12 +4,97 @@ import logger from '../utils/Logger.js';
 import { queryOne } from '../utils/queryHelpers.js';
 import type { AuthRequest } from './auth.middleware.js';
 
-const getOrgId = (req: AuthRequest) => req.user?.organizationId;
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readFiniteNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'bigint') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!normalized) return undefined;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const responseAlreadyCommitted = (res: Response): boolean =>
+  safeRead(() => res.headersSent, false) ||
+  safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
+  safeRead(() => (res as Response & { finished?: boolean }).finished === true, false);
+
+const invokeNext = (next: NextFunction, phase: string): void => {
+  if (typeof next !== 'function') return;
+  try {
+    next();
+  } catch (error) {
+    logger.warn('[ResourceQuota] next() threw', { phase, error });
+  }
+};
+
+const shouldSkipCommittedResponse = (res: Response, next: NextFunction): boolean => {
+  if (responseAlreadyCommitted(res)) {
+    invokeNext(next, 'response-committed');
+    return true;
+  }
+  return false;
+};
+const sendJsonIfOpen = (
+  res: Response,
+  next: NextFunction,
+  statusCode: number,
+  payload: Record<string, unknown>,
+  kind: 'memory' | 'cpu' | 'budget' | 'auth' | 'data'
+): boolean => {
+  if (shouldSkipCommittedResponse(res, next)) return false;
+  try {
+    res.status(statusCode).json(payload);
+    return true;
+  } catch (error) {
+    logger.warn('[ResourceQuota] Response write failed', { kind, statusCode, error });
+    if (responseAlreadyCommitted(res)) return false;
+    invokeNext(next, `write-failure-${kind}`);
+    return false;
+  }
+};
+const safeQuotaMessage = (label: string): string => `${label} quota exceeded for this organization`;
+const logQuotaExceeded = (
+  kind: 'memory' | 'cpu' | 'budget',
+  organizationId: string,
+  current: number,
+  limit: number
+): void => {
+  logger.warn('[ResourceQuota] Quota exceeded', { kind, organizationId, current, limit });
+};
+
+const getOrgId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
+  normalizeOptionalString(
+    safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
+  );
 
 export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (shouldSkipCommittedResponse(res, next)) return;
   const orgId = getOrgId(req);
   if (!orgId) {
-    res.status(403).json({ error: 'No organization found' });
+    sendJsonIfOpen(res, next, 403, { error: 'No organization found' }, 'auth');
     return;
   }
 
@@ -19,16 +104,18 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       [orgId]
     );
     if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
-      next();
+      invokeNext(next, 'memory-no-plan');
       return;
     }
 
     const plan = await queryOne('SELECT id, memory_limit_mb FROM subscription_plans WHERE id = ?', [
       (orgPlan as Record<string, unknown>).subscription_plan_id,
     ]);
-    const memoryLimit = (plan as Record<string, unknown> | null)?.memory_limit_mb as number | null;
-    if (!memoryLimit) {
-      next();
+    const memoryLimit = readFiniteNumber(
+      (plan as Record<string, unknown> | null)?.memory_limit_mb as unknown
+    );
+    if (memoryLimit === undefined || memoryLimit < 0) {
+      invokeNext(next, 'memory-invalid-limit');
       return;
     }
 
@@ -36,35 +123,49 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       'SELECT memory_usage_mb_current, cpu_usage_percent_avg FROM organization_resource_usage WHERE organization_id = ?',
       [orgId]
     );
+    if (shouldSkipCommittedResponse(res, next)) return;
     if (!usage) {
-      res.status(500).json({ error: 'Organization data not found' });
+      sendJsonIfOpen(res, next, 500, { error: 'Organization data not found' }, 'data');
       return;
     }
 
-    const current = (usage as Record<string, unknown>).memory_usage_mb_current as number;
+    const current = readFiniteNumber((usage as Record<string, unknown>).memory_usage_mb_current);
+    if (current === undefined) {
+      invokeNext(next, 'memory-invalid-current');
+      return;
+    }
     if (current > memoryLimit) {
-      res.status(429).json({
+      logQuotaExceeded('memory', orgId, current, memoryLimit);
+      sendJsonIfOpen(
+        res,
+        next,
+        429,
+        {
         error: 'Memory quota exceeded',
         details: {
           current,
           limit: memoryLimit,
-          message: `Organization ${orgId} exceeded its memory quota`,
+          message: safeQuotaMessage('Memory'),
         },
-      });
+      },
+        'memory'
+      );
       return;
     }
 
-    next();
+    invokeNext(next, 'memory-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] Memory quota check failed', error as Error);
-    next();
+    if (responseAlreadyCommitted(res)) return;
+    invokeNext(next, 'memory-catch');
   }
 };
 
 export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (shouldSkipCommittedResponse(res, next)) return;
   const orgId = getOrgId(req);
   if (!orgId) {
-    res.status(403).json({ error: 'No organization found' });
+    sendJsonIfOpen(res, next, 403, { error: 'No organization found' }, 'auth');
     return;
   }
 
@@ -74,7 +175,7 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       [orgId]
     );
     if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
-      next();
+      invokeNext(next, 'cpu-no-plan');
       return;
     }
 
@@ -82,9 +183,11 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       'SELECT id, cpu_quota_percent FROM subscription_plans WHERE id = ?',
       [(orgPlan as Record<string, unknown>).subscription_plan_id]
     );
-    const cpuLimit = (plan as Record<string, unknown> | null)?.cpu_quota_percent as number | null;
-    if (!cpuLimit && cpuLimit !== 0) {
-      next();
+    const cpuLimit = readFiniteNumber(
+      (plan as Record<string, unknown> | null)?.cpu_quota_percent as unknown
+    );
+    if (cpuLimit === undefined || cpuLimit < 0) {
+      invokeNext(next, 'cpu-invalid-limit');
       return;
     }
 
@@ -92,35 +195,49 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       'SELECT cpu_usage_percent_avg FROM organization_resource_usage WHERE organization_id = ?',
       [orgId]
     );
+    if (shouldSkipCommittedResponse(res, next)) return;
     if (!usage) {
-      res.status(500).json({ error: 'Organization data not found' });
+      sendJsonIfOpen(res, next, 500, { error: 'Organization data not found' }, 'data');
       return;
     }
 
-    const current = (usage as Record<string, unknown>).cpu_usage_percent_avg as number;
+    const current = readFiniteNumber((usage as Record<string, unknown>).cpu_usage_percent_avg);
+    if (current === undefined) {
+      invokeNext(next, 'cpu-invalid-current');
+      return;
+    }
     if (current > cpuLimit) {
-      res.status(429).json({
+      logQuotaExceeded('cpu', orgId, current, cpuLimit);
+      sendJsonIfOpen(
+        res,
+        next,
+        429,
+        {
         error: 'CPU quota exceeded',
         details: {
           current,
           limit: cpuLimit,
-          message: `Organization ${orgId} exceeded its CPU quota`,
+          message: safeQuotaMessage('CPU'),
         },
-      });
+      },
+        'cpu'
+      );
       return;
     }
 
-    next();
+    invokeNext(next, 'cpu-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] CPU quota check failed', error as Error);
-    next();
+    if (responseAlreadyCommitted(res)) return;
+    invokeNext(next, 'cpu-catch');
   }
 };
 
 export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (shouldSkipCommittedResponse(res, next)) return;
   const orgId = getOrgId(req);
   if (!orgId) {
-    res.status(403).json({ error: 'No organization found' });
+    sendJsonIfOpen(res, next, 403, { error: 'No organization found' }, 'auth');
     return;
   }
 
@@ -129,39 +246,47 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
       'SELECT monthly_budget_usd, budget_spent_current_period FROM organizations WHERE id = ?',
       [orgId]
     );
+    if (shouldSkipCommittedResponse(res, next)) return;
     if (!orgBudget) {
-      res.status(500).json({ error: 'Organization not found' });
+      sendJsonIfOpen(res, next, 500, { error: 'Organization not found' }, 'data');
       return;
     }
 
-    const monthlyBudget = (orgBudget as Record<string, unknown>).monthly_budget_usd as
-      | number
-      | null;
-    const spent = (orgBudget as Record<string, unknown>).budget_spent_current_period as
-      | number
-      | null;
+    const monthlyBudget = readFiniteNumber((orgBudget as Record<string, unknown>).monthly_budget_usd);
+    const spentRaw = readFiniteNumber(
+      (orgBudget as Record<string, unknown>).budget_spent_current_period
+    );
+    const spent = spentRaw ?? 0;
 
-    if (!monthlyBudget && monthlyBudget !== 0) {
-      next();
+    if (monthlyBudget === undefined) {
+      invokeNext(next, 'budget-missing-limit');
       return;
     }
 
-    if ((spent || 0) > monthlyBudget) {
-      res.status(429).json({
+    if (spent > monthlyBudget) {
+      logQuotaExceeded('budget', orgId, spent, monthlyBudget);
+      sendJsonIfOpen(
+        res,
+        next,
+        429,
+        {
         error: 'Monthly budget exceeded',
         details: {
-          spent: spent || 0,
+          spent,
           limit: monthlyBudget,
-          message: `Organization ${orgId} exceeded its monthly budget`,
+          message: safeQuotaMessage('Monthly budget'),
         },
-      });
+      },
+        'budget'
+      );
       return;
     }
 
-    next();
+    invokeNext(next, 'budget-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] Budget quota check failed', error as Error);
-    next();
+    if (responseAlreadyCommitted(res)) return;
+    invokeNext(next, 'budget-catch');
   }
 };
 

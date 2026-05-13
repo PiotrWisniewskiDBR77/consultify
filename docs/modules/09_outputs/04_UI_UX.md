@@ -12,6 +12,7 @@ last_updated: 2026-05-09
 ## 1. Main Screen
 
 As-Is: `/presentations` renders `ReportsAndPresentationsHub` with multi-tab library UX. Specialized create/edit screens route to report or presentation builders while the library remains the entry shell. Legacy report routes redirect to outputs tabs to avoid parallel module surfaces.
+Format lanes `/wordy`, `/excele`, `/prezentacje` remain placeholder-owned by modules `10/11/12`; Outputs must not claim those runtime surfaces as active lane owners.
 
 ## 2. Runtime States
 
@@ -28,6 +29,7 @@ Menu 2 keeps module-level navigation. Menu 3 is the Outputs command/top bar for 
 ## 4. AI Actions Placement
 
 Contextual AI/output generation actions must live in Menu 3/right-side command placement or artifact-scoped controls. They must not be duplicated below the canvas or in both library canvas and Menu 3.
+This rule is enforced for Outputs runtime surfaces today and is target-state mandatory for downstream lane runtimes when mounted.
 
 ## 5. Next Action Guidance
 
@@ -53,6 +55,8 @@ Review/mine/all artifact views are explicit tabs. Governance/access actions fetc
 
 - Existing docs confirm tab synchronization, explicit review/mine/all tabs and action-target endpoints, but not the full copy/evidence matrix for every artifact family.
 - Review/diff rendering for specialized builders is owned by those builders and needs separate runtime validation.
+- `builder_entry_watch`: Stage 1.5 resolved docs wording by separating `AppView.PRESENTATIONS` (`/presentations` shell) from `AppView.FULL_STEP6_REPORTS` (`/reports/builder`); owner/runtime evidence is still needed to confirm the direct builder entry does not create a second canonical shell.
+- `dormant_runtime_gap`: `WordyView` / `ExceleView` / `PrezentacjeView` exist in code imports but are not mounted on lane routes.
 
 ## 10. Acceptance Criteria
 
@@ -61,6 +65,7 @@ Review/mine/all artifact views are explicit tabs. Governance/access actions fetc
 - AI/output actions use Menu 3/right-side or artifact-scoped placement without duplication.
 - Outputs show source/provenance and review state.
 - Share/export/finalization require explicit user action and visible result.
+- Cross-module lane ownership stays explicit: Outputs runtime does not claim active ownership of `/wordy`, `/excele`, `/prezentacje` surfaces.
 
 ## 11. Function Annex — Outputs Functions
 

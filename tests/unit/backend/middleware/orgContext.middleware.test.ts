@@ -98,6 +98,48 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('returns 401 when user id accessor throws and required=true', async () => {
+    const mw = orgContextMiddleware({ required: true });
+    const user: Record<string, unknown> = {};
+    Object.defineProperty(user, 'id', {
+      enumerable: true,
+      get: () => {
+        throw new Error('user id getter failed');
+      },
+    });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org1' },
+      headers: {},
+      user,
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when req.user accessor throws and required=true', async () => {
+    const mw = orgContextMiddleware({ required: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org1' },
+      headers: {},
+    };
+    Object.defineProperty(req, 'user', {
+      configurable: true,
+      get: () => {
+        throw new Error('user accessor failed');
+      },
+    });
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('requires explicit orgId for write when strictWrite=true', async () => {
     const mw = orgContextMiddleware({ strictWrite: true, allowHeader: false });
     const req: any = {
@@ -239,6 +281,36 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('resolves header org when custom headerName uses mixed case', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgCase',
+      'Org Case',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mCase', 'orgCase', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ allowHeader: true, headerName: 'X-Org-Id' });
+    const req: any = {
+      method: 'GET',
+      params: {},
+      headers: { 'x-org-id': 'orgCase' },
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(req.org?.id).toBe('orgCase');
+    expect(req.org?.source).toBe('header');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('uses first header value when header is an array', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'orgArr',
@@ -265,6 +337,166 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(req.org?.id).toBe('orgArr');
     expect(req.org?.source).toBe('header');
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 400 when URL org and header org conflict under allowHeader=true', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgA',
+      'Org A',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mA', 'orgA', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ allowHeader: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'orgA' },
+      headers: { 'x-org-id': 'orgB' },
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Organization context conflict',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 invalid organization id when URL org is malformed even if header conflicts', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgGood',
+      'Org Good',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mGood', 'orgGood', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ allowHeader: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'o'.repeat(129) },
+      headers: { 'x-org-id': 'orgGood' },
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Invalid organization id',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('falls back to user default org when header accessor throws and strictWrite=false', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgFallback',
+      'Org Fallback',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mFallback', 'orgFallback', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ allowHeader: true, strictWrite: false });
+    const req: any = {
+      method: 'GET',
+      params: {},
+      user: { id: 'u1', organizationId: 'orgFallback' },
+    };
+    Object.defineProperty(req, 'headers', {
+      configurable: true,
+      get: () => {
+        throw new Error('headers getter failed');
+      },
+    });
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+    expect(req.org?.id).toBe('orgFallback');
+    expect(req.org?.source).toBe('user_default');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to user default org when x-org-id header value accessor throws and strictWrite=false', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgFallback2',
+      'Org Fallback 2',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mFallback2', 'orgFallback2', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ allowHeader: true, strictWrite: false });
+    const headersProxy = new Proxy({} as Record<string, unknown>, {
+      get: (_target, prop) => {
+        if (prop === 'x-org-id') {
+          throw new Error('header value getter failed');
+        }
+        return undefined;
+      },
+    });
+    const req: any = {
+      method: 'GET',
+      params: {},
+      headers: headersProxy,
+      user: { id: 'u1', organizationId: 'orgFallback2' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(req.org?.id).toBe('orgFallback2');
+    expect(req.org?.source).toBe('user_default');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 400 for write strict mode when method accessor throws and org is missing', async () => {
+    const mw = orgContextMiddleware({ required: true, strictWrite: true });
+    const req: any = {
+      params: {},
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    Object.defineProperty(req, 'method', {
+      configurable: true,
+      get: () => {
+        throw new Error('method getter failed');
+      },
+    });
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('ignores header when allowHeader=false and uses user default org for reads', async () => {
@@ -323,6 +555,34 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('uses legacy organization_id fallback when organizationId is missing', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgLegacy',
+      'Org Legacy',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mLegacy', 'orgLegacy', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ allowHeader: false });
+    const req: any = {
+      method: 'GET',
+      params: {},
+      headers: {},
+      user: { id: 'u1', organizationId: '', organization_id: 'orgLegacy' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+    expect(req.org?.id).toBe('orgLegacy');
+    expect(req.org?.source).toBe('user_default');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('returns 400 when org is missing for reads and required=true', async () => {
     const mw = orgContextMiddleware({ required: true, strictWrite: true });
     const req: any = {
@@ -338,6 +598,74 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 400 when orgId exceeds safety limit', async () => {
+    const mw = orgContextMiddleware({ required: true, strictWrite: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'o'.repeat(129) },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Invalid organization id',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when orgId contains traversal-like segments', async () => {
+    const mw = orgContextMiddleware({ required: true, strictWrite: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org/../x' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Invalid organization id',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when orgId contains whitespace characters', async () => {
+    const mw = orgContextMiddleware({ required: true, strictWrite: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org with-space' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Invalid organization id',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(req.org).toBeNull();
+    expect(req.orgContext).toBeNull();
+  });
+
   it('no-ops when org is missing for reads and required=false', async () => {
     const mw = orgContextMiddleware({ required: false, strictWrite: true });
     const req: any = {
@@ -351,6 +679,41 @@ describeIfDb('orgContext.middleware (L1)', () => {
     await mw(req, res, next);
     expect(req.org).toBeNull();
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears stale org context before returning 403 access denied', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgDenied',
+      'Org Denied',
+      'pro',
+      'active',
+    ]);
+
+    const mw = orgContextMiddleware({ required: true, strictWrite: true });
+    const staleOrg = {
+      id: 'stale-org',
+      source: 'user_default',
+      isMember: true,
+      isConsultant: false,
+      role: 'ADMIN',
+    };
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'orgDenied' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+      org: staleOrg,
+      orgContext: staleOrg,
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+    expect(req.org).toBeNull();
+    expect(req.orgContext).toBeNull();
   });
 
   it('allows write fallback when strictWrite=false (uses user default)', async () => {
@@ -381,7 +744,7 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('returns 500 when permission_scope JSON is invalid', async () => {
+  it('returns 403 when membership permission_scope JSON is invalid', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'org4',
       'Org 4',
@@ -404,7 +767,79 @@ describeIfDb('orgContext.middleware (L1)', () => {
     const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
     const next = vi.fn();
     await mw(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Access denied',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when membership permission_scope JSON exceeds max safety length', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'org4big',
+      'Org 4big',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      ['m4big', 'org4big', 'u1', 'ADMIN', 'ACTIVE', JSON.stringify({ blob: 'x'.repeat(70_000) })]
+    );
+
+    const mw = orgContextMiddleware();
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org4big' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Access denied',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when consultant permission_scope JSON is invalid', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'org4c',
+      'Org 4c',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO consultant_org_links (id, consultant_id, organization_id, status, permission_scope)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['l4c', 'u1', 'org4c', 'ACTIVE', '{not-json']
+    );
+
+    const mw = orgContextMiddleware();
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org4c' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Access denied',
+      })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -492,5 +927,36 @@ describeIfDb('orgContext.middleware (L1)', () => {
         linkId: 'lC',
       })
     );
+  });
+});
+
+describe('orgContext.middleware options validation', () => {
+  it('throws when paramName is empty', async () => {
+    const { default: orgContextMiddleware } = await import(
+      '../../../../server/src/middleware/orgContext.middleware.ts'
+    );
+
+    expect(() => orgContextMiddleware({ paramName: '' })).toThrow('Invalid paramName');
+  });
+
+  it('throws when paramName contains path separators', async () => {
+    const { default: orgContextMiddleware } = await import(
+      '../../../../server/src/middleware/orgContext.middleware.ts'
+    );
+
+    expect(() => orgContextMiddleware({ paramName: 'org/../id' })).toThrow('Invalid paramName');
+  });
+
+  it('throws when allowHeader=true and headerName contains newline characters', async () => {
+    const { default: orgContextMiddleware } = await import(
+      '../../../../server/src/middleware/orgContext.middleware.ts'
+    );
+
+    expect(() =>
+      orgContextMiddleware({
+        allowHeader: true,
+        headerName: 'x-org-id\r\nx-inject:1',
+      })
+    ).toThrow('Invalid headerName');
   });
 });

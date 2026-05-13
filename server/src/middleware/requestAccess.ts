@@ -1,12 +1,36 @@
 import type { AuthRequest } from './auth.middleware.js';
 
 export type RequestAccessRole = 'superadmin' | 'owner' | 'admin' | 'member' | 'guest' | '';
+const MAX_ACCESS_ROLE_INPUT_CHARS = 128;
 
-export const normalizeAccessRole = (role?: string): RequestAccessRole => {
-  const normalized = String(role || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_');
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+export const normalizeAccessRole = (role?: unknown): RequestAccessRole => {
+  const normalized = safeRead(() => {
+    if (role === null || role === undefined) return '';
+    const roleInput =
+      role instanceof String
+        ? role.valueOf()
+        : typeof role === 'string' || typeof role === 'number' || typeof role === 'bigint'
+          ? role
+          : '';
+    if (roleInput === '') return '';
+    return String(role)
+      .slice(0, MAX_ACCESS_ROLE_INPUT_CHARS)
+      .normalize('NFKC')
+      .replace(/[\x00-\x1F\x7F]+/g, '')
+      .replace(/[\u200B-\u200D\uFEFF]+/g, '')
+      .replace(/[\u202A-\u202E\u2060-\u2069]+/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+  }, '');
 
   if (!normalized) return '';
 
@@ -24,25 +48,32 @@ export const normalizeAccessRole = (role?: string): RequestAccessRole => {
 };
 
 export const isRequestSuperAdmin = (req: AuthRequest): boolean => {
-  if (req.user?.isSuperAdmin) return true;
-  return normalizeAccessRole(req.userRole) === 'superadmin';
+  if (safeRead(() => req.user?.isSuperAdmin === true, false)) return true;
+  const userRoleSnapshot = safeRead(() => req.userRole, undefined);
+  return normalizeAccessRole(userRoleSnapshot) === 'superadmin';
 };
 
 export const getRequestAccessRole = (req: AuthRequest): RequestAccessRole => {
-  if (isRequestSuperAdmin(req)) return 'superadmin';
+  const requestUserSnapshot = safeRead(() => req.user, undefined as AuthRequest['user']);
+  const userRoleSnapshot = safeRead(() => req.userRole, undefined);
+  if (
+    safeRead(() => requestUserSnapshot?.isSuperAdmin === true, false) ||
+    normalizeAccessRole(userRoleSnapshot) === 'superadmin'
+  ) {
+    return 'superadmin';
+  }
 
-  const rawRole = normalizeAccessRole(req.userRole);
+  const rawRole = normalizeAccessRole(userRoleSnapshot);
   if (rawRole) return rawRole;
 
-  return normalizeAccessRole(req.user?.role);
+  return normalizeAccessRole(safeRead(() => requestUserSnapshot?.role, undefined));
 };
 
 export const getSettingsActorRole = (
   req: AuthRequest
 ): Exclude<RequestAccessRole, 'superadmin' | ''> => {
-  if (isRequestSuperAdmin(req)) return 'owner';
-
   const resolvedRole = getRequestAccessRole(req);
+  if (resolvedRole === 'superadmin') return 'owner';
   if (resolvedRole === 'owner' || resolvedRole === 'admin' || resolvedRole === 'guest') {
     return resolvedRole;
   }

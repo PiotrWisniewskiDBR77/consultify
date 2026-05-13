@@ -23,6 +23,9 @@ interface MetricsBucket {
 }
 
 const LATENCY_BUCKETS = [50, 100, 250, 500, 1000, 2500, 5000, 10000];
+const METRICS_MW_INSTALLED = Symbol('consultify.metrics.middleware.installed');
+const MAX_METRIC_METHOD_CHARS = 32;
+const MAX_METRIC_COUNTER = Number.MAX_SAFE_INTEGER;
 
 const metrics: MetricsBucket = {
   requests: 0,
@@ -35,78 +38,201 @@ const metrics: MetricsBucket = {
   aiTimeouts: 0,
 };
 
+function safeRead<T>(reader: () => T, fallback: T): T {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeOptionalString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+}
+
+function safeMethod(req: Request): string {
+  const raw = normalizeOptionalString(safeRead(() => req.method, undefined));
+  if (!raw) return 'UNKNOWN';
+  const normalized = raw.toUpperCase();
+  if (!/^[A-Z0-9_-]+$/.test(normalized)) return 'OTHER';
+  return normalized.length > MAX_METRIC_METHOD_CHARS
+    ? normalized.slice(0, MAX_METRIC_METHOD_CHARS)
+    : normalized;
+}
+
+function normalizeHttpStatus(rawStatus: unknown): number {
+  const parsed = typeof rawStatus === 'number' ? rawStatus : Number(rawStatus);
+  if (!Number.isFinite(parsed)) return 500;
+  const integerStatus = Math.trunc(parsed);
+  if (integerStatus < 100 || integerStatus > 599) return 500;
+  return integerStatus;
+}
+
+function toPrometheusCounter(rawValue: unknown): string {
+  const value = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+  if (!Number.isFinite(value) || value < 0) return '0';
+  return Math.trunc(value).toString();
+}
+
+function escapePrometheusLabelValue(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t')
+    .replace(/"/g, '\\"');
+}
+
+function addBoundedMetric(current: unknown, delta: unknown): number {
+  const currentValue = typeof current === 'number' && Number.isFinite(current) && current >= 0 ? current : 0;
+  const deltaValue = typeof delta === 'number' && Number.isFinite(delta) && delta > 0 ? delta : 0;
+  if (deltaValue === 0) return Math.min(currentValue, MAX_METRIC_COUNTER);
+  return Math.min(MAX_METRIC_COUNTER, currentValue + deltaValue);
+}
+
 export function incrementRateLimitHits(): void {
-  metrics.rateLimitHits++;
+  metrics.rateLimitHits = addBoundedMetric(metrics.rateLimitHits, 1);
 }
 export function incrementAiTimeouts(): void {
-  metrics.aiTimeouts++;
+  metrics.aiTimeouts = addBoundedMetric(metrics.aiTimeouts, 1);
 }
 
 export function getRequestMetrics(): MetricsBucket {
-  return { ...metrics };
+  return {
+    requests: metrics.requests,
+    errors: metrics.errors,
+    latencySum: metrics.latencySum,
+    latencyBuckets: { ...metrics.latencyBuckets },
+    byStatus: { ...metrics.byStatus },
+    byMethod: { ...metrics.byMethod },
+    rateLimitHits: metrics.rateLimitHits,
+    aiTimeouts: metrics.aiTimeouts,
+  };
 }
 
 export function getPrometheusMetrics(): string {
   const lines: string[] = [];
   lines.push(`# HELP http_requests_total Total HTTP requests`);
   lines.push(`# TYPE http_requests_total counter`);
-  lines.push(`http_requests_total ${metrics.requests}`);
+  lines.push(`http_requests_total ${toPrometheusCounter(metrics.requests)}`);
 
   lines.push(`# HELP http_errors_total Total HTTP 5xx errors`);
   lines.push(`# TYPE http_errors_total counter`);
-  lines.push(`http_errors_total ${metrics.errors}`);
+  lines.push(`http_errors_total ${toPrometheusCounter(metrics.errors)}`);
 
   lines.push(`# HELP http_request_duration_ms_sum Total request duration`);
   lines.push(`# TYPE http_request_duration_ms_sum counter`);
-  lines.push(`http_request_duration_ms_sum ${metrics.latencySum.toFixed(0)}`);
+  lines.push(`http_request_duration_ms_sum ${toPrometheusCounter(metrics.latencySum)}`);
 
   for (const bucket of LATENCY_BUCKETS) {
     lines.push(
-      `http_request_duration_ms_bucket{le="${bucket}"} ${metrics.latencyBuckets[`le_${bucket}`]}`
+      `http_request_duration_ms_bucket{le="${bucket}"} ${toPrometheusCounter(metrics.latencyBuckets[`le_${bucket}`])}`
     );
   }
-  lines.push(`http_request_duration_ms_bucket{le="+Inf"} ${metrics.requests}`);
+  lines.push(`http_request_duration_ms_bucket{le="+Inf"} ${toPrometheusCounter(metrics.requests)}`);
 
   lines.push(`# HELP rate_limit_hits_total Rate limit hits`);
   lines.push(`# TYPE rate_limit_hits_total counter`);
-  lines.push(`rate_limit_hits_total ${metrics.rateLimitHits}`);
+  lines.push(`rate_limit_hits_total ${toPrometheusCounter(metrics.rateLimitHits)}`);
 
   lines.push(`# HELP ai_timeouts_total AI call timeouts`);
   lines.push(`# TYPE ai_timeouts_total counter`);
-  lines.push(`ai_timeouts_total ${metrics.aiTimeouts}`);
+  lines.push(`ai_timeouts_total ${toPrometheusCounter(metrics.aiTimeouts)}`);
+
+  lines.push(`# HELP http_requests_by_method_total HTTP requests by normalized method`);
+  lines.push(`# TYPE http_requests_by_method_total counter`);
+  for (const [method, count] of Object.entries(metrics.byMethod)) {
+    lines.push(
+      `http_requests_by_method_total{method="${escapePrometheusLabelValue(method)}"} ${toPrometheusCounter(count)}`
+    );
+  }
 
   for (const [status, count] of Object.entries(metrics.byStatus)) {
-    lines.push(`http_requests_by_status{status="${status}"} ${count}`);
+    lines.push(
+      `http_requests_by_status{status="${escapePrometheusLabelValue(status)}"} ${toPrometheusCounter(count)}`
+    );
   }
 
   return lines.join('\n') + '\n';
 }
 
 export const metricsMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+  if (safeRead(() => Boolean((res as any)[METRICS_MW_INSTALLED]), false)) {
+    next();
+    return;
+  }
+
   const start = Date.now();
-  metrics.requests++;
-  metrics.byMethod[req.method] = (metrics.byMethod[req.method] || 0) + 1;
+  const method = safeMethod(req);
+  let completionRecorded = false;
+  const recordCompletion = () => {
+    if (completionRecorded) return;
+    completionRecorded = true;
+    try {
+      const rawDuration = Date.now() - start;
+      const duration = Number.isFinite(rawDuration) && rawDuration >= 0 ? rawDuration : 0;
+      const status = normalizeHttpStatus(safeRead(() => res.statusCode, 500));
 
-  const originalEnd = res.end.bind(res) as (...args: any[]) => any;
-  (res as any).end = function (...args: any[]) {
-    const duration = Date.now() - start;
-    const status = res.statusCode;
+      metrics.latencySum = addBoundedMetric(metrics.latencySum, duration);
+      metrics.byStatus[status] = addBoundedMetric(metrics.byStatus[status], 1);
 
-    metrics.latencySum += duration;
-    metrics.byStatus[status] = (metrics.byStatus[status] || 0) + 1;
+      if (status >= 500) metrics.errors = addBoundedMetric(metrics.errors, 1);
 
-    if (status >= 500) metrics.errors++;
-
-    for (const bucket of LATENCY_BUCKETS) {
-      if (duration <= bucket) {
-        metrics.latencyBuckets[`le_${bucket}`]++;
+      for (const bucket of LATENCY_BUCKETS) {
+        if (duration <= bucket) {
+          metrics.latencyBuckets[`le_${bucket}`] = addBoundedMetric(
+            metrics.latencyBuckets[`le_${bucket}`],
+            1
+          );
+        }
       }
+    } catch {
+      // Never break the response path due to metrics accounting.
     }
+  };
+
+  const originalEnd = safeRead(() => res.end.bind(res), null as unknown as ((...args: any[]) => any));
+  if (!originalEnd) {
+    next();
+    return;
+  }
+  const wrappedEnd = function (...args: any[]) {
+    recordCompletion();
 
     return originalEnd(...args);
   };
+  const installed = safeRead(() => {
+    (res as any).end = wrappedEnd as typeof res.end;
+    return true;
+  }, false);
+  if (!installed) {
+    next();
+    return;
+  }
+  safeRead(() => {
+    (res as any)[METRICS_MW_INSTALLED] = true;
+    return true;
+  }, false);
+  safeRead(() => {
+    if (typeof (res as any).once === 'function') {
+      (res as any).once('close', recordCompletion);
+    } else if (typeof (res as any).on === 'function') {
+      (res as any).on('close', recordCompletion);
+    }
+    return true;
+  }, false);
+
+  metrics.requests = addBoundedMetric(metrics.requests, 1);
+  metrics.byMethod[method] = addBoundedMetric(metrics.byMethod[method], 1);
 
   next();
 };
 
 export default metricsMiddleware;
+
+export const __private__ = {
+  addBoundedMetric,
+  escapePrometheusLabelValue,
+};

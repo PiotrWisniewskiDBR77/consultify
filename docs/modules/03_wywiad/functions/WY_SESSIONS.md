@@ -14,6 +14,7 @@ last_updated: 2026-05-10
 
 ## 1. Function Identity
 - Function ID: `WY_SESSIONS`
+- Module: `03_wywiad`
 - UI labels: `Sesje`, `Sessions`
 - Scope: Interview tab `sessions`
 - Feature state: `real`
@@ -65,4 +66,15 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 - Risk: alias routes can obscure canonical user path understanding.
-- Change log: initial function contract created.
+- Change log: initial function contract created; execution-card/task-board linkage added for scoped delivery.
+
+## 13. Execution Card and Task Board Linkage
+
+- Scope anchor lock: `03_wywiad/WY_SESSIONS` (immutable for this cycle).
+- Source execution card: `docs/modules/03_wywiad/function-cards/WY_SESSIONS_EXECUTION_CARD.md`.
+- Source task board row set: `docs/modules/03_wywiad/IMPLEMENTATION_TASK_BOARD.md` (`WY-SES-*` only).
+- Active task IDs:
+  - `WY-SES-P0-001` (`READY`)
+  - `WY-SES-P1-001` (`WAITING_P0`)
+  - `WY-SES-P2-001` (`WAITING_P0`)
+- Dependency scope (`impact-only`): `WY_TEMPLATES`, `WY_INSIGHTS`, `WY_PENDING_REVIEW`.

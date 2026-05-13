@@ -17,7 +17,7 @@ vi.mock('@/store/useConversationStore', () => ({
 
 vi.mock('@/hooks/usePresentationMode', () => ({
   usePresentationMode: () => ({
-    mode: 'consulting',
+    mode: 'n',
     setMode: vi.fn(),
   }),
 }));
@@ -27,10 +27,22 @@ vi.mock('@/utils/artifactLinks', () => ({
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModeHeader', () => ({
+  default: ({ title }: any) => <div data-testid="nmode-header">{title}</div>,
   NModeHeader: ({ title }: any) => <div data-testid="nmode-header">{title}</div>,
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModeCanvas', () => ({
+  default: ({ sections }: any) => {
+    return (
+      <div data-testid="nmode-canvas">
+        {sections?.map((s: any, i: number) => (
+          <div key={s.id || i} data-testid={`section-${s.id}`}>
+            {s.component}
+          </div>
+        ))}
+      </div>
+    );
+  },
   NModeCanvas: ({ sections }: any) => {
     return (
       <div data-testid="nmode-canvas">
@@ -45,10 +57,12 @@ vi.mock('@/components/shared/NModeLayout/NModeCanvas', () => ({
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModeLeftNav', () => ({
+  default: () => <div data-testid="nmode-leftnav" />,
   NModeLeftNav: () => <div data-testid="nmode-leftnav" />,
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModePropertiesStrip', () => ({
+  default: () => <div data-testid="nmode-properties" />,
   NModePropertiesStrip: () => <div data-testid="nmode-properties" />,
 }));
 

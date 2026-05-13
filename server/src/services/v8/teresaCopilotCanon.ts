@@ -29,6 +29,7 @@ export type HandoffTargetModule =
   | 'calendar'
   | 'notebook'
   | 'interview'
+  | 'ideas_table'
   | 'excele';
 
 export interface TeresaHandoffContext {
@@ -126,6 +127,15 @@ export interface InterviewHandoffPayload {
   evidence_pointers: string[];
 }
 
+export interface IdeasTableHandoffPayload {
+  ideas_table_intent: {
+    workspace_id: string;
+    message: string;
+    target_table_id?: string | null;
+  };
+  proposal_only: true;
+}
+
 export const P08_HANDOFF_TARGETS = {
   radar: {
     module: 'Radar' as const,
@@ -178,6 +188,20 @@ export const P08_HANDOFF_TARGETS = {
     required_common_payload: true,
     required_extra_fields: ['interview_handoff_context', 'evidence_pointers'] as const,
   },
+  ideas_table: {
+    module: 'My Work Ideas Table' as const,
+    contract_ref: 'MW_IDEAS_TABLE',
+    description: 'Governed proposal -> approval -> execute for Idea table creation/update',
+    required_common_payload: true,
+    required_extra_fields: ['ideas_table_intent', 'proposal_only'] as const,
+  },
+  excele: {
+    module: 'Excele Workbooks' as const,
+    contract_ref: 'P23',
+    description: 'Workbook generation handoff lane',
+    required_common_payload: true,
+    required_extra_fields: ['prompt'] as const,
+  },
 } as const;
 
 export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
@@ -186,6 +210,7 @@ export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
   'calendar',
   'notebook',
   'interview',
+  'ideas_table',
   'excele',
 ];
 

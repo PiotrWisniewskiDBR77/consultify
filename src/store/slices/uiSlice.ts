@@ -6,6 +6,15 @@ import { NavigationOptions } from '../../types/workspace';
 import { navigationMonitor, validateNavigation } from '../../utils/navigationGuard';
 import type { AppState } from '../useAppStore';
 
+const isUiNavigationDebugEnabled = () =>
+  process.env.NODE_ENV !== 'test' && process.env.VITE_UI_NAV_DEBUG === 'true';
+
+const logUiNavigationDebug = (...args: unknown[]) => {
+  if (isUiNavigationDebugEnabled()) {
+    console.log(...args);
+  }
+};
+
 export interface UISlice {
   currentView: AppView;
   theme: 'light' | 'dark' | 'system';
@@ -56,7 +65,7 @@ export interface UISlice {
 
   // Cross-module deep links (e.g., header → My Work)
   myWorkIntent: {
-    tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'ideas' | 'decisions' | 'notebook';
+    tab?: 'home' | 'ideas' | 'notebook' | 'inbox' | 'calendar' | 'tasks' | 'decisions' | 'manager';
     open?: {
       type: 'notification' | 'task' | 'idea' | 'decision' | 'notebook';
       id: string;
@@ -178,8 +187,8 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     const validation = validateNavigation(view);
 
     // Enhanced diagnostic logging
-    console.log('[UISlice] ====== setCurrentView START ======');
-    console.log('[UISlice] State change:', {
+    logUiNavigationDebug('[UISlice] ====== setCurrentView START ======');
+    logUiNavigationDebug('[UISlice] State change:', {
       from: previousView,
       to: view,
       validation: validation.valid ? 'PASSED' : 'FAILED',
@@ -199,7 +208,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     if (navigateFn) {
       try {
         const route = getRouteFromAppView(view);
-        console.log('[UISlice] Route resolution:', {
+        logUiNavigationDebug('[UISlice] Route resolution:', {
           view,
           resolvedRoute: route,
           method: 'React Router (navigateFn)',
@@ -208,11 +217,12 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
         if (!route) {
           console.error('[UISlice] CRITICAL: No route found for view:', view);
           navigationMonitor.recordNavigation(previousView, view, false, 'No route found');
+          return;
         }
 
         navigateFn(route);
         navigationMonitor.recordNavigation(previousView, view, true);
-        console.log('[UISlice] navigateFn called successfully');
+        logUiNavigationDebug('[UISlice] navigateFn called successfully');
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.error('[UISlice] ERROR navigating to route:', {
@@ -223,7 +233,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
       }
     } else {
       const route = getRouteFromAppView(view);
-      console.warn('[UISlice] WARNING: navigateFn not available, queuing navigation', {
+      logUiNavigationDebug('[UISlice] WARNING: navigateFn not available, queuing navigation', {
         view,
         resolvedRoute: route,
       });
@@ -234,7 +244,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
       }
     }
 
-    console.log('[UISlice] ====== setCurrentView END ======');
+    logUiNavigationDebug('[UISlice] ====== setCurrentView END ======');
   },
 
   setCurrentViewState: (view) => {
@@ -270,8 +280,8 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   navigateWithChatContext: (view: AppView, options?: NavigationOptions) => {
     const state = get();
 
-    console.log('[UISlice] ====== navigateWithChatContext START ======');
-    console.log('[UISlice] Chat context navigation:', {
+    logUiNavigationDebug('[UISlice] ====== navigateWithChatContext START ======');
+    logUiNavigationDebug('[UISlice] Chat context navigation:', {
       from: state.currentView,
       to: view,
       options,
@@ -288,17 +298,18 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     if (navigateFn) {
       try {
         const route = getRouteFromAppView(view);
-        console.log('[UISlice] Route with chat context:', {
+        logUiNavigationDebug('[UISlice] Route with chat context:', {
           view,
           resolvedRoute: route,
         });
 
         if (!route) {
           console.error('[UISlice] CRITICAL: No route found for view:', view);
+          return;
         }
 
         navigateFn(route);
-        console.log('[UISlice] navigateWithChatContext completed');
+        logUiNavigationDebug('[UISlice] navigateWithChatContext completed');
       } catch (error) {
         console.error('[UISlice] ERROR navigating with chat context:', {
           view,
@@ -307,16 +318,19 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
       }
     } else {
       const route = getRouteFromAppView(view);
-      console.warn('[UISlice] WARNING: navigateFn not available, queuing chat context navigation', {
-        view,
-        resolvedRoute: route,
-      });
+      logUiNavigationDebug(
+        '[UISlice] WARNING: navigateFn not available, queuing chat context navigation',
+        {
+          view,
+          resolvedRoute: route,
+        }
+      );
       if (route) {
         set({ pendingNavigation: { view, route } });
       }
     }
 
-    console.log('[UISlice] ====== navigateWithChatContext END ======');
+    logUiNavigationDebug('[UISlice] ====== navigateWithChatContext END ======');
   },
 
   returnToFullChat: () => {
@@ -331,6 +345,10 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     if (navigateFn) {
       try {
         const route = getRouteFromAppView(AppView.AI_CHAT);
+        if (!route) {
+          console.error('[UISlice] CRITICAL: No route found for AI_CHAT');
+          return;
+        }
         navigateFn(route);
       } catch (error) {
         console.error('[UISlice] Error returning to full chat:', error);

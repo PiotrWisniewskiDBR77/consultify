@@ -76,6 +76,10 @@ interface OrgContextOptions {
 interface Dependencies {
   // No longer needed - using DbPromise directly
 }
+const MAX_ORG_CONTEXT_ID_CHARS = 128;
+const MAX_PERMISSION_SCOPE_JSON_CHARS = 65_536;
+const MAX_ORG_CONTEXT_OPTION_NAME_CHARS = 64;
+const SAFE_ORG_CONTEXT_OPTION_NAME = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -86,6 +90,113 @@ interface Dependencies {
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
+
+const normalizeOptionalString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized || null;
+};
+
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const readRequestMethod = (req: Request): string => {
+  const method = safeRead(() => req.method, 'GET');
+  return typeof method === 'string' ? method.toUpperCase() : 'GET';
+};
+
+const readRequestUser = (req: OrgRequest): AuthRequest['user'] | undefined =>
+  safeRead(() => req.user, undefined as AuthRequest['user']);
+
+const readUserId = (req: OrgRequest, requestUser?: AuthRequest['user']): string | null => {
+  const user = requestUser ?? readRequestUser(req);
+  return normalizeOptionalString(
+    safeRead(() => user?.id, undefined as unknown as string | undefined)
+  );
+};
+
+const readUserDefaultOrgId = (req: OrgRequest, requestUser?: AuthRequest['user']): string | null => {
+  const user = requestUser ?? readRequestUser(req);
+  const organizationId = normalizeOptionalString(
+    safeRead(() => user?.organizationId, undefined as unknown as string | undefined)
+  );
+  if (organizationId) return organizationId;
+  const legacyOrganizationId = normalizeOptionalString(
+    safeRead(
+      () => (user as { organization_id?: string } | undefined)?.organization_id,
+      undefined as unknown as string | undefined
+    )
+  );
+  if (legacyOrganizationId) return legacyOrganizationId;
+  return normalizeOptionalString(
+    safeRead(
+      () => (user as { last_selected_org?: string } | undefined)?.last_selected_org,
+      undefined as unknown as string | undefined
+    )
+  );
+};
+
+const readOrgIdFromParam = (req: Request, paramName: string): string | null => {
+  const params = safeRead(
+    () => req.params as Record<string, unknown>,
+    {} as Record<string, unknown>
+  );
+  return normalizeOptionalString(safeRead(() => params[paramName], undefined));
+};
+
+const readOrgIdFromHeader = (req: Request, headerName: string): string | null => {
+  const headers = safeRead(
+    () => req.headers as Record<string, unknown>,
+    {} as Record<string, unknown>
+  );
+  const normalizedHeaderName = normalizeOptionalString(headerName)?.toLowerCase();
+  if (!normalizedHeaderName) return null;
+  const headerValue = safeRead(() => headers[normalizedHeaderName], undefined);
+  if (Array.isArray(headerValue)) {
+    return normalizeOptionalString(safeRead(() => headerValue[0], undefined));
+  }
+  return normalizeOptionalString(headerValue);
+};
+const isSafeOrgContextId = (orgId: string): boolean => {
+  if (!orgId || orgId.length > MAX_ORG_CONTEXT_ID_CHARS) return false;
+  if (/[\u0000-\u001F\u007F]/.test(orgId)) return false;
+  if (/\s/u.test(orgId)) return false;
+  if (orgId.includes('..') || orgId.includes('/') || orgId.includes('\\')) return false;
+  return true;
+};
+
+const parsePermissionScope = (value: unknown): { valid: true; scope: Record<string, unknown> } | { valid: false } => {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) {
+    return { valid: true, scope: {} };
+  }
+  if (normalized.length > MAX_PERMISSION_SCOPE_JSON_CHARS) {
+    return { valid: false };
+  }
+  try {
+    const parsed = JSON.parse(normalized);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { valid: false };
+    }
+    return { valid: true, scope: parsed as Record<string, unknown> };
+  } catch {
+    return { valid: false };
+  }
+};
+const assertOrgContextOptionName = (label: string, value: string): void => {
+  if (
+    !value ||
+    value.length > MAX_ORG_CONTEXT_OPTION_NAME_CHARS ||
+    !SAFE_ORG_CONTEXT_OPTION_NAME.test(value)
+  ) {
+    throw new Error(`[OrgContextMiddleware] Invalid ${label}: ${JSON.stringify(value)}`);
+  }
+};
 
 /**
  * Resolve organization access for a user.
@@ -99,38 +210,48 @@ async function resolveUserOrgAccess(userId: string, orgId: string): Promise<OrgA
 
   // Check direct membership first
   const membership = await dbGet<MembershipRow>(
-    `SELECT id, role, status, permission_scope FROM organization_members 
-         WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+    `SELECT om.id, om.role, om.status, om.permission_scope
+         FROM organization_members om
+         JOIN organizations o ON o.id = om.organization_id
+         WHERE om.user_id = ? AND om.organization_id = ? AND om.status = 'ACTIVE' AND o.is_active = 1`,
     [userId, orgId]
   );
 
   if (membership) {
+    const parsedPermissionScope = parsePermissionScope(membership.permission_scope);
+    if (!parsedPermissionScope.valid) {
+      return { allowed: false };
+    }
     return {
       allowed: true,
       isMember: true,
       isConsultant: false,
       role: membership.role,
-      permissionScope: membership.permission_scope ? JSON.parse(membership.permission_scope) : {},
+      permissionScope: parsedPermissionScope.scope,
       membershipId: membership.id,
     };
   }
 
   // Check consultant link (fresh from DB — revocation is immediate)
   const consultantLink = await dbGet<ConsultantLinkRow>(
-    `SELECT id, permission_scope, status FROM consultant_org_links 
-         WHERE consultant_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+    `SELECT col.id, col.permission_scope, col.status
+         FROM consultant_org_links col
+         JOIN organizations o ON o.id = col.organization_id
+         WHERE col.consultant_id = ? AND col.organization_id = ? AND col.status = 'ACTIVE' AND o.is_active = 1`,
     [userId, orgId]
   );
 
   if (consultantLink) {
+    const parsedPermissionScope = parsePermissionScope(consultantLink.permission_scope);
+    if (!parsedPermissionScope.valid) {
+      return { allowed: false };
+    }
     return {
       allowed: true,
       isMember: false,
       isConsultant: true,
       role: 'CONSULTANT',
-      permissionScope: consultantLink.permission_scope
-        ? JSON.parse(consultantLink.permission_scope)
-        : {},
+      permissionScope: parsedPermissionScope.scope,
       linkId: consultantLink.id,
     };
   }
@@ -200,11 +321,19 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
     paramName = 'orgId',
     required = true,
   } = options;
+  assertOrgContextOptionName('paramName', paramName);
+  if (allowHeader) {
+    assertOrgContextOptionName('headerName', headerName);
+  }
 
   return async (req: OrgRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      req.org = null;
+      req.orgContext = null;
+      const requestUser = readRequestUser(req);
+
       // Must have authenticated user
-      if (!req.user) {
+      if (!requestUser) {
         if (required) {
           res.status(401).json({ error: 'Authentication required' });
           return;
@@ -214,7 +343,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         return;
       }
 
-      const method = (req.method || 'GET').toUpperCase();
+      const method = readRequestMethod(req);
       const isWrite = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
 
       // Resolve orgId with priority: URL param > header (if allowed) > user default
@@ -222,23 +351,54 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
       let orgSource: string | null = null;
 
       // 1. URL param (highest priority, always trusted)
-      if (req.params?.[paramName]) {
-        orgId = req.params[paramName] as string;
+      const paramOrgId = readOrgIdFromParam(req, paramName);
+      const headerOrgId = allowHeader ? readOrgIdFromHeader(req, headerName) : null;
+      if (paramOrgId && !isSafeOrgContextId(paramOrgId)) {
+        res.status(400).json({
+          error: 'Invalid organization id',
+          message: 'Organization identifier is malformed or too long.',
+        });
+        return;
+      }
+      if (headerOrgId && !isSafeOrgContextId(headerOrgId)) {
+        res.status(400).json({
+          error: 'Invalid organization id',
+          message: 'Organization identifier is malformed or too long.',
+        });
+        return;
+      }
+      if (paramOrgId && headerOrgId && paramOrgId !== headerOrgId) {
+        res.status(400).json({
+          error: 'Organization context conflict',
+          message: 'URL organization does not match the organization header.',
+        });
+        return;
+      }
+      if (paramOrgId) {
+        orgId = paramOrgId;
         orgSource = 'url_param';
       }
       // 2. Header (only if explicitly allowed)
-      else if (allowHeader && req.headers?.[headerName]) {
-        const headerValue = req.headers[headerName];
-        orgId = Array.isArray(headerValue) ? headerValue[0] : headerValue;
-        orgSource = 'header';
+      else if (allowHeader) {
+        if (headerOrgId) {
+          orgId = headerOrgId;
+          orgSource = 'header';
+        }
       }
       // 3. User's last selected org (only for reads when strictWrite is enabled)
       else if (!isWrite || !strictWrite) {
-        if (req.user?.organizationId) {
-          orgId = req.user.organizationId;
+        const userDefaultOrgId = readUserDefaultOrgId(req, requestUser);
+        if (userDefaultOrgId) {
+          orgId = userDefaultOrgId;
           orgSource = 'user_default';
-        } else if ((req.user as { last_selected_org?: string }).last_selected_org) {
-          orgId = (req.user as { last_selected_org?: string }).last_selected_org || null;
+        }
+      }
+
+      // If header path did not resolve anything and fallback is allowed, still try user default.
+      if (!orgId && (!isWrite || !strictWrite)) {
+        const userDefaultOrgId = readUserDefaultOrgId(req, requestUser);
+        if (userDefaultOrgId) {
+          orgId = userDefaultOrgId;
           orgSource = 'user_default';
         }
       }
@@ -266,9 +426,27 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         next();
         return;
       }
+      if (!isSafeOrgContextId(orgId)) {
+        res.status(400).json({
+          error: 'Invalid organization id',
+          message: 'Organization identifier is malformed or too long.',
+        });
+        return;
+      }
+
+      const userId = readUserId(req, requestUser);
+      if (!userId) {
+        if (required) {
+          res.status(401).json({ error: 'Authentication required' });
+          return;
+        }
+        req.org = null;
+        next();
+        return;
+      }
 
       // CRITICAL: Validate access from DB (always fresh, no cache)
-      const access = await resolveUserOrgAccess(req.user.id, orgId);
+      const access = await resolveUserOrgAccess(userId, orgId);
 
       if (!access.allowed) {
         res.status(403).json({

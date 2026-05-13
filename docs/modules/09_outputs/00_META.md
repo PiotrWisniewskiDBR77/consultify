@@ -15,7 +15,8 @@ last_updated: 2026-05-09
 - Sidebar label: `Outputs`
 - Folder: `09_outputs`
 - Route: `/presentations`
-- AppView: `AppView.FULL_STEP6_REPORTS`
+- Canonical shell AppView: `AppView.PRESENTATIONS`
+- Builder AppView: `AppView.FULL_STEP6_REPORTS` -> `/reports/builder`
 - Owner: user
 
 ## Canonicality
@@ -38,6 +39,11 @@ This folder is the author-level module contract. Other product, engineering and 
 
 ## Open Questions
 
-1. Does the active code route still match the contract route above?
+1. Should `AppView.FULL_STEP6_REPORTS` remain a direct builder entry, or should future navigation force users through the canonical `/presentations` shell first?
 2. Are there tenant-specific variants that require a separate permission matrix?
 3. Which acceptance evidence should be attached first when this module is next tested?
+
+## Stage 1.5 Note
+
+- `STAGE_1_5_ULTRA_DEEP_INTEGRATION_AUDIT_2026-05-11.md` confirms the canonical module shell is `/presentations` / `AppView.PRESENTATIONS`.
+- `AppView.FULL_STEP6_REPORTS` is retained as builder entry evidence, not as the canonical library shell.

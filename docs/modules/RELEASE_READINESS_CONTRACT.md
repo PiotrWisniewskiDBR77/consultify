@@ -22,6 +22,7 @@ Define when Consultify can be considered ready for release from documentation, r
 
 | Gate | Required result | Evidence |
 | --- | --- | --- |
+| integration cadence | `ACTIVE` | `_G1_G7_INTEGRATION_CADENCE_2026-05-11.md`, `_PROGRAM_GATE_BOARD_G1_G7_2026-05-11.md` |
 | module contract rerun | `PASS` | `npm run docs:contract:rerun-gate` |
 | PR runtime-contract sync | `PASS` | `module-contract-pr-gate.ts` |
 | traceability | no critical missing links | `SYSTEM_TRACEABILITY_MATRIX.md` |

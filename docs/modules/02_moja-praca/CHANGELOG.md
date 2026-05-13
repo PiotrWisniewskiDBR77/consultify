@@ -23,3 +23,7 @@ last_updated: 2026-05-09
 - Expanded `04_UI_UX.md` with full function annex and component mapping.
 - Deepened `CODEMAP.md`, `03_BEHAVIOR.md`, `07_ACCEPTANCE_AND_TESTS.md`, `STATUS.md` with function-level matrices and evidence paths.
 - Completed function-first updates in `README.md`, `00_META.md`, `01_PURPOSE.md`, `02_SCOPE.md`, `05_DATA_AND_INTEGRATIONS.md`, `06_PERMISSIONS_AND_SECURITY.md`.
+- Added implementation-ready stabilization/completion document:
+  - `IMPLEMENTATION_PLAN_STABILIZATION_AND_COMPLETION.md` (priority waves `P0/P1/P2`, gates, KPI, rollout and DoD).
+- Added Whiteboard RAW gap analysis and completion roadmap:
+  - `WHITEBOARD_RAW_GAP_ANALYSIS_AND_ROADMAP.md` (capability gaps and priority plan `P0-P2`).

@@ -767,10 +767,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 nodeType: n.type,
                 position: n.position,
                 color: n.data?.color,
+                data: n.data,
               }));
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
-                  detail: { items, ideaId: realId },
+                  detail: { items, ideaId: realId, tableContext },
                 })
               );
             } else if (result.type === 'table') {
@@ -781,8 +782,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                       id: r.id,
                       label: r.label,
                       nodeType: 'row',
+                      data: {
+                        ...(r.data || {}),
+                        sourceType: r.sourceType,
+                        sourceLabel: r.label,
+                        sourceRowType: r.type,
+                      },
                     })),
                     ideaId: realId,
+                    tableContext,
                   },
                 })
               );
@@ -804,7 +812,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 })) ?? [];
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
-                  detail: { items, edges: insertEdges, ideaId: realId },
+                  detail: { items, edges: insertEdges, ideaId: realId, tableContext },
                 })
               );
             }
@@ -944,6 +952,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       isPolish,
       realId,
       setActiveTool,
+      tableContext,
     ]
   );
 
@@ -2510,40 +2519,42 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           </div>
         )}
 
-        <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-              {isPolish ? 'Idea workspace' : 'Idea workspace'}
-            </span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
-              {activeToolLabel}
-            </span>
-            {(() => {
-              const rootNode = graphNodes.find(
-                (n: any) =>
-                  n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id)
-              );
-              const ps = rootNode?.data?.pipelineStage;
-              if (!ps || ps === 'draft') return null;
-              return (
-                <span className="rounded-full bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-                  {ps}
-                </span>
-              );
-            })()}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              {draftSavedLabel}
-            </span>
+        {activeTool !== 'mindmap' && (
+          <div
+            className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
+                {isPolish ? 'Idea workspace' : 'Idea workspace'}
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                {activeToolLabel}
+              </span>
+              {(() => {
+                const rootNode = graphNodes.find(
+                  (n: any) =>
+                    n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id)
+                );
+                const ps = rootNode?.data?.pipelineStage;
+                if (!ps || ps === 'draft') return null;
+                return (
+                  <span className="rounded-full bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                    {ps}
+                  </span>
+                );
+              })()}
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                {draftSavedLabel}
+              </span>
+            </div>
+            <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+              {title || safeTitleFromSeed(seedText, isPolish)}
+            </div>
+            <div className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+              {workspaceNextStepLabel}
+            </div>
           </div>
-          <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-            {title || safeTitleFromSeed(seedText, isPolish)}
-          </div>
-          <div className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
-            {workspaceNextStepLabel}
-          </div>
-        </div>
+        )}
 
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
 
@@ -2788,7 +2799,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
 
         {proposalBatch && (
-          <div className="absolute bottom-4 left-4 right-4 z-[90] max-w-lg mx-auto">
+          <div className="absolute right-4 top-16 z-[90] w-[min(28rem,calc(100%-7rem))]">
             <IdeaProposalReview
               batch={proposalBatch}
               onAccept={handleAcceptProposal}

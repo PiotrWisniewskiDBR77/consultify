@@ -61,4 +61,15 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 - Risk: template metadata completeness may vary by source.
-- Change log: initial function contract created.
+- Change log: initial function contract created; execution-card/task-board linkage added for scoped delivery.
+
+## 13. Execution Card and Task Board Linkage
+
+- Scope anchor lock: `03_wywiad/WY_TEMPLATES` (immutable for this cycle).
+- Source execution card: `docs/modules/03_wywiad/function-cards/WY_TEMPLATES_EXECUTION_CARD.md`.
+- Source task board row set: `docs/modules/03_wywiad/IMPLEMENTATION_TASK_BOARD.md` (`WY-TPL-*` only).
+- Active task IDs:
+  - `WY-TPL-P0-001` (`READY`)
+  - `WY-TPL-P1-001` (`WAITING_P0`)
+  - `WY-TPL-P2-001` (`WAITING_P0`)
+- Dependency scope (`impact-only`): `WY_SESSIONS`, `WY_INSIGHTS`.

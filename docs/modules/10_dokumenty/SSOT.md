@@ -25,6 +25,12 @@ last_updated: 2026-05-09
 - `DRD/consultify/docs/UI_UX/93_RAW_DOCUMENT_STUDIO_ANALYSIS_2026-05-09.md`
 - `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
 
+## Active Audit Packets
+
+- `DRD/consultify/docs/modules/10_dokumenty/DEEP_GAP_AUDIT_CODE_VS_DOCS_2026-05-11.md`
+- `DRD/consultify/docs/modules/10_dokumenty/DEEP_RAW_GAP_AUDIT_2026-05-11.md`
+- `DRD/consultify/docs/modules/10_dokumenty/STAGE_1_5_ULTRA_DEEP_GAP_AUDIT_2026-05-11.md`
+
 ## Superseded Or Removed References
 
 - This SSOT intentionally removes references to filenames that are not present in the repo at audit time.
@@ -34,4 +40,5 @@ last_updated: 2026-05-09
 
 - Status: `canonical baseline`.
 - Meaning: the module now has a coherent author-level contract based on verified repo sources and raw author inputs.
-- Remaining work: deepen each requirement by reading every linked source line-by-line during implementation sprints.
+- Stage 1.5 result: docs are `APPROVED_FOR_DOCS`; runtime remains `BLOCKED_P1`; module integration requires `NEEDS_OWNER_DECISION` for `/wordy` mount/copy/handoff strategy.
+- Remaining work: deepen each requirement by reading every linked source line-by-line during implementation sprints and by closing mounted-runtime evidence after owner decision.

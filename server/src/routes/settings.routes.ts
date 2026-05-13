@@ -32,6 +32,28 @@ const preferencesKey = (prefType: string) => `settings:${prefType}`;
 const LEGACY_SETTINGS_ROOT_GUIDANCE =
   'Use /api/settings/registry for scoped settings and /api/superadmin for platform-wide settings.';
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readAuthenticatedUserId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.userId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown));
+
+const readAuthenticatedOrganizationId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown));
+
 /**
  * GET /api/settings
  * Get system/user settings
@@ -1114,8 +1136,8 @@ router.get(
   '/integrations',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
@@ -1145,8 +1167,8 @@ router.post(
   '/integrations/:provider/connect',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1276,8 +1298,8 @@ router.delete(
   '/integrations/:provider',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1313,8 +1335,8 @@ router.post(
   '/integrations/:provider/test',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1361,8 +1383,8 @@ router.get(
   '/integrations/oauth/start/:connectorId',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { connectorId } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1490,7 +1512,8 @@ router.post(
   '/integrations/:connectorId/oauth-disconnect',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { connectorId } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1501,7 +1524,7 @@ router.post(
     await saveIntegrations(userId, filtered);
 
     await logIntegrationConnectionEvent({
-      organizationId: req.organizationId || req.user?.organizationId || 'unknown',
+      organizationId: organizationId || 'unknown',
       userId,
       integrationId: `${connectorId}-${userId}`,
       connectorId,
@@ -1521,7 +1544,7 @@ router.post(
   '/integrations/:connectorId/oauth-test',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
     const { connectorId } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1538,7 +1561,7 @@ router.get(
   '/integrations/oauth/status',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     const connected = await oauthEngine.listConnectedIntegrations(userId);
@@ -1556,7 +1579,8 @@ router.post(
   '/integrations/:connectorId/basic-connect',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { connectorId } = req.params;
     const { username, password, serverUrl } = req.body || {};
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -1594,7 +1618,7 @@ router.post(
     await saveIntegrations(userId, filtered);
 
     await logIntegrationConnectionEvent({
-      organizationId: req.organizationId || req.user?.organizationId || 'unknown',
+      organizationId: organizationId || 'unknown',
       userId,
       integrationId: `${connectorId}-${userId}`,
       connectorId,
@@ -1613,8 +1637,8 @@ router.post(
   '/integrations/:provider/refresh',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1686,8 +1710,8 @@ router.put(
   '/integrations/:provider/config',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     const config = parseJsonObject(req.body?.config);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -1774,8 +1798,8 @@ router.get(
   '/integrations/:provider/status',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
@@ -1792,8 +1816,8 @@ router.get(
   '/integrations/:provider/logs',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const userId = readAuthenticatedUserId(req);
+    const organizationId = readAuthenticatedOrganizationId(req);
     const { provider } = req.params;
     const rawLimit = parseInt(String(req.query.limit || '50'), 10);
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
@@ -5297,11 +5321,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { default: registryService } = await import('../services/settingsRegistryService.js');
-    const userId = req.userId || req.user?.id;
-    const orgId = req.user?.organizationId;
+    const userId = req.userId ?? req.user?.id;
+    const orgId = req.organizationId ?? req.user?.organizationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
     try {
-      const result = await registryService.resolveEffectiveValue(req.params.key, userId!, orgId);
+      const result = await registryService.resolveEffectiveValue(req.params.key, userId, orgId);
       res.json(result);
     } catch {
       const denial = registryService.buildDenialResponse(req.params.key, 'resolver_unavailable');
@@ -5345,8 +5373,12 @@ router.put(
       });
     }
 
-    const userId = req.userId || req.user?.id;
-    const organizationId = req.user?.organizationId;
+    const userId = req.userId ?? req.user?.id;
+    const organizationId = req.organizationId ?? req.user?.organizationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     const { value } = req.body;
     const writeTarget = registryService.getWriteTarget(
       req.params.key,

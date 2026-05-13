@@ -251,17 +251,22 @@ export function disablePerformanceTracking(): void {
 }
 
 export function recordQueryPerformance(type: string, duration: number): void {
-  const correlationId = getCorrelationId();
-  if (correlationId) {
-    const callback = requestTrackingCallbacks.get(correlationId);
-    if (callback) {
-      callback(type, duration);
-      return;
+  try {
+    const correlationId = getCorrelationId();
+    if (correlationId) {
+      const callback = requestTrackingCallbacks.get(correlationId);
+      if (callback) {
+        callback(type, duration);
+        return;
+      }
     }
-  }
 
-  if (trackingCallback) {
-    trackingCallback(type, duration);
+    if (trackingCallback) {
+      trackingCallback(type, duration);
+    }
+  } catch (error) {
+    // Performance telemetry must not break request/DB flow.
+    logger.warn('[QueryHelper] recordQueryPerformance callback failed:', error);
   }
 }
 

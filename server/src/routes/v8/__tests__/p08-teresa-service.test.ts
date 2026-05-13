@@ -141,6 +141,32 @@ function buildNotebookPayload() {
   };
 }
 
+function buildInterviewPayload() {
+  return {
+    interview_handoff_context: {
+      action: 'generate_insight',
+      title: 'Interview insight draft',
+    },
+    evidence_pointers: ['session:int-001'],
+  };
+}
+
+function buildIdeasTablePayload() {
+  return {
+    ideas_table_intent: {
+      workspace_id: 'idea-workspace-1',
+      message: 'Build a risk register table',
+    },
+    proposal_only: true,
+  };
+}
+
+function buildExcelePayload() {
+  return {
+    prompt: 'Build a workbook for monthly budget tracking',
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -768,6 +794,9 @@ describe('P08-B §11 — Handoff context validation', () => {
         initiatives: buildInitiativesPayload,
         calendar: buildCalendarPayload,
         notebook: buildNotebookPayload,
+        interview: buildInterviewPayload,
+        ideas_table: buildIdeasTablePayload,
+        excele: buildExcelePayload,
       };
       const result = validateTargetPayload(target, payloadMap[target]());
       expect(result.valid).toBe(true);

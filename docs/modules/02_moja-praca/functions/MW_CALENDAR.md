@@ -22,9 +22,12 @@ last_updated: 2026-05-10
 
 ## 2. User Job and Business Outcome
 
-- User job: plan and inspect time-linked execution work.
-- Business outcome: reduce scheduling conflicts and improve execution cadence.
-- Non-goals: calendar is not the canonical owner of task/decision/initiative records.
+- User job: plan and synchronize user workday and project rhythm across meetings, tasks, decisions and reviews.
+- Business outcome: reduce planning chaos, make risks visible early, and convert time availability into explicit next actions.
+- Non-goals:
+  - calendar is not the canonical owner of task/decision/initiative/execution lifecycle records,
+  - calendar does not replace PMO/execution governance,
+  - calendar does not imply owner-lane mutation success without owner read-back.
 
 ## 3. Trigger and Entry Points
 
@@ -41,38 +44,98 @@ last_updated: 2026-05-10
 
 ## 5. Inputs, Data Contracts, and Dependencies
 
-- Input objects/fields: time-based tasks/decisions/initiatives, create request id, refresh trigger.
-- Upstream modules/services: task and decision domains, initiative links.
-- APIs/models: shared API and artifact routing helpers.
-- Data freshness assumptions: calendar view refreshes based on trigger and local interactions.
+- Input objects/fields:
+  - calendar events and slots,
+  - task/deadline/decision/initiative time projections,
+  - source health/sync metadata,
+  - recommendation context with confidence and reason.
+- Upstream modules/services:
+  - `MW_TASKS`, `MW_DECISIONS` (primary owner-lane sources),
+  - `06_realizacja` and `13_meeting` as candidate handoff targets and context providers,
+  - external calendar providers as read/write integration sources according to policy.
+- APIs/models:
+  - event and source contracts (`event_type`, `source_type`, `sync_status`, `conflict_type`),
+  - recommendation payload (`suggested_action`, `target_object`, `confidence`, `urgency`, `status`),
+  - approval posture (`requires_user_approval` for high-impact actions).
+- Data freshness assumptions:
+  - calendar uses last successful sync + explicit refresh signals,
+  - stale source posture must be visible and must not be silently treated as current truth.
 
 ## 6. Outputs and Side Effects
 
-- Produced objects/artifacts: no new canonical type; emits open-item navigation and optional create intent.
-- Downstream handoff: `onTaskClick`, `onDecisionClick`, initiative navigation.
-- Side effects visible to user: opened detail contexts and route transitions.
+- Produced objects/artifacts:
+  - scheduling proposals (time blocks, reschedule suggestions, prep/follow-up suggestions),
+  - candidate handoff payloads toward owner lanes,
+  - no canonical ownership transfer inside calendar scope.
+- Downstream handoff:
+  - `MW_TASKS` candidate updates and scheduling intents,
+  - `MW_DECISIONS` decision-slot and review candidates,
+  - `13_meeting` preparation/outcome candidates,
+  - `06_realizacja` execution rhythm candidates (milestones/reviews in time context).
+- Side effects visible to user:
+  - explicit route transitions to owner lanes,
+  - visible proposal/approval cards before high-impact execution,
+  - source/sync state banners when trust posture is degraded.
 
 ## 7. Ownership and Handoff Boundaries
 
-- Canonical owner of mutated objects: source domains (tasks/decisions/initiatives).
-- Handoff contract (`from -> to`): `CalendarView -> MyWorkHub handlers -> owner detail/workflow`.
-- Forbidden ownership: calendar must not bypass owner-module mutation contracts.
+- Canonical owner of mutated objects:
+  - `MW_TASKS` for task lifecycle,
+  - `MW_DECISIONS` for decision lifecycle,
+  - `06_realizacja` for execution lifecycle and PMO governance,
+  - `13_meeting` for meeting execution lifecycle.
+- Handoff contract (`from -> to`):
+  - `MW_CALENDAR` planning surface -> explicit candidate payload -> owner module review -> owner mutation -> read-back confirmation.
+- Forbidden ownership:
+  - direct lifecycle mutation in owner lanes from calendar without owner flow,
+  - hidden/background writes based on AI recommendation,
+  - treating calendar planning state as canonical execution status.
 
 ## 8. Runtime States and UX Behavior
 
-- Loading: calendar waits for schedule dataset with visible loading state.
-- Empty: no-events state explains next steps.
-- Error: recoverable error state with retry.
-- Degraded: partial event sources can fail while view remains usable.
-- Success: selecting events routes user to actionable detail.
-- Next action guidance per state: add/schedule/open owner item, or retry sync.
+- Loading:
+  - calendar data and source-health load in progress,
+  - next action: wait, switch view, or open stable owner lane.
+- Empty:
+  - no visible events/work blocks in selected range,
+  - next action: create event or pull candidate items from tasks/decisions.
+- Error:
+  - blocking fetch/sync failure with retry and safe fallback,
+  - next action: retry, reconnect source, or continue in owner lane.
+- Degraded:
+  - partial availability with explicit reason:
+    - `degraded_sync` (source stale or partially synced),
+    - `degraded_conflict` (conflict engine incomplete),
+    - `degraded_acl` (ACL/permission-limited source visibility).
+  - next action: resolve source/permission issue or continue in safe manual mode.
+- Success:
+  - calendar renders planning context and explicit candidate actions.
+- Conflict states (must be explicit):
+  - `double_booking`,
+  - `missing_preparation_time`,
+  - `no_time_for_priority`,
+  - `decision_without_slot`,
+  - `deadline_without_work_block`,
+  - `overload_risk_high`.
+- Stale sync behavior:
+  - stale timestamp and source status are visible,
+  - stale data never auto-promotes to approved planning truth.
 
 ## 9. AI, Source, Evidence, Approval
 
 - AI action placement: Menu 3/right command-row conventions only.
-- Source/provenance visibility: events must expose source object type and id.
-- Approval/diff/review requirements: any high-impact change must happen in owner workflow.
-- Audit trail/evidence: route hops and linked source item context are visible evidence.
+- Source/provenance visibility:
+  - each recommendation must show source set (`internal/external/manual/ai_generated`),
+  - linked origin object (`type`, `id`) for event-driven recommendations,
+  - confidence/explanation and stale/uncertainty posture where applicable.
+- Approval/diff/review requirements:
+  - high-impact actions follow `propose -> approve -> execute`,
+  - includes reschedule affecting participants, external writeback, and owner-lane candidate creation,
+  - no silent approval or silent mutation.
+- Audit trail/evidence:
+  - recommendation source trace,
+  - approval decision trace,
+  - route handoff trace and owner read-back status.
 
 ## 10. Security, Roles, and Tenancy
 
@@ -85,12 +148,16 @@ last_updated: 2026-05-10
 
 - Acceptance checks:
   - Calendar tab renders and supports event-to-detail navigation.
-  - Events preserve source context.
-  - Calendar does not take ownership over source entities.
+  - Calendar operates as planning/synchronization layer, not owner lifecycle surface.
+  - Events and recommendations preserve source/provenance context.
+  - State grammar is explicit: `loading/empty/error/degraded/success` with next actions.
+  - Conflict grammar is explicit and visible (`double_booking`, `missing_preparation_time`, `no_time_for_priority`, `decision_without_slot`, `deadline_without_work_block`, `overload_risk_high`).
+  - High-impact actions require explicit approval and owner-lane review.
+  - Handoff path to tasks/meeting/execution is candidate-only until owner read-back.
   - `src/components/MyWork/MyWorkHub.tsx`
   - `src/components/MyWork/TasksCalendarView.tsx`
-- Known `doc_gap`: full event type matrix is not yet documented.
-- Known `code_gap`: missing dedicated module-level calendar contract test.
+- Known `doc_gap`: calendar-specific acceptance matrix rows in module-level acceptance doc need expansion.
+- Known `code_gap`: missing dedicated end-to-end proof for `calendar recommendation -> approval -> owner read-back`.
 
 - Route evidence: module route/view scope for `02_moja-praca` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
 - Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `02_moja-praca` function surface.
@@ -99,6 +166,11 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 
-- Risks/assumptions: cross-module timing data drift may affect planning quality.
-- Open decisions: harmonize calendar semantics with tasks calendar mode.
-- Change log: initial function contract created.
+- Risks/assumptions:
+  - stale or permission-limited sync can produce false planning confidence,
+  - over-aggressive AI scheduling can drift into owner-lane lifecycle semantics.
+- Open decisions:
+  - final split between `Day View` planning controls and owner-lane deep-edit controls,
+  - minimum required fields for cross-lane candidate payload v1.
+- Change log:
+  - contract hardened for planning boundary, conflict grammar, provenance/approval posture, and candidate handoff model.

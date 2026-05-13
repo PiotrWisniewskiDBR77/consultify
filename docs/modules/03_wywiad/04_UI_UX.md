@@ -71,4 +71,54 @@ Assignment, review and export-related operations must be explicit user actions. 
 | `WY_SESSIONS` | `Sessions` | `InterviewHub` tab `sessions` | real | session list + dynamic document panels in `InterviewHub` | `functions/WY_SESSIONS.md` |
 | `WY_TEMPLATES` | `Templates` | `InterviewHub` tab `templates` | real | template list/cards, question preview in `InterviewHub` | `functions/WY_TEMPLATES.md` |
 | `WY_INSIGHTS` | `Insights` | `InterviewHub` tab `insights` | real | insight list/report views + preview in `InterviewHub` | `functions/WY_INSIGHTS.md` |
+| `WY_INITIATIVES` | `Inicjatywy` | `InterviewHub` tab/lane `inicjatywy` | real | initiative candidate list, source chips, creator/review and handoff controls | `functions/WY_INITIATIVES.md` |
 | `WY_PENDING_REVIEW` | `Pending Review` | `InterviewHub` tab `pending_review` | real (permission-dependent) | review-filtered table/preview controls | `functions/WY_PENDING_REVIEW.md` |
+
+## 12. Interview Initiatives UX Annex
+
+The `Inicjatywy` lane visible inside Interview is governed by `WY_INITIATIVES` in this cycle.
+
+### 12.1 User Job
+
+The user reviews initiative candidates that originate from interview insights or findings and decides whether to inspect, refine or hand them off to the canonical Initiatives module.
+
+### 12.2 Required UI Elements
+
+- Interview-local initiative list with columns for initiative name, status, priority, source and date.
+- Source chip such as `Insight` for every interview-derived candidate.
+- Clear draft/candidate state before canonical handoff.
+- Row action or Menu 3 action for reviewing source context and initiating handoff.
+- Safe empty state explaining how initiatives are generated or added from insights.
+- Safe degraded state when source insight/session data or handoff confirmation is unavailable.
+
+### 12.3 Source / Provenance
+
+Every interview initiative candidate must expose:
+
+- source insight/finding reference,
+- interview session context when available,
+- generation/manual creation mode,
+- accepted/reviewed-by metadata when available,
+- missing evidence warning when source data is incomplete.
+
+### 12.4 Ownership Boundary
+
+- `03_wywiad/WY_INITIATIVES` owns interview-local initiative candidates, creator review and handoff/read-back state before canonical handoff.
+- `03_wywiad/WY_INSIGHTS` owns source insight context only.
+- `05_inicjatywy` owns canonical initiative lifecycle, approval, status, governance and execution handoff after read-back.
+- The Interview UI must not imply that a canonical initiative was created unless the downstream owner surface confirms it.
+
+### 12.5 AI Action Placement
+
+AI actions such as `Generate initiative candidates`, `Improve candidate`, `Explain source` or `Prepare handoff` must live in Menu 3/right-side command row or row-scoped actions.
+
+They must not be duplicated as a toolbar inside the table/canvas.
+
+## 13. RAW Depth UI/UX Annex
+
+| RAW source | UX decision | Evidence state |
+| --- | --- | --- |
+| `docs/RAW/110_RAW_INTERVIEW_DISCOVERY_ENGINE_2026-05-11.md` | Interview discovery UX requires explicit source lineage, review-first candidate flow and no hidden downstream mutation. | `PASS_DOC`; runtime journey evidence remains `NOT_DONE`. |
+| `docs/modules/03_wywiad/RAW_INPUT.md` | Keep Interview source/provenance visible for sessions, insights, candidates and exports. | `PASS_DOC`; full `InterviewHub` journey test `NOT_DONE`. |
+| `docs/RAW/teresa-chat/104_RAW_CONVERSATIONAL_WORK_OS_TERESA_CHAT_ENGINE_2026-05-09.md` | Conversation-origin context may seed interview work only with visible source refs and review before durable mutation. | `IMPACT_ONLY`; handoff proof `NOT_DONE`. |
+| `docs/RAW/implementation-pmo/107_RAW_IMPLEMENTATION_PMO_ENGINE_2026-05-09.md` | Interview handoff to initiatives/execution must not imply PMO ownership. | `PASS_DOC`; owner generator decision `OPEN_QUESTION`. |

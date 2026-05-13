@@ -57,6 +57,44 @@ describe('useAppStore (src/store/useAppStore.ts)', () => {
     expect(useAppStore.getState().aiConfig.responseStyle).toBe('concise');
   });
 
+  it('does not call navigateFn when route resolver returns empty route', async () => {
+    vi.resetModules();
+    vi.doMock('../../src/routes/routeConfig', async () => {
+      const actual = await vi.importActual<any>('../../src/routes/routeConfig');
+      return {
+        ...actual,
+        getRouteFromAppView: vi.fn(() => ''),
+      };
+    });
+
+    const mod = await import('../../src/store/useAppStore');
+    const mockedStore = (mod as any).useAppStore;
+    const navSpy = vi.fn();
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    mockedStore.getState().setNavigateFn(navSpy);
+    mockedStore.getState().setCurrentView(AppView.AI_CHAT);
+
+    expect(navSpy).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+    vi.doUnmock('../../src/routes/routeConfig');
+  });
+
+  it('queues pending navigation when navigateFn is missing and route exists', () => {
+    useAppStore.getState().navigateWithChatContext(AppView.MY_WORK);
+    const state = useAppStore.getState();
+
+    expect(state.pendingNavigation).toBeTruthy();
+    expect(state.pendingNavigation?.view).toBe(AppView.MY_WORK);
+    expect(typeof state.pendingNavigation?.route).toBe('string');
+  });
+
+  it('stores my-work deep-link intent for manager tab', () => {
+    useAppStore.getState().setMyWorkIntent({ tab: 'manager' });
+    expect(useAppStore.getState().myWorkIntent).toEqual({ tab: 'manager' });
+  });
+
   it('mirrors currentUser to dedicated auth storage', () => {
     useAppStore.getState().setCurrentUser({ id: 'u-1', email: 'u@example.com' } as any);
     expect(JSON.parse(localStorage.getItem('user') || '{}')).toMatchObject({

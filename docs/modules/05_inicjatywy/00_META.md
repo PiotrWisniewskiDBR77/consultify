@@ -1,10 +1,10 @@
 ---
 module_id: MODULE_INITIATIVES
 doc_kind: META
-version: 1.0
+version: 2.0
 owner: user
-status: canonical
-last_updated: 2026-05-09
+status: review
+last_updated: 2026-05-10
 ---
 
 # META — Inicjatywy
@@ -22,6 +22,14 @@ last_updated: 2026-05-09
 
 This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
 
+Contract 2.0 packet: `RAW_TARGET_STATE_2_0_PACKET.md`.
+
+Current delivery gate:
+
+- Documentation contract: `DONE_DOC`.
+- Runtime readiness: `NOT_DONE`.
+- Reason: dedicated initiative UI lifecycle/card regression evidence is not bound, source-envelope taxonomy remains open, and owner acceptance is not recorded.
+
 ## Source Package
 
 - `DRD/consultify/docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
@@ -38,8 +46,16 @@ This folder is the author-level module contract. Other product, engineering and 
 - Required functions documented: `5/5`.
 - Function contracts are stored in `functions/`.
 
+| Function | Owner business | Owner tech | Route / entry | Current gate |
+| --- | --- | --- | --- | --- |
+| `IN_PORTFOLIO_HUB` | user | user | `/initiatives` | `NOT_DONE` until UI transition/card tests are bound |
+| `IN_ANALYSIS_WORKSPACE` | user | user | `InitiativesHub` analysis tab | `NOT_DONE` until analysis UI evidence is bound |
+| `IN_ROADMAP_VIEW` | user | user | `/roadmap` | `NOT_DONE` until route/lane smoke evidence is bound |
+| `IN_PORTFOLIO_VIEW` | user | user | `/portfolio` | `NOT_DONE` until route/lane smoke evidence is bound |
+| `IN_ROI_VIEW` | user | user | `/roi` | `NOT_DONE` until route/lane smoke evidence is bound |
+
 ## Open Questions
 
-1. Does the active code route still match the contract route above?
-2. Are there tenant-specific variants that require a separate permission matrix?
-3. Which acceptance evidence should be attached first when this module is next tested?
+1. What is the canonical source-envelope taxonomy that replaces the current ToolSession/AssessmentReport-only traceability doctrine?
+2. Should interview become a true multi-initiative smart generator, or is finding-level create/link sufficient for v1?
+3. Should KPI/results be allowed to generate new initiatives directly, or only recommend/create proposals for user approval?

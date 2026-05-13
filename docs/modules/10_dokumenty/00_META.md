@@ -4,7 +4,7 @@ doc_kind: META
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-09
+last_updated: 2026-05-11
 ---
 
 # META — Dokumenty / Document Studio
@@ -30,6 +30,9 @@ This folder is the author-level module contract. Other product, engineering and 
 - `DRD/consultify/docs/UI_UX/92_RAW_DOCUMENT_STUDIO_RESEARCH_2026-05-08.md`
 - `DRD/consultify/docs/UI_UX/93_RAW_DOCUMENT_STUDIO_ANALYSIS_2026-05-09.md`
 - `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
+- `DRD/consultify/docs/modules/10_dokumenty/DEEP_GAP_AUDIT_CODE_VS_DOCS_2026-05-11.md`
+- `DRD/consultify/docs/modules/10_dokumenty/DEEP_RAW_GAP_AUDIT_2026-05-11.md`
+- `DRD/consultify/docs/modules/10_dokumenty/STAGE_1_5_ULTRA_DEEP_GAP_AUDIT_2026-05-11.md`
 
 ## Function Coverage
 
@@ -40,4 +43,5 @@ This folder is the author-level module contract. Other product, engineering and 
 
 1. Does the active code route still match the contract route above?
 2. Are there tenant-specific variants that require a separate permission matrix?
-3. Which acceptance evidence should be attached first when this module is next tested?
+3. Owner decision: should `/wordy` keep placeholder mount or switch to `WordyView` while chat/template handoffs already target `/wordy`?
+4. Owner decision: should upstream Teresa/template copy be softened if placeholder remains mounted?

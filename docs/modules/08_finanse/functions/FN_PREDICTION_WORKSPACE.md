@@ -7,7 +7,7 @@ status: active
 owner: user
 owner_business: user
 owner_tech: user
-last_updated: 2026-05-10
+last_updated: 2026-05-11
 ---
 
 # Function Contract — Prediction Workspace
@@ -55,3 +55,59 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 - Risk: scenario misuse without explicit assumption context.
+
+## 13. RAW Compare Delta + Contract Decisions (docs audit 2026-05-11)
+
+Scope anchor: `08_finanse/FN_PREDICTION_WORKSPACE`.
+
+| Claim area | RAW target | As-is coverage | Delta classification | Task ID | Contract decision | Evidence map status |
+| --- | --- | --- | --- | --- | --- | --- |
+| assumptions transparency for prediction scenarios | assumptions must be explicit (`source`, `owner`, `confidence`) before trust | function had generic input/output wording only | `P0_GAP` | `FN-PRD-P0-001` | require explicit assumptions envelope for prediction outputs | `PASS_WITH_P1` |
+| forecast uncertainty posture | confidence bands + probability + scenario uncertainty must be visible | uncertainty was implicit and not normalized as acceptance claim | `P1_GAP` | `FN-PRD-P1-001` | lock uncertainty as mandatory prediction output contract | `PASS_WITH_P1` |
+| degraded prediction semantics | low-confidence/partial-data states must show recovery next steps | degraded mode documented globally, not prediction-specific | `P1_GAP` | `FN-PRD-P1-001` | enforce degraded guidance specific to prediction lane | `PASS_WITH_P1` |
+| explicit approvals for high-impact prediction outcomes | review/approval required before operationalizing scenario outcomes | approval language was module-level only | `P1_GAP` | `FN-PRD-P1-001` | add prediction-level explicit approval boundary | `PASS_WITH_P1` |
+| dedicated prediction regression evidence | auditable function-level route/component/API/test matrix | no prediction-specific matrix linked in tests | `P2_GAP` | `FN-PRD-P2-001` | keep as explicit gap until dedicated suite exists | `NOT_DONE` |
+
+### Evidence map (function-level)
+
+| Surface | Evidence intent | Current state |
+| --- | --- | --- |
+| route | prediction tab mounted through finance routes and `FinanceHub` tab state | `PASS` |
+| component | prediction UI must expose assumptions/uncertainty/degraded guidance and approvals | `PASS_WITH_P1` |
+| API | prediction boundaries must preserve confidence/probability and approval semantics | `PASS_WITH_P1` |
+| tests | dedicated prediction regression probes and anti-regression matrix | `NOT_DONE` |
+
+### Audit result
+
+- docs verdict: `APPROVED_FOR_DOCS`
+- unresolved runtime/test gap: `BLOCKED_P1` (`FN-PRD-P2-001`)
+
+## 14. Phase 2 RAW Synthesis (As-Is / Target / Delta)
+
+Mandatory RAW set used in this phase:
+
+- `docs/RAW/finance/106_RAW_FINANCE_INTELLIGENCE_ENGINE_2026-05-09.md`
+- `docs/UI_UX/106_RAW_FINANCE_INTELLIGENCE_ENGINE_2026-05-09.md`
+- `docs/UI_UX/106_RAW_FINANCE_INTELLIGENCE_ENGINE_2026-05-09 2.md`
+- `docs/modules/08_finanse/RAW_INPUT.md`
+
+| Claim area | RAW source anchor | As-Is | Target | Delta | Task ID | Closure status |
+| --- | --- | --- | --- | --- | --- | --- |
+| forecast assumptions discipline | RAW objects `ModelAssumption`/`ForecastScenario`; RAW workflow `Create forecast scenario`; Financial Analysis v3 `2.4.6` | assumptions were present but not fully normalized as explicit contract gate | prediction output requires assumptions envelope: `owner`, `source`, `confidence`, scenario linkage, approval posture | contract-level normalization still needs deeper route/component/API probes | `FN-PRD-P0-001` | `PASS_WITH_P1` |
+| uncertainty + freshness + degraded semantics | RAW prediction engine (`confidence bands`, `forecast explanation`), RAW stale/degraded doctrine (`Stale`, low confidence), Financial Analysis v3 `2.4` | uncertainty/degraded existed at module level; freshness semantics were not prediction-specific in one matrix | prediction lane must expose confidence/probability, stale/freshness posture, and degraded recovery actions before trust | evidence consolidation is partial and requires dedicated prediction probes | `FN-PRD-P1-001` | `PASS_WITH_P1` |
+| explicit approval for high-impact prediction usage | RAW AI guardrails (`AI cannot approve`), RAW assumption/scenario confirm flow, Financial Analysis v3 `2.4.6` Confirm/Reject/Refine | approval doctrine existed globally but was not strict prediction gate in one evidence map | high-impact prediction usage must require explicit human approval checkpoint | prediction-specific approval probes are still documentation-level | `FN-PRD-P1-001` | `PASS_WITH_P1` |
+| dedicated prediction evidence matrix | RAW requires auditable governance loop; module test baseline reports missing dedicated suites | no prediction-only matrix linked | route/component/API/test evidence matrix published and maintained | currently missing dedicated automated proof | `FN-PRD-P2-001` | `NOT_DONE` |
+
+### Phase 2 Decision Table
+
+| Decision ID | Decision | Why locked | Status |
+| --- | --- | --- | --- |
+| `PRD-D1` | assumptions envelope is mandatory for every forecast scenario | RAW and product sources treat assumptions as auditable objects | `LOCKED` |
+| `PRD-D2` | uncertainty and degraded/freshness posture are mandatory before trust | RAW requires confidence bands, stale/degraded visibility, and explanation | `LOCKED` |
+| `PRD-D3` | explicit human approval is mandatory for high-impact prediction usage | RAW AI guardrail prohibits silent autonomous approval | `LOCKED` |
+| `PRD-D4` | missing prediction-only regression matrix stays explicit as gap | no dedicated proof currently linked in module acceptance evidence | `LOCKED_NOT_DONE` |
+
+### Phase 2 Hard Gates
+
+- `FAIL` when RAW->contract mapping is missing for any claim in this section.
+- `FAIL` when acceptance evidence is missing and is not marked explicitly as `NOT_DONE`.

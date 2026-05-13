@@ -23,6 +23,7 @@ Define module objects, integrations and lineage responsibilities.
 | --- | --- | --- |
 | Assignment/review (`WY_MY_ASSIGNMENTS`, `WY_MANAGED_ASSIGNMENTS`, `WY_PENDING_REVIEW`) | assignment queues, review states, SLA and ownership metadata | interview assignment APIs and status transition paths |
 | Session/template/insight (`WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`) | session lifecycle, template question models, insight records | `V8InterviewApi` + shared `Api` interview endpoints |
+| Interview initiatives (`WY_INITIATIVES`) | interview-local initiative candidates derived from source insights/findings with source envelope, generated/manual mode and review state | `V8InterviewApi` insight candidate/finding/handoff endpoints; downstream ownership/read-back remains `05_inicjatywy` |
 
 ## Must
 

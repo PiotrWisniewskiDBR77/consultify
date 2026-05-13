@@ -17,6 +17,16 @@ Define module objects, integrations and lineage responsibilities.
 
 - User preference, profile setting, memory setting, tenant policy reference and audit where needed.
 
+## As-Is Data Contract Snapshot (source -> decision -> evidence)
+
+| Source | Decision | Evidence / NOT_DONE |
+| --- | --- | --- |
+| `SettingsOwnershipPanels.tsx` + `/organization-context` and `/settings/registry/:key/resolve` calls | KEEP: tenant defaults and policy provenance exposed read-only in settings | source tags (`personal/module/tenant/system/default`) are rendered; PASS |
+| `settings.api.ts` + `settings.routes.ts` | ENHANCE: ai-privacy, ai-voice, prompt-library are API-backed in runtime wiring | endpoint contracts exist in FE+BE; E2E persistence evidence NOT_DONE |
+| `api.ts` (`getAIMemory/saveAIMemory`) | ENHANCE: memory mapping is coarse and does not yet represent full V8 semantics | retains only reduced preference shape (`context_retention`-centric); NOT_DONE |
+| `USER_AND_ADMIN_MEMORY_CONTROLS_V8.md` | ENHANCE: user/admin/operator memory control objects need full mapping in module docs | partial mapping only; NOT_DONE |
+| `STAGE_1_5_ULTRA_DEEP_GAP_AUDIT_2026-05-11.md` | ENHANCE: shared inventory status must be corrected where runtime/API evidence is newer | `ai-privacy`, `ai-prompt-library`, `ai-voice` are `API_WIRED_NOT_E2E_PROVEN`, not pure local stubs |
+
 ## Function Data Responsibility Map
 
 - `SET_SETTINGS_WORKSPACE`: user/workspace settings values and persistence state.
@@ -40,9 +50,10 @@ Define module objects, integrations and lineage responsibilities.
 
 ## Acceptance Criteria
 
-- [ ] Every durable object has owner module, source/provenance and lifecycle state where applicable.
-- [ ] Cross-module handoff preserves lineage.
-- [ ] Integration failures do not corrupt local canonical state.
+- [x] Durable settings objects in this module identify owner and provenance (`personal/module/tenant/system/default` where supported).
+- [x] Cross-module handoff preserves lineage via explicit link actions (organization/admin handoff cards).
+- [ ] Runtime proof for all high-impact settings persistence (including AI privacy/prompt/voice) has E2E evidence (`NOT_DONE`).
+- [ ] Memory control objects are fully mapped to V8 control objects (`UserMemoryPreference`, `TenantMemoryControlPolicy`, `MemoryAccessExplanation`) (`NOT_DONE`).
 
 ## Related Sources
 

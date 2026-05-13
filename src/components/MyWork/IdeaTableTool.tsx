@@ -264,13 +264,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     }
   }, [preferredViewId, platformActive, platformIntegration.setActiveViewId]);
 
-  // ── Table Platform real-time collaboration ─────────────────────────────────
-  const realtime = useTableRealtime({
-    tableId: platformActive ? ideaId : null,
-    userId: currentUserId,
-    userName: currentUserName,
-  });
-
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
   const schema = useTableSchema(isPl, ideaId);
   const {
@@ -401,6 +394,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     platformIntegration.columns.length <= 1;
   const legacyLooksPopulated = nodes.length > 0 || columns.length > 1;
   const usePlatform = platformActive && !(platformLooksEmpty && legacyLooksPopulated);
+  const platformFallbackDegraded = platformActive && !usePlatform && legacyLooksPopulated;
+
+  // ── Table Platform real-time collaboration ─────────────────────────────────
+  const realtime = useTableRealtime({
+    tableId: usePlatform ? (platformIntegration.table?.id ?? null) : null,
+    userId: currentUserId,
+    userName: currentUserName,
+  });
 
   useEffect(() => {
     if (!usePlatform || !platformIntegration.table) return;
@@ -449,11 +450,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   useEffect(() => {
     onGraphChange?.({
-      nodes: nodes as any[],
+      nodes: effectiveNodes as any[],
       edges: edges as any[],
       extensions,
     });
-  }, [edges, extensions, nodes, onGraphChange]);
+  }, [edges, extensions, effectiveNodes, onGraphChange]);
 
   // ── Rollup computation (inject aggregated values for rollup columns) ───────
   const processedRowsWithRollups = useRollupComputation(
@@ -641,9 +642,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   // ── Multi-table tab strip: load tables list ─────────────────────────────────
-  const platformTableId = usePlatform
-    ? ((platformIntegration as any).platformFields?.[0]?.tableId ?? ideaId)
-    : null;
+  const platformTableId = usePlatform ? (platformIntegration.table?.id ?? null) : null;
+  const platformBaseId = usePlatform ? (platformIntegration.base?.id ?? ideaId) : ideaId;
 
   const primaryPlatformInterfaceView = useMemo(() => {
     const views = platformIntegration.platformViews ?? [];
@@ -1235,6 +1235,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           isPl={!!isPl}
         >
           {/* Toolbar */}
+          {platformFallbackDegraded && (
+            <div className="px-3 py-2 border-b border-amber-200 bg-amber-50 text-[11px] text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
+              {isPl
+                ? 'Tryb Table Platform jest chwilowo zdegradowany: używam danych workspace fallback.'
+                : 'Table Platform is temporarily degraded: using workspace fallback data.'}
+            </div>
+          )}
           {usePlatform ? (
             <P15TableToolbar
               ideaId={ideaId}
@@ -3232,14 +3239,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showAuditTrail}
         onClose={() => setShowAuditTrail(false)}
         recordId={detailNodeId}
-        tableId={ideaId}
+        tableId={platformTableId ?? ideaId}
       />
 
       {/* Activity Feed (table-level) */}
       <ActivityFeed
         open={showActivityFeed}
         onClose={() => setShowActivityFeed(false)}
-        tableId={ideaId}
+        tableId={platformTableId ?? ideaId}
         onEventClick={(entityId) => {
           setDetailNodeId(entityId);
           setDetailMode('preview');
@@ -3250,7 +3257,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       <SnapshotManager
         open={showSnapshotManager}
         onClose={() => setShowSnapshotManager(false)}
-        baseId={ideaId}
+        baseId={platformBaseId}
       />
 
       {/* Data Connector Wizard */}
@@ -3258,7 +3265,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showConnectorWizard}
         onClose={() => setShowConnectorWizard(false)}
         workspaceId={ideaId}
-        tableId={ideaId}
+        tableId={platformTableId ?? ideaId}
         targetFields={effectiveVisibleColumns.map((c) => c.key)}
         onCreated={() => connectors.refetch()}
         testConnection={connectors.testConnection}
@@ -3387,7 +3394,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
       {/* Distribution Builder */}
       {showDistributionBuilder && (
-        <DistributionBuilder baseId={ideaId} onClose={() => setShowDistributionBuilder(false)} />
+        <DistributionBuilder
+          baseId={platformBaseId}
+          onClose={() => setShowDistributionBuilder(false)}
+        />
       )}
 
       {/* Consultify Link Panel */}
@@ -3401,7 +3411,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <ConsultifyLinkPanel
-              baseId={ideaId}
+              baseId={platformBaseId}
               tables={baseTables.map((t) => ({
                 id: t.id,
                 name: t.name,
@@ -3444,7 +3454,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           >
             <AutomationsManager
               tableId={platformTableId ?? ideaId}
-              baseId={ideaId}
+              baseId={platformBaseId}
               fields={
                 usePlatform && platformIntegration.platformFields
                   ? platformIntegration.platformFields.map((f: any) => ({
@@ -3476,7 +3486,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           >
             <SyncManager
               tableId={platformTableId ?? ideaId}
-              baseId={ideaId}
+              baseId={platformBaseId}
               tables={baseTables}
               fields={
                 usePlatform && platformIntegration.platformFields
@@ -3508,7 +3518,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <SharingManager
-              baseId={ideaId}
+              baseId={platformBaseId}
               views={
                 effectiveSavedViews?.map((v: any) => ({
                   id: v.id,
@@ -3533,7 +3543,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <DistributionManager
-              baseId={ideaId}
+              baseId={platformBaseId}
               tableId={platformTableId ?? ideaId}
               views={effectiveSavedViews?.map((v: any) => ({ id: v.id, name: v.name })) ?? []}
               onClose={() => setShowDistributionManager(false)}

@@ -5,6 +5,32 @@ import { isV8ShadowMode } from '../services/v8/featureFlagService.js';
 import Logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const MAX_SHADOW_JWT_DECODE_CHARS = 8192;
+const MAX_SHADOW_ORG_ID_CHARS = 256;
+const MAX_SHADOW_AUTHORIZATION_HEADER_CHARS = 8256;
+const MAX_SHADOW_ORG_SOURCE_READ_CHARS = 1024;
+
+const normalizeOptionalOrgCandidate = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  if (value.length > MAX_SHADOW_ORG_SOURCE_READ_CHARS) return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
 /**
  * Lightweight middleware that checks if shadow mode is active for the org
  * and sets `req.v8ShadowMode`. Designed to be mounted on legacy route
@@ -22,19 +48,45 @@ export async function v8ShadowModeCheck(
   _res: Response,
   next: NextFunction
 ): Promise<void> {
-  let orgId = req.organizationId;
+  let orgId =
+    normalizeOptionalOrgCandidate(safeRead(() => req.organizationId, undefined)) ||
+    normalizeOptionalOrgCandidate(safeRead(() => req.user?.organizationId, undefined)) ||
+    normalizeOptionalOrgCandidate(
+      safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
+    );
 
   if (!orgId) {
     try {
-      const authHeader = req.headers.authorization;
+      const rawAuthHeader = safeRead(() => req.headers?.authorization, undefined as unknown);
+      if (
+        typeof rawAuthHeader === 'string' &&
+        rawAuthHeader.length > MAX_SHADOW_AUTHORIZATION_HEADER_CHARS
+      ) {
+        (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = false;
+        next();
+        return;
+      }
+      const authHeader = normalizeOptionalString(rawAuthHeader);
       if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.slice(7);
-        const decoded = jwt.decode(token) as { organizationId?: string } | null;
-        orgId = decoded?.organizationId;
+        const token = authHeader.slice(7).trim();
+        if (token && token.length <= MAX_SHADOW_JWT_DECODE_CHARS) {
+          const decoded = jwt.decode(token) as
+            | { organizationId?: string; organization_id?: string }
+            | null;
+          orgId =
+            normalizeOptionalOrgCandidate(decoded?.organizationId) ||
+            normalizeOptionalOrgCandidate(decoded?.organization_id);
+        }
       }
     } catch {
       // ignore — shadow mode just won't fire
     }
+  }
+
+  if (orgId && orgId.length > MAX_SHADOW_ORG_ID_CHARS) {
+    (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = false;
+    next();
+    return;
   }
 
   if (!orgId) {

@@ -36,6 +36,8 @@ This graph is used to prevent island development and accidental ownership drift.
 | `05_inicjatywy` | `07_rezultaty` | `handoff` | KPI targets and expected value | Results owns realized measurement. |
 | `05_inicjatywy` | `08_finanse` | `handoff` | assumptions and budget envelope | Finance owns model assumptions. |
 | `06_realizacja` | `07_rezultaty` | `handoff` | delivery evidence and status | Results maps evidence to KPI/ROI. |
+| `06_realizacja` | `09_outputs` | `handoff` | reviewed execution report package and provenance | Outputs packages only after explicit report handoff; Execution owns report truth until handoff. |
+| `06_realizacja` | `13_meeting` | `handoff` | blockers, decisions and follow-up actions | Meetings may discuss/close loops, but source execution objects remain in owner modules. |
 | `07_rezultaty` | `08_finanse` | `handoff` | KPI/ROI inputs | Finance calculates, Results validates realized value. |
 | `07_rezultaty` | `09_outputs` | `handoff` | approved outcomes and evidence | Outputs packages, does not re-own KPI truth. |
 | `08_finanse` | `09_outputs` | `handoff` | model outputs and assumptions | Outputs must show assumptions/provenance. |

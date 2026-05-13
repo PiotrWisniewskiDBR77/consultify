@@ -23,6 +23,9 @@ This matrix is used for cross-module planning and release governance.
 | `Analysis recommendation pack` | `04_narzedzia` | findings, frameworks, source evidence | owner approval in receiving module | `05`, `09` |
 | `Initiative dossier` | `05_inicjatywy` | findings, recommendations, business rationale | initiative governance/approval | `06`, `07`, `08`, `09` |
 | `Execution task bundle` | `06_realizacja` | approved initiative and scope | execution transitions and role checks | `07`, `13`, `02` |
+| `Execution report package` | `06_realizacja` | execution initiatives, tasks, decisions, blockers, risks, capacity, budget, timeline signals | report review / explicit export or handoff approval | `09`, `13`, export |
+| `Manager intervention record` | `06_realizacja` | manager problem row, source entity, affected entities, AI recommendation, user action | high-impact action approval and read-back/verification where supported | `02`, `13`, `07` |
+| `Rollout intervention proposal` | `06_realizacja` | rollout baseline, current reality, forecast, conflicts, timeline/capacity signals | operator review before timeline/rebaseline mutation | `07`, `08`, `13` |
 | `KPI realization snapshot` | `07_rezultaty` | execution evidence + KPI definitions | value review acceptance | `08`, `09` |
 | `Financial model pack` | `08_finanse` | KPI inputs, assumptions, tables | finance approval gates | `09`, `05`, `07` |
 | `Output package` | `09_outputs` | approved results + finance + sources | export/publish approval | client delivery, library |

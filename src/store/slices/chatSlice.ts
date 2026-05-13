@@ -16,6 +16,14 @@ export interface ChatSlice {
     selectedModelId: string | null;
     selectedTier: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING' | null;
     // AI Modes (Tryby AI)
+    workModePreset:
+      | 'quick'
+      | 'documents'
+      | 'deep_web'
+      | 'secure_private'
+      | 'multi_agent'
+      | 'client_ready'
+      | null;
     deepResearch: boolean; // Głęboka analiza - dogłębne badanie tematu
     marketResearch: boolean; // Badanie rynku - analiza rynkowa z danymi
     webSearch: boolean; // Wyszukiwanie web - dane w czasie rzeczywistym
@@ -92,6 +100,7 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     // Default chat quality should be competitive with mainstream assistants.
     // Budget tier remains available as an explicit user choice.
     selectedTier: 'STANDARD',
+    workModePreset: null,
     // AI Modes
     deepResearch: false,
     marketResearch: false,

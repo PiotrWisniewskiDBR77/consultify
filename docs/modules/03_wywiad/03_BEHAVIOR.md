@@ -18,7 +18,7 @@ last_updated: 2026-05-09
 ### Function Runtime Breakdown (As-Is)
 
 - Assignment lane: `WY_MY_ASSIGNMENTS` and `WY_MANAGED_ASSIGNMENTS`.
-- Session/template/insight lanes: `WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`.
+- Session/template/insight/initiative lanes: `WY_SESSIONS`, `WY_TEMPLATES`, `WY_INSIGHTS`, `WY_INITIATIVES`.
 - Review lane: `WY_PENDING_REVIEW` for permissioned review queues.
 
 ## State Handling (As-Is)
@@ -33,3 +33,12 @@ last_updated: 2026-05-09
 - Review/send-back actions are explicit UI operations; no hidden execution branch in route layer.
 - Cross-module export/handoff is initiated by explicit user actions from interview hub elements.
 - Permissioned tabs (`managed`, `pending_review`) are runtime-gated and must not silently expose unauthorized data.
+
+## Interview Initiatives Behavior
+
+- Interview-local `Inicjatywy` is governed by `WY_INITIATIVES` in this cycle.
+- The behavior path is `interview session -> insight/finding -> initiative candidate -> explicit review/handoff -> 05_inicjatywy read-back`.
+- `WY_INITIATIVES` owns interview-local candidate preparation, creator review and handoff/read-back state.
+- `WY_INSIGHTS` and `WY_SESSIONS` provide source context only.
+- `05_inicjatywy` owns canonical initiative lifecycle, status, approval, governance and execution handoff after accepted read-back.
+- No interview action may claim canonical initiative creation when downstream handoff fails or is unavailable.

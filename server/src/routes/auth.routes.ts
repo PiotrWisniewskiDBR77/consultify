@@ -89,6 +89,16 @@ const APLIX_DEFAULT_TEMPLATE_NAMES = [
   'APLIX Plant - Charlotte Leadership',
 ] as const;
 
+const normalizeMembershipStatus = (value: unknown): string =>
+  String(value || '')
+    .trim()
+    .toUpperCase();
+
+const normalizeOrganizationStatus = (value: unknown): string =>
+  String(value || '')
+    .trim()
+    .toLowerCase();
+
 const buildPasswordResetEmailHtml = (resetLink: string): string => `
   <h2>Password Reset Request</h2>
   <p>Click the link below to reset your password. This link expires in ${authRuntimeConfig.passwordResetTtlMinutes} minutes.</p>
@@ -605,14 +615,14 @@ router.post(
         [userId, organizationId]
       );
 
-      if (!membership || membership.status !== 'ACTIVE') {
+      if (!membership || normalizeMembershipStatus(membership.status) !== 'ACTIVE') {
         return res.status(403).json({
           error: 'You do not have access to this organization',
           code: 'ORG_ACCESS_DENIED',
         });
       }
 
-      if (membership.org_status !== 'active') {
+      if (normalizeOrganizationStatus(membership.org_status) !== 'active') {
         return res.status(403).json({
           error: 'This organization is not active',
           code: 'ORG_NOT_ACTIVE',
@@ -1287,6 +1297,10 @@ router.post(
       firstName,
       lastName,
       companyName,
+      jobTitle,
+      department,
+      siteLocation,
+      seniorityLevel,
       accessCode,
       isDemo,
       promoCode,
@@ -1407,8 +1421,23 @@ router.post(
 
         // Create user
         const userResult = await dbRun(
-          `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [userId, orgId, email, hashedPassword, firstName, lastName, userRole]
+          `INSERT INTO users (
+             id, organization_id, email, password, first_name, last_name, role,
+             job_title, department, site_location, seniority_level
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            userId,
+            orgId,
+            email,
+            hashedPassword,
+            firstName,
+            lastName,
+            userRole,
+            jobTitle || null,
+            department || null,
+            siteLocation || null,
+            seniorityLevel || null,
+          ]
         );
 
         if (!userResult.success) {
@@ -1683,6 +1712,10 @@ router.post(
             firstName,
             lastName,
             role: effectiveRole,
+            jobTitle: jobTitle || null,
+            department: department || null,
+            siteLocation: siteLocation || null,
+            seniorityLevel: seniorityLevel || null,
             companyName: joiningExistingOrg ? undefined : companyName,
             organizationId: orgId,
             emailVerified: false,
@@ -2212,3 +2245,7 @@ router.get(
 );
 
 export default router;
+export const __private__ = {
+  normalizeMembershipStatus,
+  normalizeOrganizationStatus,
+};

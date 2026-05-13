@@ -25,6 +25,14 @@ Define module objects, integrations and lineage responsibilities.
 - `OUT_SHARED_PRESENTATION`: share/embed-safe output payloads.
 - `OUT_LEGACY_REPORT_REDIRECT`: migration route mapping into canonical outputs tabs.
 
+## Cross-Module Ownership Contract (09 vs 10/11/12)
+
+| Artifact family | Active runtime owner (As-Is) | Outputs role | Evidence |
+| --- | --- | --- | --- |
+| Documents | `10_dokumenty` lane is placeholder; active report/document delivery runtime remains under outputs routes | library/governance + handoff coordination, no lane takeover | module packets `09/10`, `AppRoutes.tsx` |
+| Tables | `11_tabele` lane is placeholder | library taxonomy (`sheets`) + artifact governance, no table truth takeover | module packets `09/11`, `ReportsAndPresentationsHub.tsx` |
+| Presentations | dual-route posture: `/presentations` active in outputs, `/prezentacje` placeholder in module 12 | active library/builder governance in outputs + explicit boundary docs | module packets `09/12`, `AppRoutes.tsx` |
+
 ## Must
 
 - MUST keep stable identifiers for durable objects.
@@ -55,3 +63,4 @@ Define module objects, integrations and lineage responsibilities.
 - `DRD/consultify/docs/product/REPORTING_CANONICAL_TEMPLATES.md`
 - `DRD/consultify/docs/UI_UX/94_RAW_DOCUMENT_STUDIO_AI_NATIVE_ARTIFACT_ENGINE_2026-05-09.md`
 - `DRD/consultify/docs/UI_UX/96_RAW_PRESENTATION_STUDIO_GAMMA_CLASS_2026-05-09.md`
+- `DRD/consultify/docs/RAW/ideas-tables/101_RAW_IDEAS_TABLES_STRUCTURED_THINKING_TABLE_ENGINE_2026-05-09.md` (impact-only: row-level provenance/governance expectations for sheets family)

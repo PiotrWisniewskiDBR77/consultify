@@ -27,3 +27,6 @@ last_updated: 2026-05-09
 - Expanded `04_UI_UX.md` with function annex and component mapping.
 - Deepened `CODEMAP.md`, `03_BEHAVIOR.md`, `07_ACCEPTANCE_AND_TESTS.md`, `STATUS.md` with function-level matrices.
 - Completed function-first updates in `README.md`, `00_META.md`, `01_PURPOSE.md`, `02_SCOPE.md`, `05_DATA_AND_INTEGRATIONS.md`, `06_PERMISSIONS_AND_SECURITY.md`.
+- Added missing execution-card coverage for `WY_PENDING_REVIEW` and synchronized task-board linkage in function contract.
+- Rebuilt `IMPLEMENTATION_TASK_BOARD.md` as full module registry across all six function prefixes.
+- Normalized `owner acceptance` gates in function execution cards to `APPROVED_FOR_IMPLEMENTATION` for coding continuation.

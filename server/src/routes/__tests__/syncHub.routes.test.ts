@@ -11,6 +11,7 @@ const {
   mockSetConnectorAuthState,
   mockShouldMaterializeCallbackDrivenAuth,
   mockMaterializeGovernedExternalAuthCallback,
+  mockResolveError,
 } = vi.hoisted(() => ({
   mockDbAll: vi.fn(),
   mockDbRun: vi.fn(),
@@ -18,6 +19,7 @@ const {
   mockSetConnectorAuthState: vi.fn(),
   mockShouldMaterializeCallbackDrivenAuth: vi.fn(),
   mockMaterializeGovernedExternalAuthCallback: vi.fn(),
+  mockResolveError: vi.fn(),
 }));
 
 vi.mock('../../utils/DbPromise.js', () => ({
@@ -33,13 +35,20 @@ vi.mock('../../services/v8/pmSyncTruthService.js', () => ({
   setConnectorAuthState: mockSetConnectorAuthState,
 }));
 
+vi.mock('../../services/syncGuardrailsService.js', () => ({
+  resolveError: (...args: unknown[]) => mockResolveError(...args),
+}));
+
 vi.mock('../../services/v8/pmSyncExternalAuthMaterializationService.js', () => ({
   shouldMaterializeCallbackDrivenAuth: mockShouldMaterializeCallbackDrivenAuth,
   materializeGovernedExternalAuthCallback: mockMaterializeGovernedExternalAuthCallback,
 }));
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
-  verifyToken: (_req: unknown, _res: unknown, next: () => void) => next(),
+  verifyToken: (req: { user?: { id: string; organizationId: string } }, _res: unknown, next: () => void) => {
+    req.user = { id: 'user-1', organizationId: 'org-1' };
+    next();
+  },
   isAuthenticated: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
@@ -48,6 +57,7 @@ import syncHubRoutes from '../syncHub.routes.js';
 describe('Sync Hub external auth callback route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockResolveError.mockResolvedValue(true);
     mockShouldMaterializeCallbackDrivenAuth.mockReturnValue(true);
     mockDbAll.mockResolvedValue([{ config: '{"site_url":"https://example.atlassian.net"}' }]);
     mockMaterializeGovernedExternalAuthCallback.mockResolvedValue({
@@ -105,5 +115,28 @@ describe('Sync Hub external auth callback route', () => {
         'external_auth_callback',
       ])
     );
+  });
+
+  it('returns 400 for blank errorId on resolve route', async () => {
+    const app = express();
+    app.use('/api/sync-hub', syncHubRoutes);
+
+    const res = await request(app).post('/api/sync-hub/errors/%20/resolve').send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_PARAM');
+    expect(mockResolveError).not.toHaveBeenCalled();
+  });
+
+  it('passes scoped params to resolveError and returns 404 when missing in tenant scope', async () => {
+    mockResolveError.mockResolvedValueOnce(false);
+    const app = express();
+    app.use('/api/sync-hub', syncHubRoutes);
+
+    const res = await request(app).post('/api/sync-hub/errors/err-1/resolve').send({});
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('NOT_FOUND');
+    expect(mockResolveError).toHaveBeenCalledWith('err-1', 'org-1');
   });
 });

@@ -4,7 +4,7 @@ doc_kind: ENTRYPOINT
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-09
+last_updated: 2026-05-10
 ---
 
 # Realizacja / Implementation & PMO
@@ -26,6 +26,10 @@ Operacyjne dowodzenie realizacją: portfolio, PMO reports, manager/control tower
 - `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
+- `RAW_TARGET_STATE_2_0_PACKET.md` — RAW -> Target State 2.0 module packet.
+- `INTEGRATION_REPORT.md` — module-level integration decision and gate report.
+- `IMPLEMENTATION_TASK_BOARD.md` — module task register (`P0/P1/P2`) by immutable scope anchor.
+- `function-cards/*_EXECUTION_CARD.md` — function-level execution governance cards.
 
 ## Function Inventory (Function-First)
 

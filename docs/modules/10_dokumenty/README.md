@@ -25,6 +25,7 @@ Format runtime dla profesjonalnych dokumentów Word/PDF jako żywych, wersjonowa
 - `06_PERMISSIONS_AND_SECURITY.md` — roles, tenant boundaries and security.
 - `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
 - `RAW_INPUT.md` — raw author notes before normalization.
+- `STAGE_1_5_ULTRA_DEEP_GAP_AUDIT_2026-05-11.md` — Stage 1.5 RAW/runtime gap audit for `/wordy` route truth, Teresa handoff, Menu 3 and approval gates.
 - `CHANGELOG.md` — contract changes.
 
 ## Function Inventory (Function-First)

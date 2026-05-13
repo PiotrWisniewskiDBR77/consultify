@@ -2,8 +2,8 @@
 doc_id: MODULE_HANDOFFS
 doc_kind: MODULE_HANDOFFS
 owner: user
-status: draft
-last_updated: 2026-05-09
+status: review
+last_updated: 2026-05-11
 ---
 
 # Module Handoffs
@@ -62,6 +62,30 @@ Every handoff should include:
 - `nextAction`,
 - `createdBy`,
 - `createdAt`.
+
+## Canonical Handoff Payload Shape (v1)
+
+```json
+{
+  "sourceModule": "01_czat",
+  "targetModule": "09_outputs",
+  "objectType": "artifact_request",
+  "objectId": "req_123",
+  "handoffReason": "user_requested_document_draft",
+  "sourceRefs": ["conversation:abc", "insight:def"],
+  "evidenceRefs": ["route:/chat", "component:UnifiedChatPanel"],
+  "approvalState": "review_required",
+  "nextAction": "open_outputs_documents_tab",
+  "createdBy": "teresa",
+  "createdAt": "2026-05-11T12:00:00.000Z"
+}
+```
+
+Notes:
+
+- `sourceRefs` and `evidenceRefs` are required for critical claims.
+- `approvalState` must be explicit for high-impact actions.
+- `nextAction` must be user-visible and deterministic.
 
 ## Anti-Patterns
 

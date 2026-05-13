@@ -26,6 +26,7 @@ const mockAcceptDocuments = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
 const mockDbTransaction = vi.fn();
+const mockEnsureUserOnboardingStatusTable = vi.fn();
 const mockGetActivePartnerOrgIdForUser = vi.fn();
 const mockIsV8Enabled = vi.fn();
 const mockIsV8ShadowMode = vi.fn();
@@ -88,6 +89,11 @@ vi.mock('../../../utils/DbPromise.js', () => ({
   transaction: (...args: unknown[]) => mockDbTransaction(...args),
 }));
 
+vi.mock('../../../utils/ensureUserOnboardingStatusTable.js', () => ({
+  ensureUserOnboardingStatusTable: (...args: unknown[]) =>
+    mockEnsureUserOnboardingStatusTable(...args),
+}));
+
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   isV8Enabled: (...args: unknown[]) => mockIsV8Enabled(...args),
   isV8ShadowMode: (...args: unknown[]) => mockIsV8ShadowMode(...args),
@@ -109,7 +115,16 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
       _res.status(401).json({ error: 'No token provided' });
       return;
     }
-    req.userId = mockUser.id;
+    if (req.headers['x-test-throw-userid-getter'] === '1') {
+      Object.defineProperty(req, 'userId', {
+        configurable: true,
+        get: () => {
+          throw new Error('userId getter failed');
+        },
+      });
+    } else {
+      req.userId = mockUser.id;
+    }
     req.userRole = mockUser.role;
     req.organizationId = mockUser.organizationId;
     req.user = mockUser;
@@ -121,7 +136,16 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
       _res.status(401).json({ error: 'No token provided' });
       return;
     }
-    req.userId = mockUser.id;
+    if (req.headers['x-test-throw-userid-getter'] === '1') {
+      Object.defineProperty(req, 'userId', {
+        configurable: true,
+        get: () => {
+          throw new Error('userId getter failed');
+        },
+      });
+    } else {
+      req.userId = mockUser.id;
+    }
     req.userRole = mockUser.role;
     req.organizationId = mockUser.organizationId;
     req.user = mockUser;
@@ -304,6 +328,7 @@ describe('V8 partner read bridge', () => {
     });
     mockDeleteCampaignLink.mockResolvedValue(true);
     mockAcceptDocuments.mockResolvedValue(undefined);
+    mockEnsureUserOnboardingStatusTable.mockResolvedValue(undefined);
     mockDbGet.mockResolvedValue({
       terms_accepted: 1,
       privacy_accepted: 1,

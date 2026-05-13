@@ -7,7 +7,7 @@ status: active
 owner: user
 owner_business: user
 owner_tech: user
-last_updated: 2026-05-10
+last_updated: 2026-05-11
 ---
 
 # Function Contract — Admin Workspace
@@ -29,12 +29,19 @@ last_updated: 2026-05-10
 
 ## 5. Inputs, Data Contracts, and Dependencies
 - Inputs: tenant admin entities, roles/policies, integrations and audit context.
+- Dependency boundary:
+  - user preferences read/handoff from settings plane
+  - platform-level overrides via superadmin plane only
 
 ## 6. Outputs and Side Effects
 - Outputs: explicit reviewed admin mutations with audit visibility.
 
 ## 7. Ownership and Handoff Boundaries
-- Ownership and handoff boundaries remain explicit and do not bypass canonical owner modules.
+- Hard split:
+  - module 17 owns tenant admin workspace writes
+  - module 18 owns user preferences
+  - superadmin owns cross-tenant platform operations
+- Handoffs must be explicit (link/deep-link/state guidance), never hidden.
 
 ## 8. Runtime States and UX Behavior
 - Runtime behavior must keep loading/empty/error/degraded/success states explicit with next-step guidance.
@@ -44,6 +51,7 @@ last_updated: 2026-05-10
 
 ## 10. Security, Roles, and Tenancy
 - Security is deny-by-default with tenant/ACL and role boundaries enforced for this function.
+- Known boundary risk is tracked in module board as `ADM-RAW-P0-001`.
 
 ## 11. Acceptance Criteria and Test Evidence
 
@@ -54,5 +62,14 @@ last_updated: 2026-05-10
 - API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
 - Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `17_panel-administratora` user flows.
 
+Critical claims:
+
+| Claim | Source | Decision | Evidence / Status |
+| --- | --- | --- | --- |
+| Tenant admin cockpit is mounted and canonical | enterprise P32 + runtime | `KEEP` | `AdminSettingsModule.tsx`, `AppRoutes.tsx`, inventory admin rows |
+| Workspace aliases are supported (`/admin/integrations` etc.) | route config | `ENHANCE` | `routeConfig.ts`, `AdminSettingsModule.tsx` |
+| High-impact write audit evidence is complete in module-local proofs | acceptance doctrine | `ENHANCE` | `NOT_DONE` (`ADM-RAW-P1-004`) |
+
 ## 12. Open Risks and Change Log
 - Risk: high-impact admin actions without deep regression evidence.
+- Risk: boundary policy conflict propagated from `ADM_SUPERADMIN_BOUNDARY` (`ADM-RAW-P0-001`).

@@ -296,6 +296,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
     companyName: '',
     password: '',
     accessCode: sessionStorage.getItem('attribution_invite') || '',
+    jobTitle: '',
+    department: '',
+    siteLocation: '',
   });
 
   const applyInviteCode = React.useCallback(
@@ -373,6 +376,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
         t(
           'auth.legalConsentRequired',
           'Please confirm that you accept the Terms of Service and Privacy Policy to continue.'
+        )
+      );
+      return;
+    }
+
+    if (formData.accessCode.trim() && (!formData.jobTitle.trim() || !formData.department.trim())) {
+      setError(
+        t(
+          'auth.functionProfileRequired',
+          'Please provide your function and department before joining the workspace.'
         )
       );
       return;
@@ -465,6 +478,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
         phone: formData.phone,
         password: formData.password,
         accessCode: formData.accessCode,
+        jobTitle: formData.jobTitle.trim() || undefined,
+        department: formData.department.trim() || undefined,
+        siteLocation: formData.siteLocation.trim() || undefined,
         role: UserRole.CEO,
         accessLevel: targetMode === SessionMode.FULL ? 'full' : 'free',
         partner_code: sessionStorage.getItem('attribution_ref') || undefined,
@@ -850,6 +866,64 @@ export const AuthView: React.FC<AuthViewProps> = ({
               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
             />
+          </div>
+        )}
+
+        {hasInviteCode && (
+          <div className="rounded-lg border border-purple-200 bg-purple-50/70 p-3 dark:border-purple-500/20 dark:bg-purple-500/10">
+            <div className="mb-3">
+              <div className="text-xs font-semibold text-navy-900 dark:text-white">
+                {t('auth.functionProfileTitle', 'Your function in the organization')}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'auth.functionProfileDescription',
+                  'This helps interpret survey answers and route future project work to the right people.'
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {t('auth.jobTitle', 'Function / job title')}{' '}
+                  <span className="text-purple-500 dark:text-purple-400">*</span>
+                </label>
+                <input
+                  required={hasInviteCode}
+                  value={formData.jobTitle}
+                  onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                  placeholder={t('auth.jobTitlePlaceholder', 'e.g. Production Manager')}
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {t('auth.department', 'Department')}{' '}
+                  <span className="text-purple-500 dark:text-purple-400">*</span>
+                </label>
+                <input
+                  required={hasInviteCode}
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  placeholder={t('auth.departmentPlaceholder', 'e.g. Operations')}
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all text-xs"
+                />
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                {t('auth.siteLocation', 'Site / location')}{' '}
+                <span className="text-slate-400 dark:text-slate-500 font-normal">
+                  ({t('auth.optional')})
+                </span>
+              </label>
+              <input
+                value={formData.siteLocation}
+                onChange={(e) => setFormData({ ...formData, siteLocation: e.target.value })}
+                placeholder={t('auth.siteLocationPlaceholder', 'Optional')}
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none transition-all text-xs"
+              />
+            </div>
           </div>
         )}
 

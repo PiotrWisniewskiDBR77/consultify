@@ -2627,7 +2627,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     logger.info(`[DatabaseInitializer] Database type: ${dbType}`);
 
     if (dbType === 'postgres' && skipPostgresInitInTests) {
-      logger.warn(
+      logger.info(
         '[DatabaseInitializer] Skipping PostgreSQL schema initialization/verification in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)'
       );
       return {

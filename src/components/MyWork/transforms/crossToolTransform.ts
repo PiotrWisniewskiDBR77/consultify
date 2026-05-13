@@ -21,6 +21,9 @@ export interface TransformTrace {
   sourceBranchKey?: string;
   sourceStatus?: string;
   sourceTags?: string[];
+  sourceRefs?: string[];
+  validationState?: string;
+  selected?: boolean;
   evidenceCount: number;
   artifactLinkCount: number;
 }
@@ -59,12 +62,27 @@ function getSelectedNodes(input: TransformInput): Node[] {
 }
 
 function buildTrace(node: Node, sourceTool: CanvasToolType): TransformTrace {
+  const sourceRefs = Array.isArray(node.data?.sourceRefs)
+    ? node.data.sourceRefs.map((ref: any) => String(ref))
+    : Array.isArray(node.data?.artifactLinks)
+      ? node.data.artifactLinks
+          .map((link: any) => String(link?.artifactRef?.id || link?.id || ''))
+          .filter(Boolean)
+      : [];
   return {
     sourceNodeId: node.id,
     sourceTool,
     sourceBranchKey: typeof node.data?.branchKey === 'string' ? node.data.branchKey : undefined,
     sourceStatus: typeof node.data?.status === 'string' ? node.data.status : undefined,
     sourceTags: Array.isArray(node.data?.tags) ? node.data.tags.map((tag: any) => String(tag)) : [],
+    sourceRefs,
+    validationState:
+      typeof node.data?.validationState === 'string'
+        ? node.data.validationState
+        : typeof node.data?.status === 'string'
+          ? node.data.status
+          : undefined,
+    selected: true,
     evidenceCount: Array.isArray(node.data?.evidenceLinks) ? node.data.evidenceLinks.length : 0,
     artifactLinkCount: Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks.length : 0,
   };
@@ -124,6 +142,9 @@ export function toTable(input: TransformInput): TableOutput {
         sourceNodeId: n.id,
         sourceTool: input.sourceTool,
         sourceTrace: buildTrace(n, input.sourceTool),
+        sourceRefs: Array.isArray(n.data?.sourceRefs) ? n.data.sourceRefs : [],
+        validationState: n.data?.validationState || n.data?.status || 'candidate',
+        selected: true,
         artifactLinks: Array.isArray(n.data?.artifactLinks) ? n.data.artifactLinks : [],
         tags: Array.isArray(n.data?.tags) ? n.data.tags : [],
       },

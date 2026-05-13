@@ -4,7 +4,7 @@ doc_kind: CHANGELOG
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-09
+last_updated: 2026-05-10
 ---
 
 # Changelog — Czat / Teresa Chat Engine
@@ -23,3 +23,8 @@ last_updated: 2026-05-09
 - Expanded `04_UI_UX.md` with function annex for chat vs canvas split.
 - Deepened `CODEMAP.md`, `03_BEHAVIOR.md`, `07_ACCEPTANCE_AND_TESTS.md`, `STATUS.md` with function-level mapping and evidence.
 - Completed function-first updates in `README.md`, `00_META.md`, `01_PURPOSE.md`, `02_SCOPE.md`, `05_DATA_AND_INTEGRATIONS.md`, `06_PERMISSIONS_AND_SECURITY.md`.
+- Closed module planning phase as `APPROVED_FOR_DOCS_NO_GO_RUNTIME`:
+  - owner acceptance recorded,
+  - rerun gate passed,
+  - no handoff conflicts,
+  - runtime `CZ_CANVAS_WORKSPACE` remains `NO_GO` until P0 startup evidence is delivered.

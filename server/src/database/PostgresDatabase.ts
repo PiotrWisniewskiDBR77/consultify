@@ -56,12 +56,11 @@ async function ensureDatabaseExistsForTests(err: any): Promise<boolean> {
             .includes('permission denied')
         ) {
           testDatabaseOverride = 'postgres';
-          logger.warn(
-            '[Postgres] No permission to create test DB; falling back to postgres database',
-            {
-              requestedDatabase: dbName,
-            }
-          );
+          const log =
+            process.env.NODE_ENV === 'test' ? logger.info.bind(logger) : logger.warn.bind(logger);
+          log('[Postgres] No permission to create test DB; falling back to postgres database', {
+            requestedDatabase: dbName,
+          });
           return true;
         }
         throw e;
@@ -226,7 +225,7 @@ function getPool(): Pool {
       if (skipSchemaInit) {
         logger.warn('[Postgres] DB_MANAGED_SCHEMA is disabled; skipping initDb()');
       } else if (process.env.NODE_ENV === 'test') {
-        logger.warn('[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)');
+        logger.info('[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)');
       }
       initDbPromise = Promise.resolve();
     }

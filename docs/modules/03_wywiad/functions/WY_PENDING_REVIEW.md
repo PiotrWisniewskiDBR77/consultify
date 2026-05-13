@@ -61,4 +61,15 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 - Risk: hidden review assumptions if reviewer permissions drift.
-- Change log: initial function contract created.
+- Change log: initial function contract created; execution-card/task-board linkage added for scoped delivery.
+
+## 13. Execution Card and Task Board Linkage
+
+- Scope anchor lock: `03_wywiad/WY_PENDING_REVIEW` (immutable for this cycle).
+- Source execution card: `docs/modules/03_wywiad/function-cards/WY_PENDING_REVIEW_EXECUTION_CARD.md`.
+- Source task board row set: `docs/modules/03_wywiad/IMPLEMENTATION_TASK_BOARD.md` (`WY-PRV-*` only).
+- Active task IDs:
+  - `WY-PRV-P0-001` (`READY`)
+  - `WY-PRV-P1-001` (`WAITING_P0`)
+  - `WY-PRV-P2-001` (`WAITING_P0`)
+- Dependency scope (`impact-only`): `WY_INSIGHTS`, `WY_MY_ASSIGNMENTS`, `WY_MANAGED_ASSIGNMENTS`.

@@ -49,4 +49,65 @@ describe('server utils/requestContext', () => {
     const req = makeReq({ method: 'POST', path: '/api' });
     expect(getRequestContext(req)).toMatchObject({ method: 'POST', path: '/api' });
   });
+
+  it('falls back to top-level request userId/organizationId', () => {
+    const req = makeReq({
+      user: undefined,
+      userId: 'u-top',
+      organizationId: 'org-top',
+      userRole: 'OWNER',
+    });
+    expect(getRequestContext(req)).toMatchObject({
+      userId: 'u-top',
+      orgId: 'org-top',
+      role: 'OWNER',
+    });
+  });
+
+  it('falls back to user.organization_id when organizationId is absent', () => {
+    const req = makeReq({
+      user: { id: 'u-legacy', organization_id: 'org-legacy', role: 'ADMIN' },
+    });
+    expect(getRequestContext(req)).toMatchObject({
+      userId: 'u-legacy',
+      orgId: 'org-legacy',
+      role: 'ADMIN',
+    });
+  });
+
+  it('tolerates throwing accessors and still resolves from fallbacks', () => {
+    const req = makeReq({ userId: 'u-safe' });
+    Object.defineProperty(req, 'user', {
+      configurable: true,
+      get: () => {
+        throw new Error('user getter failed');
+      },
+    });
+    Object.defineProperty(req, 'organizationId', {
+      configurable: true,
+      get: () => {
+        throw new Error('organization getter failed');
+      },
+    });
+    req.session = { user: { organizationId: 'org-from-session' } };
+
+    expect(getRequestContext(req)).toMatchObject({
+      userId: 'u-safe',
+      orgId: 'org-from-session',
+      role: 'GUEST',
+    });
+  });
+
+  it('treats null req.user as missing and uses session.user values', () => {
+    const req = makeReq({
+      user: null,
+      session: { user: { id: 'u-session', organizationId: 'org-session', role: 'USER' } },
+    });
+
+    expect(getRequestContext(req)).toMatchObject({
+      userId: 'u-session',
+      orgId: 'org-session',
+      role: 'USER',
+    });
+  });
 });

@@ -26,6 +26,9 @@ import { isSuperAdminRole } from '../../utils/roleGuards';
 interface ExtendedUser extends User {
   isOwner?: boolean;
   licensePlanId?: string;
+  jobTitle?: string;
+  department?: string;
+  siteLocation?: string;
 }
 
 interface AdminUserManagementProps {
@@ -63,6 +66,9 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
     role: UserRole.OTHER,
     status: 'active',
     licensePlanId: '',
+    jobTitle: '',
+    department: '',
+    siteLocation: '',
   });
 
   // Check if current user is the owner
@@ -219,6 +225,9 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       role: (user.role as UserRole) || UserRole.OTHER,
       status: user.status || 'active',
       licensePlanId: user.licensePlanId || '',
+      jobTitle: user.jobTitle || user.title || '',
+      department: user.department || '',
+      siteLocation: user.siteLocation || '',
     });
     setShowAddUserModal(true);
     setOpenMenuId(null);
@@ -233,6 +242,9 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       role: UserRole.OTHER,
       status: 'active',
       licensePlanId: '',
+      jobTitle: '',
+      department: '',
+      siteLocation: '',
     });
     setShowAddUserModal(true);
   };
@@ -345,6 +357,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <thead>
             <tr>
               <th>User</th>
+              <th>Function Profile</th>
               <th>Account Type</th>
               <th>License</th>
               <th>Status</th>
@@ -354,14 +367,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center">
+                <td colSpan={6} className="px-6 py-12 text-center">
                   <RefreshCw className="w-6 h-6 animate-spin text-purple-500 mx-auto" />
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
                 >
                   No users found
@@ -395,6 +408,17 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                         </div>
                         <div className="text-xs">{user.email}</div>
                       </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col text-sm">
+                      <span className="text-navy-900 dark:text-white">
+                        {user.jobTitle || user.title || 'No function'}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {user.department || 'No department'}
+                        {user.siteLocation ? ` • ${user.siteLocation}` : ''}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -549,6 +573,26 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                 placeholder="Email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  placeholder="Function / Job Title"
+                  value={formData.jobTitle}
+                  onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                />
+                <input
+                  placeholder="Department"
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                />
+              </div>
+              <input
+                placeholder="Site / Location"
+                value={formData.siteLocation}
+                onChange={(e) => setFormData({ ...formData, siteLocation: e.target.value })}
                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
               />
               <select

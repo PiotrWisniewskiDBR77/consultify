@@ -194,6 +194,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
   const {
     deepResearch,
+    webSearch,
     showReasoning,
     responseStyle,
     textToSpeech,
@@ -202,7 +203,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     privateMode,
   } = aiConfig as any;
 
-  const activeModeCount = [deepResearch, showReasoning, textToSpeech, privateMode].filter(
+  const activeModeCount = [deepResearch, webSearch, showReasoning, textToSpeech, privateMode].filter(
     Boolean
   ).length;
 
@@ -213,6 +214,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.modes.deepResearch.label',
       descKey: 'aiChat.menu.modes.deepResearch.desc',
       enabled: deepResearch,
+    },
+    {
+      id: 'webSearch',
+      icon: Search,
+      labelKey: 'aiChat.menu.modes.webSearch.label',
+      descKey: 'aiChat.menu.modes.webSearch.desc',
+      enabled: webSearch,
     },
     {
       id: 'showReasoning',
@@ -258,7 +266,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     setAIConfig({ [modeId]: newValue });
     if (modeId === 'showReasoning') setAIConfig({ maxMode: newValue });
 
-    const label = t(`aiChat.menu.modes.${modeId}.label`, modeId);
+    const label = t(
+      `aiChat.menu.modes.${modeId}.label`,
+      modeId === 'webSearch' ? 'Web Search' : modeId
+    );
     const icon = modeId === 'textToSpeech' ? '🔊' : '✓';
     toast.success(
       t(newValue ? 'aiChat.menu.toast.enabled' : 'aiChat.menu.toast.disabled', { label }),
@@ -340,7 +351,17 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 <span
                   className={`flex-1 text-[13px] ${isEnabled ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-200'}`}
                 >
-                  {t(mode.labelKey)}
+                  <span className="block">
+                    {t(mode.labelKey, mode.id === 'webSearch' ? 'Web Search' : mode.id)}
+                  </span>
+                  {mode.id === 'webSearch' && (
+                    <span className="block text-[11px] leading-4 text-slate-500 dark:text-slate-400 font-normal">
+                      {t(
+                        mode.descKey,
+                        'Allow Teresa to use public web when policy and data scope permit.'
+                      )}
+                    </span>
+                  )}
                 </span>
                 {isEnabled && <Check size={16} className="shrink-0 text-primary-500" />}
               </button>

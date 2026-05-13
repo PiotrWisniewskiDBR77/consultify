@@ -14,13 +14,15 @@ last_updated: 2026-05-10
 
 ## 1. Function Identity
 - Function ID: `WY_MANAGED_ASSIGNMENTS`
+- Module: `03_wywiad`
 - UI labels: `Managed`, `Assigned by me` (manager surface)
-- Scope: Interview tab `managed`
+- Route/AppView scope: Interview tab `managed` in `InterviewHub`
 - Feature state: `real` (permission-dependent)
 
 ## 2. User Job and Business Outcome
 - User job: oversee assigned interview workload and quality.
 - Outcome: improved assignment governance and throughput.
+- Non-goals: no hidden reassignment, no approval bypass.
 
 ## 3. Trigger and Entry Points
 - Entry: `managed` tab in `InterviewHub`.
@@ -56,6 +58,8 @@ last_updated: 2026-05-10
 
 - Managed tab loads and separates manager workload from personal queue.
 - Gap: no dedicated automated manager-assignment test.
+- Execution card: `function-cards/WY_MANAGED_ASSIGNMENTS_EXECUTION_CARD.md`
+- Task ID families: `WY-MGA-P0-*`, `WY-MGA-P1-*`, `WY-MGA-P2-*`
 
 - Route evidence: module route/view scope for `03_wywiad` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
 - Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `03_wywiad` function surface.
@@ -64,4 +68,15 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 - Risk: manager filters can drift from SLA expectations.
-- Change log: initial function contract created.
+- Change log: execution-card and implementation-task-board linkage added for `WY-MGA-*` scope.
+
+## 13. Execution Card and Task Board Linkage
+
+- Scope anchor lock: `03_wywiad/WY_MANAGED_ASSIGNMENTS` (immutable for this cycle).
+- Source execution card: `docs/modules/03_wywiad/function-cards/WY_MANAGED_ASSIGNMENTS_EXECUTION_CARD.md`.
+- Source task board row set: `docs/modules/03_wywiad/IMPLEMENTATION_TASK_BOARD.md` (`WY-MGA-*` only).
+- Active task IDs:
+  - `WY-MGA-P0-001` .. `WY-MGA-P0-003` (`READY`)
+  - `WY-MGA-P1-001` .. `WY-MGA-P1-004` (`WAITING_P0`)
+  - `WY-MGA-P2-001` .. `WY-MGA-P2-004` (`WAITING_P0`)
+- Dependency scope (`impact-only`): `WY_MY_ASSIGNMENTS`, `WY_PENDING_REVIEW`, `WY_SESSIONS`.

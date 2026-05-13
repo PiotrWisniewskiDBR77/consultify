@@ -4,7 +4,7 @@ doc_kind: META
 version: 1.0
 owner: user
 status: canonical
-last_updated: 2026-05-09
+last_updated: 2026-05-10
 ---
 
 # META — Moja Praca / My Work
@@ -31,6 +31,12 @@ last_updated: 2026-05-09
 ## Canonicality
 
 This folder is the author-level module contract. Other product, engineering and implementation docs can provide detail, but they must not contradict this contract without an explicit contract update.
+
+## Active Work Package (current cycle)
+
+- Active packet: `RAW_TARGET_STATE_2_0_PACKET.md`
+- Scope in active packet: `MW_HOME_RADAR` documentation hardening + roadmap prioritization
+- Cycle state: `REVIEW` (rerun gate passed; owner acceptance pending)
 
 ## Source Package
 

@@ -3,7 +3,7 @@ module_id: MODULE_INITIATIVES
 function_id: IN_ROADMAP_VIEW
 function_name: Initiatives — Roadmap View
 doc_kind: FUNCTION_CONTRACT
-status: active
+status: review
 owner: user
 owner_business: user
 owner_tech: user
@@ -29,12 +29,22 @@ last_updated: 2026-05-10
 
 ## 5. Inputs, Data Contracts, and Dependencies
 - Inputs: initiative timelines and status data.
+- Approved/scheduled initiative records, dependency metadata, planned dates and baseline/readiness status.
+- Capability/readiness context for scheduling actions when actions are exposed.
 
 ## 6. Outputs and Side Effects
 - Outputs: explicit navigation/handoffs back to initiative execution lanes.
+- Roadmap schedule projection, sequencing/dependency visibility and explicit scheduling context.
+- No hidden execution-task creation or duplicate initiative truth.
 
 ## 7. Ownership and Handoff Boundaries
 - Boundaries: roadmap is a planning view, not silent mutation path.
+
+| Handoff | Owner boundary |
+| --- | --- |
+| From `IN_PORTFOLIO_HUB` | Uses initiative identity, status and scheduling context. |
+| To `06_realizacja` | Shows execution readiness/handoff context only; execution owns tasks and blockers. |
+| To `07_rezultaty` / `08_finanse` | May expose timing/value context; does not own KPI or finance truth. |
 
 ## 8. Runtime States and UX Behavior
 - Runtime behavior must keep loading/empty/error/degraded/success states explicit with next-step guidance.
@@ -49,10 +59,12 @@ last_updated: 2026-05-10
 
 - Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
 
-- Route evidence: module route/view scope for `05_inicjatywy` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
-- Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `05_inicjatywy` function surface.
-- API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
-- Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `05_inicjatywy` user flows.
+| Evidence type | Pointer | Gate |
+| --- | --- | --- |
+| Route evidence | `/roadmap`; `src/routes/routeConfig.ts`; `src/routes/AppRoutes.tsx`. | `PASS_DOC` |
+| Component evidence | `src/views/FullRoadmapView.tsx`. | `PASS_DOC` |
+| API evidence | initiative lifecycle/readiness APIs and roadmap service boundaries. | `PASS_DOC` |
+| Test evidence | No lane-specific smoke/regression bound in this module contract. | `NOT_DONE` |
 
 ## 12. Open Risks and Change Log
 - Risk: route-family consistency across `/initiatives` and `/roadmap`.

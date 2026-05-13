@@ -24,6 +24,7 @@ Centralna powierzchnia rozmowy i pracy AI: rozmowa ma prowadzić do kontekstu, a
 - `05_DATA_AND_INTEGRATIONS.md` — objects, integrations and lineage.
 - `06_PERMISSIONS_AND_SECURITY.md` — roles, tenant boundaries and security.
 - `07_ACCEPTANCE_AND_TESTS.md` — verification canon.
+- `IMPLEMENTATION_PLAN.md` — deployment-ready plan for finishing and expanding the module by priority.
 - `RAW_INPUT.md` — raw author notes before normalization.
 - `CHANGELOG.md` — contract changes.
 
@@ -33,6 +34,13 @@ Centralna powierzchnia rozmowy i pracy AI: rozmowa ma prowadzić do kontekstu, a
 - `CZ_CANVAS_WORKSPACE` — chat-to-workspace/canvas bridge (`/internal/v10-runtime` + governed bridge flows).
 
 Function contracts live in `functions/` and are mandatory for gate completeness.
+
+## Implementation Readiness
+
+- Current implementation plan: `IMPLEMENTATION_PLAN.md`
+- Current runtime gate: `CZ_CANVAS_WORKSPACE = STARTUP_INCOMPLETE / NO_GO`
+- P0 completion path: `conversation -> canvas draft -> review_required -> accept/reject -> owner-lane read-back`
+- Start condition for runtime implementation: owner acceptance of `IMPLEMENTATION_PLAN.md` and selected Canvas entrypoint.
 
 ## Primary Sources
 

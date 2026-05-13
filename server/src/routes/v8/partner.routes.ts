@@ -17,7 +17,6 @@ import { Router } from 'express';
 
 import { getDatabase } from '../../database/Database.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
@@ -38,23 +37,47 @@ const router = Router();
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readPartnerUserId = (req: AuthRequest): string | undefined =>
+  normalizeOptionalString(safeRead(() => req.userId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.id, undefined as unknown));
+
+const readPartnerTenantOrgId = (req: AuthRequest): string =>
+  normalizeOptionalString(
+    safeRead(() => (req as AuthRequest & { v8Context?: { organizationId?: string } }).v8Context?.organizationId, undefined)
+  ) ||
+  normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown)) ||
+  normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
+  '';
+
 function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
-  const { organizationId } = getV8Context(req);
   return {
     version: 'v8' as const,
     contract: V8_PARTNER_READ_CONTRACT,
     partnerOrgId,
-    v8TenantOrganizationId: organizationId,
+    v8TenantOrganizationId: readPartnerTenantOrgId(req),
   };
 }
 
 function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
-  const { organizationId } = getV8Context(req);
   return {
     version: 'v8' as const,
     contract: V8_PARTNER_PROGRAM_CONTRACT,
     partnerOrgId,
-    v8TenantOrganizationId: organizationId,
+    v8TenantOrganizationId: readPartnerTenantOrgId(req),
   };
 }
 
@@ -76,7 +99,7 @@ function buildReferralToolsFallback() {
 router.get(
   '/program/status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -114,7 +137,7 @@ router.get(
 router.get(
   '/program/ledger',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -148,7 +171,7 @@ router.get(
 router.post(
   '/program/lifecycle/request-payout-phase',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -221,7 +244,7 @@ router.post(
 router.get(
   '/clients',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -256,7 +279,7 @@ router.get(
 router.get(
   '/projects',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -290,7 +313,7 @@ router.get(
 router.get(
   '/employees',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -326,7 +349,7 @@ router.get(
   '/onboarding-status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureUserOnboardingStatusTable(getDatabase() as any);
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -373,7 +396,7 @@ router.post(
   '/onboarding/accept-terms',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureUserOnboardingStatusTable(getDatabase() as any);
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -409,7 +432,7 @@ router.post(
       req.socket?.remoteAddress ||
       '';
     const userAgent = (req.headers['user-agent'] as string) || '';
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const organizationId = readPartnerTenantOrgId(req);
 
     try {
       await legalService.acceptDocuments(
@@ -438,7 +461,7 @@ router.post(
   '/onboarding/select-tier',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureUserOnboardingStatusTable(getDatabase() as any);
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -484,7 +507,7 @@ router.post(
   '/onboarding/complete',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureUserOnboardingStatusTable(getDatabase() as any);
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -558,7 +581,7 @@ router.post(
 router.get(
   '/referral-tools',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -588,7 +611,7 @@ router.get(
 router.get(
   '/referral-analytics',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -618,7 +641,7 @@ router.get(
 router.get(
   '/attributions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -653,7 +676,7 @@ router.get(
 router.get(
   '/earnings-summary',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -696,7 +719,7 @@ router.get(
 router.get(
   '/commission-transactions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -733,7 +756,7 @@ router.get(
 router.get(
   '/payouts',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -768,7 +791,7 @@ router.get(
 router.post(
   '/payouts/request',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -869,7 +892,7 @@ router.post(
 router.post(
   '/campaign-links',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -910,7 +933,7 @@ router.post(
 router.delete(
   '/campaign-links/:linkId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -941,7 +964,7 @@ router.delete(
 router.put(
   '/organization',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -982,7 +1005,7 @@ router.put(
 router.put(
   '/organization/specializations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -1042,7 +1065,7 @@ router.put(
 router.put(
   '/organization/regions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -1102,7 +1125,7 @@ router.put(
 router.put(
   '/organization/listing',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -1142,7 +1165,7 @@ router.put(
 router.get(
   '/payout-settings',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
@@ -1168,7 +1191,7 @@ router.get(
 router.put(
   '/payout-settings',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.userId || req.user?.id;
+    const userId = readPartnerUserId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }

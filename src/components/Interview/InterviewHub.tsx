@@ -55,13 +55,14 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
+import { appendCoreRuntimeHandoffTrace, buildCoreRuntimeHandoffTrace } from '@/utils/artifactLinks';
 
 import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
 
@@ -294,6 +295,7 @@ type InterviewTab =
   | 'sessions'
   | 'templates'
   | 'insights'
+  | 'initiatives'
   | 'managed'
   | 'pending_review';
 type InsightsViewMode = 'flat' | 'report';
@@ -312,6 +314,43 @@ type ItemStatus =
   | 'in_progress'
   | 'submitted'
   | 'sent_back';
+
+function isInterviewTab(value: string): value is InterviewTab {
+  return (
+    value === 'my_assignments' ||
+    value === 'sessions' ||
+    value === 'templates' ||
+    value === 'insights' ||
+    value === 'initiatives' ||
+    value === 'managed' ||
+    value === 'pending_review'
+  );
+}
+
+function resolveInterviewTabFromSearchParams(
+  searchParams: URLSearchParams,
+  permissions: { canViewManaged: boolean; canViewTemplates: boolean; canViewInsights: boolean }
+): InterviewTab | null {
+  const rawTab = String(searchParams.get('tab') || '')
+    .trim()
+    .toLowerCase();
+  if (!isInterviewTab(rawTab)) return null;
+
+  if (rawTab === 'managed' || rawTab === 'sessions') {
+    return permissions.canViewManaged ? rawTab : 'my_assignments';
+  }
+  if (rawTab === 'templates') {
+    return permissions.canViewTemplates ? 'templates' : 'my_assignments';
+  }
+  if (rawTab === 'insights' || rawTab === 'pending_review' || rawTab === 'initiatives') {
+    return permissions.canViewInsights ? rawTab : 'my_assignments';
+  }
+  return rawTab;
+}
+
+function readInterviewCoreRuntimeHandoff(pathname: string, searchParams: URLSearchParams) {
+  return buildCoreRuntimeHandoffTrace('interview', pathname, searchParams);
+}
 
 // Assignment types
 interface InterviewAssignment {
@@ -475,6 +514,7 @@ const STATUS_COLORS: Record<string, string> = {
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentProjectId,
@@ -641,6 +681,33 @@ export const InterviewHub: React.FC = () => {
   const canCreateInsights = permissionsCanCreateInsights || isUsingDemoData;
   const canReviewInsights = permissionsCanReviewInsights || isUsingDemoData;
   const canViewTemplates = canViewManaged || templates.length > 0 || isUsingDemoData;
+
+  useEffect(() => {
+    if (assignmentIdFromUrl || sessionIdFromUrl || insightIdFromUrl) return;
+    const nextTab = resolveInterviewTabFromSearchParams(searchParams, {
+      canViewManaged,
+      canViewTemplates,
+      canViewInsights,
+    });
+    if (!nextTab || nextTab === activeTab) return;
+    setActiveTab(nextTab);
+  }, [
+    activeTab,
+    assignmentIdFromUrl,
+    canViewInsights,
+    canViewManaged,
+    canViewTemplates,
+    insightIdFromUrl,
+    searchParams,
+    sessionIdFromUrl,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const trace = readInterviewCoreRuntimeHandoff(location.pathname, searchParams);
+    if (!trace || trace.source !== 'teresa') return;
+    appendCoreRuntimeHandoffTrace(window.sessionStorage, trace);
+  }, [location.pathname, searchParams]);
 
   // Interview Inbox preview (Outlook-style) — Assignments
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
@@ -814,6 +881,7 @@ export const InterviewHub: React.FC = () => {
         sessions: isPolish ? 'Sesje' : 'Sessions',
         templates: isPolish ? 'Szablony' : 'Templates',
         insights: isPolish ? 'Wnioski' : 'Insights',
+        initiatives: isPolish ? 'Inicjatywy' : 'Initiatives',
         managed: isPolish ? 'Przydzielone' : 'Assigned',
         pending_review: isPolish ? 'Do przeglądu' : 'Pending Review',
       };
@@ -1388,6 +1456,13 @@ export const InterviewHub: React.FC = () => {
         id: 'insights' as ModuleTab,
         label: isPolish ? 'Wnioski' : 'Insights',
         icon: <Lightbulb size={16} />,
+        count: insights.length,
+      });
+
+      baseTabs.push({
+        id: 'initiatives' as ModuleTab,
+        label: isPolish ? 'Inicjatywy' : 'Initiatives',
+        icon: <Target size={16} />,
         count: insights.length,
       });
     }
@@ -5159,6 +5234,140 @@ Return ONLY the answer text (no markdown fences).`;
       return <div className="h-full overflow-hidden">{insightsTableWithPreview}</div>;
     }
 
+    if (activeTab === 'initiatives') {
+      const candidates = filteredInsights;
+
+      if (candidates.length === 0) {
+        return (
+          <div className="h-full flex items-center justify-center p-8">
+            <EmptyStateInline
+              icon={Target}
+              message={isPolish ? 'Brak kandydatów inicjatyw' : 'No initiative candidates'}
+              hint={
+                isPolish
+                  ? 'Wygeneruj lub opublikuj wnioski z wywiadu, aby przygotować kandydatów inicjatyw z zachowanym źródłem.'
+                  : 'Generate or publish interview insights to prepare initiative candidates with preserved source context.'
+              }
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div className="h-full overflow-auto p-4">
+          <div className="mb-4 rounded-xl border border-blue-200/70 bg-blue-50/80 p-4 text-sm text-blue-900 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-100">
+            <div className="font-semibold">
+              {isPolish ? 'Kandydaci inicjatyw z wywiadu' : 'Interview initiative candidates'}
+            </div>
+            <div className="mt-1 text-xs opacity-80">
+              {isPolish
+                ? 'Ten widok nie tworzy ukrytych inicjatyw. Otwórz źródłowy wniosek, sprawdź evidence i wykonaj jawny handoff do modułu Inicjatywy.'
+                : 'This view does not create hidden initiatives. Open the source insight, inspect evidence and perform an explicit handoff to the Initiatives module.'}
+            </div>
+          </div>
+          <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+            <table className="w-full" style={{ minWidth: 820 }}>
+              <thead>
+                <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Inicjatywa / kandydat' : 'Initiative candidate'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Status' : 'Status'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Priorytet' : 'Priority'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Źródło' : 'Source'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Data' : 'Date'}
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Akcje' : 'Actions'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {candidates.map((insight) => {
+                  const sourceLabel = insight.sourceSessionCount
+                    ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
+                    : insight.sessionId
+                      ? `${isPolish ? 'Sesja' : 'Session'} ${insight.sessionId.slice(0, 8)}...`
+                      : isPolish
+                        ? 'Wniosek'
+                        : 'Insight';
+                  const status = insight.reviewStatus || insight.status || 'draft';
+                  const priority = insight.priority || 'medium';
+                  const createdAt = insight.createdAt
+                    ? new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+                    : '-';
+
+                  return (
+                    <tr
+                      key={insight.id}
+                      className="border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-navy-800/50"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-300">
+                            <Target size={16} />
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-900 dark:text-white">
+                              {insight.title}
+                            </div>
+                            <div className="mt-1 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                              {insight.content ||
+                                insight.description ||
+                                insight.sourceQuote ||
+                                (isPolish
+                                  ? 'Kandydat wymaga przeglądu źródła.'
+                                  : 'Candidate requires source review.')}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                          {status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-medium text-blue-600 dark:text-blue-300">
+                          {priority}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 dark:border-white/[0.08] dark:bg-navy-800 dark:text-slate-300">
+                          <Lightbulb size={12} />
+                          {sourceLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                        {createdAt}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleViewInsight(insight)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700"
+                        >
+                          <ExternalLink size={13} />
+                          {isPolish ? 'Przejrzyj / handoff' : 'Review / handoff'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'templates') {
       const rows = filteredTemplates;
       const selected = selectedTemplateId ? rows.find((t) => t.id === selectedTemplateId) : null;
@@ -6928,6 +7137,11 @@ Return ONLY the answer text (no markdown fences).`;
       />
     </div>
   );
+};
+
+export const __private__ = {
+  resolveInterviewTabFromSearchParams,
+  readInterviewCoreRuntimeHandoff,
 };
 
 export default InterviewHub;

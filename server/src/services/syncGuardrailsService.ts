@@ -403,8 +403,15 @@ export async function getUnresolvedErrors(
   }));
 }
 
-export async function resolveError(errorId: string): Promise<void> {
-  await dbRun(`UPDATE sync_error_log SET resolved_at = NOW() WHERE id = ?`, [errorId]);
+export async function resolveError(errorId: string, organizationId: string): Promise<boolean> {
+  const result = await dbRun(
+    `UPDATE sync_error_log SET resolved_at = NOW() WHERE id = ? AND organization_id = ?`,
+    [errorId, organizationId]
+  );
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to resolve sync error');
+  }
+  return Boolean(result.success && (result.changes ?? 0) > 0);
 }
 
 // ── Health Check ───────────────────────────────────────────────

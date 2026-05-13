@@ -56,6 +56,20 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(req.query.ok).toBe('safe');
   });
 
+  it('truncates overly long query strings before sanitization', async () => {
+    const req = createReq({
+      method: 'GET',
+      query: { q: 'x'.repeat(50001) },
+      body: {},
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(String(req.query.q).length).toBe(50000);
+  });
+
   it('skips multipart/form-data payloads (file uploads)', async () => {
     const req = createReq({
       headers: { 'content-type': 'multipart/form-data; boundary=---x' },
@@ -70,10 +84,41 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(req.body.html).toContain('<script>');
   });
 
+  it('skips multipart/form-data payloads when content-type header is an array', async () => {
+    const req = createReq({
+      headers: { 'content-type': ['MULTIPART/FORM-DATA; boundary=---x'] as any },
+      body: { html: '<script>nope</script>' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body.html).toContain('<script>');
+  });
+
   it('treats missing content-type header as empty string (still sanitizes)', async () => {
     const req = createReq({
       headers: {},
       body: { html: '<b>bold</b>' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(String(req.body.html)).not.toContain('<b>');
+  });
+
+  it('continues sanitization when content-type header accessor throws', async () => {
+    const req = createReq({
+      body: { html: '<b>bold</b>' },
+    });
+    Object.defineProperty(req, 'headers', {
+      configurable: true,
+      get: () => {
+        throw new Error('headers getter failed');
+      },
     });
     const next = vi.fn();
 
@@ -132,6 +177,13 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(out[1].b[0]).toBe('x'.repeat(3));
   });
 
+  it('truncateStrings stops recursion at depth boundary (private helper)', () => {
+    const deep = { a: { b: { c: 'x'.repeat(10) } } };
+    const out = __private__.truncateStrings(deep, 5, 2) as any;
+    // depth budget consumed before reaching c, so c remains unchanged
+    expect(out.a.b.c).toBe('x'.repeat(10));
+  });
+
   it('logs suspicious nested payloads (private helper)', async () => {
     const logger = (await import('../../../../server/src/utils/Logger.js')).default as any;
     const origWarn = logger.warn;
@@ -184,6 +236,27 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(String(req.query.q)).not.toContain('<b>');
   });
 
+  it('does not throw when req.body accessor throws and still sanitizes query', async () => {
+    const req = createReq({
+      query: { q: '<b>bold</b>' },
+    });
+    Object.defineProperty(req, 'body', {
+      configurable: true,
+      get: () => {
+        throw new Error('body getter failed');
+      },
+      set: () => {
+        // ignore
+      },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(String(req.query.q)).not.toContain('<b>');
+  });
+
   it('sanitizes req.body when it is an array (treated as object)', async () => {
     const req = createReq({
       body: ['<i>x</i>', { nested: '<b>y</b>' }],
@@ -195,6 +268,21 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(next).toHaveBeenCalled();
     expect(String(req.body[0])).not.toContain('<i>');
     expect(String(req.body[1].nested)).not.toContain('<b>');
+  });
+
+  it('preserves Buffer body without coercing it through object sanitization', async () => {
+    const body = Buffer.from([0xde, 0xad, 0xbe, 0xef]);
+    const req = createReq({
+      body,
+      query: { q: 'safe' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(Buffer.isBuffer(req.body)).toBe(true);
+    expect(req.body.equals(body)).toBe(true);
   });
 
   it('does not attempt query sanitization when req.query is null', async () => {

@@ -22,10 +22,17 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
   default: logger,
 }));
 
+const getCorrelationIdMock = vi.fn<() => string | undefined>();
+vi.mock('../../../../server/src/utils/RequestStore.js', () => ({
+  getCorrelationId: getCorrelationIdMock,
+}));
+
 async function importFresh() {
   vi.resetModules();
   logger.error.mockClear();
   logger.warn.mockClear();
+  getCorrelationIdMock.mockReset();
+  getCorrelationIdMock.mockReturnValue(undefined);
   return await import('../../../../server/src/utils/queryHelpers.js');
 }
 
@@ -159,5 +166,23 @@ describe('server utils/queryHelpers', () => {
       })
     ).rejects.toThrow('bad');
     expect(runs.map((r) => r.sql)).toEqual(['BEGIN TRANSACTION', 'ROLLBACK']);
+  });
+
+  it('recordQueryPerformance remains fail-open when callback throws', async () => {
+    const { enablePerformanceTracking, disablePerformanceTracking, recordQueryPerformance } =
+      await importFresh();
+    const throwingCallback = vi.fn(() => {
+      throw new Error('metrics callback failed');
+    });
+    enablePerformanceTracking(throwingCallback);
+
+    expect(() => recordQueryPerformance('query-all', 123)).not.toThrow();
+    expect(throwingCallback).toHaveBeenCalledWith('query-all', 123);
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[QueryHelper] recordQueryPerformance callback failed:',
+      expect.any(Error)
+    );
+
+    disablePerformanceTracking();
   });
 });

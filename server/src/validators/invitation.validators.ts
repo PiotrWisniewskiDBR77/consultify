@@ -34,6 +34,9 @@ export const AcceptInvitationSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
+  jobTitle: z.string().trim().min(1).max(255),
+  department: z.string().trim().min(1).max(255),
+  siteLocation: z.string().trim().max(255).optional(),
   password: z.string().min(8),
 });
 

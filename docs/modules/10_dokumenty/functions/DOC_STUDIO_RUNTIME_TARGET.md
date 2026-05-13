@@ -7,7 +7,7 @@ status: draft
 owner: user
 owner_business: user
 owner_tech: user
-last_updated: 2026-05-10
+last_updated: 2026-05-11
 ---
 
 # Function Contract — Document Studio Runtime Target
@@ -53,5 +53,19 @@ last_updated: 2026-05-10
 - API evidence: integration boundary through `src/services/api.ts` and backend route ownership in `server/src/routes/**` when endpoint-level mapping is not explicitly documented.
 - Test evidence: module regression coverage references in `tests/**` and `tests/e2e/**` aligned to `10_dokumenty` user flows.
 
+## 11A. RAW Chain Note
+
+- RAW thesis: template/use and approval-governed document generation must resolve to executable runtime.
+- Decision: `ENHANCE` split-readiness and handoff contradiction tracking.
+- Evidence: `03_BEHAVIOR.md` (`DGA-P0-002`), `07_ACCEPTANCE_AND_TESTS.md` deep rows, `DEEP_RAW_GAP_AUDIT_2026-05-11.md`.
+
+## 11B. Stage 1.5 Split-Readiness Note
+
+- Stage 1.5 thesis: `WordyView` is a target/candidate runtime footprint, not current `/wordy` route evidence.
+- Decision: `NEW_SPLIT_READINESS`.
+- Evidence: `STAGE_1_5_ULTRA_DEEP_GAP_AUDIT_2026-05-11.md`, `src/components/AIChat/KimiWorkspace/WordyView.tsx`, `src/routes/AppRoutes.tsx`.
+- NOT_DONE: route/component/API/test proof that `WordyView` is mounted and enforces Teresa, Menu 3, approval-before-export and provenance rules.
+
 ## 12. Open Risks and Change Log
-- Risk: conflating target intent with As-Is runtime truth.
+- Risk: template/use and chat handoff paths already point to `/wordy`, but route mount still resolves to placeholder.
+- Risk: backend pipeline readiness may be misread as frontend runtime readiness without explicit split-gate evidence.

@@ -904,15 +904,24 @@ router.post(
         : [req.body.tags]
       : [];
 
-    const data = await notebookService.capture(organizationId, userId, {
-      source: 'upload',
-      title: req.body.title,
-      fileBuffer: file.buffer,
-      fileMimetype: file.mimetype,
-      fileOriginalname: file.originalname,
-      tags,
-      projectId: req.body.projectId || undefined,
-    });
+    let data;
+    try {
+      data = await notebookService.capture(organizationId, userId, {
+        source: 'upload',
+        title: req.body.title,
+        fileBuffer: file.buffer,
+        fileMimetype: file.mimetype,
+        fileOriginalname: file.originalname,
+        tags,
+        projectId: req.body.projectId || undefined,
+      });
+    } catch (error) {
+      return res.status(503).json({
+        error: 'Notebook capture failed',
+        code: 'NOTEBOOK_CAPTURE_FAILED',
+        message: error instanceof Error ? error.message : 'unknown_error',
+      });
+    }
 
     return res.status(201).json({
       data,
@@ -1536,10 +1545,29 @@ router.post(
 router.get(
   '/notebook/pages/:id/ai-proposals',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     if (!(await requireNotebookPagesTable(res))) return;
 
     const pageId = String(req.params.id || '').trim();
+    const page = await queryHelpers.queryOne<any>(
+      `SELECT
+        id,
+        owner_user_id as "ownerUserId",
+        organization_id as "organizationId",
+        project_id as "projectId",
+        visibility
+       FROM notebook_pages
+       WHERE id = ?
+       LIMIT 1`,
+      [pageId]
+    );
+    if (!page) {
+      return res.status(404).json({ error: 'Not found', code: 'NOTEBOOK_PAGE_NOT_FOUND' });
+    }
+    if (!(await canAccessNotebookRow(userId, organizationId, page))) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOTEBOOK_PAGE_FORBIDDEN' });
+    }
+
     const status = req.query.status ? String(req.query.status) : undefined;
     const limit = req.query.limit ? Math.min(Number(req.query.limit), 200) : 50;
 

@@ -40,6 +40,38 @@ interface VersionedRequest extends Request {
   apiVersion?: ApiVersionInfo;
 }
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const coerceVersionInput = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return normalizeOptionalString(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const normalized = normalizeOptionalString(item);
+      if (normalized) return normalized;
+    }
+  }
+  return undefined;
+};
+
+const safeSetHeader = (res: Response, name: string, value: string): void => {
+  safeRead(() => {
+    res.setHeader(name, value);
+    return true;
+  }, false);
+};
+
 // ==========================================
 // CONFIGURATION
 // ==========================================
@@ -94,6 +126,52 @@ const VERSION_HEADER = 'x-api-version';
 const DEPRECATION_HEADER = 'deprecation';
 const SUNSET_HEADER = 'sunset';
 const API_VERSION_RESPONSE_HEADER = 'x-api-version';
+const MAX_VERSION_ECHO_CHARS = 64;
+const MAX_VERSION_INPUT_CHARS = 256;
+const MAX_HEADER_VALUE_CHARS = 128;
+const MAX_PATH_CHARS_FOR_VERSION_URL_PARSE = 8192;
+const MAX_LOG_PATH_CHARS = 512;
+
+const formatVersionForError = (value: unknown): string => {
+  const normalized = String(value ?? '');
+  if (normalized.length <= MAX_VERSION_ECHO_CHARS) return normalized;
+  return `${normalized.slice(0, MAX_VERSION_ECHO_CHARS)}...`;
+};
+
+const clampVersionInput = (value: string): string =>
+  value.length > MAX_VERSION_INPUT_CHARS ? value.slice(0, MAX_VERSION_INPUT_CHARS) : value;
+const sanitizeHeaderValue = (value: string): string =>
+  value.replace(/[\r\n\0]/g, '').slice(0, MAX_HEADER_VALUE_CHARS);
+const truncateLogPath = (value: string): string =>
+  value.length > MAX_LOG_PATH_CHARS ? `${value.slice(0, MAX_LOG_PATH_CHARS)}...` : value;
+
+const applyNoStoreHeaders = (res: Response): void => {
+  safeSetHeader(res, 'Cache-Control', 'no-store');
+  safeSetHeader(res, 'Pragma', 'no-cache');
+};
+
+const safeStatusJson = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>
+): boolean =>
+  safeRead(() => {
+    res.status(statusCode).json(payload);
+    return true;
+  }, false);
+
+const formatDateToIsoOrUndefined = (value: Date | null | undefined): string | undefined => {
+  if (!(value instanceof Date)) return undefined;
+  if (!Number.isFinite(value.getTime())) return undefined;
+  return safeRead(() => value.toISOString(), undefined as string | undefined);
+};
+const isPlainJsonObject = (value: unknown): value is Record<string, unknown> => {
+  if (value == null || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (typeof Buffer !== 'undefined' && Buffer.isBuffer(value)) return false;
+  if (value instanceof Date) return false;
+  const prototype = safeRead(() => Object.getPrototypeOf(value), null as object | null);
+  return prototype === Object.prototype || prototype === null;
+};
 
 // ==========================================
 // MIDDLEWARE
@@ -109,14 +187,24 @@ export function apiVersionMiddleware(
 ): void {
   try {
     // Priority: URL > Header > Query > Default
-    let version = extractVersionFromUrl(req.path);
+    let version = extractVersionFromUrl(
+      normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+        normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+        ''
+    );
 
     if (!version) {
-      version = req.headers[VERSION_HEADER] as string;
+      version =
+        coerceVersionInput(
+          safeRead(() => req.headers?.[VERSION_HEADER] as string | string[] | undefined, undefined)
+        ) || '';
     }
 
     if (!version) {
-      version = req.query.version as string;
+      version =
+        coerceVersionInput(
+          safeRead(() => (req.query as Record<string, unknown> | undefined)?.version, undefined)
+        ) || '';
     }
 
     if (!version) {
@@ -124,16 +212,31 @@ export function apiVersionMiddleware(
     }
 
     // Normalize version
-    const normalizedVersion = normalizeVersion(version);
+    const normalizedVersion = normalizeVersion(clampVersionInput(version));
     const versionInfo = API_VERSIONS[normalizedVersion];
 
     if (!versionInfo) {
-      res.status(400).json({
+      const headersAlreadySent = safeRead(() => res.headersSent, false);
+      if (headersAlreadySent) {
+        logger.warn('[APIVersion] Invalid version but response already started', {
+          requestedVersion: String(version).slice(0, 64),
+        });
+        next();
+        return;
+      }
+      applyNoStoreHeaders(res);
+      if (
+        !safeStatusJson(res, 400, {
         error: 'Invalid API version',
-        message: `Unsupported API version: ${version}`,
+        message: `Unsupported API version: ${formatVersionForError(version)}`,
         supportedVersions: Object.keys(API_VERSIONS).filter((v) => !v.includes('.')),
         currentVersion: LATEST_VERSION,
-      });
+        })
+      ) {
+        logger.warn('[APIVersion] Failed to send invalid version response body', {
+          requestedVersion: String(version).slice(0, 64),
+        });
+      }
       return;
     }
 
@@ -141,20 +244,25 @@ export function apiVersionMiddleware(
     req.apiVersion = versionInfo;
 
     // Set response header
-    res.setHeader(API_VERSION_RESPONSE_HEADER, versionInfo.full);
+    safeSetHeader(res, API_VERSION_RESPONSE_HEADER, sanitizeHeaderValue(versionInfo.full));
 
     // Handle deprecated versions
     if (versionInfo.deprecated) {
-      res.setHeader(DEPRECATION_HEADER, 'true');
+      safeSetHeader(res, DEPRECATION_HEADER, 'true');
 
-      if (versionInfo.sunsetDate) {
-        res.setHeader(SUNSET_HEADER, versionInfo.sunsetDate.toISOString());
+      const sunsetIso = formatDateToIsoOrUndefined(versionInfo.sunsetDate);
+      if (sunsetIso) {
+        safeSetHeader(res, SUNSET_HEADER, sanitizeHeaderValue(sunsetIso));
       }
 
       logger.warn('[APIVersion] Deprecated version used', {
         version: versionInfo.full,
-        path: req.path,
-        sunsetDate: versionInfo.sunsetDate?.toISOString(),
+        path: truncateLogPath(
+          normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+            normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+            ''
+        ),
+        sunsetDate: sunsetIso,
       });
     }
 
@@ -171,10 +279,22 @@ export function apiVersionMiddleware(
 export function requireVersion(minVersion: string) {
   return (req: VersionedRequest, res: Response, next: NextFunction): void => {
     if (!req.apiVersion) {
-      res.status(400).json({
+      if (safeRead(() => res.headersSent, false)) {
+        logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
+          reason: 'missing_api_version',
+        });
+        next();
+        return;
+      }
+      applyNoStoreHeaders(res);
+      if (
+        !safeStatusJson(res, 400, {
         error: 'API version required',
         message: 'This endpoint requires explicit API version.',
-      });
+        })
+      ) {
+        logger.warn('[APIVersion] Failed to send missing api version response body');
+      }
       return;
     }
 
@@ -185,12 +305,29 @@ export function requireVersion(minVersion: string) {
     }
 
     if (compareVersions(req.apiVersion, minInfo) < 0) {
-      res.status(400).json({
+      if (safeRead(() => res.headersSent, false)) {
+        logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
+          reason: 'api_version_too_old',
+          requiredVersion: minInfo.full,
+          currentVersion: req.apiVersion.full,
+        });
+        next();
+        return;
+      }
+      applyNoStoreHeaders(res);
+      if (
+        !safeStatusJson(res, 400, {
         error: 'API version too old',
-        message: `This endpoint requires API version ${minVersion} or higher.`,
+        message: `This endpoint requires API version ${formatVersionForError(minVersion)} or higher.`,
         yourVersion: req.apiVersion.full,
         requiredVersion: minInfo.full,
-      });
+        })
+      ) {
+        logger.warn('[APIVersion] Failed to send outdated api version response body', {
+          requiredVersion: minInfo.full,
+          currentVersion: req.apiVersion.full,
+        });
+      }
       return;
     }
 
@@ -203,25 +340,43 @@ export function requireVersion(minVersion: string) {
  */
 export function deprecatedEndpoint(sunsetDate?: Date, alternativeEndpoint?: string) {
   return (_req: Request, res: Response, next: NextFunction): void => {
-    res.setHeader(DEPRECATION_HEADER, 'true');
+    safeSetHeader(res, DEPRECATION_HEADER, 'true');
+    const sunsetIso = formatDateToIsoOrUndefined(sunsetDate);
 
-    if (sunsetDate) {
-      res.setHeader(SUNSET_HEADER, sunsetDate.toISOString());
+    if (sunsetIso) {
+      safeSetHeader(res, SUNSET_HEADER, sanitizeHeaderValue(sunsetIso));
     }
 
     // Add deprecation warning to response
-    const originalJson = res.json.bind(res);
+    const originalJson = safeRead(() => res.json.bind(res), null as unknown as Response['json']);
+    if (!originalJson) {
+      next();
+      return;
+    }
+    const trimmedAlternative =
+      typeof alternativeEndpoint === 'string' ? alternativeEndpoint.trim() : '';
+    const sanitizedAlternative = trimmedAlternative
+      ? sanitizeHeaderValue(trimmedAlternative)
+      : '';
+    const safeAlternative = sanitizedAlternative || undefined;
     res.json = function (body: unknown): Response {
-      if (body && typeof body === 'object') {
-        return originalJson({
-          ...body,
-          _deprecation: {
-            deprecated: true,
-            sunsetDate: sunsetDate?.toISOString(),
-            alternative: alternativeEndpoint,
-            message: 'This endpoint is deprecated and will be removed.',
-          },
-        });
+      if (isPlainJsonObject(body)) {
+        try {
+          return originalJson({
+            ...body,
+            _deprecation: {
+              deprecated: true,
+              sunsetDate: sunsetIso,
+              ...(safeAlternative ? { alternative: safeAlternative } : {}),
+              message: 'This endpoint is deprecated and will be removed.',
+            },
+          });
+        } catch {
+          logger.warn(
+            '[APIVersion] deprecatedEndpoint failed to attach deprecation metadata; sending original body'
+          );
+          return originalJson(body);
+        }
       }
       return originalJson(body);
     };
@@ -239,7 +394,11 @@ export function deprecatedEndpoint(sunsetDate?: Date, alternativeEndpoint?: stri
  * Supports: /api/v1/*, /api/v2/*
  */
 function extractVersionFromUrl(path: string): string | null {
-  const match = path.match(/\/api\/v(\d+(?:\.\d+(?:\.\d+)?)?)\//);
+  const pathForScan =
+    path.length > MAX_PATH_CHARS_FOR_VERSION_URL_PARSE
+      ? path.slice(0, MAX_PATH_CHARS_FOR_VERSION_URL_PARSE)
+      : path;
+  const match = pathForScan.match(/\/api\/v(\d+(?:\.\d+(?:\.\d+)?)?)\//);
   return match ? match[1] : null;
 }
 
@@ -248,7 +407,7 @@ function extractVersionFromUrl(path: string): string | null {
  */
 function normalizeVersion(version: string): string {
   // Remove 'v' prefix if present
-  const cleaned = version.replace(/^v/i, '');
+  const cleaned = String(version || '').replace(/^v/i, '');
 
   // Return as-is if it's a known format
   if (API_VERSIONS[cleaned]) {

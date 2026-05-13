@@ -660,11 +660,18 @@ D. Data scope and sources
 [P0] Exclude source — użytkownik wyłącza źródło — AI nie używa go w odpowiedzi.
 [P0] Require citations — wymuszenie cytowań — odpowiedź ma source cards.
 [P0] Source trust level — źródło ma poziom zaufania — widoczne w UI.
+[P0] Attachment Knowledge Scope — przy dodawaniu pliku/linku użytkownik wybiera, czy źródło jest tylko dla tej rozmowy, prywatne, projektowe/zespołowe, organizacyjne albo no-retention — aktywny scope jest widoczny przed wysłaniem.
+[P0] Conversation-scoped default for uploads — nowy plik/link domyślnie zasila tylko bieżącą rozmowę i odpowiedzi z cytowaniami — nie trafia do pamięci zespołu ani organizacji bez świadomej promocji.
+[P0] Context promotion approval — zapis pliku/linku do kontekstu projektu, zespołu lub organizacji wymaga jawnej akcji użytkownika i audit trail — brak ukrytego uczenia się na załącznikach.
+[P0] Private upload no-retention — w trybie prywatnym system nie zapisuje ekstrakcji pliku/linku do współdzielonego kontekstu ani organization memory — UI pokazuje status no-retention.
 [P1] Missing data warning — AI wskazuje braki — nie halucynuje.
 [P1] Source conflict detection — wykrywa sprzeczne źródła — pokazuje konflikt.
 [P1] Public web toggle — osobne włączenie web — web nieaktywny domyślnie dla danych poufnych.
 [P1] CRM scope — AI pracuje na CRM — tylko zgodnie z permissions.
 [P1] Restricted internal scope — restricted data — wymaga roli i audit.
+[P1] Source understanding preview — po parsowaniu źródła system pokazuje, co realnie zrozumiał: typ, liczbę chunków, ekstrakt, embedding status, ograniczenia parsera i potencjalne braki.
+[P1] Context destination badge — każde aktywne źródło pokazuje docelowy kontekst: Conversation only, My context, Project/team, Organization knowledge, Restricted lub No-retention.
+[P2] Knowledge review queue for sources — źródła promowane do wiedzy zespołowej/organizacyjnej trafiają do kolejki review, jeśli są poufne, duże, sprzeczne albo importowane z zewnętrznego URL.
 E. Privacy and memory
 [P0] Temporary chat — rozmowa tymczasowa — brak zapisu do memory.
 [P0] No-retention mode — brak retencji treści — UI pokazuje status.
@@ -672,10 +679,16 @@ E. Privacy and memory
 [P0] Save to memory — użytkownik zapisuje fakt — memory ma scope.
 [P0] Edit memory — edycja pamięci — zmiana audytowana.
 [P0] Delete memory — usunięcie pamięci — memory nie jest używana.
+[P0] Personal vs group context separation — system rozróżnia prywatny kontekst użytkownika, kontekst rozmowy, kontekst projektu/zespołu i kontekst organizacji — AI nie miesza ich bez widocznego scope.
+[P0] Organization context write guard — chat i attachment extraction nie zapisują faktów do organization context automatycznie, jeśli użytkownik pracuje w trybie prywatnym albo wybrał scope conversation-only/personal.
+[P0] Group context permission gate — dodanie wiedzy do projektu, zespołu lub organizacji wymaga uprawnień oraz widocznej informacji, kto będzie mógł używać tego źródła.
 [P1] Memory scope selector — user/project/org/client — widoczne przy zapisie.
 [P1] Sensitive memory warning — dane wrażliwe wymagają zgody — system ostrzega.
+[P1] Personal knowledge vault — użytkownik może zapisać źródło lub fakt do swojego prywatnego kontekstu bez udostępniania zespołowi — AI używa go tylko dla tego użytkownika.
+[P1] Team knowledge promotion — użytkownik może promować źródło z rozmowy do projektu/zespołu — system tworzy provenance, ownership, visibility i audit entry.
 [P2] Memory review queue — kolejka pamięci — admin/user zatwierdza.
 [P2] Retention policy per memory — memory ma TTL — wygasa zgodnie z polityką.
+[P2] Conflicting uploaded knowledge review — jeśli nowe źródło przeczy istniejącej wiedzy organizacji, system tworzy konflikt do review zamiast po cichu nadpisywać kontekst.
 F. Prompt input
 [P0] Text prompt — użytkownik wpisuje prompt — wysyłka działa stabilnie.
 [P0] Multiline prompt — obsługa długich promptów — enter/shift-enter działa.
@@ -690,14 +703,25 @@ F. Prompt input
 G. Attachments
 [P0] Attach file — upload działa — plik widoczny w rozmowie.
 [P0] Attach PDF — PDF parsowany — AI może cytować fragmenty.
-[P0] Attach document — DOCX/TXT — tekst ekstrahowany.
-[P0] Attach spreadsheet — XLSX/CSV — tabela rozpoznana.
+[P0] Attach text document — TXT/MD/JSON/CSV i inne tekstowe MIME są ekstrahowane jako tekst — AI może cytować fragmenty.
+[P0] Attach document — DOCX/TXT — tekst ekstrahowany; DOCX wymaga parsera dokumentowego, TXT działa tekstowo.
+[P0] Attach spreadsheet — XLSX/CSV — CSV działa tekstowo, XLSX wymaga parsera tabelarycznego i preview schematu.
+[P0] Attach URL source — publiczny HTTP(S) URL może być przetworzony jako HTML, PDF albo plain text — obowiązuje internet policy, SSRF guard, limit rozmiaru i cytowania.
 [P1] Attach presentation — PPTX — slajdy sparsowane.
 [P1] Attach image — obraz analizowany — opis/wnioski.
 [P1] Attach audio — audio transkrybowane — transcript zapisany.
+[P1] Attach image with OCR/vision — PNG/JPG/WebP mogą być rozumiane przez OCR/vision — system pokazuje, czy odpowiedź bazuje na tekście OCR, opisie obrazu czy inference.
+[P1] Attach spreadsheet with semantic schema — XLSX/CSV są rozpoznawane jako tabele: arkusze, kolumny, typy danych, jednostki, wartości odstające i ograniczenia jakości danych.
+[P1] Attach presentation with speaker context — PPTX jest rozbijany na slajdy, tytuły, notatki i strukturę narracji — AI może tworzyć summary, risks i deck outline.
+[P1] Attach audio/video transcript — audio/wideo tworzy transkrypt z privacy indicator, language detection i opcją zapisania tylko transkryptu albo też źródła.
+[P2] Attach ZIP/source pack — paczka ZIP może zawierać wiele źródeł z manifestem — system wymaga preview, klasyfikacji bezpieczeństwa i wyboru scope przed ingestem.
 [P0] File preview — preview przed analizą — user widzi zawartość.
 [P0] File parsing status — status parsing — pending/parsed/failed.
 [P0] File security classification — public/internal/confidential/restricted.
+[P0] File context destination — przy pliku widoczny jest docelowy kontekst: tylko rozmowa, mój kontekst, projekt/zespół, organizacja albo no-retention.
+[P0] Attachment citation contract — jeśli AI używa pliku/linku, odpowiedź musi wskazywać cytowania do konkretnego źródła/chunku lub powiedzieć, że źródło nie zawiera potrzebnych danych.
+[P1] Attachment extraction quality state — system pokazuje, czy ekstrakcja jest pełna, częściowa, pusta, uszkodzona albo wymaga innego formatu.
+[P1] Attachment parser limitation warning — dla plików nieobsługiwanych lub częściowo obsługiwanych system mówi, co rozumie, czego nie rozumie i jak użytkownik może poprawić źródło.
 H. Voice
 [P1] Voice input — nagrywanie głosu — transcript powstaje.
 [P1] Voice output — AI odpowiada głosem — user może wyłączyć.
@@ -809,7 +833,10 @@ Data Scope	Kiedy używać	Ryzyka	Cytowania	Memory	Client-ready
 No company data	ogólne pytania	ogólność odpowiedzi	nie zawsze	nie	tak
 Current conversation only	szybkie analizy	brak pełnego kontekstu	nie zawsze	opcjonalnie	tak
 Uploaded files only	analiza plików	jakość parsowania	tak	po zgodzie	zależnie
+Attached sources — conversation only	domyślny upload pliku/linku	źródło widoczne tylko w rozmowie	tak	nie domyślnie	tak, jeśli źródło zatwierdzone
+My private knowledge	prywatny kontekst użytkownika	ryzyko oczekiwania, że zespół też to widzi	tak	prywatna	nie domyślnie
 Current project	praca projektowa	permissions	tak	projektowa	zależnie
+Current team/project knowledge	praca zespołowa	rozszerzenie widoczności	tak	project/team memory	ostrożnie
 Current client	praca klientowa	client boundary	tak	client memory	ostrożnie
 Organization knowledge	standardy firmy	nadmiar danych	tak	org memory	tylko approved
 Selected sources	precyzyjne zadania	pominięcie danych	tak	zależnie	tak
@@ -822,6 +849,28 @@ Research database	research	aktualność	tak	tak	tak
 Public web	benchmarki/news	wiarygodność	tak	nie domyślnie	tak
 Restricted internal	dane poufne	leakage	tak	restricted	nie
 Private mode	rozmowy poufne	brak pamięci	opcjonalnie	nie	nie domyślnie
+
+Knowledge destination rules
+Destination	Kiedy źródło trafia	Warunek	Retencja	Widoczność
+Conversation only	domyślnie po dodaniu pliku/linku do promptu	plik/link został sparsowany i ma citation handle	zgodnie z retencją rozmowy	właściciel rozmowy albo uprawnieni członkowie team conversation
+My context	po wyborze "zapisz do mojego kontekstu"	użytkownik zatwierdza zapis	osobista polityka retencji	tylko użytkownik
+Project/team context	po wyborze "udostępnij projektowi/zespołowi"	uprawnienia do projektu/zespołu + audit	projektowa/zespołowa	członkowie z ACL
+Organization knowledge	po wyborze "dodaj do wiedzy organizacji"	uprawnienia + opcjonalny review dla sensitive/conflict	organizacyjna	uprawnieni użytkownicy organizacji
+No-retention/private	po wyborze trybu prywatnego albo temporary	brak zapisu do memory/org context	brak albo krótki TTL	tylko bieżące przetwarzanie
+
+Supported source understanding target
+Source type	Docelowe rozumienie	Priorytet	Uwagi governance
+PDF	tekst, strony, cytowania chunków, extraction quality	P0	już kluczowy format dla analiz dokumentów
+TXT/MD	tekst, struktura nagłówków, cytowania	P0	bezpieczny format bazowy
+CSV	tabela tekstowa, kolumny, rekordy, summary danych	P0	wymaga ostrzeżenia o typach danych
+JSON	struktura, pola, obiekty, sample records	P0	nie traktować jako plain prose, jeśli parser strukturalny dostępny
+Public URL/HTML/PDF	tekst strony, tytuł, source URL, citation	P0	wymaga internet policy, SSRF guard i limitu rozmiaru
+DOCX	akapity, nagłówki, tabele, komentarze jeśli dostępne	P0/P1	wymaga parsera dokumentowego
+XLSX	arkusze, kolumny, typy danych, formuły/values	P1	wymaga schema preview przed analizą
+PPTX	slajdy, speaker notes, narracja decku	P1	przydatne do raportów i client-ready decków
+PNG/JPG/WebP	OCR, opis wizualny, wykryte elementy	P1	wymaga oznaczenia inference vs OCR
+Audio/video	transkrypt, język, speaker segments jeśli dostępne	P1	wymaga privacy indicator i zgody na transkrypcję
+ZIP/source pack	manifest wielu źródeł, klasyfikacja, scope	P2	wymaga preview i review przed ingestem
 Source Trust Levels
 Verified internal source
 User-uploaded source
@@ -1059,6 +1108,67 @@ admin data controls;
 compliance dashboard.
 DoD:
 system gotowy do wdrożeń enterprise.
+18A. Market-parity capabilities addendum — bez przeładowania UI
+Cel tej sekcji:
+dopisać funkcjonalności, które dają Consultify użyteczność porównywalną z największymi graczami, ale zaprojektować je w sposób delikatny, minimalistyczny i nieprzytłaczający. Zasada nadrzędna: główny input zostaje spokojny, a zaawansowane funkcje żyją pod małymi przyciskami, chipsami, menu rozwijanymi, panelami bocznymi i kontekstowymi action cards.
+
+Zasady UI/UX dla wszystkich funkcji:
+domyślnie pokazuj tylko najważniejszy stan: tryb pracy, scope danych, aktywne źródła i status prywatności;
+zaawansowane opcje chowaj pod "więcej", menu kontekstowym, drobnym chipem albo lokalnym panelem;
+nie twórz dużych toolbarów pod inputem, jeśli wystarczy dropdown;
+pokazuj szczegóły dopiero na intencję użytkownika albo gdy system wymaga decyzji;
+każda mocna funkcja ma mieć cichy stan pasywny i wyraźny stan decyzyjny;
+AI prowadzi użytkownika przez next best action, ale nie zasłania pracy;
+approval, diff, źródła, memory i governance są widoczne jako lekkie karty, a nie ciężkie formularze;
+ustawienia rzadko zmieniane trafiają do projektu/workspace settings, nie do głównego okna rozmowy;
+w Menu 3 / dynamic command row mają być tylko kontekstowe akcje dla aktywnego modułu albo artifactu.
+
+Market-parity capability matrix:
+Capability	Wzorzec rynkowy	Co warto mieć w Consultify	Minimalistyczny UI/UX	Priorytet
+Project instructions / workspace rules	ChatGPT Projects, Cursor Rules	Projekt ma stałe instrukcje: ton, język, format outputu, preferowane źródła, zakazane źródła, client/internal boundary i domyślne playbooki	Mały chip "Instrukcje projektu"; rozwijany panel z podsumowaniem i linkiem "edytuj"	P0
+Shared project chat / team collaboration	ChatGPT shared projects, Slack/Teams	Shared conversations, właściciel rozmowy, komentarze, @mentions, kto dodał źródło, kto zatwierdził memory, follow-up owner	Ikona współpracy przy tytule rozmowy; szczegóły w dropdownie "Udostępnienie"	P0
+Agent run plan	Notion AI Plan Mode, Cursor Agent, Harvey Agents	Teresa przed większą akcją pokazuje plan: kroki, źródła, narzędzia, output, ryzyka i wymagane approvale	Kompaktowa karta "Plan działania" z przyciskami: Akceptuj, Edytuj, Uruchom później	P0
+Artifact versioning, diff, apply/reject	Claude Artifacts, Cursor diff/apply	Każda edycja AI do dokumentu/tabeli/prezentacji ma wersję, diff, rollback, source lineage i approval przed nadpisaniem	Drobny pasek "Zmiany AI" nad artifactem; diff w panelu bocznym, nie w głównym czacie	P0
+Enterprise connector catalog	Microsoft Copilot, Gemini Workspace, Notion Enterprise Search	Katalog źródeł: Drive, M365/SharePoint, Slack/Teams, email, calendar, CRM, DMS, repo dokumentów	Status źródeł jako małe kropki/chipsy w Source menu; pełna lista w ustawieniach źródeł	P0/P1
+Source health and freshness	Perplexity, Copilot	Źródło pokazuje freshness, trust, parser quality, access status, indexing status, stale warning i permission blocked warning	Mały badge przy cytowaniu; pełne szczegóły po kliknięciu source card	P0
+Meeting / workshop recap pipeline	Teams Copilot, Slack AI, Notion AI Meeting Notes	Transcript/voice note tworzy summary, decyzje, action items, risks, unresolved questions, follow-up mail i task candidates	Jedna karta "Z rozmowy wykryto..." z licznikami; szczegóły w accordionie	P0/P1
+Knowledge lifecycle / vault	Harvey Vault, enterprise knowledge systems	Wiedza ma ownera, source lineage, review status, expires_at, superseded_by, conflict status i możliwość wycofania	Mały badge statusu wiedzy; zarządzanie w Knowledge panel, nie w chat thread	P0/P1
+Cross-conversation intelligence	Slack recap, Teams recap, ChatGPT project context	Teresa robi recap z wielu rozmów projektu: ustalenia tygodnia, decyzje, blokery, zmiany od ostatniego raportu	Quick action "Podsumuj projekt" w projekcie; wynik jako karta, potem artifact/report	P1
+Consulting playbooks / skills	Cursor Skills, Harvey workflows	Dedykowane playbooki: discovery, audit, digital roadmap, business case, PMO review, risk register, savings analysis, vendor comparison, client-ready memo	Menu "Tryb pracy" z kilkoma widocznymi presetami i opcją "więcej playbooków"	P0/P1
+Research space / source-first workspace	Perplexity Spaces	Research session ma pytanie, plan, źródła, cytowania, findings, gaps, next actions i opcję promocji do artifactu	Mały chip "Research" przy rozmowie; panel źródeł i findings otwierany z prawej	P1
+Connected workspace side panel	Gemini Workspace, Copilot Side Panel	Chat działa obok dokumentu, tabeli, prezentacji, taska albo projektu i rozumie aktywny obiekt	Cichy side panel z kontekstem; akcje tylko w Menu 3 / right command slot	P0/P1
+Semantic history and memory search	ChatGPT history, Slack/Teams search	Szukanie po rozmowach, plikach, decyzjach, taskach, artifactach i źródłach z filtrami scope	Wyszukiwarka globalna + małe filtry; szczegóły w wynikach, nie w input barze	P1
+Client-ready redaction pipeline	Consulting-specific, Copilot enterprise controls	Teresa wykrywa internal notes, sensitive data, assumptions i usuwa je z outputu dla klienta	Jeden toggle/chip "Client-ready"; ostrzeżenia jako mała karta przed eksportem	P0
+Mobile / async continuation	Harvey Mobile, ChatGPT mobile	Użytkownik może wrócić do rozmowy, approvala lub taska z telefonu i kontynuować pracę	Minimalne powiadomienia i compact review cards	P2
+
+Docelowe zachowanie dla użytkownika:
+użytkownik widzi proste okno rozmowy, ale pod spodem ma mocny system pracy;
+jeśli nie potrzebuje zaawansowanych funkcji, UI wygląda jak lekki chat;
+jeśli pracuje nad projektem, dokumentem, researchiem albo spotkaniem, Teresa pokazuje tylko te akcje, które są potrzebne w danym kontekście;
+duże funkcje nie są wielkimi przyciskami na stałe, tylko kontekstowymi kartami, dropdownami, chipami i panelami.
+
+Minimalistyczny układ głównego inputu:
+lewa strona: Work Mode, Add, Tools, Co-thinker;
+środek: tekst promptu;
+prawa strona: wyślij, voice, stop;
+nad inputem: mały Active Mode Strip z trybem, źródłami, modelem i prywatnością;
+pod inputem: brak stałych ciężkich toolbarów; tylko krótkie statusy lub validation messages;
+szczegóły: rozwijane listy, source cards, side panel, Menu 3.
+
+Market-parity roadmap extension:
+MVP 9 — Minimalistyczne market parity layer
+Zakres:
+project instructions;
+shared project chat;
+agent run plan;
+artifact diff/versioning;
+source health;
+meeting recap;
+knowledge lifecycle;
+consulting playbooks;
+connector catalog baseline.
+DoD:
+Consultify ma funkcjonalną porównywalność z ChatGPT Projects, Claude Artifacts, Copilot grounding, Perplexity source-first UX, Notion Plan Mode i Harvey-style governed workflow, ale UI pozostaje spokojny i nieprzeładowany.
 19. Ryzyka produktowe i decyzje architektoniczne
 Ryzyko	Wpływ	Prawdopodobieństwo	Ograniczenie	Decyzja
 Zbudowanie zwykłego czata	wysokie	wysokie	roadmapa artifact/action/project	Chat = Work OS
@@ -1086,6 +1196,13 @@ User gubi outputy	wysokie	wysokie	save-to-project	Każdy output linkowany
 Za dużo przycisków	średnie	wysokie	progressive disclosure	Prosty input + advanced menu
 UX zbyt skomplikowany	wysokie	średnie	Auto mode	AI prowadzi, UI nie przytłacza
 Brak audit trail	krytyczne	średnie	ChatAuditLog	Audyt jako P0 dla tool calls
+Funkcje enterprise przeładowują UI	wysokie	średnie	progressive disclosure + command row + side panel	Główne okno zostaje spokojne
+Brak project instructions	średnie	średnie	project rules panel	Projekt ma stałe instrukcje
+Brak agent run plan	wysokie	średnie	plan card before action	Większe akcje mają plan i approval
+Brak artifact diff/versioning	wysokie	średnie	diff + rollback	AI edits są kontrolowane
+Brak source health/freshness	wysokie	średnie	source badges + health panel	User widzi jakość źródeł
+Brak knowledge lifecycle	wysokie	średnie	owner/review/expiry/superseded	Wiedza ma cykl życia
+Brak meeting recap pipeline	średnie	średnie	recap card + extraction	Spotkania zasilają execution
 20. Decyzja strategiczna: kopiować czy budować własny Chat OS?
 Rekomendacja
 Consultify nie powinien kopiować ChatGPT, Claude ani Copilot 1:1. Powinien zbudować własny Conversational Work OS inspirowany najlepszymi wzorcami, ale podporządkowany consulting execution, artifactom, taskom, decyzjom, projektom, źródłom i governance.

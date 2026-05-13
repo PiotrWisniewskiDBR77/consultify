@@ -14,7 +14,7 @@ last_updated: 2026-05-10
 
 ## 1. Function Identity
 - Function ID: `SET_POLICY_BOUNDARY_LINKS`
-- Boundary: user-editable settings vs admin/tenant-owned policy settings
+- Boundary: user-editable settings vs admin/superadmin/tenant-owned policy settings
 - Feature state: `partial` (boundary active, needs per-section evidence)
 
 ## 2. User Job and Business Outcome
@@ -22,6 +22,9 @@ last_updated: 2026-05-10
 
 ## 3. Trigger and Entry Points
 - Outputs: explicit lock/redirect/deeplink behavior instead of silent denial.
+- Entry points:
+  - `SettingsOwnershipPanels` handoff actions
+  - settings sections that display policy-owned read-only values
 
 ## 4. UI Component Footprint
 - UI footprint follows the mounted runtime anchor and standard module layout components.
@@ -33,8 +36,21 @@ last_updated: 2026-05-10
 - Outputs and side effects are explicit user-driven actions; no hidden mutations are implied.
 
 ## 7. Ownership and Handoff Boundaries
-- Evidence: behavior/codemap ownership notes for settings vs admin.
+- Evidence:
+  - settings -> organization handoff
+  - settings -> admin security handoff
+  - route-level superadmin separation (`/superadmin/*`)
 - Risk: policy ambiguity leading to incorrect ownership assumptions.
+- Risk: missing explicit settings-level superadmin handoff doctrine may cause ownership confusion.
+
+Stage 1.5 boundary decision:
+
+| Source | Decision | Evidence / NOT_DONE |
+| --- | --- | --- |
+| `SettingsOwnershipPanels.tsx` | KEEP: settings may show policy provenance and admin handoff | Organization/Admin handoff CTAs exist and policy values are read-only |
+| `AppRoutes.tsx` + `AdminView.tsx` | KEEP: tenant admin controls stay in Admin owner surface | `/admin/*` is role-gated and renders `AdminView -> AdminSettingsModule` |
+| `AppRoutes.tsx` + `SuperAdminView.tsx` | KEEP: platform controls stay in SuperAdmin owner surface | `/superadmin/*` is role-gated and renders `SuperAdminView`; settings superadmin handoff UX remains `NOT_DONE` |
+| `server/src/routes/settings.routes.ts` | KEEP: legacy settings root is superadmin/platform scoped, not user-settings scoped | non-superadmin requests receive `LEGACY_SETTINGS_SCOPE_BLOCKED` |
 
 ## 8. Runtime States and UX Behavior
 - Runtime behavior must keep loading/empty/error/degraded/success states explicit with next-step guidance.
@@ -44,10 +60,20 @@ last_updated: 2026-05-10
 
 ## 10. Security, Roles, and Tenancy
 - Security is deny-by-default with tenant/ACL and role boundaries enforced for this function.
+- Critical claim chain:
+  - Source: `AppRoutes.tsx`, `ProtectedRoute.tsx`, `SettingsOwnershipPanels.tsx`
+  - Decision: keep policy ownership explicit and avoid hidden capability
+  - Evidence: admin handoff exists; superadmin route is isolated; superadmin handoff UX in settings is `NOT_DONE`
 
 ## 11. Acceptance Criteria and Test Evidence
 
-- Acceptance checks: section maintained; explicit evidence mapping required for gate compliance.
+- Acceptance checks:
+  - [x] Policy-owned settings are presented as read-only in settings where relevant
+  - [x] Admin handoff is explicit (`Open Admin Security`)
+  - [ ] Superadmin handoff policy from settings is explicit and role-safe (`NOT_DONE`)
+  - [x] Hidden writes for policy-owned settings are disallowed by contract
+  - [x] Legacy `/api/settings` root is documented as blocked for non-superadmin users
+  - [ ] E2E evidence proves no settings surface can mutate admin/superadmin-owned policy controls directly (`NOT_DONE`)
 
 - Route evidence: module route/view scope for `18_ustawienia` in router declarations (`src/router/routeConfig.ts` and/or `src/AppRoutes.tsx`) and module view path references.
 - Component evidence: module UI footprint under `src/components/**` and `src/views/**` for `18_ustawienia` function surface.

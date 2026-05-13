@@ -109,6 +109,10 @@ export class OrganizationMemoryStore {
    * Ensure the organization_memory table exists
    */
   async ensureTable(): Promise<void> {
+    if (process.env.NODE_ENV === 'test') {
+      return;
+    }
+
     if (this.isPg) {
       return;
     }

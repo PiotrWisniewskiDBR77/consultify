@@ -55,12 +55,50 @@ As-Is: no active standalone deck mutation exists. Future generated presentations
 - Active production presentation UX is owned by `09_outputs`, not this module.
 - No standalone generator runtime, provenance UI, review/diff UI or success flow are validated as implemented.
 
+## 9A. Deep Audit UX Risk Matrix (Code vs Docs, 2026-05-11)
+
+| Risk ID | Severity | UX risk | Code evidence | Docs delta |
+| --- | --- | --- | --- | --- |
+| `PR-DA-P0-001` | `P0` | User on `/prezentacje` can miss that active ownership is in `/presentations`. | `src/views/V4ComingSoonView.tsx`, `src/routes/AppRoutes.tsx` | Add explicit handoff copy requirement to canonical Outputs route. |
+| `PR-DA-P1-001` | `P1` | Placeholder presents generic "contact required" flow instead of module ownership guidance-first flow. | `src/views/V4ComingSoonView.tsx` | Tighten placeholder UX doctrine in module acceptance checks. |
+| `PR-DA-P1-002` | `P1` | Mandatory states are documented but not function-level audited against real placeholder lane behavior. | `src/views/V4ComingSoonView.tsx`, `functions/*.md` | Require per-function state evidence rows. |
+| `PR-DA-P2-001` | `P2` | Visual audit screenshot unavailable for verification. | `NOT_DONE` | Keep visual assertion blocked until artifact path is available. |
+
+## 9B. Deep RAW Hardening (2026-05-11)
+
+- hard boundary remains explicit: `/prezentacje` is lane placeholder, `/presentations` is active outputs runtime.
+- Menu 3 doctrine remains mandatory: contextual AI actions belong to right-side command row only; no canvas toolbar duplication.
+- Teresa doctrine source is `impact-only` for module 12 in this pass and requires explicit owner closure record.
+- placeholder UX must include ownership handoff semantics, not only generic contact gating copy.
+
+## 9C. Stage 1.5 Ultra-Deep UI/UX Synchronization (2026-05-11)
+
+Source: `STAGE_1_5_ULTRA_DEEP_GAP_AUDIT_2026-05-11.md`.
+
+| UI/UX rule | Stage 1.5 decision | Evidence status |
+| --- | --- | --- |
+| `/prezentacje` must be honest about blocked standalone runtime | `KEEP + ENHANCE` | `AppRoutes.tsx` shows placeholder; explicit handoff copy remains `NOT_DONE` in runtime |
+| `/presentations` remains active Outputs runtime | `KEEP_AS_09_RUNTIME` | `ReportsAndPresentationsHub`, `PresentationWizard`, `DeckBuilder` |
+| Menu 3/right-side only for contextual AI actions | `KEEP + ENHANCE` | global rule + hub command row evidence; builder-specific proof remains future verification |
+| Teresa deck-work execution rule | `OWNER_DECISION_REQUIRED` | impact-only RAW 104; not silently closed |
+| MELS / executive layout | `DEFER_EVIDENCE` | source file not found at expected path in this pass |
+| Visual screenshot proof | `NOT_DONE` | referenced asset unavailable |
+
+UI hard stops for future runtime work:
+
+- No contextual AI action may be added in the slide canvas, bottom canvas toolbar, or separate duplicated toolbar if it is also available in Menu 3/right-side command row.
+- No future `/prezentacje` runtime may present export/share/publish as final delivery without visible review/approval and audit posture.
+- No future `/prezentacje` runtime may duplicate the `/presentations` library as a second production Outputs owner.
+
 ## 10. Acceptance Criteria
 
 - Sidebar/route lands on `/prezentacje`.
 - Current UI honestly renders blocked/placeholder generator state.
 - Contract explicitly points production presentations ownership to `09_outputs`.
 - Future standalone runtime preserves Menu 3 AI placement, provenance visibility and approval/review gates.
+- Placeholder UX explicitly shows the canonical active ownership path (`/presentations`) to reduce user confusion.
+- Teresa deck-work execution hard-rule status is explicitly recorded as either `closed` or `owner decision pending` (no implicit state).
+- Stage 1.5 final UI status remains `NEEDS_OWNER_DECISION` until Teresa binding and missing visual/MELS evidence are resolved or explicitly deferred by owner.
 
 ## 11. Function Annex — Presentation Generator Functions
 

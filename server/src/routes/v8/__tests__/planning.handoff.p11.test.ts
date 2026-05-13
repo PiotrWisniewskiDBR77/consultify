@@ -121,6 +121,7 @@ describe('P11 V8 planning handoff route', () => {
     expect(h?.initiativeId).toBe(INIT);
     expect(h?.initiativeTitle).toBe('Handoff initiative');
     expect(h?.initiativeLifecycleState).toBe('planned');
+    expect(h?.handoffBy).toBe(UID);
     expect(h?.kpiIntent).toBeTruthy();
     expect(h?.executionIntent).toBeUndefined();
     expect(Array.isArray(h?.contextPack)).toBe(true);

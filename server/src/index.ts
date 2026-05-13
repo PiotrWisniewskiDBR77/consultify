@@ -260,8 +260,12 @@ const databaseInitPromise: Promise<void> =
             dbInitError = null;
           }
 
-          // Table Platform migrations deferred to background (non-blocking)
-          if (process.env.DISABLE_TP_MIGRATIONS !== 'true') {
+          const shouldRunTpMigrations =
+            process.env.DISABLE_TP_MIGRATIONS !== 'true' && process.env.NODE_ENV !== 'test';
+
+          // Table Platform migrations deferred to background (non-blocking).
+          // Skip in test mode to avoid non-essential schema noise and permission errors.
+          if (shouldRunTpMigrations) {
             setTimeout(async () => {
               try {
                 const { runMigrations } =
@@ -287,10 +291,15 @@ const databaseInitPromise: Promise<void> =
                 logger.warn('[Server] Table Platform migrations skipped:', migErr);
               }
             }, 5000);
+          } else if (process.env.NODE_ENV === 'test') {
+            logger.info('[Server] Skipping Table Platform migrations in test mode');
           }
 
-          // Initialize connection pool
-          if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
+          const shouldInitConnectionPool =
+            process.env.DISABLE_CONNECTION_POOL !== 'true' && process.env.NODE_ENV !== 'test';
+
+          // Initialize connection pool outside test mode.
+          if (shouldInitConnectionPool) {
             try {
               const poolTimeout = new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('Connection pool init timeout (15s)')), 15000)
@@ -301,45 +310,50 @@ const databaseInitPromise: Promise<void> =
               logger.error('[Server] Connection pool initialization failed:', poolError);
               logger.warn('[Server] Continuing with singleton database connection');
             }
+          } else if (process.env.NODE_ENV === 'test') {
+            logger.info('[Server] Skipping connection pool initialization in test mode');
           } else {
             logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
           }
 
-          // Schedule periodic schema verification (every 5 minutes)
-          const healthCheckInterval = setInterval(
-            async () => {
-              try {
-                const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
-                const healthy = await verifyDatabaseHealth();
-                if (!healthy) {
-                  logger.warn('[Server] Database health check failed - schema may be incomplete');
+          // Schedule periodic schema verification (every 5 minutes) outside test mode.
+          if (process.env.NODE_ENV !== 'test') {
+            const healthCheckInterval = setInterval(
+              async () => {
+                try {
+                  const { verifyDatabaseHealth } =
+                    await import('./database/DatabaseInitializer.js');
+                  const healthy = await verifyDatabaseHealth();
+                  if (!healthy) {
+                    logger.warn('[Server] Database health check failed - schema may be incomplete');
+                    await sendSystemAlert({
+                      title: 'Database schema health degraded',
+                      message:
+                        'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
+                      severity: 'WARNING',
+                      source: 'Database',
+                      throttleKey: 'database_schema_health_failed',
+                      throttleMs: 30 * 60 * 1000,
+                    });
+                  }
+                } catch (err: any) {
+                  const error = err as Error;
+                  logger.error(`[Server] Database health check error: ${error.message}`);
                   await sendSystemAlert({
-                    title: 'Database schema health degraded',
-                    message:
-                      'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
-                    severity: 'WARNING',
+                    title: 'Database health check error',
+                    message: error.message,
+                    severity: 'CRITICAL',
                     source: 'Database',
-                    throttleKey: 'database_schema_health_failed',
-                    throttleMs: 30 * 60 * 1000,
+                    throttleKey: 'database_health_check_error',
+                    throttleMs: 15 * 60 * 1000,
                   });
                 }
-              } catch (err: any) {
-                const error = err as Error;
-                logger.error(`[Server] Database health check error: ${error.message}`);
-                await sendSystemAlert({
-                  title: 'Database health check error',
-                  message: error.message,
-                  severity: 'CRITICAL',
-                  source: 'Database',
-                  throttleKey: 'database_health_check_error',
-                  throttleMs: 15 * 60 * 1000,
-                });
-              }
-            },
-            5 * 60 * 1000
-          ) as NodeJS.Timeout;
+              },
+              5 * 60 * 1000
+            ) as NodeJS.Timeout;
 
-          (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
+            (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
+          }
         } catch (err: any) {
           const error = err as Error;
           logger.error(`[Server] Database initialization failed: ${error.message}`);
@@ -925,7 +939,9 @@ app.use('/api/', apiLimiter);
 import auditLogMiddleware from './middleware/auditLog.middleware.js';
 app.use('/api/', auditLogMiddleware);
 app.use((req: Request, res: Response, next: NextFunction) => {
-  logger.http(`${req.method} ${req.url}`);
+  if (!isTest) {
+    logger.http(`${req.method} ${req.url}`);
+  }
   next();
 });
 
@@ -942,14 +958,18 @@ app.use('/api/auth/register', authLimiter);
 
 // Initialize API Gateway Routes
 app.use((req, res, next) => {
-  logger.info(`[Index] Pre-Gateway: ${req.method} ${req.path}`);
+  if (!isTest) {
+    logger.info(`[Index] Pre-Gateway: ${req.method} ${req.path}`);
+  }
   if (
     req.path === '/auth/login' ||
     req.path === '/api/auth/login' ||
     req.originalUrl.includes('/auth/login')
   ) {
     // Do NOT log request body/headers here (credentials/token leak risk).
-    logger.info('[Index] Login request received');
+    if (!isTest) {
+      logger.info('[Index] Login request received');
+    }
   }
   next();
 });
@@ -1020,10 +1040,8 @@ try {
   logger.info(`[Server] ✓ Stored frontend dist path globally: ${frontendDistPath}`);
 } catch (e) {
   logger.error(`[Server] Error storing frontend dist path: ${e}`);
-  logger.error(`[Server] Error storing frontend dist path: ${e}`);
 }
 
-logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
 const isStaticAssetRequest = (requestPath: string): boolean =>

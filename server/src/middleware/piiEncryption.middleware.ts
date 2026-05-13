@@ -41,6 +41,97 @@ const PII_ENCRYPTION_ROUTES = [
  */
 const SKIP_ROUTES = ['/api/health', '/api/ping', '/api/csrf-token'];
 
+const safeRead = <T>(reader: () => T, fallback: T): T => {
+  try {
+    return reader();
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
+
+const readPath = (req: Request): string =>
+  (() => {
+    const raw =
+      normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+      normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+      '';
+    const noQuery = raw.split('?')[0] ?? raw;
+    const noHash = noQuery.split('#')[0] ?? noQuery;
+    return noHash;
+  })();
+
+const readMethod = (req: Request): string =>
+  (normalizeOptionalString(safeRead(() => req.method, undefined)) || '').toUpperCase();
+
+const matchesConfiguredRoute = (path: string, route: string): boolean =>
+  path === route || path.startsWith(`${route}/`);
+const isPlainObjectRecord = (value: unknown): value is Record<string, unknown> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+};
+
+const responseJsonWrapped = new WeakSet<Response>();
+const _piiRouteConfigIssuesLogged = { done: false };
+
+export function getPiiRouteConfigIssues(
+  piiRoutes: readonly string[] = PII_ENCRYPTION_ROUTES,
+  skipRoutes: readonly string[] = SKIP_ROUTES
+): string[] {
+  const issues: string[] = [];
+  const normalizedPiiRoutes: string[] = [];
+  const normalizedSkipRoutes: string[] = [];
+  const checkRoutes = (label: string, routes: readonly string[]) => {
+    for (const route of routes) {
+      if (typeof route !== 'string') {
+        issues.push(`${label}: non-string route entry`);
+        continue;
+      }
+      if (!route.trim()) {
+        issues.push(`${label}: empty route entry`);
+        continue;
+      }
+      if (route !== route.trim()) {
+        issues.push(`${label}: route has leading/trailing whitespace`);
+      }
+      if (!route.startsWith('/')) {
+        issues.push(`${label}: route must start with "/": ${route}`);
+      }
+      if (label === 'PII_ENCRYPTION_ROUTES') normalizedPiiRoutes.push(route.trim());
+      if (label === 'SKIP_ROUTES') normalizedSkipRoutes.push(route.trim());
+    }
+  };
+  checkRoutes('PII_ENCRYPTION_ROUTES', piiRoutes);
+  checkRoutes('SKIP_ROUTES', skipRoutes);
+  for (const piiRoute of normalizedPiiRoutes) {
+    for (const skipRoute of normalizedSkipRoutes) {
+      if (
+        matchesConfiguredRoute(piiRoute, skipRoute) ||
+        matchesConfiguredRoute(skipRoute, piiRoute)
+      ) {
+        issues.push(`PII vs SKIP overlap: "${piiRoute}" <-> "${skipRoute}"`);
+      }
+    }
+  }
+  return issues;
+}
+
+const logPiiRouteManifestIssuesOnce = (): void => {
+  if (_piiRouteConfigIssuesLogged.done) return;
+  _piiRouteConfigIssuesLogged.done = true;
+  const issues = getPiiRouteConfigIssues();
+  if (issues.length === 0) return;
+  for (const issue of issues) {
+    logger.error('[PIIEncryption] Route manifest issue:', issue);
+  }
+};
+
 // ==========================================
 // MIDDLEWARE
 // ==========================================
@@ -50,20 +141,27 @@ const SKIP_ROUTES = ['/api/health', '/api/ping', '/api/csrf-token'];
  * Applied before route handlers
  */
 export function encryptRequestPII(req: Request, _res: Response, next: NextFunction): void {
+  logPiiRouteManifestIssuesOnce();
   try {
+    const requestPath = readPath(req);
     // Skip for non-applicable routes
-    if (SKIP_ROUTES.some((route) => req.path.startsWith(route))) {
+    if (SKIP_ROUTES.some((route) => matchesConfiguredRoute(requestPath, route))) {
       return next();
     }
 
     // Only encrypt for write operations
-    if (!['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    if (!['POST', 'PUT', 'PATCH'].includes(readMethod(req))) {
       return next();
     }
 
     // Encrypt PII in request body
-    if (req.body && typeof req.body === 'object') {
-      req.body = encryptPII(req.body);
+    const body = safeRead(() => req.body, undefined as unknown);
+    if (isPlainObjectRecord(body)) {
+      req.body = encryptPII(body);
+    } else if (Array.isArray(body)) {
+      req.body = body.map((item) =>
+        isPlainObjectRecord(item) ? encryptPII(item as Record<string, unknown>) : item
+      );
     }
 
     next();
@@ -78,35 +176,71 @@ export function encryptRequestPII(req: Request, _res: Response, next: NextFuncti
  * Uses response interceptor pattern
  */
 export function decryptResponsePII(req: Request, res: Response, next: NextFunction): void {
+  logPiiRouteManifestIssuesOnce();
+  const requestPath = readPath(req);
   // Skip for non-applicable routes
-  if (SKIP_ROUTES.some((route) => req.path.startsWith(route))) {
+  if (SKIP_ROUTES.some((route) => matchesConfiguredRoute(requestPath, route))) {
+    return next();
+  }
+
+  // Already wrapped on this response object
+  if (responseJsonWrapped.has(res)) {
     return next();
   }
 
   // Store original json function
-  const originalJson = res.json.bind(res);
+  const jsonCandidate = safeRead(() => res.json as unknown, undefined as unknown);
+  if (typeof jsonCandidate !== 'function') {
+    logger.warn('[PIIEncryption] res.json is not a function; skipping response wrap', {
+      path: requestPath,
+      type: typeof jsonCandidate,
+    });
+    next();
+    return;
+  }
+  const originalJson = safeRead(
+    () => (jsonCandidate as Response['json']).bind(res),
+    null as unknown as Response['json']
+  );
+  if (!originalJson) {
+    next();
+    return;
+  }
 
   // Override json to decrypt PII before sending
-  res.json = function (body: unknown): Response {
-    try {
-      if (body && typeof body === 'object') {
-        if (Array.isArray(body)) {
-          body = body.map((item) =>
-            typeof item === 'object' && item !== null
-              ? decryptPII(item as Record<string, unknown>)
-              : item
-          );
-        } else {
-          body = decryptPII(body as Record<string, unknown>);
+  try {
+    res.json = function (body: unknown): Response {
+      try {
+        if (body && typeof body === 'object') {
+          if (Array.isArray(body)) {
+            body = body.map((item) =>
+              isPlainObjectRecord(item)
+                ? decryptPII(item as Record<string, unknown>)
+                : item
+            );
+          } else if (isPlainObjectRecord(body)) {
+            body = decryptPII(body as Record<string, unknown>);
+          }
         }
+      } catch (error) {
+        logger.error('[PIIEncryption] Response decryption error:', error);
+        // Send original body on error
       }
-    } catch (error) {
-      logger.error('[PIIEncryption] Response decryption error:', error);
-      // Send original body on error
-    }
-
-    return originalJson(body);
-  };
+      try {
+        return Reflect.apply(originalJson, res, [body]);
+      } catch (error) {
+        logger.error('[PIIEncryption] res.json delegate error', {
+          path: requestPath,
+          method: readMethod(req),
+          error,
+        });
+        throw error;
+      }
+    };
+    responseJsonWrapped.add(res);
+  } catch (error) {
+    logger.error('[PIIEncryption] Unable to wrap res.json:', error);
+  }
 
   next();
 }
@@ -117,7 +251,10 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
  */
 export function piiEncryptionMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Check if route should have PII encryption
-  const shouldApply = PII_ENCRYPTION_ROUTES.some((route) => req.path.startsWith(route));
+  const requestPath = readPath(req);
+  const shouldApply = PII_ENCRYPTION_ROUTES.some((route) =>
+    matchesConfiguredRoute(requestPath, route)
+  );
 
   if (!shouldApply) {
     return next();

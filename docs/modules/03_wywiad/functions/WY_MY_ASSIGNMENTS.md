@@ -76,4 +76,15 @@ last_updated: 2026-05-10
 
 ## 12. Open Risks and Change Log
 - Risk: assignment filter complexity can hide urgent items.
-- Change log: initial function contract created.
+- Change log: initial function contract created; execution-card/task-board linkage added for scoped delivery.
+
+## 13. Execution Card and Task Board Linkage
+
+- Scope anchor lock: `03_wywiad/WY_MY_ASSIGNMENTS` (immutable for this cycle).
+- Source execution card: `docs/modules/03_wywiad/function-cards/WY_MY_ASSIGNMENTS_EXECUTION_CARD.md`.
+- Source task board row set: `docs/modules/03_wywiad/IMPLEMENTATION_TASK_BOARD.md` (`WY-MYA-*` only).
+- Active task IDs:
+  - `WY-MYA-P0-001` .. `WY-MYA-P0-005` (`READY`)
+  - `WY-MYA-P1-001` .. `WY-MYA-P1-005` (`WAITING_P0`)
+  - `WY-MYA-P2-001` .. `WY-MYA-P2-005` (`WAITING_P0`)
+- Dependency scope (`impact-only`): `WY_SESSIONS`, `WY_PENDING_REVIEW`.

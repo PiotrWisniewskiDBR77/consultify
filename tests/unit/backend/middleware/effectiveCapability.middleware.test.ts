@@ -1,0 +1,449 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const {
+  mockResolveEffectiveAccess,
+  mockHasEffectiveCapability,
+  mockQueryOne,
+  mockLoggerWarn,
+  mockLoggerError,
+} = vi.hoisted(() => ({
+  mockResolveEffectiveAccess: vi.fn(),
+  mockHasEffectiveCapability: vi.fn(),
+  mockQueryOne: vi.fn(),
+  mockLoggerWarn: vi.fn(),
+  mockLoggerError: vi.fn(),
+}));
+
+vi.mock('../../../../server/src/services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: mockResolveEffectiveAccess,
+  hasEffectiveCapability: mockHasEffectiveCapability,
+}));
+
+vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
+  queryOne: mockQueryOne,
+}));
+
+vi.mock('../../../../server/src/utils/Logger.js', () => ({
+  default: {
+    warn: mockLoggerWarn,
+    info: vi.fn(),
+    error: mockLoggerError,
+    debug: vi.fn(),
+  },
+}));
+
+import {
+  requireAnyProjectCapability,
+  requireProjectCapability,
+  resolveProjectIdFromRequest,
+  resolveTaskProjectId,
+} from '../../../../server/src/middleware/effectiveCapability.middleware.ts';
+
+describe('effectiveCapability.middleware', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'true';
+    delete process.env.EFFECTIVE_ACCESS_SHADOW;
+    mockResolveEffectiveAccess.mockResolvedValue({ scope: 'ok' });
+    mockHasEffectiveCapability.mockReturnValue(true);
+    mockQueryOne.mockResolvedValue(null);
+  });
+
+  it('resolves project id from params/body/query in priority order', async () => {
+    const req: any = {
+      params: { projectId: 'p-1', id: 'p-fallback' },
+      body: { projectId: 'p-body' },
+      query: { projectId: 'p-query' },
+    };
+    await expect(resolveProjectIdFromRequest(req)).resolves.toBe('p-1');
+  });
+
+  it('returns 401 when user context is missing', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {};
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when project context is missing and allowWithoutProject=false', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: {},
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when requireProjectCapability receives whitespace capability', async () => {
+    const middleware = requireProjectCapability('   ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'CAPABILITY_INVALID' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(mockResolveEffectiveAccess).not.toHaveBeenCalled();
+  });
+
+  it('allows request and attaches effectiveAccess when capability is present', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+      user: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(mockResolveEffectiveAccess).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u-1', organizationId: 'org-1', projectId: 'p-1' })
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req.effectiveAccess).toEqual({ scope: 'ok' });
+  });
+
+  it('returns 403 when capability is missing in enforce mode', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when custom project resolver returns non-string truthy value', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ', async () => 123 as unknown as string);
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: {},
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'PROJECT_CONTEXT_REQUIRED' })
+    );
+    expect(mockResolveEffectiveAccess).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not attempt deny write when response is already committed', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = {
+      headersSent: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[effectiveCapability] response already committed; skipping json write',
+      expect.objectContaining({ status: 403, phase: 'deny' })
+    );
+  });
+
+  it('stays fail-open in shadow mode when capability is missing', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(mockLoggerWarn).toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolveTaskProjectId falls back to direct project resolver when task id missing', async () => {
+    const req: any = { params: { projectId: 'p-direct' }, body: {}, query: {} };
+    await expect(resolveTaskProjectId(req)).resolves.toBe('p-direct');
+  });
+
+  it('resolveProjectIdFromRequest tolerates throwing params/body/query accessors', async () => {
+    const req: any = {};
+    Object.defineProperty(req, 'params', {
+      configurable: true,
+      get: () => {
+        throw new Error('params getter failed');
+      },
+    });
+    Object.defineProperty(req, 'body', {
+      configurable: true,
+      get: () => {
+        throw new Error('body getter failed');
+      },
+    });
+    Object.defineProperty(req, 'query', {
+      configurable: true,
+      get: () => {
+        throw new Error('query getter failed');
+      },
+    });
+    await expect(resolveProjectIdFromRequest(req)).resolves.toBeNull();
+  });
+
+  it('requireProjectCapability returns 401 when user accessor throws', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {};
+    Object.defineProperty(req, 'user', {
+      configurable: true,
+      get: () => {
+        throw new Error('user getter failed');
+      },
+    });
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('shadow mode logs with empty path when path accessor throws', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    Object.defineProperty(req, 'path', {
+      configurable: true,
+      get: () => {
+        throw new Error('path getter failed');
+      },
+    });
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[effectiveCapability] shadow capability mismatch',
+      expect.objectContaining({ path: '' })
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 503 when resolveEffectiveAccess rejects in enforce mode', async () => {
+    mockResolveEffectiveAccess.mockRejectedValueOnce(new Error('access service down'));
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'EFFECTIVE_ACCESS_CHECK_FAILED' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalled();
+  });
+
+  it('stays fail-open in shadow mode when resolveEffectiveAccess rejects', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
+    mockResolveEffectiveAccess.mockRejectedValueOnce(new Error('access service down'));
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalled();
+  });
+
+  it('returns 503 when hasEffectiveCapability throws in enforce mode', async () => {
+    mockHasEffectiveCapability.mockImplementationOnce(() => {
+      throw new Error('capability evaluator failed');
+    });
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'EFFECTIVE_ACCESS_CHECK_FAILED' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalled();
+  });
+
+  it('stays fail-open in shadow mode when hasEffectiveCapability throws', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
+    mockHasEffectiveCapability.mockImplementationOnce(() => {
+      throw new Error('capability evaluator failed');
+    });
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(mockLoggerError).toHaveBeenCalled();
+  });
+
+  it('requireAnyProjectCapability returns 400 for empty capabilities list', async () => {
+    const middleware = requireAnyProjectCapability([]);
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'CAPABILITY_LIST_INVALID' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(mockResolveEffectiveAccess).not.toHaveBeenCalled();
+  });
+
+  it('requireAnyProjectCapability returns 400 for empty capabilities list in shadow mode', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
+    const middleware = requireAnyProjectCapability([]);
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+    expect(mockResolveEffectiveAccess).not.toHaveBeenCalled();
+  });
+});

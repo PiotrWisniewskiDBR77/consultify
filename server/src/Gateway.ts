@@ -281,7 +281,14 @@ export class ApiGateway {
   }
 
   public initializeRoutes(app: Express) {
-    logger.info('[ApiGateway] Initializing gateway routes...');
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const logInfo = (...args: unknown[]) => {
+      if (!isTestEnv) {
+        logger.info(...args);
+      }
+    };
+
+    logInfo('[ApiGateway] Initializing gateway routes...');
 
     // Test-only helpers (hard-guarded). Used by Playwright L4 remote/local bootstrapping.
     if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_SUPPORT === 'true') {
@@ -307,41 +314,41 @@ export class ApiGateway {
       app.use(apiLoggingMiddleware);
 
       // TypeScript routes (migrated)
-      logger.info('[ApiGateway] Mounting /api/auth');
+      logInfo('[ApiGateway] Mounting /api/auth');
       app.use('/api/auth', authRoutes);
-      logger.info('[ApiGateway] Mounting /api/billing');
+      logInfo('[ApiGateway] Mounting /api/billing');
       app.use('/api/billing', billingRoutes);
       app.use('/api/superadmin/billing', billingAdminRoutes);
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
       // V8 shadow mode: check flag and intercept legacy AI routes for comparison
       app.use('/api/ai', v8ShadowModeCheck, v8ShadowInterceptor);
 
-      logger.info('[ApiGateway] Mounting /api/ai');
+      logInfo('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);
       // Aggregated AI sub-routes (reduces drift & duplication)
       app.use('/api/ai', aiDomainRoutes);
       app.use('/api/ai/performance', performanceRoutes);
-      logger.info('[ApiGateway] Mounting /api/tools');
+      logInfo('[ApiGateway] Mounting /api/tools');
       app.use('/api/tools', toolsRoutes);
-      logger.info('[ApiGateway] Mounting /api/workbook');
+      logInfo('[ApiGateway] Mounting /api/workbook');
       app.use('/api/workbook', workbookRoutes);
-      logger.info('[ApiGateway] Mounting /api/known-tools');
+      logInfo('[ApiGateway] Mounting /api/known-tools');
       app.use('/api/known-tools', knownToolsRoutes);
-      logger.info('[ApiGateway] Mounting /api/tool-assets');
+      logInfo('[ApiGateway] Mounting /api/tool-assets');
       app.use('/api/tool-assets', toolAssetsRoutes);
-      logger.info('[ApiGateway] Mounting /api/assessment-evidence');
+      logInfo('[ApiGateway] Mounting /api/assessment-evidence');
       app.use('/api/assessment-evidence', assessmentEvidenceRoutes);
-      logger.info('[ApiGateway] Mounting /api/consulting-templates');
+      logInfo('[ApiGateway] Mounting /api/consulting-templates');
       app.use('/api/consulting-templates', consultingTemplatesRoutes);
-      logger.info('[ApiGateway] Mounting /api/portfolio-optimization');
+      logInfo('[ApiGateway] Mounting /api/portfolio-optimization');
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
-      logger.info('[ApiGateway] Mounting /api/assessment-workflow');
+      logInfo('[ApiGateway] Mounting /api/assessment-workflow');
       app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
-      logger.info('[ApiGateway] Mounting /api/assessment-workflow-v2');
+      logInfo('[ApiGateway] Mounting /api/assessment-workflow-v2');
       app.use('/api/assessment-workflow-v2', assessmentWorkflowV2Routes);
 
       // Register routes
-      logger.info('[ApiGateway] Mounting /api/admin-data');
+      logInfo('[ApiGateway] Mounting /api/admin-data');
       app.use('/api/admin-data', adminDataRoutes);
       app.use('/api/admin', adminBulkRoutes);
       app.use('/api/admin', adminP32Routes);
@@ -355,7 +362,7 @@ export class ApiGateway {
         })
       );
 
-      logger.info('[ApiGateway] Mounting /api/users');
+      logInfo('[ApiGateway] Mounting /api/users');
       app.use('/api/users', userRoutes);
 
       // User profile routes
@@ -537,10 +544,10 @@ export class ApiGateway {
 
       // Billing routes
       app.use('/api/revenue', revenueRoutes);
-      logger.info('[ApiGateway] Mounting /api/revenue');
+      logInfo('[ApiGateway] Mounting /api/revenue');
       app.use('/api/superadmin/analytics', analyticsSuperadminRoutes);
       app.use('/api/superadmin/ai/core-docs', coreDocsRoutes);
-      logger.info('[ApiGateway] Mounting /api/superadmin/analytics');
+      logInfo('[ApiGateway] Mounting /api/superadmin/analytics');
       app.use('/api/token-billing', tokenBillingRoutes);
       app.use('/api/budgets', budgetsRoutes);
       mountStub('/api/pricing', pricingRoutes, 'pricingRoutes');
@@ -666,7 +673,7 @@ export class ApiGateway {
       app.use('/api/executive', executiveAggregateRoutes);
 
       // Analytics routes
-      logger.info(
+      logInfo(
         '[Gateway] economicsRoutes type:',
         typeof economicsRoutes,
         'stack:',
@@ -751,11 +758,11 @@ export class ApiGateway {
       app.use('/api/content', contentRoutes);
 
       // V8 API namespace — feature-gated
-      logger.info('[ApiGateway] Mounting /api/v8');
+      logInfo('[ApiGateway] Mounting /api/v8');
       app.use('/api/v8', v8FeatureGate, v8Router);
 
       // V10 API namespace — authenticated by each router, default-off by flags internally.
-      logger.info('[ApiGateway] Mounting /api/v10');
+      logInfo('[ApiGateway] Mounting /api/v10');
       app.use('/api/v10', v10Router);
 
       // Catch-all RBAC or 404 for /api

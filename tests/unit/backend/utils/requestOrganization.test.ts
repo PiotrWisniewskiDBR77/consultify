@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  normalizeOptionalString,
   requireRequestOrganizationId,
   resolveRequestOrganizationId,
+  safeRead,
 } from '../../../../server/src/utils/requestOrganization.js';
 
 describe('requestOrganization', () => {
@@ -23,6 +25,20 @@ describe('requestOrganization', () => {
     expect(organizationId).toBe('vts');
   });
 
+  it('falls back to user organization when request organization accessor throws', () => {
+    const req: any = { user: { organizationId: 'fallback-org' } };
+    Object.defineProperty(req, 'organizationId', {
+      configurable: true,
+      get: () => {
+        throw new Error('organizationId getter failed');
+      },
+    });
+
+    const organizationId = resolveRequestOrganizationId(req);
+
+    expect(organizationId).toBe('fallback-org');
+  });
+
   it('returns 401 when organization context is missing', () => {
     const json = vi.fn();
     const status = vi.fn(() => ({ json }));
@@ -32,5 +48,30 @@ describe('requestOrganization', () => {
     expect(organizationId).toBeNull();
     expect(status).toHaveBeenCalledWith(401);
     expect(json).toHaveBeenCalledWith({ error: 'Unauthorized - no organization' });
+  });
+
+  it('falls back to session.user organization when req.user is missing', () => {
+    const organizationId = resolveRequestOrganizationId({
+      session: { user: { organizationId: 'session-org' } },
+      user: undefined,
+    } as any);
+
+    expect(organizationId).toBe('session-org');
+  });
+
+  it('normalizeOptionalString trims values and rejects empty/non-string inputs', () => {
+    expect(normalizeOptionalString('  org-1  ')).toBe('org-1');
+    expect(normalizeOptionalString('   ')).toBeNull();
+    expect(normalizeOptionalString(123)).toBeNull();
+  });
+
+  it('safeRead returns fallback when reader throws', () => {
+    const value = safeRead(
+      () => {
+        throw new Error('boom');
+      },
+      'fallback'
+    );
+    expect(value).toBe('fallback');
   });
 });

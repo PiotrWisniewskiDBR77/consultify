@@ -9,6 +9,12 @@ last_updated: 2026-05-09
 
 # Changelog — Outputs Library
 
+## 2026-05-11
+
+- Added Stage 1.5 ultra-deep integration audit for `09_outputs` vs `10/11/12`.
+- Corrected module meta semantics: canonical shell is `AppView.PRESENTATIONS` on `/presentations`; `AppView.FULL_STEP6_REPORTS` is retained as `/reports/builder` entry evidence.
+- Reconfirmed `NO_NEW_EDGE` and `NO_NEW_ARTIFACT` for graph/lineage in this docs-only pass.
+
 ## 2026-05-10
 
 - Added function-first contract layer for module 09 (`6/6` functions).
