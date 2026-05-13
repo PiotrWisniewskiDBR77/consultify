@@ -42,6 +42,7 @@ const safeRead = <T>(reader: () => T, fallback: T): T => {
 const hasExplicitPermissionGrant = (value: unknown): boolean => value === true;
 const AUDIT_JSON_WRAPPED = Symbol.for('consultify.permissionMiddleware.auditActionWrapped');
 const MAX_PERMISSION_KEY_LENGTH = 128;
+const MAX_PERMISSION_KEYS_PER_REQUEST = 32;
 
 const readOptionalString = (reader: () => unknown): string | undefined => {
   try {
@@ -289,6 +290,19 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
         });
         return;
       }
+      if (normalizedPermissionKeys.length > MAX_PERMISSION_KEYS_PER_REQUEST) {
+        logger.warn('[PermissionMiddleware] Denied: permission key list exceeds max count', {
+          userId,
+          count: normalizedPermissionKeys.length,
+          max: MAX_PERMISSION_KEYS_PER_REQUEST,
+        });
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          requiredAny: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
 
       const roleCandidates = getRoleCandidates(userRole);
       for (const permissionKey of normalizedPermissionKeys) {
@@ -368,6 +382,19 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
         logger.warn('[PermissionMiddleware] Denied: permission key over max length', {
           userId,
           max: MAX_PERMISSION_KEY_LENGTH,
+        });
+        sendJsonIfHeadersOpen(res, 403, {
+          error: 'Permission denied',
+          missing: [],
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
+      if (normalizedPermissionKeys.length > MAX_PERMISSION_KEYS_PER_REQUEST) {
+        logger.warn('[PermissionMiddleware] Denied: permission key list exceeds max count', {
+          userId,
+          count: normalizedPermissionKeys.length,
+          max: MAX_PERMISSION_KEYS_PER_REQUEST,
         });
         sendJsonIfHeadersOpen(res, 403, {
           error: 'Permission denied',
@@ -467,6 +494,9 @@ export const auditAction = (options: AuditOptions) => {
 
     // Override json to intercept response
     res.json = (async (data: unknown) => {
+      if (safeRead(() => res.headersSent, false)) {
+        return originalJson(data);
+      }
       const statusCode = safeRead(() => res.statusCode, 200);
       // Only audit on success (2xx status codes)
       if (statusCode >= 200 && statusCode < 300 && !auditEmitted) {

@@ -401,6 +401,26 @@ describe('Permission Middleware - Real Production Tests', () => {
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('denies and skips checks when requireAny key list exceeds max count', async () => {
+      const keys = Array.from({ length: 33 }, (_, index) => `P_${index}`);
+      const middleware = requireAnyPermission(keys);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Denied: permission key list exceeds max count',
+        expect.objectContaining({ count: 33, max: 32 })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('requireAllPermissions', () => {
@@ -519,6 +539,26 @@ describe('Permission Middleware - Real Production Tests', () => {
           code: 'PERMISSION_DENIED',
           missing: [],
         })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('denies and skips checks when requireAll key list exceeds max count', async () => {
+      const keys = Array.from({ length: 33 }, (_, index) => `Q_${index}`);
+      const middleware = requireAllPermissions(keys);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: [],
+        })
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Denied: permission key list exceeds max count',
+        expect.objectContaining({ count: 33, max: 32 })
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -809,6 +849,21 @@ describe('Permission Middleware - Real Production Tests', () => {
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(mockAuditService.logAudit).not.toHaveBeenCalled();
+    });
+
+    it('skips audit logging when headers are already sent before wrapped json execution', async () => {
+      const middleware = auditAction({ action: 'CREATE', resourceType: 'TASK' });
+      const req: any = { user: { id: 'user-123' }, get: () => undefined };
+      const originalJson = vi.fn().mockResolvedValue({ ok: true });
+      const res: any = { statusCode: 200, json: originalJson, headersSent: false };
+      const next = vi.fn();
+
+      await middleware(req, res, next);
+      res.headersSent = true;
+      await res.json({ ok: true });
+
+      expect(mockAuditService.logAudit).not.toHaveBeenCalled();
+      expect(originalJson).toHaveBeenCalledTimes(1);
     });
 
     it('keeps audit flow when res.statusCode accessor throws inside wrapped json', async () => {

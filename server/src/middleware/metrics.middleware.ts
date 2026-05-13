@@ -26,6 +26,7 @@ const LATENCY_BUCKETS = [50, 100, 250, 500, 1000, 2500, 5000, 10000];
 const METRICS_MW_INSTALLED = Symbol('consultify.metrics.middleware.installed');
 const MAX_METRIC_METHOD_CHARS = 32;
 const MAX_METRIC_COUNTER = Number.MAX_SAFE_INTEGER;
+const MAX_RECORDED_REQUEST_DURATION_MS = 600_000;
 
 const metrics: MetricsBucket = {
   requests: 0,
@@ -173,15 +174,16 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
     try {
       const rawDuration = Date.now() - start;
       const duration = Number.isFinite(rawDuration) && rawDuration >= 0 ? rawDuration : 0;
+      const recordedDuration = Math.min(duration, MAX_RECORDED_REQUEST_DURATION_MS);
       const status = normalizeHttpStatus(safeRead(() => res.statusCode, 500));
 
-      metrics.latencySum = addBoundedMetric(metrics.latencySum, duration);
+      metrics.latencySum = addBoundedMetric(metrics.latencySum, recordedDuration);
       metrics.byStatus[status] = addBoundedMetric(metrics.byStatus[status], 1);
 
       if (status >= 500) metrics.errors = addBoundedMetric(metrics.errors, 1);
 
       for (const bucket of LATENCY_BUCKETS) {
-        if (duration <= bucket) {
+        if (recordedDuration <= bucket) {
           metrics.latencyBuckets[`le_${bucket}`] = addBoundedMetric(
             metrics.latencyBuckets[`le_${bucket}`],
             1
@@ -217,8 +219,10 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
   }, false);
   safeRead(() => {
     if (typeof (res as any).once === 'function') {
+      (res as any).once('finish', recordCompletion);
       (res as any).once('close', recordCompletion);
     } else if (typeof (res as any).on === 'function') {
+      (res as any).on('finish', recordCompletion);
       (res as any).on('close', recordCompletion);
     }
     return true;

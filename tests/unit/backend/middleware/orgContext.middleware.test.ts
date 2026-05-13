@@ -217,6 +217,62 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('sanitizes whitespace-padded membership role before attaching org context', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgRoleTrim',
+      'Org Role Trim',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mRoleTrim', 'orgRoleTrim', 'u1', '  ADMIN  ', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware();
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'orgRoleTrim' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+
+    expect(req.org?.role).toBe('ADMIN');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to MEMBER role when membership role contains control characters', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgRoleCtrl',
+      'Org Role Ctrl',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mRoleCtrl', 'orgRoleCtrl', 'u1', 'ADMIN\u0007', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware();
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'orgRoleCtrl' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+
+    expect(req.org?.role).toBe('MEMBER');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('supports consultant access via consultant_org_links', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'org2',
@@ -841,6 +897,33 @@ describeIfDb('orgContext.middleware (L1)', () => {
       })
     );
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not attempt catch-path 500 write when headers are already sent', async () => {
+    const dbPromise = await import('../../../../server/src/utils/DbPromise.js');
+    const getSpy = vi.spyOn(dbPromise, 'get').mockRejectedValueOnce(new Error('simulated db failure'));
+
+    const mw = orgContextMiddleware();
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'orgX' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = {
+      headersSent: true,
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await expect(mw(req, res, next)).resolves.toBeUndefined();
+
+    expect(getSpy).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    getSpy.mockRestore();
   });
 
   it('getUserOrganizations returns unique orgs with access types', async () => {

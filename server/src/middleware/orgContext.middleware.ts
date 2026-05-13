@@ -79,6 +79,7 @@ interface Dependencies {
 const MAX_ORG_CONTEXT_ID_CHARS = 128;
 const MAX_PERMISSION_SCOPE_JSON_CHARS = 65_536;
 const MAX_ORG_CONTEXT_OPTION_NAME_CHARS = 64;
+const MAX_ORG_CONTEXT_ROLE_CHARS = 64;
 const SAFE_ORG_CONTEXT_OPTION_NAME = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
 
 // ==========================================
@@ -168,6 +169,14 @@ const isSafeOrgContextId = (orgId: string): boolean => {
   if (/\s/u.test(orgId)) return false;
   if (orgId.includes('..') || orgId.includes('/') || orgId.includes('\\')) return false;
   return true;
+};
+const sanitizeOrgContextRole = (role: unknown, isConsultant: boolean): string => {
+  if (isConsultant) return 'CONSULTANT';
+  if (typeof role !== 'string') return 'MEMBER';
+  const trimmed = role.trim();
+  if (!trimmed || trimmed.length > MAX_ORG_CONTEXT_ROLE_CHARS) return 'MEMBER';
+  if (/[\u0000-\u001F\u007F]/.test(trimmed)) return 'MEMBER';
+  return trimmed;
 };
 
 const parsePermissionScope = (value: unknown): { valid: true; scope: Record<string, unknown> } | { valid: false } => {
@@ -462,7 +471,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         source: orgSource || 'unknown',
         isMember: access.isMember || false,
         isConsultant: access.isConsultant || false,
-        role: access.role || 'MEMBER',
+        role: sanitizeOrgContextRole(access.role, access.isConsultant === true),
         permissionScope: access.permissionScope,
         membershipId: access.membershipId || access.linkId,
       };
@@ -473,7 +482,9 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
       next();
     } catch (error: unknown) {
       logger.error('[OrgContextMiddleware] Error:', error);
-      res.status(500).json({ error: 'Internal error resolving organization context' });
+      if (!safeRead(() => res.headersSent, false)) {
+        res.status(500).json({ error: 'Internal error resolving organization context' });
+      }
     }
   };
 }
