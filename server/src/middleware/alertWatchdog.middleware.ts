@@ -180,7 +180,8 @@ async function notifyAlert(type: string, message: string): Promise<void> {
   }
 }
 function escapeHtml(text: string): string {
-  return text
+  const normalized = text == null ? '' : String(text);
+  return normalized
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -241,13 +242,13 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
   }
 
   const start = Date.now();
-  totalRequests++;
 
   const originalEnd = safeRead(() => res.end.bind(res), null as unknown as (...args: any[]) => any);
   if (!originalEnd) {
     next();
     return;
   }
+  totalRequests++;
   let completedInWrapper = false;
   (res as any).end = function (...args: any[]) {
     let alreadyRecorded =

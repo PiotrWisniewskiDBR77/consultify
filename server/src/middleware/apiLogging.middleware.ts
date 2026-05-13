@@ -78,6 +78,8 @@ const MAX_LOGGED_ORGANIZATION_ID_CHARS = 128;
 const FALLBACK_CORRELATION_ID = '00000000-0000-4000-8000-000000000000';
 const sanitizeCorrelationId = (value: string): string =>
   value.replace(/[\u0000-\u001F\u007F]+/g, '');
+const sanitizeTelemetryText = (value: string): string =>
+  value.replace(/[\u0000-\u001F\u007F]+/g, '');
 const coerceLoggedStatusCode = (raw: unknown): number => {
   const numeric = typeof raw === 'number' ? raw : Number(raw);
   if (!Number.isFinite(numeric)) return 200;
@@ -156,7 +158,6 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
           readRequestMethod(req) !== 'GET' || statusCode >= 400 || responseTime >= 500;
 
         if (shouldPersist) {
-          persisted = true;
           const authReq = req as AuthRequest;
           const userId = normalizeOptionalString(safeRead(() => authReq.user?.id, undefined)) || null;
           const organizationId =
@@ -175,8 +176,8 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
             `INSERT INTO api_logs (id, endpoint, method, status_code, response_time_ms, user_id, organization_id, correlation_id, error_message, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
             [
-              uuidv4(),
-              requestPath.substring(0, 255),
+              safeRead(() => uuidv4(), FALLBACK_CORRELATION_ID),
+              sanitizeTelemetryText(requestPath).substring(0, 255),
               readRequestMethod(req).substring(0, MAX_LOGGED_METHOD_CHARS),
               statusCode,
               responseTime,
@@ -184,13 +185,16 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
               capLoggedString(organizationId, MAX_LOGGED_ORGANIZATION_ID_CHARS),
               correlationId,
               statusCode >= 400
-                ? (normalizeOptionalString(safeRead(() => res.statusMessage, undefined)) || '').substring(
-                    0,
-                    500
-                  )
+                ? (() => {
+                    const normalizedStatusMessage =
+                      normalizeOptionalString(safeRead(() => res.statusMessage, undefined)) || '';
+                    const cleanedStatusMessage = sanitizeTelemetryText(normalizedStatusMessage).trim();
+                    return cleanedStatusMessage ? cleanedStatusMessage.substring(0, 500) : null;
+                  })()
                 : null,
             ]
           ).catch((err) => logger.warn('Failed to write api_log:', err));
+          persisted = true;
         }
       }
     } catch {

@@ -155,6 +155,21 @@ describe('metrics.middleware', () => {
     expect(after.latencyBuckets.le_50).not.toBe(-1);
   });
 
+  it('uses null-prototype maps for byMethod and byStatus snapshots', () => {
+    const req: any = { method: 'GET' };
+    const res: any = { statusCode: 200, end: vi.fn() };
+    const next = vi.fn();
+
+    metricsMiddleware(req, res, next);
+    res.end();
+
+    const snapshot = getRequestMetrics();
+    expect(Object.getPrototypeOf(snapshot.byMethod)).toBeNull();
+    expect(Object.getPrototypeOf(snapshot.byStatus)).toBeNull();
+    expect('toString' in snapshot.byMethod).toBe(false);
+    expect('toString' in snapshot.byStatus).toBe(false);
+  });
+
   it('tracks only once when middleware is mounted twice on same response', () => {
     const req: any = { method: 'POST' };
     const res: any = { statusCode: 201, end: vi.fn() };
@@ -257,6 +272,18 @@ describe('metrics.middleware', () => {
     for (const line of bucketLines) {
       const value = line.trim().split(/\s+/).pop();
       expect(value).toMatch(/^\d+$/);
+    }
+  });
+
+  it('returns a safe fallback when prometheus export throws unexpectedly', () => {
+    const entriesSpy = vi.spyOn(Object, 'entries').mockImplementationOnce(() => {
+      throw new Error('entries failed');
+    });
+    try {
+      const output = getPrometheusMetrics();
+      expect(output).toBe('# consultify metrics export failed\n');
+    } finally {
+      entriesSpy.mockRestore();
     }
   });
 

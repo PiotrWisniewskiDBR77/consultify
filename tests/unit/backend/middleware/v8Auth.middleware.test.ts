@@ -132,6 +132,17 @@ describe('v8Auth.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireV8OrgContext denies organization id with unicode line separator controls', () => {
+    for (const bad of ['\u0085', '\u2028', '\u2029']) {
+      const req: any = { organizationId: `org${bad}1` };
+      const res = makeRes();
+      const next = vi.fn();
+      requireV8OrgContext(req, res as any, next as any);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(next).not.toHaveBeenCalled();
+    }
+  });
+
   it('attachV8Context denies when userId is missing', () => {
     const req: any = {
       organizationId: 'org-1',
@@ -152,6 +163,22 @@ describe('v8Auth.middleware', () => {
     const req: any = {
       organizationId: 'org-1',
       userId: 'user-\u0000-1',
+      userRole: 'ADMIN',
+    };
+    const res = makeRes();
+    const next = vi.fn();
+    attachV8Context(req, res as any, next as any);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'V8_MISSING_USER_CONTEXT' })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('attachV8Context denies when user id contains unicode line separator controls', () => {
+    const req: any = {
+      organizationId: 'org-1',
+      userId: `user-\u2028-1`,
       userRole: 'ADMIN',
     };
     const res = makeRes();
@@ -265,6 +292,7 @@ describe('v8Auth.middleware', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
+    expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
@@ -280,6 +308,7 @@ describe('v8Auth.middleware', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
+    expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ code: 'V8_MISSING_USER_CONTEXT' })

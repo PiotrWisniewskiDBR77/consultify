@@ -421,6 +421,21 @@ describe('Permission Middleware - Real Production Tests', () => {
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('denies when requireAnyPermission receives truthy non-boolean grant values', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue([] as any);
+      const middleware = requireAnyPermission(['ADMIN_ACCESS', 'PROJECT_CREATE']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          requiredAny: ['ADMIN_ACCESS', 'PROJECT_CREATE'],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('requireAllPermissions', () => {
@@ -562,6 +577,24 @@ describe('Permission Middleware - Real Production Tests', () => {
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('denies when requireAllPermissions receives truthy non-boolean grant values', async () => {
+      mockPermissionService.hasPermission
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce([] as any);
+
+      const middleware = requireAllPermissions(['PROJECT_VIEW', 'PROJECT_DELETE']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PERMISSION_DENIED',
+          missing: ['PROJECT_DELETE'],
+        })
+      );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('response safety when headers already sent', () => {
@@ -601,6 +634,75 @@ describe('Permission Middleware - Real Production Tests', () => {
         expect.objectContaining({ statusCode: 401, code: 'AUTH_REQUIRED' })
       );
       expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('requirePermission skips permission service when response is already committed', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requirePermission('PROJECT_CREATE');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requirePermission',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
+    });
+
+    it('requireAnyPermission skips permission service when response is already committed', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requireAnyPermission(['PROJECT_CREATE', 'PROJECT_VIEW']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requireAnyPermission',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
+    });
+
+    it('requireAllPermissions skips permission service when response is already committed', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requireAllPermissions(['PROJECT_CREATE', 'PROJECT_VIEW']);
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requireAllPermissions',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
     });
   });
 

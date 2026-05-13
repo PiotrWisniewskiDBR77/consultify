@@ -46,6 +46,11 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
   return normalized || undefined;
 };
 const MAX_RATE_LIMIT_KEY_SEGMENT = 512;
+const RATE_LIMIT_STORE_MAX_KEYS = (() => {
+  const raw = Number.parseInt(process.env.RATE_LIMIT_STORE_MAX_KEYS || '', 10);
+  if (!Number.isFinite(raw) || raw <= 0) return 50_000;
+  return Math.min(raw, 250_000);
+})();
 const truncateKeySegment = (value: string): string =>
   value.length > MAX_RATE_LIMIT_KEY_SEGMENT ? value.slice(0, MAX_RATE_LIMIT_KEY_SEGMENT) : value;
 
@@ -100,6 +105,7 @@ rateLimitStoreCleanupInterval.unref?.();
  */
 export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
   safeRemoveHeader(res, 'X-Powered-By');
+  safeRemoveHeader(res, 'Server');
 
   // Prevent MIME type sniffing
   safeSetHeader(res, 'X-Content-Type-Options', 'nosniff');
@@ -211,6 +217,10 @@ export const createRateLimiter = (options: RateLimitOptions = {}) => {
 
     // Add current request
     requests.push(now);
+    if (!rateLimitStore.has(key) && rateLimitStore.size >= RATE_LIMIT_STORE_MAX_KEYS) {
+      const oldestKey = rateLimitStore.keys().next().value;
+      if (typeof oldestKey === 'string') rateLimitStore.delete(oldestKey);
+    }
     rateLimitStore.set(key, requests);
 
     // Set rate limit headers

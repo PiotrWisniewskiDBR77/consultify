@@ -11,6 +11,8 @@ vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
 }));
 
 import {
+  checkUserDemoPreference,
+  getDemoStartedAt,
   getDemoStats,
   setUserDemoPreference,
 } from '../../../../server/src/middleware/demoGuard.middleware.ts';
@@ -89,5 +91,40 @@ describe('demoGuard.middleware setUserDemoPreference', () => {
       decisions: 0,
       users: 0,
     });
+  });
+
+  it('returns false without DB access when user id is invalid in checkUserDemoPreference', async () => {
+    const result = await checkUserDemoPreference('   ');
+
+    expect(result).toBe(false);
+    expect(runMock).not.toHaveBeenCalled();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects setUserDemoPreference and skips DB calls when user id exceeds max length', async () => {
+    await expect(setUserDemoPreference(`u${'x'.repeat(200)}`, true)).rejects.toThrow(
+      'Invalid demo preference user id'
+    );
+
+    expect(runMock).not.toHaveBeenCalled();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  it('returns null when getDemoStartedAt user id is invalid without DB access', async () => {
+    const startedAt = await getDemoStartedAt('   ');
+
+    expect(startedAt).toBeNull();
+    expect(runMock).not.toHaveBeenCalled();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  it('returns null from getDemoStartedAt when user_preferences table is missing', async () => {
+    runMock.mockResolvedValueOnce({ success: true, changes: 0 }).mockResolvedValueOnce({ success: true, changes: 0 });
+    getMock.mockRejectedValueOnce(new Error('no such table: user_preferences'));
+
+    const startedAt = await getDemoStartedAt('user-1');
+
+    expect(startedAt).toBeNull();
+    expect(getMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import jwt from 'jsonwebtoken';
 
 const { isV8ShadowModeMock, recordShadowComparisonMock } = vi.hoisted(() => ({
   isV8ShadowModeMock: vi.fn(),
@@ -65,11 +66,27 @@ describe('v8 shadow middlewares', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('v8ShadowModeCheck skips JWT decode for malformed non-compact bearer token', async () => {
+    const req: any = {
+      headers: {
+        authorization: 'Bearer a.b',
+      },
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    await v8ShadowModeCheck(req, res, next);
+
+    expect(isV8ShadowModeMock).not.toHaveBeenCalled();
+    expect(req.v8ShadowMode).toBe(false);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('v8ShadowModeCheck trims bearer token before decode and resolves org', async () => {
     const token = [
       'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0',
       'eyJvcmdhbml6YXRpb25JZCI6Im9yZy10cmltIn0',
-      '',
+      'sig',
     ].join('.');
     const req: any = {
       headers: {
@@ -115,6 +132,65 @@ describe('v8 shadow middlewares', () => {
     expect(isV8ShadowModeMock).not.toHaveBeenCalled();
     expect(req.v8ShadowMode).toBe(false);
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('v8ShadowModeCheck ignores jwt.decode string payload return type', async () => {
+    const decodeSpy = vi.spyOn(jwt, 'decode').mockReturnValueOnce('decoded-string' as any);
+    const req: any = {
+      headers: {
+        authorization: 'Bearer a.b.c',
+      },
+    };
+    const res: any = {};
+    const next = vi.fn();
+    try {
+      await v8ShadowModeCheck(req, res, next);
+
+      expect(isV8ShadowModeMock).not.toHaveBeenCalled();
+      expect(req.v8ShadowMode).toBe(false);
+      expect(next).toHaveBeenCalledTimes(1);
+    } finally {
+      decodeSpy.mockRestore();
+    }
+  });
+
+  it('v8ShadowInterceptor skips JWT decode for malformed non-compact bearer token', () => {
+    const req: any = {
+      v8ShadowMode: true,
+      method: 'GET',
+      path: '/context',
+      headers: {
+        authorization: 'Bearer a.b',
+      },
+    };
+    const originalJson = vi.fn((payload: unknown) => payload);
+    const res: any = { statusCode: 200, json: originalJson };
+    const next = vi.fn();
+
+    v8ShadowInterceptor(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.json).toBe(originalJson);
+  });
+
+  it('v8ShadowInterceptor ignores jwt.decode string payload when resolving org fallback', () => {
+    const decodeSpy = vi.spyOn(jwt, 'decode').mockReturnValueOnce('decoded-string' as any);
+    const req: any = {
+      v8ShadowMode: true,
+      method: 'GET',
+      path: '/context',
+      headers: { authorization: 'Bearer a.b.c' },
+    };
+    const originalJson = vi.fn((payload: unknown) => payload);
+    const res: any = { statusCode: 200, json: originalJson };
+    const next = vi.fn();
+    try {
+      v8ShadowInterceptor(req, res, next);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.json).toBe(originalJson);
+    } finally {
+      decodeSpy.mockRestore();
+    }
   });
 
   it('v8ShadowModeCheck treats oversized org-id source strings as absent before trim', async () => {
@@ -298,6 +374,35 @@ describe('v8 shadow middlewares', () => {
         __shadowOversizedResponse: true,
       })
     );
+
+    vi.unstubAllGlobals();
+  });
+
+  it('v8ShadowInterceptor omits content-type header for GET shadow calls', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      status: 200,
+      json: async () => ({ ok: true }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const req: any = {
+      v8ShadowMode: true,
+      organizationId: 'org-1',
+      method: 'GET',
+      path: '/context',
+      headers: { authorization: 'Bearer ok-token' },
+    };
+    const originalJson = vi.fn((payload: unknown) => payload);
+    const res: any = { statusCode: 200, json: originalJson };
+    const next = vi.fn();
+
+    v8ShadowInterceptor(req, res, next);
+    res.json({ ok: true });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const fetchOptions = fetchMock.mock.calls[0]?.[1] as { headers?: Record<string, string> } | undefined;
+    expect(fetchOptions?.headers).toBeDefined();
+    expect(fetchOptions?.headers?.Authorization).toBe('Bearer ok-token');
+    expect(fetchOptions?.headers?.['Content-Type']).toBeUndefined();
 
     vi.unstubAllGlobals();
   });

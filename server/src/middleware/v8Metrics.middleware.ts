@@ -28,13 +28,36 @@ const safeNext = (next: NextFunction): void => {
     // fail-open: telemetry middleware should never crash request flow
   }
 };
+const scheduleObservation = (fn: () => void): void => {
+  if (typeof queueMicrotask === 'function') {
+    try {
+      queueMicrotask(fn);
+      return;
+    } catch {
+      // Fall through to setImmediate/sync fallback.
+    }
+  }
+  try {
+    if (typeof setImmediate === 'function') {
+      setImmediate(fn);
+      return;
+    }
+  } catch {
+    // Fall through to sync fallback.
+  }
+  try {
+    fn();
+  } catch {
+    // fail-open: telemetry must never break response flow
+  }
+};
 
 export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: NextFunction): void => {
   if (!res || typeof res !== 'object') {
     safeNext(next);
     return;
   }
-  const start = safeRead(() => Date.now(), 0);
+  const start = safeRead(() => Date.now(), Number.NaN);
   let finishRecorded = false;
   try {
     const responseWithEvents = res as Response & {
@@ -68,24 +91,17 @@ export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: Next
         if (finishRecorded) return;
         finishRecorded = true;
         try {
-          const end = safeRead(() => Date.now(), start);
-          const durationRaw = end - start;
-          const duration =
-            Number.isFinite(durationRaw) && durationRaw >= 0 ? durationRaw : 0;
-          const recordedDuration = Math.min(duration, V8_METRICS_MAX_RECORDED_LATENCY_MS);
+          const end = safeRead(() => Date.now(), Number.NaN);
+          let recordedDuration = 0;
+          if (Number.isFinite(start) && Number.isFinite(end)) {
+            const durationRaw = end - start;
+            const duration =
+              Number.isFinite(durationRaw) && durationRaw >= 0 ? durationRaw : 0;
+            recordedDuration = Math.min(duration, V8_METRICS_MAX_RECORDED_LATENCY_MS);
+          }
           const statusCode = normalizeStatusCode(safeRead(() => res.statusCode, 200));
           const isError = statusCode >= 400;
-          const schedule =
-            typeof queueMicrotask === 'function'
-              ? queueMicrotask
-              : (fn: () => void) => {
-                  try {
-                    setImmediate(fn);
-                  } catch {
-                    fn();
-                  }
-                };
-          schedule(() => {
+          scheduleObservation(() => {
             try {
               recordV8Request(recordedDuration, isError);
             } catch {
@@ -98,15 +114,16 @@ export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: Next
       };
       try {
         registerFinish('finish', onDone);
+        v8MetricsFinishHooked.add(res);
       } catch {
         // fail-open: finish hook registration must not block request flow
       }
       try {
         registerClose?.('close', onDone);
+        v8MetricsFinishHooked.add(res);
       } catch {
         // fail-open: close hook registration must not block request flow
       }
-      v8MetricsFinishHooked.add(res);
     }
   } catch {
     // fail-open: telemetry hook registration must never block request flow

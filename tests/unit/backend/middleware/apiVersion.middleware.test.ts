@@ -296,6 +296,88 @@ describe('apiVersion.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('sanitizes version tokens in requireVersion error payload', () => {
+    const original = API_VERSIONS['2'];
+    API_VERSIONS['2'] = {
+      major: 2,
+      minor: 0,
+      patch: 0,
+      full: '2.0.0\r\nx-required: injected',
+      deprecated: false,
+      sunsetDate: null,
+    };
+    try {
+      const req: any = {
+        apiVersion: {
+          major: 1,
+          minor: 0,
+          patch: 0,
+          full: '1.0.0\r\nyour-version: injected',
+          deprecated: false,
+          sunsetDate: null,
+        },
+      };
+      const res = makeRes();
+      const next = vi.fn();
+      requireVersion('2')(req, res as any, next as any);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(String(res.body.yourVersion)).toBe('1.0.0your-version: injected');
+      expect(String(res.body.requiredVersion)).toBe('2.0.0x-required: injected');
+      expect(String(res.body.yourVersion)).not.toMatch(/[\r\n\0]/);
+      expect(String(res.body.requiredVersion)).not.toMatch(/[\r\n\0]/);
+      expect(next).not.toHaveBeenCalled();
+    } finally {
+      if (original) API_VERSIONS['2'] = original;
+      else delete (API_VERSIONS as any)['2'];
+    }
+  });
+
+  it('keeps middleware non-throwing when next throws inside extraction catch', () => {
+    const original = API_VERSIONS['0.9.3'];
+    API_VERSIONS['0.9.3'] = {
+      major: 0,
+      minor: 9,
+      patch: 3,
+      full: '0.9.3',
+      deprecated: true,
+      sunsetDate: new Date('2030-01-01T00:00:00.000Z'),
+    };
+    const warnSpy = loggerWarnMock.mockImplementationOnce(() => {
+      throw new Error('deprecated log failed');
+    });
+    try {
+      const req: any = {
+        path: '/api/x',
+        headers: { 'x-api-version': '0.9.3' },
+        query: {},
+      };
+      const res = makeRes();
+      const next = vi.fn(() => {
+        throw new Error('next boom');
+      });
+
+      expect(() => apiVersionMiddleware(req, res as any, next as any)).not.toThrow();
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        '[APIVersion] Version extraction error',
+        expect.objectContaining({
+          detail: expect.stringContaining('deprecated log failed'),
+        })
+      );
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        '[APIVersion] Failed to invoke next after extraction error',
+        expect.objectContaining({
+          detail: expect.stringContaining('deprecated log failed'),
+        })
+      );
+    } finally {
+      warnSpy.mockRestore();
+      if (original) API_VERSIONS['0.9.3'] = original;
+      else delete (API_VERSIONS as any)['0.9.3'];
+    }
+  });
+
   it('continues when response setHeader throws', () => {
     const req: any = { path: '/api/x', headers: {}, query: {} };
     const res = makeRes();

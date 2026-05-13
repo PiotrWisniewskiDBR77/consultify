@@ -214,6 +214,8 @@ describeIfDb('orgContext.middleware (L1)', () => {
       })
     );
     expect(req.orgContext).toEqual(req.org);
+    expect(Object.isFrozen(req.org)).toBe(true);
+    expect(Object.isFrozen(req.orgContext)).toBe(true);
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -747,6 +749,30 @@ describeIfDb('orgContext.middleware (L1)', () => {
     const req: any = {
       method: 'GET',
       params: { orgId: 'org with-space' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Invalid organization id',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(req.org).toBeNull();
+    expect(req.orgContext).toBeNull();
+  });
+
+  it('returns 400 when orgId contains delimiter characters', async () => {
+    const mw = orgContextMiddleware({ required: true, strictWrite: true });
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org1,org2' },
       headers: {},
       user: { id: 'u1', organizationId: '' },
     };

@@ -104,11 +104,28 @@ const sendQuotaJson = (
 ): boolean => {
   if (safeRead(() => res.headersSent, false)) return false;
   try {
-    res.status(statusCode).json(payload);
+    if (typeof res.status !== 'function') {
+      logger.error(writeErrorLogLabel);
+      return false;
+    }
+    const statusResult = res.status(statusCode) as Response | { json?: (value: unknown) => unknown };
+    if (!statusResult || typeof statusResult.json !== 'function') {
+      logger.error(writeErrorLogLabel);
+      return false;
+    }
+    statusResult.json(payload);
     return true;
   } catch {
     logger.error(writeErrorLogLabel);
     return false;
+  }
+};
+const callNextIfFunction = (next: NextFunction): void => {
+  if (typeof next !== 'function') return;
+  try {
+    next();
+  } catch {
+    // Never surface next-handler failures from quota middleware internals.
   }
 };
 
@@ -230,12 +247,13 @@ export async function enforceTokenQuota(
     const orgId = readOrgId(req);
 
     if (!orgId) {
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         401,
         { error: 'Unauthorized - no organization' },
         '[QuotaMiddleware] Failed to write token unauthorized response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
@@ -244,7 +262,7 @@ export async function enforceTokenQuota(
       const accessResult = normalizeAccessPolicyResult(await aps.checkAccess(orgId, 'ai_call'));
       if (!accessResult) {
         logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
-        sendQuotaJson(
+        const wroteResponse = sendQuotaJson(
           res,
           503,
           {
@@ -254,10 +272,11 @@ export async function enforceTokenQuota(
           },
           '[QuotaMiddleware] Failed to write token access-policy unavailable response'
         );
+        if (!wroteResponse) callNextIfFunction(next);
         return;
       }
       if (!accessResult.allowed) {
-        sendQuotaJson(
+        const wroteResponse = sendQuotaJson(
           res,
           429,
           {
@@ -273,11 +292,12 @@ export async function enforceTokenQuota(
           },
           '[QuotaMiddleware] Failed to write token access-policy deny response'
         );
+        if (!wroteResponse) callNextIfFunction(next);
         return;
       }
     } catch (policyErr) {
       logger.error('[QuotaMiddleware] Access policy check failed:', policyErr);
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         503,
         {
@@ -287,13 +307,14 @@ export async function enforceTokenQuota(
         },
         '[QuotaMiddleware] Failed to write token access-policy failure response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
     const quotaCandidate = normalizeQuotaPayloadShape(await usageService.checkQuota(orgId, 'token'));
     if (!isValidQuotaInfo(quotaCandidate)) {
       logger.error('[QuotaMiddleware] Invalid token quota payload', { orgId });
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         503,
         {
@@ -303,6 +324,7 @@ export async function enforceTokenQuota(
         },
         '[QuotaMiddleware] Failed to write token quota unavailable response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
     const quota: QuotaInfo = {
@@ -314,7 +336,7 @@ export async function enforceTokenQuota(
     req.quotaInfo = quota;
 
     if (!quota.allowed) {
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         429,
         {
@@ -332,6 +354,7 @@ export async function enforceTokenQuota(
         },
         '[QuotaMiddleware] Failed to write token quota exceeded response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
@@ -344,7 +367,7 @@ export async function enforceTokenQuota(
     next();
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
-    sendQuotaJson(
+    const wroteResponse = sendQuotaJson(
       res,
       503,
       {
@@ -354,6 +377,7 @@ export async function enforceTokenQuota(
       },
       '[QuotaMiddleware] Failed to write token quota catch-all response'
     );
+    if (!wroteResponse) callNextIfFunction(next);
   }
 }
 
@@ -371,12 +395,13 @@ export async function enforceStorageQuota(
     const orgId = readOrgId(req);
 
     if (!orgId) {
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         401,
         { error: 'Unauthorized - no organization' },
         '[QuotaMiddleware] Failed to write storage unauthorized response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
@@ -385,7 +410,7 @@ export async function enforceStorageQuota(
       const accessResult = normalizeAccessPolicyResult(await aps.checkAccess(orgId, 'upload'));
       if (!accessResult) {
         logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
-        sendQuotaJson(
+        const wroteResponse = sendQuotaJson(
           res,
           503,
           {
@@ -395,10 +420,11 @@ export async function enforceStorageQuota(
           },
           '[QuotaMiddleware] Failed to write storage access-policy unavailable response'
         );
+        if (!wroteResponse) callNextIfFunction(next);
         return;
       }
       if (!accessResult.allowed) {
-        sendQuotaJson(
+        const wroteResponse = sendQuotaJson(
           res,
           429,
           {
@@ -410,11 +436,12 @@ export async function enforceStorageQuota(
           },
           '[QuotaMiddleware] Failed to write storage access-policy deny response'
         );
+        if (!wroteResponse) callNextIfFunction(next);
         return;
       }
     } catch (policyErr) {
       logger.error('[QuotaMiddleware] Storage access policy check failed:', policyErr);
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         503,
         {
@@ -424,13 +451,14 @@ export async function enforceStorageQuota(
         },
         '[QuotaMiddleware] Failed to write storage access-policy failure response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
     const quotaCandidate = normalizeQuotaPayloadShape(await usageService.checkQuota(orgId, 'storage'));
     if (!isValidQuotaInfo(quotaCandidate)) {
       logger.error('[QuotaMiddleware] Invalid storage quota payload', { orgId });
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         503,
         {
@@ -440,6 +468,7 @@ export async function enforceStorageQuota(
         },
         '[QuotaMiddleware] Failed to write storage quota unavailable response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
     const quota: QuotaInfo = {
@@ -451,7 +480,7 @@ export async function enforceStorageQuota(
     req.storageQuotaInfo = quota;
 
     if (!quota.allowed) {
-      sendQuotaJson(
+      const wroteResponse = sendQuotaJson(
         res,
         429,
         {
@@ -469,13 +498,14 @@ export async function enforceStorageQuota(
         },
         '[QuotaMiddleware] Failed to write storage quota exceeded response'
       );
+      if (!wroteResponse) callNextIfFunction(next);
       return;
     }
 
     next();
   } catch (error: unknown) {
     logger.error('Storage quota check error:', error);
-    sendQuotaJson(
+    const wroteResponse = sendQuotaJson(
       res,
       503,
       {
@@ -485,6 +515,7 @@ export async function enforceStorageQuota(
       },
       '[QuotaMiddleware] Failed to write storage quota catch-all response'
     );
+    if (!wroteResponse) callNextIfFunction(next);
   }
 }
 

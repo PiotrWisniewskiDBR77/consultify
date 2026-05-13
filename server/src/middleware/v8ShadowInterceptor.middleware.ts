@@ -24,8 +24,19 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
 const MAX_SHADOW_JWT_DECODE_CHARS = 8192;
 const MAX_SHADOW_ORG_ID_CHARS = 256;
 const MAX_SHADOW_AUTHORIZATION_HEADER_CHARS = 8256;
+const MAX_SHADOW_ORG_SOURCE_READ_CHARS = 1024;
 const SHADOW_V8_FETCH_TIMEOUT_MS = 10_000;
 const MAX_SHADOW_COMPARISON_JSON_CHARS = 256_000;
+const isLikelyJwsCompact = (token: string): boolean => {
+  const parts = token.split('.');
+  return parts.length === 3 && parts.every((part) => part.length > 0);
+};
+const normalizeOptionalOrgCandidate = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  if (value.length > MAX_SHADOW_ORG_SOURCE_READ_CHARS) return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+};
 
 const readMethod = (req: AuthRequest): string =>
   normalizeOptionalString(safeRead(() => req.method, undefined)) || '';
@@ -107,9 +118,9 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
   }
 
   let orgId =
-    normalizeOptionalString(safeRead(() => req.organizationId, undefined)) ||
-    normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
-    normalizeOptionalString(
+    normalizeOptionalOrgCandidate(safeRead(() => req.organizationId, undefined)) ||
+    normalizeOptionalOrgCandidate(safeRead(() => req.user?.organizationId, undefined)) ||
+    normalizeOptionalOrgCandidate(
       safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
     );
   if (!orgId) {
@@ -117,13 +128,20 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
       const authHeader = normalizeOptionalString(safeRead(() => req.headers?.authorization, undefined));
       if (authHeader?.startsWith('Bearer ')) {
         const rawToken = authHeader.slice(7).trim();
-        if (rawToken && rawToken.length <= MAX_SHADOW_JWT_DECODE_CHARS) {
-          const decoded = jwt.decode(rawToken) as
-            | { organizationId?: string; organization_id?: string }
-            | null;
-          orgId =
-            normalizeOptionalString(decoded?.organizationId) ||
-            normalizeOptionalString(decoded?.organization_id);
+        if (
+          rawToken &&
+          rawToken.length <= MAX_SHADOW_JWT_DECODE_CHARS &&
+          isLikelyJwsCompact(rawToken)
+        ) {
+          const decodedRaw = jwt.decode(rawToken);
+          if (decodedRaw && typeof decodedRaw === 'object' && !Array.isArray(decodedRaw)) {
+            const decoded = decodedRaw as
+              | { organizationId?: string; organization_id?: string }
+              | null;
+            orgId =
+              normalizeOptionalOrgCandidate(decoded?.organizationId) ||
+              normalizeOptionalOrgCandidate(decoded?.organization_id);
+          }
         }
       }
     } catch {
@@ -224,12 +242,15 @@ async function callV8AndRecord(params: {
   try {
     // Internal call to V8 endpoint (same process, via HTTP)
     const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
+    const v8Headers: Record<string, string> = {
+      Authorization: params.token,
+    };
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(params.method.toUpperCase())) {
+      v8Headers['Content-Type'] = 'application/json';
+    }
     const v8Res = await fetch(`${baseUrl}/api/v8${params.v8Path}`, {
       method: params.method,
-      headers: {
-        Authorization: params.token,
-        'Content-Type': 'application/json',
-      },
+      headers: v8Headers,
       signal: AbortSignal.timeout(SHADOW_V8_FETCH_TIMEOUT_MS),
     });
 

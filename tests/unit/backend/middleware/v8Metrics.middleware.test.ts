@@ -29,7 +29,6 @@ describe('v8Metrics.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
 
     expect(() => finishHandlers[0]?.()).not.toThrow();
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
   });
 
   it('swallows telemetry store errors in finish handler', () => {
@@ -51,7 +50,7 @@ describe('v8Metrics.middleware', () => {
     expect(() => finishHandlers[0]?.()).not.toThrow();
   });
 
-  it('records zero latency when Date.now goes backwards', () => {
+  it('records zero latency when Date.now goes backwards', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -68,11 +67,12 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     finishHandlers[0]?.();
 
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledWith(0, false);
     now.mockRestore();
   });
 
-  it('registers finish listener only once for the same response object', () => {
+  it('registers finish listener only once for the same response object', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -91,10 +91,11 @@ describe('v8Metrics.middleware', () => {
     expect(res.on).toHaveBeenCalledWith('close', expect.any(Function));
     expect(next).toHaveBeenCalledTimes(2);
     finishHandlers[0]?.();
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
-  it('records only once when finish handler is triggered twice on res.on path', () => {
+  it('records only once when finish handler is triggered twice on res.on path', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -109,10 +110,11 @@ describe('v8Metrics.middleware', () => {
     finishHandlers[0]?.();
     finishHandlers[0]?.();
 
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
-  it('continues when Date.now throws during middleware entry', () => {
+  it('continues when Date.now throws during middleware entry', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -131,11 +133,12 @@ describe('v8Metrics.middleware', () => {
     expect(() => v8MetricsMiddleware(req, res, next)).not.toThrow();
     expect(next).toHaveBeenCalledTimes(1);
     expect(() => finishHandlers[0]?.()).not.toThrow();
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledWith(0, false);
     now.mockRestore();
   });
 
-  it('caps extremely large duration samples before recording', () => {
+  it('caps extremely large duration samples before recording', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -152,11 +155,12 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     finishHandlers[0]?.();
 
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledWith(86_400_000, true);
     now.mockRestore();
   });
 
-  it('prefers res.once for finish registration when available', () => {
+  it('prefers res.once for finish registration when available', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -175,10 +179,11 @@ describe('v8Metrics.middleware', () => {
     expect(res.once).toHaveBeenCalledWith('finish', expect.any(Function));
     expect(res.once).toHaveBeenCalledWith('close', expect.any(Function));
     expect(res.on).not.toHaveBeenCalled();
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
-  it('registers and records via close fallback when close fires before finish', () => {
+  it('registers and records via close fallback when close fires before finish', async () => {
     const handlers: Record<string, Array<() => void>> = { finish: [], close: [] };
     const req: any = {};
     const res: any = {
@@ -192,7 +197,8 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     handlers.close[0]?.();
 
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
   it('registers close fallback even when finish registration throws', async () => {
@@ -217,7 +223,7 @@ describe('v8Metrics.middleware', () => {
     expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
-  it('records once when both finish and close fire', () => {
+  it('records once when both finish and close fire', async () => {
     const handlers: Record<string, Array<() => void>> = { finish: [], close: [] };
     const req: any = {};
     const res: any = {
@@ -232,10 +238,11 @@ describe('v8Metrics.middleware', () => {
     handlers.finish[0]?.();
     handlers.close[0]?.();
 
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
-  it('attaches metrics handlers when response exposes once but no on', () => {
+  it('attaches metrics handlers when response exposes once but no on', async () => {
     const handlers: Record<string, Array<() => void>> = { finish: [], close: [] };
     const req: any = {};
     const res: any = {
@@ -251,10 +258,11 @@ describe('v8Metrics.middleware', () => {
 
     expect(res.once).toHaveBeenCalledWith('finish', expect.any(Function));
     expect(res.once).toHaveBeenCalledWith('close', expect.any(Function));
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
-  it('records zero duration when Date.now throws in finish handler', () => {
+  it('records zero duration when Date.now throws in finish handler', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -273,11 +281,12 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     expect(() => finishHandlers[0]?.()).not.toThrow();
 
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledWith(0, false);
     now.mockRestore();
   });
 
-  it('treats invalid statusCode values as non-error metrics classification', () => {
+  it('treats invalid statusCode values as non-error metrics classification', async () => {
     const finishHandlers: Array<() => void> = [];
     const req: any = {};
     const res: any = {
@@ -294,7 +303,98 @@ describe('v8Metrics.middleware', () => {
     v8MetricsMiddleware(req, res, next);
     finishHandlers[0]?.();
 
-    expect(recordV8RequestMock).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(recordV8RequestMock).toHaveBeenCalledWith(expect.any(Number), false);
+  });
+
+  it('falls back when queueMicrotask throws during scheduling', async () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {};
+    const res: any = {
+      statusCode: 200,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    };
+    const next = vi.fn();
+    const originalQueueMicrotask = globalThis.queueMicrotask;
+    const queueMicrotaskSpy = vi.fn(() => {
+      throw new Error('queueMicrotask broken');
+    });
+    vi.stubGlobal('queueMicrotask', queueMicrotaskSpy as any);
+    try {
+      v8MetricsMiddleware(req, res, next);
+      finishHandlers[0]?.();
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1);
+      expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.stubGlobal('queueMicrotask', originalQueueMicrotask as any);
+    }
+  });
+
+  it('retries listener registration on second pass when initial hook registration fully fails', async () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {};
+    const onMock = vi
+      .fn<(event: string, cb: () => void) => void>()
+      .mockImplementationOnce(() => {
+        throw new Error('finish registration failed');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('close registration failed');
+      })
+      .mockImplementation((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      });
+    const res: any = {
+      statusCode: 200,
+      on: onMock,
+    };
+    const next = vi.fn();
+
+    v8MetricsMiddleware(req, res, next);
+    v8MetricsMiddleware(req, res, next);
+    finishHandlers[0]?.();
+
+    await Promise.resolve();
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(res.on).toHaveBeenCalledTimes(4);
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to sync record path when queueMicrotask and setImmediate both throw', () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {};
+    const res: any = {
+      statusCode: 200,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    };
+    const next = vi.fn();
+    const originalQueueMicrotask = globalThis.queueMicrotask;
+    const originalSetImmediate = globalThis.setImmediate;
+    vi.stubGlobal(
+      'queueMicrotask',
+      vi.fn(() => {
+        throw new Error('queueMicrotask failed');
+      }) as any
+    );
+    vi.stubGlobal(
+      'setImmediate',
+      vi.fn(() => {
+        throw new Error('setImmediate failed');
+      }) as any
+    );
+    try {
+      v8MetricsMiddleware(req, res, next);
+      finishHandlers[0]?.();
+      expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.stubGlobal('queueMicrotask', originalQueueMicrotask as any);
+      vi.stubGlobal('setImmediate', originalSetImmediate as any);
+    }
   });
 
   it('records asynchronously after finish handler runs', async () => {

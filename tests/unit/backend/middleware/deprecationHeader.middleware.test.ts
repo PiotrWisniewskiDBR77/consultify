@@ -200,8 +200,38 @@ describe('deprecationHeader.middleware', () => {
 
     expect(() => deprecationHeader('/api/v8/new')(req, res as any, next as any)).not.toThrow();
     expect(next).toHaveBeenCalledTimes(1);
+    expect(res.setHeader).toHaveBeenCalledWith('Deprecation', 'true');
+    expect(res.setHeader).toHaveBeenCalledWith('Sunset', expect.any(String));
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Link',
+      '</api/v8/new>; rel="successor-version"'
+    );
 
     infoSpy.mockRestore();
+  });
+
+  it('still sets headers when writableEnded accessor throws but response is not committed', () => {
+    const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-writable-ended-throw' };
+    const res: any = {
+      headersSent: false,
+      setHeader: vi.fn(),
+    };
+    Object.defineProperty(res, 'writableEnded', {
+      configurable: true,
+      get: () => {
+        throw new Error('writableEnded getter failed');
+      },
+    });
+    const next = vi.fn();
+
+    expect(() => deprecationHeader('/api/v8/new')(req, res, next as any)).not.toThrow();
+    expect(res.setHeader).toHaveBeenCalledWith('Deprecation', 'true');
+    expect(res.setHeader).toHaveBeenCalledWith('Sunset', expect.any(String));
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Link',
+      '</api/v8/new>; rel="successor-version"'
+    );
+    expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('strips control characters from deprecation log key components', () => {

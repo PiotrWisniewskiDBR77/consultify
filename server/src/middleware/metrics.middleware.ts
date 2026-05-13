@@ -33,8 +33,8 @@ const metrics: MetricsBucket = {
   errors: 0,
   latencySum: 0,
   latencyBuckets: Object.fromEntries(LATENCY_BUCKETS.map((b) => [`le_${b}`, 0])),
-  byStatus: {},
-  byMethod: {},
+  byStatus: Object.create(null) as Record<number, number>,
+  byMethod: Object.create(null) as Record<string, number>,
   rateLimitHits: 0,
   aiTimeouts: 0,
 };
@@ -106,57 +106,61 @@ export function getRequestMetrics(): MetricsBucket {
     errors: metrics.errors,
     latencySum: metrics.latencySum,
     latencyBuckets: { ...metrics.latencyBuckets },
-    byStatus: { ...metrics.byStatus },
-    byMethod: { ...metrics.byMethod },
+    byStatus: Object.assign(Object.create(null), metrics.byStatus),
+    byMethod: Object.assign(Object.create(null), metrics.byMethod),
     rateLimitHits: metrics.rateLimitHits,
     aiTimeouts: metrics.aiTimeouts,
   };
 }
 
 export function getPrometheusMetrics(): string {
-  const lines: string[] = [];
-  lines.push(`# HELP http_requests_total Total HTTP requests`);
-  lines.push(`# TYPE http_requests_total counter`);
-  lines.push(`http_requests_total ${toPrometheusCounter(metrics.requests)}`);
+  try {
+    const lines: string[] = [];
+    lines.push(`# HELP http_requests_total Total HTTP requests`);
+    lines.push(`# TYPE http_requests_total counter`);
+    lines.push(`http_requests_total ${toPrometheusCounter(metrics.requests)}`);
 
-  lines.push(`# HELP http_errors_total Total HTTP 5xx errors`);
-  lines.push(`# TYPE http_errors_total counter`);
-  lines.push(`http_errors_total ${toPrometheusCounter(metrics.errors)}`);
+    lines.push(`# HELP http_errors_total Total HTTP 5xx errors`);
+    lines.push(`# TYPE http_errors_total counter`);
+    lines.push(`http_errors_total ${toPrometheusCounter(metrics.errors)}`);
 
-  lines.push(`# HELP http_request_duration_ms_sum Total request duration`);
-  lines.push(`# TYPE http_request_duration_ms_sum counter`);
-  lines.push(`http_request_duration_ms_sum ${toPrometheusCounter(metrics.latencySum)}`);
+    lines.push(`# HELP http_request_duration_ms_sum Total request duration`);
+    lines.push(`# TYPE http_request_duration_ms_sum counter`);
+    lines.push(`http_request_duration_ms_sum ${toPrometheusCounter(metrics.latencySum)}`);
 
-  for (const bucket of LATENCY_BUCKETS) {
-    lines.push(
-      `http_request_duration_ms_bucket{le="${bucket}"} ${toPrometheusCounter(metrics.latencyBuckets[`le_${bucket}`])}`
-    );
+    for (const bucket of LATENCY_BUCKETS) {
+      lines.push(
+        `http_request_duration_ms_bucket{le="${bucket}"} ${toPrometheusCounter(metrics.latencyBuckets[`le_${bucket}`])}`
+      );
+    }
+    lines.push(`http_request_duration_ms_bucket{le="+Inf"} ${toPrometheusCounter(metrics.requests)}`);
+
+    lines.push(`# HELP rate_limit_hits_total Rate limit hits`);
+    lines.push(`# TYPE rate_limit_hits_total counter`);
+    lines.push(`rate_limit_hits_total ${toPrometheusCounter(metrics.rateLimitHits)}`);
+
+    lines.push(`# HELP ai_timeouts_total AI call timeouts`);
+    lines.push(`# TYPE ai_timeouts_total counter`);
+    lines.push(`ai_timeouts_total ${toPrometheusCounter(metrics.aiTimeouts)}`);
+
+    lines.push(`# HELP http_requests_by_method_total HTTP requests by normalized method`);
+    lines.push(`# TYPE http_requests_by_method_total counter`);
+    for (const [method, count] of Object.entries(metrics.byMethod)) {
+      lines.push(
+        `http_requests_by_method_total{method="${escapePrometheusLabelValue(method)}"} ${toPrometheusCounter(count)}`
+      );
+    }
+
+    for (const [status, count] of Object.entries(metrics.byStatus)) {
+      lines.push(
+        `http_requests_by_status{status="${escapePrometheusLabelValue(status)}"} ${toPrometheusCounter(count)}`
+      );
+    }
+
+    return lines.join('\n') + '\n';
+  } catch {
+    return '# consultify metrics export failed\n';
   }
-  lines.push(`http_request_duration_ms_bucket{le="+Inf"} ${toPrometheusCounter(metrics.requests)}`);
-
-  lines.push(`# HELP rate_limit_hits_total Rate limit hits`);
-  lines.push(`# TYPE rate_limit_hits_total counter`);
-  lines.push(`rate_limit_hits_total ${toPrometheusCounter(metrics.rateLimitHits)}`);
-
-  lines.push(`# HELP ai_timeouts_total AI call timeouts`);
-  lines.push(`# TYPE ai_timeouts_total counter`);
-  lines.push(`ai_timeouts_total ${toPrometheusCounter(metrics.aiTimeouts)}`);
-
-  lines.push(`# HELP http_requests_by_method_total HTTP requests by normalized method`);
-  lines.push(`# TYPE http_requests_by_method_total counter`);
-  for (const [method, count] of Object.entries(metrics.byMethod)) {
-    lines.push(
-      `http_requests_by_method_total{method="${escapePrometheusLabelValue(method)}"} ${toPrometheusCounter(count)}`
-    );
-  }
-
-  for (const [status, count] of Object.entries(metrics.byStatus)) {
-    lines.push(
-      `http_requests_by_status{status="${escapePrometheusLabelValue(status)}"} ${toPrometheusCounter(count)}`
-    );
-  }
-
-  return lines.join('\n') + '\n';
 }
 
 export const metricsMiddleware = (req: Request, res: Response, next: NextFunction): void => {

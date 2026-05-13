@@ -133,6 +133,30 @@ function truncateOptionalAuditString(value: string | undefined, maxChars: number
   return `${value.slice(0, maxChars)}...[truncated]`;
 }
 
+function formatAuditFailureReason(reason: unknown): string {
+  if (reason instanceof Error) {
+    const message = normalizeOptionalString(reason.message);
+    if (message) return truncateOptionalAuditString(message, 500) || message;
+    const name = normalizeOptionalString(reason.name);
+    if (name) return truncateOptionalAuditString(name, 500) || name;
+    return 'Error';
+  }
+  if (reason == null) return 'Unknown rejection';
+  if (typeof reason === 'string') {
+    return truncateOptionalAuditString(reason, 500) || '';
+  }
+  if (typeof reason === 'number' || typeof reason === 'boolean' || typeof reason === 'bigint') {
+    return String(reason);
+  }
+  try {
+    const serialized = JSON.stringify(reason);
+    if (serialized) return truncateOptionalAuditString(serialized, 500) || serialized;
+  } catch {
+    // Ignore circular structures and fall back to String().
+  }
+  return truncateOptionalAuditString(String(reason), 500) || 'Unknown rejection';
+}
+
 function redactAuditBody(
   body: Record<string, unknown> | undefined
 ): Record<string, unknown> | undefined {
@@ -263,11 +287,17 @@ const auditLogMiddleware = async (
         const auditPath = truncateAuditText(readPath(req));
         const bodySnapshot =
           httpMethod !== 'DELETE' ? safeRead(() => req.body, null) : null;
+        const bodySnapshotIsBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer(bodySnapshot);
         const bodyRecord =
-          bodySnapshot && typeof bodySnapshot === 'object'
+          !bodySnapshotIsBuffer && bodySnapshot && isPlainObjectRecord(bodySnapshot)
             ? (bodySnapshot as Record<string, unknown>)
             : undefined;
-        const auditBody = redactAuditBody(bodyRecord);
+        const auditBody = bodySnapshotIsBuffer
+          ? {
+              _auditBodyOmitted: 'buffer',
+              byteLength: (bodySnapshot as Buffer).byteLength,
+            }
+          : redactAuditBody(bodyRecord);
 
         // Determine Entity & Action
         // URL: /api/projects/:id -> Entity: project, ID: :id
@@ -349,8 +379,8 @@ const auditLogMiddleware = async (
               userAgent,
             });
           })
-          .catch((err: Error | null) =>
-            logger.error('[AuditLog] Failed to log:', (err as Error).message)
+          .catch((reason: unknown) =>
+            logger.error('[AuditLog] Failed to log:', formatAuditFailureReason(reason))
           );
         // V4-ENT-03: dual-write to audit_events
         getAuditEventsService()
@@ -376,8 +406,8 @@ const auditLogMiddleware = async (
               },
             })
           )
-          .catch((err: Error | null) =>
-            logger.error('[AuditLog] Failed audit_events log:', (err as Error).message)
+          .catch((reason: unknown) =>
+            logger.error('[AuditLog] Failed audit_events log:', formatAuditFailureReason(reason))
           );
         getAuditService()
           .then((svc) =>
@@ -409,8 +439,8 @@ const auditLogMiddleware = async (
               result: 'success',
             })
           )
-          .catch((err: Error | null) =>
-            logger.error('[AuditLog] Failed audit_log write:', (err as Error).message)
+          .catch((reason: unknown) =>
+            logger.error('[AuditLog] Failed audit_log write:', formatAuditFailureReason(reason))
           );
       } catch (err: any) {
         logger.error('[AuditLog] Error processing log:', err);

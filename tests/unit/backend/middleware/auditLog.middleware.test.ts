@@ -871,4 +871,99 @@ describe('auditLog.middleware', () => {
     expect(auditEventsLog).toHaveBeenCalledTimes(1);
     expect(auditServiceLog).toHaveBeenCalledTimes(1);
   });
+
+  it('logs normalized rejection reason when activity logger rejects with non-Error', async () => {
+    vi.resetModules();
+    const loggerError = vi.fn();
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: loggerError,
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: vi.fn().mockRejectedValue('db unavailable') },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: vi.fn().mockResolvedValue('evt-1') },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: vi.fn().mockResolvedValue('aud-1') },
+    }));
+
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      body: { id: 'x1' },
+      originalUrl: '/api/projects/x1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end();
+    await flushAsyncAuditWrites();
+
+    expect(loggerError).toHaveBeenCalledWith('[AuditLog] Failed to log:', expect.stringContaining('db unavailable'));
+  });
+
+  it('uses redacted sentinel snapshot when request body is Buffer', async () => {
+    vi.resetModules();
+    const activityLog = vi.fn().mockResolvedValue(undefined);
+    const auditEventsLog = vi.fn().mockResolvedValue('evt-1');
+    const auditServiceLog = vi.fn().mockResolvedValue('aud-1');
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: activityLog },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: auditEventsLog },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: auditServiceLog },
+    }));
+
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const bodyBuffer = Buffer.from('secret-bytes');
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      body: bodyBuffer,
+      originalUrl: '/api/projects/x1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end();
+    await flushAsyncAuditWrites();
+
+    const expectedSentinel = expect.objectContaining({
+      _auditBodyOmitted: 'buffer',
+      byteLength: bodyBuffer.byteLength,
+    });
+
+    expect(activityLog).toHaveBeenCalledWith(expect.objectContaining({ newValue: expectedSentinel }));
+    expect(auditEventsLog).toHaveBeenCalledWith(expect.objectContaining({ after: expectedSentinel }));
+    expect(auditServiceLog).toHaveBeenCalledWith(expect.objectContaining({ newValues: expectedSentinel }));
+    expect(req.body).toBe(bodyBuffer);
+  });
 });

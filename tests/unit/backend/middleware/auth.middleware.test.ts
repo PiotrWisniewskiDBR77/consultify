@@ -2352,6 +2352,36 @@ describe('AuthMiddleware', () => {
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('should deny without calling req.can when capability exceeds max length', () => {
+      mockReq.user = { id: 'u1' } as any;
+      mockReq.can = vi.fn().mockReturnValue(true);
+
+      const middleware = requirePermission(`e${'x'.repeat(200)}`);
+      middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Permission denied', code: 'INVALID_CAPABILITY' })
+      );
+      expect(mockReq.can).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should deny without calling req.can when capability contains control chars', () => {
+      mockReq.user = { id: 'u1' } as any;
+      mockReq.can = vi.fn().mockReturnValue(true);
+
+      const middleware = requirePermission('edit\u0000project');
+      middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Permission denied', code: 'INVALID_CAPABILITY' })
+      );
+      expect(mockReq.can).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('validateOrgMembership helpers', () => {

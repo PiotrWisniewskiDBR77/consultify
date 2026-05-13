@@ -20,6 +20,7 @@ export const DEMO_SESSION_ORG_HEADER = 'X-Demo-Session-Org';
 const MAX_DEMO_ORG_ID_CHARS = 128;
 const MAX_DEMO_GUARD_URL_CHARS = 8192;
 const MAX_DEMO_MODE_HEADER_CHARS = 64;
+const MAX_DEMO_USER_ID_CHARS = 128;
 const DEMO_PREF_KEY = 'demo:enabled';
 const DEMO_STARTED_AT_KEY = 'demo:started_at';
 
@@ -81,6 +82,13 @@ function sanitizeDemoOrgIdCandidate(value: unknown): string {
   if (!normalized) return '';
   if (normalized.length > MAX_DEMO_ORG_ID_CHARS) return '';
   if (!/^[a-zA-Z0-9_.:-]+$/.test(normalized)) return '';
+  return normalized;
+}
+
+function sanitizeDemoPreferenceUserId(value: unknown): string | undefined {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return undefined;
+  if (normalized.length > MAX_DEMO_USER_ID_CHARS) return undefined;
   return normalized;
 }
 
@@ -248,11 +256,13 @@ async function requireUserPreferencesTable(): Promise<void> {
  * Check if user has demo preference enabled
  */
 export const checkUserDemoPreference = async (userId: string): Promise<boolean> => {
+  const sanitizedUserId = sanitizeDemoPreferenceUserId(userId);
+  if (!sanitizedUserId) return false;
   try {
     await requireUserPreferencesTable();
     const row = await dbGet<{ value: string }>(
       `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
-      [userId, DEMO_PREF_KEY],
+      [sanitizedUserId, DEMO_PREF_KEY],
       { fallback: false }
     );
     if (!row?.value) return false;
@@ -275,6 +285,8 @@ export const setUserDemoPreference = async (
   enabled: boolean,
   options?: { setStartedAt?: boolean }
 ): Promise<void> => {
+  const sanitizedUserId = sanitizeDemoPreferenceUserId(userId);
+  if (!sanitizedUserId) throw new Error('Invalid demo preference user id');
   try {
     await requireUserPreferencesTable();
     const payload = JSON.stringify(Boolean(enabled));
@@ -282,18 +294,18 @@ export const setUserDemoPreference = async (
 
     await dbRun(
       `DELETE FROM user_preferences WHERE user_id = ? AND key = ?`,
-      [userId, DEMO_PREF_KEY],
+      [sanitizedUserId, DEMO_PREF_KEY],
       { fallback: true }
     );
     await dbRun(
       `INSERT INTO user_preferences (user_id, key, value, updated_at)
        VALUES (?, ?, ?, ?)`,
-      [userId, DEMO_PREF_KEY, payload, now],
+      [sanitizedUserId, DEMO_PREF_KEY, payload, now],
       { fallback: false }
     );
 
     if (enabled && options?.setStartedAt !== false) {
-      await setDemoStartedAt(userId, now);
+      await setDemoStartedAt(sanitizedUserId, now);
     }
   } catch (error: unknown) {
     if (isMissingTableError(error)) throw new Error('Demo preference storage unavailable');
@@ -305,18 +317,20 @@ export const setUserDemoPreference = async (
  * Set demo_started_at timestamp (for duration tracking and follow-up)
  */
 export const setDemoStartedAt = async (userId: string, isoDate?: string): Promise<void> => {
+  const sanitizedUserId = sanitizeDemoPreferenceUserId(userId);
+  if (!sanitizedUserId) throw new Error('Invalid demo preference user id');
   const value = isoDate || new Date().toISOString();
   await requireUserPreferencesTable();
 
   await dbRun(
     `DELETE FROM user_preferences WHERE user_id = ? AND key = ?`,
-    [userId, DEMO_STARTED_AT_KEY],
+    [sanitizedUserId, DEMO_STARTED_AT_KEY],
     { fallback: true }
   );
   await dbRun(
     `INSERT INTO user_preferences (user_id, key, value, updated_at)
      VALUES (?, ?, ?, ?)`,
-    [userId, DEMO_STARTED_AT_KEY, value, value],
+    [sanitizedUserId, DEMO_STARTED_AT_KEY, value, value],
     { fallback: false }
   );
 };
@@ -325,12 +339,20 @@ export const setDemoStartedAt = async (userId: string, isoDate?: string): Promis
  * Get demo_started_at timestamp (ISO string or null)
  */
 export const getDemoStartedAt = async (userId: string): Promise<string | null> => {
-  const row = await dbGet<{ value: string }>(
-    `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
-    [userId, DEMO_STARTED_AT_KEY],
-    { fallback: false }
-  );
-  return row?.value && typeof row.value === 'string' ? row.value : null;
+  const sanitizedUserId = sanitizeDemoPreferenceUserId(userId);
+  if (!sanitizedUserId) return null;
+  try {
+    await requireUserPreferencesTable();
+    const row = await dbGet<{ value: string }>(
+      `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [sanitizedUserId, DEMO_STARTED_AT_KEY],
+      { fallback: false }
+    );
+    return row?.value && typeof row.value === 'string' ? row.value : null;
+  } catch (error: unknown) {
+    if (isMissingTableError(error)) return null;
+    throw error;
+  }
 };
 
 /**

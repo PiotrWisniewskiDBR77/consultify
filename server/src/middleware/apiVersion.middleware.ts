@@ -132,6 +132,7 @@ const MAX_HEADER_VALUE_CHARS = 128;
 const MAX_PATH_CHARS_FOR_VERSION_URL_PARSE = 8192;
 const MAX_LOG_PATH_CHARS = 512;
 const MAX_SUPPORTED_VERSIONS_IN_ERROR = 32;
+const MAX_API_VERSION_ERROR_LOG_DETAIL_CHARS = 256;
 
 const formatVersionForError = (value: unknown): string => {
   const normalized = String(value ?? '');
@@ -144,6 +145,7 @@ const clampVersionInput = (value: string): string =>
 const stripAsciiControlChars = (value: string): string => value.replace(/[\u0000-\u001F\u007F]/g, '');
 const sanitizeHeaderValue = (value: string): string =>
   value.replace(/[\r\n\0]/g, '').slice(0, MAX_HEADER_VALUE_CHARS);
+const sanitizeVersionTokenForPayload = (value: string): string => sanitizeHeaderValue(value);
 const truncateLogPath = (value: string): string =>
   value.length > MAX_LOG_PATH_CHARS ? `${value.slice(0, MAX_LOG_PATH_CHARS)}...` : value;
 const getSupportedMajorVersionsForError = (): string[] =>
@@ -170,6 +172,13 @@ const formatDateToIsoOrUndefined = (value: Date | null | undefined): string | un
   if (!(value instanceof Date)) return undefined;
   if (!Number.isFinite(value.getTime())) return undefined;
   return safeRead(() => value.toISOString(), undefined as string | undefined);
+};
+const formatErrorForLog = (error: unknown): string => {
+  const rawDetail = (() => {
+    if (error instanceof Error) return `${error.name}: ${error.message}`;
+    return String(error);
+  })();
+  return rawDetail.replace(/[\r\n\0]/g, ' ').slice(0, MAX_API_VERSION_ERROR_LOG_DETAIL_CHARS);
 };
 const isPlainJsonObject = (value: unknown): value is Record<string, unknown> => {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -227,7 +236,10 @@ export function apiVersionMiddleware(
         logger.warn('[APIVersion] Invalid version but response already started', {
           requestedVersion: String(version).slice(0, 64),
         });
-        next();
+        safeRead(() => {
+          next();
+          return true;
+        }, false);
         return;
       }
       applyNoStoreHeaders(res);
@@ -236,7 +248,7 @@ export function apiVersionMiddleware(
         error: 'Invalid API version',
         message: `Unsupported API version: ${formatVersionForError(version)}`,
         supportedVersions: getSupportedMajorVersionsForError(),
-        currentVersion: LATEST_VERSION,
+        currentVersion: sanitizeVersionTokenForPayload(LATEST_VERSION),
         })
       ) {
         logger.warn('[APIVersion] Failed to send invalid version response body', {
@@ -274,8 +286,18 @@ export function apiVersionMiddleware(
 
     next();
   } catch (error) {
-    logger.error('[APIVersion] Version extraction error:', error);
-    next();
+    logger.error('[APIVersion] Version extraction error', {
+      detail: formatErrorForLog(error),
+    });
+    const nextSucceeded = safeRead(() => {
+      next();
+      return true;
+    }, false);
+    if (!nextSucceeded) {
+      logger.warn('[APIVersion] Failed to invoke next after extraction error', {
+        detail: formatErrorForLog(error),
+      });
+    }
   }
 }
 
@@ -289,7 +311,10 @@ export function requireVersion(minVersion: string) {
         logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
           reason: 'missing_api_version',
         });
-        next();
+        safeRead(() => {
+          next();
+          return true;
+        }, false);
         return;
       }
       applyNoStoreHeaders(res);
@@ -318,7 +343,10 @@ export function requireVersion(minVersion: string) {
           requiredVersion: minInfo.full,
           currentVersion: req.apiVersion.full,
         });
-        next();
+        safeRead(() => {
+          next();
+          return true;
+        }, false);
         return;
       }
       applyNoStoreHeaders(res);
@@ -328,8 +356,8 @@ export function requireVersion(minVersion: string) {
         message: `This endpoint requires API version ${formatVersionForError(
           normalizedMinVersionInput
         )} or higher.`,
-        yourVersion: req.apiVersion.full,
-        requiredVersion: minInfo.full,
+        yourVersion: sanitizeVersionTokenForPayload(req.apiVersion.full),
+        requiredVersion: sanitizeVersionTokenForPayload(minInfo.full),
         })
       ) {
         logger.warn('[APIVersion] Failed to send outdated api version response body', {

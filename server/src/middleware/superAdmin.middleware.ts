@@ -50,6 +50,7 @@ export type SuperAdminCapability = (typeof SUPERADMIN_CAPABILITIES)[number];
 const MAX_SUPERADMIN_JWT_CHARS = 8192;
 const MAX_SUPERADMIN_SUBJECT_ID_CHARS = 256;
 const MAX_SUPERADMIN_ORGANIZATION_ID_CHARS = 256;
+const MAX_SUPERADMIN_ROLE_CLAIM_CHARS = 128;
 const MAX_SUPERADMIN_CAPABILITY_RAW_ARRAY_ENTRIES = 8192;
 const MAX_SUPERADMIN_CAPABILITY_CLAIM_ENTRIES = 64;
 const SUPERADMIN_JWS_COMPACT_TOKEN_PATTERN = /^[A-Za-z0-9._-]+$/;
@@ -256,6 +257,14 @@ export const verifySuperAdmin = async (
     });
     return;
   }
+  if (cleanToken.split('.').length !== 3) {
+    res.status(401).json({
+      error: 'Unauthorized',
+      code: 'UNAUTHORIZED',
+      guidance: 'Refresh your session and retry.',
+    });
+    return;
+  }
 
   try {
     const decoded = await new Promise<JWTPayload>((resolve, reject) => {
@@ -310,6 +319,14 @@ export const verifySuperAdmin = async (
       }
     }
     const tokenRole = readOptionalStringClaim(decodedClaims, 'role');
+    if (tokenRole && tokenRole.length > MAX_SUPERADMIN_ROLE_CLAIM_CHARS) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+        guidance: 'Refresh your session and retry.',
+      });
+      return;
+    }
     const tokenOrganizationId =
       readOptionalStringClaim(decodedClaims, 'organizationId') ||
       readOptionalStringClaim(decodedClaims, 'organization_id') ||

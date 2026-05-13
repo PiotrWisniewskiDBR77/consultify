@@ -344,4 +344,47 @@ describe('requireAudit.middleware', () => {
     );
     expect(logMock).toHaveBeenCalledTimes(1);
   });
+
+  it('does not forward arbitrary caller properties to auditEventsService.log', async () => {
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+    await req.emitAuditEvent({
+      action: 'CREATE',
+      resourceType: 'task',
+      extraField: 'should-not-reach-log',
+    } as any);
+
+    const logged = logMock.mock.calls[0]?.[0];
+    expect(logged).not.toHaveProperty('extraField');
+    expect(logged).toEqual(
+      expect.objectContaining({
+        action: 'CREATE',
+        resourceType: 'task',
+      })
+    );
+  });
+
+  it('returns trimmed audit event id when persistence returns padded string', async () => {
+    logMock.mockResolvedValueOnce('  evt-padded  ');
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+    const eventId = await req.emitAuditEvent({ action: 'UPDATE', resourceType: 'initiative' });
+
+    expect(eventId).toBe('evt-padded');
+    expect(logMock).toHaveBeenCalledTimes(1);
+  });
 });

@@ -10,7 +10,7 @@ export interface V8RequestContext {
 }
 const MAX_V8_ORG_USER_ID_CHARS = 256;
 const MAX_V8_USER_ROLE_CHARS = 128;
-const DISALLOWED_V8_ID_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
+const DISALLOWED_V8_ID_CONTROL_CHARS = /[\u0000-\u001F\u007F\u0085\u2028\u2029]/;
 const DISALLOWED_V8_ROLE_CONTROL_CHARS_GLOBAL = /[\u0000-\u001F\u007F]/g;
 
 const normalizeOptionalString = (value: unknown): string | undefined => {
@@ -55,6 +55,7 @@ const applyV8NoStoreHeaders = (res: Response): void => {
   safeSetHeader(res, 'Cache-Control', 'no-store');
   safeSetHeader(res, 'Pragma', 'no-cache');
   safeSetHeader(res, 'Expires', '0');
+  safeSetHeader(res, 'X-Content-Type-Options', 'nosniff');
 };
 
 const responseWriteBlocked = (res: Response): boolean =>

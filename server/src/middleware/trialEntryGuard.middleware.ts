@@ -76,6 +76,7 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
   { method: 'POST', path: /^\/api\/knowledge/ },
 ];
 const MAX_TRIAL_GUARD_PATH_LEN = 8192;
+const MAX_TRIAL_GUARD_USER_ID_LEN = 512;
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -141,7 +142,7 @@ const normalizePathForRouteMatch = (path: string): string => path.replace(/\/+/g
 const normalizeMethodForRouteMatch = (value: unknown): string | undefined =>
   normalizeOptionalString(value)?.toUpperCase();
 const isSkippableTrialGuardMethod = (method: string | undefined): boolean =>
-  method === 'OPTIONS' || method === 'HEAD';
+  method === 'OPTIONS' || method === 'HEAD' || method === 'TRACE';
 const stripRouteQueryAndFragment = (path: string): string => path.split('?')[0]?.split('#')[0] || '';
 const readOriginalUrlPathForRouting = (req: Request): string =>
   normalizeOptionalString(safeRead(() => req.originalUrl, undefined as unknown)) || '';
@@ -199,6 +200,13 @@ export const trialEntryGuard = async (
     // Skip if no user (auth middleware not applied or failed)
     const userId = normalizeUserId(safeRead(() => req.user?.id, undefined as unknown));
     if (!userId) {
+      next();
+      return;
+    }
+    if (userId.length > MAX_TRIAL_GUARD_USER_ID_LEN) {
+      logger.warn('[TrialEntryGuard] user id exceeded max supported length; skipping lookup', {
+        userIdLength: userId.length,
+      });
       next();
       return;
     }

@@ -23,6 +23,10 @@ const MAX_SHADOW_JWT_DECODE_CHARS = 8192;
 const MAX_SHADOW_ORG_ID_CHARS = 256;
 const MAX_SHADOW_AUTHORIZATION_HEADER_CHARS = 8256;
 const MAX_SHADOW_ORG_SOURCE_READ_CHARS = 1024;
+const isLikelyJwsCompact = (token: string): boolean => {
+  const parts = token.split('.');
+  return parts.length === 3 && parts.every((part) => part.length > 0);
+};
 
 const normalizeOptionalOrgCandidate = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -69,13 +73,20 @@ export async function v8ShadowModeCheck(
       const authHeader = normalizeOptionalString(rawAuthHeader);
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice(7).trim();
-        if (token && token.length <= MAX_SHADOW_JWT_DECODE_CHARS) {
-          const decoded = jwt.decode(token) as
-            | { organizationId?: string; organization_id?: string }
-            | null;
-          orgId =
-            normalizeOptionalOrgCandidate(decoded?.organizationId) ||
-            normalizeOptionalOrgCandidate(decoded?.organization_id);
+        if (
+          token &&
+          token.length <= MAX_SHADOW_JWT_DECODE_CHARS &&
+          isLikelyJwsCompact(token)
+        ) {
+          const decodedRaw = jwt.decode(token);
+          if (decodedRaw && typeof decodedRaw === 'object' && !Array.isArray(decodedRaw)) {
+            const decoded = decodedRaw as
+              | { organizationId?: string; organization_id?: string }
+              | null;
+            orgId =
+              normalizeOptionalOrgCandidate(decoded?.organizationId) ||
+              normalizeOptionalOrgCandidate(decoded?.organization_id);
+          }
         }
       }
     } catch {

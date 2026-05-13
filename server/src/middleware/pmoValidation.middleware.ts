@@ -370,12 +370,22 @@ export const logStatusChange = (entityType: string) => {
       const body = safeRead(() => req.body, {} as PMORequest['body']);
       const nextStatus = normalizeOptionalString(body.status);
       const organizationId = normalizeOptionalString(safeRead(() => req.organizationId, undefined));
-      const entityId = normalizeOptionalString(safeRead(() => req.params?.id, undefined));
+      const entityId = readEntityId(req);
       const userId = normalizeOptionalString(safeRead(() => req.userId, undefined));
+      const previousStatus = normalizeOptionalString(safeRead(() => req.previousStatus, undefined));
       const responseStatus = safeRead(() => res.statusCode, 500);
+      const entityIdWithinLimit = Boolean(
+        entityId && entityId.length > 0 && entityId.length <= MAX_PMO_ENTITY_ID_CHARS
+      );
 
       // Only log if successful and status changed, and we have a valid org context
-      if (responseStatus < 400 && req.previousStatus && nextStatus && organizationId && entityId) {
+      if (
+        responseStatus < 400 &&
+        previousStatus &&
+        nextStatus &&
+        organizationId &&
+        entityIdWithinLimit
+      ) {
         const logSql = `INSERT INTO activity_logs 
                     (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                     VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
@@ -387,7 +397,7 @@ export const logStatusChange = (entityType: string) => {
             userId,
             entityType,
             entityId,
-            JSON.stringify({ status: req.previousStatus }),
+            JSON.stringify({ status: previousStatus }),
             JSON.stringify({ status: nextStatus }),
           ]);
         } catch (err: any) {

@@ -10,6 +10,7 @@ const MAX_ACTION_TYPE_LENGTH = 128;
 const MAX_REASON_LENGTH = 4000;
 const MAX_METADATA_METHOD_LENGTH = 16;
 const MAX_METADATA_PATH_LENGTH = 2048;
+const INVISIBLE_REASON_CHARS = /[\u200B-\u200D\uFEFF]/g;
 const RISK_LEVELS: readonly RiskLevel[] = ['low', 'medium', 'high', 'critical'];
 
 const safeRead = <T>(reader: () => T, fallback: T): T => {
@@ -34,6 +35,21 @@ const normalizeOptionalHeaderValue = (value: unknown): string | undefined => {
     }
   }
   return undefined;
+};
+const normalizeReasonForGatekeeping = (value: string): string =>
+  value.replace(INVISIBLE_REASON_CHARS, '').trim();
+const respondJson = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>
+): boolean => {
+  if (safeRead(() => res.headersSent, false)) return false;
+  try {
+    res.status(statusCode).json(payload);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 const isExplicitConfirmation = (value: unknown): boolean => {
@@ -70,7 +86,7 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
       typeof rawConfirmation !== 'boolean' &&
       typeof rawConfirmation !== 'string'
     ) {
-      res.status(428).json({
+      respondJson(res, 428, {
         error: 'Confirmation must be a boolean or the string "true"',
         code: 'CONFIRMATION_INVALID_TYPE',
         actionType: normalizedActionType,
@@ -80,17 +96,17 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
     }
     const confirmation = isExplicitConfirmation(body.confirmation);
     if (rawReason !== undefined && typeof rawReason !== 'string') {
-      res.status(422).json({
+      respondJson(res, 422, {
         error: 'Reason must be a string',
         code: 'REASON_INVALID_TYPE',
         actionType: normalizedActionType,
       });
       return;
     }
-    const reason = normalizeOptionalString(rawReason);
+    const reason = normalizeReasonForGatekeeping(normalizeOptionalString(rawReason) || '');
 
     if (!confirmation) {
-      res.status(428).json({
+      respondJson(res, 428, {
         error: 'Action requires explicit confirmation',
         code: 'CONFIRMATION_REQUIRED',
         actionType: normalizedActionType,
@@ -99,8 +115,8 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
       return;
     }
 
-    if (!reason || reason.length < 3) {
-      res.status(422).json({
+    if (reason.length < 3) {
+      respondJson(res, 422, {
         error: 'A reason must be provided for this action (minimum 3 characters)',
         code: 'REASON_REQUIRED',
         actionType: normalizedActionType,
@@ -109,7 +125,7 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
     }
 
     if (reason.length > MAX_REASON_LENGTH) {
-      res.status(422).json({
+      respondJson(res, 422, {
         error: `A reason must be at most ${MAX_REASON_LENGTH} characters`,
         code: 'REASON_TOO_LONG',
         actionType: normalizedActionType,
@@ -170,7 +186,7 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
         actionType: normalizedActionType,
         adminId,
       });
-      res.status(503).json({
+      respondJson(res, 503, {
         error:
           'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
         code: 'AUDIT_UNAVAILABLE',

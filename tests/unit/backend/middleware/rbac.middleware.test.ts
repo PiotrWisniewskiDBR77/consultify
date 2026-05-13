@@ -56,6 +56,20 @@ describe('rbac.middleware (L1)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireRole: fails closed when req is null', () => {
+    const res = makeRes();
+    const next = vi.fn();
+
+    requireRole('admin')(null as any, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Insufficient role',
+      code: 'RBAC_INSUFFICIENT_ROLE',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('requireRole: allows when role matches (case-insensitive)', () => {
     const req: any = { user: { role: 'ADMIN' } };
     const res = makeRes();
@@ -78,6 +92,20 @@ describe('rbac.middleware (L1)', () => {
     const res = makeRes();
     const next = vi.fn();
     requireOrgAccess()(req, res as any, next as any);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Organization access required',
+      code: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgAccess: fails closed when req is null', () => {
+    const res = makeRes();
+    const next = vi.fn();
+
+    requireOrgAccess()(null as any, res as any, next as any);
+
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.body).toEqual({
       error: 'Organization access required',
@@ -209,6 +237,80 @@ describe('rbac.middleware (L1)', () => {
     const next = vi.fn();
     requireOrgAccess()(req, res as any, next as any);
     expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: avoids writing when response writableFinished is true', () => {
+    const req: any = { user: { role: 'guest' } };
+    const res: any = makeRes();
+    res.writableFinished = true;
+    const next = vi.fn();
+    requireRole('admin')(req, res as any, next as any);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: avoids writing when response destroyed is true', () => {
+    const req: any = { user: { role: 'guest' } };
+    const res: any = makeRes();
+    res.destroyed = true;
+    const next = vi.fn();
+    requireRole('admin')(req, res as any, next as any);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgAccess: avoids writing when response writableFinished is true', () => {
+    const req: any = { user: { organizationId: '' } };
+    const res: any = makeRes();
+    res.writableFinished = true;
+    const next = vi.fn();
+    requireOrgAccess()(req, res as any, next as any);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgAccess: avoids writing when response destroyed is true', () => {
+    const req: any = { user: { organizationId: '' } };
+    const res: any = makeRes();
+    res.destroyed = true;
+    const next = vi.fn();
+    requireOrgAccess()(req, res as any, next as any);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: avoids json write when status marks response as committed', () => {
+    const req: any = { user: { role: 'guest' } };
+    const res: any = makeRes();
+    res.status = vi.fn((code: number) => {
+      res.statusCode = code;
+      res.headersSent = true;
+      return res;
+    });
+    const next = vi.fn();
+    requireRole('admin')(req, res as any, next as any);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgAccess: avoids json write when status marks response as committed', () => {
+    const req: any = { user: { organizationId: '' } };
+    const res: any = makeRes();
+    res.status = vi.fn((code: number) => {
+      res.statusCode = code;
+      res.headersSent = true;
+      return res;
+    });
+    const next = vi.fn();
+    requireOrgAccess()(req, res as any, next as any);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });

@@ -16,6 +16,7 @@ function makeRes() {
     res.body = payload;
     return res;
   });
+  res.end = vi.fn(() => res);
   return res;
 }
 
@@ -633,7 +634,7 @@ describe('rateLimiting.middleware (L1)', () => {
         })
       );
       expect(lastRes.headers['retry-after']).toBe(String(lastRes.body.retryAfter));
-      expect(lastRes.body.retryAfter).toBeGreaterThanOrEqual(0);
+      expect(lastRes.body.retryAfter).toBeGreaterThanOrEqual(1);
     } finally {
       process.env.NODE_ENV = prev;
     }
@@ -663,6 +664,72 @@ describe('rateLimiting.middleware (L1)', () => {
       expect(lastNext).toHaveBeenCalledTimes(1);
       expect(lastRes.status).not.toHaveBeenCalled();
       expect(lastRes.json).not.toHaveBeenCalled();
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('clamps retry-after to minimum 1 second when over limit at window boundary', async () => {
+    const prev = process.env.NODE_ENV;
+    const baseNow = 1_700_000_000_000;
+    const windowMs = 15 * 60_000;
+    const dateNowSpy = vi.spyOn(Date, 'now');
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const req: any = { method: 'POST', ip: '31.31.31.31', headers: {}, socket: {} };
+
+      let nowCall = 0;
+      dateNowSpy.mockImplementation(() => {
+        nowCall += 1;
+        if (nowCall <= 15) return baseNow;
+        if (nowCall === 16) return baseNow + windowMs - 1;
+        return baseNow + windowMs;
+      });
+      for (let i = 0; i < 16; i++) {
+        if (i < 15) {
+          mod.authRateLimiter(req, makeRes() as any, vi.fn() as any);
+          continue;
+        }
+        const res = makeRes();
+        const next = vi.fn();
+        mod.authRateLimiter(req, res as any, next as any);
+
+        expect(next).not.toHaveBeenCalled();
+        expect(res.statusCode).toBe(429);
+        expect(res.headers['retry-after']).toBe('1');
+        expect(res.body.retryAfter).toBe(1);
+      }
+    } finally {
+      dateNowSpy.mockRestore();
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('fails closed when 429 json write throws', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const req: any = { method: 'POST', ip: '32.32.32.32', headers: {}, socket: {} };
+
+      for (let i = 0; i < 15; i++) {
+        mod.authRateLimiter(req, makeRes() as any, vi.fn() as any);
+      }
+
+      const res = makeRes();
+      const next = vi.fn();
+      res.json = vi.fn(() => {
+        throw new Error('json failed');
+      });
+
+      mod.authRateLimiter(req, res as any, next as any);
+
+      expect(res.status).toHaveBeenCalledWith(429);
+      expect(res.end).toHaveBeenCalledTimes(1);
+      expect(next).not.toHaveBeenCalled();
     } finally {
       process.env.NODE_ENV = prev;
     }

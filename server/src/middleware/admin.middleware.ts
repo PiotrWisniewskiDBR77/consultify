@@ -78,10 +78,19 @@ const sendAdminAccessRequired = (res: Response): boolean => {
         setHeader?: (name: string, value: string) => Response;
       }).setHeader;
       if (typeof setHeader === 'function') {
-        setHeader.call(res, 'Cache-Control', 'no-store');
-        setHeader.call(res, 'Pragma', 'no-cache');
-        setHeader.call(res, 'Expires', '0');
-        setHeader.call(res, 'X-Content-Type-Options', 'nosniff');
+        const denySecurityHeaders: ReadonlyArray<readonly [string, string]> = [
+          ['Cache-Control', 'no-store'],
+          ['Pragma', 'no-cache'],
+          ['Expires', '0'],
+          ['X-Content-Type-Options', 'nosniff'],
+          ['X-Frame-Options', 'DENY'],
+          ['Referrer-Policy', 'no-referrer'],
+        ];
+        for (const [headerName, headerValue] of denySecurityHeaders) {
+          safeRead(() => {
+            setHeader.call(res, headerName, headerValue);
+          }, undefined as void);
+        }
       }
     } catch {
       // fail-closed: deny path must remain non-throwing
@@ -133,9 +142,19 @@ export const verifyAdmin = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const denySafely = (): void => {
+    safeRead(() => {
+      safeSendAdminAccessRequired(res);
+    }, undefined as void);
+  };
   try {
     if (req == null) {
-      safeSendAdminAccessRequired(res);
+      denySafely();
+      return;
+    }
+    const isSuperAdmin = safeRead(() => isRequestSuperAdmin(req), false);
+    if (isSuperAdmin) {
+      finishAllowPath(next, res);
       return;
     }
     const role = safeRead(() => getRequestAccessRole(req), '');
@@ -153,12 +172,6 @@ export const verifyAdmin = async (
       normalizeOptionalString(safeRead(() => req.userId, undefined as unknown));
     const orgId = sanitizeMembershipLookupId(orgIdRaw);
     const userId = sanitizeMembershipLookupId(userIdRaw);
-    const isSuperAdmin = safeRead(() => isRequestSuperAdmin(req), false);
-
-    if (isSuperAdmin) {
-      finishAllowPath(next, res);
-      return;
-    }
     if (isAdminRole(role)) {
       finishAllowPath(next, res);
       return;
@@ -183,9 +196,9 @@ export const verifyAdmin = async (
       }
     }
 
-    safeSendAdminAccessRequired(res);
+    denySafely();
   } catch {
-    safeSendAdminAccessRequired(res);
+    denySafely();
   }
 };
 

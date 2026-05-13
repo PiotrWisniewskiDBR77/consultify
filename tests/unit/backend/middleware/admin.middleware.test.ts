@@ -135,6 +135,8 @@ describe('admin.middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
       expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
+      expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -151,6 +153,8 @@ describe('admin.middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
       expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
+      expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
     });
 
     it('allows when req.user.role is admin', () => {
@@ -174,6 +178,8 @@ describe('admin.middleware (L1)', () => {
       expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
       expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
       expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
+      expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
     });
 
     it('allows when req.userRole is admin (legacy)', () => {
@@ -215,6 +221,31 @@ describe('admin.middleware (L1)', () => {
       verifyAdmin(req, res, next);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
+      expect(dbGetMock).not.toHaveBeenCalled();
+    });
+
+    it('allows superadmin without evaluating membership lookup ids', async () => {
+      let orgIdReads = 0;
+      const user: any = {
+        isSuperAdmin: true,
+      };
+      Object.defineProperty(user, 'organizationId', {
+        configurable: true,
+        get: () => {
+          orgIdReads += 1;
+          return 'org-ignored';
+        },
+      });
+      const req: any = { user };
+      const res = makeRes();
+      const next = vi.fn();
+
+      await verifyAdmin(req, res, next);
+
+      expect(orgIdReads).toBe(0);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(dbGetMock).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it('does not attempt json body when headers are already sent', async () => {
@@ -227,6 +258,29 @@ describe('admin.middleware (L1)', () => {
 
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('still applies remaining deny headers when first setHeader call throws', async () => {
+      const req: any = { user: { role: 'user' } };
+      const res = makeRes() as any;
+      res.setHeader = vi.fn((name: string) => {
+        if (name === 'Cache-Control') {
+          throw new Error('setHeader failed');
+        }
+        return res;
+      });
+      const next = vi.fn();
+
+      await verifyAdmin(req, res, next);
+
+      expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+      expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
+      expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'no-referrer');
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Admin access required' });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -265,6 +319,19 @@ describe('admin.middleware (L1)', () => {
       await expect(verifyAdmin(req, res, next)).resolves.toBeUndefined();
       expect(next).not.toHaveBeenCalled();
       expect(res.end).toHaveBeenCalledTimes(1);
+    });
+
+    it('verifyAdmin settles when deny path status throws after headers already sent', async () => {
+      const req: any = { user: { role: 'user' } };
+      const res: any = makeRes();
+      res.headersSent = true;
+      res.status = vi.fn(() => {
+        throw new Error('status failed late');
+      });
+      const next = vi.fn();
+
+      await expect(verifyAdmin(req, res, next)).resolves.toBeUndefined();
+      expect(next).not.toHaveBeenCalled();
     });
 
     it('does not reject when response object is null in deny path', async () => {

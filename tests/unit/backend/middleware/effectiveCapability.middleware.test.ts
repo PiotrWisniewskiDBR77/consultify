@@ -397,6 +397,61 @@ describe('effectiveCapability.middleware', () => {
     expect(mockLoggerError).toHaveBeenCalled();
   });
 
+  it('returns 503 when custom project resolver throws in enforce mode', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ', async () => {
+      throw new Error('project resolver failed');
+    });
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: {},
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'EFFECTIVE_ACCESS_CHECK_FAILED' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] resolveProjectId failed',
+      expect.objectContaining({ capability: 'PROJECT_READ' })
+    );
+  });
+
+  it('stays fail-open in shadow mode when custom project resolver throws', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
+    const middleware = requireProjectCapability('PROJECT_READ', async () => {
+      throw new Error('project resolver failed');
+    });
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: {},
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] resolveProjectId failed',
+      expect.objectContaining({ capability: 'PROJECT_READ' })
+    );
+  });
+
   it('returns 503 when hasEffectiveCapability throws in enforce mode', async () => {
     mockHasEffectiveCapability.mockImplementationOnce(() => {
       throw new Error('capability evaluator failed');
@@ -421,6 +476,61 @@ describe('effectiveCapability.middleware', () => {
     );
     expect(next).not.toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalled();
+  });
+
+  it('returns 503 when any-capability resolver throws in enforce mode', async () => {
+    const middleware = requireAnyProjectCapability(['PROJECT_READ', 'PROJECT_WRITE'], async () => {
+      throw new Error('project resolver failed');
+    });
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: {},
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'EFFECTIVE_ACCESS_CHECK_FAILED' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] resolveProjectId failed',
+      expect.objectContaining({ capabilities: ['PROJECT_READ', 'PROJECT_WRITE'] })
+    );
+  });
+
+  it('stays fail-open in shadow mode when any-capability resolver throws', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'true';
+    const middleware = requireAnyProjectCapability(['PROJECT_READ', 'PROJECT_WRITE'], async () => {
+      throw new Error('project resolver failed');
+    });
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: {},
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] resolveProjectId failed',
+      expect.objectContaining({ capabilities: ['PROJECT_READ', 'PROJECT_WRITE'] })
+    );
   });
 
   it('logs and swallows response writer errors on deny path', async () => {

@@ -38,7 +38,8 @@ const readFiniteNumber = (value: unknown): number | undefined => {
 const responseAlreadyCommitted = (res: Response): boolean =>
   safeRead(() => res.headersSent, false) ||
   safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
-  safeRead(() => (res as Response & { finished?: boolean }).finished === true, false);
+  safeRead(() => (res as Response & { finished?: boolean }).finished === true, false) ||
+  safeRead(() => (res as Response & { destroyed?: boolean }).destroyed === true, false);
 
 const invokeNext = (next: NextFunction, phase: string): void => {
   if (typeof next !== 'function') return;
@@ -53,11 +54,16 @@ const invokeNext = (next: NextFunction, phase: string): void => {
     logger.warn('[ResourceQuota] next() threw', { phase, error });
   }
 };
-const readSubscriptionPlanId = (orgPlan: Record<string, unknown> | null): unknown => {
+const readSubscriptionPlanId = (orgPlan: Record<string, unknown> | null): string | undefined => {
   if (!orgPlan) return undefined;
   const raw = orgPlan.subscription_plan_id;
   if (typeof raw === 'string') return normalizeOptionalString(raw);
-  return raw;
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
+  if (typeof raw === 'bigint') {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed)) return String(parsed);
+  }
+  return undefined;
 };
 
 const shouldSkipCommittedResponse = (res: Response, next: NextFunction): boolean => {

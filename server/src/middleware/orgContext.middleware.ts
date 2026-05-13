@@ -185,6 +185,7 @@ const isSafeOrgContextId = (orgId: string): boolean => {
   if (!orgId || orgId.length > MAX_ORG_CONTEXT_ID_CHARS) return false;
   if (/[\u0000-\u001F\u007F]/.test(orgId)) return false;
   if (/\s/u.test(orgId)) return false;
+  if (/[,;|]/.test(orgId)) return false;
   if (orgId.includes('..') || orgId.includes('/') || orgId.includes('\\')) return false;
   return true;
 };
@@ -497,7 +498,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
       }
 
       // Attach org context
-      req.org = {
+      const resolvedOrgContext: OrgContext = {
         id: orgId,
         source: orgSource || 'unknown',
         isMember: access.isMember || false,
@@ -506,6 +507,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
         permissionScope: access.permissionScope,
         membershipId: access.membershipId || access.linkId,
       };
+      req.org = Object.freeze(resolvedOrgContext);
 
       // Legacy compatibility: also set orgContext
       req.orgContext = req.org;

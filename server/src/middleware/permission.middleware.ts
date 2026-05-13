@@ -103,6 +103,25 @@ const sendJsonIfHeadersOpen = (
     return false;
   }
 };
+const isResponseCommitted = (res: Response): boolean =>
+  safeRead(
+    () =>
+      res.headersSent ||
+      (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
+      (res as Response & { writableEnded?: boolean; destroyed?: boolean }).destroyed === true,
+    false
+  );
+const shouldSkipPermissionCheck = (
+  res: Response,
+  middlewareName: 'requirePermission' | 'requireAnyPermission' | 'requireAllPermissions'
+): boolean => {
+  if (!isResponseCommitted(res)) return false;
+  logger.warn('[PermissionMiddleware] Skipped permission check: response already committed', {
+    middleware: middlewareName,
+    code: 'RESPONSE_ALREADY_COMMITTED',
+  });
+  return true;
+};
 const asPermissionKeyList = (permissionKeys: unknown): string[] =>
   Array.isArray(permissionKeys) ? permissionKeys : [];
 const isPermissionKeyWithinLimit = (key: string): boolean => key.length <= MAX_PERMISSION_KEY_LENGTH;
@@ -203,6 +222,7 @@ export const requirePermission = (permissionKey: string) => {
         });
         return;
       }
+      if (shouldSkipPermissionCheck(res, 'requirePermission')) return;
 
       const roleCandidates = getRoleCandidates(userRole);
       let hasPermission = false;
@@ -258,6 +278,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
         });
         return;
       }
+      if (shouldSkipPermissionCheck(res, 'requireAnyPermission')) return;
       const permissionKeyList = asPermissionKeyList(permissionKeys);
       if (permissionKeyList !== permissionKeys) {
         logger.warn('[PermissionMiddleware] Invalid permission key list input for requireAnyPermission', {
@@ -358,6 +379,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
         });
         return;
       }
+      if (shouldSkipPermissionCheck(res, 'requireAllPermissions')) return;
       const permissionKeyList = asPermissionKeyList(permissionKeys);
       if (permissionKeyList !== permissionKeys) {
         logger.warn('[PermissionMiddleware] Invalid permission key list input for requireAllPermissions', {

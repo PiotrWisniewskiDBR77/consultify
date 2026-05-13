@@ -127,6 +127,22 @@ describe('validation.middleware (L1 contract)', () => {
       expect(loggerError).toHaveBeenCalled();
     });
 
+    it('still returns 500 when logger.error throws in invalid-schema branch', () => {
+      loggerError.mockImplementationOnce(() => {
+        throw new Error('logger down');
+      });
+      const mw = validateBody(null as unknown as z.ZodSchema);
+      const req: any = { body: {}, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('still completes 400 when res.json throws once (fallback send path)', () => {
       const schema = z.object({ name: z.string().min(2) });
       const mw = validateBody(schema);
@@ -200,6 +216,93 @@ describe('validation.middleware (L1 contract)', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('caps excessively long validation field/message values in 400 payload', () => {
+      const longPathSegment = 'x'.repeat(600);
+      const longMessage = 'm'.repeat(5000);
+      const schema: any = {
+        safeParse: () => ({
+          success: false,
+          error: {
+            issues: [
+              {
+                path: [longPathSegment],
+                message: longMessage,
+                code: 'too_big',
+              },
+            ],
+          },
+        }),
+      };
+      const mw = validateBody(schema);
+      const req: any = { body: { any: 'x' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      const payload = (res.json as any).mock.calls[0][0];
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(payload.details[0].field.length).toBeLessThanOrEqual(259);
+      expect(payload.details[0].message.length).toBeLessThanOrEqual(2051);
+      expect(payload.details[0].field.endsWith('...')).toBe(true);
+      expect(payload.details[0].message.endsWith('...')).toBe(true);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('logs bounded preview string for large validation error arrays', () => {
+      loggerInfo.mockClear();
+      const hugeIssues = Array.from({ length: 300 }, (_, index) => ({
+        path: [`field_${index}_${'x'.repeat(120)}`],
+        message: `issue_${index}_${'m'.repeat(300)}`,
+        code: 'custom',
+      }));
+      const schema: any = {
+        safeParse: () => ({
+          success: false,
+          error: { issues: hugeIssues },
+        }),
+      };
+      const mw = validateBody(schema);
+      const req: any = { body: { any: 'x' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(loggerInfo).toHaveBeenCalled();
+      const preview = loggerInfo.mock.calls[0][1];
+      expect(typeof preview).toBe('string');
+      expect(preview.length).toBeLessThanOrEqual(8003);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('caps validation details array size in 400 response payload', () => {
+      const issues = Array.from({ length: 120 }, (_, index) => ({
+        path: [`field_${index}`],
+        message: `invalid_${index}`,
+        code: 'custom',
+      }));
+      const schema: any = {
+        safeParse: () => ({
+          success: false,
+          error: { issues },
+        }),
+      };
+      const mw = validateBody(schema);
+      const req: any = { body: { any: 'x' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      const payload = (res.json as any).mock.calls[0][0];
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(Array.isArray(payload.details)).toBe(true);
+      expect(payload.details).toHaveLength(50);
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when body accessor throws and schema expects object', () => {
       const schema = z.object({ name: z.string() });
       const mw = validateBody(schema);
@@ -250,6 +353,22 @@ describe('validation.middleware (L1 contract)', () => {
 
       mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(500);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('still returns 500 when logger.error throws in query invalid-schema branch', () => {
+      loggerError.mockImplementationOnce(() => {
+        throw new Error('logger down');
+      });
+      const mw = validateQuery(null as unknown as z.ZodSchema);
+      const req: any = { query: {}, method: 'GET', path: '/list' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -349,6 +468,22 @@ describe('validation.middleware (L1 contract)', () => {
 
       mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(500);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('still returns 500 when logger.error throws in params invalid-schema branch', () => {
+      loggerError.mockImplementationOnce(() => {
+        throw new Error('logger down');
+      });
+      const mw = validateParams(null as unknown as z.ZodSchema);
+      const req: any = { params: {}, method: 'GET', path: '/entity/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
       expect(next).not.toHaveBeenCalled();
     });
 

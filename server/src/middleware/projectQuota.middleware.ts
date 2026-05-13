@@ -33,17 +33,17 @@ const safeToFixed = (value: unknown, decimals: number, fallback: string): string
   const n = Number(value);
   return Number.isFinite(n) ? n.toFixed(decimals) : fallback;
 };
+const isResponseTerminal = (res: Response): boolean =>
+  safeRead(() => res.headersSent, false) ||
+  safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
+  safeRead(() => (res as Response & { destroyed?: boolean }).destroyed === true, false);
 
 const sendJsonIfHeadersOpen = (
   res: Response,
   statusCode: number,
   payload: Record<string, unknown>
 ): boolean => {
-  const blocked =
-    safeRead(() => res.headersSent, false) ||
-    safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
-    safeRead(() => (res as Response & { destroyed?: boolean }).destroyed === true, false);
-  if (blocked) return false;
+  if (isResponseTerminal(res)) return false;
   try {
     res.status(statusCode).json(payload);
     return true;
@@ -52,13 +52,18 @@ const sendJsonIfHeadersOpen = (
   }
 };
 const PROJECT_QUOTA_UPLOAD_ROOT = path.resolve(process.env.UPLOAD_TMP_DIR || os.tmpdir());
+const PROJECT_QUOTA_UPLOAD_ROOT_REAL = safeRead(
+  () => fs.realpathSync(PROJECT_QUOTA_UPLOAD_ROOT),
+  PROJECT_QUOTA_UPLOAD_ROOT
+);
 const MAX_PROJECT_ID_LENGTH = 256;
 const canSafelyCleanupFilePath = (filePath: string): boolean => {
   const resolved = path.resolve(filePath);
   if (!resolved) return false;
+  const realResolved = safeRead(() => fs.realpathSync(resolved), resolved);
   return (
-    resolved === PROJECT_QUOTA_UPLOAD_ROOT ||
-    resolved.startsWith(`${PROJECT_QUOTA_UPLOAD_ROOT}${path.sep}`)
+    realResolved === PROJECT_QUOTA_UPLOAD_ROOT_REAL ||
+    realResolved.startsWith(`${PROJECT_QUOTA_UPLOAD_ROOT_REAL}${path.sep}`)
   );
 };
 
@@ -176,13 +181,13 @@ export async function enforceProjectQuota(
   } catch (error: unknown) {
     logger.error('Project quota check error:', error);
     // Fail closed for safety
-    if (!safeRead(() => res.headersSent, false)) {
-      if (!sendJsonIfHeadersOpen(res, 500, { error: 'Failed to verify project quota' })) {
-        next(error as Error);
-      }
+    if (isResponseTerminal(res)) {
+      next(error as Error);
       return;
     }
-    next(error as Error);
+    if (!sendJsonIfHeadersOpen(res, 500, { error: 'Failed to verify project quota' })) {
+      next(error as Error);
+    }
     return;
   }
 }

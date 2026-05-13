@@ -107,6 +107,17 @@ describe('requireConfirmation', () => {
     expect(res.statusCode).toBe(422);
   });
 
+  it('rejects reason composed only of zero-width characters', async () => {
+    const req = mockReq({ confirmation: true, reason: '\u200b\u200b\u200b' });
+    const res = mockRes();
+
+    await middleware(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe('REASON_REQUIRED');
+  });
+
   it('rejects with too-long reason', async () => {
     const req = mockReq({ confirmation: true, reason: 'a'.repeat(4001) });
     const res = mockRes();
@@ -171,6 +182,22 @@ describe('requireConfirmation', () => {
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(503);
     expect(res.body.code).toBe('AUDIT_UNAVAILABLE');
+  });
+
+  it('does not send AUDIT_UNAVAILABLE JSON when headers are already sent on audit failure', async () => {
+    const { run: mockRun } = await import('../../../../server/src/utils/DbPromise.js');
+    const req = mockReq({ confirmation: true, reason: 'Fail-closed headers path' });
+    const res = mockRes();
+    const jsonSpy = vi.spyOn(res, 'json');
+    (mockRun as any).mockImplementationOnce(async () => {
+      (res as any).headersSent = true;
+      throw new Error('DB down');
+    });
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+
+    expect(jsonSpy).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('uses req.user.id fallback when req.userId accessor throws', async () => {

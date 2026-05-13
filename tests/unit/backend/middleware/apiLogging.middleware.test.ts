@@ -429,6 +429,54 @@ describe('apiLogging.middleware', () => {
     expect(insertParams[1]).toBe('/api/example/path');
   });
 
+  it('strips control characters from persisted endpoint', () => {
+    process.env.NODE_ENV = 'development';
+    const rawPath = `/api/example\r\n\t${String.fromCharCode(0)}suffix`;
+    const req = {
+      method: 'POST',
+      path: rawPath,
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: vi.fn(),
+    } as unknown as MutableResponse;
+
+    apiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
+    res.end();
+
+    const insertParams = runMock.mock.calls[0]?.[1] as unknown[];
+    expect(insertParams[1]).toBe('/api/examplesuffix');
+  });
+
+  it('strips control characters from persisted status message on error responses', () => {
+    process.env.NODE_ENV = 'development';
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 400,
+      statusMessage: `Bad\r\nRequest${String.fromCharCode(0)}!`,
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: vi.fn(),
+    } as unknown as MutableResponse;
+
+    apiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
+    res.end();
+
+    const insertParams = runMock.mock.calls[0]?.[1] as unknown[];
+    expect(insertParams[3]).toBe(400);
+    expect(insertParams[8]).toBe('BadRequest!');
+  });
+
   it('caps correlation id length from request header before setting response header and persist', () => {
     process.env.NODE_ENV = 'development';
     const oversizedCorrelationId = 'x'.repeat(300);
@@ -569,6 +617,46 @@ describe('apiLogging.middleware', () => {
     apiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
     res.end();
     res.end();
+
+    expect(originalEnd).toHaveBeenCalledTimes(2);
+    expect(runMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('still persists when first uuidv4 row id generation throws during initial end call', async () => {
+    process.env.NODE_ENV = 'development';
+    vi.resetModules();
+    vi.doMock('uuid', () => {
+      const uuidMock = vi
+        .fn()
+        .mockReturnValueOnce('corr-id')
+        .mockImplementationOnce(() => {
+          throw new Error('row id failed');
+        })
+        .mockReturnValueOnce('row-id-second-end');
+      return { v4: uuidMock };
+    });
+    const { apiLoggingMiddleware: isolatedApiLoggingMiddleware } = await import(
+      '../../../../server/src/middleware/apiLogging.middleware.ts'
+    );
+
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const originalEnd = vi.fn();
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: originalEnd,
+    } as unknown as MutableResponse;
+
+    isolatedApiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
+    expect(() => res.end()).not.toThrow();
+    expect(() => res.end()).not.toThrow();
 
     expect(originalEnd).toHaveBeenCalledTimes(2);
     expect(runMock).toHaveBeenCalledTimes(1);

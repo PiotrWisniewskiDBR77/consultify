@@ -20,6 +20,7 @@ const MAX_AUTH_JWT_CHARS = 8192;
 const MAX_AUTH_HEADER_CHARS = MAX_AUTH_JWT_CHARS + 64;
 const MAX_AUTH_JWT_SEGMENT_CHARS = 6144;
 const MAX_AUTH_JTI_CHARS = 256;
+const MAX_AUTH_CAPABILITY_CHARS = 128;
 const MAX_JWT_SECRET_CHARS = 4096;
 const AUTH_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 const AUTH_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
@@ -498,7 +499,7 @@ const attachUser = async (
   decoded: JWTPayload,
   req: AuthRequest,
   next: NextFunction,
-  res?: Response
+  res: Response
 ): Promise<void> => {
   const { PermissionService, dbGet } = await getDeps();
   const requestedDemoSessionOrgId = normalizeOptionalStringClaim(
@@ -513,11 +514,7 @@ const attachUser = async (
   const decodedClaims = decoded as unknown as Record<string, unknown>;
   const decodedUserId = readOptionalStringClaim(decodedClaims, 'id');
   if (!decodedUserId) {
-    if (res) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    next();
+    res.status(401).json({ error: 'Unauthorized' });
     return;
   }
   const tokenOrganizationId =
@@ -606,14 +603,12 @@ const attachUser = async (
   const isReadOnlyMethod = READ_ONLY_IMPERSONATION_METHODS.has(requestMethod);
   const isAllowedImpersonationWrite = READ_ONLY_IMPERSONATION_PATHS.has(requestPath);
   if (isImpersonating && !isReadOnlyMethod && !isAllowedImpersonationWrite) {
-    if (res) {
-      res.status(403).json({
-        error: 'Impersonation sessions are read-only. End session to perform actions as yourself.',
-        code: 'IMPERSONATION_READ_ONLY',
-        guidance: 'Stop impersonation and retry the action from your own superadmin session.',
-      });
-      return;
-    }
+    res.status(403).json({
+      error: 'Impersonation sessions are read-only. End session to perform actions as yourself.',
+      code: 'IMPERSONATION_READ_ONLY',
+      guidance: 'Stop impersonation and retry the action from your own superadmin session.',
+    });
+    return;
   }
 
   // Attach permission helper
@@ -1322,6 +1317,23 @@ export const requirePermission = (capability: string) => {
       res.status(403).json({
         error: 'Permission denied',
         required: normalizedCapability,
+      });
+      return;
+    }
+    if (normalizedCapability.length > MAX_AUTH_CAPABILITY_CHARS) {
+      res.status(403).json({
+        error: 'Permission denied',
+        code: 'INVALID_CAPABILITY',
+      });
+      return;
+    }
+    if (
+      AUTH_TOKEN_CONTROL_CHARS.test(normalizedCapability) ||
+      AUTH_TOKEN_DISALLOWED_UNICODE.test(normalizedCapability)
+    ) {
+      res.status(403).json({
+        error: 'Permission denied',
+        code: 'INVALID_CAPABILITY',
       });
       return;
     }

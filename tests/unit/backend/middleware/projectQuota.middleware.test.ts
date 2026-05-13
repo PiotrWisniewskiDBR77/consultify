@@ -132,6 +132,26 @@ describe('projectQuota.middleware', () => {
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
   });
 
+  it('does not send 500 when response is writableEnded in catch path', async () => {
+    checkProjectQuota.mockRejectedValueOnce(new Error('quota service down'));
+
+    const req: any = { body: { project_id: 'proj-1' } };
+    const res: any = {
+      headersSent: false,
+      writableEnded: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceProjectQuota(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
   it('calls next when quota exceeded but headers are already sent', async () => {
     checkProjectQuota.mockResolvedValueOnce({
       allowed: false,
@@ -287,6 +307,39 @@ describe('projectQuota.middleware', () => {
       expect(fs.existsSync(outsidePath)).toBe(true);
     } finally {
       if (fs.existsSync(outsidePath)) fs.unlinkSync(outsidePath);
+    }
+  });
+
+  it('skips temp-file cleanup when path under tmp is a symlink to outside upload root', async () => {
+    checkProjectQuota.mockResolvedValueOnce({
+      allowed: false,
+      used: 2048,
+      limit: 1024,
+      percentage: 200,
+    });
+    const targetOutside = path.join(process.cwd(), `project-quota-symlink-target-${Date.now()}.tmp`);
+    const linkInsideTmp = path.join(os.tmpdir(), `project-quota-symlink-${Date.now()}.tmp`);
+    fs.writeFileSync(targetOutside, 'keep');
+
+    try {
+      fs.symlinkSync(targetOutside, linkInsideTmp);
+
+      const req: any = {
+        body: { project_id: 'proj-1' },
+        file: { path: linkInsideTmp },
+      };
+      const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+      const next = vi.fn();
+
+      await enforceProjectQuota(req, res, next);
+
+      expect(fs.existsSync(targetOutside)).toBe(true);
+      expect(fs.existsSync(linkInsideTmp)).toBe(true);
+      expect(res.status).toHaveBeenCalledWith(429);
+      expect(next).not.toHaveBeenCalled();
+    } finally {
+      if (fs.existsSync(linkInsideTmp)) fs.unlinkSync(linkInsideTmp);
+      if (fs.existsSync(targetOutside)) fs.unlinkSync(targetOutside);
     }
   });
 

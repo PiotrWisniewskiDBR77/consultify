@@ -110,6 +110,7 @@ describe('securityHeaders.middleware (L1)', () => {
     securityHeaders(req, res, next);
 
     expect(res.removeHeader).toHaveBeenCalledWith('X-Powered-By');
+    expect(res.removeHeader).toHaveBeenCalledWith('Server');
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -351,6 +352,39 @@ describe('securityHeaders.middleware (L1)', () => {
     limiter(reqB, resB, nextB);
     expect(resB.status).toHaveBeenCalledWith(429);
     expect(nextB).not.toHaveBeenCalled();
+  });
+
+  it('evicts oldest limiter key when store reaches configured max key count', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-18T00:00:00.000Z'));
+    process.env.RATE_LIMIT_STORE_MAX_KEYS = '3';
+    vi.resetModules();
+    const { createRateLimiter } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const limiter = createRateLimiter({ windowMs: 60_000, max: 1, message: 'Limited' });
+    const call = (ip: string) => {
+      const res = mkRes();
+      const next = vi.fn();
+      limiter({ ip, path: '/evict' } as any, res, next);
+      return { res, next };
+    };
+
+    const r1 = call('10.0.0.1');
+    const r2 = call('10.0.0.2');
+    const r3 = call('10.0.0.3');
+    expect(r1.next).toHaveBeenCalledTimes(1);
+    expect(r2.next).toHaveBeenCalledTimes(1);
+    expect(r3.next).toHaveBeenCalledTimes(1);
+
+    const r4 = call('10.0.0.4');
+    expect(r4.next).toHaveBeenCalledTimes(1);
+    expect(r4.res.status).not.toHaveBeenCalled();
+
+    const r1Again = call('10.0.0.1');
+    expect(r1Again.next).toHaveBeenCalledTimes(1);
+    expect(r1Again.res.status).not.toHaveBeenCalled();
   });
 
   it('validateRequest returns 400 with detailed errors', async () => {

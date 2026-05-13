@@ -229,7 +229,10 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
       safeSetHeader(res, 'X-RateLimit-Reset', String(resetSeconds));
 
       if (count > max) {
-        const retryAfter = toSafeNonNegativeIntSeconds((resetAt - Date.now()) / 1000, 0);
+        const retryAfter = Math.max(
+          1,
+          toSafeNonNegativeIntSeconds((resetAt - Date.now()) / 1000, 0)
+        );
         safeSetHeader(res, 'Retry-After', String(retryAfter));
         if (safeRead(() => res.headersSent, false)) {
           safeInvokeNext(next);
@@ -242,7 +245,18 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
             retryAfter,
           });
         } catch {
-          safeInvokeNext(next);
+          if (!safeRead(() => res.headersSent, false)) {
+            safeRead(() => {
+              const statusResult = res.status(429) as Response | { end?: () => void };
+              if (statusResult && typeof statusResult.end === 'function') {
+                statusResult.end();
+                return;
+              }
+              if (typeof (res as Response & { end?: () => void }).end === 'function') {
+                (res as Response & { end?: () => void }).end?.();
+              }
+            }, undefined as void);
+          }
         }
         return;
       }

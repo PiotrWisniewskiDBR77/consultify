@@ -179,6 +179,49 @@ describe('pmoValidation.middleware', () => {
     expect(runMock).not.toHaveBeenCalled();
   });
 
+  it('logStatusChange still sends response when previousStatus accessor throws', async () => {
+    const req: any = {
+      body: { status: 'DONE' },
+      organizationId: 'org-1',
+      userId: 'user-1',
+      params: { id: 'task-1' },
+    };
+    Object.defineProperty(req, 'previousStatus', {
+      configurable: true,
+      get: () => {
+        throw new Error('previousStatus getter failed');
+      },
+    });
+    const res: any = { statusCode: 200, json: vi.fn((payload: unknown) => payload) };
+    const next = vi.fn();
+
+    const middleware = logStatusChange('task');
+    middleware(req, res as Response, next as unknown as NextFunction);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    await expect((res.json as any)({ ok: true })).resolves.toEqual({ ok: true });
+    expect(runMock).not.toHaveBeenCalled();
+  });
+
+  it('logStatusChange skips audit insert when entity id exceeds max allowed length', async () => {
+    const req: any = {
+      body: { status: 'DONE' },
+      previousStatus: 'IN_PROGRESS',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      params: { id: 'x'.repeat(129) },
+    };
+    const res: any = { statusCode: 200, json: vi.fn((payload: unknown) => payload) };
+    const next = vi.fn();
+
+    const middleware = logStatusChange('task');
+    middleware(req, res as Response, next as unknown as NextFunction);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    await expect((res.json as any)({ ok: true })).resolves.toEqual({ ok: true });
+    expect(runMock).not.toHaveBeenCalled();
+  });
+
   it('validateInitiativeStatus returns 400 when params accessor throws', async () => {
     const req: any = { body: { status: 'IN_PROGRESS' } };
     Object.defineProperty(req, 'params', {

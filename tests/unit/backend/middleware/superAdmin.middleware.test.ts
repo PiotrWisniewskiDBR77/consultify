@@ -10,7 +10,7 @@ import {
 
 function mockReq(overrides: Record<string, any> = {}) {
   return {
-    headers: { authorization: 'Bearer test-token' },
+    headers: { authorization: 'Bearer test.token.sig' },
     user: undefined as any,
     userId: undefined as any,
     userRole: undefined as any,
@@ -62,7 +62,7 @@ describe('verifySuperAdmin', () => {
     expect(req.user?.isSuperAdmin).toBe(true);
     expect(req.userId).toBe('admin-1');
     expect(verify).toHaveBeenCalledWith(
-      'test-token',
+      'test.token.sig',
       'test-secret',
       expect.objectContaining({ algorithms: ['HS256'], clockTolerance: 30 }),
       expect.any(Function)
@@ -166,7 +166,7 @@ describe('verifySuperAdmin', () => {
       config: { JWT_SECRET: 'test-secret' },
       dbGet: vi.fn().mockResolvedValue({ role: 'SUPERADMIN' }),
     });
-    const req = mockReq({ headers: { authorization: ['Bearer', 'Bearer array-token'] } });
+    const req = mockReq({ headers: { authorization: ['Bearer', 'Bearer array.token.sig'] } });
     const res = mockRes();
 
     await verifySuperAdmin(req, res, next);
@@ -406,6 +406,27 @@ describe('verifySuperAdmin', () => {
     expect(verify).not.toHaveBeenCalled();
   });
 
+  it('rejects and skips JWT verify when bearer token has invalid JWS segment count', async () => {
+    const verify = vi.fn();
+    setDependencies({
+      jwt: { verify } as any,
+      config: { JWT_SECRET: 'test-secret' },
+    });
+    const req = mockReq({
+      headers: {
+        authorization: 'Bearer a.b',
+      },
+    });
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(verify).not.toHaveBeenCalled();
+  });
+
   it('rejects and skips DB lookup when decoded subject id exceeds max length', async () => {
     const dbGet = vi.fn();
     setDependencies({
@@ -440,6 +461,31 @@ describe('verifySuperAdmin', () => {
             id: 'admin-1',
             role: 'SUPERADMIN',
             organizationId: 'o'.repeat(257),
+          }),
+      } as any,
+      config: { JWT_SECRET: 'test-secret' },
+      dbGet,
+    });
+    const req = mockReq();
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe('UNAUTHORIZED');
+    expect(dbGet).not.toHaveBeenCalled();
+  });
+
+  it('rejects and skips DB lookup when role claim exceeds max length', async () => {
+    const dbGet = vi.fn();
+    setDependencies({
+      jwt: {
+        verify: (...args: unknown[]) =>
+          invokeVerifyCallback(args, {
+            id: 'admin-role-1',
+            role: 'S'.repeat(129),
+            organizationId: 'org-1',
           }),
       } as any,
       config: { JWT_SECRET: 'test-secret' },

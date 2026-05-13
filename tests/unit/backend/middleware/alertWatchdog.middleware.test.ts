@@ -7,7 +7,7 @@ describe('alertWatchdog.middleware', () => {
 
   it('continues request flow when response end binder throws before wrapping', async () => {
     vi.resetModules();
-    const { default: alertWatchdog } = await import(
+    const { default: alertWatchdog, getWatchdogStats } = await import(
       '../../../../server/src/middleware/alertWatchdog.middleware.ts'
     );
     const req: any = {};
@@ -22,6 +22,8 @@ describe('alertWatchdog.middleware', () => {
 
     expect(() => alertWatchdog(req, res, next)).not.toThrow();
     expect(next).toHaveBeenCalledTimes(1);
+    expect(getWatchdogStats().totalRequests).toBe(0);
+    expect(getWatchdogStats().windowRequests).toBe(0);
   });
 
   it('swallows statusCode accessor errors in wrapped end handler', async () => {
@@ -281,6 +283,9 @@ describe('alertWatchdog.middleware', () => {
     const mod = await import('../../../../server/src/middleware/alertWatchdog.middleware.ts');
 
     expect(mod.__private__.escapeHtml(`a<&>"'b`)).toBe('a&lt;&amp;&gt;&quot;&#39;b');
+    expect(mod.__private__.escapeHtml(null as unknown as string)).toBe('');
+    expect(mod.__private__.escapeHtml(undefined as unknown as string)).toBe('');
+    expect(mod.__private__.escapeHtml(42 as unknown as string)).toBe('42');
   });
 
   it('pruneOld limits removals per invocation to avoid long blocking loops', async () => {

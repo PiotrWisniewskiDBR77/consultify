@@ -183,6 +183,40 @@ describe('trialEntryGuard.middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('skips trial lookup for TRACE requests', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'TRACE',
+      path: '/api/initiatives',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('skips trial lookup for oversized normalized user id', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: ` ${'u'.repeat(513)} ` },
+      method: 'POST',
+      path: '/api/initiatives',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('blocks route when path includes query string', async () => {
     mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
     const req: any = {

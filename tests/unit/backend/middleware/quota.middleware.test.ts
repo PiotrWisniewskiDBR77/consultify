@@ -381,7 +381,7 @@ describe('quota.middleware', () => {
     expect(mockLogger.error).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalledWith(503);
     expect(res.json).not.toHaveBeenCalled();
-    expect(next).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('does not attempt storage 503 response when headers are already sent', async () => {
@@ -404,7 +404,7 @@ describe('quota.middleware', () => {
     expect(mockLogger.error).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalledWith(503);
     expect(res.json).not.toHaveBeenCalled();
-    expect(next).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('returns finite storage usage values when quota payload contains NaN numbers', async () => {
@@ -536,7 +536,7 @@ describe('quota.middleware', () => {
     await expect(enforceTokenQuota(req, res, next)).resolves.toBeUndefined();
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(next).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
     expect(mockLogger.error).toHaveBeenCalledWith(
       '[QuotaMiddleware] Failed to write token unauthorized response'
     );
@@ -555,7 +555,25 @@ describe('quota.middleware', () => {
 
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
-    expect(next).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls through to next when token unauthorized response chain is non-callable', async () => {
+    const req: any = {};
+    const res: any = {
+      headersSent: false,
+      status: 'not-a-function',
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      '[QuotaMiddleware] Failed to write token unauthorized response'
+    );
   });
 
   it('returns 503 when token quota payload is malformed', async () => {
@@ -578,6 +596,28 @@ describe('quota.middleware', () => {
       expect.objectContaining({ orgId: 'org-1' })
     );
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('falls through to next when token quota exceeded response is skipped because headers are sent', async () => {
+    mockUsageService.checkQuota.mockResolvedValueOnce({
+      allowed: false,
+      used: 101,
+      limit: 100,
+      percentage: 101,
+    });
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
   });
 
   it('accepts token quota payload when numeric fields are numeric strings', async () => {
@@ -652,6 +692,33 @@ describe('quota.middleware', () => {
       expect.objectContaining({ orgId: 'org-1' })
     );
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('falls through to next when storage quota exceeded response is skipped because headers are sent', async () => {
+    mockUsageService.checkQuota.mockImplementation(async (_orgId: string, type: 'token' | 'storage') => {
+      if (type === 'storage') {
+        return {
+          allowed: false,
+          used: 10,
+          limit: 9,
+          percentage: 111,
+        };
+      }
+      return { allowed: true, used: 1, limit: 100, percentage: 1 };
+    });
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
   });
 
   it('accepts storage quota payload when numeric fields are numeric strings', async () => {

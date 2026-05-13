@@ -150,6 +150,19 @@ describe('Resource Quota Middleware', () => {
       expect(jsonSpy).not.toHaveBeenCalled();
     });
 
+    it('should call next and avoid writes when response is already destroyed', async () => {
+      (mockRes as any).headersSent = false;
+      (mockRes as any).writableEnded = false;
+      (mockRes as any).finished = false;
+      (mockRes as any).destroyed = true;
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
+    });
+
     it('should pass when no organization ID present', async () => {
       mockReq.user = undefined;
 
@@ -194,6 +207,36 @@ describe('Resource Quota Middleware', () => {
       await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
       expect(queryOneSpy).toHaveBeenCalledTimes(1);
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should pass when subscription plan id is object and skip secondary plan lookup', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy.mockResolvedValueOnce({ subscription_plan_id: { invalid: true } as any });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(1);
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should perform plan lookup when subscription plan id is finite number', async () => {
+      const queryOneSpy = vi.mocked(queryHelpers.queryOne);
+      queryOneSpy
+        .mockResolvedValueOnce({ subscription_plan_id: 12345 })
+        .mockResolvedValueOnce({ id: '12345', memory_limit_mb: 1000 })
+        .mockResolvedValueOnce({ memory_usage_mb_current: 500, cpu_usage_percent_avg: 20 });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(queryOneSpy).toHaveBeenCalledTimes(3);
+      expect(queryOneSpy).toHaveBeenNthCalledWith(
+        2,
+        'SELECT id, memory_limit_mb FROM subscription_plans WHERE id = ?',
+        ['12345']
+      );
       expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalled();
     });

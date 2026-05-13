@@ -137,13 +137,12 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
       assertJsonSerializableAuditPayload('after', normalizedAfter);
 
       const eventId = await auditEventsService.log({
-        ...snapshotInput,
+        action: normalizedAction,
+        resourceType: normalizedResourceType,
         resourceId: normalizedResourceId,
         metadata: normalizedMetadata,
         before: normalizedBefore,
         after: normalizedAfter,
-        action: normalizedAction,
-        resourceType: normalizedResourceType,
         actorType: normalizeActorType(snapshotInput.actorType),
         actorId: clampOptionalString(
           normalizeOptionalString(safeRead(() => req.user?.id, undefined)) ||
@@ -178,7 +177,7 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
       if (typeof eventId !== 'string' || !eventId.trim()) {
         throw new TypeError('emitAuditEvent persistence returned an invalid event id');
       }
-      return eventId;
+      return eventId.trim();
     } catch (err) {
       logger.error('[requireAudit] Audit write failed — fail-closed:', err);
       throw err;

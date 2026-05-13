@@ -56,13 +56,12 @@ const evictWarnedKeysIfNeeded = (): void => {
 };
 
 const safeSetHeader = (res: Response, key: string, value: string): void => {
-  const alreadyCommitted = safeRead(() => {
-    if (res.headersSent) return true;
-    const writable = res as Response & { writableEnded?: boolean; writableFinished?: boolean };
-    if (writable.writableEnded) return true;
-    if (writable.writableFinished) return true;
-    return false;
-  }, true);
+  const headersSentCommitted = safeRead(() => Boolean(res.headersSent), true);
+  const writable = res as Response & { writableEnded?: boolean; writableFinished?: boolean };
+  const writableEndedCommitted = safeRead(() => Boolean(writable.writableEnded), false);
+  const writableFinishedCommitted = safeRead(() => Boolean(writable.writableFinished), false);
+  const alreadyCommitted =
+    headersSentCommitted || writableEndedCommitted || writableFinishedCommitted;
   if (alreadyCommitted) return;
   safeRead(() => {
     res.setHeader(key, value);
@@ -125,6 +124,9 @@ export function deprecationHeader(v8Replacement: string, opts?: Partial<Deprecat
         safeRead(() => {
           evictWarnedKeysIfNeeded();
           warned.add(key);
+          return true;
+        }, false);
+        safeRead(() => {
           logger.info(
             `[Deprecation] First call to legacy route: ${key} → migrate to ${successorPath}`
           );
