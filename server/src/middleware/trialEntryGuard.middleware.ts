@@ -75,6 +75,7 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
   { method: 'POST', path: /^\/api\/ai\/memory/ },
   { method: 'POST', path: /^\/api\/knowledge/ },
 ];
+const MAX_TRIAL_GUARD_PATH_LEN = 8192;
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -171,6 +172,14 @@ const sendTrialGuardJson = (
     return false;
   }
 };
+const emitTrialGuardWriteFailure = (next: NextFunction, contextCode: string): void => {
+  const error = new Error(contextCode);
+  safeRead(() => {
+    (error as { code?: string }).code = contextCode;
+    return undefined as void;
+  }, undefined as void);
+  next(error);
+};
 
 // ==========================================
 // MIDDLEWARE
@@ -213,11 +222,22 @@ export const trialEntryGuard = async (
 
     // Check if this route is blocked
     const requestPathCandidates = getCandidateTrialRoutePaths(req);
+    if (requestPathCandidates.some((candidatePath) => candidatePath.length > MAX_TRIAL_GUARD_PATH_LEN)) {
+      const sent = sendTrialGuardJson(res, 400, {
+        error: 'REQUEST_URI_TOO_LONG',
+        message: 'Żądanie jest zbyt długie.',
+        messageEn: 'The request URI is too long.',
+      });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
+      return;
+    }
     if (
       requestMethod &&
       requestPathCandidates.some((candidatePath) => isBlockedRoute(requestMethod, candidatePath))
     ) {
-      sendTrialGuardJson(res, 403, {
+      const sent = sendTrialGuardJson(res, 403, {
         error: 'TRIAL_ENTRY_RESTRICTION',
         message: 'Ta funkcja nie jest dostępna w Trial Entry. Załóż organizację, aby kontynuować.',
         messageEn:
@@ -227,6 +247,9 @@ export const trialEntryGuard = async (
           path: '/trial/create-org',
         },
       });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
       return;
     }
 
@@ -248,7 +271,7 @@ export const requireOrgContext = async (
 ): Promise<void> => {
   try {
     if (safeRead(() => Boolean(req.isTrialEntry), false)) {
-      sendTrialGuardJson(res, 403, {
+      const sent = sendTrialGuardJson(res, 403, {
         error: 'ORG_REQUIRED',
         message: 'Ta funkcja wymaga organizacji. Jesteś w fazie Trial Entry.',
         cta: {
@@ -256,6 +279,9 @@ export const requireOrgContext = async (
           path: '/trial/create-org',
         },
       });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
       return;
     }
 
@@ -263,10 +289,13 @@ export const requireOrgContext = async (
       safeRead(() => req.user?.organizationId, undefined as unknown)
     );
     if (!organizationId) {
-      sendTrialGuardJson(res, 403, {
+      const sent = sendTrialGuardJson(res, 403, {
         error: 'ORG_REQUIRED',
         message: 'Brak kontekstu organizacji.',
       });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
       return;
     }
 

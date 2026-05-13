@@ -177,6 +177,12 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(out[1].b[0]).toBe('x'.repeat(3));
   });
 
+  it('truncateStrings caps oversized arrays before recursive sanitization', () => {
+    const large = Array.from({ length: 10001 }, () => 'x');
+    const out = __private__.truncateStrings(large, 10) as unknown[];
+    expect(out.length).toBe(10000);
+  });
+
   it('truncateStrings stops recursion at depth boundary (private helper)', () => {
     const deep = { a: { b: { c: 'x'.repeat(10) } } };
     const out = __private__.truncateStrings(deep, 5, 2) as any;
@@ -316,6 +322,41 @@ describe('inputSanitizationMiddleware (L1)', () => {
           await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
         const req = createReq({
           body: { html: '<script>alert(1)</script>' },
+        });
+        const next = vi.fn();
+
+        await mod.inputSanitizationMiddleware(req, {} as any, next);
+        expect(next).toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalled();
+      } finally {
+        logger.warn = origWarn;
+      }
+    } finally {
+      process.env.NODE_ENV = origNodeEnv;
+      if (origVitest !== undefined) process.env.VITEST = origVitest;
+      else delete process.env.VITEST;
+    }
+  });
+
+  it('in non-test env: logs suspicious content found in query payload', async () => {
+    const origNodeEnv = process.env.NODE_ENV;
+    const origVitest = process.env.VITEST;
+    try {
+      process.env.NODE_ENV = 'production';
+      delete process.env.VITEST;
+      vi.resetModules();
+      vi.doMock('../../../../server/src/utils/security.utils.js', () => ({
+        sanitizeObject: (x: unknown) => x,
+      }));
+
+      const logger = (await import('../../../../server/src/utils/Logger.js')).default as any;
+      const origWarn = logger.warn;
+      logger.warn = vi.fn();
+      try {
+        const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
+        const req = createReq({
+          body: { ok: 'safe' },
+          query: { q: '<script>alert(1)</script>' },
         });
         const next = vi.fn();
 

@@ -132,6 +132,9 @@ describe('admin.middleware (L1)', () => {
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith({ error: 'Admin access required' });
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+      expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+      expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -145,6 +148,9 @@ describe('admin.middleware (L1)', () => {
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith({ error: 'Admin access required' });
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+      expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+      expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
     });
 
     it('allows when req.user.role is admin', () => {
@@ -154,6 +160,20 @@ describe('admin.middleware (L1)', () => {
       verifyAdmin(req, res, next);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('denies with 403 when allow path has invalid next handler', async () => {
+      const req: any = { user: { role: 'admin' } };
+      const res = makeRes();
+
+      await verifyAdmin(req, res, undefined as any);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Admin access required' });
+      expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+      expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+      expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
+      expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
     });
 
     it('allows when req.userRole is admin (legacy)', () => {

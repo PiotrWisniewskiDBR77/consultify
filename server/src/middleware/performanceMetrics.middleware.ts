@@ -89,6 +89,7 @@ const MAX_ENTRIES = 1000;
 const MAX_METRIC_PATH_CHARS = 2048;
 const MAX_METHOD_LABEL_CHARS = 32;
 const MAX_DB_QUERY_TYPE_CHARS = 128;
+const MAX_USER_CONTEXT_CHARS = 256;
 const DEFAULT_SLOW_REQUEST_THRESHOLD_MS = 1000;
 const MAX_SLOW_REQUEST_THRESHOLD_MS = 86_400_000;
 const resolveSlowRequestThresholdMs = (raw: string | undefined): number => {
@@ -248,9 +249,15 @@ export function performanceMetricsMiddleware(
         dbQueryCount: metrics.dbQueryCount,
         dbQueryTime: metrics.dbQueryTime,
         memoryDelta,
-        userId: normalizeOptionalString(safeRead(() => req.user?.id, undefined)) || null,
+        userId: clampMetricText(
+          normalizeOptionalString(safeRead(() => req.user?.id, undefined)) || '',
+          MAX_USER_CONTEXT_CHARS
+        ) || null,
         organizationId:
-          normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) || null,
+          clampMetricText(
+            normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) || '',
+            MAX_USER_CONTEXT_CHARS
+          ) || null,
       };
 
       metricsService.recordHttpRequest(requestMethod, routeLabel, statusCode, responseTime / 1000);
@@ -275,7 +282,7 @@ export function performanceMetricsMiddleware(
       // Log high DB query counts outside test mode.
       if (!IS_TEST_ENV && metrics.dbQueryCount > 10) {
         logger.warn('High DB query count', {
-          path: requestPath,
+          path: metric.path,
           dbQueryCount: metrics.dbQueryCount,
           dbQueryTime: metrics.dbQueryTime,
         });

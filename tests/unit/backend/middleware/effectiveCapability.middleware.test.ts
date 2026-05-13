@@ -155,6 +155,28 @@ describe('effectiveCapability.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('enforces when EFFECTIVE_ACCESS_ENFORCE has mixed casing and whitespace', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = ' TRUE ';
+    delete process.env.EFFECTIVE_ACCESS_SHADOW;
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when custom project resolver returns non-string truthy value', async () => {
     const middleware = requireProjectCapability('PROJECT_READ', async () => 123 as unknown as string);
     const req: any = {
@@ -227,6 +249,29 @@ describe('effectiveCapability.middleware', () => {
 
     expect(mockLoggerWarn).toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('enables shadow mode when EFFECTIVE_ACCESS_SHADOW has mixed casing', async () => {
+    process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
+    process.env.EFFECTIVE_ACCESS_SHADOW = 'TrUe';
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(mockLoggerWarn).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
   });
 
   it('resolveTaskProjectId falls back to direct project resolver when task id missing', async () => {
@@ -376,6 +421,35 @@ describe('effectiveCapability.middleware', () => {
     );
     expect(next).not.toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalled();
+  });
+
+  it('logs and swallows response writer errors on deny path', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = {
+      headersSent: false,
+      status: vi.fn(() => {
+        throw new Error('status failed');
+      }),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] failed to write json response',
+      expect.objectContaining({ status: 403, phase: 'deny', path: '' })
+    );
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('stays fail-open in shadow mode when hasEffectiveCapability throws', async () => {

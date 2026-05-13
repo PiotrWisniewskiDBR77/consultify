@@ -17,6 +17,7 @@ import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 const isProductionEnv = process.env.NODE_ENV === 'production';
 const isTestEnv = process.env.NODE_ENV === 'test';
 const MAX_AUTH_JWT_CHARS = 8192;
+const MAX_AUTH_HEADER_CHARS = MAX_AUTH_JWT_CHARS + 64;
 const MAX_AUTH_JWT_SEGMENT_CHARS = 6144;
 const MAX_AUTH_JTI_CHARS = 256;
 const AUTH_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
@@ -360,17 +361,21 @@ const extractToken = (req: AuthRequest): string | null => {
 
     return { kind: 'token', token: normalized };
   };
+  const isOversizedAuthorizationValue = (value: unknown): boolean =>
+    typeof value === 'string' && value.length > MAX_AUTH_HEADER_CHARS;
 
   // Try Authorization header first
   if (Array.isArray(authHeaderRaw)) {
     let sawBareBearer = false;
     for (const headerValue of authHeaderRaw) {
+      if (isOversizedAuthorizationValue(headerValue)) continue;
       const parsed = parseAuthorizationValue(headerValue);
       if (parsed.kind === 'token') return parsed.token;
       if (parsed.kind === 'bare') sawBareBearer = true;
     }
     if (sawBareBearer) return null;
   } else {
+    if (isOversizedAuthorizationValue(authHeaderRaw)) return null;
     const parsed = parseAuthorizationValue(authHeaderRaw);
     if (parsed.kind === 'token') return parsed.token;
     if (parsed.kind === 'bare') return null;
@@ -389,22 +394,24 @@ const extractToken = (req: AuthRequest): string | null => {
   }
   if (cookieToken) return cookieToken;
 
-  // Try body or query (legacy support)
-  let bodyToken: string | null = null;
-  try {
-    bodyToken = normalizeTokenCandidate(req.body?.token);
-  } catch {
-    bodyToken = null;
-  }
-  if (bodyToken) return bodyToken;
+  // Try body or query (legacy support), but keep production strict.
+  if (!isProductionEnv) {
+    let bodyToken: string | null = null;
+    try {
+      bodyToken = normalizeTokenCandidate(req.body?.token);
+    } catch {
+      bodyToken = null;
+    }
+    if (bodyToken) return bodyToken;
 
-  let queryToken: string | null = null;
-  try {
-    queryToken = normalizeTokenCandidate(req.query?.token);
-  } catch {
-    queryToken = null;
+    let queryToken: string | null = null;
+    try {
+      queryToken = normalizeTokenCandidate(req.query?.token);
+    } catch {
+      queryToken = null;
+    }
+    if (queryToken) return queryToken;
   }
-  if (queryToken) return queryToken;
 
   return null;
 };

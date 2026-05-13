@@ -23,8 +23,12 @@ const INVALID_CAPABILITY_RESPONSE = {
   reason: 'capability_must_be_non_empty_string',
 } as const;
 
-const shouldEnforceEffectiveAccess = () => process.env.EFFECTIVE_ACCESS_ENFORCE === 'true';
-const shouldShadowEffectiveAccess = () => process.env.EFFECTIVE_ACCESS_SHADOW === 'true';
+const isEnvFlagTrue = (value: unknown): boolean =>
+  typeof value === 'string' && value.trim().toLowerCase() === 'true';
+const shouldEnforceEffectiveAccess = () =>
+  isEnvFlagTrue(safeRead(() => process.env.EFFECTIVE_ACCESS_ENFORCE, ''));
+const shouldShadowEffectiveAccess = () =>
+  isEnvFlagTrue(safeRead(() => process.env.EFFECTIVE_ACCESS_SHADOW, ''));
 
 function safeRead<T>(reader: () => T, fallback: T): T {
   try {
@@ -93,7 +97,16 @@ const sendJsonIfOpen = (
     });
     return;
   }
-  res.status(status).json(payload);
+  try {
+    res.status(status).json(payload);
+  } catch (err) {
+    logger.error('[effectiveCapability] failed to write json response', {
+      err,
+      status,
+      path: getRequestPath(req),
+      ...logContext,
+    });
+  }
 };
 
 export async function resolveProjectIdFromRequest(req: AuthRequest): Promise<string | null> {

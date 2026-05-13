@@ -94,6 +94,11 @@ describe('requestAccess middleware helpers', () => {
     ).toBe(true);
   });
 
+  it('isRequestSuperAdmin ignores inherited isSuperAdmin=true on user prototype', () => {
+    const user = Object.create({ isSuperAdmin: true });
+    expect(isRequestSuperAdmin({ user, userRole: 'member' } as any)).toBe(false);
+  });
+
   it('getRequestAccessRole does not elevate for non-boolean isSuperAdmin values', () => {
     expect(
       getRequestAccessRole({
@@ -101,6 +106,11 @@ describe('requestAccess middleware helpers', () => {
         userRole: 'member',
       } as any)
     ).toBe('member');
+  });
+
+  it('getRequestAccessRole ignores inherited user.role when userRole is empty', () => {
+    const user = Object.create({ role: 'ADMIN' });
+    expect(getRequestAccessRole({ user, userRole: undefined } as any)).toBe('');
   });
 
   it('getRequestAccessRole falls back safely when userRole accessor throws', () => {

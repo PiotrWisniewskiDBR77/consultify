@@ -10,6 +10,16 @@ const safeRead = <T>(reader: () => T, fallback: T): T => {
     return fallback;
   }
 };
+const hasOwn = (obj: object, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+const isOwnSuperAdminTrue = (user: AuthRequest['user'] | undefined): boolean => {
+  if (!user || typeof user !== 'object' || !hasOwn(user as object, 'isSuperAdmin')) return false;
+  return safeRead(() => user.isSuperAdmin === true, false);
+};
+const getOwnUserRole = (user: AuthRequest['user'] | undefined): unknown => {
+  if (!user || typeof user !== 'object' || !hasOwn(user as object, 'role')) return undefined;
+  return safeRead(() => user.role, undefined);
+};
 
 export const normalizeAccessRole = (role?: unknown): RequestAccessRole => {
   const normalized = safeRead(() => {
@@ -48,7 +58,7 @@ export const normalizeAccessRole = (role?: unknown): RequestAccessRole => {
 };
 
 export const isRequestSuperAdmin = (req: AuthRequest): boolean => {
-  if (safeRead(() => req.user?.isSuperAdmin === true, false)) return true;
+  if (isOwnSuperAdminTrue(safeRead(() => req.user, undefined as AuthRequest['user']))) return true;
   const userRoleSnapshot = safeRead(() => req.userRole, undefined);
   return normalizeAccessRole(userRoleSnapshot) === 'superadmin';
 };
@@ -56,17 +66,14 @@ export const isRequestSuperAdmin = (req: AuthRequest): boolean => {
 export const getRequestAccessRole = (req: AuthRequest): RequestAccessRole => {
   const requestUserSnapshot = safeRead(() => req.user, undefined as AuthRequest['user']);
   const userRoleSnapshot = safeRead(() => req.userRole, undefined);
-  if (
-    safeRead(() => requestUserSnapshot?.isSuperAdmin === true, false) ||
-    normalizeAccessRole(userRoleSnapshot) === 'superadmin'
-  ) {
+  if (isOwnSuperAdminTrue(requestUserSnapshot) || normalizeAccessRole(userRoleSnapshot) === 'superadmin') {
     return 'superadmin';
   }
 
   const rawRole = normalizeAccessRole(userRoleSnapshot);
   if (rawRole) return rawRole;
 
-  return normalizeAccessRole(safeRead(() => requestUserSnapshot?.role, undefined));
+  return normalizeAccessRole(getOwnUserRole(requestUserSnapshot));
 };
 
 export const getSettingsActorRole = (

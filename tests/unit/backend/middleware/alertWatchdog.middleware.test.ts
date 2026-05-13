@@ -275,4 +275,43 @@ describe('alertWatchdog.middleware', () => {
 
     filterSpy.mockRestore();
   });
+
+  it('escapes html metacharacters in alert email payload helper', async () => {
+    vi.resetModules();
+    const mod = await import('../../../../server/src/middleware/alertWatchdog.middleware.ts');
+
+    expect(mod.__private__.escapeHtml(`a<&>"'b`)).toBe('a&lt;&amp;&gt;&quot;&#39;b');
+  });
+
+  it('pruneOld limits removals per invocation to avoid long blocking loops', async () => {
+    vi.stubEnv('ALERT_WATCHDOG_MAX_RECORDS', '50000');
+    vi.stubEnv('ALERT_WATCHDOG_WINDOW_MS', '1000');
+    vi.resetModules();
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2020-01-01T00:00:00.000Z'));
+      const { default: alertWatchdog, __private__ } = await import(
+        '../../../../server/src/middleware/alertWatchdog.middleware.ts'
+      );
+
+      for (let i = 0; i < 12_000; i += 1) {
+        const req: any = {};
+        const res: any = { end: vi.fn(), statusCode: 200 };
+        const next = vi.fn();
+        alertWatchdog(req, res, next);
+        res.end();
+      }
+
+      vi.setSystemTime(new Date('2020-01-01T00:00:05.000Z'));
+      const req: any = {};
+      const res: any = { end: vi.fn(), statusCode: 200 };
+      const next = vi.fn();
+      alertWatchdog(req, res, next);
+      res.end();
+
+      expect(__private__.getRecordCount()).toBeGreaterThan(1000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

@@ -431,4 +431,31 @@ describe('performanceMetrics.middleware', () => {
     const routeArg = recordHttpRequestMock.mock.calls[0]?.[1] as string;
     expect(routeArg.length).toBeLessThanOrEqual(2048);
   });
+
+  it('caps oversized user context identifiers before storing metrics', () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {
+      method: 'GET',
+      path: '/api/example',
+      originalUrl: '/api/example',
+      user: {
+        id: 'u'.repeat(5000),
+        organizationId: 'o'.repeat(5000),
+      },
+    };
+    const res: any = {
+      statusCode: 200,
+      once: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+      on: vi.fn(),
+    };
+
+    performanceMetricsMiddleware(req as Request, res as unknown as Response, vi.fn() as unknown as NextFunction);
+    finishHandlers[0]?.();
+
+    expect(metricsStore.requests).toHaveLength(1);
+    expect(metricsStore.requests[0]?.userId?.length).toBeLessThanOrEqual(256);
+    expect(metricsStore.requests[0]?.organizationId?.length).toBeLessThanOrEqual(256);
+  });
 });

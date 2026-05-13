@@ -18,6 +18,7 @@ import logger from '../utils/Logger.js';
 
 const MAX_BODY_DEPTH = 10;
 const MAX_STRING_LENGTH = 50000; // 50KB per string field
+const MAX_ARRAY_ELEMENTS = 10000;
 const isVitest = !!process.env.VITEST;
 
 function safeRead<T>(reader: () => T, fallback: T): T {
@@ -103,7 +104,8 @@ function truncateStrings(
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => truncateStrings(item, maxLen, depth - 1));
+    const bounded = obj.length > MAX_ARRAY_ELEMENTS ? obj.slice(0, MAX_ARRAY_ELEMENTS) : obj;
+    return bounded.map((item) => truncateStrings(item, maxLen, depth - 1));
   }
 
   if (typeof obj === 'object') {
@@ -146,7 +148,12 @@ function neutralizeInlineEventHandlers(
 /**
  * Log suspicious payloads for security monitoring
  */
-function checkForSuspiciousContent(body: unknown, path: string, method: string): void {
+function checkForSuspiciousContent(
+  body: unknown,
+  path: string,
+  method: string,
+  rootField: string = 'body'
+): void {
   if (!body || typeof body !== 'object') return;
 
   const checkValue = (value: unknown, fieldPath: string): void => {
@@ -161,7 +168,7 @@ function checkForSuspiciousContent(body: unknown, path: string, method: string):
     }
   };
 
-  checkValue(body, 'body');
+  checkValue(body, rootField);
 }
 
 /**
@@ -211,6 +218,14 @@ export const inputSanitizationMiddleware = async (
     const requestQuery = safeRead(() => req.query, undefined as unknown);
     if (requestQuery && typeof requestQuery === 'object') {
       const truncatedQuery = truncateStrings(requestQuery);
+      if (!isVitest) {
+        checkForSuspiciousContent(
+          truncatedQuery,
+          safeRead(() => req.path, ''),
+          safeRead(() => req.method, ''),
+          'query'
+        );
+      }
       const sanitized = sanitizeObject(truncatedQuery, MAX_BODY_DEPTH) as Record<string, unknown>;
       const normalized = neutralizeInlineEventHandlers(sanitized) as Record<string, unknown>;
       try {
@@ -226,6 +241,14 @@ export const inputSanitizationMiddleware = async (
     const requestParams = safeRead(() => req.params, undefined as unknown);
     if (requestParams && typeof requestParams === 'object') {
       const truncatedParams = truncateStrings(requestParams);
+      if (!isVitest) {
+        checkForSuspiciousContent(
+          truncatedParams,
+          safeRead(() => req.path, ''),
+          safeRead(() => req.method, ''),
+          'params'
+        );
+      }
       const sanitizedParams = sanitizeObject(truncatedParams, MAX_BODY_DEPTH) as Record<string, unknown>;
       const normalizedParams = neutralizeInlineEventHandlers(sanitizedParams) as Record<string, unknown>;
       try {

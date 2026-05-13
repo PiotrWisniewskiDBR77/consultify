@@ -44,7 +44,13 @@ const RBAC_MAX_ORG_ID_CHARS = 256;
 const responseWriteBlocked = (res: Response): boolean =>
   safeRead(() => res.headersSent, false) ||
   safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded, false) ||
-  safeRead(() => (res as Response & { finished?: boolean }).finished, false);
+  safeRead(() => (res as Response & { finished?: boolean }).finished, false) ||
+  safeRead(() => (res as Response & { destroyed?: boolean }).destroyed, false);
+const invokeNextIfFunction = (next: NextFunction): boolean => {
+  if (typeof next !== 'function') return false;
+  next();
+  return true;
+};
 
 const sendRbacForbidden = (res: Response, error: string, code: string): void => {
   if (responseWriteBlocked(res)) return;
@@ -141,8 +147,10 @@ const roleSatisfies = (userRole: CanonicalRole, requiredRole: CanonicalRole): bo
  */
 export const requireRole = (...roles: UserRole[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (typeof next !== 'function') return;
     if (!roles || roles.length === 0) {
-      return next();
+      invokeNextIfFunction(next);
+      return;
     }
 
     const userRole = getRequestRole(req);
@@ -161,7 +169,7 @@ export const requireRole = (...roles: UserRole[]) => {
       return;
     }
 
-    next();
+    invokeNextIfFunction(next);
   };
 };
 
@@ -170,6 +178,7 @@ export const requireRole = (...roles: UserRole[]) => {
  */
 export const requireOrgAccess = () => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (typeof next !== 'function') return;
     const orgId =
       normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
       normalizeOptionalString(safeRead(() => req.user?.organization_id, undefined as unknown)) ||
@@ -189,7 +198,7 @@ export const requireOrgAccess = () => {
       return;
     }
 
-    next();
+    invokeNextIfFunction(next);
   };
 };
 

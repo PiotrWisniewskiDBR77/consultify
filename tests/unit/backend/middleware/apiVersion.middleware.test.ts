@@ -359,6 +359,42 @@ describe('apiVersion.middleware (L1)', () => {
       expect(next).toHaveBeenCalledTimes(1);
     });
 
+    it('trims spaced minVersion input in requireVersion before lookup', () => {
+      const original = API_VERSIONS['2'];
+      API_VERSIONS['2'] = {
+        major: 2,
+        minor: 0,
+        patch: 0,
+        full: '2.0.0',
+        deprecated: false,
+        sunsetDate: null,
+      };
+      try {
+        const req: any = { apiVersion: API_VERSIONS['1'] };
+        const res = makeRes();
+        const next = vi.fn();
+
+        requireVersion('  v2.0.0  ')(req, res as any, next as any);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(next).not.toHaveBeenCalled();
+      } finally {
+        if (original) API_VERSIONS['2'] = original;
+        else delete (API_VERSIONS as any)['2'];
+      }
+    });
+
+    it('handles extremely long unknown minVersion input as unrecognized no-op', () => {
+      const req: any = { apiVersion: API_VERSIONS['1'] };
+      const res = makeRes();
+      const next = vi.fn();
+
+      requireVersion(`9${'z'.repeat(10_000)}`)(req, res as any, next as any);
+
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when version is too old', () => {
       const original = API_VERSIONS['2'];
       API_VERSIONS['2'] = {

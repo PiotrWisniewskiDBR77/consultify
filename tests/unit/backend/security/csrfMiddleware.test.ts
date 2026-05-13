@@ -241,6 +241,8 @@ describe('CSRF middleware (L1)', () => {
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'CSRF_MISSING' }));
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
       expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+      expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
+      expect(res.setHeader).toHaveBeenCalledWith('Surrogate-Control', 'no-store');
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -326,6 +328,34 @@ describe('CSRF middleware (L1)', () => {
       req.headers['x-csrf-token'] = [tok] as any;
       csrfValidationMiddleware(req, res, next);
       expect(next).toHaveBeenCalled();
+    });
+
+    it('accepts matching cookie and header when header array contains duplicate identical values', () => {
+      const tok = 'a'.repeat(64);
+      const { req, res, next } = createMocks({
+        method: 'POST',
+        path: '/api/test',
+        cookies: { csrf_token: tok },
+      });
+      req.headers['x-csrf-token'] = [tok, tok] as any;
+      csrfValidationMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('rejects POST when csrf header array contains conflicting token values', () => {
+      const tokA = 'a'.repeat(64);
+      const tokB = 'b'.repeat(64);
+      const { req, res, next } = createMocks({
+        method: 'POST',
+        path: '/api/test',
+        cookies: { csrf_token: tokA },
+      });
+      req.headers['x-csrf-token'] = [tokA, tokB] as any;
+      csrfValidationMiddleware(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'CSRF_INVALID' }));
+      expect(next).not.toHaveBeenCalled();
     });
 
     it('accepts matching tokens when CSRF header has surrounding whitespace', () => {

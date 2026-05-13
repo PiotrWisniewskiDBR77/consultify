@@ -166,6 +166,25 @@ describe('internalTools.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 404 when email local-part contains whitespace before @', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', 'dbr77.com');
+    const req: any = {
+      user: {
+        email: 'admin @dbr77.com',
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 404 when mailbox host contains consecutive dots', () => {
     vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', 'dbr77.com');
     const req: any = {
@@ -299,6 +318,26 @@ describe('internalTools.middleware', () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 in production when INTERNAL_TOOLS_ENABLED is not strictly true', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('INTERNAL_TOOLS_ENABLED', 'false');
+    const req: any = {
+      user: {
+        email: 'admin@dbr77.com',
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('returns 404 when INTERNAL_TOOLS_ALLOWED_ORG_IDS contains control characters', () => {

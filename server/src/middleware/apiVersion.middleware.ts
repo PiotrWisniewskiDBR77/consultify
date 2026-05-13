@@ -298,7 +298,8 @@ export function requireVersion(minVersion: string) {
       return;
     }
 
-    const minInfo = API_VERSIONS[normalizeVersion(minVersion)];
+    const normalizedMinVersionInput = clampVersionInput(String(minVersion ?? ''));
+    const minInfo = API_VERSIONS[normalizeVersion(normalizedMinVersionInput)];
     if (!minInfo) {
       next();
       return;
@@ -318,7 +319,9 @@ export function requireVersion(minVersion: string) {
       if (
         !safeStatusJson(res, 400, {
         error: 'API version too old',
-        message: `This endpoint requires API version ${formatVersionForError(minVersion)} or higher.`,
+        message: `This endpoint requires API version ${formatVersionForError(
+          normalizedMinVersionInput
+        )} or higher.`,
         yourVersion: req.apiVersion.full,
         requiredVersion: minInfo.full,
         })
@@ -407,7 +410,9 @@ function extractVersionFromUrl(path: string): string | null {
  */
 function normalizeVersion(version: string): string {
   // Remove 'v' prefix if present
-  const cleaned = String(version || '').replace(/^v/i, '');
+  const rawNormalized = normalizeOptionalString(String(version || '')) || '';
+  const cleaned = rawNormalized.replace(/^v/i, '');
+  if (!cleaned) return '';
 
   // Return as-is if it's a known format
   if (API_VERSIONS[cleaned]) {

@@ -96,6 +96,21 @@ const safeSetHeader = (res: Response, name: string, value: string): void => {
     // Quota warnings are optional metadata only.
   }
 };
+const sendQuotaJson = (
+  res: Response,
+  statusCode: number,
+  payload: Record<string, unknown>,
+  writeErrorLogLabel: string
+): boolean => {
+  if (safeRead(() => res.headersSent, false)) return false;
+  try {
+    res.status(statusCode).json(payload);
+    return true;
+  } catch {
+    logger.error(writeErrorLogLabel);
+    return false;
+  }
+};
 
 const finiteNumberOrZero = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
@@ -181,7 +196,12 @@ export async function enforceTokenQuota(
     const orgId = readOrgId(req);
 
     if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized - no organization' });
+      sendQuotaJson(
+        res,
+        401,
+        { error: 'Unauthorized - no organization' },
+        '[QuotaMiddleware] Failed to write token unauthorized response'
+      );
       return;
     }
 
@@ -190,64 +210,94 @@ export async function enforceTokenQuota(
       const accessResult = normalizeAccessPolicyResult(await aps.checkAccess(orgId, 'ai_call'));
       if (!accessResult) {
         logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
-        res.status(503).json({
-          error: 'Access policy is temporarily unavailable',
-          errorCode: 'ACCESS_POLICY_UNAVAILABLE',
-          code: 'ACCESS_POLICY_UNAVAILABLE',
-        });
+        sendQuotaJson(
+          res,
+          503,
+          {
+            error: 'Access policy is temporarily unavailable',
+            errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+            code: 'ACCESS_POLICY_UNAVAILABLE',
+          },
+          '[QuotaMiddleware] Failed to write token access-policy unavailable response'
+        );
         return;
       }
       if (!accessResult.allowed) {
-        res.status(429).json({
-          error: accessResult.reason,
-          errorCode: accessResult.errorCode,
-          code: accessResult.errorCode,
-          message: accessResult.reason,
-          upgradeUrl: '/settings?tab=billing',
-          upgradeCta:
-            accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
-              ? 'Add payment method'
-              : 'Upgrade plan',
-        });
+        sendQuotaJson(
+          res,
+          429,
+          {
+            error: accessResult.reason,
+            errorCode: accessResult.errorCode,
+            code: accessResult.errorCode,
+            message: accessResult.reason,
+            upgradeUrl: '/settings?tab=billing',
+            upgradeCta:
+              accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
+                ? 'Add payment method'
+                : 'Upgrade plan',
+          },
+          '[QuotaMiddleware] Failed to write token access-policy deny response'
+        );
         return;
       }
     } catch (policyErr) {
       logger.error('[QuotaMiddleware] Access policy check failed:', policyErr);
-      res.status(503).json({
-        error: 'Access policy is temporarily unavailable',
-        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
-        code: 'ACCESS_POLICY_UNAVAILABLE',
-      });
+      sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Access policy is temporarily unavailable',
+          errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+          code: 'ACCESS_POLICY_UNAVAILABLE',
+        },
+        '[QuotaMiddleware] Failed to write token access-policy failure response'
+      );
       return;
     }
 
     const quotaCandidate = await usageService.checkQuota(orgId, 'token');
     if (!isValidQuotaInfo(quotaCandidate)) {
       logger.error('[QuotaMiddleware] Invalid token quota payload', { orgId });
-      res.status(503).json({
-        error: 'Token quota service unavailable',
-        errorCode: 'QUOTA_CHECK_UNAVAILABLE',
-        code: 'QUOTA_CHECK_UNAVAILABLE',
-      });
+      sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Token quota service unavailable',
+          errorCode: 'QUOTA_CHECK_UNAVAILABLE',
+          code: 'QUOTA_CHECK_UNAVAILABLE',
+        },
+        '[QuotaMiddleware] Failed to write token quota unavailable response'
+      );
       return;
     }
-    const quota = quotaCandidate;
+    const quota: QuotaInfo = {
+      allowed: quotaCandidate.allowed,
+      used: finiteNumberOrZero(quotaCandidate.used),
+      limit: finiteNumberOrZero(quotaCandidate.limit),
+      percentage: finiteNumberOrZero(quotaCandidate.percentage),
+    };
     req.quotaInfo = quota;
 
     if (!quota.allowed) {
-      res.status(429).json({
-        error: 'Token quota exceeded',
-        errorCode: 'QUOTA_EXCEEDED',
-        code: 'QUOTA_EXCEEDED',
-        usage: {
-          used: finiteNumberOrZero(quota.used),
-          limit: finiteNumberOrZero(quota.limit),
-          percentage: finiteNumberOrZero(quota.percentage),
+      sendQuotaJson(
+        res,
+        429,
+        {
+          error: 'Token quota exceeded',
+          errorCode: 'QUOTA_EXCEEDED',
+          code: 'QUOTA_EXCEEDED',
+          usage: {
+            used: finiteNumberOrZero(quota.used),
+            limit: finiteNumberOrZero(quota.limit),
+            percentage: finiteNumberOrZero(quota.percentage),
+          },
+          message:
+            'Your organization has exceeded the monthly token limit. Please upgrade your plan or wait for the next billing cycle.',
+          upgradeUrl: '/settings?tab=billing',
         },
-        message:
-          'Your organization has exceeded the monthly token limit. Please upgrade your plan or wait for the next billing cycle.',
-        upgradeUrl: '/settings?tab=billing',
-      });
+        '[QuotaMiddleware] Failed to write token quota exceeded response'
+      );
       return;
     }
 
@@ -260,13 +310,16 @@ export async function enforceTokenQuota(
     next();
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
-    if (!res.headersSent) {
-      res.status(503).json({
+    sendQuotaJson(
+      res,
+      503,
+      {
         error: 'Token quota service unavailable',
         errorCode: 'QUOTA_CHECK_UNAVAILABLE',
         code: 'QUOTA_CHECK_UNAVAILABLE',
-      });
-    }
+      },
+      '[QuotaMiddleware] Failed to write token quota catch-all response'
+    );
   }
 }
 
@@ -284,7 +337,12 @@ export async function enforceStorageQuota(
     const orgId = readOrgId(req);
 
     if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized - no organization' });
+      sendQuotaJson(
+        res,
+        401,
+        { error: 'Unauthorized - no organization' },
+        '[QuotaMiddleware] Failed to write storage unauthorized response'
+      );
       return;
     }
 
@@ -293,73 +351,106 @@ export async function enforceStorageQuota(
       const accessResult = normalizeAccessPolicyResult(await aps.checkAccess(orgId, 'upload'));
       if (!accessResult) {
         logger.error('[QuotaMiddleware] Invalid access policy payload', { orgId });
-        res.status(503).json({
-          error: 'Access policy is temporarily unavailable',
-          errorCode: 'ACCESS_POLICY_UNAVAILABLE',
-          code: 'ACCESS_POLICY_UNAVAILABLE',
-        });
+        sendQuotaJson(
+          res,
+          503,
+          {
+            error: 'Access policy is temporarily unavailable',
+            errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+            code: 'ACCESS_POLICY_UNAVAILABLE',
+          },
+          '[QuotaMiddleware] Failed to write storage access-policy unavailable response'
+        );
         return;
       }
       if (!accessResult.allowed) {
-        res.status(429).json({
-          error: accessResult.reason,
-          errorCode: accessResult.errorCode,
-          code: accessResult.errorCode,
-          message: accessResult.reason,
-          upgradeUrl: '/settings?tab=billing',
-        });
+        sendQuotaJson(
+          res,
+          429,
+          {
+            error: accessResult.reason,
+            errorCode: accessResult.errorCode,
+            code: accessResult.errorCode,
+            message: accessResult.reason,
+            upgradeUrl: '/settings?tab=billing',
+          },
+          '[QuotaMiddleware] Failed to write storage access-policy deny response'
+        );
         return;
       }
     } catch (policyErr) {
       logger.error('[QuotaMiddleware] Storage access policy check failed:', policyErr);
-      res.status(503).json({
-        error: 'Access policy is temporarily unavailable',
-        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
-        code: 'ACCESS_POLICY_UNAVAILABLE',
-      });
+      sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Access policy is temporarily unavailable',
+          errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+          code: 'ACCESS_POLICY_UNAVAILABLE',
+        },
+        '[QuotaMiddleware] Failed to write storage access-policy failure response'
+      );
       return;
     }
 
     const quotaCandidate = await usageService.checkQuota(orgId, 'storage');
     if (!isValidQuotaInfo(quotaCandidate)) {
       logger.error('[QuotaMiddleware] Invalid storage quota payload', { orgId });
-      res.status(503).json({
-        error: 'Storage quota service unavailable',
-        errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
-        code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
-      });
+      sendQuotaJson(
+        res,
+        503,
+        {
+          error: 'Storage quota service unavailable',
+          errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+          code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+        },
+        '[QuotaMiddleware] Failed to write storage quota unavailable response'
+      );
       return;
     }
-    const quota = quotaCandidate;
+    const quota: QuotaInfo = {
+      allowed: quotaCandidate.allowed,
+      used: finiteNumberOrZero(quotaCandidate.used),
+      limit: finiteNumberOrZero(quotaCandidate.limit),
+      percentage: finiteNumberOrZero(quotaCandidate.percentage),
+    };
     req.storageQuotaInfo = quota;
 
     if (!quota.allowed) {
-      res.status(429).json({
-        error: 'Storage quota exceeded',
-        errorCode: 'STORAGE_QUOTA_EXCEEDED',
-        code: 'STORAGE_QUOTA_EXCEEDED',
-        usage: {
-          usedGB: bytesToGbString(quota.used),
-          limitGB: bytesToGbString(quota.limit),
-          percentage: finiteNumberOrZero(quota.percentage),
+      sendQuotaJson(
+        res,
+        429,
+        {
+          error: 'Storage quota exceeded',
+          errorCode: 'STORAGE_QUOTA_EXCEEDED',
+          code: 'STORAGE_QUOTA_EXCEEDED',
+          usage: {
+            usedGB: bytesToGbString(quota.used),
+            limitGB: bytesToGbString(quota.limit),
+            percentage: finiteNumberOrZero(quota.percentage),
+          },
+          message:
+            'Your organization has exceeded the storage limit. Please upgrade your plan or delete unused files.',
+          upgradeUrl: '/settings?tab=billing',
         },
-        message:
-          'Your organization has exceeded the storage limit. Please upgrade your plan or delete unused files.',
-        upgradeUrl: '/settings?tab=billing',
-      });
+        '[QuotaMiddleware] Failed to write storage quota exceeded response'
+      );
       return;
     }
 
     next();
   } catch (error: unknown) {
     logger.error('Storage quota check error:', error);
-    if (!res.headersSent) {
-      res.status(503).json({
+    sendQuotaJson(
+      res,
+      503,
+      {
         error: 'Storage quota service unavailable',
         errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
         code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
-      });
-    }
+      },
+      '[QuotaMiddleware] Failed to write storage quota catch-all response'
+    );
   }
 }
 

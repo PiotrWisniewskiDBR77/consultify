@@ -430,6 +430,99 @@ describe('quota.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('sanitizes non-finite token quota values attached to req on allow path', async () => {
+    mockUsageService.checkQuota.mockResolvedValue({
+      allowed: true,
+      used: Number.NaN,
+      limit: Number.POSITIVE_INFINITY,
+      percentage: Number.NaN,
+    });
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(req.quotaInfo).toEqual({
+      allowed: true,
+      used: 0,
+      limit: 0,
+      percentage: 0,
+    });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('sanitizes non-finite storage quota values attached to req on allow path', async () => {
+    mockUsageService.checkQuota.mockImplementation(
+      async (_orgId: string, type: 'token' | 'storage') => {
+        if (type === 'storage') {
+          return {
+            allowed: true,
+            used: Number.NaN,
+            limit: Number.POSITIVE_INFINITY,
+            percentage: Number.NaN,
+          };
+        }
+        return { allowed: true, used: 1, limit: 100, percentage: 1 };
+      }
+    );
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(req.storageQuotaInfo).toEqual({
+      allowed: true,
+      used: 0,
+      limit: 0,
+      percentage: 0,
+    });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not throw when token unauthorized response writer fails', async () => {
+    const req: any = {};
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(() => {
+        throw new Error('json write failed');
+      }),
+    };
+    const next = vi.fn();
+
+    await expect(enforceTokenQuota(req, res, next)).resolves.toBeUndefined();
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      '[QuotaMiddleware] Failed to write token unauthorized response'
+    );
+  });
+
+  it('does not write token unauthorized response when headers are already sent', async () => {
+    const req: any = {};
+    const res: any = {
+      headersSent: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 503 when token quota payload is malformed', async () => {
     mockUsageService.checkQuota.mockResolvedValueOnce(null as any);
     const req: any = { user: { organizationId: 'org-1' } };

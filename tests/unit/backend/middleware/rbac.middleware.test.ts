@@ -27,6 +27,22 @@ describe('rbac.middleware (L1)', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('requireRole: does not throw when next is not a function on allow path', () => {
+    const req: any = { user: { role: 'admin' } };
+    const res = makeRes();
+    expect(() => requireRole('admin')(req, res as any, undefined as any)).not.toThrow();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: does not throw when next is not a function on deny path', () => {
+    const req: any = { user: { role: 'guest' } };
+    const res = makeRes();
+    expect(() => requireRole('admin')(req, res as any, undefined as any)).not.toThrow();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
   it('requireRole: denies when role not allowed', () => {
     const req: any = { user: { role: 'guest' } };
     const res = makeRes();
@@ -76,6 +92,14 @@ describe('rbac.middleware (L1)', () => {
     const next = vi.fn();
     requireOrgAccess()(req, res as any, next as any);
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('requireOrgAccess: does not throw when next is not a function', () => {
+    const req: any = { user: { organizationId: 'org1' } };
+    const res = makeRes();
+    expect(() => requireOrgAccess()(req, res as any, undefined as any)).not.toThrow();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
   });
 
   it('requireOrgAccess: allows when only legacy organization_id exists', () => {

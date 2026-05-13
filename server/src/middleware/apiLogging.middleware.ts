@@ -42,6 +42,8 @@ const readRequestPath = (req: Request): string =>
 
 const readRequestMethod = (req: Request): string =>
   (normalizeOptionalString(safeRead(() => req.method, undefined)) || '').toUpperCase();
+const capLoggedString = (value: string | null, maxChars: number): string | null =>
+  typeof value === 'string' ? value.substring(0, maxChars) : null;
 
 const safeGetHeader = (req: Request, header: string): string | undefined =>
   normalizeOptionalString(safeRead(() => req.get?.(header), undefined));
@@ -70,6 +72,9 @@ const SKIP_PATH_PREFIXES = [
 const RES_END_PATCHED = Symbol.for('consultify.apiLogging.endPatched');
 const MAX_CORRELATION_ID_CHARS = 128;
 const MAX_LOGGED_RESPONSE_TIME_MS = 86_400_000;
+const MAX_LOGGED_METHOD_CHARS = 32;
+const MAX_LOGGED_USER_ID_CHARS = 128;
+const MAX_LOGGED_ORGANIZATION_ID_CHARS = 128;
 const FALLBACK_CORRELATION_ID = '00000000-0000-4000-8000-000000000000';
 const sanitizeCorrelationId = (value: string): string =>
   value.replace(/[\u0000-\u001F\u007F]+/g, '');
@@ -141,7 +146,6 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
     next();
     return;
   }
-  const boundEnd = safeRead(() => originalEnd.bind(res), originalEnd);
   let persisted = false;
   res.end = function (this: Response, ...args: any[]) {
     try {
@@ -173,11 +177,11 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
             [
               uuidv4(),
               requestPath.substring(0, 255),
-              readRequestMethod(req),
+              readRequestMethod(req).substring(0, MAX_LOGGED_METHOD_CHARS),
               statusCode,
               responseTime,
-              userId,
-              organizationId,
+              capLoggedString(userId, MAX_LOGGED_USER_ID_CHARS),
+              capLoggedString(organizationId, MAX_LOGGED_ORGANIZATION_ID_CHARS),
               correlationId,
               statusCode >= 400
                 ? (normalizeOptionalString(safeRead(() => res.statusMessage, undefined)) || '').substring(
@@ -192,7 +196,7 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
     } catch {
       // Fail-open: observability must never break API responses.
     }
-    return boundEnd(...(args as any));
+    return originalEnd.apply(res, args as any);
   } as any;
   next();
 }

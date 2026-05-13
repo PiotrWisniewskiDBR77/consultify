@@ -199,6 +199,27 @@ describe('trialEntryGuard.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 400 when trial user sends oversized request path', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'POST',
+      path: `/${'a'.repeat(8200)}`,
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'REQUEST_URI_TOO_LONG',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('does not block when path accessor throws', async () => {
     mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
     const req: any = {
@@ -343,6 +364,25 @@ describe('trialEntryGuard.middleware', () => {
     const next = vi.fn();
 
     await expect(trialEntryGuard(req, res, next)).resolves.toBeUndefined();
-    expect(next).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0][0]).toBeInstanceOf(Error);
+    expect(next.mock.calls[0][0].message).toContain('TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+  });
+
+  it('requireOrgContext forwards to next(error) when org-required response writer fails', async () => {
+    const req: any = { isTrialEntry: true, user: {} };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(() => {
+        throw new Error('json failed');
+      }),
+    };
+    const next = vi.fn();
+
+    await expect(requireOrgContext(req, res, next)).resolves.toBeUndefined();
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0][0]).toBeInstanceOf(Error);
+    expect(next.mock.calls[0][0].message).toContain('TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
   });
 });

@@ -80,6 +80,7 @@ const MAX_ORG_CONTEXT_ID_CHARS = 128;
 const MAX_PERMISSION_SCOPE_JSON_CHARS = 65_536;
 const MAX_ORG_CONTEXT_OPTION_NAME_CHARS = 64;
 const MAX_ORG_CONTEXT_ROLE_CHARS = 64;
+const PERMISSION_SCOPE_DISALLOWED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const SAFE_ORG_CONTEXT_OPTION_NAME = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
 
 // ==========================================
@@ -163,6 +164,23 @@ const readOrgIdFromHeader = (req: Request, headerName: string): string | null =>
   }
   return normalizeOptionalString(headerValue);
 };
+const readDistinctOrgIdsFromHeader = (req: Request, headerName: string): string[] => {
+  const headers = safeRead(
+    () => req.headers as Record<string, unknown>,
+    {} as Record<string, unknown>
+  );
+  const normalizedHeaderName = normalizeOptionalString(headerName)?.toLowerCase();
+  if (!normalizedHeaderName) return [];
+  const headerValue = safeRead(() => headers[normalizedHeaderName], undefined);
+  if (!Array.isArray(headerValue)) return [];
+
+  const distinctValues = new Set<string>();
+  for (const value of headerValue) {
+    const normalized = normalizeOptionalString(value);
+    if (normalized) distinctValues.add(normalized);
+  }
+  return Array.from(distinctValues);
+};
 const isSafeOrgContextId = (orgId: string): boolean => {
   if (!orgId || orgId.length > MAX_ORG_CONTEXT_ID_CHARS) return false;
   if (/[\u0000-\u001F\u007F]/.test(orgId)) return false;
@@ -191,6 +209,11 @@ const parsePermissionScope = (value: unknown): { valid: true; scope: Record<stri
     const parsed = JSON.parse(normalized);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return { valid: false };
+    }
+    for (const key of Object.keys(parsed as Record<string, unknown>)) {
+      if (PERMISSION_SCOPE_DISALLOWED_KEYS.has(key)) {
+        return { valid: false };
+      }
     }
     return { valid: true, scope: parsed as Record<string, unknown> };
   } catch {
@@ -362,6 +385,14 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
       // 1. URL param (highest priority, always trusted)
       const paramOrgId = readOrgIdFromParam(req, paramName);
       const headerOrgId = allowHeader ? readOrgIdFromHeader(req, headerName) : null;
+      const headerOrgCandidates = allowHeader ? readDistinctOrgIdsFromHeader(req, headerName) : [];
+      if (headerOrgCandidates.length > 1) {
+        res.status(400).json({
+          error: 'Invalid organization id',
+          message: 'Organization header contains conflicting values.',
+        });
+        return;
+      }
       if (paramOrgId && !isSafeOrgContextId(paramOrgId)) {
         res.status(400).json({
           error: 'Invalid organization id',

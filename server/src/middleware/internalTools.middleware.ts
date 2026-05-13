@@ -85,8 +85,9 @@ function readOrganizationId(req: AuthRequest): string {
 }
 
 function isInternalToolsEnabled(): boolean {
-  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return true;
-  return normalizeOptionalString(process.env.INTERNAL_TOOLS_ENABLED) === 'true';
+  const nodeEnv = normalizeOptionalString(safeRead(() => process.env.NODE_ENV, ''));
+  if (nodeEnv === 'development' || nodeEnv === 'test') return true;
+  return normalizeOptionalString(safeRead(() => process.env.INTERNAL_TOOLS_ENABLED, '')) === 'true';
 }
 
 export function requireInternalToolsAccess(
@@ -106,6 +107,10 @@ export function requireInternalToolsAccess(
     return;
   }
   if (userEmail.length > MAX_INTERNAL_TOOLS_EMAIL_CHARS || /[\u0000-\u001F\u007F]/.test(userEmail)) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  if (/\s/.test(userEmail)) {
     res.status(404).json({ error: 'Not found' });
     return;
   }

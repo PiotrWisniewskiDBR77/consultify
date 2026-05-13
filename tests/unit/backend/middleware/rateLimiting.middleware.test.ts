@@ -683,6 +683,31 @@ describe('rateLimiting.middleware (L1)', () => {
     }
   });
 
+  it('clears previous cleanup interval on module reload before starting a new one', async () => {
+    const prev = process.env.NODE_ENV;
+    const unrefSpy = vi.fn();
+    const handle = { unref: unrefSpy } as unknown as NodeJS.Timeout;
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockReturnValue(handle);
+    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval').mockImplementation(() => undefined);
+
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      vi.resetModules();
+      await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      expect(setIntervalSpy).toHaveBeenCalledTimes(2);
+      expect(clearIntervalSpy).toHaveBeenCalled();
+      expect(clearIntervalSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+      expect(unrefSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      setIntervalSpy.mockRestore();
+      clearIntervalSpy.mockRestore();
+      process.env.NODE_ENV = prev;
+    }
+  });
+
   it('caps oversized ip key material so suffix-only differences share a bucket', async () => {
     const prev = process.env.NODE_ENV;
     try {
@@ -745,6 +770,29 @@ describe('rateLimiting.middleware (L1)', () => {
       const remainingB = Number(resB.headers['x-ratelimit-remaining']);
 
       expect(remainingB).toBeLessThan(remainingA);
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('enforces in-memory store cap for unique key bursts', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      for (let i = 0; i < 50_200; i++) {
+        const req: any = {
+          method: 'GET',
+          ip: `198.18.${Math.floor(i / 255)}.${i % 255}`,
+          headers: {},
+          socket: {},
+        };
+        mod.defaultRateLimiter(req, makeRes() as any, vi.fn() as any);
+      }
+
+      expect(mod.__private__.getStoreSize()).toBeLessThanOrEqual(50_000);
     } finally {
       process.env.NODE_ENV = prev;
     }

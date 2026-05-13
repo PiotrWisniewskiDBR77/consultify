@@ -91,6 +91,26 @@ describe('demoGuard.middleware runtime safety', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('demoContextMiddleware ignores oversized X-Demo-Mode header payloads', () => {
+    const req: any = {};
+    Object.defineProperty(req, 'get', {
+      configurable: true,
+      value: (header: string) => {
+        if (header === 'X-Demo-Mode') return `true${'x'.repeat(80)}`;
+        if (header === 'X-Demo-Session-Org') return 'demo-session-org';
+        return null;
+      },
+    });
+    const res = {} as Response;
+    const next = vi.fn();
+
+    demoContextMiddleware(req as Request, res, next as unknown as NextFunction);
+
+    expect((req as any).demo).toBeUndefined();
+    expect((req as any).organizationId).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('demoWriteProtection blocks writes when req.get throws and org is demo', () => {
     const middleware = demoWriteProtection();
     const req: any = { organizationId: DEMO_ORG_ID };
@@ -187,6 +207,70 @@ describe('demoGuard.middleware runtime safety', () => {
     expect((res as any).json).not.toHaveBeenCalled();
   });
 
+  it('demoWriteProtection skips response write when finished is true', () => {
+    const middleware = demoWriteProtection();
+    const req: any = { organizationId: DEMO_ORG_ID };
+    Object.defineProperty(req, 'method', {
+      configurable: true,
+      get: () => 'POST',
+    });
+    Object.defineProperty(req, 'originalUrl', {
+      configurable: true,
+      get: () => '/api/protected',
+    });
+    Object.defineProperty(req, 'get', {
+      configurable: true,
+      value: () => 'true',
+    });
+
+    const res = {
+      headersSent: false,
+      finished: true,
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    } as unknown as Response;
+    const next = vi.fn();
+
+    middleware(req as Request, res, next as unknown as NextFunction);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect((res as any).status).not.toHaveBeenCalled();
+    expect((res as any).json).not.toHaveBeenCalled();
+  });
+
+  it('demoWriteProtection skips response write when destroyed is true', () => {
+    const middleware = demoWriteProtection();
+    const req: any = { organizationId: DEMO_ORG_ID };
+    Object.defineProperty(req, 'method', {
+      configurable: true,
+      get: () => 'POST',
+    });
+    Object.defineProperty(req, 'originalUrl', {
+      configurable: true,
+      get: () => '/api/protected',
+    });
+    Object.defineProperty(req, 'get', {
+      configurable: true,
+      value: () => 'true',
+    });
+
+    const res = {
+      headersSent: false,
+      destroyed: true,
+      setHeader: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    } as unknown as Response;
+    const next = vi.fn();
+
+    middleware(req as Request, res, next as unknown as NextFunction);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect((res as any).status).not.toHaveBeenCalled();
+    expect((res as any).json).not.toHaveBeenCalled();
+  });
+
   it('demoWriteProtection blocks writes for whitespace-padded X-Demo-Mode header', () => {
     const middleware = demoWriteProtection();
     const req: any = {};
@@ -215,6 +299,37 @@ describe('demoGuard.middleware runtime safety', () => {
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('demoWriteProtection ignores oversized X-Demo-Mode header for non-demo organization', () => {
+    const middleware = demoWriteProtection();
+    const req: any = { organizationId: 'org-live-1' };
+    Object.defineProperty(req, 'method', {
+      configurable: true,
+      get: () => 'POST',
+    });
+    Object.defineProperty(req, 'originalUrl', {
+      configurable: true,
+      get: () => '/api/protected',
+    });
+    Object.defineProperty(req, 'get', {
+      configurable: true,
+      value: (header: string) => {
+        if (header === 'X-Demo-Mode') return `true${'x'.repeat(80)}`;
+        return null;
+      },
+    });
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    } as unknown as Response;
+    const next = vi.fn();
+
+    middleware(req as Request, res, next as unknown as NextFunction);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
   });
 
   it('demoWriteProtection forwards error when response json writer throws', () => {

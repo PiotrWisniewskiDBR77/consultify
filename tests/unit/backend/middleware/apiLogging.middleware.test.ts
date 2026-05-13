@@ -603,4 +603,73 @@ describe('apiLogging.middleware', () => {
     expect(originalEnd).toHaveBeenCalledTimes(1);
     expect(thisValues[0]).toBe(res);
   });
+
+  it('still calls original end with response context when Function.prototype.bind throws', async () => {
+    process.env.NODE_ENV = 'development';
+    vi.resetModules();
+    const bindSpy = vi.spyOn(Function.prototype, 'bind').mockImplementation(function () {
+      throw new Error('bind blocked');
+    });
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const thisValues: unknown[] = [];
+    const originalEnd = vi.fn(function (this: unknown) {
+      thisValues.push(this);
+      return this;
+    });
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: originalEnd,
+    } as unknown as MutableResponse;
+    const next = vi.fn();
+    const { apiLoggingMiddleware: isolatedApiLoggingMiddleware } = await import(
+      '../../../../server/src/middleware/apiLogging.middleware.ts'
+    );
+
+    expect(() =>
+      isolatedApiLoggingMiddleware(req, res, next as unknown as NextFunction)
+    ).not.toThrow();
+    const detachedEnd = res.end as (...args: unknown[]) => unknown;
+    expect(() => detachedEnd()).not.toThrow();
+
+    expect(originalEnd).toHaveBeenCalledTimes(1);
+    expect(thisValues[0]).toBe(res);
+    bindSpy.mockRestore();
+  });
+
+  it('caps logged method, user id, and organization id lengths before insert', () => {
+    process.env.NODE_ENV = 'development';
+    const req = {
+      method: 'x'.repeat(80),
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: {
+        id: 'u'.repeat(200),
+        organizationId: 'o'.repeat(200),
+      },
+    } as unknown as Request;
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: vi.fn(),
+    } as unknown as MutableResponse;
+    const next = vi.fn();
+
+    apiLoggingMiddleware(req, res, next as unknown as NextFunction);
+    res.end();
+
+    const insertParams = runMock.mock.calls[0]?.[1] as unknown[];
+    expect(String(insertParams[2]).length).toBeLessThanOrEqual(32);
+    expect(String(insertParams[5]).length).toBeLessThanOrEqual(128);
+    expect(String(insertParams[6]).length).toBeLessThanOrEqual(128);
+  });
 });

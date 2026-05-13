@@ -28,6 +28,7 @@ const DEFAULT_CONFIG: WatchdogConfig = {
   checkEveryN: 10,
 };
 const HARD_CAP_WINDOW_RECORDS = 50_000;
+const PRUNE_MAX_SHIFTS_PER_CALL = 10_000;
 const WATCHDOG_PATCHED = Symbol.for('consultify.alertWatchdog.patched');
 const WATCHDOG_COMPLETED = Symbol.for('consultify.alertWatchdog.completed');
 
@@ -117,8 +118,10 @@ const sanitizeStatusCode = (value: unknown): number => {
 
 function pruneOld(config: WatchdogConfig): void {
   const cutoff = Date.now() - config.windowMs;
-  while (records.length > 0 && records[0].timestamp < cutoff) {
+  let shifts = 0;
+  while (records.length > 0 && records[0].timestamp < cutoff && shifts < PRUNE_MAX_SHIFTS_PER_CALL) {
     records.shift();
+    shifts += 1;
   }
 }
 
@@ -168,13 +171,21 @@ async function notifyAlert(type: string, message: string): Promise<void> {
     if (alertEmail && emailService?.sendEmail) {
       await emailService.sendEmail(
         alertEmail,
-        `[Consultivity Alert] ${type}`,
-        `<p>${message}</p><p>Time: ${new Date().toISOString()}</p>`
+        `[Consultivity Alert] ${escapeHtml(type)}`,
+        `<p>${escapeHtml(message)}</p><p>Time: ${escapeHtml(new Date().toISOString())}</p>`
       );
     }
   } catch {
     // fail-open: never block requests for alerting failures
   }
+}
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 const emptyWatchdogStats = () => ({
@@ -285,3 +296,7 @@ const alertWatchdog = (req: Request, res: Response, next: NextFunction): void =>
 };
 
 export default alertWatchdog;
+export const __private__ = {
+  escapeHtml,
+  getRecordCount: (): number => records.length,
+};

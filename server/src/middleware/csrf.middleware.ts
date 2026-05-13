@@ -62,6 +62,17 @@ function readCsrfHeader(req: Request): string | undefined {
   return normalizeHeaderValue(upper);
 }
 
+function hasConflictingCsrfHeaderValues(req: Request): boolean {
+  const raw = safeRead(() => req.headers?.[CSRF_HEADER_NAME], undefined as unknown);
+  if (!Array.isArray(raw) || raw.length <= 1) return false;
+  const normalized = raw
+    .filter((value): value is string => typeof value === 'string')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  if (normalized.length <= 1) return false;
+  return new Set(normalized).size > 1;
+}
+
 function isTestEnv() {
   return process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 }
@@ -124,6 +135,8 @@ function sendCsrfForbidden(
 ): void {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   res.status(403).json(body);
 }
 
@@ -176,6 +189,10 @@ export const csrfValidationMiddleware = (req: Request, res: Response, next: Next
 
   const cookieTok = readCsrfCookieRaw(req);
   const headerTok = readCsrfHeader(req);
+  if (hasConflictingCsrfHeaderValues(req)) {
+    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
+    return;
+  }
 
   if (cookieTok === undefined || cookieTok === null || !headerTok) {
     sendCsrfForbidden(res, { code: 'CSRF_MISSING', message: 'CSRF token missing' });

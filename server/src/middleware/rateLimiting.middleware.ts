@@ -19,12 +19,21 @@ interface Entry {
 const store = new Map<string, Entry>();
 const MAX_RATE_LIMIT_IP_KEY_LEN = 256;
 const MAX_RATE_LIMIT_JWT_DECODE_LEN = 16384;
+const MAX_RATE_LIMIT_STORE_KEYS = 50_000;
+const STORE_CAP_PRUNE_TARGET = 45_000;
+const STORE_CLEANUP_INTERVAL_KEY = '__consultifyRateLimitStoreCleanup__';
+type RateLimitGlobal = typeof globalThis & { [STORE_CLEANUP_INTERVAL_KEY]?: ReturnType<typeof setInterval> };
+const globalRateLimit = globalThis as RateLimitGlobal;
+if (globalRateLimit[STORE_CLEANUP_INTERVAL_KEY]) {
+  clearInterval(globalRateLimit[STORE_CLEANUP_INTERVAL_KEY]);
+}
 const storeCleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [k, v] of store) {
     if (now >= v.resetAt) store.delete(k);
   }
 }, 60_000);
+globalRateLimit[STORE_CLEANUP_INTERVAL_KEY] = storeCleanupInterval;
 storeCleanupInterval.unref?.();
 
 function safeInvokeNext(next: NextFunction): void {
@@ -47,10 +56,25 @@ function increment(key: string, windowMs: number): { count: number; resetAt: num
   if (!entry || now >= entry.resetAt) {
     const e = { count: 1, resetAt: now + windowMs };
     store.set(key, e);
+    enforceStoreCap(now);
     return e;
   }
   entry.count++;
   return { count: entry.count, resetAt: entry.resetAt };
+}
+
+function enforceStoreCap(now: number): void {
+  if (store.size <= MAX_RATE_LIMIT_STORE_KEYS) return;
+  for (const [k, v] of store) {
+    if (now >= v.resetAt) store.delete(k);
+  }
+  if (store.size <= MAX_RATE_LIMIT_STORE_KEYS) return;
+
+  const byResetAt = [...store.entries()].sort((a, b) => a[1].resetAt - b[1].resetAt);
+  for (const [key] of byResetAt) {
+    if (store.size <= STORE_CAP_PRUNE_TARGET) break;
+    store.delete(key);
+  }
 }
 
 function resolveLimiterParams(windowMs: number, max: number): { windowMs: number; max: number } {
@@ -289,6 +313,7 @@ export const feedbackRateLimiter = createLimiter({
 
 export const __private__ = {
   resolveLimiterParams,
+  getStoreSize: (): number => store.size,
 };
 
 export default defaultRateLimiter;

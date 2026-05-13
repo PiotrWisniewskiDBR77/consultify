@@ -19,6 +19,7 @@ export const DEMO_ORG_NAME = process.env.DEMO_ORG_NAME || 'Demo Organization';
 export const DEMO_SESSION_ORG_HEADER = 'X-Demo-Session-Org';
 const MAX_DEMO_ORG_ID_CHARS = 128;
 const MAX_DEMO_GUARD_URL_CHARS = 8192;
+const MAX_DEMO_MODE_HEADER_CHARS = 64;
 const DEMO_PREF_KEY = 'demo:enabled';
 const DEMO_STARTED_AT_KEY = 'demo:started_at';
 
@@ -69,7 +70,9 @@ function safeWrite(writer: () => void): boolean {
 function responseWriteBlocked(res: Response): boolean {
   return Boolean(
     safeRead(() => res.headersSent, false) ||
-      safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false)
+      safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
+      safeRead(() => (res as Response & { finished?: boolean }).finished === true, false) ||
+      safeRead(() => (res as Response & { destroyed?: boolean }).destroyed === true, false)
   );
 }
 
@@ -86,8 +89,10 @@ function normalizeOrgIdForDemoComparison(value: unknown): string {
 }
 
 function isDemoModeHeaderTrue(value: unknown): boolean {
-  const normalized = String(value ?? '').trim().toLowerCase();
-  return normalized === 'true' || normalized === '1';
+  const normalized = String(value ?? '').trim();
+  if (!normalized || normalized.length > MAX_DEMO_MODE_HEADER_CHARS) return false;
+  const lowered = normalized.toLowerCase();
+  return lowered === 'true' || lowered === '1';
 }
 
 function stripPathOnly(url: string): string {

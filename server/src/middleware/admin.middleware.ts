@@ -48,6 +48,13 @@ const safeNext = (next: NextFunction): void => {
     // fail-closed: auth middleware allow path should not throw outward
   }
 };
+const finishAllowPath = (next: NextFunction, res: Response): void => {
+  if (typeof next !== 'function') {
+    safeSendAdminAccessRequired(res);
+    return;
+  }
+  safeNext(next);
+};
 
 // ==========================================
 // HELPERS
@@ -72,6 +79,9 @@ const sendAdminAccessRequired = (res: Response): boolean => {
       }).setHeader;
       if (typeof setHeader === 'function') {
         setHeader.call(res, 'Cache-Control', 'no-store');
+        setHeader.call(res, 'Pragma', 'no-cache');
+        setHeader.call(res, 'Expires', '0');
+        setHeader.call(res, 'X-Content-Type-Options', 'nosniff');
       }
     } catch {
       // fail-closed: deny path must remain non-throwing
@@ -146,11 +156,11 @@ export const verifyAdmin = async (
     const isSuperAdmin = safeRead(() => isRequestSuperAdmin(req), false);
 
     if (isSuperAdmin) {
-      safeNext(next);
+      finishAllowPath(next, res);
       return;
     }
     if (isAdminRole(role)) {
-      safeNext(next);
+      finishAllowPath(next, res);
       return;
     }
 
@@ -165,7 +175,7 @@ export const verifyAdmin = async (
           typeof membership?.role === 'string' ? normalizeOptionalString(membership.role) : undefined;
         const normalizedRole = normalizeOrganizationRole(membershipRole || role);
         if (['OWNER', 'ADMIN'].includes(normalizedRole)) {
-          safeNext(next);
+          finishAllowPath(next, res);
           return;
         }
       } catch {

@@ -330,6 +330,39 @@ describe('featureGate.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireFeature does not write deny response when response is finished', () => {
+    const mw = requireFeature('benchmark_access');
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE' };
+    const res = makeRes();
+    res.finished = true;
+    const next = vi.fn();
+
+    expect(() => mw(req, res as any, next as any)).not.toThrow();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireFeature rejects feature ids containing control characters with 500', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const mw = requireFeature('demo_view\u0000');
+    const req: any = { currentPhase: 'B', userState: 'DEMO_SESSION', userRole: 'ADMIN' };
+    const res = makeRes();
+    const next = vi.fn();
+
+    mw(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'INVALID_FEATURE_ID',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('disallowed characters'));
+    errorSpy.mockRestore();
+  });
+
   it('requireFeature does not throw when next is not a function on allow path', () => {
     const mw = requireFeature('demo_view');
     const req: any = { currentPhase: 'B', userState: 'DEMO_SESSION' };
@@ -370,6 +403,16 @@ describe('featureGate.middleware', () => {
   it('isFeatureAccessible returns false for oversized feature identifiers', () => {
     expect(
       isFeatureAccessible(`benchmark_access${'x'.repeat(300)}`, {
+        phase: 'G',
+        state: 'ECOSYSTEM_NODE',
+        role: 'ADMIN',
+      })
+    ).toBe(false);
+  });
+
+  it('isFeatureAccessible returns false when feature id contains control characters', () => {
+    expect(
+      isFeatureAccessible('bench\u0000mark_access', {
         phase: 'G',
         state: 'ECOSYSTEM_NODE',
         role: 'ADMIN',

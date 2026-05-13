@@ -49,6 +49,7 @@ const sendJsonIfHeadersOpen = (
   if (safeRead(() => res.headersSent, false)) return false;
   if (safeRead(() => (res as { writableEnded?: boolean }).writableEnded, false)) return false;
   if (safeRead(() => (res as { destroyed?: boolean }).destroyed, false)) return false;
+  if (safeRead(() => (res as { finished?: boolean }).finished, false)) return false;
   try {
     res.status(statusCode).json(payload);
     return true;
@@ -76,6 +77,7 @@ const normalizeRole = (value: unknown): string | undefined =>
   normalizeOptionalString(value)?.toUpperCase();
 const isRegisteredFeature = (featureId: string): boolean =>
   Object.prototype.hasOwnProperty.call(FEATURE_REQUIREMENTS, featureId);
+const hasDisallowedFeatureIdChars = (featureId: string): boolean => /[\u0000-\u001F\u007F]/.test(featureId);
 const MAX_FEATURE_ID_PUBLIC = 64;
 const MAX_FEATURE_ID_INTERNAL = 256;
 const MAX_REQUIRE_ACCESS_RULE_ENTRIES = 64;
@@ -202,6 +204,15 @@ Object.freeze(FEATURE_REQUIREMENTS);
 export function requireFeature(featureId: string) {
   const normalizedFeatureId = normalizeOptionalString(featureId) || '';
   const publicFeatureId = truncateForPublicSurface(normalizedFeatureId || featureId);
+  if (hasDisallowedFeatureIdChars(normalizedFeatureId)) {
+    return (_req: Request, res: Response, _next: NextFunction): void => {
+      logger.error(`Feature '${publicFeatureId}' rejected: feature id contains disallowed characters`);
+      sendJsonIfHeadersOpen(res, 500, {
+        error: 'INVALID_FEATURE_ID',
+        message: 'Feature identifier is not valid. Contact support.',
+      });
+    };
+  }
   if (normalizedFeatureId.length > MAX_FEATURE_ID_INTERNAL) {
     return (_req: Request, res: Response, _next: NextFunction): void => {
       logger.error(`Feature '${publicFeatureId}' rejected: feature id exceeds max length`);
@@ -423,6 +434,7 @@ export function requireAccess(requirements: FeatureRequirements) {
  */
 export function isFeatureAccessible(featureId: string, context: FeatureContext): boolean {
   const normalizedFeatureId = normalizeOptionalString(featureId) || '';
+  if (hasDisallowedFeatureIdChars(normalizedFeatureId)) return false;
   if (normalizedFeatureId.length > MAX_FEATURE_ID_INTERNAL) return false;
   const requirements = isRegisteredFeature(normalizedFeatureId)
     ? FEATURE_REQUIREMENTS[normalizedFeatureId]

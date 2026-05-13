@@ -395,6 +395,50 @@ describeIfDb('orgContext.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('returns 400 when header array contains conflicting org ids', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgArr',
+      'Org Arr',
+      'pro',
+      'active',
+    ]);
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgOther',
+      'Org Other',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mArr', 'orgArr', 'u1', 'ADMIN', 'ACTIVE']
+    );
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mOther', 'orgOther', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ allowHeader: true });
+    const req: any = {
+      method: 'GET',
+      params: {},
+      headers: { 'x-org-id': ['orgArr', 'orgOther'] },
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Invalid organization id',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when URL org and header org conflict under allowHeader=true', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'orgA',
@@ -817,6 +861,38 @@ describeIfDb('orgContext.middleware (L1)', () => {
     const req: any = {
       method: 'GET',
       params: { orgId: 'org4' },
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+    await mw(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Access denied',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when membership permission_scope contains disallowed object keys', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'org4badkey',
+      'Org 4 Bad Key',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      ['m4badkey', 'org4badkey', 'u1', 'ADMIN', 'ACTIVE', JSON.stringify({ constructor: { x: 1 } })]
+    );
+
+    const mw = orgContextMiddleware();
+    const req: any = {
+      method: 'GET',
+      params: { orgId: 'org4badkey' },
       headers: {},
       user: { id: 'u1', organizationId: '' },
     };

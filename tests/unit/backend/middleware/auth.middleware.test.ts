@@ -852,6 +852,78 @@ describe('AuthMiddleware', () => {
       }
     });
 
+    it('production mode ignores query token fallback when authorization and cookies are missing', async () => {
+      const origNodeEnv = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = 'production';
+        vi.resetModules();
+        const mod = await import(
+          '../../../../server/src/middleware/auth.middleware.ts?prod_query_token_disabled=1'
+        );
+        mod.setDependencies({
+          jwt: mockJwt as any,
+          config: mockConfig,
+          PermissionService: mockPermissionService,
+          dbGet: mockDbGet,
+        });
+
+        const req: any = {
+          headers: {},
+          cookies: {},
+          body: {},
+          query: { token: 'query-token' },
+          path: '/test',
+        };
+        const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+        const next = vi.fn();
+
+        await mod.verifyToken(req, res, next);
+
+        expect(mockJwt.verify).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith({ error: 'No token provided' });
+        expect(next).not.toHaveBeenCalled();
+      } finally {
+        process.env.NODE_ENV = origNodeEnv;
+      }
+    });
+
+    it('production mode ignores body token fallback when authorization and cookies are missing', async () => {
+      const origNodeEnv = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = 'production';
+        vi.resetModules();
+        const mod = await import(
+          '../../../../server/src/middleware/auth.middleware.ts?prod_body_token_disabled=1'
+        );
+        mod.setDependencies({
+          jwt: mockJwt as any,
+          config: mockConfig,
+          PermissionService: mockPermissionService,
+          dbGet: mockDbGet,
+        });
+
+        const req: any = {
+          headers: {},
+          cookies: {},
+          body: { token: 'body-token' },
+          query: {},
+          path: '/test',
+        };
+        const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+        const next = vi.fn();
+
+        await mod.verifyToken(req, res, next);
+
+        expect(mockJwt.verify).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith({ error: 'No token provided' });
+        expect(next).not.toHaveBeenCalled();
+      } finally {
+        process.env.NODE_ENV = origNodeEnv;
+      }
+    });
+
     it('should map role "guest" and normalize permission role to VIEWER', async () => {
       mockReq.headers!['authorization'] = 'Bearer guest-token';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
@@ -1154,6 +1226,17 @@ describe('AuthMiddleware', () => {
       expect(mockJwt.verify).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(401);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should reject oversized raw authorization header before parsing', async () => {
+      mockReq.headers!['authorization'] = 'x'.repeat(8257);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -1727,6 +1810,16 @@ describe('AuthMiddleware', () => {
 
     it('should continue without verification for oversized token', async () => {
       mockReq.headers!['authorization'] = `Bearer ${'a'.repeat(8193)}`;
+
+      await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockReq.user).toBeUndefined();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('continues without verification for oversized raw authorization header', async () => {
+      mockReq.headers!['authorization'] = 'x'.repeat(8257);
 
       await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
 
