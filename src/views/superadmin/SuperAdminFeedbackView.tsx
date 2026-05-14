@@ -243,6 +243,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<FeedbackItem | null>(null);
   const [responseText, setResponseText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [deepLinkStatus, setDeepLinkStatus] = useState<string | null>(null);
   const [workflowDraft, setWorkflowDraft] = useState<WorkflowDraft>({
     owner: '',
     cluster: '',
@@ -280,15 +281,18 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [pageLimit, setPageLimit] = useState<number>(1000);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Deep-link support: when the Superadmin signal popover (or any other
-  // caller) navigates here with `?feedbackId=<id>`, auto-open that item's
+  // Deep-link support: when another superadmin surface navigates here with
+  // `?feedbackId=<id>` (canonical) or `?ticket=<id>` (legacy alias), auto-open that item's
   // detail drawer as soon as it's loaded, then strip the query param so
   // the URL stays clean on back/forward.
   const location = useLocation();
   const navigate = useNavigate();
   const requestedFeedbackId = useMemo(() => {
     try {
-      return new URLSearchParams(location.search).get('feedbackId');
+      const params = new URLSearchParams(location.search);
+      const canonical = params.get('feedbackId')?.trim() || '';
+      const alias = params.get('ticket')?.trim() || '';
+      return canonical || alias || null;
     } catch {
       return null;
     }
@@ -297,6 +301,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
   const fetchFeedback = useCallback(
     async (limit?: number) => {
+      setDeepLinkStatus(null);
       try {
         const page = await Api.getFeedbackPage({ limit: limit ?? pageLimit });
         setFeedback((page.items || []).map((item: any) => normalizeItem(item)));
@@ -386,8 +391,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
       try {
         const detail = await Api.get(`/feedback/${id}`);
         setSelectedItem(normalizeItem(detail));
+        setDeepLinkStatus(null);
       } catch (error) {
         console.error('[Feedback] Deep-link failed to load detail:', error);
+        setDeepLinkStatus('Unable to open requested feedback ticket.');
       }
     },
     [normalizeItem]
@@ -404,6 +411,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
     // without re-triggering the effect or leaving a stale URL.
     const params = new URLSearchParams(location.search);
     params.delete('feedbackId');
+    params.delete('ticket');
     const nextSearch = params.toString();
     navigate(
       { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
@@ -1496,6 +1504,14 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {deepLinkStatus ? (
+        <div
+          role="status"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
+        >
+          {deepLinkStatus}
+        </div>
+      ) : null}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
           <div>

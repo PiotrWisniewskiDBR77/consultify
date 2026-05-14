@@ -11,6 +11,7 @@ import {
   getNodeArtifactLinks,
   getPrimaryArtifactLink,
   legacyRefToArtifactLinks,
+  parseArtifactRef,
   type ArtifactLink,
   type CoreRuntimeHandoffTrace,
 } from '../../../src/utils/artifactLinks';
@@ -83,6 +84,33 @@ describe('artifactLinks helpers', () => {
 
     it('returns empty array for unknown artifact type', () => {
       expect(legacyRefToArtifactLinks('unsupported:abc123')).toEqual([]);
+    });
+  });
+
+  describe('parseArtifactRef', () => {
+    it('parses canonical refs and trims surrounding whitespace', () => {
+      expect(parseArtifactRef('  initiative:abc  ')).toEqual({ type: 'initiative', id: 'abc' });
+    });
+
+    it('uses first colon as type separator and preserves subsequent colons in id', () => {
+      expect(parseArtifactRef('tool_session:sess:extra:bits')).toEqual({
+        type: 'tool_session',
+        id: 'sess:extra:bits',
+      });
+    });
+
+    it('rejects malformed or unsupported refs', () => {
+      expect(parseArtifactRef(null)).toBeNull();
+      expect(parseArtifactRef('')).toBeNull();
+      expect(parseArtifactRef('nocolon')).toBeNull();
+      expect(parseArtifactRef('initiative:')).toBeNull();
+      expect(parseArtifactRef(':id')).toBeNull();
+      expect(parseArtifactRef('unknown:xyz')).toBeNull();
+      expect(parseArtifactRef('toString:xyz')).toBeNull();
+    });
+
+    it('normalizes type casing to lowercase', () => {
+      expect(parseArtifactRef('INITIATIVE:id')).toEqual({ type: 'initiative', id: 'id' });
     });
   });
 

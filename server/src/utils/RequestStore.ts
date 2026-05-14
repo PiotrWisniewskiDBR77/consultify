@@ -24,6 +24,22 @@ interface RequestStore {
 // ==========================================
 
 const storage = new AsyncLocalStorage<RequestStore>();
+const CORRELATION_ID_SAFE_PATTERN = /[^a-zA-Z0-9._-]/g;
+const CORRELATION_ID_MAX_LENGTH = 128;
+
+function sanitizeCorrelationId(rawCorrelationId: unknown): string | null {
+  if (typeof rawCorrelationId !== 'string') {
+    return null;
+  }
+
+  const trimmed = rawCorrelationId.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const safe = trimmed.replace(CORRELATION_ID_SAFE_PATTERN, '').slice(0, CORRELATION_ID_MAX_LENGTH);
+  return safe || null;
+}
 
 // ==========================================
 // MIDDLEWARE & UTILITIES
@@ -34,7 +50,7 @@ const storage = new AsyncLocalStorage<RequestStore>();
  */
 export const correlationMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   // Read existing correlation ID from frontend or generate a new one
-  const correlationId = req.get('X-Correlation-ID') || uuidv4();
+  const correlationId = sanitizeCorrelationId(req.get('X-Correlation-ID')) || uuidv4();
 
   // Store it in AsyncLocalStorage
   storage.run({ correlationId, startTime: Date.now() }, () => {

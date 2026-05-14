@@ -42,8 +42,14 @@ import { sendSystemAlert } from './services/systemAlertNotifier.js';
 import { buildApiLimiterKey, getApiLimiterLimit } from './utils/apiLimiterPolicy.js';
 // TypeScript routes (migrated)
 import { get as dbGet } from './utils/DbPromise.js';
+import {
+  sendApiGatewayRateLimitedResponse,
+  sendApiMethodNotAllowed,
+  sendApiUnknownRouteNotFound,
+} from './utils/apiContractResponses.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
+import { resolveAllowedApiMethods } from './utils/apiRouteMethodAllowlist.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
 
@@ -770,7 +776,9 @@ const apiLimiter = rateLimit({
     isTest ||
     (!isProduction && !enableRateLimitInNonProd) ||
     req.originalUrl.includes('/api/auth/'),
-  message: { error: 'Too many requests, please try again later.' },
+  handler: (req, res) => {
+    sendApiGatewayRateLimitedResponse(req, res);
+  },
   keyGenerator: (req) => {
     try {
       return buildApiLimiterKey(req);
@@ -872,6 +880,10 @@ app.use(sentryHandlers.requestHandler);
 // Sentry Tracing Handler (must be after request handler, before routes)
 app.use(sentryHandlers.tracingHandler);
 
+// Correlation & Context Tracking
+// Keep before JSON parsing so malformed/oversized JSON still gets correlation headers.
+app.use(correlationMiddleware);
+
 // Body Parsing, Cookies & Static Files
 // Stripe webhooks require the *raw* request body for signature verification.
 // Since `express.json()` consumes the stream, we conditionally route body parsing.
@@ -894,9 +906,6 @@ const kbStaticCandidates = [
 ];
 const kbStaticDir = kbStaticCandidates.find((d) => fs.existsSync(d)) || kbStaticCandidates[0];
 app.use('/kb', express.static(kbStaticDir, { maxAge: '7d', immutable: true }));
-
-// Correlation & Context Tracking
-app.use(correlationMiddleware);
 
 // ============================================================
 // INPUT SANITIZATION & CSRF PROTECTION (Security Hardening)
@@ -1201,13 +1210,13 @@ app.use((req: Request, res: Response) => {
     }
   }
 
-  res.status(404).json({
-    error: {
-      code: 'NOT_FOUND',
-      message: `Route ${req.method} ${req.path} not found`,
-      timestamp: new Date().toISOString(),
-    },
-  });
+  const allowedMethods = resolveAllowedApiMethods(app, req);
+  if (allowedMethods.length > 0 && !allowedMethods.includes(req.method.toUpperCase())) {
+    sendApiMethodNotAllowed(req, res, allowedMethods);
+    return;
+  }
+
+  sendApiUnknownRouteNotFound(req, res);
 });
 
 // ============================================================

@@ -27,12 +27,14 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState<string>('ALL');
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       setError(null);
+      setErrorCode(null);
       try {
         const data = await Api.getFeedbackBacklogTasks(300);
         if (!mounted) return;
@@ -42,6 +44,8 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
         console.error('[SuperAdminFeedbackBacklogView] Failed to load backlog tasks', e);
         setTasks([]);
         setError('Feedback backlog is temporarily unavailable.');
+        const code = (e as { code?: unknown })?.code;
+        setErrorCode(typeof code === 'string' && code.trim() ? code.trim() : null);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -135,8 +139,19 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
+        >
           {error}
+          {errorCode ? (
+            <div
+              data-testid="feedback-backlog-error-code"
+              className="mt-1 text-[11px] font-medium text-amber-700/90 dark:text-amber-300/90"
+            >
+              Code: {errorCode}
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -224,7 +239,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                         {item.feedbackId && (
                           <div className="pt-1">
                             <a
-                              href={`#/superadmin/feedback?ticket=${encodeURIComponent(
+                              href={`#/superadmin/feedback?feedbackId=${encodeURIComponent(
                                 item.feedbackId
                               )}`}
                               className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
@@ -232,7 +247,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                                 // Keep it within the SPA — navigate to the
                                 // feedback registry and deep-link to this ticket.
                                 e.preventDefault();
-                                const targetHash = `#/superadmin/feedback?ticket=${encodeURIComponent(
+                                const targetHash = `#/superadmin/feedback?feedbackId=${encodeURIComponent(
                                   String(item.feedbackId)
                                 )}`;
                                 if (window.location.hash !== targetHash) {

@@ -6,13 +6,135 @@ import { FileText, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+
+const CUSTOMER_SUCCESS_NOTES_COPY = {
+  organizationsLoadFailed: 'Could not load organizations.',
+  notesLoadFailed: 'Customer success notes unavailable.',
+  createFailed: 'Could not create customer success note.',
+  createNotConfirmed: 'Customer success note creation was not confirmed by the server',
+  notesPayloadInvalid: 'Customer success notes response was not a list',
+};
+
+const LEAKY_TOKENS = ['sqlstate', '/var/', 'internal:', 'secret', 'stack', 'trace'];
+
+function normalizeCsNotesErrorCode(input: unknown): string | null {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const payload = input as Record<string, unknown>;
+  const candidates = [
+    payload.code,
+    (payload.error as Record<string, unknown> | undefined)?.code,
+    (payload.data as Record<string, unknown> | undefined)?.code,
+    ((payload.data as Record<string, unknown> | undefined)?.error as Record<string, unknown> | undefined)
+      ?.code,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+
+  return null;
+}
+
+function normalizeCsNotesErrorDetail(input: unknown): string | null {
+  const raw = input instanceof Error ? input.message : typeof input === 'string' ? input : '';
+  const detail = raw.trim();
+  if (!detail) return null;
+  const lowered = detail.toLowerCase();
+  if (LEAKY_TOKENS.some((token) => lowered.includes(token))) {
+    return null;
+  }
+  return detail;
+}
+
+function normalizeOrganizationsPayload(input: unknown): any[] {
+  if (Array.isArray(input)) return input;
+  if (!input || typeof input !== 'object') return [];
+
+  const payload = input as Record<string, unknown>;
+  const direct = payload.organizations;
+  if (Array.isArray(direct)) return direct as any[];
+
+  const nestedData = payload.data as Record<string, unknown> | undefined;
+  if (nestedData) {
+    if (Array.isArray(nestedData.organizations)) return nestedData.organizations as any[];
+    const nestedDataData = nestedData.data as Record<string, unknown> | undefined;
+    if (nestedDataData && Array.isArray(nestedDataData.organizations)) {
+      return nestedDataData.organizations as any[];
+    }
+  }
+
+  return [];
+}
+
+function normalizeNotesPayload(input: unknown): any[] | null {
+  if (Array.isArray(input)) return input;
+  if (!input || typeof input !== 'object') return null;
+
+  const payload = input as Record<string, unknown>;
+  const candidates: unknown[] = [
+    payload.notes,
+    payload.items,
+    (payload.data as Record<string, unknown> | undefined)?.notes,
+    (payload.data as Record<string, unknown> | undefined)?.items,
+    ((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
+      ?.notes,
+    ((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
+      ?.items,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate as any[];
+    }
+  }
+
+  return null;
+}
+
+function resolveCreatedNoteId(input: unknown): string | null {
+  if (!input || typeof input !== 'object') return null;
+  const payload = input as Record<string, unknown>;
+  const candidates: unknown[] = [
+    payload.id,
+    (payload.note as Record<string, unknown> | undefined)?.id,
+    (payload.data as Record<string, unknown> | undefined)?.id,
+    ((payload.data as Record<string, unknown> | undefined)?.note as Record<string, unknown> | undefined)
+      ?.id,
+    (((payload.data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined)
+      ?.note as Record<string, unknown> | undefined)?.id,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+  return null;
+}
+
+function formatNoteDate(value: unknown): string {
+  const parsed = new Date(typeof value === 'string' ? value : '');
+  if (Number.isNaN(parsed.getTime())) return 'Unknown date';
+  return parsed.toLocaleDateString();
+}
 
 export const CustomerSuccessNotesView: React.FC = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [organizationsLoadError, setOrganizationsLoadError] = useState<string | null>(null);
+  const [notesLoadError, setNotesLoadError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newNote, setNewNote] = useState({
@@ -32,28 +154,49 @@ export const CustomerSuccessNotesView: React.FC = () => {
   }, [selectedOrgId]);
 
   const fetchOrganizations = async () => {
+    setOrganizationsLoadError(null);
+    setErrorCode(null);
+    setErrorDetail(null);
     try {
-      const orgs = await Api.getOrganizations();
+      const raw = await Api.getOrganizations();
+      const orgs = normalizeOrganizationsPayload(raw);
       setOrganizations(orgs);
       if (orgs.length > 0) {
         setSelectedOrgId(orgs[0].id);
       }
     } catch (err) {
-      console.error('Failed to fetch organizations:', err);
+      console.error('[CustomerSuccessNotesView] Failed to fetch organizations:', err);
+      setOrganizations([]);
+      setSelectedOrgId('');
+      setNotes([]);
+      setOrganizationsLoadError(CUSTOMER_SUCCESS_NOTES_COPY.organizationsLoadFailed);
+      setErrorCode(normalizeCsNotesErrorCode(err));
+      setErrorDetail(normalizeCsNotesErrorDetail(err));
     }
   };
 
   const fetchNotes = async () => {
     if (!selectedOrgId) return;
     setLoading(true);
+    setNotesLoadError(null);
+    setErrorCode(null);
+    setErrorDetail(null);
     try {
       const data = await Api.getCustomerSuccessNotes(selectedOrgId);
-      const normalized = Array.isArray(data)
-        ? data
-        : (data as any)?.notes || (data as any)?.items || [];
+      const normalized = normalizeNotesPayload(data);
+      if (!normalized) {
+        setNotes([]);
+        setNotesLoadError(CUSTOMER_SUCCESS_NOTES_COPY.notesLoadFailed);
+        setErrorDetail(CUSTOMER_SUCCESS_NOTES_COPY.notesPayloadInvalid);
+        return;
+      }
       setNotes(normalized);
     } catch (err) {
-      toast.error('Failed to fetch notes');
+      console.error('[CustomerSuccessNotesView] Failed to fetch notes:', err);
+      setNotes([]);
+      setNotesLoadError(CUSTOMER_SUCCESS_NOTES_COPY.notesLoadFailed);
+      setErrorCode(normalizeCsNotesErrorCode(err));
+      setErrorDetail(normalizeCsNotesErrorDetail(err));
     } finally {
       setLoading(false);
     }
@@ -66,26 +209,67 @@ export const CustomerSuccessNotesView: React.FC = () => {
       return;
     }
     setCreating(true);
+    setCreateError(null);
+    setErrorCode(null);
+    setErrorDetail(null);
     try {
+      const previousCount = notes.length;
       const result = await Api.createCustomerSuccessNote(selectedOrgId, {
         title: newNote.title.trim(),
         content: newNote.content.trim(),
         note_type: newNote.note_type || 'General',
       });
       if (!result?.success) throw new Error(result?.error || 'Failed to create note');
+      const createdId = resolveCreatedNoteId(result);
+      const readBack = await Api.getCustomerSuccessNotes(selectedOrgId);
+      const normalizedNotes = normalizeNotesPayload(readBack);
+      if (!normalizedNotes) {
+        setCreateError(CUSTOMER_SUCCESS_NOTES_COPY.createNotConfirmed);
+        setErrorDetail(CUSTOMER_SUCCESS_NOTES_COPY.notesPayloadInvalid);
+        setNotes([]);
+        return;
+      }
+
+      setNotes(normalizedNotes);
+      const confirmedById = createdId
+        ? normalizedNotes.some((item) => String((item as any)?.id || '') === createdId)
+        : false;
+      const confirmedByCount = normalizedNotes.length > previousCount;
+      if (!confirmedById && !confirmedByCount) {
+        setCreateError(CUSTOMER_SUCCESS_NOTES_COPY.createNotConfirmed);
+        return;
+      }
+
       toast.success('Note created');
       setShowCreateModal(false);
       setNewNote({ title: '', content: '', note_type: 'General' });
-      fetchNotes();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to create note');
+    } catch (err) {
+      console.error('[CustomerSuccessNotesView] Failed to create note:', err);
+      setCreateError(CUSTOMER_SUCCESS_NOTES_COPY.createFailed);
+      setErrorCode(normalizeCsNotesErrorCode(err));
+      setErrorDetail(normalizeCsNotesErrorDetail(err));
     } finally {
       setCreating(false);
     }
   };
 
+  const activeError = organizationsLoadError || notesLoadError || createError;
+
   return (
     <div className="p-6 space-y-6">
+      {activeError ? (
+        <div>
+          <DegradedState title={activeError} description={errorDetail || undefined} />
+          {errorCode ? (
+            <div
+              data-testid="customer-success-notes-error-code"
+              className="mt-2 text-xs font-medium text-orange-700 dark:text-orange-200"
+            >
+              Code: {errorCode}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -121,7 +305,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
 
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : notesLoadError || organizationsLoadError ? null : (
         <div className="space-y-4">
           {notes.length === 0 ? (
             <div className="text-center py-12 text-slate-500 dark:text-slate-400">
@@ -141,7 +325,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
                     </p>
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {new Date(note.created_at).toLocaleDateString()}
+                    {formatNoteDate((note as any)?.created_at)}
                   </span>
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">

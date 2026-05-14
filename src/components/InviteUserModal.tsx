@@ -26,6 +26,8 @@ interface SeatInfo {
 }
 
 const API_URL = '/api';
+const INVITE_SEAT_ADD_FAILED_COPY = 'Could not add a seat. Try again or contact support.';
+const INVITE_SEND_FAILED_COPY = 'Could not send invitation. Try again or contact support.';
 
 const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, projectId }) => {
   const { currentUser } = useAppStore();
@@ -38,6 +40,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   // Seat management state
   const [seatInfo, setSeatInfo] = useState<SeatInfo | null>(null);
@@ -124,6 +127,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
 
     setLoading(true);
     setError(null);
+    setErrorCode(null);
 
     try {
       // Step 1: Add seat if needed
@@ -142,7 +146,12 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
         setAddingSeat(false);
 
         if (!addSeatRes.ok) {
-          throw new Error(addSeatData.error || 'Failed to add seat');
+          const rawCode = addSeatData?.error?.code || addSeatData?.code;
+          const nextCode =
+            typeof rawCode === 'string' && rawCode.trim().length > 0 ? rawCode.trim() : null;
+          setErrorCode(nextCode);
+          setError(INVITE_SEAT_ADD_FAILED_COPY);
+          return;
         }
 
         // Update local seat info
@@ -176,12 +185,18 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to send invitation');
+        const rawCode = data?.error?.code || data?.code;
+        const nextCode =
+          typeof rawCode === 'string' && rawCode.trim().length > 0 ? rawCode.trim() : null;
+        setErrorCode(nextCode);
+        setError(INVITE_SEND_FAILED_COPY);
+        return;
       }
 
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send invitation');
+      setErrorCode(null);
+      setError(INVITE_SEND_FAILED_COPY);
     } finally {
       setLoading(false);
       setAddingSeat(false);
@@ -250,9 +265,22 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+            <div
+              role="alert"
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm"
+            >
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
+              <div className="min-w-0">
+                <div>{error}</div>
+                {errorCode ? (
+                  <div
+                    data-testid="invite-user-error-code"
+                    className="mt-1 text-[11px] font-medium text-red-700/90"
+                  >
+                    Code: {errorCode}
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
 

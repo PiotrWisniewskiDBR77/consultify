@@ -11,6 +11,7 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
   didAutoReload: boolean;
+  telemetryDelivery: 'idle' | 'sent' | 'failed' | 'unavailable';
 }
 
 /**
@@ -27,6 +28,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
@@ -36,6 +38,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       error,
       errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
@@ -58,8 +61,16 @@ export class RouteErrorBoundary extends Component<Props, State> {
             componentStack: errorInfo.componentStack,
             url: window.location.href,
           }),
+          keepalive: true,
         })
-        .catch(() => {});
+        .then((response) => {
+          this.setState({ telemetryDelivery: response?.ok ? 'sent' : 'failed' });
+        })
+        .catch(() => {
+          this.setState({ telemetryDelivery: 'failed' });
+        });
+    } else {
+      this.setState({ telemetryDelivery: 'unavailable' });
     }
 
     // System recovery: dynamic-import/module-script failures are typically fixed by a hard reload,
@@ -110,6 +121,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      telemetryDelivery: 'idle',
     });
   };
 
@@ -154,6 +166,30 @@ export class RouteErrorBoundary extends Component<Props, State> {
                   </details>
                 )}
               </div>
+            )}
+            {this.state.telemetryDelivery === 'sent' && (
+              <p
+                data-testid="route-error-boundary-telemetry-sent"
+                className="mb-4 text-xs text-emerald-700 dark:text-emerald-300"
+              >
+                Crash diagnostics were sent successfully.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'failed' && (
+              <p
+                data-testid="route-error-boundary-telemetry-failed"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics could not be delivered. You can retry or report manually.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'unavailable' && (
+              <p
+                data-testid="route-error-boundary-telemetry-unavailable"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics were not sent in this environment.
+              </p>
             )}
 
             <div className="flex gap-3">

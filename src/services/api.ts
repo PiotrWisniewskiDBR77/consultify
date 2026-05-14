@@ -6298,7 +6298,15 @@ export const Api = {
   getFeedbackBacklogTasks: async (limit = 200): Promise<any[]> => {
     const url = `${API_URL}/feedback/backlog/tasks?limit=${encodeURIComponent(String(limit))}`;
     const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch feedback backlog tasks');
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      const err: any = new Error('Failed to fetch feedback backlog tasks');
+      err.status = res.status;
+      err.code = payload?.error?.code || payload?.code || null;
+      err.correlationId = payload?.correlationId || null;
+      err.data = payload;
+      throw err;
+    }
     const data = await res.json();
     return data || [];
   },
