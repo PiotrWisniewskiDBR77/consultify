@@ -38,6 +38,7 @@ import type {
   CanvasWorkflowRun,
 } from '@/types/canvasWorkspace';
 import { getCanvasActionAvailability } from '@/utils/canvas/canvasActionAvailability';
+import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
 import {
   mapDraftResponseToCanvasDocumentState,
   starterIdToCanvasKind,
@@ -539,19 +540,7 @@ function shortcutReplacementForSelection(
   return lines.map((line) => `- ${line.replace(/[.;]\s*$/, '')}`).join('\n');
 }
 
-function canvasActionErrorMessage(error: unknown, fallback: string): string {
-  const record = error && typeof error === 'object' ? (error as any) : null;
-  if (record?.data?.code === 'CANVAS_DRAFT_CONFLICT') {
-    return 'Canvas changed elsewhere. Your local edits are still visible. Reload latest or retry from the current draft before applying this action.';
-  }
-  if (record?.data?.code === 'CANVAS_WORKFLOW_REVIEW_REQUIRED') {
-    return 'Workflow is still in review. Mark the workflow approved before generating a durable output.';
-  }
-  if (record?.data?.code === 'CANVAS_WORKFLOW_TERMINAL_STATE') {
-    return 'Workflow is already completed or failed. Use the output ledger or resume the workflow before running another step.';
-  }
-  return error instanceof Error ? error.message : fallback;
-}
+const canvasActionErrorMessage = workCanvasActionErrorMessage;
 
 function isWorkflowReviewBlocked(workflow: {
   collaboration?: {

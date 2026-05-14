@@ -50,6 +50,24 @@ interface ExtendedInboxTriageProps extends Partial<InboxTriageProps> {
   onItemClick?: (item: InboxItem) => void;
 }
 
+function getInboxErrorMessage(
+  t: (key: string, defaultValue?: string) => string,
+  error: unknown,
+  fallback: string
+): string {
+  const code = (error as any)?.data?.code as string | undefined;
+  switch (code) {
+    case 'INBOX_TRIAGE_ACTION_INVALID':
+      return t('myWork.inbox.errorActionInvalid', 'Inbox action is invalid');
+    case 'INBOX_TRIAGE_ITEM_KEY_REQUIRED':
+      return t('myWork.inbox.errorItemKeyRequired', 'Inbox item key is missing');
+    case 'INBOX_TRIAGE_ITEM_KEYS_REQUIRED':
+      return t('myWork.inbox.errorItemKeysRequired', 'No inbox items were provided');
+    default:
+      return t('myWork.inbox.error', fallback);
+  }
+}
+
 /**
  * Urgency configuration
  */
@@ -422,7 +440,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
     } catch (error) {
       console.error('Failed to triage:', error);
       loadInbox(); // Revert
-      toast.error(t('myWork.inbox.error', 'Failed to process'));
+      toast.error(getInboxErrorMessage(t, error, 'Failed to process'));
     }
   };
 
@@ -451,7 +469,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
     } catch (error) {
       console.error('Failed to bulk triage:', error);
       loadInbox();
-      toast.error(t('myWork.inbox.error', 'Failed to process'));
+      toast.error(getInboxErrorMessage(t, error, 'Failed to process'));
     }
   };
 

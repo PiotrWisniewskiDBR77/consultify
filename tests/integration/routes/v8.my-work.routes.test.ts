@@ -13,6 +13,7 @@ const mockGetInboxMaterializationStats = vi.fn();
 const mockSetCalendarPhase = vi.fn();
 const mockGetCalendarPhases = vi.fn();
 const mockRunInboxAiAssist = vi.fn();
+const mockInboxAiSchemaSafeParse = vi.fn((value: unknown) => ({ success: true, data: value }));
 
 vi.mock('../../../server/src/services/v8/myWorkRoofService.js', () => ({
   setCanonicalObjectState: (...args: unknown[]) => mockSetCanonicalObjectState(...args),
@@ -28,7 +29,7 @@ vi.mock('../../../server/src/services/v8/myWorkRoofService.js', () => ({
 
 vi.mock('../../../server/src/services/inboxAiAssistService.js', () => ({
   InboxAiAssistItemSchema: {
-    safeParse: (value: unknown) => ({ success: true, data: value }),
+    safeParse: (value: unknown) => mockInboxAiSchemaSafeParse(value),
   },
   runInboxAiAssist: (...args: unknown[]) => mockRunInboxAiAssist(...args),
 }));
@@ -102,6 +103,10 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
       recommendedAction: 'accept_today',
       recommendedReason: 'Actionable and time-sensitive',
     });
+    mockInboxAiSchemaSafeParse.mockImplementation((value: unknown) => ({
+      success: true,
+      data: value,
+    }));
   });
 
   it('sets and reads canonical object state with org injected from v8 context', async () => {
@@ -373,5 +378,34 @@ describe('MyWork Roof Routes (/api/v8/my-work)', () => {
     });
     expect(res.body.data.result.recommendedAction).toBe('accept_today');
     expect(res.body.meta.contract).toBe('my_work_inbox_ai_assist_v1');
+  });
+
+  it('returns coded 400 when inbox ai-assist payload is invalid', async () => {
+    mockInboxAiSchemaSafeParse.mockReturnValueOnce({
+      success: false,
+      error: { message: 'invalid item payload' },
+    });
+
+    const res = await request(createApp()).post('/api/v8/my-work/inbox/ai-assist').send({
+      item: {},
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INBOX_AI_ASSIST_INVALID_ITEM');
+    expect(res.body.error).toBe('Invalid item payload');
+    expect(mockRunInboxAiAssist).not.toHaveBeenCalled();
+  });
+
+  it('returns coded 503 when inbox ai-assist runtime is unavailable', async () => {
+    mockRunInboxAiAssist.mockRejectedValueOnce(new Error('provider-offline'));
+
+    const res = await request(createApp()).post('/api/v8/my-work/inbox/ai-assist').send({
+      language: 'en',
+      item: { title: 'Escalation' },
+    });
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('INBOX_AI_ASSIST_UNAVAILABLE');
+    expect(res.body.error).toBe('AI assist unavailable');
   });
 });

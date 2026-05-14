@@ -6,6 +6,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InboxTriage } from '../../components/MyWork/Inbox/InboxTriage';
 import { Api } from '@/services/api';
+import toast from 'react-hot-toast';
 
 // Mock dependencies
 
@@ -450,6 +451,72 @@ describe('InboxTriage Component', () => {
             // Should reload inbox after error
             await waitFor(() => {
                 expect(Api.get).toHaveBeenCalledTimes(2);
+            });
+        });
+
+        it('shows coded triage error message when action is invalid', async () => {
+            (Api.post as any).mockRejectedValueOnce(
+                Object.assign(new Error('Invalid action'), {
+                    data: { code: 'INBOX_TRIAGE_ACTION_INVALID' }
+                })
+            );
+
+            render(<InboxTriage />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Critical Task Assignment')).toBeInTheDocument();
+            });
+
+            const itemCard = screen.getByText('Critical Task Assignment').closest('.group');
+            if (itemCard) {
+                await fireEvent.mouseEnter(itemCard);
+            }
+
+            const acceptButtons = screen.getAllByRole('button').filter(btn =>
+                btn.classList.contains('triage-accept')
+            );
+            if (acceptButtons[0]) {
+                await user.click(acceptButtons[0]);
+            }
+
+            await waitFor(() => {
+                expect(toast.error).toHaveBeenCalledWith('Inbox action is invalid');
+            });
+        });
+
+        it('shows coded bulk triage error message when itemKeys are missing', async () => {
+            (Api.post as any).mockRejectedValueOnce(
+                Object.assign(new Error('Missing item keys'), {
+                    data: { code: 'INBOX_TRIAGE_ITEM_KEYS_REQUIRED' }
+                })
+            );
+
+            render(<InboxTriage />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Critical Task Assignment')).toBeInTheDocument();
+            });
+
+            const checkboxes = screen.getAllByRole('button').filter(btn =>
+                btn.querySelector('.lucide-square')
+            );
+            for (const checkbox of checkboxes.slice(0, 2)) {
+                await user.click(checkbox);
+            }
+
+            await waitFor(() => {
+                expect(screen.getByText(/2 selected/)).toBeInTheDocument();
+            });
+
+            const archiveButtons = screen.getAllByRole('button').filter(btn =>
+                btn.classList.contains('triage-archive')
+            );
+            if (archiveButtons[0]) {
+                await user.click(archiveButtons[0]);
+            }
+
+            await waitFor(() => {
+                expect(toast.error).toHaveBeenCalledWith('No inbox items were provided');
             });
         });
     });

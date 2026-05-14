@@ -109,4 +109,20 @@ describe('WorkspacePresenceIndicator', () => {
 
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('shows degraded state when governed workspace presence bridge fails', async () => {
+    vi.mocked(V8MultiplayerApi.getRoomBinding).mockRejectedValue(new Error('room-binding-offline'));
+
+    render(
+      <WorkspacePresenceIndicator
+        workspaceId="org-1"
+        currentUserId="user-self"
+        enabled={true}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Workspace presence unavailable')).toBeInTheDocument();
+    });
+  });
 });

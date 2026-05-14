@@ -325,4 +325,111 @@ describe('/api/work-canvas routes', () => {
     expect(res.status).toBe(409);
     expect(serviceMocks.approveProposal).toHaveBeenCalledTimes(1);
   });
+
+  it('returns coded 404 for workflow collaboration when run is missing', async () => {
+    serviceMocks.getDraft.mockResolvedValueOnce(
+      makeDraft({
+        provenance: { workflowRuns: [] },
+      })
+    );
+
+    const res = await request(app)
+      .patch('/api/work-canvas/drafts/draft-1/workflows/run-1/collaboration')
+      .send({ lifecycle: 'in_review' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('WORK_CANVAS_WORKFLOW_RUN_NOT_FOUND');
+  });
+
+  it('returns coded 400 for workflow collaboration invalid lifecycle', async () => {
+    serviceMocks.getDraft.mockResolvedValueOnce(
+      makeDraft({
+        provenance: {
+          workflowRuns: [
+            {
+              id: 'run-1',
+              draftId: 'draft-1',
+              conversationId: 'conv-1',
+              createdBy: 'user-1',
+              workflowId: 'wf-1',
+              status: 'pending',
+              collaboration: { lifecycle: 'draft', comments: [] },
+              events: [],
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      })
+    );
+    serviceMocks.updateDraft.mockResolvedValueOnce(makeDraft());
+
+    const res = await request(app)
+      .patch('/api/work-canvas/drafts/draft-1/workflows/run-1/collaboration')
+      .send({ lifecycle: 'invalid' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('WORK_CANVAS_WORKFLOW_LIFECYCLE_INVALID');
+  });
+
+  it('returns coded 409 for workflow comments context mismatch', async () => {
+    serviceMocks.getDraft.mockResolvedValueOnce(
+      makeDraft({
+        provenance: {
+          workflowRuns: [
+            {
+              id: 'run-1',
+              draftId: 'draft-foreign',
+              conversationId: 'conv-foreign',
+              createdBy: 'user-1',
+              workflowId: 'wf-1',
+              status: 'pending',
+              collaboration: { lifecycle: 'draft', comments: [] },
+              events: [],
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      })
+    );
+
+    const res = await request(app)
+      .post('/api/work-canvas/drafts/draft-1/workflows/run-1/comments')
+      .send({ body: 'Looks good' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('WORK_CANVAS_WORKFLOW_CONTEXT_MISMATCH');
+  });
+
+  it('returns coded 400 for workflow comments when body is empty', async () => {
+    serviceMocks.getDraft.mockResolvedValueOnce(
+      makeDraft({
+        provenance: {
+          workflowRuns: [
+            {
+              id: 'run-1',
+              draftId: 'draft-1',
+              conversationId: 'conv-1',
+              createdBy: 'user-1',
+              workflowId: 'wf-1',
+              status: 'pending',
+              collaboration: { lifecycle: 'draft', comments: [] },
+              events: [],
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+        },
+      })
+    );
+
+    const res = await request(app)
+      .post('/api/work-canvas/drafts/draft-1/workflows/run-1/comments')
+      .send({ body: '   ' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('WORK_CANVAS_WORKFLOW_COMMENT_BODY_REQUIRED');
+  });
+
 });

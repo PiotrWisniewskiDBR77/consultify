@@ -38,6 +38,7 @@ import {
   Trash2,
   Unplug,
   Users,
+  WifiOff,
   X,
   XCircle,
   Zap,
@@ -73,6 +74,7 @@ import {
   type V8SyncRunRecord,
   type V8SyncWorkflowRecord,
 } from '@/services/api/v8/sync';
+import { syncWorkflowPolicyErrorMessage } from '@/utils/sync/syncWorkflowPolicyErrorMessage';
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -242,6 +244,13 @@ interface V8RefreshPolicyTarget {
   providerLabel: string;
   connectorId: string;
   integrationName: string;
+}
+
+type WorkflowPolicyValue = 'active' | 'paused' | 'blocked' | 'safety_gate';
+
+interface WorkflowPolicyDraft {
+  policy: WorkflowPolicyValue;
+  reason: string;
 }
 
 // ── Connector icons ─────────────────────────────────────────────
@@ -453,6 +462,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     []
   );
   const [v8WorkspaceLocks, setV8WorkspaceLocks] = useState<V8MultiplayerLockRecord[]>([]);
+  const [v8WorkspaceSubstrateStatus, setV8WorkspaceSubstrateStatus] = useState<
+    'healthy' | 'mapping_unavailable' | 'binding_unavailable'
+  >('healthy');
+  const [v8WorkspacePresenceStatus, setV8WorkspacePresenceStatus] = useState<'healthy' | 'degraded'>(
+    'healthy'
+  );
+  const [v8WorkspaceLocksStatus, setV8WorkspaceLocksStatus] = useState<'healthy' | 'degraded'>(
+    'healthy'
+  );
   const [v8AuthHealthSummary, setV8AuthHealthSummary] =
     useState<V8SyncCredentialHealthSummary | null>(null);
   const [v8AuthEscalations, setV8AuthEscalations] = useState<V8SyncAuthEscalation[]>([]);
@@ -479,6 +497,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const [mutatingRefreshPolicyFamily, setMutatingRefreshPolicyFamily] =
     useState<V8SyncProviderFamily | null>(null);
+  const [v8WorkflowPolicies, setV8WorkflowPolicies] = useState<
+    Record<string, { workflowPolicy: WorkflowPolicyValue; reason: string | null; isPaused: boolean }>
+  >({});
+  const [v8WorkflowPolicyStatus, setV8WorkflowPolicyStatus] = useState<
+    Record<string, 'healthy' | 'read_unavailable'>
+  >({});
+  const [workflowPolicyDrafts, setWorkflowPolicyDrafts] = useState<Record<string, WorkflowPolicyDraft>>(
+    {}
+  );
+  const [savingWorkflowPolicyId, setSavingWorkflowPolicyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -688,6 +716,49 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     setV8RefreshPolicies(Object.fromEntries(results));
   }, [v8RefreshPolicyTargets]);
 
+  const fetchV8WorkflowPolicies = useCallback(async () => {
+    if (integrations.length === 0) {
+      setV8WorkflowPolicies({});
+      setV8WorkflowPolicyStatus({});
+      return;
+    }
+
+    const connectedIntegrations = integrations.filter((integration) => integration.status === 'connected');
+    const entries = await Promise.all(
+      connectedIntegrations.map(async (integration) => {
+        try {
+          const data = await V8SyncApi.getWorkflowPolicy(integration.id);
+          return {
+            integrationId: integration.id,
+            policy: {
+              workflowPolicy: data.workflowPolicy as WorkflowPolicyValue,
+              reason: data.reason,
+              isPaused: data.isPaused,
+            },
+            status: 'healthy' as const,
+          };
+        } catch {
+          return {
+            integrationId: integration.id,
+            policy: null,
+            status: 'read_unavailable' as const,
+          };
+        }
+      })
+    );
+
+    setV8WorkflowPolicies(
+      Object.fromEntries(
+        entries
+          .filter((entry) => entry.policy !== null)
+          .map((entry) => [entry.integrationId, entry.policy!])
+      )
+    );
+    setV8WorkflowPolicyStatus(
+      Object.fromEntries(entries.map((entry) => [entry.integrationId, entry.status]))
+    );
+  }, [integrations]);
+
   const fetchV8ConnectorHealth = useCallback(async () => {
     if (v8ConnectorHealthTargets.length === 0) {
       setV8ConnectorHealth({});
@@ -723,8 +794,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     try {
       const data = await V8MultiplayerApi.getWorkspaceMapping();
       setV8WorkspaceMapping(data.mapping);
+      setV8WorkspaceSubstrateStatus((previous) =>
+        previous === 'mapping_unavailable' ? 'healthy' : previous
+      );
     } catch {
       setV8WorkspaceMapping(null);
+      setV8WorkspaceSubstrateStatus('mapping_unavailable');
     }
   }, []);
 
@@ -737,9 +812,11 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     try {
       const data = await V8MultiplayerApi.getRoomBinding('workspace', currentOrganization.id);
       setV8WorkspaceBinding(data.binding);
+      setV8WorkspaceSubstrateStatus('healthy');
       return data.binding;
     } catch {
       setV8WorkspaceBinding(null);
+      setV8WorkspaceSubstrateStatus('binding_unavailable');
       return null;
     }
   }, [currentOrganization?.id]);
@@ -752,6 +829,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       if (!roomId) {
         setV8WorkspacePresence([]);
         setV8WorkspaceLocks([]);
+        setV8WorkspacePresenceStatus('healthy');
+        setV8WorkspaceLocksStatus('healthy');
         return;
       }
 
@@ -762,9 +841,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         ]);
         setV8WorkspacePresence(presenceData.presence || []);
         setV8WorkspaceLocks(locksData.locks || []);
+        setV8WorkspacePresenceStatus('healthy');
+        setV8WorkspaceLocksStatus('healthy');
       } catch {
         setV8WorkspacePresence([]);
         setV8WorkspaceLocks([]);
+        setV8WorkspacePresenceStatus('degraded');
+        setV8WorkspaceLocksStatus('degraded');
       }
     },
     [fetchV8WorkspaceBinding]
@@ -933,7 +1016,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   useEffect(() => {
     if (activeTab !== 'policies') return;
     void fetchV8RefreshPolicies();
-  }, [activeTab, fetchV8RefreshPolicies]);
+    void fetchV8WorkflowPolicies();
+  }, [activeTab, fetchV8RefreshPolicies, fetchV8WorkflowPolicies]);
 
   useEffect(() => {
     if (activeTab !== 'workflows') return;
@@ -1571,6 +1655,48 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       );
     } finally {
       setMutatingRefreshPolicyFamily(null);
+    }
+  };
+
+  const handleWorkflowPolicyDraftChange = (
+    integrationId: string,
+    field: keyof WorkflowPolicyDraft,
+    value: string
+  ) => {
+    const currentPolicy = v8WorkflowPolicies[integrationId]?.workflowPolicy || 'active';
+    setWorkflowPolicyDrafts((current) => ({
+      ...current,
+      [integrationId]: {
+        policy: current[integrationId]?.policy || currentPolicy,
+        reason: current[integrationId]?.reason || '',
+        [field]: value,
+      } as WorkflowPolicyDraft,
+    }));
+  };
+
+  const handleSaveWorkflowPolicy = async (integrationId: string) => {
+    const currentPolicy = v8WorkflowPolicies[integrationId]?.workflowPolicy || 'active';
+    const draft = workflowPolicyDrafts[integrationId] || { policy: currentPolicy, reason: '' };
+    setSavingWorkflowPolicyId(integrationId);
+    try {
+      await V8SyncApi.setWorkflowPolicy(
+        integrationId,
+        draft.policy,
+        draft.reason.trim() ? draft.reason.trim() : undefined
+      );
+      toast.success(
+        t('integrations.syncHub.workflowPolicySaved', 'Workflow policy updated on governed sync.')
+      );
+      await fetchV8WorkflowPolicies();
+    } catch (error) {
+      toast.error(
+        syncWorkflowPolicyErrorMessage(
+          error,
+          t('integrations.syncHub.workflowPolicySaveFailed', 'Workflow policy update failed')
+        )
+      );
+    } finally {
+      setSavingWorkflowPolicyId(null);
     }
   };
 
@@ -2450,6 +2576,84 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     </div>
                   </div>
                 )}
+                <div className="rounded-lg border border-slate-700/70 bg-navy-950/30 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-medium text-white">
+                        {t('integrations.syncHub.workflowPolicyTitle', 'Workflow policy gate')}
+                      </div>
+                      <div className="mt-1 text-[11px] text-slate-400">
+                        {t(
+                          'integrations.syncHub.workflowPolicyDesc',
+                          'Controls whether this integration can process automated workflow executions.'
+                        )}
+                      </div>
+                    </div>
+                    {v8WorkflowPolicyStatus[int.id] === 'read_unavailable' && (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-300">
+                        <WifiOff size={12} />
+                        {t('integrations.syncHub.workflowPolicyUnavailable', 'Policy read unavailable')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-[minmax(180px,220px)_1fr_auto] md:items-end">
+                    <label className="block">
+                      <div className="mb-1 text-[11px] uppercase tracking-wide text-slate-400">
+                        {t('integrations.syncHub.workflowPolicyLabel', 'Policy')}
+                      </div>
+                      <select
+                        value={
+                          workflowPolicyDrafts[int.id]?.policy ||
+                          v8WorkflowPolicies[int.id]?.workflowPolicy ||
+                          'active'
+                        }
+                        onChange={(e) =>
+                          handleWorkflowPolicyDraftChange(int.id, 'policy', e.target.value)
+                        }
+                        className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white focus:border-violet-500/40 focus:outline-none"
+                      >
+                        <option value="active">active</option>
+                        <option value="paused">paused</option>
+                        <option value="blocked">blocked</option>
+                        <option value="safety_gate">safety_gate</option>
+                      </select>
+                    </label>
+                    <label className="block">
+                      <div className="mb-1 text-[11px] uppercase tracking-wide text-slate-400">
+                        {t('integrations.syncHub.workflowPolicyReason', 'Reason (optional)')}
+                      </div>
+                      <input
+                        type="text"
+                        value={
+                          workflowPolicyDrafts[int.id]?.reason ??
+                          v8WorkflowPolicies[int.id]?.reason ??
+                          ''
+                        }
+                        onChange={(e) =>
+                          handleWorkflowPolicyDraftChange(int.id, 'reason', e.target.value)
+                        }
+                        placeholder={t(
+                          'integrations.syncHub.workflowPolicyReasonPlaceholder',
+                          'Explain why this policy is applied'
+                        )}
+                        className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-violet-500/40 focus:outline-none"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveWorkflowPolicy(int.id)}
+                      disabled={savingWorkflowPolicyId === int.id}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-violet-500/20 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:bg-violet-500/15 disabled:opacity-60 transition-colors"
+                    >
+                      {savingWorkflowPolicyId === int.id ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={12} />
+                      )}
+                      {t('integrations.syncHub.workflowPolicyApply', 'Apply policy')}
+                    </button>
+                  </div>
+                </div>
 
                 {canMaterializeCredential && (
                   <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3 text-xs">
@@ -3501,6 +3705,24 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         )}
       </div>
 
+      {v8WorkspaceSubstrateStatus === 'mapping_unavailable' ? (
+        <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs flex items-center gap-2">
+          <WifiOff size={14} className="shrink-0 text-amber-300" />
+          {t(
+            'integrations.syncHub.v8WorkspaceMappingUnavailable',
+            'Workspace mapping unavailable. Collaboration substrate metadata could not be read.'
+          )}
+        </div>
+      ) : null}
+      {v8WorkspaceSubstrateStatus === 'binding_unavailable' ? (
+        <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs flex items-center gap-2">
+          <WifiOff size={14} className="shrink-0 text-amber-300" />
+          {t(
+            'integrations.syncHub.v8WorkspaceBindingUnavailable',
+            'Workspace room binding unavailable. Presence and lock snapshots may be incomplete.'
+          )}
+        </div>
+      ) : null}
       {v8WorkspaceMapping && (
         <div>
           <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
@@ -3558,7 +3780,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {v8WorkspaceBinding.roomResourceId}
           </div>
         ) : null}
-        {v8WorkspacePresence.length === 0 ? (
+        {v8WorkspacePresenceStatus === 'degraded' ? (
+          <div className="text-center py-6 text-amber-200 text-sm rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center gap-2">
+            <WifiOff size={14} className="text-amber-300" />
+            {t(
+              'integrations.syncHub.v8WorkspacePresenceUnavailable',
+              'Workspace presence unavailable. Presence bridge read failed.'
+            )}
+          </div>
+        ) : v8WorkspacePresence.length === 0 ? (
           <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {v8WorkspaceBinding
               ? t(
@@ -3606,7 +3836,15 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             </span>
           )}
         </h3>
-        {v8WorkspaceLocks.length === 0 ? (
+        {v8WorkspaceLocksStatus === 'degraded' ? (
+          <div className="text-center py-6 text-amber-200 text-sm rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center gap-2">
+            <WifiOff size={14} className="text-amber-300" />
+            {t(
+              'integrations.syncHub.v8WorkspaceLocksUnavailable',
+              'Workspace locks unavailable. Lock bridge read failed.'
+            )}
+          </div>
+        ) : v8WorkspaceLocks.length === 0 ? (
           <div className="text-center py-6 text-slate-500 text-sm rounded-lg bg-navy-900/30 border border-navy-700/40">
             {t('integrations.syncHub.v8NoLocks', 'No governed workspace locks are active.')}
           </div>

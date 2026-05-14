@@ -29,6 +29,8 @@ import ReactFlow, {
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
+import { toolSessionLockErrorMessage } from '@/utils/realtime/toolSessionLockErrorMessage';
+import { toolSessionPresenceErrorMessage } from '@/utils/realtime/toolSessionPresenceErrorMessage';
 
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
@@ -599,6 +601,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       activeBlockId?: string | null;
     }>
   >([]);
+  const [activeBlockLockId, setActiveBlockLockId] = useState<string | null>(null);
   const [outlineImportOpen, setOutlineImportOpen] = useState(false);
   const [outlineImportValue, setOutlineImportValue] = useState('');
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
@@ -1991,6 +1994,37 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   useEffect(() => {
     if (!open) return;
+    const acquireActiveBlockLock = async (blockId: string | null) => {
+      if (!blockId) return;
+      try {
+        await Api.toolSessionAcquireLock(toolSessionId, { blockId, ttlMinutes: 3 });
+        setActiveBlockLockId(blockId);
+      } catch (error) {
+        toast.error(
+          toolSessionLockErrorMessage(
+            error,
+            t('myWork.whiteboard.errors.presenceFailed')
+          )
+        );
+      }
+    };
+
+    const releaseActiveBlockLock = async (blockId: string | null) => {
+      if (!blockId) return;
+      try {
+        await Api.toolSessionReleaseLock(toolSessionId, blockId);
+      } catch (error) {
+        toast.error(
+          toolSessionLockErrorMessage(
+            error,
+            t('myWork.whiteboard.errors.disconnectFailed')
+          )
+        );
+      } finally {
+        setActiveBlockLockId((current) => (current === blockId ? null : current));
+      }
+    };
+
     const syncPresence = async () => {
       try {
         await Api.toolSessionJoinPresence(toolSessionId, {
@@ -2002,10 +2036,21 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           },
           activeBlockId: selectedNodeIds[0],
         });
+        await Api.toolSessionListLocks(toolSessionId);
+        if (selectedNodeIds[0] && selectedNodeIds[0] !== activeBlockLockId) {
+          if (activeBlockLockId) {
+            await releaseActiveBlockLock(activeBlockLockId);
+          }
+          await acquireActiveBlockLock(selectedNodeIds[0]);
+        } else if (!selectedNodeIds[0] && activeBlockLockId) {
+          await releaseActiveBlockLock(activeBlockLockId);
+        }
         const presenceRes = await Api.toolSessionListPresence(toolSessionId);
         setPresenceUsers(Array.isArray(presenceRes?.presence) ? presenceRes.presence : []);
-      } catch {
-        /* best-effort */
+      } catch (error) {
+        toast.error(
+          toolSessionPresenceErrorMessage(error, t('myWork.whiteboard.errors.presenceFailed'))
+        );
       }
     };
     syncPresence();
@@ -2014,17 +2059,39 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         viewport: viewportTransform,
         spotlightNodeId: sessionState.spotlightNodeId,
         role: sessionState.role,
-      }).catch(() => toast.error(t('myWork.whiteboard.errors.presenceFailed')));
+      }).catch((error) =>
+        toast.error(
+          toolSessionPresenceErrorMessage(error, t('myWork.whiteboard.errors.presenceFailed'))
+        )
+      );
+      Api.toolSessionListLocks(toolSessionId).catch((error) =>
+        toast.error(
+          toolSessionLockErrorMessage(error, t('myWork.whiteboard.errors.presenceFailed'))
+        )
+      );
       Api.toolSessionListPresence(toolSessionId)
         .then((presenceRes) => {
           setPresenceUsers(Array.isArray(presenceRes?.presence) ? presenceRes.presence : []);
         })
-        .catch(() => toast.error(t('myWork.whiteboard.errors.presenceFailed')));
+        .catch((error) =>
+          toast.error(
+            toolSessionPresenceErrorMessage(error, t('myWork.whiteboard.errors.presenceFailed'))
+          )
+        );
     }, 5000);
     return () => {
       window.clearInterval(heartbeat);
-      Api.toolSessionDisconnect(toolSessionId).catch(() =>
-        toast.error(t('myWork.whiteboard.errors.disconnectFailed'))
+      if (activeBlockLockId) {
+        Api.toolSessionReleaseLock(toolSessionId, activeBlockLockId).catch((error) =>
+          toast.error(
+            toolSessionLockErrorMessage(error, t('myWork.whiteboard.errors.disconnectFailed'))
+          )
+        );
+      }
+      Api.toolSessionDisconnect(toolSessionId).catch((error) =>
+        toast.error(
+          toolSessionPresenceErrorMessage(error, t('myWork.whiteboard.errors.disconnectFailed'))
+        )
       );
     };
   }, [
@@ -2035,6 +2102,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     sessionState.spotlightNodeId,
     toolSessionId,
     viewportTransform,
+    activeBlockLockId,
   ]);
 
   useEffect(() => {

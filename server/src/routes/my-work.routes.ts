@@ -8295,7 +8295,10 @@ router.post(
       res.json({ ok: true });
     } catch (err: any) {
       logger.error('[idea-presence-broadcast]', err);
-      res.status(500).json({ error: err?.message || 'Failed to broadcast presence' });
+      res.status(500).json({
+        error: 'Failed to broadcast presence',
+        code: 'IDEA_TABLE_PRESENCE_UPSERT_FAILED',
+      });
     }
   })
 );
@@ -8335,7 +8338,10 @@ router.get(
       res.json({ users });
     } catch (err: any) {
       logger.error('[idea-presence-poll]', err);
-      res.json({ users: [] });
+      res.status(500).json({
+        error: 'Failed to read idea presence',
+        code: 'IDEA_TABLE_PRESENCE_POLL_FAILED',
+      });
     }
   })
 );

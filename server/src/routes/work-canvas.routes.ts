@@ -1894,6 +1894,20 @@ async function updateDraftAfterOperation(
   return updated;
 }
 
+async function updateWorkflowDraftAfterOperation(
+  draft: WorkCanvasDraft,
+  provenancePatch: Record<string, unknown>
+): Promise<WorkCanvasDraft> {
+  try {
+    return await updateDraftAfterOperation(draft, provenancePatch);
+  } catch {
+    throw Object.assign(new Error('Workflow state could not be persisted'), {
+      statusCode: 503,
+      code: 'WORK_CANVAS_WORKFLOW_PERSIST_FAILED',
+    });
+  }
+}
+
 async function createVersionSnapshot(
   draft: WorkCanvasDraft,
   operationType: string,
@@ -2636,7 +2650,10 @@ router.post('/drafts/:draftId/workflows', async (req: AuthRequest, res) => {
   const { userId } = authContext(req);
   const template = String(req.body?.template || '') as WorkflowTemplate;
   if (!Object.keys(workflowTemplateTitles).includes(template)) {
-    return res.status(400).json({ error: 'Unsupported workflow template' });
+    return res.status(400).json({
+      error: 'Unsupported workflow template',
+      code: 'WORK_CANVAS_WORKFLOW_TEMPLATE_INVALID',
+    });
   }
 
   const workflowRun = createWorkflowRun({
@@ -2645,7 +2662,7 @@ router.post('/drafts/:draftId/workflows', async (req: AuthRequest, res) => {
     userId,
     now: new Date().toISOString(),
   });
-  const updatedDraft = await updateDraftAfterOperation(
+  const updatedDraft = await updateWorkflowDraftAfterOperation(
     draft,
     appendWorkflowRun(draft, workflowRun)
   );
@@ -2673,7 +2690,12 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/resume', async (req: Auth
   }
   const runs = workflowRunsFromProvenance(draft.provenance || {});
   const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
-  if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+  if (index < 0) {
+    return res.status(404).json({
+      error: 'Workflow run not found',
+      code: 'WORK_CANVAS_WORKFLOW_RUN_NOT_FOUND',
+    });
+  }
   const run = runs[index];
   if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
     return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
@@ -2703,7 +2725,7 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/resume', async (req: Auth
     updatedAt: now,
   };
   runs[index] = resumed;
-  const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+  const updatedDraft = await updateWorkflowDraftAfterOperation(draft, { workflowRuns: runs });
   return res.json(
     envelope({
       draft: updatedDraft,
@@ -2728,7 +2750,12 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/run-next', async (req: Au
   const { userId, organizationId } = authContext(req);
   const runs = workflowRunsFromProvenance(draft.provenance || {});
   const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
-  if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+  if (index < 0) {
+    return res.status(404).json({
+      error: 'Workflow run not found',
+      code: 'WORK_CANVAS_WORKFLOW_RUN_NOT_FOUND',
+    });
+  }
   const run = runs[index];
   if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
     return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
@@ -2853,7 +2880,7 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/run-next', async (req: Au
     updatedAt: now,
   };
   runs[index] = completed;
-  const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+  const updatedDraft = await updateWorkflowDraftAfterOperation(draft, { workflowRuns: runs });
   return res.json(
     envelope({
       draft: updatedDraft,
@@ -2875,23 +2902,39 @@ router.patch(
   '/drafts/:draftId/workflows/:workflowRunId/collaboration',
   async (req: AuthRequest, res) => {
     const draft = await ownedDraft(req, req.params.draftId);
-    if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+    if (!draft) {
+      return res.status(404).json({
+        error: 'Canvas draft not found',
+        code: 'WORK_CANVAS_DRAFT_NOT_FOUND',
+      });
+    }
     const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
     if (hasDraftConflict(draft, baseUpdatedAt)) {
       return sendDraftConflict(res, draft, baseUpdatedAt, 'update_workflow_collaboration');
     }
     const runs = workflowRunsFromProvenance(draft.provenance || {});
     const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
-    if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+    if (index < 0) {
+      return res.status(404).json({
+        error: 'Workflow run not found',
+        code: 'WORK_CANVAS_WORKFLOW_RUN_NOT_FOUND',
+      });
+    }
     const run = runs[index];
     if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
-      return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
+      return res.status(409).json({
+        error: 'Workflow context does not match this Canvas draft',
+        code: 'WORK_CANVAS_WORKFLOW_CONTEXT_MISMATCH',
+      });
     }
     const lifecycle = String(req.body?.lifecycle || run.collaboration?.lifecycle || 'draft');
     if (!['draft', 'in_review', 'approved'].includes(lifecycle)) {
       return res
         .status(400)
-        .json({ error: 'Workflow lifecycle must be draft, in_review, or approved' });
+        .json({
+          error: 'Workflow lifecycle must be draft, in_review, or approved',
+          code: 'WORK_CANVAS_WORKFLOW_LIFECYCLE_INVALID',
+        });
     }
     const now = new Date().toISOString();
     const updatedRun: WorkCanvasWorkflowRun = {
@@ -2927,7 +2970,7 @@ router.patch(
       updatedAt: now,
     };
     runs[index] = updatedRun;
-    const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+    const updatedDraft = await updateWorkflowDraftAfterOperation(draft, { workflowRuns: runs });
     return res.json(
       envelope({
         draft: updatedDraft,
@@ -2940,7 +2983,12 @@ router.patch(
 
 router.post('/drafts/:draftId/workflows/:workflowRunId/comments', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
-  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  if (!draft) {
+    return res.status(404).json({
+      error: 'Canvas draft not found',
+      code: 'WORK_CANVAS_DRAFT_NOT_FOUND',
+    });
+  }
   const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
   if (hasDraftConflict(draft, baseUpdatedAt)) {
     return sendDraftConflict(res, draft, baseUpdatedAt, 'add_workflow_comment');
@@ -2948,13 +2996,26 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/comments', async (req: Au
   const { userId } = authContext(req);
   const runs = workflowRunsFromProvenance(draft.provenance || {});
   const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
-  if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+  if (index < 0) {
+    return res.status(404).json({
+      error: 'Workflow run not found',
+      code: 'WORK_CANVAS_WORKFLOW_RUN_NOT_FOUND',
+    });
+  }
   const run = runs[index];
   if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
-    return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
+    return res.status(409).json({
+      error: 'Workflow context does not match this Canvas draft',
+      code: 'WORK_CANVAS_WORKFLOW_CONTEXT_MISMATCH',
+    });
   }
   const body = String(req.body?.body || '').trim();
-  if (!body) return res.status(400).json({ error: 'Comment body is required' });
+  if (!body) {
+    return res.status(400).json({
+      error: 'Comment body is required',
+      code: 'WORK_CANVAS_WORKFLOW_COMMENT_BODY_REQUIRED',
+    });
+  }
   const now = new Date().toISOString();
   const comment = {
     id: randomUUID(),
@@ -2983,7 +3044,7 @@ router.post('/drafts/:draftId/workflows/:workflowRunId/comments', async (req: Au
     updatedAt: now,
   };
   runs[index] = updatedRun;
-  const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+  const updatedDraft = await updateWorkflowDraftAfterOperation(draft, { workflowRuns: runs });
   return res.status(201).json(
     envelope({
       draft: updatedDraft,
