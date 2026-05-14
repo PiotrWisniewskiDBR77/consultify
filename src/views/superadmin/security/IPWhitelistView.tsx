@@ -3,17 +3,88 @@
  * Manages IP whitelisting for organizations
  */
 
-import { Plus, Search, Shield, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+
+const IP_WHITELIST_COPY = {
+  unavailableTitle: 'IP whitelist unavailable',
+  malformedPayload: 'IP whitelist response was not a list',
+  addIncomplete: 'IP whitelist addition response was incomplete',
+  addNotConfirmed: 'IP whitelist addition was not confirmed by the server',
+  removeNotConfirmed: 'IP whitelist removal was not confirmed by the server',
+  genericAddFailure: 'Failed to add IP',
+  genericRemoveFailure: 'Failed to remove IP',
+};
+
+const LEAKY_ERROR_TOKENS = ['sqlstate', '/var/', 'internal:', 'secret', 'stack', 'trace', 'token'];
+
+function safeErrorMessage(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const detail = message.trim();
+  if (!detail) return fallback;
+  const lowered = detail.toLowerCase();
+  if (LEAKY_ERROR_TOKENS.some((token) => lowered.includes(token))) return fallback;
+  return detail;
+}
+
+function normalizeOrganizationsPayload(payload: unknown): any[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  const anyPayload = payload as any;
+  return (
+    anyPayload.organizations ||
+    anyPayload?.data?.organizations ||
+    anyPayload?.data?.data?.organizations ||
+    []
+  );
+}
+
+function normalizeWhitelistPayload(payload: unknown): any[] | null {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return null;
+  const anyPayload = payload as any;
+  const candidates: unknown[] = [
+    anyPayload.whitelist,
+    anyPayload.items,
+    anyPayload.data,
+    anyPayload?.data?.whitelist,
+    anyPayload?.data?.items,
+    anyPayload?.data?.data?.whitelist,
+    anyPayload?.data?.data?.items,
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
+  }
+  return null;
+}
+
+function resolveCreatedWhitelistId(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const anyPayload = payload as any;
+  const candidates: unknown[] = [
+    anyPayload.id,
+    anyPayload?.ipWhitelist?.id,
+    anyPayload?.data?.id,
+    anyPayload?.data?.ipWhitelist?.id,
+    anyPayload?.data?.data?.ipWhitelist?.id,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) return candidate.trim();
+  }
+  return null;
+}
 
 export const IPWhitelistView: React.FC = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [whitelist, setWhitelist] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newIP, setNewIP] = useState({ ipAddress: '', ipRange: '', description: '' });
 
@@ -29,24 +100,42 @@ export const IPWhitelistView: React.FC = () => {
 
   const fetchOrganizations = async () => {
     try {
-      const orgs = await Api.getOrganizations();
+      const raw = await Api.getOrganizations();
+      const orgs = normalizeOrganizationsPayload(raw);
       setOrganizations(orgs);
       if (orgs.length > 0 && !selectedOrgId) {
         setSelectedOrgId(orgs[0].id);
       }
     } catch (err) {
-      console.error('Failed to fetch organizations:', err);
+      setOrganizations([]);
+      setSelectedOrgId('');
+      setWhitelist([]);
+      setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+      setErrorDetail(safeErrorMessage(err, 'Failed to load organizations.'));
     }
   };
 
-  const fetchWhitelist = async () => {
+  const fetchWhitelist = async (): Promise<any[] | null> => {
     if (!selectedOrgId) return;
     setLoading(true);
+    setErrorTitle(null);
+    setErrorDetail(null);
     try {
-      const list = await Api.getIPWhitelist(selectedOrgId);
-      setWhitelist(list);
+      const response = await Api.getIPWhitelist(selectedOrgId);
+      const normalized = normalizeWhitelistPayload(response);
+      if (!normalized) {
+        setWhitelist([]);
+        setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+        setErrorDetail(IP_WHITELIST_COPY.malformedPayload);
+        return null;
+      }
+      setWhitelist(normalized);
+      return normalized;
     } catch (err) {
-      toast.error('Failed to fetch IP whitelist');
+      setWhitelist([]);
+      setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+      setErrorDetail(safeErrorMessage(err, 'Failed to fetch IP whitelist'));
+      return null;
     } finally {
       setLoading(false);
     }
@@ -58,24 +147,57 @@ export const IPWhitelistView: React.FC = () => {
       return;
     }
     try {
-      await Api.addIPWhitelist(selectedOrgId, newIP);
+      setErrorTitle(null);
+      setErrorDetail(null);
+      const previousCount = whitelist.length;
+      const addResponse = await Api.addIPWhitelist(selectedOrgId, newIP);
+      const createdId = resolveCreatedWhitelistId(addResponse);
+      if (!createdId) {
+        setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+        setErrorDetail(IP_WHITELIST_COPY.addIncomplete);
+        return;
+      }
+      const refreshed = await fetchWhitelist();
+      const confirmed =
+        !!refreshed &&
+        (refreshed.some((entry) => String(entry?.id || '') === createdId) ||
+          refreshed.length > previousCount);
+      if (!confirmed) {
+        setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+        setErrorDetail(IP_WHITELIST_COPY.addNotConfirmed);
+        return;
+      }
       toast.success('IP added to whitelist');
       setShowAddModal(false);
       setNewIP({ ipAddress: '', ipRange: '', description: '' });
-      fetchWhitelist();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add IP');
+    } catch (err) {
+      setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+      setErrorDetail(safeErrorMessage(err, IP_WHITELIST_COPY.genericAddFailure));
     }
   };
 
   const handleRemoveIP = async (ipId: string) => {
     if (!confirm('Remove this IP from whitelist?')) return;
     try {
+      const targetEntry = whitelist.find((entry) => String(entry?.id || '') === ipId);
+      const previousCount = whitelist.length;
       await Api.removeIPWhitelist(selectedOrgId, ipId);
+      const refreshed = await fetchWhitelist();
+      const confirmed =
+        !!refreshed &&
+        (!targetEntry
+          ? refreshed.length < previousCount
+          : refreshed.every((entry) => String(entry?.id || '') !== String(targetEntry.id || '')));
+
+      if (!confirmed) {
+        setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+        setErrorDetail(IP_WHITELIST_COPY.removeNotConfirmed);
+        return;
+      }
       toast.success('IP removed from whitelist');
-      fetchWhitelist();
     } catch (err) {
-      toast.error('Failed to remove IP');
+      setErrorTitle(IP_WHITELIST_COPY.unavailableTitle);
+      setErrorDetail(safeErrorMessage(err, IP_WHITELIST_COPY.genericRemoveFailure));
     }
   };
 
@@ -111,9 +233,11 @@ export const IPWhitelistView: React.FC = () => {
         </div>
       </div>
 
+      {errorTitle ? <DegradedState title={errorTitle} description={errorDetail || undefined} /> : null}
+
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : errorTitle ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
@@ -170,6 +294,7 @@ export const IPWhitelistView: React.FC = () => {
                       <button
                         onClick={() => handleRemoveIP(ip.id)}
                         className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                        aria-label={`Remove IP ${ip.ip_address}`}
                       >
                         <Trash2 size={18} />
                       </button>

@@ -13,6 +13,7 @@ import {
 import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 
 import {
   type FilterChip,
@@ -313,16 +314,10 @@ export const ResultsHub: React.FC = () => {
       setKpis(result.kpis);
       setResultsSource(result.source);
     } catch (error: any) {
-      const message =
-        typeof error?.data?.error === 'string' && error.data.error.trim()
-          ? error.data.error.trim()
-          : typeof error?.message === 'string' && error.message.trim()
-            ? error.message.trim()
-            : 'Failed to load KPI catalog.';
-      const code =
-        typeof error?.data?.code === 'string' && error.data.code.trim()
-          ? error.data.code.trim()
-          : null;
+      const { message, code } = mapHubLoadFailureToPresentation(
+        error,
+        'Failed to load KPI catalog.'
+      );
       setKpiLoadError(message);
       setKpiLoadErrorCode(code);
     } finally {

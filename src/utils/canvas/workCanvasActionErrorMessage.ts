@@ -30,8 +30,5 @@ export function workCanvasActionErrorMessage(error: unknown, fallback: string): 
     return 'Workflow comment body is required before submitting.';
   }
 
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
   return fallback;
 }

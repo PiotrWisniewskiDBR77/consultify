@@ -65,4 +65,23 @@ describe('RouteErrorBoundary telemetry delivery honesty', () => {
     expect(screen.getByTestId('route-error-boundary-telemetry-unavailable')).toBeInTheDocument();
     consoleSpy.mockRestore();
   });
+
+  it('does not leak raw runtime error messages and exposes alert contract', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 200 })) as typeof fetch;
+
+    render(
+      <RouteErrorBoundary>
+        <Thrower message="LEAK_SECRET_DB_CONNECTION_STRING" />
+      </RouteErrorBoundary>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    expect(document.body.textContent || '').not.toContain('LEAK_SECRET_DB_CONNECTION_STRING');
+    expect(screen.queryByText(/Stack trace/i)).not.toBeInTheDocument();
+
+    consoleSpy.mockRestore();
+  });
 });

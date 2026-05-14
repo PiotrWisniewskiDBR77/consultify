@@ -79,6 +79,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
@@ -328,6 +329,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [titleDraft, setTitleDraft] = useState<string>('');
   const titleInputId = 'initiative-title-input';
 
@@ -1368,8 +1370,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       resetCreateKpiDraft();
       setShowCreateKpi(false);
-    } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się dodać KPI' : 'Failed to add KPI'));
+    } catch {
+      toast.error(isPolish ? 'Nie udało się dodać KPI' : 'Failed to add KPI');
     } finally {
       setIsMutating(false);
     }
@@ -1445,8 +1447,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       toast.success(isPolish ? 'KPI zaktualizowane' : 'KPI updated');
       cancelEditKpi();
-    } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się zapisać KPI' : 'Failed to save KPI'));
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zapisać KPI' : 'Failed to save KPI');
     } finally {
       setIsMutating(false);
     }
@@ -1506,10 +1508,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           ...prev,
         ]);
         toast.success(isPolish ? 'KPI zduplikowane' : 'KPI duplicated');
-      } catch (e: any) {
-        toast.error(
-          e?.message || (isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI')
-        );
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI');
       } finally {
         setIsMutating(false);
       }
@@ -1526,8 +1526,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setLocalKpis((prev) => prev.filter((k) => k.id !== kpiId));
         if (editingKpiId === kpiId) cancelEditKpi();
         toast.success(isPolish ? 'KPI usunięte' : 'KPI removed');
-      } catch (e: any) {
-        toast.error(e?.message || (isPolish ? 'Nie udało się usunąć KPI' : 'Failed to remove KPI'));
+      } catch {
+        toast.error(isPolish ? 'Nie udało się usunąć KPI' : 'Failed to remove KPI');
       } finally {
         setIsMutating(false);
       }
@@ -1698,6 +1698,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     if (!initiativeId) return;
     setIsLoading(true);
     setError(null);
+    setErrorCode(null);
     try {
       const showcaseDetail = isShowcaseInitiativeId(initiativeId)
         ? initiativesDemoData.initiativeDetailsById[initiativeId]
@@ -2264,7 +2265,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       await Promise.allSettled(fetches);
     } catch (e: any) {
-      setError(e?.message || 'Failed to load initiative');
+      const mapped = mapHubLoadFailureToPresentation(e, 'Failed to load initiative');
+      setError(mapped.message);
+      setErrorCode(mapped.code);
     } finally {
       setIsLoading(false);
     }
@@ -7851,6 +7854,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       <HubWorkAreaLoadError
         title={t('initiatives.document.failedToLoad', 'Failed to load initiative card.')}
         message={message}
+        errorCode={errorCode}
         retryLabel={t('initiatives.document.retry', 'Retry')}
         dismissLabel={t('initiatives.document.goBack', 'Go back')}
         onRetry={() => {

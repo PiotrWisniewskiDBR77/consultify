@@ -53,21 +53,47 @@ const upload = multer({
   },
 });
 
-const featureReadFallback = (res: Response, _data: unknown = []) =>
-  res.status(503).json({
-    statusCode: 503,
-    status: false,
-    type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
-  });
+const featureReadFallback = (req: AuthRequest, res: Response, _data: unknown = []) =>
+  res.status(503).json(
+    buildDocumentsFailClosedError(
+      req,
+      503,
+      'DOCUMENTS_SERVICE_NOT_CONFIGURED',
+      'Documents service is temporarily unavailable.'
+    )
+  );
 
-const featureWriteBlocked = (res: Response) =>
-  res.status(503).json({
-    statusCode: 503,
-    status: false,
-    type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
-  });
+const featureWriteBlocked = (req: AuthRequest, res: Response) =>
+  res.status(503).json(
+    buildDocumentsFailClosedError(
+      req,
+      503,
+      'DOCUMENTS_SERVICE_NOT_CONFIGURED',
+      'Documents service is temporarily unavailable.'
+    )
+  );
+
+function resolveDocumentsCorrelationId(req: AuthRequest | null): string | null {
+  if (!req) return null;
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildDocumentsFailClosedError(
+  req: AuthRequest | null,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveDocumentsCorrelationId(req),
+  };
+}
 
 /**
  * GET /api/documents/project/:projectId
@@ -78,7 +104,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getProjectDocuments) {
-      return featureReadFallback(res, []);
+      return featureReadFallback(req, res, []);
     }
 
     try {
@@ -87,7 +113,16 @@ router.get(
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching project documents:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_PROJECT_READ_FAILED',
+            'Failed to load project documents.'
+          )
+        );
     }
   })
 );
@@ -101,21 +136,39 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getUserDocuments) {
-      return featureReadFallback(res, []);
+      return featureReadFallback(req, res, []);
     }
 
     try {
       const userId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!userId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to access documents.'
+            )
+          );
       }
 
       const documents = await DocumentService.getUserDocuments(userId, organizationId);
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching user documents:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_USER_READ_FAILED',
+            'Failed to load user documents.'
+          )
+        );
     }
   })
 );
@@ -129,14 +182,23 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getAccessibleDocuments) {
-      return featureReadFallback(res, []);
+      return featureReadFallback(req, res, []);
     }
 
     try {
       const userId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!userId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to access documents.'
+            )
+          );
       }
 
       const { projectId } = req.query;
@@ -148,7 +210,16 @@ router.get(
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching documents:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_ACCESSIBLE_READ_FAILED',
+            'Failed to load documents.'
+          )
+        );
     }
   })
 );
@@ -163,14 +234,23 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     // Return empty array if service not available (for tests)
     if (!DocumentService?.getAccessibleDocuments) {
-      return res.json([]);
+      return featureReadFallback(req, res, []);
     }
 
     try {
       const userId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!userId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to access documents.'
+            )
+          );
       }
 
       const { projectId } = req.query;
@@ -182,7 +262,16 @@ router.get(
       return res.json(documents);
     } catch (error: any) {
       logger.error('[Documents] Error fetching documents:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_ACCESSIBLE_READ_FAILED',
+            'Failed to load documents.'
+          )
+        );
     }
   })
 );
@@ -196,18 +285,36 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return featureReadFallback(res, null);
+      return featureReadFallback(req, res, null);
     }
 
     try {
       const document = await DocumentService.getDocumentById(req.params.id);
       if (!document) {
-        return res.status(404).json({ error: 'Document not found' });
+        return res
+          .status(404)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              404,
+              'DOCUMENTS_ITEM_NOT_FOUND',
+              'Document was not found.'
+            )
+          );
       }
       return res.json(document);
     } catch (error: any) {
       logger.error('[Documents] Error fetching document:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_ITEM_READ_FAILED',
+            'Failed to load document.'
+          )
+        );
     }
   })
 );
@@ -221,29 +328,51 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(503).json({
-        statusCode: 503,
-        status: false,
-        type: 'not_configured',
-        message: 'Service temporarily unavailable due to missing configuration',
-      });
+      return featureReadFallback(req, res, null);
     }
 
     try {
       const document = await DocumentService.getDocumentById(req.params.id);
       if (!document) {
-        return res.status(404).json({ error: 'Document not found' });
+        return res
+          .status(404)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              404,
+              'DOCUMENTS_ITEM_NOT_FOUND',
+              'Document was not found.'
+            )
+          );
       }
 
       const filePath = document.filepath;
       if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'File not found on server' });
+        return res
+          .status(404)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              404,
+              'DOCUMENTS_FILE_NOT_FOUND',
+              'Document file was not found.'
+            )
+          );
       }
 
       return res.download(filePath, document.originalName || document.filename);
     } catch (error: any) {
       logger.error('[Documents] Error downloading document:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_DOWNLOAD_FAILED',
+            'Failed to download document.'
+          )
+        );
     }
   })
 );
@@ -260,27 +389,63 @@ router.post(
     if (!DocumentService?.uploadDocument) {
       // Return 400 for missing file (tests expect this, not 503)
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        return res
+          .status(400)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              400,
+              'DOCUMENTS_UPLOAD_FILE_REQUIRED',
+              'File is required for upload.'
+            )
+          );
       }
-      return featureWriteBlocked(res);
+      return featureWriteBlocked(req, res);
     }
 
     try {
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        return res
+          .status(400)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              400,
+              'DOCUMENTS_UPLOAD_FILE_REQUIRED',
+              'File is required for upload.'
+            )
+          );
       }
 
       const ownerId = req.user?.id;
       const organizationId = (req.user as any)?.organization_id || req.user?.organizationId;
       if (!ownerId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to upload documents.'
+            )
+          );
       }
 
       const { scope = 'user', projectId, description, tags } = req.body;
 
       // Validate scope
       if (scope === 'project' && !projectId) {
-        return res.status(400).json({ error: 'Project ID required for project scope' });
+        return res
+          .status(400)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              400,
+              'DOCUMENTS_PROJECT_ID_REQUIRED',
+              'Project id is required for project-scoped uploads.'
+            )
+          );
       }
 
       logger.info(
@@ -302,7 +467,16 @@ router.post(
       });
     } catch (error: any) {
       logger.error('[Documents] Upload error:', error);
-      return res.status(500).json({ error: error.message || 'Upload failed' });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_UPLOAD_FAILED',
+            'Failed to upload document.'
+          )
+        );
     }
   })
 );
@@ -316,7 +490,7 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.moveToProject) {
-      return featureWriteBlocked(res);
+      return featureWriteBlocked(req, res);
     }
 
     try {
@@ -324,11 +498,29 @@ router.put(
       const { projectId } = req.body;
       const userId = req.user?.id;
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to modify documents.'
+            )
+          );
       }
 
       if (!projectId) {
-        return res.status(400).json({ error: 'Project ID required' });
+        return res
+          .status(400)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              400,
+              'DOCUMENTS_PROJECT_ID_REQUIRED',
+              'Project id is required.'
+            )
+          );
       }
 
       const document = await DocumentService.moveToProject(documentId, projectId, userId);
@@ -338,7 +530,16 @@ router.put(
       });
     } catch (error: any) {
       logger.error('[Documents] Move error:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_MOVE_FAILED',
+            'Failed to move document.'
+          )
+        );
     }
   })
 );
@@ -352,25 +553,52 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.deleteDocument) {
-      return featureWriteBlocked(res);
+      return featureWriteBlocked(req, res);
     }
 
     try {
       const userId = req.user?.id;
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res
+          .status(401)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              401,
+              'DOCUMENTS_UNAUTHORIZED',
+              'Authentication is required to delete documents.'
+            )
+          );
       }
 
       const result = await DocumentService.deleteDocument(req.params.id, userId);
 
       if (!result.success) {
-        return res.status(404).json({ error: 'Document not found or access denied' });
+        return res
+          .status(404)
+          .json(
+            buildDocumentsFailClosedError(
+              req,
+              404,
+              'DOCUMENTS_DELETE_NOT_FOUND',
+              'Document was not found or access is denied.'
+            )
+          );
       }
 
       return res.json({ message: 'Document deleted' });
     } catch (error: any) {
       logger.error('[Documents] Delete error:', error);
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          buildDocumentsFailClosedError(
+            req,
+            500,
+            'DOCUMENTS_DELETE_FAILED',
+            'Failed to delete document.'
+          )
+        );
     }
   })
 );

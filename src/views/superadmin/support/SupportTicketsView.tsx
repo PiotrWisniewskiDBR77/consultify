@@ -7,11 +7,94 @@ import { MessageSquare, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+
+const SUPPORT_TICKETS_COPY = {
+  unavailableTitle: 'Support tickets unavailable',
+  malformedPayload: 'Support tickets response was not a list',
+  creationNotConfirmed: 'Support ticket creation was not confirmed by the server',
+  commentsLoadFailed: 'Failed to load ticket comments',
+  createFailed: 'Failed to create ticket',
+  replyFailed: 'Failed to add reply',
+};
+
+const LEAKY_ERROR_MARKERS = ['sqlstate', '/var/', 'internal:', 'secret', 'stack', 'trace', 'token'];
+
+function safeSupportErrorMessage(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const detail = message.trim();
+  if (!detail) return fallback;
+  const lowered = detail.toLowerCase();
+  if (LEAKY_ERROR_MARKERS.some((marker) => lowered.includes(marker))) return fallback;
+  return detail;
+}
+
+function normalizeSupportTicketsPayload(payload: unknown): any[] | null {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return null;
+  const anyPayload = payload as any;
+  const candidates: unknown[] = [
+    anyPayload.tickets,
+    anyPayload.items,
+    anyPayload.data,
+    anyPayload?.data?.tickets,
+    anyPayload?.data?.items,
+    anyPayload?.data?.data?.tickets,
+    anyPayload?.data?.data?.items,
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
+  }
+  return null;
+}
+
+function normalizeSupportCommentsPayload(payload: unknown): any[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  const anyPayload = payload as any;
+  const candidates: unknown[] = [
+    anyPayload.comments,
+    anyPayload.items,
+    anyPayload.data,
+    anyPayload?.data?.comments,
+    anyPayload?.data?.items,
+    anyPayload?.data?.data?.comments,
+    anyPayload?.data?.data?.items,
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
+  }
+  return [];
+}
+
+function resolveSupportTicketId(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const anyPayload = payload as any;
+  const candidates: unknown[] = [
+    anyPayload.id,
+    anyPayload?.ticket?.id,
+    anyPayload?.data?.id,
+    anyPayload?.data?.ticket?.id,
+    anyPayload?.data?.data?.ticket?.id,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) return candidate.trim();
+  }
+  return null;
+}
+
+function formatTicketDate(value: unknown): string {
+  const parsed = new Date(typeof value === 'string' ? value : '');
+  if (Number.isNaN(parsed.getTime())) return 'Unknown date';
+  return parsed.toLocaleDateString();
+}
 
 export const SupportTicketsView: React.FC = () => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [ticketComments, setTicketComments] = useState<any[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -32,8 +115,13 @@ export const SupportTicketsView: React.FC = () => {
     category: '',
   });
 
+  const lastFetchKeyRef = React.useRef<string | null>(null);
+
   useEffect(() => {
-    fetchTickets();
+    const fetchKey = JSON.stringify(filters);
+    if (lastFetchKeyRef.current === fetchKey) return;
+    lastFetchKeyRef.current = fetchKey;
+    void fetchTickets();
   }, [filters]);
 
   useEffect(() => {
@@ -47,9 +135,10 @@ export const SupportTicketsView: React.FC = () => {
       setCommentsLoading(true);
       try {
         const comments = await Api.getSupportTicketComments(selectedTicket.id);
-        setTicketComments(Array.isArray(comments) ? comments : []);
-      } catch (err: any) {
-        toast.error(err?.message || 'Failed to load ticket comments');
+        setTicketComments(normalizeSupportCommentsPayload(comments));
+      } catch (err) {
+        setErrorTitle(SUPPORT_TICKETS_COPY.unavailableTitle);
+        setErrorDetail(safeSupportErrorMessage(err, SUPPORT_TICKETS_COPY.commentsLoadFailed));
         setTicketComments([]);
       } finally {
         setCommentsLoading(false);
@@ -59,13 +148,26 @@ export const SupportTicketsView: React.FC = () => {
     void loadComments();
   }, [selectedTicket?.id, showDetailsModal]);
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (): Promise<any[] | null> => {
     setLoading(true);
+    setErrorTitle(null);
+    setErrorDetail(null);
     try {
       const data = await Api.getSupportTickets(filters);
-      setTickets(data);
+      const normalized = normalizeSupportTicketsPayload(data);
+      if (!normalized) {
+        setTickets([]);
+        setErrorTitle(SUPPORT_TICKETS_COPY.unavailableTitle);
+        setErrorDetail(SUPPORT_TICKETS_COPY.malformedPayload);
+        return null;
+      }
+      setTickets(normalized);
+      return normalized;
     } catch (err) {
-      toast.error('Failed to fetch tickets');
+      setTickets([]);
+      setErrorTitle(SUPPORT_TICKETS_COPY.unavailableTitle);
+      setErrorDetail(safeSupportErrorMessage(err, 'Failed to fetch tickets'));
+      return null;
     } finally {
       setLoading(false);
     }
@@ -77,7 +179,20 @@ export const SupportTicketsView: React.FC = () => {
       return;
     }
     try {
-      await Api.createSupportTicket(newTicket);
+      const previousCount = tickets.length;
+      const created = await Api.createSupportTicket(newTicket);
+      const createdId = resolveSupportTicketId(created);
+      const refreshed = await fetchTickets();
+      const confirmed =
+        !!refreshed &&
+        (createdId
+          ? refreshed.some((ticket) => String(ticket?.id || '') === createdId)
+          : refreshed.length > previousCount);
+      if (!confirmed) {
+        setErrorTitle(SUPPORT_TICKETS_COPY.unavailableTitle);
+        setErrorDetail(SUPPORT_TICKETS_COPY.creationNotConfirmed);
+        return;
+      }
       toast.success('Ticket created');
       setShowCreateModal(false);
       setNewTicket({
@@ -88,9 +203,9 @@ export const SupportTicketsView: React.FC = () => {
         priority: 'medium',
         category: '',
       });
-      fetchTickets();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create ticket');
+    } catch (err) {
+      setErrorTitle(SUPPORT_TICKETS_COPY.unavailableTitle);
+      setErrorDetail(safeSupportErrorMessage(err, SUPPORT_TICKETS_COPY.createFailed));
     }
   };
 
@@ -108,8 +223,9 @@ export const SupportTicketsView: React.FC = () => {
       setTicketComments((current) => [...current, comment]);
       setCommentDraft('');
       toast.success('Reply added');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to add reply');
+    } catch (err) {
+      setErrorTitle(SUPPORT_TICKETS_COPY.unavailableTitle);
+      setErrorDetail(safeSupportErrorMessage(err, SUPPORT_TICKETS_COPY.replyFailed));
     }
   };
 
@@ -159,6 +275,8 @@ export const SupportTicketsView: React.FC = () => {
         </button>
       </div>
 
+      {errorTitle ? <DegradedState title={errorTitle} description={errorDetail || undefined} /> : null}
+
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex gap-4">
         <select
           value={filters.status}
@@ -185,7 +303,7 @@ export const SupportTicketsView: React.FC = () => {
 
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : errorTitle ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
@@ -242,7 +360,7 @@ export const SupportTicketsView: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {new Date(ticket.created_at).toLocaleDateString()}
+                      {formatTicketDate(ticket.created_at)}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button

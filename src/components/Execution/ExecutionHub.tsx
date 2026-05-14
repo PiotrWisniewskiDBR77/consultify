@@ -62,6 +62,7 @@ import {
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -954,14 +955,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
         );
         setInitiatives(executionInitiatives);
-        const message =
-          typeof err?.data?.error === 'string' && err.data.error.trim()
-            ? err.data.error.trim()
-            : typeof err?.message === 'string' && err.message.trim()
-              ? err.message.trim()
-              : t('execution.hub.failedToLoad', 'Failed to load execution initiatives.');
-        const code =
-          typeof err?.data?.code === 'string' && err.data.code.trim() ? err.data.code.trim() : null;
+        const { message, code } = mapHubLoadFailureToPresentation(
+          err,
+          t('execution.hub.failedToLoad', 'Failed to load execution initiatives.')
+        );
         setInitiativesLoadError(message);
         setInitiativesLoadErrorCode(code);
       } finally {

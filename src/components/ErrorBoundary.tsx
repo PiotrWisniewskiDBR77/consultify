@@ -120,8 +120,16 @@ export class ErrorBoundary extends Component<Props, State> {
               The application encountered an unexpected error. This usually happens due to corrupted
               local data or a temporary glitch.
             </p>
-            <div className="bg-slate-950 p-4 rounded-lg mb-6 overflow-auto max-h-40 text-xs font-mono text-red-400">
-              {this.state.error?.message}
+            <div
+              className="bg-slate-950 p-4 rounded-lg mb-2 text-sm text-red-300"
+              role="alert"
+              aria-live="assertive"
+            >
+              Runtime details are hidden for safety. You can retry, reset app data, or report this
+              incident with context.
+            </div>
+            <div className="mb-6 text-xs text-slate-400">
+              Technical diagnostics are captured in telemetry and available through the report action.
             </div>
             {this.state.telemetryDelivery === 'sent' && (
               <p

@@ -37,6 +37,27 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+function resolveConversationCorrelationId(req: AuthRequest): string | null {
+  return (req as any).correlationId || req.get('X-Correlation-ID') || null;
+}
+
+function buildConversationFailClosedError(
+  req: AuthRequest,
+  statusCode: number,
+  code: string,
+  message: string
+) {
+  return {
+    status: statusCode >= 500 ? 'error' : 'fail',
+    error: {
+      code,
+      message,
+      timestamp: new Date().toISOString(),
+    },
+    correlationId: resolveConversationCorrelationId(req),
+  };
+}
+
 // ==================== HELPERS ====================
 
 /**
@@ -1213,8 +1234,16 @@ router.post(
       return res.json({ title: generatedTitle });
     } catch (err: any) {
       logger.error('[Conversations] Generate title error:', err);
-      // Return error status instead of masking failure
-      return res.status(500).json({ error: 'Title generation failed', details: err.message });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_TITLE_GENERATION_FAILED',
+            'Failed to generate conversation title.'
+          )
+        );
     }
   })
 );
@@ -1239,7 +1268,16 @@ router.post(
       const ownedIds = owned.map((c) => c.id);
 
       if (ownedIds.length === 0) {
-        return res.status(404).json({ error: 'No conversations found' });
+        return res
+          .status(404)
+          .json(
+            buildConversationFailClosedError(
+              req,
+              404,
+              'CONVERSATIONS_BULK_NOT_FOUND',
+              'No conversations were found for this bulk request.'
+            )
+          );
       }
 
       const ownedPlaceholders = ownedIds.map(() => '?').join(',');
@@ -1296,7 +1334,16 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Conversations] Bulk operation error:', err);
-      return res.status(500).json({ error: err.message });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_BULK_OPERATION_FAILED',
+            'Bulk conversation operation failed.'
+          )
+        );
     }
   })
 );
@@ -1648,7 +1695,16 @@ router.get(
       });
     } catch (err: any) {
       logger.error('[Conversations] Search error:', err);
-      return res.status(500).json({ error: 'Search failed' });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_SEARCH_FAILED',
+            'Failed to search conversations.'
+          )
+        );
     }
   })
 );
@@ -2049,7 +2105,16 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Conversations] Auto-archive error:', err);
-      return res.status(500).json({ error: 'Auto-archive failed' });
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_AUTO_ARCHIVE_FAILED',
+            'Failed to auto-archive conversations.'
+          )
+        );
     }
   })
 );

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="retry-suite" tests="1" failures="0" errors="0" skipped="0" time="0.01">
+  <testcase classname="execution.retry.contract" name="handles transient failures" time="0.01" retry="1" />
+</testsuite>
+
