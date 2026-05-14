@@ -168,4 +168,36 @@ describe('AIGovernanceTab honest UI', () => {
     });
     expect(toast.success).not.toHaveBeenCalledWith('Governance settings saved');
   });
+
+  it('surfaces coded governance save failures for support traceability', async () => {
+    const codedError = Object.assign(new Error('Save failed'), {
+      data: { code: 'CONTEXT_POLICY_PERSIST_FAILED' },
+    });
+    vi.mocked(Api.updateAIGovernanceContextPolicy).mockRejectedValueOnce(codedError);
+
+    render(<AIGovernanceTab />);
+
+    const orgProfile = await screen.findByRole('checkbox', { name: 'Org profile' });
+    fireEvent.click(orgProfile);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Save failed (CONTEXT_POLICY_PERSIST_FAILED)');
+    });
+  });
+
+  it('surfaces health report unavailable state with coded error', async () => {
+    const healthError = Object.assign(new Error('Health endpoint unavailable'), {
+      data: { code: 'HEALTH_REPORT_FAILED' },
+    });
+    vi.mocked(Api.getAIGovernanceHealth).mockRejectedValueOnce(healthError);
+
+    render(<AIGovernanceTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Health report unavailable')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Health endpoint unavailable (HEALTH_REPORT_FAILED)')).toBeInTheDocument();
+    expect(screen.queryByText('No report loaded.')).not.toBeInTheDocument();
+  });
 });

@@ -415,7 +415,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.SETTINGS_APPEARANCE]: `${ROUTES.SETTINGS.ROOT}/theme`,
   [AppView.SETTINGS_AI_MEMORY]: `${ROUTES.SETTINGS.ROOT}/ai-memory`,
   [AppView.SETTINGS_AI_RESPONSE_STYLE]: `${ROUTES.SETTINGS.ROOT}/ai-behavior`,
-  [AppView.SETTINGS_AI_CHAT_HISTORY]: `${ROUTES.SETTINGS.ROOT}/ai-memory`,
+  [AppView.SETTINGS_AI_CHAT_HISTORY]: `${ROUTES.SETTINGS.ROOT}/ai-chat-history`,
   [AppView.SETTINGS_AI_VOICE]: `${ROUTES.SETTINGS.ROOT}/ai-voice`,
   [AppView.SETTINGS_SECURITY]: `${ROUTES.SETTINGS.ROOT}/security-dashboard`,
   [AppView.SETTINGS_API_ACCESS]: `${ROUTES.SETTINGS.ROOT}/api-keys`,

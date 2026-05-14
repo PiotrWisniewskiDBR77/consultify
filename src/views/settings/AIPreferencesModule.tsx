@@ -9,7 +9,9 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIInboxAutomationSettings } from '../../components/settings/ai/AIInboxAutomationSettings';
+import { AIMemorySettings } from '../../components/settings/AIMemorySettings';
 import { AISettings } from '../../components/settings/AISettings';
+import { ChatHistorySettings as CanonicalChatHistorySettings } from '../../components/settings/ChatHistorySettings';
 import { VoiceSettingsPanel } from '../../components/settings/VoiceSettingsPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
@@ -19,97 +21,6 @@ interface AIPreferencesModuleProps {
   currentUser: User;
   onUpdateUser: (updates: Partial<User>) => void;
 }
-
-// AI Memory Settings Component
-const AIMemorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
-  const { t } = useTranslation();
-  const [memoryEnabled, setMemoryEnabled] = useState(true);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          {t('settings.aiMemory.title', 'AI Memory & Context')}
-        </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          {t(
-            'settings.aiMemory.description',
-            'Control what the AI remembers about you across conversations'
-          )}
-        </p>
-      </div>
-
-      {/* Memory Toggle */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-slate-900 dark:text-white">
-              {t('settings.aiMemory.enable', 'Enable Memory')}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t(
-                'settings.aiMemory.enableDesc',
-                'Allow AI to remember preferences and context between sessions'
-              )}
-            </p>
-          </div>
-          <button
-            onClick={() => setMemoryEnabled(!memoryEnabled)}
-            className={`w-12 h-6 rounded-full transition-colors ${
-              memoryEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
-            }`}
-          >
-            <div
-              className={`w-5 h-5 bg-white dark:bg-navy-900 rounded-full transform transition-transform ${
-                memoryEnabled ? 'translate-x-6' : 'translate-x-0.5'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* What AI Remembers */}
-      {memoryEnabled && (
-        <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
-          <h4 className="font-medium text-slate-900 dark:text-white mb-3">
-            {t('settings.aiMemory.remembered', 'What AI Remembers')}
-          </h4>
-          <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
-              {t('settings.aiMemory.item1', 'Your preferred communication style')}
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
-              {t('settings.aiMemory.item2', 'Industry and role context')}
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
-              {t('settings.aiMemory.item3', 'Previous project preferences')}
-            </li>
-          </ul>
-        </div>
-      )}
-
-      {/* Clear Memory */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-slate-900 dark:text-white">
-              {t('settings.aiMemory.clear', 'Clear Memory')}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t('settings.aiMemory.clearDesc', 'Delete all stored preferences and start fresh')}
-            </p>
-          </div>
-          <button className="px-4 py-2 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 rounded-lg transition-colors">
-            {t('settings.aiMemory.clearBtn', 'Clear All')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Response Style Settings Component
 const ResponseStyleSettings: React.FC<{
@@ -144,7 +55,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setResponseLength(len)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 responseLength === len
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
@@ -166,7 +77,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setTone(t_)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 tone === t_
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
@@ -188,75 +99,13 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setFormat(f)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 format === f
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
               {t(`settings.responseStyle.${f}`, f.charAt(0).toUpperCase() + f.slice(1))}
             </button>
           ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Chat History Settings Component
-const ChatHistorySettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
-  const { t } = useTranslation();
-  const [historyEnabled, setHistoryEnabled] = useState(true);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          {t('settings.chatHistory.title', 'Chat History')}
-        </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          {t('settings.chatHistory.description', 'Manage your conversation history')}
-        </p>
-      </div>
-
-      {/* History Toggle */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-slate-900 dark:text-white">
-              {t('settings.chatHistory.enable', 'Save Chat History')}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t('settings.chatHistory.enableDesc', 'Keep a record of your conversations')}
-            </p>
-          </div>
-          <button
-            onClick={() => setHistoryEnabled(!historyEnabled)}
-            className={`w-12 h-6 rounded-full transition-colors ${
-              historyEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
-            }`}
-          >
-            <div
-              className={`w-5 h-5 bg-white dark:bg-navy-900 rounded-full transform transition-transform ${
-                historyEnabled ? 'translate-x-6' : 'translate-x-0.5'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Clear History */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-slate-900 dark:text-white">
-              {t('settings.chatHistory.clear', 'Clear All Chats')}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t('settings.chatHistory.clearDesc', 'Permanently delete all conversation history')}
-            </p>
-          </div>
-          <button className="px-4 py-2 bg-rose-100 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 rounded-lg transition-colors">
-            {t('settings.chatHistory.clearBtn', 'Clear All')}
-          </button>
         </div>
       </div>
     </div>
@@ -311,7 +160,7 @@ export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({
       case 'memory':
         return (
           <div className="p-6 overflow-y-auto h-full">
-            <AIMemorySettings currentUser={currentUser} />
+            <AIMemorySettings />
           </div>
         );
       case 'style':
@@ -325,7 +174,7 @@ export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({
       case 'history':
         return (
           <div className="p-6 overflow-y-auto h-full">
-            <ChatHistorySettings currentUser={currentUser} />
+            <CanonicalChatHistorySettings />
           </div>
         );
       case 'voice':

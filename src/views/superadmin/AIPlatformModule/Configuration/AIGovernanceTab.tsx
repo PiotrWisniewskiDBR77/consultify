@@ -1,10 +1,8 @@
 import { CheckCircle, RefreshCw, Save, Shield, ShieldAlert } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { DegradedState } from '@/components/Admin/AdminState';
 import { Api } from '@/services/api';
-import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 type ContextCategory =
   | 'ORG_PROFILE'
@@ -34,7 +32,7 @@ type SanityReport = {
   timestamp: string;
 };
 
-const CONTEXT_CATEGORIES: ContextCategory[] = [
+const contextCategories: ContextCategory[] = [
   'ORG_PROFILE',
   'ORG_TERMINOLOGY',
   'ORG_PATTERNS',
@@ -44,95 +42,10 @@ const CONTEXT_CATEGORIES: ContextCategory[] = [
   'ORG_DOCUMENTS',
 ];
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
-
-const getObjectPayload = (value: unknown) => {
-  if (!isRecord(value)) return value;
-  const data = isRecord(value.data) ? value.data : null;
-  return data && isRecord(data.data) ? data.data : data || value;
-};
-
-const asText = (value: unknown, fallback: string) =>
-  typeof value === 'string' && value.trim()
-    ? value
-    : typeof value === 'number' || typeof value === 'boolean'
-      ? String(value)
-      : fallback;
-
-const toBool = (value: unknown, fallback = false) =>
-  typeof value === 'boolean'
-    ? value
-    : value === undefined || value === null
-      ? fallback
-      : value === 1 || value === '1' || value === 'true';
-
-const normalizeContextPolicy = (value: unknown): ContextPolicy => {
-  const payload = getObjectPayload(value);
-  if (!isRecord(payload) || !isRecord(payload.categories)) {
-    throw new Error('Governance context policy response was incomplete');
-  }
-  const categories = payload.categories;
-
-  return {
-    categories: CONTEXT_CATEGORIES.reduce(
-      (acc, key) => ({ ...acc, [key]: toBool(categories[key], false) }),
-      {} as Record<ContextCategory, boolean>
-    ),
-    piiRedaction:
-      payload.piiRedaction === 'off' || payload.piiRedaction === 'on'
-        ? payload.piiRedaction
-        : 'inherit',
-    retention: payload.retention === 'strict' ? 'strict' : 'standard',
-  };
-};
-
-const normalizePolicySummary = (value: unknown): PolicySummary => {
-  const payload = getObjectPayload(value);
-  const summary = isRecord(payload) && isRecord(payload.summary) ? payload.summary : payload;
-  if (!isRecord(summary) || !('currentLevel' in summary)) {
-    throw new Error('Governance policy response was incomplete');
-  }
-
-  return {
-    currentLevel: asText(summary.currentLevel, 'unknown'),
-    description: asText(summary.description, 'No description provided'),
-    internetEnabled: toBool(summary.internetEnabled, false),
-    auditRequired: toBool(summary.auditRequired, false),
-  };
-};
-
-const normalizeSanityReport = (value: unknown): SanityReport => {
-  const payload = getObjectPayload(value);
-  if (!isRecord(payload) || !Array.isArray(payload.healthChecks)) {
-    throw new Error('Governance health response was incomplete');
-  }
-
-  return {
-    duplicateMounts: Array.isArray(payload.duplicateMounts)
-      ? payload.duplicateMounts.filter(isRecord).map((item) => ({
-          path: asText(item.path, 'unknown'),
-          count: Number.isFinite(Number(item.count)) ? Number(item.count) : 0,
-        }))
-      : [],
-    healthChecks: payload.healthChecks.filter(isRecord).map((item) => {
-      const status = item.status === 'warn' || item.status === 'error' ? item.status : 'ok';
-      return {
-        name: asText(item.name, 'unknown'),
-        status,
-        detail: asText(item.detail, 'No detail provided'),
-      };
-    }),
-    timestamp: asText(payload.timestamp, ''),
-  };
-};
-
-function formatDateTime(value?: string | null): string {
-  if (!value) return 'n/a';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'n/a';
-  return date.toLocaleString();
-}
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${localStorage.getItem('token')}`,
+});
 
 export const AIGovernanceTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -142,11 +55,10 @@ export const AIGovernanceTab: React.FC = () => {
   const [contextPolicy, setContextPolicy] = useState<ContextPolicy | null>(null);
   const [policySummary, setPolicySummary] = useState<PolicySummary | null>(null);
   const [sanityReport, setSanityReport] = useState<SanityReport | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [healthError, setHealthError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [hasChanges, setHasChanges] = useState(false);
+  const [governanceUnavailable, setGovernanceUnavailable] = useState<string | null>(null);
+  const [healthUnavailable, setHealthUnavailable] = useState<string | null>(null);
 
   const errorCount = useMemo(() => {
     if (!sanityReport?.healthChecks) return 0;
@@ -158,58 +70,110 @@ export const AIGovernanceTab: React.FC = () => {
     return sanityReport.healthChecks.filter((c) => c.status === 'warn').length;
   }, [sanityReport]);
 
-  const loadAll = useCallback(async () => {
+  const normalizeBoolean = (value: unknown): boolean => {
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return Boolean(value);
+  };
+
+  const extractContextPolicy = (payload: any): ContextPolicy => {
+    const source = payload?.data?.data ?? payload?.data ?? payload;
+    if (!source || typeof source !== 'object') {
+      throw new Error('Governance context policy response was incomplete');
+    }
+    const categories = source.categories;
+    if (!categories || typeof categories !== 'object') {
+      throw new Error('Governance context policy response was incomplete');
+    }
+    const normalizedCategories = contextCategories.reduce(
+      (acc, key) => ({ ...acc, [key]: normalizeBoolean(categories[key]) }),
+      {} as Record<ContextCategory, boolean>
+    );
+    return {
+      categories: normalizedCategories,
+      piiRedaction:
+        source.piiRedaction === 'off' || source.piiRedaction === 'on' ? source.piiRedaction : 'inherit',
+      retention: source.retention === 'strict' ? 'strict' : 'standard',
+    };
+  };
+
+  const extractPolicySummary = (payload: any): PolicySummary => {
+    const source = payload?.data?.data?.summary ?? payload?.data?.summary ?? payload?.summary;
+    if (!source || typeof source !== 'object') {
+      throw new Error('Governance policy summary response was incomplete');
+    }
+    return {
+      currentLevel: String(source.currentLevel || 'balanced'),
+      description: String(source.description || ''),
+      internetEnabled: normalizeBoolean(source.internetEnabled),
+      auditRequired: normalizeBoolean(source.auditRequired),
+    };
+  };
+
+  const extractHealthReport = (payload: any): SanityReport => {
+    const source = payload?.data?.data ?? payload?.data ?? payload;
+    if (!source || typeof source !== 'object') {
+      throw new Error('Health report response was incomplete');
+    }
+    return {
+      duplicateMounts: Array.isArray(source.duplicateMounts) ? source.duplicateMounts : [],
+      healthChecks: Array.isArray(source.healthChecks) ? source.healthChecks : [],
+      timestamp: source.timestamp || new Date().toISOString(),
+    };
+  };
+
+  const getErrorMessage = (error: any, fallback: string) => {
+    const message = error?.message || fallback;
+    const code = error?.data?.code;
+    return code ? `${message} (${code})` : message;
+  };
+
+  const loadAll = async (): Promise<{ ok: true } | { ok: false; message: string }> => {
     setLoading(true);
-    setLoadError(null);
-    setSaveError(null);
     try {
       const [ctxJson, polJson] = await Promise.all([
         Api.getAIGovernanceContextPolicy(),
         Api.getAIGovernancePolicy(),
       ]);
-
-      const nextContextPolicy = normalizeContextPolicy(ctxJson);
-      const nextPolicySummary = normalizePolicySummary(polJson);
-      setContextPolicy(nextContextPolicy);
-      setPolicySummary(nextPolicySummary);
+      setContextPolicy(extractContextPolicy(ctxJson));
+      setPolicySummary(extractPolicySummary(polJson));
+      setGovernanceUnavailable(null);
       setHasChanges(false);
-      return { contextPolicy: nextContextPolicy, policySummary: nextPolicySummary };
-    } catch (error: unknown) {
-      const message = normalizeApiErrorMessage(error, 'Failed to load governance settings');
+      return { ok: true };
+    } catch (e: any) {
+      const message = getErrorMessage(e, 'Failed to load governance settings');
       setContextPolicy(null);
       setPolicySummary(null);
-      setHasChanges(false);
-      setLoadError(message);
-      toast.error(message);
-      return null;
+      setGovernanceUnavailable(message);
+      return { ok: false, message };
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const loadHealth = useCallback(async () => {
+  const loadHealth = async () => {
     setRefreshingHealth(true);
-    setHealthError(null);
     try {
       const json = await Api.getAIGovernanceHealth();
-      setSanityReport(normalizeSanityReport(json));
-    } catch (error: unknown) {
-      const message = normalizeApiErrorMessage(error, 'Failed to load health report');
-      setSanityReport(null);
-      setHealthError(message);
+      setSanityReport(extractHealthReport(json));
+      setHealthUnavailable(null);
+    } catch (e: any) {
+      const message = getErrorMessage(e, 'Failed to load health report');
       toast.error(message);
+      setHealthUnavailable(message);
+      setSanityReport(null);
     } finally {
       setRefreshingHealth(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    void loadAll();
-    void loadHealth();
-  }, [loadAll, loadHealth]);
+    loadAll();
+    loadHealth();
+  }, []);
 
   const updateContextCategory = (key: ContextCategory, value: boolean) => {
-    if (loadError) return;
     setContextPolicy((prev) => {
       if (!prev) return prev;
       return { ...prev, categories: { ...prev.categories, [key]: value } };
@@ -218,9 +182,8 @@ export const AIGovernanceTab: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (loadError || !contextPolicy || !policySummary) return;
+    if (!contextPolicy || !policySummary || governanceUnavailable) return;
     setSaving(true);
-    setSaveError(null);
     try {
       await Promise.all([
         Api.updateAIGovernanceContextPolicy(contextPolicy),
@@ -230,16 +193,15 @@ export const AIGovernanceTab: React.FC = () => {
           policyLevel: policySummary.currentLevel,
         }),
       ]);
-
-      const refreshed = await loadAll();
-      if (!refreshed) {
-        throw new Error('Governance settings save was not confirmed by the server');
+      const readBack = await loadAll();
+      if (!readBack.ok) {
+        toast.error(readBack.message);
+        return;
       }
       toast.success('Governance settings saved');
-    } catch (error: unknown) {
-      const message = normalizeApiErrorMessage(error, 'Save failed');
-      setSaveError(message);
-      toast.error(message);
+      setHasChanges(false);
+    } catch (e: any) {
+      toast.error(getErrorMessage(e, 'Save failed'));
     } finally {
       setSaving(false);
     }
@@ -269,8 +231,8 @@ export const AIGovernanceTab: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              void loadAll();
-              void loadHealth();
+              loadAll();
+              loadHealth();
             }}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors flex items-center gap-2"
             title="Refresh"
@@ -280,9 +242,9 @@ export const AIGovernanceTab: React.FC = () => {
           </button>
           <button
             onClick={handleSave}
-            disabled={!hasChanges || saving || !!loadError}
+            disabled={!hasChanges || saving || Boolean(governanceUnavailable)}
             className="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-2"
-            title={loadError || 'Save'}
+            title="Save"
           >
             {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
             Save
@@ -290,178 +252,146 @@ export const AIGovernanceTab: React.FC = () => {
         </div>
       </div>
 
-      {loadError ? (
-        <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-          <DegradedState title="AI governance unavailable" description={loadError} />
-        </div>
-      ) : (
-        <>
-          {saveError && (
-            <div
-              role="alert"
-              className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
-            >
-              {saveError}
+      {/* Context policy */}
+      <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+          Context policy
+        </h3>
+
+        {governanceUnavailable ? (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div className="font-medium mb-1">AI governance unavailable</div>
+            <div>{governanceUnavailable}</div>
+          </div>
+        ) : !contextPolicy ? (
+          <div className="text-slate-500 dark:text-slate-400 text-sm">No policy loaded.</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(
+                [
+                  ['ORG_PROFILE', 'Org profile'],
+                  ['ORG_TERMINOLOGY', 'Org terminology'],
+                  ['ORG_PATTERNS', 'Org patterns'],
+                  ['ORG_STRATEGY', 'Org strategy'],
+                  ['ORG_SECURITY_POSTURE', 'Security posture'],
+                  ['ORG_FINANCIAL_SUMMARY', 'Financial summary'],
+                  ['ORG_DOCUMENTS', 'Org documents (RAG)'],
+                ] as Array<[ContextCategory, string]>
+              ).map(([key, label]) => (
+                <label
+                  key={key}
+                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700"
+                >
+                  <span className="text-sm text-slate-700 dark:text-slate-200">{label}</span>
+                  <input
+                    type="checkbox"
+                    checked={!!contextPolicy.categories?.[key]}
+                    onChange={(e) => updateContextCategory(key, e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                </label>
+              ))}
             </div>
-          )}
 
-          {/* Context policy */}
-          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-              Context policy
-            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  PII redaction
+                </label>
+                <select
+                  value={contextPolicy.piiRedaction}
+                  onChange={(e) => {
+                    setContextPolicy((prev) =>
+                      prev ? { ...prev, piiRedaction: e.target.value as any } : prev
+                    );
+                    setHasChanges(true);
+                  }}
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                >
+                  <option value="inherit">Inherit</option>
+                  <option value="off">Off</option>
+                  <option value="on">On</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Retention mode
+                </label>
+                <select
+                  value={contextPolicy.retention}
+                  onChange={(e) => {
+                    setContextPolicy((prev) =>
+                      prev ? { ...prev, retention: e.target.value as any } : prev
+                    );
+                    setHasChanges(true);
+                  }}
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                >
+                  <option value="standard">Standard</option>
+                  <option value="strict">Strict</option>
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
-            {!contextPolicy ? (
-              <DegradedState
-                title="Context policy unavailable"
-                description="The governance context policy endpoint returned no policy."
-              />
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {(
-                    [
-                      ['ORG_PROFILE', 'Org profile'],
-                      ['ORG_TERMINOLOGY', 'Org terminology'],
-                      ['ORG_PATTERNS', 'Org patterns'],
-                      ['ORG_STRATEGY', 'Org strategy'],
-                      ['ORG_SECURITY_POSTURE', 'Security posture'],
-                      ['ORG_FINANCIAL_SUMMARY', 'Financial summary'],
-                      ['ORG_DOCUMENTS', 'Org documents (RAG)'],
-                    ] as Array<[ContextCategory, string]>
-                  ).map(([key, label]) => (
-                    <label
-                      key={key}
-                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700"
-                    >
-                      <span className="text-sm text-slate-700 dark:text-slate-200">{label}</span>
-                      <input
-                        type="checkbox"
-                        checked={!!contextPolicy.categories?.[key]}
-                        onChange={(e) => updateContextCategory(key, e.target.checked)}
-                        disabled={!!loadError}
-                        className="w-4 h-4"
-                      />
-                    </label>
-                  ))}
+      {/* Org AI policy */}
+      <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+          Internet & audit policy
+        </h3>
+
+        {governanceUnavailable ? (
+          <div className="text-slate-500 dark:text-slate-400 text-sm">Governance policy unavailable.</div>
+        ) : !policySummary ? (
+          <div className="text-slate-500 dark:text-slate-400 text-sm">No policy loaded.</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
+                <span className="text-sm text-slate-700 dark:text-slate-200">Internet enabled</span>
+                <input
+                  type="checkbox"
+                  checked={!!policySummary.internetEnabled}
+                  onChange={(e) => {
+                    setPolicySummary((prev) =>
+                      prev ? { ...prev, internetEnabled: e.target.checked } : prev
+                    );
+                    setHasChanges(true);
+                  }}
+                  className="w-4 h-4"
+                />
+              </label>
+              <label className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
+                <span className="text-sm text-slate-700 dark:text-slate-200">Audit required</span>
+                <input
+                  type="checkbox"
+                  checked={!!policySummary.auditRequired}
+                  onChange={(e) => {
+                    setPolicySummary((prev) =>
+                      prev ? { ...prev, auditRequired: e.target.checked } : prev
+                    );
+                    setHasChanges(true);
+                  }}
+                  className="w-4 h-4"
+                />
+              </label>
+              <div className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
+                <div className="text-xs text-slate-500 dark:text-slate-400">Current level</div>
+                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                  {policySummary.currentLevel}
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      PII redaction
-                    </label>
-                    <select
-                      value={contextPolicy.piiRedaction}
-                      onChange={(e) => {
-                        setContextPolicy((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                piiRedaction: e.target.value as ContextPolicy['piiRedaction'],
-                              }
-                            : prev
-                        );
-                        setHasChanges(true);
-                      }}
-                      disabled={!!loadError}
-                      className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
-                    >
-                      <option value="inherit">Inherit</option>
-                      <option value="off">Off</option>
-                      <option value="on">On</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      Retention mode
-                    </label>
-                    <select
-                      value={contextPolicy.retention}
-                      onChange={(e) => {
-                        setContextPolicy((prev) =>
-                          prev
-                            ? { ...prev, retention: e.target.value as ContextPolicy['retention'] }
-                            : prev
-                        );
-                        setHasChanges(true);
-                      }}
-                      disabled={!!loadError}
-                      className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
-                    >
-                      <option value="standard">Standard</option>
-                      <option value="strict">Strict</option>
-                    </select>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Org AI policy */}
-          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-              Internet & audit policy
-            </h3>
-
-            {!policySummary ? (
-              <DegradedState
-                title="Internet policy unavailable"
-                description="The governance policy endpoint returned no policy summary."
-              />
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <label className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
-                    <span className="text-sm text-slate-700 dark:text-slate-200">
-                      Internet enabled
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={!!policySummary.internetEnabled}
-                      onChange={(e) => {
-                        setPolicySummary((prev) =>
-                          prev ? { ...prev, internetEnabled: e.target.checked } : prev
-                        );
-                        setHasChanges(true);
-                      }}
-                      disabled={!!loadError}
-                      className="w-4 h-4"
-                    />
-                  </label>
-                  <label className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
-                    <span className="text-sm text-slate-700 dark:text-slate-200">
-                      Audit required
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={!!policySummary.auditRequired}
-                      onChange={(e) => {
-                        setPolicySummary((prev) =>
-                          prev ? { ...prev, auditRequired: e.target.checked } : prev
-                        );
-                        setHasChanges(true);
-                      }}
-                      disabled={!!loadError}
-                      className="w-4 h-4"
-                    />
-                  </label>
-                  <div className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
-                    <div className="text-xs text-slate-500 dark:text-slate-400">Current level</div>
-                    <div className="text-sm text-slate-900 dark:text-white font-medium">
-                      {policySummary.currentLevel}
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {policySummary.description}
-                </p>
-              </>
-            )}
-          </div>
-        </>
-      )}
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {policySummary.description}
+            </p>
+          </>
+        )}
+      </div>
 
       {/* Health */}
       <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
@@ -483,15 +413,18 @@ export const AIGovernanceTab: React.FC = () => {
           </button>
         </div>
 
-        {healthError ? (
-          <DegradedState title="Governance health unavailable" description={healthError} />
+        {healthUnavailable ? (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div className="font-medium mb-1">Health report unavailable</div>
+            <div>{healthUnavailable}</div>
+          </div>
         ) : !sanityReport ? (
           <div className="text-slate-500 dark:text-slate-400 text-sm">No report loaded.</div>
         ) : (
           <>
             <div className="flex items-center gap-3 text-sm">
               {errorCount > 0 ? (
-                <span className="inline-flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                <span className="inline-flex items-center gap-2 text-red-600 dark:text-red-400">
                   <ShieldAlert size={16} /> {errorCount} errors
                 </span>
               ) : (
@@ -501,7 +434,7 @@ export const AIGovernanceTab: React.FC = () => {
               )}
               <span className="text-slate-500 dark:text-slate-400">{warnCount} warnings</span>
               <span className="text-slate-400 dark:text-slate-500">
-                {formatDateTime(sanityReport.timestamp)}
+                {new Date(sanityReport.timestamp).toLocaleString()}
               </span>
             </div>
 
@@ -536,7 +469,7 @@ export const AIGovernanceTab: React.FC = () => {
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : c.status === 'warn'
                             ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-rose-600 dark:text-rose-400'
+                            : 'text-red-600 dark:text-red-400'
                       }`}
                     >
                       {c.status}

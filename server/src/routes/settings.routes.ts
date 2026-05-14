@@ -1957,7 +1957,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!userId)
+      return res.status(401).json({ error: 'User not authenticated', code: 'AUTH_REQUIRED' });
 
     const connected = await oauthEngine.listConnectedIntegrations(userId);
     const availability = oauthEngine.getConnectorAvailability();
@@ -2430,7 +2431,10 @@ router.get(
       try {
         return res.json({ preferences: JSON.parse(row.preferences_data) });
       } catch {
-        // fallthrough
+        return res.status(500).json({
+          error: 'Stored AI memory preferences are invalid',
+          code: 'AI_MEMORY_PREFERENCES_INVALID_STORE',
+        });
       }
     }
     return res.json({ preferences: defaultPrivacyPreferences });
@@ -4055,15 +4059,24 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { preferences } = req.body || {};
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!userId)
+      return res.status(401).json({ error: 'User not authenticated', code: 'AUTH_REQUIRED' });
     if (!preferences || typeof preferences !== 'object') {
-      return res.status(400).json({ error: 'Invalid preferences payload' });
+      return res.status(400).json({
+        error: 'Invalid preferences payload',
+        code: 'AI_MEMORY_PREFERENCES_INVALID_PAYLOAD',
+      });
     }
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
     const result = await upsertUserPreferenceValue(userId, preferencesKey('ai-memory'), payload);
-    if (!result.success) throw new Error(result.error || 'Failed to save preference');
+    if (!result.success) {
+      return res.status(500).json({
+        error: 'Failed to save AI memory preferences',
+        code: 'AI_MEMORY_PREFERENCES_SAVE_FAILED',
+      });
+    }
 
     logger.info(`[settings] AI memory preferences updated for user ${userId}`);
     return res.json({ success: true });
@@ -4079,7 +4092,8 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!userId)
+      return res.status(401).json({ error: 'User not authenticated', code: 'AUTH_REQUIRED' });
 
     // Clear user's AI conversation history if exists
     try {

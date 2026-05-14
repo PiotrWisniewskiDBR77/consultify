@@ -76,6 +76,7 @@ export type SettingsSection =
   | 'ai-model-params'
   | 'ai-autocomplete'
   | 'ai-memory'
+  | 'ai-chat-history'
   | 'ai-privacy'
   | 'ai-prompt-library'
   | 'ai-voice'
@@ -291,7 +292,13 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 id: 'ai-memory',
                 label: t('settings.sidebar.aiMemory', 'Memory & Context'),
                 icon: Database,
-                keywords: ['context', 'history', 'remember', 'retention'],
+                keywords: ['context', 'remember', 'retention', 'memory'],
+              },
+              {
+                id: 'ai-chat-history',
+                label: t('settings.sidebar.aiChatHistory', 'Chat History'),
+                icon: History,
+                keywords: ['history', 'chat', 'conversations', 'transcript'],
               },
               {
                 id: 'ai-privacy',
