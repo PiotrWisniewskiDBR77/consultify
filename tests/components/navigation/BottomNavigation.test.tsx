@@ -15,6 +15,7 @@ const deviceState = {
 const appState = {
   currentView: AppView.MY_WORK,
   setCurrentView: vi.fn(),
+  returnToFullChat: vi.fn(),
   setIsSidebarOpen: vi.fn(),
   toggleChatCollapse: vi.fn(),
   isChatCollapsed: true,
@@ -49,6 +50,7 @@ describe('BottomNavigation', () => {
     appState.currentView = AppView.MY_WORK;
     appState.isChatCollapsed = true;
     appState.setCurrentView.mockReset();
+    appState.returnToFullChat.mockReset();
     appState.setIsSidebarOpen.mockReset();
     appState.toggleChatCollapse.mockReset();
     conversationState.setDisplayMode.mockReset();
@@ -62,7 +64,7 @@ describe('BottomNavigation', () => {
     const initiativesButton = screen.getByTestId('bottom-nav-initiatives');
     const assessmentButton = screen.getByTestId('bottom-nav-assessment');
 
-    expect(initiativesButton.className).toContain('text-purple-600');
+    expect(initiativesButton.className).toContain('text-purple-700');
 
     fireEvent.click(initiativesButton);
     fireEvent.click(assessmentButton);
@@ -77,7 +79,26 @@ describe('BottomNavigation', () => {
     fireEvent.click(screen.getByTestId('bottom-nav-ai'));
 
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('full');
-    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.AI_CHAT);
+    expect(appState.returnToFullChat).toHaveBeenCalledTimes(1);
+    expect(appState.setCurrentView).not.toHaveBeenCalledWith(AppView.AI_CHAT);
+  });
+
+  it('marks active destination and sets accessible labels', () => {
+    appState.currentView = AppView.MY_WORK;
+    render(<BottomNavigation />);
+
+    const nav = screen.getByRole('navigation', { name: 'Primary mobile navigation' });
+    expect(nav).toBeInTheDocument();
+
+    const myWorkButton = screen.getByTestId('bottom-nav-mywork');
+    const assessmentButton = screen.getByTestId('bottom-nav-assessment');
+    const aiButton = screen.getByTestId('bottom-nav-ai');
+    const moreButton = screen.getByTestId('bottom-nav-more');
+
+    expect(myWorkButton).toHaveAttribute('aria-current', 'page');
+    expect(assessmentButton).not.toHaveAttribute('aria-current');
+    expect(aiButton).toHaveAttribute('aria-label', 'Open AI chat');
+    expect(moreButton).toHaveAttribute('aria-label', 'Open menu');
   });
 
   it('stays hidden outside mobile breakpoints', () => {

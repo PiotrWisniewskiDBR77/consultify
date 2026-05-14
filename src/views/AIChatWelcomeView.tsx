@@ -26,6 +26,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
 import { useAIContext } from '@/contexts/AIContext';
@@ -128,6 +129,8 @@ function downloadFile(filename: string, content: string, mimeType: string): void
 export const AIChatWelcomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // App state
   const {
@@ -1125,6 +1128,25 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
   // F1.1: Consume chatKickoffMessage on full-screen chat (mobile/tablet from Help → Ask AI)
   const kickoffSentRef = useRef<string | null>(null);
+  const queryKickoffHandledRef = useRef(false);
+  useEffect(() => {
+    if (queryKickoffHandledRef.current) return;
+
+    const rawPrompt = searchParams.get('prompt');
+    if (!rawPrompt) return;
+    queryKickoffHandledRef.current = true;
+
+    const normalizedPrompt = rawPrompt.trim().slice(0, 8000);
+    if (normalizedPrompt.length > 0) {
+      setChatKickoffMessage(normalizedPrompt);
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('prompt');
+    const nextSearch = nextParams.toString();
+    navigate(nextSearch ? `/chat?${nextSearch}` : '/chat', { replace: true });
+  }, [navigate, searchParams, setChatKickoffMessage]);
+
   useEffect(() => {
     if (!chatKickoffMessage) return;
     if (isStreaming) return;

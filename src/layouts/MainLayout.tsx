@@ -241,6 +241,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     pb-16 md:pb-0
                 `}
       >
+        <a
+          href="#app-main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-50 bg-white dark:bg-navy-900 text-slate-900 dark:text-white border border-slate-300 dark:border-navy-600 rounded px-3 py-2 text-sm"
+        >
+          {t('layout.skipToContent', 'Skip to main content')}
+        </a>
         {/* Header */}
         <div className="flex flex-col z-30 shrink-0">
           <DemoModeBanner />
@@ -254,22 +260,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setIsSidebarOpen(true)}
                 className="lg:hidden text-navy-700 dark:text-white mr-2"
+                aria-label="Open menu"
               >
                 <Menu />
               </button>
-              <div className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500">
-                <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
+              <nav
+                aria-label={t('layout.breadcrumb', 'Breadcrumb')}
+                className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500"
+              >
+                <span
+                  className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"
+                  aria-current={!breadcrumbs?.[1] && breadcrumbs?.[0] ? 'page' : undefined}
+                >
                   {breadcrumbs?.[0] || ''}
                 </span>
                 {breadcrumbs?.[1] ? (
                   <>
-                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
-                    <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
+                    <ChevronRight size={14} className="mx-2 rtl:rotate-180" aria-hidden="true" />
+                    <span className="text-navy-900 dark:text-white" aria-current="page">
+                      {breadcrumbs[1]}
+                    </span>
                   </>
                 ) : null}
-              </div>
+              </nav>
             </div>
 
             <div className="flex items-center gap-4">
@@ -330,8 +346,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     type="button"
                     onClick={() => toggleChatCollapse()}
                     className="absolute top-2 right-2 z-10 w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
-                    title="Close AI panel"
-                    aria-label="Close AI panel"
+                    title={t('layout.aiPanel.close', 'Close AI panel')}
+                    aria-label={t('layout.aiPanel.close', 'Close AI panel')}
                   >
                     <X size={16} />
                   </button>
@@ -363,7 +379,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             )}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto">{children}</div>
+            <div
+              id="app-main-content"
+              tabIndex={-1}
+              className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto"
+            >
+              {children}
+            </div>
           </div>
         </TrialExpiredGate>
       </main>

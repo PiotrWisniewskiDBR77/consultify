@@ -22,13 +22,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  MENU_2_TAB_ACTIVE,
-  MENU_2_TAB_INACTIVE,
-  MENU_3_INNER_CLASS,
-  MENU_3_ROW_CLASS,
-} from '@/components/shared/ModuleMenu3';
-
 import { ActiveFilters, type FilterChip } from './ActiveFilters';
 import { DynamicTabs } from './DynamicTabs';
 import { StatusDropdown } from './StatusDropdown';
@@ -68,7 +61,6 @@ interface ModuleNavBarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onSearch: (query: string) => void;
-  searchValue?: string;
   // Command Row inputs (V3: one row; modes swap in place)
   openDocuments: OpenDocument[];
   activeDocumentId: string | null;
@@ -109,8 +101,6 @@ interface ModuleNavBarProps {
   toolControl?: React.ReactNode;
   // Optional AI control (rightmost in the topbar cluster)
   aiControl?: React.ReactNode;
-  // Optional right-side content in Menu 3 / Command Row, e.g. contextual AI actions.
-  commandRowRightContent?: React.ReactNode;
   /**
    * If true, `commandRowContent` overrides Search/DynamicTabs (used for multi-select bulk mode).
    * KANON v3: bulk actions row is the highest priority mode of Command Row.
@@ -124,8 +114,23 @@ interface ModuleNavBarProps {
  * Level B — Pill / Soft: helper actions, view toggles
  * Level C — Ghost / Text: link-like, per-row actions
  */
-const TAB_INACTIVE = MENU_2_TAB_INACTIVE;
-const TAB_ACTIVE = MENU_2_TAB_ACTIVE;
+const TAB_BASE = `
+  inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium
+  transition-colors duration-150
+`;
+
+const TAB_INACTIVE = `
+  ${TAB_BASE}
+  border border-slate-200 dark:border-navy-700
+  text-slate-700 dark:text-slate-300
+  hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
+`;
+
+const TAB_ACTIVE = `
+  ${TAB_BASE}
+  border border-primary-500/40
+  bg-primary-500/10 text-slate-900 dark:text-slate-100
+`;
 
 const BUTTON_BASE = `
   inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium
@@ -143,12 +148,6 @@ const BUTTON_ACTIVE = `
   bg-primary-500/10 text-slate-900 dark:text-slate-100
 `;
 
-function isFullMenu3Row(node: React.ReactNode): boolean {
-  if (!React.isValidElement<{ className?: string }>(node)) return false;
-  const className = node.props.className || '';
-  return className.includes('px-4') && className.includes('py-2') && className.includes('border-b');
-}
-
 export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   tabs,
   activeTab,
@@ -157,7 +156,6 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   viewMode,
   onViewModeChange,
   onSearch,
-  searchValue,
   openDocuments,
   activeDocumentId,
   onSelectDocument,
@@ -180,7 +178,6 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   rightControls,
   toolControl,
   aiControl,
-  commandRowRightContent,
   forceCommandRow = false,
 }) => {
   const [showSearch, setShowSearch] = useState(false);
@@ -189,11 +186,6 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
   // Debounce search query (300ms)
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
-  useEffect(() => {
-    if (searchValue === undefined) return;
-    setSearchQuery(searchValue);
-  }, [searchValue]);
 
   // Call onSearch when debounced value changes
   useEffect(() => {
@@ -246,47 +238,42 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   const commandRow = (() => {
     // 0) Bulk / forced row — overrides search and tabs
     if (forceCommandRow && commandRowContent) {
-      return isFullMenu3Row(commandRowContent) ? (
-        commandRowContent
-      ) : (
-        <div className={MENU_3_ROW_CLASS}>
-          <div className={MENU_3_INNER_CLASS}>{commandRowContent}</div>
-        </div>
-      );
+      return <div className="shrink-0">{commandRowContent}</div>;
     }
 
     if (showSearch) {
       return (
-        <div className={MENU_3_ROW_CLASS}>
-          <div className={MENU_3_INNER_CLASS}>
-            <div className="relative min-w-[280px] flex-1">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-              />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search..."
-                className="
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            />
+            <input
+              id="modulehub-command-search"
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search..."
+              aria-label="Search"
+              className="
                 w-full pl-10 pr-10 py-2 rounded-lg
-                bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60
+                bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
                 text-slate-900 dark:text-white placeholder-slate-500
                 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
                 transition-all
               "
-              />
-              {searchQuery && (
-                <button
-                  onClick={handleCloseSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleCloseSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
         </div>
       );
@@ -300,25 +287,15 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           onSelectDocument={onSelectDocument}
           onCloseDocument={onCloseDocument}
           onShowList={onShowList}
-          rightContent={commandRowRightContent}
         />
       );
     }
 
-    if (!commandRowContent && !commandRowRightContent && activeFilters.length === 0) return null;
-
-    if (
-      commandRowContent &&
-      !commandRowRightContent &&
-      activeFilters.length === 0 &&
-      isFullMenu3Row(commandRowContent)
-    ) {
-      return commandRowContent;
-    }
+    if (!commandRowContent && activeFilters.length === 0) return null;
 
     return (
-      <div className={MENU_3_ROW_CLASS}>
-        <div className={MENU_3_INNER_CLASS}>
+      <div className="px-4 pb-3">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           {commandRowContent ? <div className="flex-1 min-w-0">{commandRowContent}</div> : null}
           {activeFilters.length > 0 ? (
             <ActiveFilters
@@ -326,11 +303,6 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               onRemoveFilter={onRemoveFilter}
               onClearAll={onClearFilters}
             />
-          ) : null}
-          {commandRowRightContent ? (
-            <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
-              {commandRowRightContent}
-            </div>
           ) : null}
         </div>
       </div>
@@ -344,6 +316,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     <div className="flex items-center gap-2">
       {categoryButtons.map((btn) => (
         <button
+          type="button"
           key={btn.id}
           onClick={btn.onClick}
           data-testid={`category-button-${btn.id}`}
@@ -367,6 +340,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         <div className="flex items-center gap-3">
           {/* Search Toggle */}
           <button
+            type="button"
             onClick={() => {
               if (forceCommandRow) return;
               setShowSearch(!showSearch);
@@ -378,19 +352,24 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             }`}
             title={forceCommandRow ? 'Bulk mode active' : 'Search'}
             aria-disabled={forceCommandRow}
+            aria-expanded={showSearch}
+            aria-controls={showSearch ? 'modulehub-command-search' : undefined}
           >
             <Search size={18} />
           </button>
 
           {/* Main Tabs — V3-A03: Level A pill (rounded-full) */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" role="tablist" aria-label="Module sections">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
+                  type="button"
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
                   className={isActive ? TAB_ACTIVE : TAB_INACTIVE}
+                  role="tab"
+                  aria-selected={isActive}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
@@ -438,6 +417,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                   activeStatusFilter === filter.id || (filter.id === 'all' && !activeStatusFilter);
                 return (
                   <button
+                    type="button"
                     key={filter.id}
                     onClick={() => onStatusFilterChange?.(filter.id === 'all' ? null : filter.id)}
                     data-testid={`status-filter-${filter.id}`}
@@ -470,6 +450,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 const isActive = viewMode === mode;
                 return (
                   <button
+                    type="button"
                     key={mode}
                     onClick={() => onViewModeChange(mode)}
                     data-testid={`view-mode-${mode}`}
@@ -495,6 +476,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             primaryCta
           ) : onNewItem ? (
             <button
+              type="button"
               onClick={onNewItem}
               className="
                 inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium
