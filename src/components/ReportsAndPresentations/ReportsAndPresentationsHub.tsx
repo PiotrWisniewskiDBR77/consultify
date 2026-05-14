@@ -18,7 +18,7 @@ import {
   Table2,
   User,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -80,13 +80,28 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     else if (location.pathname.startsWith('/reports')) tab = 'outputs_documents';
     else if (location.pathname.startsWith('/presentations')) tab = 'presentations';
     else tab = 'outputs_all';
-    return { initialTab: tab, initialArtifactId: params.get('artifactId') || null };
+    return {
+      initialTab: tab,
+      // Keep backward compatibility with older deep links using ?deck=<id>.
+      initialArtifactId: params.get('artifactId') || params.get('deck') || null,
+    };
   }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const artifactId = params.get('artifactId');
+    const deck = params.get('deck');
+    if (!artifactId && deck) {
+      params.set('artifactId', deck);
+      params.delete('deck');
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate]);
 
   const openContextualHelp = useCallback(() => {
     setKnowledgeModuleIdOverride(activeTab === 'templates' ? 'templates' : 'outputs');
@@ -975,6 +990,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={templatesError}
             onRefresh={fetchTemplates}
             actions={{ startArtifactReview: actions.startArtifactReview }}
+            initialArtifactId={initialArtifactId}
           />
         );
       case 'outputs_documents':
@@ -1019,6 +1035,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={sheetsError}
             onRefresh={fetchSheets}
             actions={actions}
+            initialArtifactId={initialArtifactId}
           />
         );
       default:
@@ -1038,7 +1055,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           setActiveFilters([]);
           setFiltersOpen(false);
           const q = RAP_TAB_TO_QUERY[next];
-          navigate(`${location.pathname}?tab=${encodeURIComponent(q)}`, { replace: true });
+          const params = new URLSearchParams(location.search || '');
+          params.set('tab', q);
+          navigate(`${location.pathname}?${params.toString()}`, { replace: true });
         }}
         showTabCounts={false}
         viewMode={viewMode}

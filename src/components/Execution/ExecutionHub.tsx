@@ -44,7 +44,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -531,6 +531,7 @@ interface ExecutionHubProps {
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const { currentProjectId, fullSessionData } = useAppStore();
@@ -619,6 +620,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }>
   >([]);
   const [isLoadingActionQueue, setIsLoadingActionQueue] = useState(false);
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
 
   // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
   const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
@@ -654,6 +656,50 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const queueExecutionTruthRefresh = useCallback(() => {
     setExecutionTruthRefreshKey((prev) => prev + 1);
   }, []);
+
+  useEffect(() => {
+    if (deepLinkHandled) return;
+    const openId = String(searchParams.get('open') || '').trim();
+    const mode = String(searchParams.get('mode') || '').trim().toLowerCase();
+    const targetTab = String(searchParams.get('tab') || '').trim().toLowerCase();
+    const targetView = String(searchParams.get('view') || '').trim().toLowerCase();
+
+    if (targetTab === 'reports') {
+      setActiveTab('reports');
+      setViewMode(targetView === 'grid' ? 'grid' : 'table');
+      setDeepLinkHandled(true);
+      return;
+    }
+
+    if (openId && (mode === 'doc' || mode === 'initiative')) {
+      setActiveTab('list');
+      setViewMode('table');
+      setActiveDocumentId(openId);
+      setIsSidePanelOpen(false);
+      setDeepLinkHandled(true);
+    }
+  }, [deepLinkHandled, searchParams]);
+
+  useEffect(() => {
+    if (!deepLinkHandled) return;
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (next.has('open')) {
+      next.delete('open');
+      changed = true;
+    }
+    if (next.has('mode')) {
+      next.delete('mode');
+      changed = true;
+    }
+    if (next.has('view')) {
+      next.delete('view');
+      changed = true;
+    }
+    if (changed) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [deepLinkHandled, searchParams, setSearchParams]);
 
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
@@ -1448,7 +1494,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           entityType: 'initiative',
           entityId: initiative.id,
           entityName: initiative.name,
-          contextData: initiative as unknown as Record<string, unknown>,
+          contextData: {
+            ...(initiative as unknown as Record<string, unknown>),
+            p11Handoff: {
+              source: 'execution_hub',
+              lane: activeTab === 'reports' ? 'execution_reports' : 'execution_portfolio',
+              initiativeId: initiative.id,
+              initiativeIds: [initiative.id],
+            },
+          },
           pmoContext: { initiativeIds: [initiative.id] },
         });
         await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);

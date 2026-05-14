@@ -16,6 +16,7 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
+import { ROUTES } from '@/routes/routeConfig';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
@@ -279,6 +280,15 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
         >
           <ExternalLink size={12} className="text-primary-500 shrink-0" />
           {isPolish ? 'Budżet i predykcja' : 'Budget & Prediction'}
+        </button>
+        <button
+          onClick={() =>
+            navigate(`${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${initiativeId}`)
+          }
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-primary-500 shrink-0" />
+          {isPolish ? 'Wyniki i raporty KPI' : 'Results & KPI reports'}
         </button>
       </div>
     </div>

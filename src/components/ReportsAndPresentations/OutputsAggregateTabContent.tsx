@@ -18,7 +18,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
   Dialog,
@@ -146,6 +146,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const location = useLocation();
   const { isEnabled } = useFeatureFlagsContext();
   const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -507,8 +508,16 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               const err = await res.json().catch(() => ({}));
               throw new Error(String(err?.error || 'Failed to save template'));
             }
+            const payload = (await res.json().catch(() => ({}))) as { data?: { artifactId?: string } };
+            const templateArtifactId =
+              typeof payload?.data?.artifactId === 'string' ? payload.data.artifactId : null;
             toast.success(isPolish ? 'Zapisano jako wzorzec' : 'Saved as template');
-            navigate('/presentations?tab=templates');
+            const params = new URLSearchParams(location.search || '');
+            params.set('tab', 'templates');
+            if (templateArtifactId) {
+              params.set('artifactId', templateArtifactId);
+            }
+            navigate(`/presentations?${params.toString()}`);
           } catch (e: any) {
             toast.error(
               e?.message ? String(e.message) : isPolish ? 'Błąd zapisu wzorca' : 'Failed'

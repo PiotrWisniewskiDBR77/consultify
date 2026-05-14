@@ -312,7 +312,34 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.snapshot?.organizationId).toBe(ORG);
-    expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG);
+    expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG, { initiativeId: undefined });
+  });
+
+  it('GET /api/v8/results/dashboard forwards initiativeId scope when provided', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/dashboard').query({ initiativeId: 'init-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      ['init-1', ORG],
+      { fallback: true }
+    );
+    expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG, { initiativeId: 'init-1' });
+  });
+
+  it('GET /api/v8/results/dashboard returns 404 for invalid initiativeId scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/dashboard')
+      .query({ initiativeId: 'missing-init' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockGetResultsDashboard).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/results/roi/portfolio-summary returns envelope and delegates to getROIPortfolioSummary', async () => {

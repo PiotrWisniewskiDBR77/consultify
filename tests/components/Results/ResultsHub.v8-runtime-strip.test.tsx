@@ -45,7 +45,16 @@ vi.mock('../../../src/components/shared/ModuleHub/useModuleOpenDocuments', () =>
 }));
 
 vi.mock('../../../src/components/Results/ResultsKpiReportsView', () => ({
-  ResultsKpiReportsView: () => <div>results-kpi-reports-view</div>,
+  ResultsKpiReportsView: ({ activeFilters }: any) => (
+    <div>
+      <div>results-kpi-reports-view</div>
+      <div data-testid="results-kpi-reports-initiative-filter">
+        {Array.isArray(activeFilters)
+          ? activeFilters.find((f: any) => f.column === 'initiativeName')?.value || ''
+          : ''}
+      </div>
+    </div>
+  ),
 }));
 
 vi.mock('../../../src/components/Results/ResultsKpiScorecardsView', () => ({
@@ -346,6 +355,61 @@ describe('ResultsHub V8 runtime strip', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Connectors' }));
     expect(screen.getByText('results-kpi-connectors-view')).toBeInTheDocument();
+  });
+
+  it('opens initiative document from deep link and clears deep-link params', async () => {
+    render(
+      <MemoryRouter initialEntries={['/results?open=ini-123&mode=initiative']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_initiatives');
+    });
+  });
+
+  it('applies initiative scope when reports lane is opened from initiative context', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'dbr77',
+      kpis: [],
+      mappings: [],
+      initiatives: [
+        {
+          initiativeId: 'ini-1',
+          initiativeName: 'Growth Program',
+          initiativeStatus: 'TRACKING',
+          trackedKpiCount: 2,
+          realizationKpiCount: 1,
+          postImplementationKpiCount: 1,
+          belowTargetCount: 0,
+          needsEntryCount: 0,
+          openDeviationCount: 0,
+          openReportCount: 0,
+          lastReportTitle: null,
+          ownerName: 'Alex',
+          lifecycleBucket: 'realized',
+        },
+      ],
+    } as any);
+
+    render(
+      <MemoryRouter initialEntries={['/benefits?tab=results_reports&rmode=reports&initiativeId=ini-1']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_reports');
+      expect(screen.getByText('results-kpi-reports-view')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('results-kpi-reports-view')).toBeInTheDocument();
+      expect(screen.getByTestId('results-kpi-reports-initiative-filter')).toHaveTextContent(
+        'Growth Program'
+      );
+    });
   });
 
   it('deletes KPI from the hub through the governed V8 seam first', async () => {

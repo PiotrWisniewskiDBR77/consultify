@@ -252,7 +252,7 @@ describe('scheduleExport', () => {
 
   it('rejects invalid format', async () => {
     mockDbGet.mockResolvedValueOnce(artifactRow());
-    await expect(scheduleExport(ARTIFACT_ID, ORG_ID, 'docx' as 'pdf', USER_ID)).rejects.toThrow(
+    await expect(scheduleExport(ARTIFACT_ID, ORG_ID, 'zip' as 'pdf', USER_ID)).rejects.toThrow(
       'Invalid export format'
     );
   });
@@ -277,6 +277,36 @@ describe('recordCompletedExport', () => {
     expect(sql).toContain('INSERT INTO v8_output_exports');
     const params = mockDbRun.mock.calls[0][1] as unknown[];
     expect(params[5]).toBe('completed');
+  });
+
+  it('accepts png as valid completed export format', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordCompletedExport(ARTIFACT_ID, ORG_ID, 'png' as any, USER_ID);
+
+    expect(rec.format).toBe('png');
+    expect(rec.status).toBe('completed');
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
+
+  it('accepts docx as valid completed export format', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordCompletedExport(ARTIFACT_ID, ORG_ID, 'docx' as any, USER_ID);
+
+    expect(rec.format).toBe('docx');
+    expect(rec.status).toBe('completed');
+    expect(mockDbRun).toHaveBeenCalledOnce();
+  });
+
+  it('accepts csv as valid completed export format', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordCompletedExport(ARTIFACT_ID, ORG_ID, 'csv' as any, USER_ID);
+
+    expect(rec.format).toBe('csv');
+    expect(rec.status).toBe('completed');
+    expect(mockDbRun).toHaveBeenCalledOnce();
   });
 });
 

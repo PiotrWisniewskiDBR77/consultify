@@ -572,12 +572,38 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         label: t('results.kpiReports.discuss', 'Discuss report'),
         onClick: async () => {
           try {
+            const relatedInitiativeIds = Array.from(
+              new Set(
+                selectedInitiatives
+                  .map((initiative) => String(initiative.initiativeId || '').trim())
+                  .filter(Boolean)
+              )
+            );
+            const relatedKpiIds = Array.from(
+              new Set(
+                selectedKpis.map((kpi) => String(kpi.id || '').trim()).filter(Boolean)
+              )
+            );
             await openChatWithContext({
               entityType: 'kpi_report',
               entityId: String(row.reportId || row.id),
               entityName: String(row.title || 'KPI Report'),
-              contextData: row as unknown as Record<string, unknown>,
-              pmoContext: { reportId: String(row.reportId || row.id) },
+              contextData: {
+                ...(row as unknown as Record<string, unknown>),
+                initiativeIds: relatedInitiativeIds,
+                kpiIds: relatedKpiIds,
+                p11Handoff: {
+                  source: 'results_kpi_reports',
+                  lane: 'kpi_reports',
+                  reportId: String(row.reportId || row.id),
+                  initiativeIds: relatedInitiativeIds,
+                  kpiIds: relatedKpiIds,
+                },
+              },
+              pmoContext: {
+                reportId: String(row.reportId || row.id),
+                initiativeIds: relatedInitiativeIds,
+              },
             });
             toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
           } catch {
@@ -586,7 +612,16 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         },
       },
     ],
-    [navigate, t, loadActionsForRow, refreshingReportId, fetchReports, openChatWithContext]
+    [
+      navigate,
+      t,
+      loadActionsForRow,
+      refreshingReportId,
+      fetchReports,
+      openChatWithContext,
+      selectedInitiatives,
+      selectedKpis,
+    ]
   );
 
   return (

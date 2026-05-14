@@ -15,7 +15,7 @@ import {
   Play,
   Presentation,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,6 +50,7 @@ interface TemplatesTabContentProps {
   actions?: {
     startArtifactReview?: (artifactId: string) => Promise<boolean>;
   };
+  initialArtifactId?: string | null;
 }
 
 export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
@@ -62,6 +63,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   error,
   onRefresh,
   actions,
+  initialArtifactId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -69,6 +71,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const openChat = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
+  const deepLinkConsumed = useRef(false);
 
   const filteredData = useMemo(() => {
     let data = templates;
@@ -297,6 +300,15 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       onClick: () => navigate(resolveTemplateEditPath(row.id, row.type)),
     },
   ];
+
+  useEffect(() => {
+    if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
+    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    if (match) {
+      setSelectedId(match.id);
+      deepLinkConsumed.current = true;
+    }
+  }, [initialArtifactId, filteredData]);
 
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
   const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;

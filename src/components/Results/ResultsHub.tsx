@@ -200,6 +200,7 @@ export const ResultsHub: React.FC = () => {
     'empty'
   );
   const [watchedKpiIds, setWatchedKpiIds] = useState<Set<string>>(new Set());
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('results');
@@ -266,6 +267,32 @@ export const ResultsHub: React.FC = () => {
       setReportWorkspaceModeRaw(rmode);
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (deepLinkHandled) return;
+    const openId = String(searchParams.get('open') || '').trim();
+    const mode = String(searchParams.get('mode') || '').trim().toLowerCase();
+    if (!openId || (mode !== 'initiative' && mode !== 'doc')) return;
+
+    setActiveTabRaw('results_initiatives');
+    setActiveDocumentId(openId);
+    setDeepLinkHandled(true);
+  }, [deepLinkHandled, searchParams, setActiveDocumentId]);
+
+  useEffect(() => {
+    if (!deepLinkHandled) return;
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (next.has('open')) {
+      next.delete('open');
+      changed = true;
+    }
+    if (next.has('mode')) {
+      next.delete('mode');
+      changed = true;
+    }
+    if (changed) setSearchParams(next, { replace: true });
+  }, [deepLinkHandled, searchParams, setSearchParams]);
 
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
@@ -648,6 +675,27 @@ export const ResultsHub: React.FC = () => {
     });
   }, []);
 
+  useEffect(() => {
+    const initiativeId = String(searchParams.get('initiativeId') || '').trim();
+    if (!initiativeId || activeTab !== 'results_reports') return;
+    const targetInitiative = trackedInitiatives.find((item) => item.initiativeId === initiativeId);
+    if (!targetInitiative) return;
+    replaceResultsFilters(
+      {
+        id: `initiativeName:${targetInitiative.initiativeName}`,
+        column: 'initiativeName',
+        value: targetInitiative.initiativeName,
+        label: targetInitiative.initiativeName,
+      },
+      ['initiativeName']
+    );
+  }, [
+    activeTab,
+    replaceResultsFilters,
+    searchParams,
+    trackedInitiatives,
+  ]);
+
   const openInitiativeKpiLane = useCallback(
     (initiative: ResultsTrackedInitiative) => {
       setActiveTab('results_kpi');
@@ -666,10 +714,15 @@ export const ResultsHub: React.FC = () => {
     [replaceResultsFilters]
   );
 
-  const openInitiativeReportsLane = useCallback(() => {
+  const openInitiativeReportsLane = useCallback((initiative?: ResultsTrackedInitiative) => {
     setActiveTab('results_reports');
-    setReportWorkspaceMode('tracked');
-  }, []);
+    setReportWorkspaceMode('reports');
+    if (initiative?.initiativeId) {
+      const next = new URLSearchParams(searchParams);
+      next.set('initiativeId', initiative.initiativeId);
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams, setActiveTab, setReportWorkspaceMode]);
 
   const openInitiativeDocument = useCallback(
     (initiative: ResultsTrackedInitiative) => {

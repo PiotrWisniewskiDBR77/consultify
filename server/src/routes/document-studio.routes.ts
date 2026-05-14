@@ -345,6 +345,7 @@ import {
   recordTemplateFeedback,
   recordTemplateUsage,
 } from '../services/documentStudio/documentTemplateService.js';
+import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -3265,6 +3266,11 @@ router.get(
         userRole,
         qaOverride,
       });
+      if (format === 'docx' || format === 'pdf') {
+        await reportsPresModelService
+          .recordCompletedExport(artifactId, organizationId, format, userId)
+          .catch(() => null);
+      }
       res.json(result);
     } catch (err) {
       if (err instanceof QaOverrideUnauthorizedError) {
@@ -3283,6 +3289,11 @@ router.get(
           report: err.report,
         });
         return;
+      }
+      if (format === 'docx' || format === 'pdf') {
+        await reportsPresModelService
+          .recordFailedExport(artifactId, organizationId, format, userId)
+          .catch(() => null);
       }
       const message = err instanceof Error ? err.message : 'Failed to export document';
       const status = message.toLowerCase().includes('not found') ? 404 : 500;

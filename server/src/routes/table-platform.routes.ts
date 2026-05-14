@@ -2043,18 +2043,19 @@ router.get(
   '/tables/:tableId/export/csv',
   requireTableAccess,
   async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    const { tableId } = req.params;
+    const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
+    const fieldIds =
+      typeof req.query.fields === 'string'
+        ? req.query.fields
+            .split(',')
+            .map((f) => f.trim())
+            .filter(Boolean)
+        : undefined;
+    let exportArtifactId: string | null = null;
     try {
-      const { tableId } = req.params;
       if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-
-      const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
-      const fieldIds =
-        typeof req.query.fields === 'string'
-          ? req.query.fields
-              .split(',')
-              .map((f) => f.trim())
-              .filter(Boolean)
-          : undefined;
 
       const ExportService = (await import('../services/tablePlatform/ExportService.js')).default;
       const tableName = await ExportService.getTableName(tableId);
@@ -2065,7 +2066,51 @@ router.get(
       res.write('\uFEFF');
 
       await ExportService.streamCsvExport({ tableId, viewId, fieldIds }, res);
+      if (authReq.organizationId && authReq.userId) {
+        const artifact = await artifactRegistryService
+          .getArtifactByOrigin({
+            organizationId: authReq.organizationId,
+            originRuntime: 'sheet',
+            originRecordId: tableId,
+            userId: authReq.userId,
+            roleKey: null,
+          })
+          .catch(() => null);
+        exportArtifactId = artifact?.artifactId || null;
+      }
+      if (exportArtifactId && authReq.organizationId) {
+        await reportsPresModelService
+          .recordCompletedExport(
+            exportArtifactId,
+            authReq.organizationId,
+            'csv',
+            authReq.userId || 'system'
+          )
+          .catch(() => null);
+      }
     } catch (e) {
+      if (!exportArtifactId && authReq.organizationId && authReq.userId && tableId) {
+        const artifact = await artifactRegistryService
+          .getArtifactByOrigin({
+            organizationId: authReq.organizationId,
+            originRuntime: 'sheet',
+            originRecordId: tableId,
+            userId: authReq.userId,
+            roleKey: null,
+          })
+          .catch(() => null);
+        exportArtifactId = artifact?.artifactId || null;
+      }
+      if (exportArtifactId && authReq.organizationId) {
+        await reportsPresModelService
+          .recordFailedExport(
+            exportArtifactId,
+            authReq.organizationId,
+            'csv',
+            authReq.userId || 'system'
+          )
+          .catch(() => null);
+      }
       logger.error('[TablePlatform] CSV export failed', { error: (e as Error).message });
       if (!res.headersSent) {
         res.status(500).json({ error: 'CSV export failed', details: (e as Error).message });
@@ -2078,22 +2123,20 @@ router.get(
   '/tables/:tableId/export/xlsx',
   requireTableAccess,
   async (req: Request, res: Response) => {
+    const authReq = req as AuthRequest;
+    const { tableId } = req.params;
+    const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
+    const fieldIds =
+      typeof req.query.fields === 'string'
+        ? req.query.fields
+            .split(',')
+            .map((f) => f.trim())
+            .filter(Boolean)
+        : undefined;
+    const wantRegister = req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
+    let exportArtifactId: string | null = null;
     try {
-      const authReq = req as AuthRequest;
-      const { tableId } = req.params;
       if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-
-      const viewId = typeof req.query.viewId === 'string' ? req.query.viewId : undefined;
-      const fieldIds =
-        typeof req.query.fields === 'string'
-          ? req.query.fields
-              .split(',')
-              .map((f) => f.trim())
-              .filter(Boolean)
-          : undefined;
-
-      const wantRegister =
-        req.query.registerArtifact === 'true' || req.query.registerArtifact === '1';
 
       let registeredArtifactId: string | null = null;
       if (wantRegister) {
@@ -2128,7 +2171,7 @@ router.get(
       const safeName = tableName.replace(/[^a-zA-Z0-9_-]/g, '_');
 
       const buffer = await ExportService.buildXlsxBuffer({ tableId, viewId, fieldIds });
-      let exportArtifactId = registeredArtifactId;
+      exportArtifactId = registeredArtifactId;
       if (!exportArtifactId && authReq.organizationId && authReq.userId) {
         const artifact = await artifactRegistryService
           .getArtifactByOrigin({
@@ -2163,6 +2206,28 @@ router.get(
       }
       res.end(buffer);
     } catch (e) {
+      if (!exportArtifactId && authReq.organizationId && authReq.userId && tableId) {
+        const artifact = await artifactRegistryService
+          .getArtifactByOrigin({
+            organizationId: authReq.organizationId,
+            originRuntime: 'sheet',
+            originRecordId: tableId,
+            userId: authReq.userId,
+            roleKey: null,
+          })
+          .catch(() => null);
+        exportArtifactId = artifact?.artifactId || null;
+      }
+      if (exportArtifactId && authReq.organizationId) {
+        await reportsPresModelService
+          .recordFailedExport(
+            exportArtifactId,
+            authReq.organizationId,
+            'xlsx',
+            authReq.userId || 'system'
+          )
+          .catch(() => null);
+      }
       logger.error('[TablePlatform] XLSX export failed', { error: (e as Error).message });
       if (!res.headersSent) {
         res.status(500).json({ error: 'XLSX export failed', details: (e as Error).message });

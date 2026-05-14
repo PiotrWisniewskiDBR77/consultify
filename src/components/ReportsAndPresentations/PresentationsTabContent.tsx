@@ -287,7 +287,9 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
 
   useEffect(() => {
     if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
-    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    const match = filteredData.find(
+      (r) => r.artifactId === initialArtifactId || r.id === initialArtifactId
+    );
     if (match) {
       setSelectedId(match.id);
       deepLinkConsumed.current = true;
