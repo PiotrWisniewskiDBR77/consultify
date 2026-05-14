@@ -7,6 +7,19 @@ export function normalizeAppRole(role: string | null | undefined): string {
     return 'SUPERADMIN';
   }
 
+  if (normalized === 'ADMINISTRATOR') {
+    return 'ADMIN';
+  }
+
+  if (
+    normalized === 'MEMBER' ||
+    normalized === 'TEAM_MEMBER' ||
+    normalized === 'VIEWER' ||
+    normalized === 'GUEST'
+  ) {
+    return 'USER';
+  }
+
   return normalized;
 }
 

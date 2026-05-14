@@ -34,6 +34,51 @@ const buildRouteWithParams = (basePath: string, params: URLSearchParams) => {
   return query ? `${basePath}?${query}` : basePath;
 };
 
+const isProtectedPath = (path: string): boolean =>
+  path === '/chat' ||
+  path.startsWith('/chat/') ||
+  path === '/app-intro' ||
+  path.startsWith('/app-intro/') ||
+  path === '/studio' ||
+  path.startsWith('/internal') ||
+  path.startsWith('/admin') ||
+  path.startsWith('/superadmin') ||
+  path.startsWith('/settings') ||
+  path.startsWith('/organization') ||
+  (path.startsWith('/partner') && !path.startsWith('/partner/pricing')) ||
+  path.startsWith('/my-work') ||
+  path.startsWith('/initiatives') ||
+  path.startsWith('/execution') ||
+  path.startsWith('/implementation') ||
+  path.startsWith('/rollout') ||
+  path.startsWith('/kpi-okr') ||
+  path.startsWith('/benefits') ||
+  path.startsWith('/finance') ||
+  path.startsWith('/economics') ||
+  path.startsWith('/reports') ||
+  path.startsWith('/presentations') ||
+  path.startsWith('/assessment') ||
+  path.startsWith('/discovery-tools') ||
+  path.startsWith('/context') ||
+  path.startsWith('/interview') ||
+  path === '/discovery' ||
+  path.startsWith('/discovery/') ||
+  path.startsWith('/wordy') ||
+  path.startsWith('/excele') ||
+  path.startsWith('/prezentacje') ||
+  path.startsWith('/meeting') ||
+  path.startsWith('/mcp/') ||
+  path.startsWith('/roadmap') ||
+  path.startsWith('/portfolio') ||
+  path.startsWith('/roi') ||
+  path.startsWith('/project-intelligence') ||
+  path.startsWith('/ai-actions') ||
+  path.startsWith('/consultant') ||
+  path.startsWith('/setup/organization') ||
+  path.startsWith('/setup/onboarding') ||
+  path.startsWith('/partner/onboarding') ||
+  path.startsWith('/affiliate');
+
 /**
  * RouterSync
  *
@@ -117,7 +162,17 @@ export const RouterSync: React.FC = () => {
 
     if (!isAuthenticated) {
       isNavigatingRef.current = true;
-      navigate(buildRouteWithParams('/login', searchParams), { replace: true });
+      navigate(buildRouteWithParams('/login', searchParams), {
+        replace: true,
+        state: {
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+            key: location.key,
+          },
+        },
+      });
       scheduleNavigationUnlock();
       return;
     }
@@ -332,42 +387,22 @@ export const RouterSync: React.FC = () => {
     }
 
     // If user is not authenticated, protect private routes
-    const isProtected =
-      path === '/chat' ||
-      path.startsWith('/chat/') ||
-      path === '/app-intro' ||
-      path.startsWith('/app-intro/') ||
-      path === '/studio' ||
-      path.startsWith('/internal') ||
-      path.startsWith('/admin') ||
-      path.startsWith('/settings') ||
-      path.startsWith('/my-work') ||
-      path.startsWith('/initiatives') ||
-      path.startsWith('/execution') ||
-      path.startsWith('/implementation') ||
-      path.startsWith('/rollout') ||
-      path.startsWith('/kpi-okr') ||
-      path.startsWith('/benefits') ||
-      path.startsWith('/finance') ||
-      path.startsWith('/economics') ||
-      path.startsWith('/reports') ||
-      path.startsWith('/presentations') ||
-      path.startsWith('/assessment') ||
-      path.startsWith('/discovery-tools') ||
-      path.startsWith('/context') ||
-      path.startsWith('/interview') ||
-      path === '/discovery' ||
-      path.startsWith('/discovery/') ||
-      path.startsWith('/wordy') ||
-      path.startsWith('/excele') ||
-      path.startsWith('/prezentacje') ||
-      path.startsWith('/meeting') ||
-      path.startsWith('/mcp/');
+    const isProtected = isProtectedPath(path);
 
     if (isProtected && !isAuthenticated) {
       debugRouterSync('[RouterSync] Not authenticated, redirecting to /login');
       isNavigatingRef.current = true;
-      navigate('/login', { replace: true });
+      navigate('/login', {
+        replace: true,
+        state: {
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+            key: location.key,
+          },
+        },
+      });
       scheduleNavigationUnlock();
       return;
     }

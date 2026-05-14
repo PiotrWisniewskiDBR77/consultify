@@ -405,7 +405,8 @@ const handleResponse = async (res: Response, defaultError: string) => {
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
   if (res.status === 403) {
-    const code = data.code || data.errorCode;
+    const featureAccessDenied = data?.error === 'FEATURE_ACCESS_DENIED';
+    const code = featureAccessDenied ? 'FEATURE_ACCESS_DENIED' : data.code || data.errorCode;
     const accessBlockedCodes = new Set([
       'TRIAL_PROFILE_INCOMPLETE',
       'TRIAL_EXPIRED',
@@ -413,6 +414,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       'AI_TOKEN_BUDGET_EXCEEDED',
       'INSUFFICIENT_TOKENS',
       'DEMO_READ_ONLY',
+      'FEATURE_ACCESS_DENIED',
     ]);
     if (accessBlockedCodes.has(code)) {
       try {
@@ -420,7 +422,10 @@ const handleResponse = async (res: Response, defaultError: string) => {
           new CustomEvent('access:blocked', {
             detail: {
               code,
-              message: data.message || data.error || defaultError,
+              message:
+                data.message ||
+                (featureAccessDenied ? 'Access to this feature is restricted.' : data.error) ||
+                defaultError,
             },
           })
         );

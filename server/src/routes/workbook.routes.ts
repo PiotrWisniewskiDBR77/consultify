@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -22,6 +23,7 @@ const router = Router();
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 // In-memory cache for recent workbooks (bounded to 50 entries)

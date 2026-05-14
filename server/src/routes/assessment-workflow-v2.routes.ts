@@ -29,6 +29,7 @@ import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import activityService from '../services/ActivityService.js';
 import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
@@ -62,6 +63,7 @@ const router = Router();
 // Apply middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 const safeRead = <T>(reader: () => T, fallback: T): T => {
@@ -102,7 +104,7 @@ function getAuthContext(req: any): {
     readOptionalString(() => req.user?.organizationId) ||
     readOptionalString(() => req.user?.organization_id) ||
     readOptionalString(() => req.organizationId) ||
-    'org-default';
+    '';
   const globalRole =
     (readOptionalString(() => req.user?.role) || readOptionalString(() => req.userRole) || '')
       .toUpperCase();

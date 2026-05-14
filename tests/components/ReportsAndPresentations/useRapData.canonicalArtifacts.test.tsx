@@ -578,4 +578,101 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     expect(result.current.presentations).toEqual([]);
     expect(result.current.error).toBe('Canonical artifact registry failed to load presentations.');
   });
+
+  it('useRapActions.exportReportPdf prefers canonical action-target exportPath', async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    const blobMock = new Blob(['pdf-data'], { type: 'application/pdf' });
+    globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : String(input);
+      const method = init?.method || 'GET';
+      calls.push({ url, method });
+      if (url.includes('/api/artifacts/art-report-1/action-target')) {
+        return jsonResponse({
+          data: {
+            artifactId: 'art-report-1',
+            originRuntime: 'report',
+            originRecordId: 'report-1',
+            exportPath: '/api/report-builder/report-1/export/pdf',
+          },
+        });
+      }
+      if (url === '/api/report-builder/report-1/export/pdf') {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          blob: async () => blobMock,
+        }) as Promise<Response>;
+      }
+      return jsonResponse({}, false);
+    }) as typeof fetch;
+    const objectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob://report');
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useRapActions());
+    await result.current.exportReportPdf({
+      originRecordId: 'report-1',
+      artifactId: 'art-report-1',
+      title: 'Report 1',
+    });
+
+    expect(calls).toEqual([
+      { url: '/api/artifacts/art-report-1/action-target', method: 'GET' },
+      { url: '/api/report-builder/report-1/export/pdf', method: 'GET' },
+    ]);
+    expect(toastSuccessMock).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+
+    clickSpy.mockRestore();
+    revokeSpy.mockRestore();
+    objectUrlSpy.mockRestore();
+  });
+
+  it('useRapActions.exportDeckPptx falls back to default download path when action-target missing', async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    const blobMock = new Blob(['pptx-data'], {
+      type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    });
+    globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : String(input);
+      const method = init?.method || 'GET';
+      calls.push({ url, method });
+      if (url.includes('/api/artifacts/art-deck-1/action-target')) {
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          json: async () => ({}),
+        }) as Promise<Response>;
+      }
+      if (url === '/api/presentations/decks/deck-1/download') {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          blob: async () => blobMock,
+        }) as Promise<Response>;
+      }
+      return jsonResponse({}, false);
+    }) as typeof fetch;
+    const objectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob://deck');
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useRapActions());
+    await result.current.exportDeckPptx({
+      originRecordId: 'deck-1',
+      artifactId: 'art-deck-1',
+      title: 'Deck 1',
+    });
+
+    expect(calls).toEqual([
+      { url: '/api/artifacts/art-deck-1/action-target', method: 'GET' },
+      { url: '/api/presentations/decks/deck-1/download', method: 'GET' },
+    ]);
+    expect(toastSuccessMock).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+
+    clickSpy.mockRestore();
+    revokeSpy.mockRestore();
+    objectUrlSpy.mockRestore();
+  });
 });

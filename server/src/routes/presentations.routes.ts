@@ -11,6 +11,7 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { send as sendNotification } from '../services/notificationService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
@@ -57,7 +58,7 @@ async function recordCanonicalDeckExportTrace(params: {
   });
   if (!artifact?.artifactId) return;
   if (params.status === 'failed') {
-    await reportsPresModelService.recordCompletedExport(
+    await reportsPresModelService.recordFailedExport(
       artifact.artifactId,
       params.organizationId,
       params.format as any,
@@ -352,6 +353,7 @@ router.get(
 );
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // ============================================================
 // TEMPLATES (T059)
@@ -1013,10 +1015,26 @@ router.post(
     } catch {
       return res.status(422).json({ success: false, error: 'Invalid deck data' });
     }
+    const htmlCards = Array.isArray(deckData.cards) ? deckData.cards : [];
+    const htmlLimitCheck = enforceExportLimits(deck, htmlCards);
+    if (!htmlLimitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'html',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: htmlLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
 
     const htmlBuffer = await exportDeckAsHtml({
       title: deck.title || 'Presentation',
-      cards: deckData.cards || [],
+      cards: htmlCards,
       theme: deckData.theme || {
         primary: '#6366F1',
         secondary: '#8B5CF6',
@@ -1034,6 +1052,14 @@ router.post(
       'Content-Disposition',
       `attachment; filename="${deck.title || 'presentation'}.html"`
     );
+    await recordCanonicalDeckExportTrace({
+      organizationId: orgId,
+      userId,
+      deckId: String(deckId || ''),
+      roleKey,
+      format: 'html',
+      status: 'completed',
+    }).catch(() => null);
     res.send(htmlBuffer);
   })
 );
@@ -1334,6 +1360,21 @@ router.post(
       deckData = {};
     }
     const cards = deckData.cards || deckData.slides || [];
+    const pngLimitCheck = enforceExportLimits(deck, cards);
+    if (!pngLimitCheck.ok) {
+      await recordCanonicalDeckExportTrace({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        roleKey,
+        format: 'png',
+        status: 'failed',
+        errorCategory: 'limit_exceeded',
+      }).catch(() => null);
+      return res
+        .status(422)
+        .json({ success: false, error: pngLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
+    }
     const title = deck.title || 'presentation';
 
     const Archiver = (await import('archiver')).default;
@@ -1362,6 +1403,14 @@ router.post(
     }
 
     await archive.finalize();
+    await recordCanonicalDeckExportTrace({
+      organizationId: orgId,
+      userId,
+      deckId: String(deckId || ''),
+      roleKey,
+      format: 'png',
+      status: 'completed',
+    }).catch(() => null);
   })
 );
 

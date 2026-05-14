@@ -29,6 +29,7 @@ import {
   getRecurringProgramHealth,
   getTemplateUsageStats,
   recordCompletedExport,
+  recordFailedExport,
   scheduleExport,
   scoreArtifactQuality,
 } from '../reportsPresModelService.js';
@@ -277,6 +278,21 @@ describe('recordCompletedExport', () => {
     expect(sql).toContain('INSERT INTO v8_output_exports');
     const params = mockDbRun.mock.calls[0][1] as unknown[];
     expect(params[5]).toBe('completed');
+  });
+});
+
+describe('recordFailedExport', () => {
+  it('inserts failed export row', async () => {
+    mockDbGet.mockResolvedValueOnce(artifactRow());
+
+    const rec = await recordFailedExport(ARTIFACT_ID, ORG_ID, 'pdf', USER_ID);
+
+    expect(rec.format).toBe('pdf');
+    expect(rec.status).toBe('failed');
+    expect(rec.completedAt).toBeTruthy();
+    expect(mockDbRun).toHaveBeenCalledOnce();
+    const params = mockDbRun.mock.calls[0][1] as unknown[];
+    expect(params[5]).toBe('failed');
   });
 });
 

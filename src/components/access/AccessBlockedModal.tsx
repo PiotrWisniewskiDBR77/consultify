@@ -27,6 +27,7 @@ const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
   TRIAL_EXPIRED: { labelKey: 'access.cta.upgradeNow', href: '/settings?tab=billing' },
   AI_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
+  FEATURE_ACCESS_DENIED: { labelKey: 'access.cta.goToMyWork', href: ROUTES.MY_WORK },
   AI_TOKEN_BUDGET_EXCEEDED: {
     labelKey: 'access.cta.addPaymentMethod',
     href: '/settings?tab=billing',

@@ -101,6 +101,7 @@
 import { type Request, type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { runDocumentQa } from '../services/documentStudio/documentQaService.js';
 import {
   ingestFileSource,
@@ -189,6 +190,7 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 function getAuthContext(req: AuthRequest): {
   userId: string;

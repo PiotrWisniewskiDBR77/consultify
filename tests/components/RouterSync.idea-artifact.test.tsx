@@ -20,7 +20,12 @@ const routerState = {
 };
 
 vi.mock('react-router-dom', () => ({
-  useLocation: () => ({ pathname: routerState.pathname }),
+  useLocation: () => ({
+    pathname: routerState.pathname,
+    search: routerState.searchParams.toString() ? `?${routerState.searchParams.toString()}` : '',
+    hash: '',
+    key: 'router-sync-test',
+  }),
   useNavigate: () => navigateMock,
   useSearchParams: () => [routerState.searchParams],
 }));
@@ -54,6 +59,28 @@ vi.mock('../../src/store/useAppStore', () => ({
 }));
 
 describe('RouterSync idea artifact deep links', () => {
+  const expectLoginRedirectWithFrom = () => {
+    expect(navigateMock).toHaveBeenCalledWith('/login', {
+      replace: true,
+      state: {
+        from: expect.objectContaining({
+          pathname: routerState.pathname,
+        }),
+      },
+    });
+  };
+  const expectArtifactLoginRedirectWithFrom = (artifactPath: string, artifactQuery: string) => {
+    expect(navigateMock).toHaveBeenCalledWith(`/login?${artifactQuery}`, {
+      replace: true,
+      state: {
+        from: expect.objectContaining({
+          pathname: artifactPath,
+          search: `?${artifactQuery}`,
+        }),
+      },
+    });
+  };
+
   beforeEach(() => {
     navigateMock.mockReset();
     setCurrentViewStateMock.mockReset();
@@ -232,7 +259,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expectLoginRedirectWithFrom();
     });
 
     navigateMock.mockReset();
@@ -241,7 +268,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expectLoginRedirectWithFrom();
     });
 
     navigateMock.mockReset();
@@ -250,7 +277,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expectLoginRedirectWithFrom();
     });
 
     navigateMock.mockReset();
@@ -259,7 +286,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expectLoginRedirectWithFrom();
     });
 
     navigateMock.mockReset();
@@ -268,8 +295,64 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expectLoginRedirectWithFrom();
     });
+  });
+
+  it('protects pack-02 gated module routes for unauthenticated users', async () => {
+    appState.currentUser = null as any;
+    routerState.searchParams = new URLSearchParams();
+
+    const protectedPaths = [
+      '/roadmap',
+      '/portfolio',
+      '/roi',
+      '/ai-actions',
+      '/project-intelligence',
+      '/consultant/invites',
+      '/setup/organization',
+      '/setup/onboarding',
+      '/partner/onboarding',
+      '/affiliate',
+    ];
+
+    for (const path of protectedPaths) {
+      navigateMock.mockReset();
+      routerState.pathname = path;
+      render(<RouterSync />);
+      await waitFor(() => {
+        expectLoginRedirectWithFrom();
+      });
+    }
+  });
+
+  it('protects /organization, /superadmin, and authenticated /partner routes for unauthenticated users', async () => {
+    appState.currentUser = null as any;
+    routerState.searchParams = new URLSearchParams();
+
+    const protectedPaths = ['/organization/profile', '/superadmin/overview', '/partner/dashboard'];
+    for (const path of protectedPaths) {
+      navigateMock.mockReset();
+      routerState.pathname = path;
+      render(<RouterSync />);
+      await waitFor(() => {
+        expectLoginRedirectWithFrom();
+      });
+    }
+  });
+
+  it('keeps /partner/pricing public in RouterSync guard matrix', async () => {
+    appState.currentUser = null as any;
+    appState.currentView = AppView.AI_CHAT;
+    routerState.pathname = '/partner/pricing';
+    routerState.searchParams = new URLSearchParams();
+
+    render(<RouterSync />);
+
+    await waitFor(() => {
+      expect(setCurrentViewStateMock).toHaveBeenCalledWith(AppView.MY_WORK);
+    });
+    expect(navigateMock).not.toHaveBeenCalledWith('/login', expect.any(Object));
   });
 
   it('maps /trial and /trial/start to the correct auth steps', async () => {
@@ -378,7 +461,7 @@ describe('RouterSync idea artifact deep links', () => {
       expect(() => render(<RouterSync />)).not.toThrow();
 
       await waitFor(() => {
-        expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+        expectLoginRedirectWithFrom();
       });
     } finally {
       setItemSpy.mockRestore();
@@ -393,7 +476,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login?artifact=idea%3Aidea-42', { replace: true });
+      expectArtifactLoginRedirectWithFrom('/my-work', 'artifact=idea%3Aidea-42');
     });
 
     expect(setMyWorkIntentMock).not.toHaveBeenCalled();
@@ -410,7 +493,7 @@ describe('RouterSync idea artifact deep links', () => {
     const { rerender } = render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login?artifact=idea%3Aidea-42', { replace: true });
+      expectArtifactLoginRedirectWithFrom('/login', 'artifact=idea%3Aidea-42');
     });
 
     navigateMock.mockReset();
@@ -454,7 +537,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login?artifact=report%3Arep-1', { replace: true });
+      expectArtifactLoginRedirectWithFrom('/interview', 'artifact=report%3Arep-1');
     });
   });
 
@@ -466,7 +549,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expectLoginRedirectWithFrom();
     });
 
     navigateMock.mockReset();
@@ -475,7 +558,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expectLoginRedirectWithFrom();
     });
   });
 });

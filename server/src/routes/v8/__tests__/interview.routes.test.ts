@@ -142,6 +142,7 @@ vi.mock('../../../middleware/permission.middleware.js', () => ({
   requireAllPermissions: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
+
 vi.mock('../../../services/permissionService.js', () => ({
   hasPermission: vi.fn().mockResolvedValue(true),
   default: {},
@@ -244,6 +245,7 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.data?.sessions).toHaveLength(1);
     expect(mockListSessions).toHaveBeenCalledWith(ORG, 'in_progress');
   });
+
 
   it('GET /api/v8/interview/sessions/accepted returns V8 envelope and forwards org + user to loader', async () => {
     mockListAcceptedSessions.mockResolvedValue([

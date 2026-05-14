@@ -14,6 +14,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 
 const router = Router();
 const templateSourceUpload = multer({
@@ -32,6 +33,7 @@ const templateSourceUpload = multer({
 // Middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 // ==========================================
