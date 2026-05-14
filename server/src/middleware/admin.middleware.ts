@@ -53,6 +53,10 @@ const finishAllowPath = (next: NextFunction, res: Response): void => {
     safeSendAdminAccessRequired(res);
     return;
   }
+  // Defensive guard: if another middleware already committed the response, do not continue chain.
+  if (safeRead(() => Boolean(res.headersSent), false)) return;
+  if (safeRead(() => Boolean((res as Response & { writableEnded?: boolean }).writableEnded), false))
+    return;
   safeNext(next);
 };
 
@@ -191,7 +195,10 @@ export const verifyAdmin = async (
         );
         const membershipRole =
           typeof membership?.role === 'string' ? normalizeOptionalString(membership.role) : undefined;
-        const normalizedRole = normalizeOrganizationRole(membershipRole || role);
+        const normalizedRole = safeRead(
+          () => normalizeOrganizationRole(membershipRole || role),
+          normalizeOrganizationRole('')
+        );
         if (['OWNER', 'ADMIN'].includes(normalizedRole)) {
           finishAllowPath(next, res);
           return;

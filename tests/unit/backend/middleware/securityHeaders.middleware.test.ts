@@ -51,7 +51,7 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Origin-Agent-Cluster', '?1');
     expect(res.setHeader).toHaveBeenCalledWith(
       'Permissions-Policy',
-      'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=()'
+      'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=(), accelerometer=(), gyroscope=(), magnetometer=(), ambient-light-sensor=(), serial=(), hid=(), gamepad=(), storage-access=(), web-share=(), window-management=(), identity-credentials-get=()'
     );
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Security-Policy',
@@ -60,6 +60,10 @@ describe('securityHeaders.middleware (L1)', () => {
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Security-Policy',
       expect.stringContaining("base-uri 'self'")
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.stringContaining("manifest-src 'self'")
     );
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Security-Policy',
@@ -92,7 +96,7 @@ describe('securityHeaders.middleware (L1)', () => {
       '../../../../server/src/middleware/securityHeaders.middleware.ts'
     );
 
-    const req: any = {};
+    const req: any = { secure: true, get: vi.fn(() => undefined) };
     const res = mkRes();
     const next = vi.fn();
 
@@ -181,7 +185,55 @@ describe('securityHeaders.middleware (L1)', () => {
       '../../../../server/src/middleware/securityHeaders.middleware.ts'
     );
 
-    const req: any = {};
+    const req: any = { secure: true, get: vi.fn(() => undefined) };
+    const res = mkRes();
+    const next = vi.fn();
+
+    securityHeaders(req, res, next);
+
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains'
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.stringContaining('upgrade-insecure-requests')
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not add HSTS or upgrade-insecure-requests in production over non-https request', async () => {
+    process.env.NODE_ENV = 'production';
+    vi.resetModules();
+    const { securityHeaders } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const req: any = { secure: false, get: vi.fn(() => undefined) };
+    const res = mkRes();
+    const next = vi.fn();
+
+    securityHeaders(req, res, next);
+
+    expect(res.setHeader).not.toHaveBeenCalledWith('Strict-Transport-Security', expect.any(String));
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.not.stringContaining('upgrade-insecure-requests')
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds HSTS when production request is https via x-forwarded-proto', async () => {
+    process.env.NODE_ENV = 'production';
+    vi.resetModules();
+    const { securityHeaders } = await import(
+      '../../../../server/src/middleware/securityHeaders.middleware.ts'
+    );
+
+    const req: any = {
+      secure: false,
+      get: vi.fn((header: string) => (header.toLowerCase() === 'x-forwarded-proto' ? 'https' : undefined)),
+    };
     const res = mkRes();
     const next = vi.fn();
 
@@ -232,6 +284,10 @@ describe('securityHeaders.middleware (L1)', () => {
     );
     expect(res3.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
     expect(res3.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
+    expect(res3.setHeader).toHaveBeenCalledWith(
+      'Content-Security-Policy',
+      expect.stringContaining("default-src 'none'")
+    );
     expect(res3.setHeader).toHaveBeenCalledWith('Retry-After', expect.any(String));
     expect(res3.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     expect(res3.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');

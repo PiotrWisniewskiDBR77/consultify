@@ -338,7 +338,8 @@ describe('performanceMetrics.middleware', () => {
     performanceMetricsMiddleware(req as Request, res as unknown as Response, next as unknown as NextFunction);
 
     expect(next).toHaveBeenCalledTimes(2);
-    expect(res.once).toHaveBeenCalledTimes(1);
+    expect(res.once).toHaveBeenCalledTimes(2);
+    expect(onceHandlers).toHaveLength(1);
     expect(res.on).toHaveBeenCalledTimes(0);
     (onceHandlers[0] || finishHandlers[0])?.();
     expect(metricsStore.requests).toHaveLength(1);
@@ -571,6 +572,57 @@ describe('performanceMetrics.middleware', () => {
     );
     const routeArg = recordHttpRequestMock.mock.calls[0]?.[1] as string;
     expect(routeArg.length).toBeLessThanOrEqual(2048);
+  });
+
+  it('releases tracking on close when finish is never emitted', () => {
+    const closeHandlers: Array<() => void> = [];
+    const req: any = {
+      method: 'GET',
+      path: '/api/example',
+      originalUrl: '/api/example',
+      user: { id: 'u-1', organizationId: 'org-1' },
+    };
+    const res: any = {
+      statusCode: 200,
+      once: vi.fn((event: string, cb: () => void) => {
+        if (event === 'close') closeHandlers.push(cb);
+      }),
+      on: vi.fn(),
+    };
+    const disableSpy = vi.spyOn(queryHelpers, 'disablePerformanceTracking');
+
+    performanceMetricsMiddleware(req as Request, res as unknown as Response, vi.fn() as unknown as NextFunction);
+    closeHandlers[0]?.();
+
+    expect(disableSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps oversized method before recording exported HTTP metric labels', () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {
+      method: `METHOD-${'x'.repeat(120)}`,
+      path: '/api/example',
+      originalUrl: '/api/example',
+      user: { id: 'u-1', organizationId: 'org-1' },
+    };
+    const res: any = {
+      statusCode: 200,
+      once: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+      on: vi.fn(),
+    };
+    const next = vi.fn();
+
+    performanceMetricsMiddleware(req as Request, res as unknown as Response, next as unknown as NextFunction);
+    finishHandlers[0]?.();
+
+    expect(metricsStore.requests).toHaveLength(1);
+    const storedMethod = metricsStore.requests[0]?.method ?? '';
+    const exportedMethod = String(recordHttpRequestMock.mock.calls[0]?.[0] ?? '');
+    expect(storedMethod.length).toBeLessThanOrEqual(32);
+    expect(exportedMethod.length).toBeLessThanOrEqual(32);
+    expect(exportedMethod).toBe(storedMethod);
   });
 
   it('caps oversized user context identifiers before storing metrics', () => {

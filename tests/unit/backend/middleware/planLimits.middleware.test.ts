@@ -233,6 +233,27 @@ describe('planLimits.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('forwards next(error) when empty limit key response cannot be written', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const { checkPlanLimit } = await import('../../../../server/src/middleware/planLimits.middleware.ts');
+    const middleware = checkPlanLimit('   ');
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = {
+      headersSent: false,
+      status: 'invalid-status-writer',
+      json: vi.fn(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
   it('returns 500 when limit key exceeds max length after normalization', async () => {
     vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
     vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
@@ -258,6 +279,27 @@ describe('planLimits.middleware', () => {
     });
     expect(checkAccess).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('forwards next(error) when oversized limit key response cannot be written', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const { checkPlanLimit } = await import('../../../../server/src/middleware/planLimits.middleware.ts');
+    const middleware = checkPlanLimit('x'.repeat(129));
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = {
+      headersSent: false,
+      status: 'invalid-status-writer',
+      json: vi.fn(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
   });
 
   it('returns 401 and skips access check when organizationId exceeds max length', async () => {
@@ -495,6 +537,37 @@ describe('planLimits.middleware', () => {
     await middleware(req, res, next);
 
     expect(checkAccess).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not call next when response becomes committed after access check resolves allow=true', async () => {
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.js');
+    vi.doUnmock('../../../../server/src/middleware/planLimits.middleware.ts');
+
+    const checkAccess = vi.fn().mockImplementation(async () => {
+      res.headersSent = true;
+      return { allowed: true };
+    });
+    const { checkPlanLimit, setAccessPolicyServiceForTests } = await import(
+      '../../../../server/src/middleware/planLimits.middleware.ts'
+    );
+    setAccessPolicyServiceForTests({ checkAccess } as any);
+    const middleware = checkPlanLimit('max_projects');
+
+    const req: any = { organizationId: 'org-1' };
+    const res: any = {
+      headersSent: false,
+      writableEnded: false,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(checkAccess).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
 

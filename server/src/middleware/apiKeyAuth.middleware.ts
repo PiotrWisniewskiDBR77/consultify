@@ -75,6 +75,8 @@ const DEFAULT_API_KEY_RATE_LIMIT = 60;
 const MAX_API_KEY_RATE_LIMIT = 1_000_000;
 const API_KEY_ATTEMPT_FINGERPRINT_CHARS = 16;
 const MAX_FORWARDED_FOR_SCAN_CHARS = 512;
+const API_KEY_UNSAFE_TRANSPORT_CHARS = /[\u0000-\u001F\u007F\s]/;
+const isSafeApiKeyTransport = (value: string): boolean => !API_KEY_UNSAFE_TRANSPORT_CHARS.test(value);
 const applyNoStoreHeaders = (res: Response): void => {
   safeSetHeader(res, 'Cache-Control', 'no-store');
   safeSetHeader(res, 'Pragma', 'no-cache');
@@ -209,6 +211,19 @@ export async function apiKeyAuth(
       );
       return;
     }
+    if (!isSafeApiKeyTransport(apiKey)) {
+      sendApiKeyJsonIfOpen(
+        res,
+        401,
+        {
+          error: 'Invalid API key',
+          message: 'The provided API key is invalid, expired, or not authorized for this IP.',
+          code: 'API_KEY_INVALID',
+        },
+        { noStore: true, withAuthChallenge: true }
+      );
+      return;
+    }
 
     // Get client IP
     const ip = getClientIp(req);
@@ -264,12 +279,17 @@ export async function apiKeyAuth(
       if (responseWriteBlocked(res)) return;
       applyNoStoreHeaders(res);
       safeSetHeader(res, 'Retry-After', retryAfterSec.toString());
-      sendApiKeyJsonIfOpen(res, 429, {
-        error: 'Rate limit exceeded',
-        message: `API key rate limit of ${effectiveRateLimit} requests/minute exceeded.`,
-        retryAfter: retryAfterSec,
-        code: 'API_KEY_RATE_LIMITED',
-      });
+      sendApiKeyJsonIfOpen(
+        res,
+        429,
+        {
+          error: 'Rate limit exceeded',
+          message: `API key rate limit of ${effectiveRateLimit} requests/minute exceeded.`,
+          retryAfter: retryAfterSec,
+          code: 'API_KEY_RATE_LIMITED',
+        },
+        { noStore: true }
+      );
       return;
     }
 
@@ -305,7 +325,22 @@ export async function apiKeyAuth(
  * Require specific API key permission
  */
 export function requireApiKeyPermission(permission: string) {
+  const normalizedPermission = normalizeOptionalString(permission);
   return (req: ApiKeyRequest, res: Response, next: NextFunction): void => {
+    if (responseWriteBlocked(res)) return;
+    if (!normalizedPermission) {
+      sendApiKeyJsonIfOpen(
+        res,
+        500,
+        {
+          error: 'Authentication policy misconfigured',
+          message: 'API key permission gate is missing a valid permission identifier.',
+          code: 'API_KEY_PERMISSION_CONFIG',
+        },
+        { noStore: true }
+      );
+      return;
+    }
     if (!req.apiKey) {
       sendApiKeyJsonIfOpen(
         res,
@@ -320,13 +355,13 @@ export function requireApiKeyPermission(permission: string) {
       return;
     }
 
-    if (!hasPermission(req.apiKey, permission)) {
+    if (!hasPermission(req.apiKey, normalizedPermission)) {
       sendApiKeyJsonIfOpen(
         res,
         403,
         {
         error: 'Permission denied',
-        message: `This action requires the '${permission}' permission.`,
+        message: `This action requires the '${normalizedPermission}' permission.`,
         code: 'API_KEY_FORBIDDEN',
         yourPermissions: Array.isArray(req.apiKey.permissions) ? req.apiKey.permissions : [],
         },
@@ -354,6 +389,19 @@ export async function optionalApiKeyAuth(
     next();
     return;
   }
+  if (!isSafeApiKeyTransport(apiKey)) {
+    sendApiKeyJsonIfOpen(
+      res,
+      401,
+      {
+        error: 'Invalid API key',
+        message: 'The provided API key is invalid, expired, or not authorized for this IP.',
+        code: 'API_KEY_INVALID',
+      },
+      { noStore: true, withAuthChallenge: true }
+    );
+    return;
+  }
 
   // If key provided, validate it
   await apiKeyAuth(req, res, next);
@@ -363,7 +411,7 @@ export async function optionalApiKeyAuth(
  * Combined auth - accepts either JWT or API key
  */
 export function hybridAuth(
-  jwtMiddleware: (req: Request, res: Response, next: NextFunction) => void
+  jwtMiddleware: (req: Request, res: Response, next: NextFunction) => void | Promise<void>
 ) {
   return async (req: ApiKeyRequest, res: Response, next: NextFunction): Promise<void> => {
     const apiKey = extractApiKey(req);
@@ -373,7 +421,11 @@ export function hybridAuth(
       await apiKeyAuth(req, res, next);
     } else {
       // Fall back to JWT auth
-      jwtMiddleware(req, res, next);
+      try {
+        await Promise.resolve(jwtMiddleware(req, res, next));
+      } catch (error) {
+        next(error instanceof Error ? error : new Error('JWT middleware failed'));
+      }
     }
   };
 }

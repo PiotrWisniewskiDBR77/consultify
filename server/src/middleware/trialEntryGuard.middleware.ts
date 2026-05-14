@@ -51,6 +51,7 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
   // Initiative creation/modification
   { method: 'POST', path: /^\/api\/initiatives/ },
   { method: 'PUT', path: /^\/api\/initiatives/ },
+  { method: 'PATCH', path: /^\/api\/initiatives/ },
   { method: 'DELETE', path: /^\/api\/initiatives/ },
 
   // Team invitations
@@ -80,6 +81,7 @@ export const BLOCKED_ROUTES: BlockedRoute[] = [
 const MAX_TRIAL_GUARD_PATH_LEN = 8192;
 const MAX_TRIAL_GUARD_USER_ID_LEN = 512;
 const MAX_TRIAL_GUARD_METHOD_LEN = 64;
+const MAX_TRIAL_GUARD_ORG_ID_LEN = 512;
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -151,6 +153,8 @@ const isSkippableTrialGuardMethod = (method: string | undefined): boolean =>
 const stripRouteQueryAndFragment = (path: string): string => path.split('?')[0]?.split('#')[0] || '';
 const readOriginalUrlPathForRouting = (req: Request): string =>
   normalizeOptionalString(safeRead(() => req.originalUrl, undefined as unknown)) || '';
+const readUrlPathForRouting = (req: Request): string =>
+  normalizeOptionalString(safeRead(() => req.url, undefined as unknown)) || '';
 const getCandidateTrialRoutePaths = (req: Request): string[] => {
   const mountedPath = stripRouteQueryAndFragment(
     normalizePathForRouteMatch(readRequestPathForRouting(req))
@@ -158,9 +162,13 @@ const getCandidateTrialRoutePaths = (req: Request): string[] => {
   const originalUrlPath = stripRouteQueryAndFragment(
     normalizePathForRouteMatch(readOriginalUrlPathForRouting(req))
   );
+  const urlPath = stripRouteQueryAndFragment(
+    normalizePathForRouteMatch(readUrlPathForRouting(req))
+  );
   const uniquePaths = new Set<string>();
   if (mountedPath) uniquePaths.add(mountedPath);
   if (originalUrlPath) uniquePaths.add(originalUrlPath);
+  if (urlPath) uniquePaths.add(urlPath);
   return [...uniquePaths];
 };
 const sendTrialGuardJson = (
@@ -264,9 +272,6 @@ export const trialEntryGuard = async (
       return;
     }
 
-    // Attach flag for downstream use
-    req.isTrialEntry = true;
-
     if (requestPathCandidates.some((candidatePath) => isBlockedRoute(requestMethod, candidatePath))) {
       const sent = sendTrialGuardJson(res, 403, {
         error: 'TRIAL_ENTRY_RESTRICTION',
@@ -284,6 +289,8 @@ export const trialEntryGuard = async (
       return;
     }
 
+    // Attach flag only when trial user is allowed to continue.
+    req.isTrialEntry = true;
     next();
   } catch (error: unknown) {
     logger.error('[TrialEntryGuard] Error:', error);
@@ -320,6 +327,16 @@ export const requireOrgContext = async (
       safeRead(() => req.user?.organizationId, undefined as unknown)
     );
     if (!organizationId) {
+      const sent = sendTrialGuardJson(res, 403, {
+        error: 'ORG_REQUIRED',
+        message: 'Brak kontekstu organizacji.',
+      });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        emitTrialGuardWriteFailure(next, 'TRIAL_ENTRY_GUARD_RESPONSE_FAILED');
+      }
+      return;
+    }
+    if (organizationId.length > MAX_TRIAL_GUARD_ORG_ID_LEN) {
       const sent = sendTrialGuardJson(res, 403, {
         error: 'ORG_REQUIRED',
         message: 'Brak kontekstu organizacji.',

@@ -20,13 +20,17 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
 };
 
 const MAX_SHADOW_JWT_DECODE_CHARS = 8192;
+const MAX_SHADOW_JWT_SEGMENT_CHARS = 2048;
 const MAX_SHADOW_ORG_ID_CHARS = 256;
 const MAX_SHADOW_AUTHORIZATION_HEADER_CHARS = 8256;
 const MAX_SHADOW_ORG_SOURCE_READ_CHARS = 1024;
 const MAX_SHADOW_LOG_FRAGMENT_CHARS = 512;
 const isLikelyJwsCompact = (token: string): boolean => {
   const parts = token.split('.');
-  return parts.length === 3 && parts.every((part) => part.length > 0);
+  return (
+    parts.length === 3 &&
+    parts.every((part) => part.length > 0 && part.length <= MAX_SHADOW_JWT_SEGMENT_CHARS)
+  );
 };
 
 const normalizeOptionalOrgCandidate = (value: unknown): string | undefined => {

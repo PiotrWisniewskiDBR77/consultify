@@ -76,6 +76,14 @@ const sanitizeRoleInput = (value: unknown): string | undefined => {
     .replace(ROLE_INVISIBLE_FORMAT_CHARS, '');
   return normalizeOptionalString(stripped);
 };
+const sanitizePermissionKeyInput = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = safeRead(() => value.normalize('NFKC'), value);
+  const stripped = normalized
+    .replace(ROLE_CONTROL_CHARS, '')
+    .replace(ROLE_INVISIBLE_FORMAT_CHARS, '');
+  return normalizeOptionalString(stripped);
+};
 
 const getAuthContext = (
   req: AuthRequest
@@ -265,7 +273,8 @@ export const requirePermission = (permissionKey: string) => {
         });
         return;
       }
-      const normalizedPermissionKey = normalizeOptionalString(permissionKey);
+      if (shouldSkipPermissionCheck(res, 'requirePermission')) return;
+      const normalizedPermissionKey = sanitizePermissionKeyInput(permissionKey);
       if (!normalizedPermissionKey || !isPermissionKeyWithinLimit(normalizedPermissionKey)) {
         logger.info(`[PermissionMiddleware] Denied: blank permission key for user ${userId}`);
         sendJsonIfHeadersOpen(res, 403, {
@@ -274,7 +283,6 @@ export const requirePermission = (permissionKey: string) => {
         });
         return;
       }
-      if (shouldSkipPermissionCheck(res, 'requirePermission')) return;
 
       const roleCandidates = getRoleCandidates(userRole);
       let hasPermission = false;
@@ -338,7 +346,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
         });
       }
       const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
-        .map((permissionKey) => normalizeOptionalString(permissionKey))
+        .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
         .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
       if (normalizedPermissionKeys.length === 0) {
         logger.info(
@@ -439,7 +447,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
         });
       }
       const normalizedPermissionKeys = dedupePermissionKeys(permissionKeyList
-        .map((permissionKey) => normalizeOptionalString(permissionKey))
+        .map((permissionKey) => sanitizePermissionKeyInput(permissionKey))
         .filter((permissionKey): permissionKey is string => Boolean(permissionKey)));
       if (normalizedPermissionKeys.length === 0) {
         logger.info(

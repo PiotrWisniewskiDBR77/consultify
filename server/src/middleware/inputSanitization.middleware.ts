@@ -40,6 +40,16 @@ const normalizeContentTypeHeader = (req: Request): string => {
   }
   return '';
 };
+const shouldSkipStructuredSanitization = (normalizedContentType: string): boolean => {
+  if (!normalizedContentType) return false;
+  return (
+    normalizedContentType.startsWith('multipart/') ||
+    normalizedContentType.startsWith('application/octet-stream') ||
+    normalizedContentType.startsWith('image/') ||
+    normalizedContentType.startsWith('video/') ||
+    normalizedContentType.startsWith('audio/')
+  );
+};
 
 type SecurityUtilsModule = typeof import('../utils/security.utils.ts');
 let securityUtilsPromise: Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>> | null = null;
@@ -144,10 +154,17 @@ function neutralizeInlineEventHandlers(
   if (typeof obj === 'string') {
     return obj.replace(/\bon[a-z]+\s*=/gi, (m) => m.replace('=', '&#61;'));
   }
-  if (Array.isArray(obj)) return obj.map((x) => neutralizeInlineEventHandlers(x, depth - 1));
+  if (Array.isArray(obj)) {
+    const bounded = obj.length > MAX_ARRAY_ELEMENTS ? obj.slice(0, MAX_ARRAY_ELEMENTS) : obj;
+    return bounded.map((x) => neutralizeInlineEventHandlers(x, depth - 1));
+  }
   if (typeof obj === 'object') {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj)) out[k] = neutralizeInlineEventHandlers(v, depth - 1);
+    const keys = Object.keys(obj as Record<string, unknown>);
+    const boundedKeys = keys.length > MAX_OBJECT_KEYS ? keys.slice(0, MAX_OBJECT_KEYS) : keys;
+    for (const key of boundedKeys) {
+      out[key] = neutralizeInlineEventHandlers((obj as Record<string, unknown>)[key], depth - 1);
+    }
     return out;
   }
   return obj;
@@ -198,7 +215,7 @@ export const inputSanitizationMiddleware = async (
   try {
     // Skip multipart/file uploads (binary data)
     const normalizedContentType = normalizeContentTypeHeader(req);
-    if (normalizedContentType.startsWith('multipart/')) {
+    if (shouldSkipStructuredSanitization(normalizedContentType)) {
       next();
       return Promise.resolve();
     }

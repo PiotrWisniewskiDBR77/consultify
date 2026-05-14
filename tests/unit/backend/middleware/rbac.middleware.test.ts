@@ -403,6 +403,36 @@ describe('rbac.middleware (L1)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireOrgAccess: denies when organization id contains traversal delimiters', () => {
+    const req: any = { user: { organizationId: 'org/../x' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    requireOrgAccess()(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Organization access required',
+      code: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgAccess: denies when organization id contains angle bracket delimiters', () => {
+    const req: any = { user: { organizationId: 'org<unsafe>' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    requireOrgAccess()(req, res as any, next as any);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Organization access required',
+      code: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('requireRole: fails closed when required role coercion throws', () => {
     const req: any = { userRole: 'admin' };
     const res = makeRes();
@@ -510,6 +540,100 @@ describe('rbac.middleware (L1)', () => {
     expect(() => requireRole('admin')(req, res as any, next as any)).not.toThrow();
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: skips allow-path next when response is already committed', () => {
+    const req: any = { user: { role: 'admin' } };
+    const res: any = makeRes();
+    res.headersSent = true;
+    const next = vi.fn();
+
+    requireRole('admin')(req, res as any, next as any);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: fails closed when internal role-checking path throws unexpectedly', () => {
+    const req: any = { user: { role: 'admin' } };
+    const res = makeRes();
+    const next = vi.fn();
+    const someSpy = vi.spyOn(Array.prototype, 'some').mockImplementationOnce(() => {
+      throw new Error('some failed');
+    });
+
+    expect(() => requireRole('admin')(req, res as any, next as any)).not.toThrow();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Insufficient role',
+      code: 'RBAC_INSUFFICIENT_ROLE',
+    });
+    expect(next).not.toHaveBeenCalled();
+    someSpy.mockRestore();
+  });
+
+  it('requireOrgAccess: fails closed when internal org checks throw unexpectedly', () => {
+    const req: any = { user: { organizationId: 'org-safe' } };
+    const res = makeRes();
+    const next = vi.fn();
+    const includesSpy = vi.spyOn(String.prototype, 'includes').mockImplementationOnce(() => {
+      throw new Error('includes failed');
+    });
+
+    expect(() => requireOrgAccess()(req, res as any, next as any)).not.toThrow();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({
+      error: 'Organization access required',
+      code: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
+    });
+    expect(next).not.toHaveBeenCalled();
+    includesSpy.mockRestore();
+  });
+
+  it('requireOrgAccess: skips allow-path next when response is already committed', () => {
+    const req: any = { user: { organizationId: 'org-safe' } };
+    const res: any = makeRes();
+    res.writableEnded = true;
+    const next = vi.fn();
+
+    requireOrgAccess()(req, res as any, next as any);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it('requireRole: uses send fallback when deny response json writer is missing', () => {
+    const req: any = { user: { role: 'guest' } };
+    const res: any = makeRes();
+    delete res.json;
+    res.send = vi.fn(() => res);
+    const next = vi.fn();
+
+    expect(() => requireRole('admin')(req, res as any, next as any)).not.toThrow();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.send).toHaveBeenCalledWith({
+      error: 'Insufficient role',
+      code: 'RBAC_INSUFFICIENT_ROLE',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgAccess: uses send fallback when deny response json writer is missing', () => {
+    const req: any = { user: { organizationId: '' } };
+    const res: any = makeRes();
+    delete res.json;
+    res.send = vi.fn(() => res);
+    const next = vi.fn();
+
+    expect(() => requireOrgAccess()(req, res as any, next as any)).not.toThrow();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.send).toHaveBeenCalledWith({
+      error: 'Organization access required',
+      code: 'RBAC_ORGANIZATION_ACCESS_REQUIRED',
+    });
+    expect(next).not.toHaveBeenCalled();
   });
 });
 

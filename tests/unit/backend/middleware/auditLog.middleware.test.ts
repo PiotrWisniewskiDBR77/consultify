@@ -765,6 +765,121 @@ describe('auditLog.middleware', () => {
     expect(originalUrlReads).toBe(1);
   });
 
+  it('drops query string from audit metadata path and resource id', async () => {
+    vi.resetModules();
+    const activityLog = vi.fn().mockResolvedValue(undefined);
+    const auditEventsLog = vi.fn().mockResolvedValue('evt-1');
+    const auditServiceLog = vi.fn().mockResolvedValue('aud-1');
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: activityLog },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: auditEventsLog },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: auditServiceLog },
+    }));
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      body: { id: 'x1' },
+      originalUrl: '/api/projects/x1?access_token=super-secret&foo=1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end();
+    await flushAsyncAuditWrites();
+
+    const eventsPayload = auditEventsLog.mock.calls[0]?.[0];
+    const servicePayload = auditServiceLog.mock.calls[0]?.[0];
+    expect(eventsPayload.metadata.path).toBe('/api/projects/x1');
+    expect(servicePayload.metadata.path).toBe('/api/projects/x1');
+    expect(String(eventsPayload.metadata.path)).not.toContain('access_token');
+    expect(String(servicePayload.metadata.path)).not.toContain('super-secret');
+    expect(eventsPayload.resourceId).toBe('x1');
+    expect(servicePayload.resourceId).toBe('x1');
+  });
+
+  it('keeps audit processing stable when req.demo accessor throws', async () => {
+    vi.resetModules();
+    const activityLog = vi.fn().mockResolvedValue(undefined);
+    const auditEventsLog = vi.fn().mockResolvedValue('evt-1');
+    const auditServiceLog = vi.fn().mockResolvedValue('aud-1');
+    const loggerError = vi.fn();
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: loggerError,
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: activityLog },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: auditEventsLog },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: auditServiceLog },
+    }));
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      body: { id: 'x1' },
+      originalUrl: '/api/projects/x1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    Object.defineProperty(req, 'demo', {
+      configurable: true,
+      get: () => {
+        throw new Error('demo getter failed');
+      },
+    });
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end();
+    await flushAsyncAuditWrites();
+
+    expect(activityLog).toHaveBeenCalledTimes(1);
+    expect(auditEventsLog).toHaveBeenCalledTimes(1);
+    expect(auditServiceLog).toHaveBeenCalledTimes(1);
+    expect(auditEventsLog.mock.calls[0]?.[0]?.metadata).toEqual(
+      expect.objectContaining({
+        demoEnabled: false,
+        demoOrganizationId: null,
+      })
+    );
+    expect(auditServiceLog.mock.calls[0]?.[0]?.metadata).toEqual(
+      expect.objectContaining({
+        demoEnabled: false,
+        demoOrganizationId: null,
+      })
+    );
+    expect(loggerError).not.toHaveBeenCalledWith('[AuditLog] Error processing log:', expect.anything());
+  });
+
   it('caps oversized array payloads with truncation metadata in audit snapshots', async () => {
     vi.resetModules();
     const activityLog = vi.fn().mockResolvedValue(undefined);
@@ -884,6 +999,120 @@ describe('auditLog.middleware', () => {
       );
       expect(snapshot.k_0).toBe('v_0');
       expect(snapshot.k_250).toBeUndefined();
+      expect(snapshot.password).toBe('[REDACTED]');
+    }
+  });
+
+  it('stores audit object snapshots with null prototype to harden against prototype pollution keys', async () => {
+    vi.resetModules();
+    const activityLog = vi.fn().mockResolvedValue(undefined);
+    const auditEventsLog = vi.fn().mockResolvedValue('evt-1');
+    const auditServiceLog = vi.fn().mockResolvedValue('aud-1');
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: activityLog },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: auditEventsLog },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: auditServiceLog },
+    }));
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const body = Object.create(null) as Record<string, unknown>;
+    body.id = 'x1';
+    body.safe = 'value';
+    body.nested = { password: 'secret' };
+    const protoPayload = { password: 'nested-secret' };
+    Object.defineProperty(body, '__proto__', {
+      value: protoPayload,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      body,
+      originalUrl: '/api/projects/x1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end();
+    await flushAsyncAuditWrites();
+
+    const activityBody = activityLog.mock.calls[0]?.[0]?.newValue;
+    const eventsBody = auditEventsLog.mock.calls[0]?.[0]?.after;
+    const serviceBody = auditServiceLog.mock.calls[0]?.[0]?.newValues;
+    for (const snapshot of [activityBody, eventsBody, serviceBody]) {
+      expect(Object.getPrototypeOf(snapshot)).toBeNull();
+      expect(snapshot.safe).toBe('value');
+      expect(snapshot.nested.password).toBe('[REDACTED]');
+      expect(snapshot.__proto__).toEqual(expect.objectContaining({ password: '[REDACTED]' }));
+    }
+  });
+
+  it('truncates oversized string leaves in audit body snapshots', async () => {
+    vi.resetModules();
+    const activityLog = vi.fn().mockResolvedValue(undefined);
+    const auditEventsLog = vi.fn().mockResolvedValue('evt-1');
+    const auditServiceLog = vi.fn().mockResolvedValue('aud-1');
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: activityLog },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: auditEventsLog },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: auditServiceLog },
+    }));
+
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      body: { id: 'x1', notes: 'x'.repeat(100_000), password: 'secret' },
+      originalUrl: '/api/projects/x1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const res: any = { end: vi.fn(), statusCode: 200 };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end();
+    await flushAsyncAuditWrites();
+
+    const activityBody = activityLog.mock.calls[0]?.[0]?.newValue;
+    const eventsBody = auditEventsLog.mock.calls[0]?.[0]?.after;
+    const serviceBody = auditServiceLog.mock.calls[0]?.[0]?.newValues;
+    for (const snapshot of [activityBody, eventsBody, serviceBody]) {
+      expect(typeof snapshot.notes).toBe('string');
+      expect(snapshot.notes).toContain('...[truncated]');
+      expect(snapshot.notes.length).toBeLessThanOrEqual(4110);
       expect(snapshot.password).toBe('[REDACTED]');
     }
   });
@@ -1092,6 +1321,117 @@ describe('auditLog.middleware', () => {
           databaseReason: 'resolver_error',
           databaseHost: null,
         }),
+      })
+    );
+    expect(loggerError).not.toHaveBeenCalledWith('[AuditLog] Error processing log:', expect.anything());
+  });
+
+  it('forwards res.end overload arguments with original ordering', async () => {
+    vi.resetModules();
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: vi.fn().mockResolvedValue(undefined) },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: vi.fn().mockResolvedValue('evt-1') },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: vi.fn().mockResolvedValue('aud-1') },
+    }));
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      body: { id: 'x1' },
+      originalUrl: '/api/projects/x1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const callback = vi.fn();
+    const originalEnd = vi.fn(function (_data: any, _enc: any, cb: any) {
+      if (typeof cb === 'function') cb();
+    });
+    const res: any = { end: originalEnd, statusCode: 200 };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end('payload', 'utf8', callback);
+
+    expect(originalEnd).toHaveBeenCalledWith('payload', 'utf8', callback);
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses pre-end identity snapshot when original end clears req.user', async () => {
+    vi.resetModules();
+    const activityLog = vi.fn().mockResolvedValue(undefined);
+    const auditEventsLog = vi.fn().mockResolvedValue('evt-1');
+    const auditServiceLog = vi.fn().mockResolvedValue('aud-1');
+    const loggerError = vi.fn();
+    vi.doMock('../../../../server/src/utils/Logger.js', () => ({
+      default: {
+        error: loggerError,
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
+    }));
+    vi.doMock('../../../../server/src/services/ActivityService.js', () => ({
+      default: { log: activityLog },
+    }));
+    vi.doMock('../../../../server/src/services/AuditEventsService.js', () => ({
+      default: { log: auditEventsLog },
+    }));
+    vi.doMock('../../../../server/src/services/auditService.js', () => ({
+      default: { log: auditServiceLog },
+    }));
+    const { default: auditLogMiddleware } = await import(
+      '../../../../server/src/middleware/auditLog.middleware.ts'
+    );
+
+    const req: any = {
+      method: 'POST',
+      user: { id: 'u-1', organizationId: 'org-1', email: 'u@example.com', name: 'User' },
+      body: { id: 'x1' },
+      originalUrl: '/api/projects/x1',
+      get: vi.fn().mockReturnValue(undefined),
+    };
+    const res: any = {
+      statusCode: 200,
+      end: vi.fn(() => {
+        req.user = undefined;
+      }),
+    };
+    const next = vi.fn();
+
+    await auditLogMiddleware(req, res, next);
+    res.end();
+    await flushAsyncAuditWrites();
+
+    expect(activityLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org-1',
+        userId: 'u-1',
+      })
+    );
+    expect(auditEventsLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'u-1',
+        organizationId: 'org-1',
+      })
+    );
+    expect(auditServiceLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'u-1',
+        organizationId: 'org-1',
       })
     );
     expect(loggerError).not.toHaveBeenCalledWith('[AuditLog] Error processing log:', expect.anything());

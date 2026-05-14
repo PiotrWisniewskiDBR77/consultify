@@ -427,6 +427,39 @@ describe('featureGate.middleware', () => {
     expect(res.json).not.toHaveBeenCalled();
   });
 
+  it('requireFeature does not throw and does not call next when response object is incomplete', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const mw = requireFeature('demo_view');
+    const req: any = { currentPhase: 'B', userState: 'DEMO_SESSION' };
+    const next = vi.fn();
+    const incompleteRes: any = { status: 123 };
+
+    expect(() => mw(req, incompleteRes as any, next as any)).not.toThrow();
+    expect(next).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith('[featureGate] Invalid or incomplete response object');
+    errorSpy.mockRestore();
+  });
+
+  it('requireFeature returns controlled 500 when downstream next throws synchronously', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const mw = requireFeature('demo_view');
+    const req: any = { currentPhase: 'B', userState: 'DEMO_SESSION' };
+    const res = makeRes();
+    const next = vi.fn(() => {
+      throw new Error('downstream sync failure');
+    });
+
+    expect(() => mw(req, res as any, next as any)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'FEATURE_GATE_INTERNAL',
+      })
+    );
+    errorSpy.mockRestore();
+  });
+
   it('requireFeature skips next on allow path when response is already finalized', () => {
     const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     const mw = requireFeature('demo_view');
@@ -520,6 +553,39 @@ describe('featureGate.middleware', () => {
       expect.objectContaining({ featureId: 'requireAccess' })
     );
     warnSpy.mockRestore();
+  });
+
+  it('requireAccess returns controlled 500 when downstream next throws synchronously', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const mw = requireAccess({ phase: ['G'], state: ['ECOSYSTEM_NODE'], role: ['ADMIN'] });
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE', userRole: 'ADMIN' };
+    const res = makeRes();
+    const next = vi.fn(() => {
+      throw new Error('downstream sync failure');
+    });
+
+    expect(() => mw(req, res as any, next as any)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'FEATURE_GATE_INTERNAL',
+      })
+    );
+    errorSpy.mockRestore();
+  });
+
+  it('requireAccess does not throw and does not call next when response object is incomplete', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const mw = requireAccess({ phase: ['G'], state: ['ECOSYSTEM_NODE'], role: ['ADMIN'] });
+    const req: any = { currentPhase: 'G', userState: 'ECOSYSTEM_NODE', userRole: 'ADMIN' };
+    const next = vi.fn();
+    const incompleteRes: any = {};
+
+    expect(() => mw(req, incompleteRes as any, next as any)).not.toThrow();
+    expect(next).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith('[featureGate] Invalid or incomplete response object');
+    errorSpy.mockRestore();
   });
 
   it('requireAccess ignores inherited requirements and returns 500 when no own rule arrays exist', () => {

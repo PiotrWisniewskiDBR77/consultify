@@ -75,6 +75,13 @@ function readPath(req: AuthRequest): string {
     ''
   );
 }
+function stripAuditQueryAndHash(rawPath: string): string {
+  if (!rawPath) return rawPath;
+  const hashIndex = rawPath.indexOf('#');
+  const withoutHash = hashIndex >= 0 ? rawPath.slice(0, hashIndex) : rawPath;
+  const queryIndex = withoutHash.indexOf('?');
+  return queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
+}
 
 const MAX_AUDIT_PATH_CHARS = 2048;
 const MAX_AUDIT_CORRELATION_ID_CHARS = 128;
@@ -117,6 +124,7 @@ const AUDIT_REDACT_KEYS = new Set([
 const MAX_AUDIT_BODY_REDACTION_DEPTH = 6;
 const MAX_AUDIT_BODY_ARRAY_ITEMS = 500;
 const MAX_AUDIT_BODY_KEYS_PER_OBJECT = 200;
+const MAX_AUDIT_BODY_LEAF_STRING_CHARS = 4096;
 const isPlainObjectRecord = (value: unknown): value is Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const proto = Object.getPrototypeOf(value);
@@ -164,18 +172,21 @@ function redactAuditBody(
   if (!body) return undefined;
   const visit = (value: unknown, depth: number): unknown => {
     if (depth > MAX_AUDIT_BODY_REDACTION_DEPTH) return value;
+    if (typeof value === 'string') {
+      return truncateOptionalAuditString(value, MAX_AUDIT_BODY_LEAF_STRING_CHARS) || '';
+    }
     if (Array.isArray(value)) {
       if (value.length <= MAX_AUDIT_BODY_ARRAY_ITEMS) {
         return value.map((item) => visit(item, depth + 1));
       }
-      return {
-        _auditArrayTruncated: true,
-        originalLength: value.length,
-        head: value.slice(0, MAX_AUDIT_BODY_ARRAY_ITEMS).map((item) => visit(item, depth + 1)),
-      };
+      const truncatedArray: Record<string, unknown> = Object.create(null);
+      truncatedArray._auditArrayTruncated = true;
+      truncatedArray.originalLength = value.length;
+      truncatedArray.head = value.slice(0, MAX_AUDIT_BODY_ARRAY_ITEMS).map((item) => visit(item, depth + 1));
+      return truncatedArray;
     }
     if (!isPlainObjectRecord(value)) return value;
-    const redactedNode: Record<string, unknown> = {};
+    const redactedNode: Record<string, unknown> = Object.create(null);
     const keys = Object.keys(value);
     const boundedKeys = keys.slice(0, MAX_AUDIT_BODY_KEYS_PER_OBJECT);
     if (keys.length > MAX_AUDIT_BODY_KEYS_PER_OBJECT) {
@@ -194,7 +205,9 @@ function redactAuditBody(
   try {
     return visit(body, 0) as Record<string, unknown>;
   } catch {
-    return { _auditBodySnapshotFailed: true };
+    const fallback: Record<string, unknown> = Object.create(null);
+    fallback._auditBodySnapshotFailed = true;
+    return fallback;
   }
 }
 
@@ -257,29 +270,112 @@ const auditLogMiddleware = async (
   }, false);
 
   // Override end to capture status
-  (res.end as any) = function (chunk?: any, encodingOrCb?: any, cb?: any) {
+  (res.end as any) = function (...args: any[]) {
+    const user = safeRead(() => req.user, undefined as unknown as AuthRequest['user']);
+    const userId =
+      normalizeOptionalString(safeRead(() => user?.id, undefined)) ||
+      normalizeOptionalString(safeRead(() => req.userId, undefined)) ||
+      null;
+    const organizationId =
+      normalizeOptionalString(safeRead(() => (req as any).organizationId, undefined)) ||
+      normalizeOptionalString(safeRead(() => user?.organizationId, undefined)) ||
+      normalizeOptionalString(
+        safeRead(() => (user as { organization_id?: string } | undefined)?.organization_id, undefined)
+      ) ||
+      normalizeOptionalString(safeRead(() => (req.body as any)?.organizationId, undefined)) ||
+      null;
+    const httpMethod = readMethod(req);
+    const auditPath = truncateAuditText(stripAuditQueryAndHash(readPath(req)));
+    const bodySnapshot = httpMethod !== 'DELETE' ? safeRead(() => req.body, null) : null;
+    const bodySnapshotIsBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer(bodySnapshot);
+    const bodyRecord =
+      !bodySnapshotIsBuffer && bodySnapshot && isPlainObjectRecord(bodySnapshot)
+        ? (bodySnapshot as Record<string, unknown>)
+        : undefined;
+    const auditBody = bodySnapshotIsBuffer
+      ? {
+          _auditBodyOmitted: 'buffer',
+          byteLength: (bodySnapshot as Buffer).byteLength,
+        }
+      : redactAuditBody(bodyRecord);
+    const parts = auditPath.split('/').filter((p) => p);
+    const entityType = parts[1] || 'unknown';
+    const entityId = parts[2] || normalizeOptionalString(safeRead(() => bodyRecord?.id, undefined)) || 'new';
+    const actionMap: Record<string, string> = {
+      POST: 'created',
+      PUT: 'updated',
+      PATCH: 'updated',
+      DELETE: 'deleted',
+    };
+    const action = actionMap[httpMethod] || 'modified';
+    const auditActionMap: Record<string, string> = {
+      created: 'create',
+      updated: 'update',
+      modified: 'update',
+      deleted: 'delete',
+    };
+    const auditAction = auditActionMap[action] || action;
+    const resourceType = entityType.replace(/s$/, '');
+    const entityNameRaw =
+      normalizeOptionalString(safeRead(() => bodyRecord?.name, undefined)) ||
+      normalizeOptionalString(safeRead(() => bodyRecord?.title, undefined)) ||
+      entityType;
+    const boundedEntityId = truncateOptionalAuditString(entityId, MAX_AUDIT_ENTITY_ID_CHARS) || entityId;
+    const boundedResourceType =
+      truncateOptionalAuditString(resourceType, MAX_AUDIT_RESOURCE_TYPE_CHARS) || resourceType;
+    const boundedEntityName =
+      truncateOptionalAuditString(entityNameRaw, MAX_AUDIT_ENTITY_NAME_CHARS) || entityNameRaw;
+    const correlationId =
+      truncateOptionalAuditString(
+        normalizeOptionalString(
+          safeRead(() => (req as AuthRequest & { correlationId?: string }).correlationId, undefined)
+        ) ||
+          normalizeOptionalString(safeRead(() => req.get?.('X-Correlation-ID'), undefined)) ||
+          undefined,
+        MAX_AUDIT_CORRELATION_ID_CHARS
+      ) || undefined;
+    const userAgent = truncateOptionalAuditString(
+      normalizeOptionalString(safeRead(() => req.get?.('user-agent'), undefined)),
+      MAX_AUDIT_USER_AGENT_CHARS
+    );
+    const actorIp = truncateOptionalAuditString(
+      normalizeOptionalString(safeRead(() => req.ip, undefined)),
+      MAX_AUDIT_IP_CHARS
+    );
+    const demoEnabled = safeRead(() => Boolean((req as any).demo?.enabled), false);
+    const demoOrganizationId = safeRead(
+      () => normalizeOptionalString((req as any).demo?.organizationId) || null,
+      null as string | null
+    );
+    const resolvedDb = safeRead(
+      () =>
+        resolveReachableDatabaseUrl({
+          databaseUrl: process.env.DATABASE_URL,
+          publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
+          env: process.env,
+        }),
+      {
+        databaseUrl: null,
+        source: 'unavailable',
+        reason: 'resolver_error',
+      } as {
+        databaseUrl: string | null;
+        source: string;
+        reason: string | null;
+      }
+    );
+    const databaseHost = safeRead(
+      () => (resolvedDb.databaseUrl ? new URL(resolvedDb.databaseUrl).hostname : null),
+      null as string | null
+    );
+
     res.end = originalEnd;
-    res.end(chunk, encodingOrCb, cb);
+    originalEnd.apply(res, args);
 
     const statusCode = safeRead(() => res.statusCode, 200);
     // Only log successful operations (2xx)
     if (statusCode >= 200 && statusCode < 300) {
       try {
-        // Extract User Info
-        const user = safeRead(() => req.user, undefined as unknown as AuthRequest['user']);
-        const userId =
-          normalizeOptionalString(safeRead(() => user?.id, undefined)) ||
-          normalizeOptionalString(safeRead(() => req.userId, undefined)) ||
-          null;
-        const organizationId =
-          normalizeOptionalString(safeRead(() => (req as any).organizationId, undefined)) ||
-          normalizeOptionalString(safeRead(() => user?.organizationId, undefined)) ||
-          normalizeOptionalString(
-            safeRead(() => (user as { organization_id?: string } | undefined)?.organization_id, undefined)
-          ) ||
-          normalizeOptionalString(safeRead(() => (req.body as any)?.organizationId, undefined)) ||
-          null;
-
         // Skip audit log if we don't have a valid user context
         // (avoids FK violation on activity_logs.organization_id)
         if (!organizationId || !userId) {
@@ -290,95 +386,7 @@ const auditLogMiddleware = async (
         if (!organizationId || organizationId === 'unknown') {
           return;
         }
-        const httpMethod = readMethod(req);
-        const auditPath = truncateAuditText(readPath(req));
-        const bodySnapshot =
-          httpMethod !== 'DELETE' ? safeRead(() => req.body, null) : null;
-        const bodySnapshotIsBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer(bodySnapshot);
-        const bodyRecord =
-          !bodySnapshotIsBuffer && bodySnapshot && isPlainObjectRecord(bodySnapshot)
-            ? (bodySnapshot as Record<string, unknown>)
-            : undefined;
-        const auditBody = bodySnapshotIsBuffer
-          ? {
-              _auditBodyOmitted: 'buffer',
-              byteLength: (bodySnapshot as Buffer).byteLength,
-            }
-          : redactAuditBody(bodyRecord);
-
-        // Determine Entity & Action
-        // URL: /api/projects/:id -> Entity: project, ID: :id
-        const parts = auditPath.split('/').filter((p) => p);
-        const entityType = parts[1] || 'unknown'; // api / [entity]
-        const entityId =
-          parts[2] ||
-          normalizeOptionalString(safeRead(() => bodyRecord?.id, undefined)) ||
-          'new';
-
-        const actionMap: Record<string, string> = {
-          POST: 'created',
-          PUT: 'updated',
-          PATCH: 'updated',
-          DELETE: 'deleted',
-        };
-        const action = actionMap[httpMethod] || 'modified';
-
         // Log asynchronously (ActivityService + V4 audit_events)
-        const auditActionMap: Record<string, string> = {
-          created: 'create',
-          updated: 'update',
-          modified: 'update',
-          deleted: 'delete',
-        };
-        const auditAction = auditActionMap[action] || action;
-        const resourceType = entityType.replace(/s$/, ''); // singularize roughly
-        const entityNameRaw =
-          normalizeOptionalString(safeRead(() => bodyRecord?.name, undefined)) ||
-          normalizeOptionalString(safeRead(() => bodyRecord?.title, undefined)) ||
-          entityType;
-        const boundedEntityId = truncateOptionalAuditString(entityId, MAX_AUDIT_ENTITY_ID_CHARS) || entityId;
-        const boundedResourceType =
-          truncateOptionalAuditString(resourceType, MAX_AUDIT_RESOURCE_TYPE_CHARS) || resourceType;
-        const boundedEntityName =
-          truncateOptionalAuditString(entityNameRaw, MAX_AUDIT_ENTITY_NAME_CHARS) || entityNameRaw;
-        const correlationId =
-          truncateOptionalAuditString(
-            normalizeOptionalString(
-              safeRead(() => (req as AuthRequest & { correlationId?: string }).correlationId, undefined)
-            ) ||
-              normalizeOptionalString(safeRead(() => req.get?.('X-Correlation-ID'), undefined)) ||
-              undefined,
-            MAX_AUDIT_CORRELATION_ID_CHARS
-          ) || undefined;
-        const userAgent = truncateOptionalAuditString(
-          normalizeOptionalString(safeRead(() => req.get?.('user-agent'), undefined)),
-          MAX_AUDIT_USER_AGENT_CHARS
-        );
-        const actorIp = truncateOptionalAuditString(
-          normalizeOptionalString(safeRead(() => req.ip, undefined)),
-          MAX_AUDIT_IP_CHARS
-        );
-        const resolvedDb = safeRead(
-          () =>
-            resolveReachableDatabaseUrl({
-              databaseUrl: process.env.DATABASE_URL,
-              publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
-              env: process.env,
-            }),
-          {
-            databaseUrl: null,
-            source: 'unavailable',
-            reason: 'resolver_error',
-          } as {
-            databaseUrl: string | null;
-            source: string;
-            reason: string | null;
-          }
-        );
-        const databaseHost = safeRead(
-          () => (resolvedDb.databaseUrl ? new URL(resolvedDb.databaseUrl).hostname : null),
-          null as string | null
-        );
         getActivityService()
           .then((service) => {
             return service.log({
@@ -413,8 +421,8 @@ const auditLogMiddleware = async (
                 correlationId,
                 databaseHost,
                 databaseSource: resolvedDb.source,
-                demoEnabled: Boolean((req as any).demo?.enabled),
-                demoOrganizationId: (req as any).demo?.organizationId || null,
+                demoEnabled,
+                demoOrganizationId,
                 method: httpMethod,
                 path: auditPath,
               },
@@ -443,8 +451,8 @@ const auditLogMiddleware = async (
                 databaseHost,
                 databaseSource: resolvedDb.source,
                 databaseReason: resolvedDb.reason || null,
-                demoEnabled: Boolean((req as any).demo?.enabled),
-                demoOrganizationId: (req as any).demo?.organizationId || null,
+                demoEnabled,
+                demoOrganizationId,
                 method: httpMethod,
                 path: auditPath,
                 statusCode,

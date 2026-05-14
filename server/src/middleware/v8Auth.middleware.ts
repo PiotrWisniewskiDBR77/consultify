@@ -64,7 +64,12 @@ const responseWriteBlocked = (res: Response): boolean =>
   safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded, false) ||
   safeRead(() => (res as Response & { destroyed?: boolean }).destroyed, false);
 
-const safeNext = (res: Response, next: NextFunction): void => {
+const inboundConnectionClosed = (req: AuthRequest): boolean =>
+  safeRead(() => (req as AuthRequest & { destroyed?: boolean }).destroyed === true, false) ||
+  safeRead(() => req.socket?.destroyed === true, false);
+
+const safeNext = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (inboundConnectionClosed(req)) return;
   if (typeof next === 'function' && !responseWriteBlocked(res)) {
     next();
   }
@@ -118,7 +123,7 @@ export const requireV8OrgContext = (req: AuthRequest, res: Response, next: NextF
     });
     return;
   }
-  safeNext(res, next);
+  safeNext(req, res, next);
 };
 
 /**
@@ -147,6 +152,7 @@ export const attachV8Context = (req: AuthRequest, res: Response, next: NextFunct
     });
     return;
   }
+  if (inboundConnectionClosed(req)) return;
 
   const v8Context: V8RequestContext = {
     organizationId,
@@ -167,7 +173,7 @@ export const attachV8Context = (req: AuthRequest, res: Response, next: NextFunct
     });
     return;
   }
-  safeNext(res, next);
+  safeNext(req, res, next);
 };
 
 /**
@@ -176,7 +182,10 @@ export const attachV8Context = (req: AuthRequest, res: Response, next: NextFunct
  */
 export function getV8Context(req: AuthRequest): V8RequestContext {
   const ctx = safeRead(
-    () => (req as any).v8Context as Partial<V8RequestContext> | undefined,
+    () => {
+      if (!Object.prototype.hasOwnProperty.call(req, 'v8Context')) return undefined;
+      return (req as any).v8Context as Partial<V8RequestContext> | undefined;
+    },
     undefined
   );
   const organizationId = normalizeBoundedId(safeRead(() => ctx?.organizationId, undefined));

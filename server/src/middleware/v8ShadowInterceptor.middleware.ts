@@ -22,14 +22,19 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
 };
 
 const MAX_SHADOW_JWT_DECODE_CHARS = 8192;
+const MAX_SHADOW_JWT_SEGMENT_CHARS = 2048;
 const MAX_SHADOW_ORG_ID_CHARS = 256;
 const MAX_SHADOW_AUTHORIZATION_HEADER_CHARS = 8256;
 const MAX_SHADOW_ORG_SOURCE_READ_CHARS = 1024;
 const SHADOW_V8_FETCH_TIMEOUT_MS = 10_000;
 const MAX_SHADOW_COMPARISON_JSON_CHARS = 256_000;
+const MAX_SHADOW_V8_RESPONSE_TEXT_CHARS = 524_288;
 const isLikelyJwsCompact = (token: string): boolean => {
   const parts = token.split('.');
-  return parts.length === 3 && parts.every((part) => part.length > 0);
+  return (
+    parts.length === 3 &&
+    parts.every((part) => part.length > 0 && part.length <= MAX_SHADOW_JWT_SEGMENT_CHARS)
+  );
 };
 const normalizeOptionalOrgCandidate = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -190,11 +195,16 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
   }
   let legacyBody: unknown = null;
   let legacyStatus = safeRead(() => res.statusCode, 200);
+  let shadowDispatchStarted = false;
 
   try {
     res.json = function (body: unknown) {
       legacyBody = body;
       legacyStatus = safeRead(() => res.statusCode, 200);
+      if (shadowDispatchStarted) {
+        return originalJson(body);
+      }
+      shadowDispatchStarted = true;
 
       // Fire-and-forget: call V8 endpoint and record comparison
       void callV8AndRecord({
@@ -256,7 +266,16 @@ async function callV8AndRecord(params: {
 
     v8Status = v8Res.status;
     try {
-      v8Body = await v8Res.json();
+      const textBody = await v8Res.text();
+      if (textBody.length > MAX_SHADOW_V8_RESPONSE_TEXT_CHARS) {
+        v8Body = {
+          __shadowTruncatedResponse: true,
+          receivedChars: textBody.length,
+          parsedChars: MAX_SHADOW_V8_RESPONSE_TEXT_CHARS,
+        };
+      } else {
+        v8Body = textBody ? JSON.parse(textBody) : null;
+      }
     } catch {
       v8Body = null;
     }

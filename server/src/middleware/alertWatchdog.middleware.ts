@@ -95,6 +95,7 @@ const lastAlerts: Map<string, number> = new Map();
 let totalRequests = 0;
 let totalFiveXx = 0;
 let thresholdCheckScheduled = false;
+let notifyAlertChain: Promise<void> = Promise.resolve();
 
 const safeRead = <T>(reader: () => T, fallback: T): T => {
   try {
@@ -152,21 +153,34 @@ function checkThresholds(config: WatchdogConfig): void {
   pruneOld(config);
   if (records.length === 0) return;
 
-  const fiveXxInWindow = records.filter((r) => r.statusCode >= 500).length;
+  let fiveXxInWindow = 0;
+  const durations: number[] = [];
+  for (const record of records) {
+    if (record.statusCode >= 500) {
+      fiveXxInWindow += 1;
+    }
+    durations.push(record.durationMs);
+  }
   if (fiveXxInWindow >= config.fiveXxThreshold && shouldAlert('5xx_spike', config)) {
     safeRead(() => {
       logger.error(
         `[AlertWatchdog] 5xx SPIKE: ${fiveXxInWindow} errors in ${config.windowMs / 1000}s window`
       );
-      void notifyAlert(
-        'api_5xx_spike_detected',
-        `5xx spike: ${fiveXxInWindow} errors in ${config.windowMs / 60000}min`
-      );
+      notifyAlertChain = notifyAlertChain
+        .then(() =>
+          notifyAlert(
+            'api_5xx_spike_detected',
+            `5xx spike: ${fiveXxInWindow} errors in ${config.windowMs / 60000}min`
+          )
+        )
+        .catch(() => {
+          // fail-open: alert delivery failures must not break watchdog chain
+        });
       return true;
     }, false);
   }
 
-  const durations = records.map((r) => r.durationMs).sort((a, b) => a - b);
+  durations.sort((a, b) => a - b);
   const p95Index = Math.floor(durations.length * 0.95);
   const p95 = durations[p95Index] || 0;
   if (p95 > config.latencyThresholdMs && shouldAlert('high_latency', config)) {
@@ -174,7 +188,11 @@ function checkThresholds(config: WatchdogConfig): void {
       logger.warn(
         `[AlertWatchdog] HIGH LATENCY: p95=${p95.toFixed(0)}ms (threshold: ${config.latencyThresholdMs}ms)`
       );
-      void notifyAlert('api_latency_spike', `p95 latency: ${p95.toFixed(0)}ms`);
+      notifyAlertChain = notifyAlertChain
+        .then(() => notifyAlert('api_latency_spike', `p95 latency: ${p95.toFixed(0)}ms`))
+        .catch(() => {
+          // fail-open: alert delivery failures must not break watchdog chain
+        });
       return true;
     }, false);
   }

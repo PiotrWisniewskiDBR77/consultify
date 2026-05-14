@@ -92,6 +92,8 @@ const sendPlanLimitsJson = (
     return false;
   }
 };
+const responseCommitted = (res: Response): boolean =>
+  safeRead(() => res.headersSent || res.writableEnded, false);
 const invokeNext = (nextFn: NextFunction, error?: unknown): void => {
   if (typeof nextFn !== 'function') {
     logger.error('[PlanLimits] next is not a function; skipping');
@@ -126,23 +128,29 @@ async function getAccessPolicyService(): Promise<AccessPolicyServiceLike | null>
 export const checkPlanLimit = (limitKey: string) => {
   const normalizedLimitKey = normalizeOptionalString(limitKey);
   if (normalizedLimitKey && normalizedLimitKey.length > MAX_PLAN_LIMIT_KEY_CHARS) {
-    return async (_req: Request, res: Response, _next: NextFunction): Promise<void> => {
+    return async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
       logger.error('[PlanLimits] Limit key exceeds max length');
-      sendPlanLimitsJson(res, 500, {
+      const sent = sendPlanLimitsJson(res, 500, {
         error: 'Plan limit misconfigured',
         errorCode: 'PLAN_LIMIT_KEY_INVALID',
         code: 'PLAN_LIMIT_KEY_INVALID',
       });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        invokeNext(next, new Error('Plan limit key misconfiguration response failed'));
+      }
     };
   }
   if (!normalizedLimitKey) {
-    return async (_req: Request, res: Response, _next: NextFunction): Promise<void> => {
+    return async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
       logger.error('[PlanLimits] Invalid limit key configuration');
-      sendPlanLimitsJson(res, 500, {
+      const sent = sendPlanLimitsJson(res, 500, {
         error: 'Plan limit misconfigured',
         errorCode: 'PLAN_LIMIT_KEY_INVALID',
         code: 'PLAN_LIMIT_KEY_INVALID',
       });
+      if (!sent && !safeRead(() => res.headersSent, false)) {
+        invokeNext(next, new Error('Plan limit key misconfiguration response failed'));
+      }
     };
   }
 
@@ -173,13 +181,17 @@ export const checkPlanLimit = (limitKey: string) => {
       });
       return;
     }
-    if (safeRead(() => res.headersSent || res.writableEnded, false)) {
+    if (responseCommitted(res)) {
       logger.warn('[PlanLimits] Skipping plan check; response already committed');
       return;
     }
 
     try {
       const service = await getAccessPolicyService();
+      if (responseCommitted(res)) {
+        logger.warn('[PlanLimits] Response committed after service resolve; skipping plan check response');
+        return;
+      }
       if (!service) {
         sendPlanLimitsJson(res, 503, {
           error: 'Plan limit service unavailable',
@@ -206,6 +218,10 @@ export const checkPlanLimit = (limitKey: string) => {
         organizationId,
         action
       );
+      if (responseCommitted(res)) {
+        logger.warn('[PlanLimits] Response committed after access check; skipping plan response');
+        return;
+      }
       if (!isAccessCheckResponse(result)) {
         logger.error('[PlanLimits] Invalid checkAccess response shape');
         sendPlanLimitsJson(res, 503, {

@@ -91,6 +91,26 @@ describe('v8 shadow middlewares', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('v8ShadowModeCheck skips decode when any JWT segment exceeds per-segment cap', async () => {
+    const decodeSpy = vi.spyOn(jwt, 'decode');
+    const oversizedSegment = 'x'.repeat(2049);
+    const req: any = {
+      headers: {
+        authorization: `Bearer a.${oversizedSegment}.c`,
+      },
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    await v8ShadowModeCheck(req, res, next);
+
+    expect(decodeSpy).not.toHaveBeenCalled();
+    expect(isV8ShadowModeMock).not.toHaveBeenCalled();
+    expect(req.v8ShadowMode).toBe(false);
+    expect(next).toHaveBeenCalledTimes(1);
+    decodeSpy.mockRestore();
+  });
+
   it('v8ShadowModeCheck trims bearer token before decode and resolves org', async () => {
     const token = [
       'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0',
@@ -394,11 +414,50 @@ describe('v8 shadow middlewares', () => {
     vi.unstubAllGlobals();
   });
 
-  it('v8ShadowInterceptor clamps oversized V8 response body before recording comparison', async () => {
+  it('v8ShadowInterceptor reads V8 response via text() and truncates oversized payload safely', async () => {
+    const textSpy = vi.fn(async () => 'x'.repeat(600_000));
+    const jsonSpy = vi.fn(async () => ({ shouldNot: 'run' }));
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         status: 200,
+        text: textSpy,
+        json: jsonSpy,
+      })
+    );
+    const req: any = {
+      v8ShadowMode: true,
+      organizationId: 'org-1',
+      method: 'GET',
+      path: '/context',
+      headers: { authorization: 'Bearer ok-token' },
+    };
+    const originalJson = vi.fn((payload: unknown) => payload);
+    const res: any = { statusCode: 200, json: originalJson };
+    const next = vi.fn();
+
+    v8ShadowInterceptor(req, res, next);
+    res.json({ ok: true });
+    await vi.waitFor(() => expect(recordShadowComparisonMock).toHaveBeenCalledTimes(1));
+
+    const payload = recordShadowComparisonMock.mock.calls[0]?.[0];
+    expect(textSpy).toHaveBeenCalledTimes(1);
+    expect(jsonSpy).not.toHaveBeenCalled();
+    expect(payload.v8ResponseBody).toEqual(
+      expect.objectContaining({
+        __shadowTruncatedResponse: true,
+      })
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it('v8ShadowInterceptor clamps oversized V8 response body before recording comparison', async () => {
+    const textSpy = vi.fn(async () => JSON.stringify({ value: 'x'.repeat(300_000) }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        status: 200,
+        text: textSpy,
         json: async () => ({ value: 'x'.repeat(300_000) }),
       })
     );
@@ -423,6 +482,7 @@ describe('v8 shadow middlewares', () => {
         __shadowOversizedResponse: true,
       })
     );
+    expect(textSpy).toHaveBeenCalledTimes(1);
 
     vi.unstubAllGlobals();
   });

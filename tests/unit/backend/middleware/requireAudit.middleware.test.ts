@@ -222,6 +222,52 @@ describe('requireAudit.middleware', () => {
     expect(logged.resourceId).toBe('r'.repeat(256));
   });
 
+  it('strips control characters from action and resourceType before logging', async () => {
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+    await req.emitAuditEvent({
+      action: 'CR\r\nEATE',
+      resourceType: ' ta\u0000sk ',
+    });
+
+    expect(logMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'CREATE',
+        resourceType: 'task',
+      })
+    );
+  });
+
+  it('strips control characters from resourceId before logging', async () => {
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+    await req.emitAuditEvent({
+      action: 'UPDATE',
+      resourceType: 'task',
+      resourceId: 'id\u0000-1',
+    });
+
+    expect(logMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceId: 'id-1',
+      })
+    );
+  });
+
   it('rejects circular metadata payload before logging', async () => {
     const req: any = {
       user: { id: 'user-1', organizationId: 'org-1' },
@@ -265,6 +311,52 @@ describe('requireAudit.middleware', () => {
 
     await req.emitAuditEvent({ action: 'CREATE', resourceType: 'task' });
     expect(logMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps audit emissions per request and rejects once cap is exceeded', async () => {
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+
+    for (let i = 0; i < 50; i += 1) {
+      await req.emitAuditEvent({ action: 'CREATE', resourceType: 'task', resourceId: `id-${i}` });
+    }
+    expect(logMock).toHaveBeenCalledTimes(50);
+
+    await expect(
+      req.emitAuditEvent({ action: 'CREATE', resourceType: 'task', resourceId: 'id-over-limit' })
+    ).rejects.toThrow(TypeError);
+    expect(logMock).toHaveBeenCalledTimes(50);
+    expect(loggerWarnMock).toHaveBeenCalled();
+  });
+
+  it('does not count validation failures toward the per-request emission cap', async () => {
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+    await expect(req.emitAuditEvent(null)).rejects.toThrow(TypeError);
+
+    for (let i = 0; i < 50; i += 1) {
+      await req.emitAuditEvent({ action: 'CREATE', resourceType: 'task', resourceId: `id-${i}` });
+    }
+    expect(logMock).toHaveBeenCalledTimes(50);
+
+    await expect(
+      req.emitAuditEvent({ action: 'CREATE', resourceType: 'task', resourceId: 'id-over-limit' })
+    ).rejects.toThrow(TypeError);
+    expect(logMock).toHaveBeenCalledTimes(50);
   });
 
   it('rejects invalid emitAuditEvent payload types before logging', async () => {
@@ -449,5 +541,36 @@ describe('requireAudit.middleware', () => {
 
     expect(eventId).toBe('evt-padded');
     expect(logMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('serializes concurrent emitAuditEvent calls per request', async () => {
+    const resolvers: Array<(value: string) => void> = [];
+    logMock.mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    const req: any = {
+      user: { id: 'user-1', organizationId: 'org-1' },
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('agent-x'),
+    };
+    const res: any = {};
+    const next = vi.fn();
+
+    requireAudit(req, res, next);
+
+    const firstPromise = req.emitAuditEvent({ action: 'CREATE', resourceType: 'task' });
+    const secondPromise = req.emitAuditEvent({ action: 'UPDATE', resourceType: 'task' });
+    await Promise.resolve();
+
+    expect(logMock).toHaveBeenCalledTimes(1);
+    resolvers[0]?.('evt-1');
+    await expect(firstPromise).resolves.toBe('evt-1');
+    await Promise.resolve();
+    expect(logMock).toHaveBeenCalledTimes(2);
+    resolvers[1]?.('evt-2');
+    await expect(secondPromise).resolves.toBe('evt-2');
   });
 });

@@ -103,7 +103,13 @@ rateLimitStoreCleanupInterval.unref?.();
 /**
  * Apply security headers to responses
  */
-export const securityHeaders = (_req: Request, res: Response, next: NextFunction): void => {
+const isHttpsRequest = (req: Request): boolean => {
+  if (safeRead(() => req.secure === true, false)) return true;
+  const forwardedProtoRaw = normalizeOptionalString(safeRead(() => req.get?.('x-forwarded-proto'), undefined));
+  const forwardedProto = normalizeOptionalString((forwardedProtoRaw || '').split(',')[0]);
+  return (forwardedProto || '').toLowerCase() === 'https';
+};
+export const securityHeaders = (req: Request, res: Response, next: NextFunction): void => {
   safeRemoveHeader(res, 'X-Powered-By');
   safeRemoveHeader(res, 'Server');
 
@@ -130,13 +136,14 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   safeSetHeader(
     res,
     'Permissions-Policy',
-    'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=()'
+    'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), bluetooth=(), display-capture=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=(), accelerometer=(), gyroscope=(), magnetometer=(), ambient-light-sensor=(), serial=(), hid=(), gamepad=(), storage-access=(), web-share=(), window-management=(), identity-credentials-get=()'
   );
 
   const isProduction = process.env.NODE_ENV === 'production';
+  const isHttps = isHttpsRequest(req);
 
   // HSTS (only in production with HTTPS)
-  if (isProduction) {
+  if (isProduction && isHttps) {
     const hstsParts = ['max-age=31536000', 'includeSubDomains'];
     if (process.env.HSTS_PRELOAD === '1') hstsParts.push('preload');
     safeSetHeader(res, 'Strict-Transport-Security', hstsParts.join('; '));
@@ -147,6 +154,7 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   const cspBase =
     "default-src 'self'; " +
     "base-uri 'self'; " +
+    "manifest-src 'self'; " +
     "form-action 'self'; " +
     "script-src 'self' 'unsafe-inline'; " +
     "style-src 'self' 'unsafe-inline'; " +
@@ -158,7 +166,7 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
     "media-src 'self'; " +
     "frame-ancestors 'none'; " +
     "frame-src 'none'";
-  const csp = isProduction ? `${cspBase}; upgrade-insecure-requests` : cspBase;
+  const csp = isProduction && isHttps ? `${cspBase}; upgrade-insecure-requests` : cspBase;
 
   safeSetHeader(
     res,
@@ -205,6 +213,11 @@ export const createRateLimiter = (options: RateLimitOptions = {}) => {
       const retryAfter = Math.ceil((requests[0] + windowMs - now) / 1000);
       safeSetHeader(res, 'X-Content-Type-Options', 'nosniff');
       safeSetHeader(res, 'X-Frame-Options', 'DENY');
+      safeSetHeader(
+        res,
+        'Content-Security-Policy',
+        "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+      );
       safeSetHeader(res, 'Retry-After', retryAfter.toString());
       safeSetHeader(res, 'X-RateLimit-Limit', max.toString());
       safeSetHeader(res, 'X-RateLimit-Remaining', '0');

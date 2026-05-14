@@ -6,10 +6,13 @@ import {
   buildSafeUploadedFilename,
   FILE_UPLOAD_DISALLOWED_TYPE_CODE,
   FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE,
+  FILE_UPLOAD_FILTER_RUNTIME_CODE,
+  FILE_UPLOAD_FILTER_RUNTIME_MESSAGE,
   FILE_UPLOAD_INVALID_FILENAME_CODE,
   FILE_UPLOAD_INVALID_FILENAME_MESSAGE,
   FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE,
   FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE,
+  MAX_CLIENT_ORIGINALNAME_LENGTH,
   fileFilter,
   isPathInsideDir,
   resolveAssessmentUploadDir,
@@ -70,7 +73,7 @@ describe('fileUpload.middleware', () => {
 
   it('buildSafeUploadedFilename handles invalid or throwing originalname values', () => {
     const filenameFromUndefined = buildSafeUploadedFilename(undefined);
-    expect(filenameFromUndefined).toContain('-upload.bin');
+    expect(filenameFromUndefined).toContain('-unknown.file.bin');
 
     const throwingName = {
       get value() {
@@ -78,7 +81,7 @@ describe('fileUpload.middleware', () => {
       },
     } as unknown;
     const filenameFromObject = buildSafeUploadedFilename(throwingName);
-    expect(filenameFromObject).toContain('-upload.bin');
+    expect(filenameFromObject).toContain('-unknown.file.bin');
 
     const filenameUpperExt = buildSafeUploadedFilename('Report.PDF');
     expect(filenameUpperExt).toMatch(/\.pdf$/);
@@ -89,6 +92,12 @@ describe('fileUpload.middleware', () => {
 
     const filenameUnknownExt = buildSafeUploadedFilename('report.TXT');
     expect(filenameUnknownExt).toMatch(/\.bin$/);
+  });
+
+  it('buildSafeUploadedFilename normalizes Windows-style path separators to filename tail', () => {
+    const filename = buildSafeUploadedFilename('nested\\reports\\Q1-summary.pdf');
+    expect(filename).toMatch(/\.pdf$/);
+    expect(filename).not.toContain('\\');
   });
 
   it('buildSafeUploadedFilename truncates oversized client basenames', () => {
@@ -105,6 +114,20 @@ describe('fileUpload.middleware', () => {
   it('rejects invalid documents with stable code and message', () => {
     const req: any = {};
     const file: any = { originalname: 'payload.exe', mimetype: 'application/octet-stream' };
+    const cb = vi.fn();
+
+    expect(() => fileFilter(req, file, cb)).not.toThrow();
+    expect(cb).toHaveBeenCalledTimes(1);
+    expectDisallowedTypeError(cb.mock.calls[0][0]);
+    expect(cb.mock.calls[0][1]).toBe(false);
+  });
+
+  it('rejects oversized originalname metadata before extension checks', () => {
+    const req: any = {};
+    const file: any = {
+      originalname: `${'a'.repeat(MAX_CLIENT_ORIGINALNAME_LENGTH + 1)}.pdf`,
+      mimetype: 'application/pdf',
+    };
     const cb = vi.fn();
 
     expect(() => fileFilter(req, file, cb)).not.toThrow();
@@ -133,6 +156,19 @@ describe('fileUpload.middleware', () => {
     const file: any = {
       originalname: 'report.pdf',
       mimetype: 'application/pdf; charset=binary',
+    };
+    const cb = vi.fn();
+
+    fileFilter(req, file, cb);
+
+    expect(cb).toHaveBeenCalledWith(null, true);
+  });
+
+  it('accepts valid PDF when originalname contains Windows-style path segments', () => {
+    const req: any = {};
+    const file: any = {
+      originalname: 'nested\\reports\\q1.pdf',
+      mimetype: 'application/pdf',
     };
     const cb = vi.fn();
 
@@ -230,6 +266,11 @@ describe('fileUpload.middleware', () => {
     expect(cb.mock.calls[0][1]).toBe(false);
   });
 
+  it('exports stable runtime filter error contract constants', () => {
+    expect(FILE_UPLOAD_FILTER_RUNTIME_CODE).toBe('FILE_UPLOAD_FILTER_RUNTIME');
+    expect(FILE_UPLOAD_FILTER_RUNTIME_MESSAGE).toBe('Failed to validate uploaded file metadata');
+  });
+
   it('sanitizeOrgIdForUploadPath falls back to unknown for unsafe path-like values', () => {
     expect(sanitizeOrgIdForUploadPath('org-1')).toBe('org-1');
     expect(sanitizeOrgIdForUploadPath('../../../etc')).toBe('unknown');
@@ -253,6 +294,15 @@ describe('fileUpload.middleware', () => {
 
     expect(resolved).toContain('/uploads/assessments/org-canonical');
     expect(resolved).toBe(fs.realpathSync(resolved));
+  });
+
+  it('resolveAssessmentUploadDir creates org directory with owner-only mode when missing', () => {
+    const organizationId = `perm-test-${Date.now()}`;
+    const req: any = { user: { organizationId } };
+    const resolved = resolveAssessmentUploadDir(req as any);
+    const stat = fs.statSync(resolved);
+
+    expect((stat.mode & 0o777)).toBe(0o700);
   });
 
   it('resolveUploadDestinationForMulter passes non-empty fallback destination when resolver throws', () => {

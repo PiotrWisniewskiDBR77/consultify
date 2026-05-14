@@ -199,6 +199,36 @@ describe('userStateGuard.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('attachUserState coerces undefined permissions into ANON fallback object', async () => {
+    mockDb.getAsync.mockResolvedValue({ user_journey_state: 'ORG_MEMBER', current_phase: 'B' });
+    mockUserStateMachine.getPermissions
+      .mockReturnValueOnce(undefined as any)
+      .mockImplementation(() => ({ fallback: true }));
+    const req: any = { user: { id: 'u-1' } };
+    const res: any = {};
+    const next = vi.fn();
+
+    await attachUserState(req, res, next);
+
+    expect(req.statePermissions).toEqual({ fallback: true });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('attachUserState coerces array permissions into ANON fallback object', async () => {
+    mockDb.getAsync.mockResolvedValue({ user_journey_state: 'ORG_MEMBER', current_phase: 'B' });
+    mockUserStateMachine.getPermissions
+      .mockReturnValueOnce(['unexpected'] as any)
+      .mockImplementation(() => ({ fallback: true }));
+    const req: any = { user: { id: 'u-1' } };
+    const res: any = {};
+    const next = vi.fn();
+
+    await attachUserState(req, res, next);
+
+    expect(req.statePermissions).toEqual({ fallback: true });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('requireState denies when state is not allowed', () => {
     const middleware = requireState(['TEAM_COLLAB']);
     const req: any = { userState: 'ANON', currentPhase: 'A' };
@@ -226,6 +256,28 @@ describe('userStateGuard.middleware', () => {
   it('requireState returns 401 when userState is whitespace-only', () => {
     const middleware = requireState(['ORG_MEMBER']);
     const req: any = { userState: '   \t ', currentPhase: 'A' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'USER_STATE_UNKNOWN',
+      message: 'User state not determined. Are you logged in?',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireState returns 401 when req.userState accessor throws', () => {
+    const middleware = requireState(['ORG_MEMBER']);
+    const req: any = {};
+    Object.defineProperty(req, 'userState', {
+      configurable: true,
+      get: () => {
+        throw new Error('userState getter failed');
+      },
+    });
     const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
     const next = vi.fn();
 
@@ -278,6 +330,46 @@ describe('userStateGuard.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requirePhase returns 401 when req.currentPhase accessor throws', () => {
+    const middleware = requirePhase(['A']);
+    const req: any = {};
+    Object.defineProperty(req, 'currentPhase', {
+      configurable: true,
+      get: () => {
+        throw new Error('currentPhase getter failed');
+      },
+    });
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'USER_PHASE_UNKNOWN',
+      message: 'User phase not determined. Are you logged in?',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when requirePhase contains unknown phases', () => {
+    const middleware = requirePhase(['Z']);
+    const req: any = { currentPhase: 'A' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        invalidPhases: ['Z'],
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 500 when requireState is configured with no valid allowed states', () => {
     const middleware = requireState(['', '   ']);
     const req: any = { userState: 'ORG_MEMBER', currentPhase: 'A' };
@@ -287,6 +379,24 @@ describe('userStateGuard.middleware', () => {
     middleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(500);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when requireState contains unknown states', () => {
+    const middleware = requireState(['ORG_MEBER']);
+    const req: any = { userState: 'ORG_MEMBER', currentPhase: 'A' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        invalidStates: ['ORG_MEBER'],
+      })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -322,6 +432,28 @@ describe('userStateGuard.middleware', () => {
   it('requirePermission returns 401 when user state is missing', () => {
     const middleware = requirePermission('canWrite');
     const req: any = {};
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'USER_STATE_UNKNOWN',
+      message: 'User state not determined. Are you logged in?',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requirePermission returns 401 when req.userState accessor throws', () => {
+    const middleware = requirePermission('canWrite');
+    const req: any = {};
+    Object.defineProperty(req, 'userState', {
+      configurable: true,
+      get: () => {
+        throw new Error('userState getter failed');
+      },
+    });
     const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
     const next = vi.fn();
 
@@ -445,6 +577,21 @@ describe('userStateGuard.middleware', () => {
     const result = await transitionState('u-1', 'ANON', 'TEAM_COLLAB');
 
     expect(result.success).toBe(true);
+    expect(mockDb.run).toHaveBeenCalledTimes(1);
+  });
+
+  it('transitionState succeeds when context is null by coercing to empty object', async () => {
+    mockUserStateMachine.validateTransition.mockReturnValue({ valid: true });
+    mockDb.run.mockResolvedValue(undefined);
+
+    const result = await transitionState('u-1', 'ANON', 'TEAM_COLLAB', null as any);
+
+    expect(result.success).toBe(true);
+    expect(mockUserStateMachine.validateTransition).toHaveBeenCalledWith(
+      'ANON',
+      'TEAM_COLLAB',
+      {}
+    );
     expect(mockDb.run).toHaveBeenCalledTimes(1);
   });
 

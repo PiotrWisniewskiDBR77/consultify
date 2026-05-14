@@ -6,6 +6,7 @@ import {
   getPiiRouteConfigIssues,
   piiEncryptionMiddleware,
 } from '../../../../server/src/middleware/piiEncryption.middleware.ts';
+import * as encryptionService from '../../../../server/src/services/encryption/EncryptionService.js';
 import { encryptPII } from '../../../../server/src/services/encryption/EncryptionService.js';
 import logger from '../../../../server/src/utils/Logger.js';
 
@@ -335,6 +336,59 @@ describe('piiEncryption.middleware', () => {
       })
     );
 
+    errorSpy.mockRestore();
+  });
+
+  it('encryptRequestPII logs request path and method when encryptPII throws', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const encryptSpy = vi.spyOn(encryptionService, 'encryptPII').mockImplementationOnce(() => {
+      throw new Error('encrypt failed');
+    });
+    const req: any = {
+      path: '/api/users',
+      method: 'POST',
+      body: { email: 'user@example.com' },
+    };
+    const next = vi.fn();
+
+    encryptRequestPII(req, {} as any, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[PIIEncryption] Request encryption error:',
+      expect.objectContaining({
+        path: '/api/users',
+        method: 'POST',
+      })
+    );
+
+    encryptSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  it('decryptResponsePII forwards original payload reference when decryptPII throws', () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const decryptSpy = vi.spyOn(encryptionService, 'decryptPII').mockImplementationOnce(() => {
+      throw new Error('decrypt failed');
+    });
+    const req: any = { path: '/api/users' };
+    const originalJson = vi.fn(function (this: unknown, payload: unknown) {
+      return payload;
+    });
+    const res: any = { json: originalJson };
+    const next = vi.fn();
+    const payload = { email: 'enc:v1:testpayload' };
+
+    decryptResponsePII(req, res, next);
+    const result = res.json(payload);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(originalJson).toHaveBeenCalledTimes(1);
+    expect(originalJson.mock.calls[0]?.[0]).toBe(payload);
+    expect(result).toBe(payload);
+    expect(errorSpy).toHaveBeenCalledWith('[PIIEncryption] Response decryption error:', expect.any(Error));
+
+    decryptSpy.mockRestore();
     errorSpy.mockRestore();
   });
 });

@@ -152,6 +152,7 @@ const readOrgIdFromParam = (req: Request, paramName: string): string | null => {
     () => req.params as Record<string, unknown>,
     {} as Record<string, unknown>
   );
+  if (!Object.prototype.hasOwnProperty.call(params, paramName)) return null;
   return normalizeOptionalString(safeRead(() => params[paramName], undefined));
 };
 
@@ -272,6 +273,9 @@ async function resolveUserOrgAccess(userId: string, orgId: string): Promise<OrgA
   if (!userId || !orgId) {
     return { allowed: false };
   }
+  if (!isSafeOrgContextUserId(userId) || !isSafeOrgContextId(orgId)) {
+    return { allowed: false };
+  }
 
   // Check direct membership first
   const membership = await dbGet<MembershipRow>(
@@ -331,6 +335,7 @@ async function resolveUserOrgAccess(userId: string, orgId: string): Promise<OrgA
 async function getUserOrganizations(
   userId: string
 ): Promise<Array<{ id: string; name: string; role: string; access_type: string }>> {
+  if (!isSafeOrgContextUserId(userId)) return [];
   const orgs: Array<{ id: string; name: string; role: string; access_type: string }> = [];
 
   // Get member organizations

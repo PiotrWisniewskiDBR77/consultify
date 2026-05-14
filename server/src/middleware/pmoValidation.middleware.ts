@@ -97,9 +97,20 @@ const clampOptionalString = (value: string | undefined, maxChars: number): strin
   if (value.length <= maxChars) return value;
   return value.slice(0, maxChars);
 };
+const readPmoBody = (req: PMORequest): PMORequest['body'] => {
+  const raw = safeRead(() => req.body, {} as PMORequest['body']);
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {} as PMORequest['body'];
+  }
+  return raw as PMORequest['body'];
+};
 
 const readEntityId = (req: PMORequest): string | undefined =>
   normalizeOptionalString(safeRead(() => req.params?.id, undefined));
+const hasBooleanValidFlag = (value: unknown): value is { valid: boolean; reason?: unknown } =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  typeof safeRead(() => (value as { valid?: unknown }).valid, undefined) === 'boolean';
 const readTransitionErrorMessage = (reason: unknown): string => {
   const normalized = normalizeOptionalString(reason);
   if (!normalized) return 'Invalid status transition';
@@ -123,7 +134,7 @@ let deps: Dependencies = {
  * Validate initiative creation (owner required)
  */
 export const validateInitiative = (req: PMORequest, res: Response, next: NextFunction): void => {
-  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const body = readPmoBody(req);
   const { ownerId, owner_business_id, ownerBusinessId } = body;
   const owner =
     normalizeOptionalString(ownerId) ||
@@ -156,7 +167,7 @@ export const validateTask = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const body = readPmoBody(req);
   const { initiativeId, initiative_id } = body;
   const initId = normalizeOptionalString(initiativeId) || normalizeOptionalString(initiative_id);
 
@@ -204,7 +215,15 @@ export const validateInitiativeStatus = async (
 ): Promise<void> => {
   const { StatusMachine } = deps;
 
-  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const body = readPmoBody(req);
+  const rawStatus = safeRead(() => body.status, undefined as unknown);
+  if (rawStatus !== undefined && rawStatus !== null && typeof rawStatus !== 'string') {
+    res.status(400).json({
+      error: 'Invalid status value type',
+      rule: 'INVALID_STATUS_TYPE',
+    });
+    return;
+  }
   const { blockedReason, blocked_reason } = body;
   const blockedReasonValue = clampOptionalString(
     normalizeOptionalString(blockedReason) || normalizeOptionalString(blocked_reason),
@@ -243,10 +262,20 @@ export const validateInitiativeStatus = async (
       res.status(404).json({ error: 'Initiative not found' });
       return;
     }
+    const currentStatus = normalizeOptionalString(safeRead(() => row.status, undefined));
+    if (!currentStatus) {
+      logger.error('[PMO Validation] Initiative status row malformed', { initiativeId });
+      res.status(500).json({ error: 'Internal server error' });
+      return;
+    }
+    const projectId = clampOptionalString(
+      normalizeOptionalString(safeRead(() => row.project_id, undefined)),
+      MAX_PMO_ENTITY_ID_CHARS
+    );
 
     let validation: { valid: boolean; reason?: string };
     try {
-      validation = StatusMachine.validateInitiativeTransition(row.status, status, {
+      validation = StatusMachine.validateInitiativeTransition(currentStatus, status, {
         blockedReason: blockedReasonValue,
       });
     } catch (validationError: any) {
@@ -255,19 +284,19 @@ export const validateInitiativeStatus = async (
       return;
     }
 
-    if (!validation.valid) {
+    if (!hasBooleanValidFlag(validation) || validation.valid !== true) {
       res.status(400).json({
-        error: readTransitionErrorMessage(validation.reason),
+        error: readTransitionErrorMessage(validation?.reason),
         rule: 'INVALID_STATUS_TRANSITION',
-        currentStatus: row.status,
+        currentStatus,
         requestedStatus: status,
       });
       return;
     }
 
     // Store current status for audit
-    req.previousStatus = row.status;
-    req.projectId = row.project_id;
+    req.previousStatus = currentStatus;
+    req.projectId = projectId;
     next();
   } catch (err: any) {
     logger.error('[PMO Validation] validateInitiativeStatus failed', err);
@@ -285,7 +314,15 @@ export const validateTaskStatus = async (
 ): Promise<void> => {
   const { StatusMachine } = deps;
 
-  const body = safeRead(() => req.body, {} as PMORequest['body']);
+  const body = readPmoBody(req);
+  const rawStatus = safeRead(() => body.status, undefined as unknown);
+  if (rawStatus !== undefined && rawStatus !== null && typeof rawStatus !== 'string') {
+    res.status(400).json({
+      error: 'Invalid status value type',
+      rule: 'INVALID_STATUS_TYPE',
+    });
+    return;
+  }
   const { blockedReason, blocked_reason, blockerType, blocker_type } = body;
   const blockedReasonValue = clampOptionalString(
     normalizeOptionalString(blockedReason) || normalizeOptionalString(blocked_reason),
@@ -328,10 +365,20 @@ export const validateTaskStatus = async (
       res.status(404).json({ error: 'Task not found' });
       return;
     }
+    const currentStatus = normalizeOptionalString(safeRead(() => row.status, undefined));
+    if (!currentStatus) {
+      logger.error('[PMO Validation] Task status row malformed', { taskId });
+      res.status(500).json({ error: 'Internal server error' });
+      return;
+    }
+    const initiativeId = clampOptionalString(
+      normalizeOptionalString(safeRead(() => row.initiative_id, undefined)),
+      MAX_PMO_ENTITY_ID_CHARS
+    );
 
     let validation: { valid: boolean; reason?: string };
     try {
-      validation = StatusMachine.validateTaskTransition(row.status, status, {
+      validation = StatusMachine.validateTaskTransition(currentStatus, status, {
         blockedReason: blockedReasonValue,
         blockerType: blockerTypeValue,
       });
@@ -341,18 +388,18 @@ export const validateTaskStatus = async (
       return;
     }
 
-    if (!validation.valid) {
+    if (!hasBooleanValidFlag(validation) || validation.valid !== true) {
       res.status(400).json({
-        error: readTransitionErrorMessage(validation.reason),
+        error: readTransitionErrorMessage(validation?.reason),
         rule: 'INVALID_STATUS_TRANSITION',
-        currentStatus: row.status,
+        currentStatus,
         requestedStatus: status,
       });
       return;
     }
 
-    req.previousStatus = row.status;
-    req.initiativeId = row.initiative_id;
+    req.previousStatus = currentStatus;
+    req.initiativeId = initiativeId;
     next();
   } catch (err: any) {
     logger.error('[PMO Validation] validateTaskStatus failed', err);
@@ -373,7 +420,7 @@ export const logStatusChange = (entityType: string) => {
 
     (res.json as any) = async (data: unknown) => {
       try {
-        const body = safeRead(() => req.body, {} as PMORequest['body']);
+        const body = readPmoBody(req);
         const nextStatus = normalizeOptionalString(body.status);
         const organizationId = normalizeOptionalString(safeRead(() => req.organizationId, undefined));
         const entityId = readEntityId(req);
@@ -383,13 +430,20 @@ export const logStatusChange = (entityType: string) => {
         const entityIdWithinLimit = Boolean(
           entityId && entityId.length > 0 && entityId.length <= MAX_PMO_ENTITY_ID_CHARS
         );
+        const organizationIdWithinLimit = Boolean(
+          organizationId &&
+            organizationId.length > 0 &&
+            organizationId.length <= MAX_PMO_ENTITY_ID_CHARS
+        );
+        const userIdWithinLimit = !userId || userId.length <= MAX_PMO_ENTITY_ID_CHARS;
 
         // Only log if successful and status changed, and we have a valid org context
         if (
           responseStatus < 400 &&
           previousStatus &&
           nextStatus &&
-          organizationId &&
+          organizationIdWithinLimit &&
+          userIdWithinLimit &&
           entityIdWithinLimit
         ) {
           const logSql = `INSERT INTO activity_logs 

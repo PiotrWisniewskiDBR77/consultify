@@ -101,8 +101,25 @@ describe('demoGuard.middleware setUserDemoPreference', () => {
     expect(getMock).not.toHaveBeenCalled();
   });
 
+  it('returns false without DB access when user id contains disallowed characters in checkUserDemoPreference', async () => {
+    const result = await checkUserDemoPreference('user\nid');
+
+    expect(result).toBe(false);
+    expect(runMock).not.toHaveBeenCalled();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
   it('rejects setUserDemoPreference and skips DB calls when user id exceeds max length', async () => {
     await expect(setUserDemoPreference(`u${'x'.repeat(200)}`, true)).rejects.toThrow(
+      'Invalid demo preference user id'
+    );
+
+    expect(runMock).not.toHaveBeenCalled();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects setUserDemoPreference and skips DB calls when user id contains disallowed characters', async () => {
+    await expect(setUserDemoPreference('user\nid', true)).rejects.toThrow(
       'Invalid demo preference user id'
     );
 

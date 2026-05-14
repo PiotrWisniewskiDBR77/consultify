@@ -405,6 +405,19 @@ describe('Resource Quota Middleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should return 500 when memory usage row is not a plain object', async () => {
+      vi.mocked(queryHelpers.queryOne)
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockResolvedValueOnce({ id: 'plan-123', memory_limit_mb: 1000 })
+        .mockResolvedValueOnce([] as any);
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(500);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Organization data not found' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should pass when memory usage value is non-numeric', async () => {
       vi.mocked(queryHelpers.queryOne)
         .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
@@ -489,7 +502,7 @@ describe('Resource Quota Middleware', () => {
       expect(statusSpy).not.toHaveBeenCalled();
     });
 
-    it('should not call next on memory DB error when response is already committed', async () => {
+    it('should call next on memory DB error when response is already committed', async () => {
       vi.mocked(queryHelpers.queryOne).mockImplementation(async () => {
         (mockRes as any).headersSent = true;
         throw new Error('DB Error');
@@ -497,8 +510,36 @@ describe('Resource Quota Middleware', () => {
 
       await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledTimes(1);
       expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call next on memory DB error when response is writableEnded', async () => {
+      vi.mocked(queryHelpers.queryOne).mockImplementation(async () => {
+        (mockRes as any).headersSent = false;
+        (mockRes as any).writableEnded = true;
+        throw new Error('DB Error');
+      });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
+    });
+
+    it('should treat unsafe bigint memory values as invalid and pass through', async () => {
+      const unsafeBigInt = BigInt(Number.MAX_SAFE_INTEGER) + 2n;
+      vi.mocked(queryHelpers.queryOne)
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockResolvedValueOnce({ id: 'plan-123', memory_limit_mb: unsafeBigInt })
+        .mockResolvedValueOnce({ memory_usage_mb_current: unsafeBigInt });
+
+      await checkMemoryQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -724,6 +765,19 @@ describe('Resource Quota Middleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should return 500 when CPU usage row is not a plain object', async () => {
+      vi.mocked(queryHelpers.queryOne)
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockResolvedValueOnce({ id: 'plan-123', cpu_quota_percent: 50 })
+        .mockResolvedValueOnce([] as any);
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(500);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Organization data not found' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should pass when cpu usage value is non-numeric', async () => {
       vi.mocked(queryHelpers.queryOne)
         .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
@@ -799,7 +853,7 @@ describe('Resource Quota Middleware', () => {
       expect(statusSpy).not.toHaveBeenCalled();
     });
 
-    it('should not call next on CPU DB error when response is already committed', async () => {
+    it('should call next on CPU DB error when response is already committed', async () => {
       vi.mocked(queryHelpers.queryOne).mockImplementation(async () => {
         (mockRes as any).headersSent = true;
         throw new Error('DB Error');
@@ -807,8 +861,36 @@ describe('Resource Quota Middleware', () => {
 
       await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledTimes(1);
       expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call next on CPU DB error when response is writableEnded', async () => {
+      vi.mocked(queryHelpers.queryOne).mockImplementation(async () => {
+        (mockRes as any).headersSent = false;
+        (mockRes as any).writableEnded = true;
+        throw new Error('DB Error');
+      });
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
+    });
+
+    it('should treat unsafe bigint cpu values as invalid and pass through', async () => {
+      const unsafeBigInt = BigInt(Number.MAX_SAFE_INTEGER) + 2n;
+      vi.mocked(queryHelpers.queryOne)
+        .mockResolvedValueOnce({ subscription_plan_id: 'plan-123' })
+        .mockResolvedValueOnce({ id: 'plan-123', cpu_quota_percent: unsafeBigInt })
+        .mockResolvedValueOnce({ cpu_usage_percent_avg: unsafeBigInt });
+
+      await checkCPUQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -894,6 +976,16 @@ describe('Resource Quota Middleware', () => {
 
     it('should return error when organization not found', async () => {
       vi.mocked(queryHelpers.queryOne).mockResolvedValue(null);
+
+      await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(500);
+      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Organization not found' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should return 500 when budget row is not a plain object', async () => {
+      vi.mocked(queryHelpers.queryOne).mockResolvedValue([] as any);
 
       await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
@@ -1068,7 +1160,7 @@ describe('Resource Quota Middleware', () => {
       expect(statusSpy).not.toHaveBeenCalled();
     });
 
-    it('should not call next on budget DB error when response is already committed', async () => {
+    it('should call next on budget DB error when response is already committed', async () => {
       vi.mocked(queryHelpers.queryOne).mockImplementation(async () => {
         (mockRes as any).headersSent = true;
         throw new Error('DB Error');
@@ -1076,8 +1168,22 @@ describe('Resource Quota Middleware', () => {
 
       await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
 
-      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledTimes(1);
       expect(statusSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call next on budget DB error when response is writableEnded', async () => {
+      vi.mocked(queryHelpers.queryOne).mockImplementation(async () => {
+        (mockRes as any).headersSent = false;
+        (mockRes as any).writableEnded = true;
+        throw new Error('DB Error');
+      });
+
+      await checkBudgetQuota(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
     });
   });
 

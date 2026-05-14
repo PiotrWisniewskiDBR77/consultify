@@ -22,11 +22,13 @@ interface MetricsBucket {
   aiTimeouts: number;
 }
 
-const LATENCY_BUCKETS = [50, 100, 250, 500, 1000, 2500, 5000, 10000];
+const LATENCY_BUCKETS = [50, 100, 250, 500, 1000, 2500, 5000, 10000].sort((a, b) => a - b);
 const METRICS_MW_INSTALLED = Symbol('consultify.metrics.middleware.installed');
 const MAX_METRIC_METHOD_CHARS = 32;
 const MAX_METRIC_COUNTER = Number.MAX_SAFE_INTEGER;
 const MAX_RECORDED_REQUEST_DURATION_MS = 600_000;
+const MAX_DISTINCT_METHOD_LABELS = 64;
+const METHOD_OVERFLOW_BUCKET = 'OTHER';
 
 const metrics: MetricsBucket = {
   requests: 0,
@@ -91,6 +93,13 @@ function addBoundedMetric(current: unknown, delta: unknown): number {
   const deltaValue = typeof delta === 'number' && Number.isFinite(delta) && delta > 0 ? delta : 0;
   if (deltaValue === 0) return Math.min(currentValue, MAX_METRIC_COUNTER);
   return Math.min(MAX_METRIC_COUNTER, currentValue + deltaValue);
+}
+
+function subtractBoundedMetric(current: unknown, delta: unknown): number {
+  const currentValue = typeof current === 'number' && Number.isFinite(current) && current >= 0 ? current : 0;
+  const deltaValue = typeof delta === 'number' && Number.isFinite(delta) && delta > 0 ? delta : 0;
+  if (deltaValue === 0) return Math.min(currentValue, MAX_METRIC_COUNTER);
+  return Math.max(0, Math.min(MAX_METRIC_COUNTER, currentValue - deltaValue));
 }
 
 export function incrementRateLimitHits(): void {
@@ -173,18 +182,27 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
 
   const start = Date.now();
   const method = safeMethod(req);
+  const effectiveMethod = (() => {
+    if (method in metrics.byMethod) return method;
+    if (Object.keys(metrics.byMethod).length < MAX_DISTINCT_METHOD_LABELS) return method;
+    return METHOD_OVERFLOW_BUCKET;
+  })();
   let completionRecorded = false;
   let listenersDetached = false;
   const detachCompletionListeners = () => {
     if (listenersDetached) return;
+    const remove = (res as any).removeListener;
+    if (typeof remove === 'function') {
+      safeRead(() => {
+        remove.call(res, 'finish', onFinish);
+        return true;
+      }, false);
+      safeRead(() => {
+        remove.call(res, 'close', onClose);
+        return true;
+      }, false);
+    }
     listenersDetached = true;
-    safeRead(() => {
-      if (typeof (res as any).removeListener === 'function') {
-        (res as any).removeListener('finish', onFinish);
-        (res as any).removeListener('close', onClose);
-      }
-      return true;
-    }, false);
   };
   const recordCompletion = () => {
     if (completionRecorded) return;
@@ -267,14 +285,27 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
   }
 
   metrics.requests = addBoundedMetric(metrics.requests, 1);
-  metrics.byMethod[method] = addBoundedMetric(metrics.byMethod[method], 1);
+  metrics.byMethod[effectiveMethod] = addBoundedMetric(metrics.byMethod[effectiveMethod], 1);
 
-  next();
+  try {
+    next();
+  } catch (error) {
+    detachCompletionListeners();
+    safeRead(() => {
+      (res as any).end = originalEnd as typeof res.end;
+      delete (res as any)[METRICS_MW_INSTALLED];
+      return true;
+    }, false);
+    metrics.requests = subtractBoundedMetric(metrics.requests, 1);
+    metrics.byMethod[effectiveMethod] = subtractBoundedMetric(metrics.byMethod[effectiveMethod], 1);
+    throw error;
+  }
 };
 
 export default metricsMiddleware;
 
 export const __private__ = {
   addBoundedMetric,
+  subtractBoundedMetric,
   escapePrometheusLabelValue,
 };

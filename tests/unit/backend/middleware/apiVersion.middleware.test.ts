@@ -107,6 +107,23 @@ describe('apiVersion.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('does not call next twice when downstream next throws after successful version resolution', () => {
+    const req: any = { path: '/api/x', headers: {}, query: {} };
+    const res = makeRes();
+    const next = vi.fn(() => {
+      throw new Error('next boom');
+    });
+
+    expect(() => apiVersionMiddleware(req, res as any, next as any)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      '[APIVersion] next() threw after successful version resolution',
+      expect.objectContaining({
+        detail: expect.stringContaining('next boom'),
+      })
+    );
+  });
+
   it('attaches a detached apiVersion object instead of mutating API_VERSIONS map entries', () => {
     const req: any = { path: '/api/x', headers: {}, query: {} };
     const res = makeRes();
@@ -200,6 +217,17 @@ describe('apiVersion.middleware (L1)', () => {
 
   it('uses first non-empty query.version when query value is an array', () => {
     const req: any = { path: '/api/x', headers: {}, query: { version: [' ', '1.0'] } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    apiVersionMiddleware(req, res as any, next as any);
+    expect(req.apiVersion?.full).toBe('1.0.0');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores inherited query.version and falls back to default version', () => {
+    const inherited = { version: '9.9.9' };
+    const req: any = { path: '/api/x', headers: {}, query: Object.create(inherited) };
     const res = makeRes();
     const next = vi.fn();
 
@@ -439,12 +467,6 @@ describe('apiVersion.middleware (L1)', () => {
           detail: expect.stringContaining('deprecated log failed'),
         })
       );
-      expect(loggerWarnMock).toHaveBeenCalledWith(
-        '[APIVersion] Failed to invoke next after extraction error',
-        expect.objectContaining({
-          detail: expect.stringContaining('deprecated log failed'),
-        })
-      );
     } finally {
       warnSpy.mockRestore();
       if (original) API_VERSIONS['0.9.3'] = original;
@@ -556,6 +578,40 @@ describe('apiVersion.middleware (L1)', () => {
       const next = vi.fn();
       requireVersion('999')(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not throw when next throws on recognized minVersion success path', () => {
+      const req: any = { apiVersion: API_VERSIONS['1'] };
+      const res = makeRes();
+      const next = vi.fn(() => {
+        throw new Error('next success boom');
+      });
+
+      expect(() => requireVersion('1')(req, res as any, next as any)).not.toThrow();
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        '[APIVersion] requireVersion next() threw (success)',
+        expect.objectContaining({
+          detail: expect.stringContaining('next success boom'),
+        })
+      );
+    });
+
+    it('does not throw when next throws on unrecognized minVersion no-op path', () => {
+      const req: any = { apiVersion: API_VERSIONS['1'] };
+      const res = makeRes();
+      const next = vi.fn(() => {
+        throw new Error('next no-op boom');
+      });
+
+      expect(() => requireVersion('999')(req, res as any, next as any)).not.toThrow();
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        '[APIVersion] requireVersion next() threw (unknown minVersion no-op)',
+        expect.objectContaining({
+          detail: expect.stringContaining('next no-op boom'),
+        })
+      );
     });
 
     it('trims spaced minVersion input in requireVersion before lookup', () => {
@@ -713,6 +769,40 @@ describe('apiVersion.middleware (L1)', () => {
       requireVersion('1.0.0')(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('rejects non-finite req.apiVersion major as too old for higher required version', () => {
+      const original = API_VERSIONS['2'];
+      API_VERSIONS['2'] = {
+        major: 2,
+        minor: 0,
+        patch: 0,
+        full: '2.0.0',
+        deprecated: false,
+        sunsetDate: null,
+      };
+      try {
+        const req: any = {
+          apiVersion: {
+            major: Number.NaN,
+            minor: 0,
+            patch: 0,
+            full: '1.0.0',
+            deprecated: false,
+            sunsetDate: null,
+          },
+        };
+        const res = makeRes();
+        const next = vi.fn();
+
+        requireVersion('2')(req, res as any, next as any);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(next).not.toHaveBeenCalled();
+      } finally {
+        if (original) API_VERSIONS['2'] = original;
+        else delete (API_VERSIONS as any)['2'];
+      }
     });
 
     it('stays non-throwing when req.apiVersion accessor throws inside requireVersion', () => {

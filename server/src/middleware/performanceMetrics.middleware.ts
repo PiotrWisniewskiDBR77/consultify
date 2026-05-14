@@ -112,6 +112,7 @@ const resolveSlowRequestThresholdMs = (raw: string | undefined): number => {
 const SLOW_REQUEST_THRESHOLD_MS = resolveSlowRequestThresholdMs(process.env.SLOW_REQUEST_THRESHOLD_MS);
 const IS_TEST_ENV = process.env.NODE_ENV === 'test';
 const performanceFinishHooked = new WeakSet<Response>();
+const performanceCloseHooked = new WeakSet<Response>();
 
 function safeRead<T>(reader: () => T, fallback: T): T {
   try {
@@ -244,6 +245,7 @@ export function performanceMetricsMiddleware(
       const responseTime =
         Number.isFinite(responseTimeRaw) && responseTimeRaw >= 0 ? responseTimeRaw : 0;
       const routeLabel = clampMetricText(getRouteLabel(req), MAX_METRIC_PATH_CHARS);
+      const methodLabel = clampMetricText(requestMethod, MAX_METHOD_LABEL_CHARS);
       const endMemory = safeRead(() => process.memoryUsage(), startMemory);
       const memoryDelta = {
         heapUsed: finiteOrZero(endMemory.heapUsed - startMemory.heapUsed),
@@ -265,7 +267,7 @@ export function performanceMetricsMiddleware(
           : 500;
       const metric: Metric = {
         timestamp: new Date().toISOString(),
-        method: clampMetricText(requestMethod, MAX_METHOD_LABEL_CHARS),
+        method: methodLabel,
         path: clampMetricText(requestPath, MAX_METRIC_PATH_CHARS),
         statusCode,
         responseTime,
@@ -289,7 +291,7 @@ export function performanceMetricsMiddleware(
         metricsStore.requests.shift();
       }
       try {
-        metricsService?.recordHttpRequest(requestMethod, routeLabel, statusCode, responseTime / 1000);
+        metricsService?.recordHttpRequest(methodLabel, routeLabel, statusCode, responseTime / 1000);
       } catch (error) {
         logger.warn('Performance middleware recordHttpRequest failed', error);
       }
@@ -355,6 +357,27 @@ export function performanceMetricsMiddleware(
   if (performanceTrackingEnabled && !finishListenerAttached) {
     releasePerformanceTracking();
   }
+  safeRead(() => {
+    if (typeof res.on !== 'function') {
+      return false;
+    }
+    if (performanceCloseHooked.has(res)) {
+      return true;
+    }
+    if (
+      typeof (res as Response & { once?: (event: string, listener: () => void) => Response })
+        .once === 'function'
+    ) {
+      (res as Response & { once: (event: string, listener: () => void) => Response }).once(
+        'close',
+        releasePerformanceTracking
+      );
+    } else {
+      res.on('close', releasePerformanceTracking);
+    }
+    performanceCloseHooked.add(res);
+    return true;
+  }, false);
 
   try {
     next();

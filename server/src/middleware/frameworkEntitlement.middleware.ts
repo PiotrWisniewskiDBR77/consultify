@@ -46,13 +46,21 @@ const FRAMEWORK_UPGRADE_CTA_MAX_LEN = 512;
 const VALID_FRAMEWORK_ACCESS_LEVELS = new Set(['locked', 'trial', 'full', 'educational']);
 const FRAMEWORK_ID_PATTERN = /^[A-Z0-9][A-Z0-9._-]*$/;
 const FRAMEWORK_CHECK_TIMEOUT_MS = 8000;
+class FrameworkEntitlementCheckTimeoutError extends Error {
+  code = 'FRAMEWORK_CHECK_TIMEOUT';
+
+  constructor(timeoutMs: number) {
+    super(`Framework entitlement check timed out after ${timeoutMs}ms`);
+    this.name = 'FrameworkEntitlementCheckTimeoutError';
+  }
+}
 
 const sendJsonIfHeadersOpen = (
   res: Response,
   statusCode: number,
   payload: Record<string, unknown>
 ): boolean => {
-  if (safeRead(() => res.headersSent, false)) return false;
+  if (isResponseCommitted(res)) return false;
   try {
     res.status(statusCode).json(payload);
     return true;
@@ -61,12 +69,27 @@ const sendJsonIfHeadersOpen = (
     return false;
   }
 };
+const isResponseCommitted = (res: Response): boolean =>
+  safeRead(
+    () =>
+      res.headersSent ||
+      (res as Response & { writableEnded?: boolean }).writableEnded === true,
+    false
+  );
+const isClientGone = (req: Request): boolean =>
+  safeRead(
+    () =>
+      (req as Request & { aborted?: boolean; destroyed?: boolean }).aborted === true ||
+      (req as Request & { aborted?: boolean; destroyed?: boolean }).destroyed === true ||
+      ((req as Request & { socket?: { destroyed?: boolean } }).socket?.destroyed === true),
+    false
+  );
 
 const withTimeout = async <T>(operation: Promise<T>, timeoutMs: number): Promise<T> => {
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(() => {
-      reject(new Error('FRAMEWORK_CHECK_TIMEOUT'));
+      reject(new FrameworkEntitlementCheckTimeoutError(timeoutMs));
     }, timeoutMs);
     timeoutHandle.unref?.();
   });
@@ -85,7 +108,7 @@ const respondOrNextOnWriteFailure = (
   fallbackMessage: string
 ): void => {
   const sent = sendJsonIfHeadersOpen(res, statusCode, payload);
-  if (!sent && !safeRead(() => res.headersSent, false)) {
+  if (!sent && !isResponseCommitted(res)) {
     invokeNext(next, new Error(fallbackMessage));
   }
 };
@@ -175,6 +198,20 @@ export function requireFrameworkAccess(frameworkId: string) {
       );
       return;
     }
+    if (isClientGone(req)) {
+      logger.warn('[FrameworkGate] client gone before checkAccess', {
+        framework: canonicalFrameworkId,
+        orgId: clampOptionalString(orgId, 128),
+      });
+      const sent = sendJsonIfHeadersOpen(res, 503, {
+        error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+        framework: canonicalFrameworkId,
+      });
+      if (!sent && !isResponseCommitted(res)) {
+        invokeNext(next, new Error('Framework access check aborted'));
+      }
+      return;
+    }
     try {
       const result = await withTimeout(
         FrameworkEntitlementService.checkAccess(orgId, canonicalFrameworkId),
@@ -188,7 +225,7 @@ export function requireFrameworkAccess(frameworkId: string) {
           error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
           framework: canonicalFrameworkId,
         });
-        if (!sent && !safeRead(() => res.headersSent, false)) {
+        if (!sent && !isResponseCommitted(res)) {
           invokeNext(next, new Error('Framework access check returned invalid payload'));
         }
         return;
@@ -201,7 +238,7 @@ export function requireFrameworkAccess(frameworkId: string) {
           error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
           framework: canonicalFrameworkId,
         });
-        if (!sent && !safeRead(() => res.headersSent, false)) {
+        if (!sent && !isResponseCommitted(res)) {
           invokeNext(next, new Error('Framework access check returned invalid payload'));
         }
         return;
@@ -223,15 +260,30 @@ export function requireFrameworkAccess(frameworkId: string) {
         );
         return;
       }
+      if (isResponseCommitted(res)) {
+        logger.warn('[FrameworkGate] Response already committed before gate success', {
+          framework: canonicalFrameworkId,
+        });
+        invokeNext(next, new Error('FRAMEWORK_GATE_HEADERS_ALREADY_SENT'));
+        return;
+      }
       req.frameworkAccess = buildFrameworkAccessAttachment(result);
       invokeNext(next);
     } catch (error) {
-      logger.warn('[FrameworkGate] checkAccess failed', error);
+      if (error instanceof FrameworkEntitlementCheckTimeoutError) {
+        logger.warn('[FrameworkGate] checkAccess timed out', {
+          framework: canonicalFrameworkId,
+          timeoutMs: FRAMEWORK_CHECK_TIMEOUT_MS,
+          orgId: clampOptionalString(orgId, 128),
+        });
+      } else {
+        logger.warn('[FrameworkGate] checkAccess failed', error);
+      }
       const sent = sendJsonIfHeadersOpen(res, 503, {
         error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
         framework: canonicalFrameworkId,
       });
-      if (!sent && !safeRead(() => res.headersSent, false)) {
+      if (!sent && !isResponseCommitted(res)) {
         invokeNext(next, error instanceof Error ? error : new Error('Framework access check failed'));
       }
     }
@@ -298,6 +350,20 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
       );
       return;
     }
+    if (isClientGone(req)) {
+      logger.warn('[FrameworkGate] dynamic client gone before checkAccess', {
+        framework: canonicalFwId,
+        orgId: clampOptionalString(orgId, 128),
+      });
+      const sent = sendJsonIfHeadersOpen(res, 503, {
+        error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
+        framework: canonicalFwId,
+      });
+      if (!sent && !isResponseCommitted(res)) {
+        invokeNext(next, new Error('Dynamic framework access check aborted'));
+      }
+      return;
+    }
     try {
       const result = await withTimeout(
         FrameworkEntitlementService.checkAccess(orgId, canonicalFwId),
@@ -311,7 +377,7 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
           error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
           framework: canonicalFwId,
         });
-        if (!sent && !safeRead(() => res.headersSent, false)) {
+        if (!sent && !isResponseCommitted(res)) {
           invokeNext(next, new Error('Dynamic framework access check returned invalid payload'));
         }
         return;
@@ -324,7 +390,7 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
           error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
           framework: canonicalFwId,
         });
-        if (!sent && !safeRead(() => res.headersSent, false)) {
+        if (!sent && !isResponseCommitted(res)) {
           invokeNext(next, new Error('Dynamic framework access check returned invalid payload'));
         }
         return;
@@ -346,15 +412,30 @@ export function requireDynamicFrameworkAccess(paramName = 'frameworkId') {
         );
         return;
       }
+      if (isResponseCommitted(res)) {
+        logger.warn('[FrameworkGate] Response already committed before dynamic gate success', {
+          framework: canonicalFwId,
+        });
+        invokeNext(next, new Error('FRAMEWORK_GATE_HEADERS_ALREADY_SENT'));
+        return;
+      }
       req.frameworkAccess = buildFrameworkAccessAttachment(result);
       invokeNext(next);
     } catch (error) {
-      logger.warn('[FrameworkGate] dynamic checkAccess failed', error);
+      if (error instanceof FrameworkEntitlementCheckTimeoutError) {
+        logger.warn('[FrameworkGate] dynamic checkAccess timed out', {
+          framework: canonicalFwId,
+          timeoutMs: FRAMEWORK_CHECK_TIMEOUT_MS,
+          orgId: clampOptionalString(orgId, 128),
+        });
+      } else {
+        logger.warn('[FrameworkGate] dynamic checkAccess failed', error);
+      }
       const sent = sendJsonIfHeadersOpen(res, 503, {
         error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE',
         framework: canonicalFwId,
       });
-      if (!sent && !safeRead(() => res.headersSent, false)) {
+      if (!sent && !isResponseCommitted(res)) {
         invokeNext(next, error instanceof Error ? error : new Error('Dynamic framework access check failed'));
       }
     }

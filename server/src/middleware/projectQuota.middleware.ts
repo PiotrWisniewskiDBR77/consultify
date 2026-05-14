@@ -22,6 +22,36 @@ const safeRead = <T>(reader: () => T, fallback: T): T => {
     return fallback;
   }
 };
+const invokeNextSafely = (next: NextFunction, err?: Error): void => {
+  try {
+    if (typeof next === 'function') {
+      next(err);
+    }
+  } catch {
+    // fail-open: quota middleware should not crash request lifecycle
+  }
+};
+const PROJECT_QUOTA_CHECK_TIMEOUT_MS = 8_000;
+const readCheckTimeoutMs = (): number => {
+  const raw = Number(process.env.PROJECT_QUOTA_CHECK_TIMEOUT_MS);
+  if (!Number.isFinite(raw) || raw <= 0) return PROJECT_QUOTA_CHECK_TIMEOUT_MS;
+  return Math.min(Math.trunc(raw), 60_000);
+};
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error('Project quota check timed out'));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
 
 const normalizeOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -63,6 +93,9 @@ const PROJECT_QUOTA_UPLOAD_ROOT_REAL = safeRead(
   PROJECT_QUOTA_UPLOAD_ROOT
 );
 const MAX_PROJECT_ID_LENGTH = 256;
+const PROJECT_ID_DISALLOWED_CHARS = /[\/\\\u0000]/;
+const hasUnsafeProjectIdShape = (projectId: string): boolean =>
+  PROJECT_ID_DISALLOWED_CHARS.test(projectId) || projectId.includes('..');
 const canSafelyCleanupFilePath = (filePath: string): boolean => {
   const resolved = path.resolve(filePath);
   if (!resolved) return false;
@@ -71,6 +104,16 @@ const canSafelyCleanupFilePath = (filePath: string): boolean => {
     realResolved === PROJECT_QUOTA_UPLOAD_ROOT_REAL ||
     realResolved.startsWith(`${PROJECT_QUOTA_UPLOAD_ROOT_REAL}${path.sep}`)
   );
+};
+const toMiddlewareError = (caught: unknown): Error => {
+  if (caught instanceof Error) return caught;
+  if (typeof caught === 'string') return new Error(caught);
+  try {
+    const serialized = JSON.stringify(caught);
+    return new Error(serialized || 'Non-Error rejection');
+  } catch {
+    return new Error('Non-Error rejection');
+  }
 };
 
 // ==========================================
@@ -123,7 +166,7 @@ export async function enforceProjectQuota(
 
     // If no project specified, skip project-level check (falls back to Org check)
     if (!projectId) {
-      next();
+      invokeNextSafely(next);
       return;
     }
     if (projectId.length > MAX_PROJECT_ID_LENGTH) {
@@ -133,16 +176,30 @@ export async function enforceProjectQuota(
           code: 'INVALID_PROJECT_ID',
         })
       ) {
-        next(new Error('Invalid project id'));
+        invokeNextSafely(next, new Error('Invalid project id'));
+      }
+      return;
+    }
+    if (hasUnsafeProjectIdShape(projectId)) {
+      if (
+        !sendJsonIfHeadersOpen(res, 400, {
+          error: 'Invalid project id',
+          code: 'INVALID_PROJECT_ID',
+        })
+      ) {
+        invokeNextSafely(next, new Error('Invalid project id'));
       }
       return;
     }
 
-    const quota = await usageService.checkProjectQuota(projectId);
+    const quota = await withTimeout(
+      usageService.checkProjectQuota(projectId),
+      readCheckTimeoutMs()
+    );
     if (!quota || typeof quota !== 'object' || typeof quota.allowed !== 'boolean') {
       logger.error('Invalid project quota payload');
       if (!sendJsonIfHeadersOpen(res, 500, { error: 'Failed to verify project quota' })) {
-        next(new Error('Failed to verify project quota'));
+        invokeNextSafely(next, new Error('Failed to verify project quota'));
       }
       return;
     }
@@ -153,22 +210,18 @@ export async function enforceProjectQuota(
       if (filePath) {
         try {
           if (canSafelyCleanupFilePath(filePath)) {
-            if (canSafelyCleanupFilePath(filePath)) {
-              if (safeRead(() => fs.existsSync(filePath), false)) {
-                fs.unlinkSync(filePath);
-              }
-            } else {
-              logger.warn('Skipped project quota temp cleanup after path changed before unlink', {
-                filePath: path.basename(filePath),
-              });
-            }
+            await fs.promises.unlink(filePath);
           } else {
             logger.warn('Skipped project quota temp cleanup outside upload root', {
               filePath: path.basename(filePath),
             });
           }
         } catch (e: unknown) {
+          if ((e as NodeJS.ErrnoException)?.code === 'ENOENT') {
+            // Missing temporary file is safe to ignore.
+          } else {
           logger.error('Failed to cleanup temp file:', e);
+          }
         }
       }
 
@@ -184,21 +237,22 @@ export async function enforceProjectQuota(
         message: 'This project has exceeded its storage limit.',
       })
       ) {
-        next(new Error('Failed to send project quota exceeded response'));
+        invokeNextSafely(next, new Error('Failed to send project quota exceeded response'));
       }
       return;
     }
 
-    next();
+    invokeNextSafely(next);
   } catch (error: unknown) {
     logger.error('Project quota check error:', error);
+    const middlewareError = toMiddlewareError(error);
     // Fail closed for safety
     if (isResponseTerminal(res)) {
-      next(error as Error);
+      invokeNextSafely(next, middlewareError);
       return;
     }
     if (!sendJsonIfHeadersOpen(res, 500, { error: 'Failed to verify project quota' })) {
-      next(error as Error);
+      invokeNextSafely(next, middlewareError);
     }
     return;
   }

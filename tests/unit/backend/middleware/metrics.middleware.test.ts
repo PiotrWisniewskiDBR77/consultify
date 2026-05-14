@@ -249,6 +249,33 @@ describe('metrics.middleware', () => {
     expect(after.requests).toBe(before.requests);
   });
 
+  it('restores patched response state when downstream next throws', () => {
+    const req: any = { method: 'POST' };
+    const originalEnd = vi.fn(function thisAwareEnd() {
+      return undefined;
+    });
+    const res: any = {
+      statusCode: 200,
+      end: originalEnd,
+      once: vi.fn(),
+      removeListener: vi.fn(),
+    };
+    const before = getRequestMetrics();
+    const next = vi.fn(() => {
+      throw new Error('next failed');
+    });
+
+    expect(() => metricsMiddleware(req, res, next)).toThrow('next failed');
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(typeof res.end).toBe('function');
+    res.end();
+    expect(originalEnd).toHaveBeenCalledTimes(1);
+
+    const after = getRequestMetrics();
+    expect(after.requests).toBe(before.requests);
+    expect(after.byMethod.POST || 0).toBe(before.byMethod.POST || 0);
+  });
+
   it('normalizes invalid statusCode values to 500', () => {
     const req: any = { method: 'GET' };
     const res: any = { end: vi.fn() };
@@ -299,6 +326,21 @@ describe('metrics.middleware', () => {
     for (const line of bucketLines) {
       const value = line.trim().split(/\s+/).pop();
       expect(value).toMatch(/^\d+$/);
+    }
+  });
+
+  it('exports histogram bucket boundaries in non-decreasing order', () => {
+    const output = getPrometheusMetrics();
+    const finiteBoundaries = output
+      .split('\n')
+      .filter((line) => line.startsWith('http_request_duration_ms_bucket{le="'))
+      .map((line) => line.match(/le="([^"]+)"/)?.[1] ?? '')
+      .filter((value) => value !== '+Inf')
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value));
+
+    for (let i = 1; i < finiteBoundaries.length; i += 1) {
+      expect(finiteBoundaries[i]).toBeGreaterThanOrEqual(finiteBoundaries[i - 1]);
     }
   });
 
@@ -411,5 +453,44 @@ describe('metrics.middleware', () => {
     expect((after.byStatus[200] || 0) - (before.byStatus[200] || 0)).toBe(1);
     expect(res.removeListener).toHaveBeenCalledWith('finish', finishHandlers[0]);
     expect(res.removeListener).toHaveBeenCalledWith('close', closeHandlers[0]);
+  });
+
+  it('attempts to detach both listeners even if finish detach throws', () => {
+    const finishHandlers: Array<() => void> = [];
+    const closeHandlers: Array<() => void> = [];
+    const req: any = { method: 'GET' };
+    const res: any = {
+      statusCode: 200,
+      end: vi.fn(),
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+        if (event === 'close') closeHandlers.push(cb);
+      }),
+      removeListener: vi.fn((event: string) => {
+        if (event === 'finish') throw new Error('detach finish failed');
+      }),
+    };
+    const next = vi.fn();
+
+    metricsMiddleware(req, res, next);
+
+    expect(() => finishHandlers[0]?.()).not.toThrow();
+    expect(res.removeListener).toHaveBeenCalledWith('finish', finishHandlers[0]);
+    expect(res.removeListener).toHaveBeenCalledWith('close', closeHandlers[0]);
+  });
+
+  it('caps distinct method labels by routing excess labels to OTHER bucket', () => {
+    const before = getRequestMetrics();
+    for (let i = 0; i < 70; i += 1) {
+      const req: any = { method: `M${String(i).padStart(3, '0')}` };
+      const res: any = { statusCode: 200, end: vi.fn() };
+      const next = vi.fn();
+      metricsMiddleware(req, res, next);
+      res.end();
+    }
+
+    const after = getRequestMetrics();
+    expect(Object.keys(after.byMethod).length).toBeLessThanOrEqual(64);
+    expect(after.byMethod.OTHER || 0).toBeGreaterThanOrEqual(before.byMethod.OTHER || 0);
   });
 });

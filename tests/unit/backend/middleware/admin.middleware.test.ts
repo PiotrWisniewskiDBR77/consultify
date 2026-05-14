@@ -8,7 +8,16 @@ vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
   get: dbGetMock,
 }));
 
+vi.mock('../../../../server/src/services/organizationService.js', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    normalizeOrganizationRole: vi.fn(actual.normalizeOrganizationRole),
+  };
+});
+
 import { isAdminRole, verifyAdmin } from '../../../../server/src/middleware/admin.middleware.ts';
+import { normalizeOrganizationRole } from '../../../../server/src/services/organizationService.js';
 
 function makeRes() {
   const res: any = {};
@@ -166,6 +175,32 @@ describe('admin.middleware (L1)', () => {
       verifyAdmin(req, res, next);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('does not call next on allow path when response is already headersSent', async () => {
+      const req: any = { user: { role: 'admin' } };
+      const res: any = makeRes();
+      res.headersSent = true;
+      const next = vi.fn();
+
+      await verifyAdmin(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('does not call next on allow path when response is already writableEnded', async () => {
+      const req: any = { user: { role: 'admin' } };
+      const res: any = makeRes();
+      res.writableEnded = true;
+      const next = vi.fn();
+
+      await verifyAdmin(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
 
     it('denies with 403 when allow path has invalid next handler', async () => {
@@ -420,6 +455,24 @@ describe('admin.middleware (L1)', () => {
 
       await verifyAdmin(req, res, next);
 
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('fails closed when normalizeOrganizationRole throws on membership branch', async () => {
+      dbGetMock.mockResolvedValueOnce({ role: 'OWNER' });
+      const normalizeSpy = vi.mocked(normalizeOrganizationRole).mockImplementationOnce(() => {
+        throw new Error('normalize failed');
+      });
+      const req: any = {
+        user: { role: 'user', organizationId: 'org-1', id: 'user-1' },
+      };
+      const res = makeRes();
+      const next = vi.fn();
+
+      await verifyAdmin(req, res, next);
+
+      expect(normalizeSpy).toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(403);
     });

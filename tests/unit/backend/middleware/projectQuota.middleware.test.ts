@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -23,6 +23,11 @@ describe('projectQuota.middleware', () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+    delete process.env.PROJECT_QUOTA_CHECK_TIMEOUT_MS;
+  });
+
   it('falls back to req.query.projectId when req.body accessor throws', async () => {
     const req: any = { query: { projectId: 'proj-1' } };
     Object.defineProperty(req, 'body', {
@@ -40,8 +45,72 @@ describe('projectQuota.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('skips project quota lookup when req.query accessor throws and body has no project id', async () => {
+    const req: any = { body: {} };
+    Object.defineProperty(req, 'query', {
+      configurable: true,
+      get: () => {
+        throw new Error('query getter failed');
+      },
+    });
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await enforceProjectQuota(req, res, next);
+
+    expect(checkProjectQuota).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('still uses body project id when req.query accessor throws', async () => {
+    const req: any = { body: { project_id: 'proj-body' } };
+    Object.defineProperty(req, 'query', {
+      configurable: true,
+      get: () => {
+        throw new Error('query getter failed');
+      },
+    });
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await enforceProjectQuota(req, res, next);
+
+    expect(checkProjectQuota).toHaveBeenCalledWith('proj-body');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not throw when next throws synchronously in no-project short-circuit', async () => {
+    const req: any = { body: {}, query: {} };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn(() => {
+      throw new Error('next failed');
+    });
+
+    await expect(enforceProjectQuota(req, res, next)).resolves.toBeUndefined();
+    expect(checkProjectQuota).not.toHaveBeenCalled();
+  });
+
   it('returns 400 without calling usage service when project id exceeds max length', async () => {
     const req: any = { body: { project_id: 'p'.repeat(257) } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceProjectQuota(req, res, next);
+
+    expect(checkProjectQuota).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'INVALID_PROJECT_ID' })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 without calling usage service when project id contains traversal markers', async () => {
+    const req: any = { body: { project_id: 'proj/../evil' } };
     const res: any = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
@@ -154,6 +223,46 @@ describe('projectQuota.middleware', () => {
     expect(res.json).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
+  it('times out long-running quota check and returns 500', async () => {
+    vi.useFakeTimers();
+    process.env.PROJECT_QUOTA_CHECK_TIMEOUT_MS = '10';
+    checkProjectQuota.mockReturnValueOnce(new Promise(() => {}));
+
+    const req: any = { body: { project_id: 'proj-1' } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    const middlewarePromise = enforceProjectQuota(req, res, next);
+    await vi.advanceTimersByTimeAsync(11);
+    await middlewarePromise;
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to verify project quota' });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('normalizes string rejection to Error when catch path must call next', async () => {
+    checkProjectQuota.mockRejectedValueOnce('quota service string failure');
+
+    const req: any = { body: { project_id: 'proj-1' } };
+    const res: any = {
+      status: vi.fn(() => {
+        throw new Error('status failed');
+      }),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceProjectQuota(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+    expect((next.mock.calls[0]?.[0] as Error).message).toBe('quota service string failure');
   });
 
   it('does not send 500 when response is writableEnded in catch path', async () => {
@@ -395,7 +504,8 @@ describe('projectQuota.middleware', () => {
       limit: 1024,
       percentage: 200,
     });
-    const missingPath = path.join(os.tmpdir(), `consultify-missing-${Date.now()}.tmp`);
+    const canonicalTmp = fs.realpathSync(os.tmpdir());
+    const missingPath = path.join(canonicalTmp, `consultify-missing-${Date.now()}.tmp`);
 
     const req: any = {
       body: { project_id: 'proj-1' },
@@ -404,9 +514,15 @@ describe('projectQuota.middleware', () => {
     const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
     const next = vi.fn();
 
+    const unlinkSpy = vi.spyOn(fs.promises, 'unlink').mockRejectedValueOnce(
+      Object.assign(new Error('not found'), { code: 'ENOENT' })
+    );
+
     await enforceProjectQuota(req, res, next);
 
     expect(fs.existsSync(missingPath)).toBe(false);
     expect(res.status).toHaveBeenCalledWith(429);
+    expect(unlinkSpy).toHaveBeenCalledWith(missingPath);
+    unlinkSpy.mockRestore();
   });
 });

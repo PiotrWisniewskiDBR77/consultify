@@ -89,6 +89,7 @@ function sanitizeDemoPreferenceUserId(value: unknown): string | undefined {
   const normalized = String(value ?? '').trim();
   if (!normalized) return undefined;
   if (normalized.length > MAX_DEMO_USER_ID_CHARS) return undefined;
+  if (!/^[a-zA-Z0-9_.:-]+$/.test(normalized)) return undefined;
   return normalized;
 }
 
@@ -232,6 +233,12 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
             'no-store'
           );
           (setHeaderWriter as (name: string, value: string) => unknown).call(res, 'Pragma', 'no-cache');
+          (setHeaderWriter as (name: string, value: string) => unknown).call(res, 'Expires', '0');
+          (setHeaderWriter as (name: string, value: string) => unknown).call(
+            res,
+            'CDN-Cache-Control',
+            'no-store'
+          );
         }
 
         const statusWriter = safeRead(

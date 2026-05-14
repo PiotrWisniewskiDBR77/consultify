@@ -107,6 +107,7 @@ describe('v8FeatureGate.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+
   it('module gate logs warning and fails open when feature service throws', async () => {
     mocks.isV8Enabled.mockRejectedValueOnce(new Error('module flag service down'));
     const req: any = { organizationId: 'org-2' };
@@ -137,6 +138,18 @@ describe('v8FeatureGate.middleware', () => {
 
     await moduleGate(req, res, next);
 
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('module gate returns early when response is already committed before gate evaluation', async () => {
+    const req: any = { organizationId: 'org-2' };
+    const res: any = { headersSent: true, status: vi.fn().mockReturnThis(), json: vi.fn() };
+    const next = vi.fn();
+    const moduleGate = createV8ModuleGate('outputs');
+
+    await moduleGate(req, res, next);
+
+    expect(mocks.isV8Enabled).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -254,6 +267,41 @@ describe('v8FeatureGate.middleware', () => {
     expect(next.mock.calls[1]?.[0]).toBe(err);
   });
 
+  it('v8OrgGate does not throw when next(error) also throws and logs warning', async () => {
+    const err = new Error('downstream sync failure');
+    const req: any = { organizationId: 'org-ok' };
+    const res: any = { headersSent: false, status: vi.fn().mockReturnThis(), json: vi.fn() };
+    let callCount = 0;
+    const next = vi.fn((maybeErr?: unknown) => {
+      callCount += 1;
+      if (callCount === 1 && maybeErr === undefined) {
+        throw err;
+      }
+      if (callCount === 2) {
+        throw new Error('forward failed');
+      }
+    });
+
+    await expect(v8OrgGate(req, res, next)).resolves.toBeUndefined();
+
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[v8:featureGate] V8 gate next(error) failed',
+      expect.objectContaining({ code: 'V8_GATE_NEXT_ERROR_FAILED' })
+    );
+  });
+
+  it('v8OrgGate returns early when response is already committed before gate evaluation', async () => {
+    const req: any = { organizationId: 'org-1' };
+    const res: any = { headersSent: true, status: vi.fn().mockReturnThis(), json: vi.fn() };
+    const next = vi.fn();
+
+    await v8OrgGate(req, res, next);
+
+    expect(mocks.isV8Enabled).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('v8OrgGate treats placeholder organizationId as missing context', async () => {
     const req: any = { organizationId: ' undefined ' };
     const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
@@ -366,6 +414,26 @@ describe('v8FeatureGate.middleware', () => {
       })
     );
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('module gate rejects invalid module name with 500 and does not call next', async () => {
+    const req: any = { organizationId: 'org-2' };
+    const res: any = { headersSent: false, status: vi.fn().mockReturnThis(), json: vi.fn() };
+    const next = vi.fn();
+    const moduleGate = createV8ModuleGate('bad\nmodule');
+
+    await moduleGate(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'V8_MODULE_GATE_INVALID' })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(mocks.isV8Enabled).not.toHaveBeenCalled();
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[v8:featureGate] V8 module gate misconfigured',
+      expect.objectContaining({ code: 'V8_MODULE_GATE_INVALID' })
+    );
   });
 
   it('v8FeatureGate logs warning when response status writer is invalid', () => {

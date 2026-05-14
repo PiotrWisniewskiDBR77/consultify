@@ -59,8 +59,11 @@ const invokeNextIfFunction = (next: NextFunction): boolean => {
 };
 
 const sendRbacForbidden = (res: Response, error: string, code: string): void => {
-  if (!res || typeof (res as Response & { status?: unknown }).status !== 'function') return;
-  if (typeof (res as Response & { json?: unknown }).json !== 'function') return;
+  if (!res) return;
+  const statusWriter = (res as Response & { status?: unknown }).status;
+  if (typeof statusWriter !== 'function') return;
+  const jsonWriter = (res as Response & { json?: unknown }).json;
+  const sendWriter = (res as Response & { send?: unknown }).send;
   if (responseWriteBlocked(res)) return;
   try {
     res.status(403);
@@ -68,10 +71,20 @@ const sendRbacForbidden = (res: Response, error: string, code: string): void => 
     return;
   }
   if (responseWriteBlocked(res)) return;
-  try {
-    res.json({ error, code });
-  } catch {
-    // fail-closed: RBAC deny path should not throw
+  if (typeof jsonWriter === 'function') {
+    try {
+      res.json({ error, code });
+      return;
+    } catch {
+      // Fall through to send() fallback when available.
+    }
+  }
+  if (typeof sendWriter === 'function' && !responseWriteBlocked(res)) {
+    try {
+      (sendWriter as (body: unknown) => unknown).call(res, { error, code });
+    } catch {
+      // fail-closed: RBAC deny path should not throw
+    }
   }
 };
 const isInvalidOrgToken = (value: string): boolean => {
@@ -80,6 +93,8 @@ const isInvalidOrgToken = (value: string): boolean => {
 };
 const containsInvalidOrgChars = (value: string): boolean =>
   /[\u0000-\u001F\u007F\u2028\u2029\u202A-\u202E\u2066-\u2069\u200B-\u200D\uFEFF]/.test(value);
+const containsDisallowedOrgIdDelimiters = (value: string): boolean =>
+  value.includes('..') || value.includes('//') || value.includes('\\') || value.includes('<') || value.includes('>');
 
 const toCanonicalRole = (role: UserRole | undefined): CanonicalRole => {
   const r = safeRead(
@@ -156,37 +171,46 @@ const roleSatisfies = (userRole: CanonicalRole, requiredRole: CanonicalRole): bo
  */
 export const requireRole = (...roles: UserRole[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (req == null) {
-      sendRbacForbidden(
-        res,
-        'Insufficient role',
-        RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
+    try {
+      if (req == null) {
+        sendRbacForbidden(
+          res,
+          'Insufficient role',
+          RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
+        );
+        return;
+      }
+      const safeRoles: UserRole[] = Array.isArray(roles) ? roles.slice(0, RBAC_MAX_REQUIRED_ROLES) : [];
+      if (safeRoles.length === 0) {
+        invokeNextIfFunction(next);
+        return;
+      }
+
+      const userRole = getRequestRole(req);
+      const required = safeRead(
+        () => safeRoles.map(toCanonicalRole).filter(Boolean),
+        [] as CanonicalRole[]
       );
-      return;
-    }
-    const safeRoles: UserRole[] = Array.isArray(roles) ? roles.slice(0, RBAC_MAX_REQUIRED_ROLES) : [];
-    if (safeRoles.length === 0) {
+      const allowed = safeRead(() => required.some((r) => roleSatisfies(userRole, r)), false);
+
+      if (!allowed) {
+        sendRbacForbidden(
+          res,
+          'Insufficient role',
+          RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
+        );
+        return;
+      }
+      if (responseWriteBlocked(res)) return;
+
       invokeNextIfFunction(next);
-      return;
-    }
-
-    const userRole = getRequestRole(req);
-    const required = safeRead(
-      () => safeRoles.map(toCanonicalRole).filter(Boolean),
-      [] as CanonicalRole[]
-    );
-    const allowed = safeRead(() => required.some((r) => roleSatisfies(userRole, r)), false);
-
-    if (!allowed) {
+    } catch {
       sendRbacForbidden(
         res,
         'Insufficient role',
         RBAC_FORBIDDEN_CODES.INSUFFICIENT_ROLE
       );
-      return;
     }
-
-    invokeNextIfFunction(next);
   };
 };
 
@@ -195,34 +219,44 @@ export const requireRole = (...roles: UserRole[]) => {
  */
 export const requireOrgAccess = () => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (req == null) {
+    try {
+      if (req == null) {
+        sendRbacForbidden(
+          res,
+          'Organization access required',
+          RBAC_FORBIDDEN_CODES.ORGANIZATION_ACCESS_REQUIRED
+        );
+        return;
+      }
+      const orgId =
+        normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
+        normalizeOptionalString(safeRead(() => req.user?.organization_id, undefined as unknown)) ||
+        normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown));
+
+      if (
+        !orgId ||
+        isInvalidOrgToken(orgId) ||
+        orgId.length > RBAC_MAX_ORG_ID_CHARS ||
+        containsInvalidOrgChars(orgId) ||
+        containsDisallowedOrgIdDelimiters(orgId)
+      ) {
+        sendRbacForbidden(
+          res,
+          'Organization access required',
+          RBAC_FORBIDDEN_CODES.ORGANIZATION_ACCESS_REQUIRED
+        );
+        return;
+      }
+      if (responseWriteBlocked(res)) return;
+
+      invokeNextIfFunction(next);
+    } catch {
       sendRbacForbidden(
         res,
         'Organization access required',
         RBAC_FORBIDDEN_CODES.ORGANIZATION_ACCESS_REQUIRED
       );
-      return;
     }
-    const orgId =
-      normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined as unknown)) ||
-      normalizeOptionalString(safeRead(() => req.user?.organization_id, undefined as unknown)) ||
-      normalizeOptionalString(safeRead(() => req.organizationId, undefined as unknown));
-
-    if (
-      !orgId ||
-      isInvalidOrgToken(orgId) ||
-      orgId.length > RBAC_MAX_ORG_ID_CHARS ||
-      containsInvalidOrgChars(orgId)
-    ) {
-      sendRbacForbidden(
-        res,
-        'Organization access required',
-        RBAC_FORBIDDEN_CODES.ORGANIZATION_ACCESS_REQUIRED
-      );
-      return;
-    }
-
-    invokeNextIfFunction(next);
   };
 };
 

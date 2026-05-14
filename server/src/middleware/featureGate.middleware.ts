@@ -40,6 +40,17 @@ const safeRead = <T>(reader: () => T, fallback: T): T => {
     return fallback;
   }
 };
+const safeLog = (log: () => void): void => {
+  try {
+    log();
+  } catch {
+    // Logging is best-effort and must never break feature-gate flow.
+  }
+};
+const safeAuthPredicate = (predicate: () => boolean): boolean => safeRead(predicate, true);
+const hasUsableResponseWriters = (res: Response): boolean =>
+  typeof safeRead(() => (res as Response & { status?: unknown }).status, undefined) === 'function' &&
+  typeof safeRead(() => (res as Response & { json?: unknown }).json, undefined) === 'function';
 
 const sendJsonIfHeadersOpen = (
   res: Response,
@@ -53,28 +64,38 @@ const sendJsonIfHeadersOpen = (
   } else if (safeRead(() => (res as { destroyed?: boolean }).destroyed, false)) skipReason = 'destroyed';
   else if (safeRead(() => (res as { finished?: boolean }).finished, false)) skipReason = 'finished';
   if (skipReason) {
-    logger.warn('[featureGate] Skipped JSON response write (response already finalized)', {
-      skipReason,
-      statusCode,
-      errorCode: typeof payload.error === 'string' ? payload.error : undefined,
-    });
+    safeLog(() =>
+      logger.warn('[featureGate] Skipped JSON response write (response already finalized)', {
+        skipReason,
+        statusCode,
+        errorCode: typeof payload.error === 'string' ? payload.error : undefined,
+      })
+    );
     return false;
   }
   try {
     res.status(statusCode).json(payload);
     return true;
   } catch (error) {
-    logger.warn('[featureGate] Failed to write JSON response', error);
+    safeLog(() => logger.warn('[featureGate] Failed to write JSON response', error));
     return false;
   }
 };
 
-const invokeNext = (next: NextFunction): void => {
+const invokeNext = (res: Response, next: NextFunction): void => {
   if (typeof next !== 'function') {
-    logger.error('[featureGate] next is not a function; request chain cannot continue');
+    safeLog(() => logger.error('[featureGate] next is not a function; request chain cannot continue'));
     return;
   }
-  next();
+  try {
+    next();
+  } catch (error) {
+    safeLog(() => logger.error('[featureGate] next() threw synchronously', error));
+    sendJsonIfHeadersOpen(res, 500, {
+      error: 'FEATURE_GATE_INTERNAL',
+      message: 'Feature gate encountered an unexpected error. Contact support.',
+    });
+  }
 };
 const responseIsFinalized = (res: Response): boolean =>
   safeRead(() => res.headersSent, false) ||
@@ -221,7 +242,9 @@ export function requireFeature(featureId: string) {
   const publicFeatureId = truncateForPublicSurface(normalizedFeatureId || featureId);
   if (hasDisallowedFeatureIdChars(normalizedFeatureId)) {
     return (_req: Request, res: Response, _next: NextFunction): void => {
-      logger.error(`Feature '${publicFeatureId}' rejected: feature id contains disallowed characters`);
+      safeLog(() =>
+        logger.error(`Feature '${publicFeatureId}' rejected: feature id contains disallowed characters`)
+      );
       sendJsonIfHeadersOpen(res, 500, {
         error: 'INVALID_FEATURE_ID',
         message: 'Feature identifier is not valid. Contact support.',
@@ -230,7 +253,7 @@ export function requireFeature(featureId: string) {
   }
   if (normalizedFeatureId.length > MAX_FEATURE_ID_INTERNAL) {
     return (_req: Request, res: Response, _next: NextFunction): void => {
-      logger.error(`Feature '${publicFeatureId}' rejected: feature id exceeds max length`);
+      safeLog(() => logger.error(`Feature '${publicFeatureId}' rejected: feature id exceeds max length`));
       sendJsonIfHeadersOpen(res, 500, {
         error: 'FEATURE_NOT_REGISTERED',
         message: `Feature '${publicFeatureId}' is not properly configured. Contact support.`,
@@ -244,7 +267,7 @@ export function requireFeature(featureId: string) {
   if (!requirements) {
     // Feature not registered - block by default (fail closed)
     return (_req: Request, res: Response, _next: NextFunction): void => {
-      logger.error(`Feature '${publicFeatureId}' not registered in FEATURE_REQUIREMENTS`);
+      safeLog(() => logger.error(`Feature '${publicFeatureId}' not registered in FEATURE_REQUIREMENTS`));
       sendJsonIfHeadersOpen(res, 500, {
         error: 'FEATURE_NOT_REGISTERED',
         message: `Feature '${publicFeatureId}' is not properly configured. Contact support.`,
@@ -254,6 +277,10 @@ export function requireFeature(featureId: string) {
 
   return (req: FeatureRequest, res: Response, next: NextFunction): void => {
     try {
+      if (!hasUsableResponseWriters(res)) {
+        safeLog(() => logger.error('[featureGate] Invalid or incomplete response object'));
+        return;
+      }
       const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
       const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
       const currentRole =
@@ -263,7 +290,11 @@ export function requireFeature(featureId: string) {
       const errors: Array<{ type: string; required: string[]; current: string | null }> = [];
 
       // Check phase
-      if (requirements.phase.length > 0 && !requirements.phase.includes(currentPhase || '')) {
+      if (
+        safeAuthPredicate(
+          () => requirements.phase.length > 0 && !requirements.phase.includes(currentPhase || '')
+        )
+      ) {
         errors.push({
           type: 'PHASE',
           required: requirements.phase,
@@ -272,7 +303,11 @@ export function requireFeature(featureId: string) {
       }
 
       // Check state
-      if (requirements.state.length > 0 && !requirements.state.includes(currentState || '')) {
+      if (
+        safeAuthPredicate(
+          () => requirements.state.length > 0 && !requirements.state.includes(currentState || '')
+        )
+      ) {
         errors.push({
           type: 'STATE',
           required: requirements.state,
@@ -281,7 +316,11 @@ export function requireFeature(featureId: string) {
       }
 
       // Check role (only if roles are specified and user has org context)
-      if (requirements.role.length > 0 && !requirements.role.includes(currentRole || '')) {
+      if (
+        safeAuthPredicate(
+          () => requirements.role.length > 0 && !requirements.role.includes(currentRole || '')
+        )
+      ) {
         errors.push({
           type: 'ROLE',
           required: requirements.role,
@@ -310,15 +349,17 @@ export function requireFeature(featureId: string) {
         return;
       }
       if (responseIsFinalized(res)) {
-        logger.warn('[featureGate] Skipped next() (response already finalized)', {
-          featureId: truncateForPublicSurface(normalizedFeatureId),
-        });
+        safeLog(() =>
+          logger.warn('[featureGate] Skipped next() (response already finalized)', {
+            featureId: truncateForPublicSurface(normalizedFeatureId),
+          })
+        );
         return;
       }
 
-      invokeNext(next);
+      invokeNext(res, next);
     } catch (error) {
-      logger.error('[featureGate] Unexpected error in requireFeature handler', error);
+      safeLog(() => logger.error('[featureGate] Unexpected error in requireFeature handler', error));
       sendJsonIfHeadersOpen(res, 500, {
         error: 'FEATURE_GATE_INTERNAL',
         message: 'Feature gate encountered an unexpected error. Contact support.',
@@ -427,7 +468,9 @@ export function requireAccess(requirements: FeatureRequirements) {
     stateRules.some((stateRule) => hasDisallowedFeatureIdChars(stateRule)) ||
     normalizedRoleRules.some((roleRule) => hasDisallowedFeatureIdChars(roleRule));
   if (hasDisallowedRuleChars) {
-    logger.error('[featureGate] requireAccess rejected requirements with disallowed control characters');
+    safeLog(() =>
+      logger.error('[featureGate] requireAccess rejected requirements with disallowed control characters')
+    );
     return (_req: FeatureRequest, res: Response, _next: NextFunction): void => {
       sendJsonIfHeadersOpen(res, 500, {
         error: 'INVALID_FEATURE_REQUIREMENTS',
@@ -451,6 +494,10 @@ export function requireAccess(requirements: FeatureRequirements) {
 
   return (req: FeatureRequest, res: Response, next: NextFunction): void => {
     try {
+      if (!hasUsableResponseWriters(res)) {
+        safeLog(() => logger.error('[featureGate] Invalid or incomplete response object'));
+        return;
+      }
       const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined));
       const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined));
       const currentRole =
@@ -458,7 +505,11 @@ export function requireAccess(requirements: FeatureRequirements) {
         normalizeRole(safeRead(() => req.user?.role, undefined));
 
       // Phase check
-      if (phaseRulesSnapshot.length > 0 && !phaseRulesSnapshot.includes(currentPhase || '')) {
+      if (
+        safeAuthPredicate(
+          () => phaseRulesSnapshot.length > 0 && !phaseRulesSnapshot.includes(currentPhase || '')
+        )
+      ) {
         sendJsonIfHeadersOpen(res, 403, {
           error: 'PHASE_REQUIRED',
           required: phaseRulesSnapshot,
@@ -468,7 +519,11 @@ export function requireAccess(requirements: FeatureRequirements) {
       }
 
       // State check
-      if (stateRulesSnapshot.length > 0 && !stateRulesSnapshot.includes(currentState || '')) {
+      if (
+        safeAuthPredicate(
+          () => stateRulesSnapshot.length > 0 && !stateRulesSnapshot.includes(currentState || '')
+        )
+      ) {
         sendJsonIfHeadersOpen(res, 403, {
           error: 'STATE_REQUIRED',
           required: stateRulesSnapshot,
@@ -478,7 +533,11 @@ export function requireAccess(requirements: FeatureRequirements) {
       }
 
       // Role check
-      if (roleRulesSnapshot.length > 0 && !roleRulesSnapshot.includes(currentRole || '')) {
+      if (
+        safeAuthPredicate(
+          () => roleRulesSnapshot.length > 0 && !roleRulesSnapshot.includes(currentRole || '')
+        )
+      ) {
         sendJsonIfHeadersOpen(res, 403, {
           error: 'ROLE_REQUIRED',
           required: roleRulesSnapshot,
@@ -487,15 +546,17 @@ export function requireAccess(requirements: FeatureRequirements) {
         return;
       }
       if (responseIsFinalized(res)) {
-        logger.warn('[featureGate] Skipped next() (response already finalized)', {
-          featureId: 'requireAccess',
-        });
+        safeLog(() =>
+          logger.warn('[featureGate] Skipped next() (response already finalized)', {
+            featureId: 'requireAccess',
+          })
+        );
         return;
       }
 
-      invokeNext(next);
+      invokeNext(res, next);
     } catch (error) {
-      logger.error('[featureGate] Unexpected error in requireAccess handler', error);
+      safeLog(() => logger.error('[featureGate] Unexpected error in requireAccess handler', error));
       sendJsonIfHeadersOpen(res, 500, {
         error: 'FEATURE_GATE_INTERNAL',
         message: 'Feature gate encountered an unexpected error. Contact support.',
@@ -523,17 +584,17 @@ export function isFeatureAccessible(featureId: string, context: FeatureContext):
   const state = normalizeOptionalString(safeRead(() => context.state, undefined)) || '';
   const role = normalizeRole(safeRead(() => context.role, undefined));
 
-  if (requirements.phase.length > 0 && !requirements.phase.includes(phase)) {
+  if (safeAuthPredicate(() => requirements.phase.length > 0 && !requirements.phase.includes(phase))) {
     return false;
   }
 
-  if (requirements.state.length > 0 && !requirements.state.includes(state)) {
+  if (safeAuthPredicate(() => requirements.state.length > 0 && !requirements.state.includes(state))) {
     return false;
   }
 
   if (requirements.role.length > 0) {
     if (!role) return false;
-    if (!requirements.role.includes(role)) return false;
+    if (safeAuthPredicate(() => !requirements.role.includes(role))) return false;
   }
 
   return true;

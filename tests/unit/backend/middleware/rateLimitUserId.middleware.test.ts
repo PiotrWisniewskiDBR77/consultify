@@ -155,6 +155,26 @@ describe('rateLimitUserIdMiddleware', () => {
     expect(req2._rateLimitUserId).toBe('u-cookie');
   });
 
+  it('ignores oversized authorization string but still extracts token from cookies', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    verifyMock.mockReturnValue({ id: 'u-cookie-only' });
+    const req = makeReq({
+      authorization: `Bearer ${'x'.repeat(8600)}`,
+      cookies: { token: makeCompactJws('from-cookie') },
+    });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(verifyMock).toHaveBeenCalledWith(
+      makeCompactJws('from-cookie'),
+      'secret',
+      EXPECTED_VERIFY_OPTIONS
+    );
+    expect(req._rateLimitUserId).toBe('u-cookie-only');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to cookies.token when cookies.access_token accessor throws', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-cookie-fallback' });
@@ -381,6 +401,18 @@ describe('rateLimitUserIdMiddleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('does not set _rateLimitUserId when verify returns an array payload', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    verifyMock.mockReturnValue(['u-array-payload']);
+    const req = makeReq({ authorization: `Bearer ${makeCompactJws('array-payload')}` });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(req._rateLimitUserId).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('only scans bounded number of authorization header array values', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     verifyMock.mockReturnValue({ id: 'u-bounded-array' });
@@ -443,6 +475,20 @@ describe('rateLimitUserIdMiddleware', () => {
   it('skips parsing when token is longer than safety threshold', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     const req = makeReq({ authorization: `Bearer ${'a'.repeat(8200)}` });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req._rateLimitUserId).toBeUndefined();
+    expect(verifyMock).not.toHaveBeenCalled();
+    expect(decodeMock).not.toHaveBeenCalled();
+  });
+
+  it('skips parsing when compact token segment exceeds max per-segment limit', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    const oversizedSegmentToken = `${'A'.repeat(4097)}.BB.CC`;
+    const req = makeReq({ authorization: `Bearer ${oversizedSegmentToken}` });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);
@@ -556,6 +602,19 @@ describe('rateLimitUserIdMiddleware', () => {
   it('skips jwt parsing when token contains tab control character', () => {
     vi.stubEnv('JWT_SECRET', 'secret');
     const req = makeReq({ authorization: 'Bearer header\tpayload' });
+    const next = vi.fn();
+
+    rateLimitUserIdMiddleware(req, {} as Response, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(req._rateLimitUserId).toBeUndefined();
+    expect(verifyMock).not.toHaveBeenCalled();
+    expect(decodeMock).not.toHaveBeenCalled();
+  });
+
+  it('skips jwt parsing when token contains non-base64url character', () => {
+    vi.stubEnv('JWT_SECRET', 'secret');
+    const req = makeReq({ authorization: 'Bearer aaa+bbb.ccc.ddd' });
     const next = vi.fn();
 
     rateLimitUserIdMiddleware(req, {} as Response, next);

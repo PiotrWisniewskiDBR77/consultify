@@ -19,9 +19,12 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
   const normalized = value.trim();
   return normalized || undefined;
 };
+const MAX_SAFE_INTEGER_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
+const MIN_SAFE_INTEGER_BIGINT = BigInt(Number.MIN_SAFE_INTEGER);
 
 const readFiniteNumber = (value: unknown): number | undefined => {
   if (typeof value === 'bigint') {
+    if (value > MAX_SAFE_INTEGER_BIGINT || value < MIN_SAFE_INTEGER_BIGINT) return undefined;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : undefined;
   }
@@ -35,6 +38,11 @@ const readFiniteNumber = (value: unknown): number | undefined => {
     return Number.isFinite(parsed) ? parsed : undefined;
   }
   return undefined;
+};
+const isPlainObjectRecord = (value: unknown): value is Record<string, unknown> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = safeRead(() => Object.getPrototypeOf(value), null as object | null);
+  return prototype === Object.prototype || prototype === null;
 };
 
 const responseAlreadyCommitted = (res: Response): boolean =>
@@ -146,6 +154,10 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       'SELECT subscription_plan_id FROM organization_billing WHERE organization_id = ?',
       [orgId]
     );
+    if (orgPlan !== null && !isPlainObjectRecord(orgPlan)) {
+      sendJsonIfOpen(res, next, 500, { error: 'Billing data is unavailable' }, 'data');
+      return;
+    }
     const subscriptionPlanId = readSubscriptionPlanId(orgPlan as Record<string, unknown> | null);
     if (!subscriptionPlanId) {
       invokeNextIfStillWritable(res, next, 'memory-no-plan');
@@ -160,6 +172,10 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       subscriptionPlanId,
     ]);
     if (shouldSkipCommittedResponse(res, next)) return;
+    if (plan !== null && !isPlainObjectRecord(plan)) {
+      sendJsonIfOpen(res, next, 500, { error: 'Billing data is unavailable' }, 'data');
+      return;
+    }
     const memoryLimit = readFiniteNumber(
       (plan as Record<string, unknown> | null)?.memory_limit_mb as unknown
     );
@@ -173,7 +189,7 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
       [orgId]
     );
     if (shouldSkipCommittedResponse(res, next)) return;
-    if (!usage) {
+    if (!isPlainObjectRecord(usage)) {
       sendJsonIfOpen(res, next, 500, { error: 'Organization data not found' }, 'data');
       return;
     }
@@ -205,8 +221,7 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
     invokeNextIfStillWritable(res, next, 'memory-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] Memory quota check failed', toLoggableError(error));
-    if (responseAlreadyCommitted(res)) return;
-    invokeNext(next, 'memory-catch');
+    invokeNextIfStillWritable(res, next, 'memory-catch');
   }
 };
 
@@ -227,6 +242,10 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       'SELECT subscription_plan_id FROM organization_billing WHERE organization_id = ?',
       [orgId]
     );
+    if (orgPlan !== null && !isPlainObjectRecord(orgPlan)) {
+      sendJsonIfOpen(res, next, 500, { error: 'Billing data is unavailable' }, 'data');
+      return;
+    }
     const subscriptionPlanId = readSubscriptionPlanId(orgPlan as Record<string, unknown> | null);
     if (!subscriptionPlanId) {
       invokeNextIfStillWritable(res, next, 'cpu-no-plan');
@@ -242,6 +261,10 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       [subscriptionPlanId]
     );
     if (shouldSkipCommittedResponse(res, next)) return;
+    if (plan !== null && !isPlainObjectRecord(plan)) {
+      sendJsonIfOpen(res, next, 500, { error: 'Billing data is unavailable' }, 'data');
+      return;
+    }
     const cpuLimit = readFiniteNumber(
       (plan as Record<string, unknown> | null)?.cpu_quota_percent as unknown
     );
@@ -255,7 +278,7 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
       [orgId]
     );
     if (shouldSkipCommittedResponse(res, next)) return;
-    if (!usage) {
+    if (!isPlainObjectRecord(usage)) {
       sendJsonIfOpen(res, next, 500, { error: 'Organization data not found' }, 'data');
       return;
     }
@@ -287,8 +310,7 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
     invokeNextIfStillWritable(res, next, 'cpu-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] CPU quota check failed', toLoggableError(error));
-    if (responseAlreadyCommitted(res)) return;
-    invokeNext(next, 'cpu-catch');
+    invokeNextIfStillWritable(res, next, 'cpu-catch');
   }
 };
 
@@ -310,7 +332,7 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
       [orgId]
     );
     if (shouldSkipCommittedResponse(res, next)) return;
-    if (!orgBudget) {
+    if (!isPlainObjectRecord(orgBudget)) {
       sendJsonIfOpen(res, next, 500, { error: 'Organization not found' }, 'data');
       return;
     }
@@ -348,8 +370,7 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
     invokeNextIfStillWritable(res, next, 'budget-pass');
   } catch (error) {
     logger.warn('[ResourceQuota] Budget quota check failed', toLoggableError(error));
-    if (responseAlreadyCommitted(res)) return;
-    invokeNext(next, 'budget-catch');
+    invokeNextIfStillWritable(res, next, 'budget-catch');
   }
 };
 

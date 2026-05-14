@@ -403,6 +403,44 @@ describe('quota.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('does not attempt token 503 response when response is already finished', async () => {
+    mockUsageService.checkQuota.mockRejectedValue(new Error('quota service down'));
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: false,
+      finished: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(503);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not attempt token 503 response when response is already closed', async () => {
+    mockUsageService.checkQuota.mockRejectedValue(new Error('quota service down'));
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: false,
+      closed: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(503);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('does not attempt storage 503 response when headers are already sent', async () => {
     mockUsageService.checkQuota.mockImplementation(
       async (_orgId: string, type: 'token' | 'storage') => {
@@ -437,6 +475,54 @@ describe('quota.middleware', () => {
     const res: any = {
       headersSent: false,
       writableEnded: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(503);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not attempt storage 503 response when response is already finished', async () => {
+    mockUsageService.checkQuota.mockImplementation(
+      async (_orgId: string, type: 'token' | 'storage') => {
+        if (type === 'storage') throw new Error('storage quota service down');
+        return { allowed: true, used: 1, limit: 100, percentage: 1 };
+      }
+    );
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: false,
+      finished: true,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(mockLogger.error).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(503);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not attempt storage 503 response when response is already closed', async () => {
+    mockUsageService.checkQuota.mockImplementation(
+      async (_orgId: string, type: 'token' | 'storage') => {
+        if (type === 'storage') throw new Error('storage quota service down');
+        return { allowed: true, used: 1, limit: 100, percentage: 1 };
+      }
+    );
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      headersSent: false,
+      closed: true,
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
     };
@@ -534,6 +620,71 @@ describe('quota.middleware', () => {
           used: 0,
           limit: 0,
           percentage: 0,
+        },
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('clamps negative token quota values to zero in deny payload', async () => {
+    mockUsageService.checkQuota.mockResolvedValue({
+      allowed: false,
+      used: -10,
+      limit: -5,
+      percentage: 55,
+    });
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceTokenQuota(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        usage: {
+          used: 0,
+          limit: 0,
+          percentage: 55,
+        },
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('clamps negative storage quota values to zero in deny payload', async () => {
+    mockUsageService.checkQuota.mockImplementation(
+      async (_orgId: string, type: 'token' | 'storage') => {
+        if (type === 'storage') {
+          return {
+            allowed: false,
+            used: -2048,
+            limit: -1024,
+            percentage: 40,
+          };
+        }
+        return { allowed: true, used: 1, limit: 100, percentage: 1 };
+      }
+    );
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    await enforceStorageQuota(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        usage: {
+          usedGB: '0.00',
+          limitGB: '0.00',
+          percentage: 40,
         },
       })
     );

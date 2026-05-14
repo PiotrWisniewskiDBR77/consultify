@@ -223,6 +223,25 @@ describe('internalTools.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 404 when mailbox local-part contains consecutive dots', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', 'dbr77.com');
+    const req: any = {
+      user: {
+        email: 'admin..user@dbr77.com',
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 404 when mailbox domain exceeds max supported length', () => {
     const longDomain = 'a'.repeat(254);
     vi.stubEnv('INTERNAL_TOOLS_ALLOWED_EMAIL_DOMAINS', longDomain);
@@ -282,11 +301,48 @@ describe('internalTools.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 404 when email is a non-string object even if it stringifies to allowed mailbox', () => {
+    const user: Record<string, unknown> = {
+      role: 'ADMIN',
+      organizationId: 'org-1',
+    };
+    Object.defineProperty(user, 'email', {
+      enumerable: true,
+      value: { toString: () => 'admin@dbr77.com' },
+    });
+    const req: any = { user, organizationId: 'org-1' };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 404 when role exceeds max supported length', () => {
     const req: any = {
       user: {
         email: 'admin@dbr77.com',
         role: 'A'.repeat(65),
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when role contains control characters', () => {
+    const req: any = {
+      user: {
+        email: 'admin@dbr77.com',
+        role: `ADMIN${String.fromCharCode(7)}`,
         organizationId: 'org-1',
       },
       organizationId: 'org-1',
@@ -495,6 +551,25 @@ describe('internalTools.middleware', () => {
 
   it('returns 404 when INTERNAL_TOOLS_ALLOWED_ORG_IDS contains unsafe token characters', () => {
     vi.stubEnv('INTERNAL_TOOLS_ALLOWED_ORG_IDS', 'org-1,bad/org');
+    const req: any = {
+      user: {
+        email: 'admin@dbr77.com',
+        role: 'ADMIN',
+        organizationId: 'org-1',
+      },
+      organizationId: 'org-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    requireInternalToolsAccess(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when INTERNAL_TOOLS_ALLOWED_ORG_IDS is set but parses to an empty allowlist', () => {
+    vi.stubEnv('INTERNAL_TOOLS_ALLOWED_ORG_IDS', '  , ,  ');
     const req: any = {
       user: {
         email: 'admin@dbr77.com',

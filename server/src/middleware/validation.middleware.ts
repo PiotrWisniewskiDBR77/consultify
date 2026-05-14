@@ -54,7 +54,9 @@ const safeJsonPreview = (value: unknown, maxChars: number): string => {
 };
 
 const readValidationErrors = (result: unknown): Array<{ field: string; message: string; code: string }> =>
-  readValidationIssues(result).map((rawIssue) => {
+  readValidationIssues(result)
+    .slice(0, MAX_VALIDATION_DETAILS_ITEMS)
+    .map((rawIssue) => {
     try {
       const issue = rawIssue as { path?: unknown; message?: unknown; code?: unknown };
       const pathValue = issue.path;
@@ -81,7 +83,17 @@ const readValidationErrors = (result: unknown): Array<{ field: string; message: 
         code: 'custom',
       };
     }
-  });
+    });
+const safeReadValidationErrors = (
+  result: unknown
+): Array<{ field: string; message: string; code: string }> => {
+  try {
+    const details = readValidationErrors(result);
+    return Array.isArray(details) ? details : [];
+  } catch {
+    return [{ field: '', message: 'Validation Error', code: 'custom' }];
+  }
+};
 const isZodSchemaLike = (schema: unknown): schema is z.ZodSchema =>
   Boolean(schema) && typeof (schema as z.ZodSchema).safeParse === 'function';
 
@@ -91,7 +103,11 @@ const respondIfHeadersOpen = (
   statusCode: 400 | 500,
   payload: Record<string, unknown>
 ): boolean => {
-  if (safeRead(() => res.headersSent, false)) {
+  const responseCommitted =
+    safeRead(() => res.headersSent, false) ||
+    safeRead(() => (res as Response & { writableEnded?: boolean }).writableEnded === true, false) ||
+    safeRead(() => (res as Response & { finished?: boolean }).finished === true, false);
+  if (responseCommitted) {
     safeRead(() => {
       logger.warn(
         `[ValidationMiddleware] Skipped ${statusCode} response; headers already sent (${readMethod(req)} ${readPath(req)})`
@@ -143,7 +159,7 @@ export const validateBody = (schema: z.ZodSchema) => {
     try {
       const result = schema.safeParse(safeRead(() => req.body, undefined));
       if (!result.success) {
-        const errors = readValidationErrors(result);
+        const errors = safeReadValidationErrors(result);
         const details = errors.slice(0, MAX_VALIDATION_DETAILS_ITEMS);
         const firstError = errors[0];
         const errorMessage = firstError ? firstError.message : 'Validation Error';
@@ -162,6 +178,14 @@ export const validateBody = (schema: z.ZodSchema) => {
         }, false);
         return;
       }
+      if (typeof next !== 'function') {
+        safeRead(() => {
+          logger.error('[ValidationMiddleware] next is not a function (body validator)');
+          return true;
+        }, false);
+        respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+        return;
+      }
 
       // Replace body with parsed (sanitized/coerced) data
       try {
@@ -174,15 +198,15 @@ export const validateBody = (schema: z.ZodSchema) => {
           configurable: true,
         });
       }
-      if (typeof next !== 'function') {
+      try {
+        next();
+      } catch (nextError) {
         safeRead(() => {
-          logger.error('[ValidationMiddleware] next is not a function (body validator)');
+          logger.error('[ValidationMiddleware] next is not callable (body validator)', nextError);
           return true;
         }, false);
         respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
-        return;
       }
-      next();
     } catch (error: unknown) {
       safeRead(() => {
         logger.error('Validation Middleware Error:', error);
@@ -211,7 +235,7 @@ export const validateQuery = (schema: z.ZodSchema) => {
     try {
       const result = schema.safeParse(safeRead(() => req.query, undefined));
       if (!result.success) {
-        const errors = readValidationErrors(result);
+        const errors = safeReadValidationErrors(result);
         const details = errors.slice(0, MAX_VALIDATION_DETAILS_ITEMS);
 
         const firstError = errors[0];
@@ -230,6 +254,14 @@ export const validateQuery = (schema: z.ZodSchema) => {
         }, false);
         return;
       }
+      if (typeof next !== 'function') {
+        safeRead(() => {
+          logger.error('[ValidationMiddleware] next is not a function (query validator)');
+          return true;
+        }, false);
+        respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+        return;
+      }
 
       try {
         req.query = result.data as unknown as typeof req.query;
@@ -241,15 +273,15 @@ export const validateQuery = (schema: z.ZodSchema) => {
           configurable: true,
         });
       }
-      if (typeof next !== 'function') {
+      try {
+        next();
+      } catch (nextError) {
         safeRead(() => {
-          logger.error('[ValidationMiddleware] next is not a function (query validator)');
+          logger.error('[ValidationMiddleware] next is not callable (query validator)', nextError);
           return true;
         }, false);
         respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
-        return;
       }
-      next();
     } catch (error: unknown) {
       safeRead(() => {
         logger.error('Validation Middleware Error:', error);
@@ -278,7 +310,7 @@ export const validateParams = (schema: z.ZodSchema) => {
     try {
       const result = schema.safeParse(safeRead(() => req.params, undefined));
       if (!result.success) {
-        const errors = readValidationErrors(result);
+        const errors = safeReadValidationErrors(result);
         const details = errors.slice(0, MAX_VALIDATION_DETAILS_ITEMS);
 
         const firstError = errors[0];
@@ -297,6 +329,14 @@ export const validateParams = (schema: z.ZodSchema) => {
         }, false);
         return;
       }
+      if (typeof next !== 'function') {
+        safeRead(() => {
+          logger.error('[ValidationMiddleware] next is not a function (params validator)');
+          return true;
+        }, false);
+        respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
+        return;
+      }
 
       try {
         req.params = result.data as unknown as typeof req.params;
@@ -308,15 +348,15 @@ export const validateParams = (schema: z.ZodSchema) => {
           configurable: true,
         });
       }
-      if (typeof next !== 'function') {
+      try {
+        next();
+      } catch (nextError) {
         safeRead(() => {
-          logger.error('[ValidationMiddleware] next is not a function (params validator)');
+          logger.error('[ValidationMiddleware] next is not callable (params validator)', nextError);
           return true;
         }, false);
         respondIfHeadersOpen(req, res, 500, { error: 'Internal Server Error during validation' });
-        return;
       }
-      next();
     } catch (error: unknown) {
       safeRead(() => {
         logger.error('Validation Middleware Error:', error);

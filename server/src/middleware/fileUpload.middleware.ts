@@ -47,6 +47,7 @@ const readOrgId = (req: Request): string =>
 const MAX_UPLOAD_ORG_ID_CHARS = 128;
 const MAX_UPLOAD_BASENAME_CHARS = 120;
 const MAX_UPLOAD_FILENAME_CHARS = 200;
+export const MAX_CLIENT_ORIGINALNAME_LENGTH = 4096;
 export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_MESSAGE = 'Upload workspace unavailable';
 export const FILE_UPLOAD_WORKSPACE_UNAVAILABLE_CODE = 'FILE_UPLOAD_WORKSPACE_UNAVAILABLE' as const;
 export const sanitizeOrgIdForUploadPath = (value: unknown): string => {
@@ -85,9 +86,18 @@ const EXTENSION_TO_ALLOWED_MIME = new Map<string, Set<string>>([
   ],
 ]);
 const normalizeMimeType = (value: string): string => value.split(';')[0]?.trim().toLowerCase() || '';
+const clientReportedFilenameTail = (raw: unknown): string => {
+  if (typeof raw === 'string' && raw.length > MAX_CLIENT_ORIGINALNAME_LENGTH) {
+    return 'unknown.file';
+  }
+  const normalized = normalizeOptionalString(raw);
+  if (!normalized) return 'unknown.file';
+  const unifiedSlashes = normalized.replace(/\\/g, '/');
+  return path.posix.basename(unifiedSlashes) || 'unknown.file';
+};
 
 export const buildSafeUploadedFilename = (originalname: unknown): string => {
-  const normalizedOriginalName = normalizeOptionalString(originalname) || 'upload.bin';
+  const normalizedOriginalName = clientReportedFilenameTail(originalname) || 'upload.bin';
   const extRaw = path.extname(normalizedOriginalName).toLowerCase();
   const ext = EXTENSION_TO_ALLOWED_MIME.has(extRaw) ? extRaw : '.bin';
   const basename = path.basename(normalizedOriginalName, ext) || 'upload';
@@ -124,7 +134,7 @@ export const resolveAssessmentUploadDir = (req: Request): string => {
       throw new Error('Upload path outside assessments root');
     }
     if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     }
     const realRoot = fs.realpathSync(assessmentsUploadRoot);
     const realDir = fs.realpathSync(dir);
@@ -190,25 +200,28 @@ const fileFilter = (
   file: Express.Multer.File,
   cb: (error: Error | null, acceptFile: boolean) => void
 ): void => {
-  const originalName =
-    normalizeOptionalString(safeRead(() => file.originalname, undefined)) || 'unknown.file';
-  if (/[\u0000-\u001F\u007F\u200B-\u200F\u2028-\u202E\uFEFF]/.test(originalName)) {
-    cb(createInvalidFilenameError(), false);
-    return;
-  }
-  const mimeType =
-    normalizeMimeType(normalizeOptionalString(safeRead(() => file.mimetype, undefined)) || '');
-  const ext = safeRead(() => path.extname(originalName).toLowerCase(), '');
-  const extensionAllowedMimes = EXTENSION_TO_ALLOWED_MIME.get(ext);
-  const extname = Boolean(extensionAllowedMimes);
-  const mimetype = safeRead(() => ALLOWED_MIME_TYPES.has(mimeType), false);
-  const mimeMatchesExtension = Boolean(extensionAllowedMimes?.has(mimeType));
+  try {
+    const originalName = clientReportedFilenameTail(safeRead(() => file.originalname, undefined));
+    if (/[\u0000-\u001F\u007F\u200B-\u200F\u2028-\u202E\uFEFF]/.test(originalName)) {
+      cb(createInvalidFilenameError(), false);
+      return;
+    }
+    const mimeType =
+      normalizeMimeType(normalizeOptionalString(safeRead(() => file.mimetype, undefined)) || '');
+    const ext = safeRead(() => path.extname(originalName).toLowerCase(), '');
+    const extensionAllowedMimes = EXTENSION_TO_ALLOWED_MIME.get(ext);
+    const extname = Boolean(extensionAllowedMimes);
+    const mimetype = safeRead(() => ALLOWED_MIME_TYPES.has(mimeType), false);
+    const mimeMatchesExtension = Boolean(extensionAllowedMimes?.has(mimeType));
 
-  if (extname && mimetype && mimeMatchesExtension) {
-    return cb(null, true);
-  }
+    if (extname && mimetype && mimeMatchesExtension) {
+      return cb(null, true);
+    }
 
-  cb(createDisallowedFileTypeError(), false);
+    cb(createDisallowedFileTypeError(), false);
+  } catch {
+    cb(createRuntimeFilterError(), false);
+  }
 };
 
 /**
@@ -230,6 +243,9 @@ export const FILE_UPLOAD_DISALLOWED_TYPE_CODE = 'FILE_UPLOAD_DISALLOWED_TYPE' as
 export const FILE_UPLOAD_INVALID_FILENAME_MESSAGE =
   'The uploaded filename contains invalid characters';
 export const FILE_UPLOAD_INVALID_FILENAME_CODE = 'FILE_UPLOAD_INVALID_FILENAME' as const;
+export const FILE_UPLOAD_FILTER_RUNTIME_MESSAGE =
+  'Failed to validate uploaded file metadata';
+export const FILE_UPLOAD_FILTER_RUNTIME_CODE = 'FILE_UPLOAD_FILTER_RUNTIME' as const;
 
 const createDisallowedFileTypeError = (): Error => {
   const err = new Error(FILE_UPLOAD_DISALLOWED_TYPE_MESSAGE) as Error & {
@@ -243,6 +259,13 @@ const createInvalidFilenameError = (): Error => {
     code?: typeof FILE_UPLOAD_INVALID_FILENAME_CODE;
   };
   err.code = FILE_UPLOAD_INVALID_FILENAME_CODE;
+  return err;
+};
+const createRuntimeFilterError = (): Error => {
+  const err = new Error(FILE_UPLOAD_FILTER_RUNTIME_MESSAGE) as Error & {
+    code?: typeof FILE_UPLOAD_FILTER_RUNTIME_CODE;
+  };
+  err.code = FILE_UPLOAD_FILTER_RUNTIME_CODE;
   return err;
 };
 

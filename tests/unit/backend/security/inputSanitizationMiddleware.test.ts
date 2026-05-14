@@ -110,6 +110,45 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(req.body.html).toContain('<script>');
   });
 
+  it('skips application/octet-stream payloads', async () => {
+    const req = createReq({
+      headers: { 'content-type': 'application/octet-stream' },
+      body: { html: '<script>nope</script>' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body.html).toContain('<script>');
+  });
+
+  it('skips image payloads when content-type header indicates media', async () => {
+    const req = createReq({
+      headers: { 'content-type': 'image/png' },
+      body: { html: '<script>nope</script>' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body.html).toContain('<script>');
+  });
+
+  it('skips video payloads when content-type header is an array', async () => {
+    const req = createReq({
+      headers: { 'content-type': ['VIDEO/MP4'] as any },
+      body: { html: '<script>nope</script>' },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body.html).toContain('<script>');
+  });
+
   it('treats missing content-type header as empty string (still sanitizes)', async () => {
     const req = createReq({
       headers: {},
@@ -306,6 +345,37 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(next).toHaveBeenCalled();
     expect(String(req.body[0])).not.toContain('<i>');
     expect(String(req.body[1].nested)).not.toContain('<b>');
+  });
+
+  it('caps oversized body arrays during neutralization phase', async () => {
+    const req = createReq({
+      body: Array.from({ length: 10001 }, (_, i) =>
+        i === 0 ? '<img src=x onerror=alert(1)>' : `<div onload=alert(${i})>`
+      ),
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(Array.isArray(req.body)).toBe(true);
+    expect(req.body.length).toBe(10000);
+    expect(String(req.body[0])).not.toContain('onerror=');
+  });
+
+  it('caps oversized body object keys during neutralization phase', async () => {
+    const body = Object.fromEntries(
+      Array.from({ length: 10001 }, (_, i) => [`k${i}`, i === 0 ? '<div onclick=alert(1)>' : 'safe'])
+    );
+    const req = createReq({ body });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(Object.keys(req.body).length).toBe(10000);
+    expect(String(req.body.k0)).not.toContain('onclick=');
+    expect(req.body.k10000).toBeUndefined();
   });
 
   it('preserves Buffer body without coercing it through object sanitization', async () => {

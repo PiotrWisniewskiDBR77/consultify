@@ -168,6 +168,8 @@ describe('demoGuard.middleware runtime safety', () => {
     expect(res.status).toHaveBeenCalledWith(403);
     expect((res as any).setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
     expect((res as any).setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+    expect((res as any).setHeader).toHaveBeenCalledWith('Expires', '0');
+    expect((res as any).setHeader).toHaveBeenCalledWith('CDN-Cache-Control', 'no-store');
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -423,6 +425,7 @@ describe('demoGuard.middleware runtime safety', () => {
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
     expect((res as any).status).not.toHaveBeenCalled();
     expect((res as any).json).not.toHaveBeenCalled();
+    expect((res as any).setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
   });
 
   it('demoWriteProtection blocks writes when org id matches DEMO_ORG_ID after trimming', () => {
@@ -441,6 +444,7 @@ describe('demoGuard.middleware runtime safety', () => {
       value: () => null,
     });
     const res = {
+      setHeader: vi.fn(),
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
     } as unknown as Response;
@@ -449,6 +453,8 @@ describe('demoGuard.middleware runtime safety', () => {
     middleware(req as Request, res, next as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(403);
+    expect((res as any).setHeader).toHaveBeenCalledWith('Expires', '0');
+    expect((res as any).setHeader).toHaveBeenCalledWith('CDN-Cache-Control', 'no-store');
     expect(next).not.toHaveBeenCalled();
   });
 

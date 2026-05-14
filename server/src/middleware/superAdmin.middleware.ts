@@ -34,7 +34,7 @@ interface UserRow {
 
 interface Dependencies {
   jwt: typeof jwt;
-  config: { JWT_SECRET: string };
+  config: { JWT_SECRET: string; JWT_ISSUER?: string; JWT_AUDIENCE?: string };
   dbGet: <T>(sql: string, params?: any[]) => Promise<T | undefined>;
 }
 
@@ -54,6 +54,7 @@ const MAX_SUPERADMIN_ROLE_CLAIM_CHARS = 128;
 const MAX_SUPERADMIN_CAPABILITY_RAW_ARRAY_ENTRIES = 8192;
 const MAX_SUPERADMIN_CAPABILITY_CLAIM_ENTRIES = 64;
 const MAX_SUPERADMIN_JWT_SEGMENT_CHARS = 6144;
+const MAX_SUPERADMIN_AUTHORIZATION_HEADER_VALUES = 32;
 const SUPERADMIN_JWS_COMPACT_TOKEN_PATTERN = /^[A-Za-z0-9._-]+$/;
 const SUPERADMIN_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 const SUPERADMIN_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
@@ -139,6 +140,8 @@ const safeWrite = (writer: () => void): boolean => {
     return false;
   }
 };
+const containsUnsafeSuperAdminIdentifierChars = (value: string): boolean =>
+  SUPERADMIN_TOKEN_CONTROL_CHARS.test(value) || SUPERADMIN_TOKEN_DISALLOWED_UNICODE.test(value);
 
 export const getSuperAdminCapabilities = (
   role?: string,
@@ -189,6 +192,8 @@ export const verifySuperAdmin = async (
 ): Promise<void> => {
   const { jwt: jwtLib, config: depsConfig, dbGet: db } = deps;
   const jwtSecret = normalizeOptionalString(depsConfig.JWT_SECRET);
+  const jwtIssuer = normalizeOptionalString(depsConfig.JWT_ISSUER);
+  const jwtAudience = normalizeOptionalString(depsConfig.JWT_AUDIENCE);
   if (!jwtSecret) {
     logger.error('[SuperAdmin Middleware] JWT_SECRET is not configured');
     res.status(500).json({
@@ -224,6 +229,15 @@ export const verifySuperAdmin = async (
     }
     return undefined;
   };
+
+  if (Array.isArray(token) && token.length > MAX_SUPERADMIN_AUTHORIZATION_HEADER_VALUES) {
+    res.status(401).json({
+      error: 'Authorization token required',
+      code: 'UNAUTHORIZED',
+      guidance: 'Sign in with a platform superadmin account and retry.',
+    });
+    return;
+  }
 
   const cleanToken =
     typeof token === 'string'
@@ -275,8 +289,13 @@ export const verifySuperAdmin = async (
   }
 
   try {
+    const verifyOptions: jwt.VerifyOptions = {
+      ...SUPERADMIN_JWT_VERIFY_OPTIONS,
+      ...(jwtIssuer ? { issuer: jwtIssuer } : {}),
+      ...(jwtAudience ? { audience: jwtAudience } : {}),
+    };
     const decoded = await new Promise<JWTPayload>((resolve, reject) => {
-      jwtLib.verify(cleanToken, jwtSecret, SUPERADMIN_JWT_VERIFY_OPTIONS, (err: any, decoded: any) => {
+      jwtLib.verify(cleanToken, jwtSecret, verifyOptions, (err: any, decoded: any) => {
         if (err) return reject(err);
         resolve(decoded as JWTPayload);
       });
@@ -300,6 +319,14 @@ export const verifySuperAdmin = async (
       return;
     }
     if (decodedUserId.length > MAX_SUPERADMIN_SUBJECT_ID_CHARS) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+        guidance: 'Refresh your session and retry.',
+      });
+      return;
+    }
+    if (containsUnsafeSuperAdminIdentifierChars(decodedUserId)) {
       res.status(401).json({
         error: 'Unauthorized',
         code: 'UNAUTHORIZED',
@@ -347,6 +374,14 @@ export const verifySuperAdmin = async (
       });
       return;
     }
+    if (tokenOrganizationId && containsUnsafeSuperAdminIdentifierChars(tokenOrganizationId)) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+        guidance: 'Refresh your session and retry.',
+      });
+      return;
+    }
     const tokenSuperadminCapabilities = (
       readOptionalStringArrayClaim(decodedClaims, 'superadminCapabilities') || []
     )
@@ -359,7 +394,7 @@ export const verifySuperAdmin = async (
     let dbRole: string | undefined;
     try {
       const user = await db<UserRow>('SELECT role FROM users WHERE id = ?', [decodedUserId]);
-      dbRole = user?.role;
+      dbRole = normalizeOptionalString(user?.role);
     } catch (dbError) {
       logger.error('[SuperAdmin Middleware] Database check error:', dbError);
       res.status(403).json({
@@ -370,8 +405,8 @@ export const verifySuperAdmin = async (
       return;
     }
 
-    // Prefer DB truth when available; fall back to token role if DB doesn't return a row.
-    const effectiveRole = dbRole || userRole;
+    // Enforce DB role as source of truth for superadmin elevation.
+    const effectiveRole = dbRole;
 
     if (normalizeSuperAdminRole(effectiveRole) !== 'superadmin') {
       logger.info(`[SuperAdmin Middleware] Access Denied. Role: ${effectiveRole}`);

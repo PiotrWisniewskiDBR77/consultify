@@ -14,6 +14,7 @@ import {
   requireDynamicFrameworkAccess,
   requireFrameworkAccess,
 } from '../../../../server/src/middleware/frameworkEntitlement.middleware.ts';
+import logger from '../../../../server/src/utils/Logger.js';
 
 function makeRes() {
   const res: any = {};
@@ -132,6 +133,35 @@ describe('frameworkEntitlement.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('routes static success-path through next(error) when response is already committed', async () => {
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = makeRes();
+    res.headersSent = true;
+    const next = vi.fn();
+    const mw = requireFrameworkAccess('DRD');
+
+    await mw(req, res as any, next as any);
+
+    expect(req.frameworkAccess).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
+  it('routes static success-path through next(error) when response writableEnded is already true', async () => {
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = makeRes();
+    res.headersSent = false;
+    res.writableEnded = true;
+    const next = vi.fn();
+    const mw = requireFrameworkAccess('DRD');
+
+    await mw(req, res as any, next as any);
+
+    expect(req.frameworkAccess).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
   it('dynamic middleware tolerates throwing params accessor and falls back to body', async () => {
     const req: any = { user: { organizationId: 'org-1' }, body: { frameworkId: 'cmmi' } };
     Object.defineProperty(req, 'params', {
@@ -150,6 +180,35 @@ describe('frameworkEntitlement.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('routes dynamic success-path through next(error) when response is already committed', async () => {
+    const req: any = { user: { organizationId: 'org-1' }, params: { frameworkId: 'cmmi' } };
+    const res: any = makeRes();
+    res.headersSent = true;
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(req.frameworkAccess).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
+  it('routes dynamic success-path through next(error) when response writableEnded is already true', async () => {
+    const req: any = { user: { organizationId: 'org-1' }, params: { frameworkId: 'cmmi' } };
+    const res: any = makeRes();
+    res.headersSent = false;
+    res.writableEnded = true;
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(req.frameworkAccess).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+  });
+
   it('does not send 503 body when headers are already sent in dynamic middleware catch path', async () => {
     checkAccessMock.mockRejectedValueOnce(new Error('db unavailable'));
     const req: any = { user: { organizationId: 'org-1' }, params: { frameworkId: 'cmmi' } };
@@ -162,6 +221,74 @@ describe('frameworkEntitlement.middleware', () => {
 
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not send 503 body when writableEnded is true in static middleware catch path', async () => {
+    checkAccessMock.mockRejectedValueOnce(new Error('db unavailable'));
+    const req: any = { user: { organizationId: 'org-1' } };
+    const res: any = makeRes();
+    res.headersSent = false;
+    res.writableEnded = true;
+    const next = vi.fn();
+    const mw = requireFrameworkAccess('DRD');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not send 503 body when writableEnded is true in dynamic middleware catch path', async () => {
+    checkAccessMock.mockRejectedValueOnce(new Error('db unavailable'));
+    const req: any = { user: { organizationId: 'org-1' }, params: { frameworkId: 'cmmi' } };
+    const res: any = makeRes();
+    res.headersSent = false;
+    res.writableEnded = true;
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('skips static entitlement check when request is already aborted', async () => {
+    const req: any = { user: { organizationId: 'org-1' }, aborted: true };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireFrameworkAccess('DRD');
+
+    await mw(req, res as any, next as any);
+
+    expect(checkAccessMock).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE', framework: 'DRD' })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('skips dynamic entitlement check when socket is already destroyed', async () => {
+    const req: any = {
+      user: { organizationId: 'org-1' },
+      params: { frameworkId: 'cmmi' },
+      socket: { destroyed: true },
+    };
+    const res = makeRes();
+    const next = vi.fn();
+    const mw = requireDynamicFrameworkAccess('frameworkId');
+
+    await mw(req, res as any, next as any);
+
+    expect(checkAccessMock).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE', framework: 'CMMI' })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -310,6 +437,7 @@ describe('frameworkEntitlement.middleware', () => {
   it('returns 503 when static entitlement check times out', async () => {
     vi.useFakeTimers();
     checkAccessMock.mockImplementationOnce(() => new Promise(() => undefined));
+    const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     const req: any = { user: { organizationId: 'org-1' } };
     const res = makeRes();
     const next = vi.fn();
@@ -323,7 +451,12 @@ describe('frameworkEntitlement.middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: 'FRAMEWORK_ACCESS_CHECK_UNAVAILABLE', framework: 'DRD' })
     );
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[FrameworkGate] checkAccess timed out',
+      expect.objectContaining({ framework: 'DRD', timeoutMs: 8000, orgId: 'org-1' })
+    );
     expect(next).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
     vi.useRealTimers();
   });
 

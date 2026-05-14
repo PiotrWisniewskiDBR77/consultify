@@ -179,7 +179,11 @@ export function encryptRequestPII(req: Request, _res: Response, next: NextFuncti
 
     safeCallNext(next, 'encryptRequestPII:success');
   } catch (error) {
-    logger.error('[PIIEncryption] Request encryption error:', error);
+    logger.error('[PIIEncryption] Request encryption error:', {
+      path: readPath(req),
+      method: readMethod(req),
+      error,
+    });
     safeCallNext(next, 'encryptRequestPII:error'); // Continue without encryption on error
   }
 }
@@ -228,25 +232,26 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
 
   // Override json to decrypt PII before sending
   try {
-    res.json = function (body: unknown): Response {
+    res.json = function (incomingPayload: unknown): Response {
+      let outgoingPayload: unknown = incomingPayload;
       try {
-        if (body && typeof body === 'object') {
-          if (Array.isArray(body)) {
-            body = body.map((item) =>
+        if (outgoingPayload && typeof outgoingPayload === 'object') {
+          if (Array.isArray(outgoingPayload)) {
+            outgoingPayload = outgoingPayload.map((item) =>
               isPlainObjectRecord(item)
                 ? decryptPII(item as Record<string, unknown>)
                 : item
             );
-          } else if (isPlainObjectRecord(body)) {
-            body = decryptPII(body as Record<string, unknown>);
+          } else if (isPlainObjectRecord(outgoingPayload)) {
+            outgoingPayload = decryptPII(outgoingPayload as Record<string, unknown>);
           }
         }
       } catch (error) {
         logger.error('[PIIEncryption] Response decryption error:', error);
-        // Send original body on error
+        outgoingPayload = incomingPayload;
       }
       try {
-        return Reflect.apply(originalJson, res, [body]);
+        return Reflect.apply(originalJson, res, [outgoingPayload]);
       } catch (error) {
         logger.error('[PIIEncryption] res.json delegate error', {
           path: requestPath,

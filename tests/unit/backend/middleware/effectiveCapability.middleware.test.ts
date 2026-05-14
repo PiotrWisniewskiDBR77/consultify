@@ -229,6 +229,40 @@ describe('effectiveCapability.middleware', () => {
     );
   });
 
+  it('does not attempt deny write when response state accessors throw (assume committed)', async () => {
+    mockHasEffectiveCapability.mockReturnValue(false);
+    const middleware = requireProjectCapability('PROJECT_WRITE');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    Object.defineProperty(res, 'headersSent', {
+      configurable: true,
+      get: () => {
+        throw new Error('headersSent getter failed');
+      },
+    });
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[effectiveCapability] response already committed; skipping json write',
+      expect.objectContaining({ status: 403, phase: 'deny' })
+    );
+  });
+
   it('does not attempt deny write when response writableFinished is already true', async () => {
     mockHasEffectiveCapability.mockReturnValue(false);
     const middleware = requireProjectCapability('PROJECT_WRITE');
@@ -339,6 +373,35 @@ describe('effectiveCapability.middleware', () => {
     );
   });
 
+  it('logs next() promise rejections on allow path without rethrowing', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: { projectId: 'p-1' },
+      body: {},
+      query: {},
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const rejection = new Error('next rejected');
+    const next = vi
+      .fn()
+      .mockImplementationOnce(() => Promise.reject(rejection))
+      .mockImplementationOnce(() => undefined);
+
+    await expect(middleware(req, res, next)).resolves.toBeUndefined();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(next.mock.calls[1]?.[0]).toBe(rejection);
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      '[effectiveCapability] next() returned rejected promise',
+      expect.objectContaining({ phase: 'allow', capability: 'PROJECT_READ' })
+    );
+  });
+
   it('enables shadow mode when EFFECTIVE_ACCESS_SHADOW has mixed casing', async () => {
     process.env.EFFECTIVE_ACCESS_ENFORCE = 'false';
     process.env.EFFECTIVE_ACCESS_SHADOW = 'TrUe';
@@ -365,6 +428,48 @@ describe('effectiveCapability.middleware', () => {
   it('resolveTaskProjectId falls back to direct project resolver when task id missing', async () => {
     const req: any = { params: { projectId: 'p-direct' }, body: {}, query: {} };
     await expect(resolveTaskProjectId(req)).resolves.toBe('p-direct');
+  });
+
+  it('resolveTaskProjectId skips db lookup when task id is oversized and falls back to direct project id', async () => {
+    const req: any = {
+      params: { taskId: 't'.repeat(129), projectId: 'p-direct' },
+      body: {},
+      query: {},
+    };
+    await expect(resolveTaskProjectId(req)).resolves.toBe('p-direct');
+    expect(mockQueryOne).not.toHaveBeenCalled();
+  });
+
+  it('resolveProjectIdFromRequest rejects ambiguous multi-value query projectId', async () => {
+    const req: any = {
+      params: {},
+      body: {},
+      query: { projectId: ['p-a', 'p-b'] },
+    };
+    await expect(resolveProjectIdFromRequest(req)).resolves.toBeNull();
+  });
+
+  it('returns 400 when project context is ambiguous multi-value query projectId in enforce mode', async () => {
+    const middleware = requireProjectCapability('PROJECT_READ');
+    const req: any = {
+      userId: 'u-1',
+      organizationId: 'org-1',
+      userRole: 'ADMIN',
+      params: {},
+      body: {},
+      query: { projectId: ['p-a', 'p-b'] },
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await middleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'PROJECT_CONTEXT_REQUIRED' })
+    );
+    expect(mockResolveEffectiveAccess).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('resolveProjectIdFromRequest tolerates throwing params/body/query accessors', async () => {

@@ -68,6 +68,7 @@ function hasPlausibleMailboxHost(email: string): boolean {
   if (atIndex <= 0 || atIndex >= email.length - 1) return false;
   const localPart = email.slice(0, atIndex).trim();
   const hostPart = email.slice(atIndex + 1).trim();
+  if (localPart.includes('..')) return false;
   const isHostMalformed =
     /\s/.test(hostPart) || hostPart.includes('..') || hostPart.startsWith('.') || hostPart.endsWith('.');
   return localPart.length > 0 && hostPart.length > 0 && !isHostMalformed;
@@ -117,7 +118,12 @@ export function requireInternalToolsAccess(
   }
 
   const user = safeRead(() => req.user, undefined as unknown as AuthRequest['user']);
-  const userEmail = normalizeOptionalString(safeRead(() => user?.email, undefined as unknown));
+  const rawUserEmail = safeRead(() => user?.email, undefined as unknown);
+  if (typeof rawUserEmail !== 'string') {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  const userEmail = normalizeOptionalString(rawUserEmail);
   if (!userEmail) {
     res.status(404).json({ error: 'Not found' });
     return;
@@ -162,6 +168,7 @@ export function requireInternalToolsAccess(
     safeRead(() => process.env.INTERNAL_TOOLS_ALLOWED_ORG_IDS, undefined),
     []
   );
+  const rawAllowedOrgIdsCsv = safeRead(() => process.env.INTERNAL_TOOLS_ALLOWED_ORG_IDS, undefined);
   if (
     allowedDomains.some(
       (allowedDomain) =>
@@ -194,6 +201,10 @@ export function requireInternalToolsAccess(
     res.status(404).json({ error: 'Not found' });
     return;
   }
+  if (typeof rawAllowedOrgIdsCsv === 'string' && rawAllowedOrgIdsCsv.length > 0 && allowedOrgIds.length === 0) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
 
   const orgId = readOrganizationId(req);
   if (
@@ -207,6 +218,10 @@ export function requireInternalToolsAccess(
   }
   const roleRaw = safeRead(() => user?.role, undefined as unknown);
   if (typeof roleRaw === 'string' && roleRaw.length > MAX_INTERNAL_TOOLS_ROLE_CHARS) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  if (typeof roleRaw === 'string' && INTERNAL_TOOLS_CONTROL_CHARS.test(roleRaw)) {
     res.status(404).json({ error: 'Not found' });
     return;
   }

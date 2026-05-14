@@ -88,7 +88,8 @@ const readRecordedDuration = (
     durationRaw = endWall - startWall;
   }
   if (durationRaw == null || !Number.isFinite(durationRaw) || durationRaw < 0) return 0;
-  return Math.min(durationRaw, V8_METRICS_MAX_RECORDED_LATENCY_MS);
+  const capped = Math.min(durationRaw, V8_METRICS_MAX_RECORDED_LATENCY_MS);
+  return Math.round(capped);
 };
 
 export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: NextFunction): void => {
@@ -127,10 +128,10 @@ export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: Next
         safeNext(next);
         return;
       }
-      const onDone = () => {
-        if (finishRecorded) return;
-        finishRecorded = true;
+      const recordFinishSample = () => {
         try {
+          if (finishRecorded) return;
+          finishRecorded = true;
           const endWall = safeRead(() => Date.now(), Number.NaN);
           const endMono = readMonotonicNow();
           const recordedDuration = readRecordedDuration(startWall, endWall, startMono, endMono);
@@ -147,6 +148,13 @@ export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: Next
           // fail-open: telemetry must never break response flow
         }
       };
+      const onDone = () => {
+        try {
+          recordFinishSample();
+        } catch {
+          // fail-open: telemetry listener must never break response lifecycle
+        }
+      };
       try {
         registerFinish('finish', onDone);
         v8MetricsFinishHooked.add(res);
@@ -158,6 +166,15 @@ export const v8MetricsMiddleware = (_req: AuthRequest, res: Response, next: Next
         v8MetricsFinishHooked.add(res);
       } catch {
         // fail-open: close hook registration must not block request flow
+      }
+      const alreadyFinished = safeRead(
+        () =>
+          (res as Response & { writableEnded?: boolean; finished?: boolean }).writableEnded === true ||
+          (res as Response & { writableEnded?: boolean; finished?: boolean }).finished === true,
+        false
+      );
+      if (alreadyFinished) {
+        recordFinishSample();
       }
     }
   } catch {

@@ -74,6 +74,7 @@ describe('rateLimiting.middleware (L1)', () => {
     try {
       process.env.NODE_ENV = 'production';
       process.env.DISABLE_RATE_LIMIT = 'true';
+      process.env.RATE_LIMIT_ALLOW_PROD_DISABLE = 'true';
       vi.resetModules();
       const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
       const res = makeRes();
@@ -83,6 +84,26 @@ describe('rateLimiting.middleware (L1)', () => {
       mod.defaultRateLimiter(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
+    } finally {
+      process.env = prev;
+    }
+  });
+
+  it('does not disable limiter in production without explicit RATE_LIMIT_ALLOW_PROD_DISABLE', async () => {
+    const prev = { ...process.env };
+    try {
+      process.env.NODE_ENV = 'production';
+      process.env.DISABLE_RATE_LIMIT = 'true';
+      delete process.env.RATE_LIMIT_ALLOW_PROD_DISABLE;
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const res = makeRes();
+      const next = vi.fn();
+      const req: any = { method: 'GET', ip: '1.1.1.1', headers: {}, socket: {}, user: { id: 'u1' } };
+
+      mod.defaultRateLimiter(req, res as any, next as any);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.headers['x-ratelimit-limit']).toBe('300');
     } finally {
       process.env = prev;
     }
@@ -659,6 +680,41 @@ describe('rateLimiting.middleware (L1)', () => {
       mod.defaultRateLimiter(reqB, resB as any, vi.fn() as any);
 
       expect(Number(resB.headers['x-ratelimit-remaining'])).toBe(
+        Number(resA.headers['x-ratelimit-remaining'])
+      );
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('normalizes forwarded IPv4 host:port so equivalent client maps to same limiter key', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      const reqA: any = {
+        method: 'GET',
+        ip: undefined,
+        headers: { 'x-forwarded-for': '9.9.9.9:12345' },
+        socket: { remoteAddress: '10.0.0.1' },
+        app: { get: () => true },
+      };
+      const reqB: any = {
+        method: 'GET',
+        ip: undefined,
+        headers: { 'x-forwarded-for': '9.9.9.9' },
+        socket: { remoteAddress: '10.0.0.1' },
+        app: { get: () => true },
+      };
+
+      const resA = makeRes();
+      const resB = makeRes();
+      mod.defaultRateLimiter(reqA, resA as any, vi.fn() as any);
+      mod.defaultRateLimiter(reqB, resB as any, vi.fn() as any);
+
+      expect(Number(resB.headers['x-ratelimit-remaining'])).toBeLessThan(
         Number(resA.headers['x-ratelimit-remaining'])
       );
     } finally {

@@ -41,6 +41,42 @@ describe('v8Metrics.middleware', () => {
     expect(() => finishHandlers[0]?.()).not.toThrow();
   });
 
+  it('records metrics when response is already writableEnded before listener execution', async () => {
+    const finishHandlers: Array<() => void> = [];
+    const req: any = {};
+    const res: any = {
+      statusCode: 200,
+      writableEnded: true,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') finishHandlers.push(cb);
+      }),
+    };
+    const next = vi.fn();
+
+    v8MetricsMiddleware(req, res, next);
+
+    await flushObservation();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
+    expect(() => finishHandlers[0]?.()).not.toThrow();
+    await flushObservation();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('records metrics when response is already finished before listener execution', async () => {
+    const req: any = {};
+    const res: any = {
+      statusCode: 500,
+      finished: true,
+      on: vi.fn(),
+    };
+    const next = vi.fn();
+
+    v8MetricsMiddleware(req, res, next);
+
+    await flushObservation();
+    expect(recordV8RequestMock).toHaveBeenCalledWith(expect.any(Number), true);
+  });
+
   it('swallows telemetry store errors in finish handler', () => {
     recordV8RequestMock.mockImplementationOnce(() => {
       throw new Error('metrics store failed');
@@ -478,17 +514,37 @@ describe('v8Metrics.middleware', () => {
     const dateNowSpy = vi.spyOn(Date, 'now');
     dateNowSpy.mockReturnValueOnce(10_000);
     dateNowSpy.mockReturnValueOnce(10_300);
-    nowSpy.mockReturnValueOnce(1_000);
-    nowSpy.mockReturnValueOnce(1_500);
+    nowSpy.mockReturnValueOnce(1_000.4);
+    nowSpy.mockReturnValueOnce(1_001.1);
     try {
       v8MetricsMiddleware(req, res, next);
       finishHandlers[0]?.();
       await flushObservation();
-      expect(recordV8RequestMock).toHaveBeenCalledWith(500, true);
+      expect(recordV8RequestMock).toHaveBeenCalledWith(1, true);
+      expect(Number.isInteger(recordV8RequestMock.mock.calls[0]?.[0])).toBe(true);
     } finally {
       nowSpy.mockRestore();
       dateNowSpy.mockRestore();
     }
+  });
+
+  it('keeps middleware non-throwing when finish listener fires synchronously during registration', async () => {
+    recordV8RequestMock.mockImplementationOnce(() => {
+      throw new Error('metrics store failed');
+    });
+    const req: any = {};
+    const res: any = {
+      statusCode: 200,
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === 'finish') cb();
+      }),
+    };
+    const next = vi.fn();
+
+    expect(() => v8MetricsMiddleware(req, res, next)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+    await flushObservation();
+    expect(recordV8RequestMock).toHaveBeenCalledTimes(1);
   });
 
   it('keeps monotonic duration stable when wall clock goes backwards', async () => {

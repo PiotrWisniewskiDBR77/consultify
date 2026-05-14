@@ -734,6 +734,65 @@ describe('apiLogging.middleware', () => {
     expect(runMock).toHaveBeenCalledTimes(1);
   });
 
+  it('persists once when close event fires without explicit end() call', () => {
+    process.env.NODE_ENV = 'development';
+    const closeListeners: Array<() => void> = [];
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const originalEnd = vi.fn();
+    const res: any = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      once: vi.fn((event: string, listener: () => void) => {
+        if (event === 'close') closeListeners.push(listener);
+        return res;
+      }),
+      end: originalEnd,
+    };
+
+    apiLoggingMiddleware(req, res as MutableResponse, vi.fn() as unknown as NextFunction);
+    closeListeners.forEach((listener) => listener());
+
+    expect(originalEnd).not.toHaveBeenCalled();
+    expect(runMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not persist twice when end() and close event both fire', () => {
+    process.env.NODE_ENV = 'development';
+    const closeListeners: Array<() => void> = [];
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const originalEnd = vi.fn();
+    const res: any = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      once: vi.fn((event: string, listener: () => void) => {
+        if (event === 'close') closeListeners.push(listener);
+        return res;
+      }),
+      end: originalEnd,
+    };
+
+    apiLoggingMiddleware(req, res as MutableResponse, vi.fn() as unknown as NextFunction);
+    res.end();
+    closeListeners.forEach((listener) => listener());
+
+    expect(originalEnd).toHaveBeenCalledTimes(1);
+    expect(runMock).toHaveBeenCalledTimes(1);
+  });
+
   it('still persists when first uuidv4 row id generation throws during initial end call', async () => {
     process.env.NODE_ENV = 'development';
     vi.resetModules();
@@ -899,5 +958,56 @@ describe('apiLogging.middleware', () => {
     expect(String(insertParams[2]).length).toBeLessThanOrEqual(32);
     expect(String(insertParams[5]).length).toBeLessThanOrEqual(128);
     expect(String(insertParams[6]).length).toBeLessThanOrEqual(128);
+  });
+
+  it('still calls next exactly once when Date.now throws during setup', () => {
+    process.env.NODE_ENV = 'development';
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 200,
+      statusMessage: 'OK',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: vi.fn(),
+    } as unknown as MutableResponse;
+    const next = vi.fn();
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => {
+      throw new Error('clock failed');
+    });
+
+    expect(() => apiLoggingMiddleware(req, res, next as unknown as NextFunction)).not.toThrow();
+    expect(next).toHaveBeenCalledTimes(1);
+
+    nowSpy.mockRestore();
+  });
+
+  it('does not throw when logger.warn fails while handling db insert failure', () => {
+    process.env.NODE_ENV = 'development';
+    runMock.mockRejectedValueOnce(new Error('db down'));
+    loggerWarnMock.mockImplementationOnce(() => {
+      throw new Error('logger down');
+    });
+    const req = {
+      method: 'POST',
+      path: '/api/example',
+      get: vi.fn().mockReturnValue(undefined),
+      user: { id: 'user-1', organizationId: 'org-1' },
+    } as unknown as Request;
+    const res = {
+      statusCode: 500,
+      statusMessage: 'ERR',
+      getHeader: vi.fn().mockReturnValue(undefined),
+      setHeader: vi.fn(),
+      end: vi.fn(),
+    } as unknown as MutableResponse;
+
+    apiLoggingMiddleware(req, res, vi.fn() as unknown as NextFunction);
+    expect(() => res.end()).not.toThrow();
+    expect(runMock).toHaveBeenCalledTimes(1);
   });
 });

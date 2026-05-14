@@ -47,6 +47,22 @@ function firstString(...values: unknown[]): string | null {
   }
   return null;
 }
+const LOOKUP_ID_MAX_CHARS = 128;
+const getSingleScalarString = (value: unknown): string | null => {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (Array.isArray(value)) {
+    if (value.length !== 1) return null;
+    const first = value[0];
+    if (typeof first === 'string' && first.trim()) return first.trim();
+  }
+  return null;
+};
+const normalizeLookupId = (value: unknown): string | null => {
+  const normalized = getSingleScalarString(value);
+  if (!normalized) return null;
+  if (normalized.length > LOOKUP_ID_MAX_CHARS) return null;
+  return normalized;
+};
 
 function getUserContext(req: AuthRequest) {
   return {
@@ -81,7 +97,7 @@ const responseWriteBlocked = (res: Response): boolean =>
       (res as Response & { writableFinished?: boolean }).writableFinished === true ||
       (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
       (res as Response & { writableEnded?: boolean; destroyed?: boolean }).destroyed === true,
-    false
+    true
   );
 
 const invokeNextSafely = (
@@ -97,7 +113,25 @@ const invokeNextSafely = (
     return;
   }
   try {
-    next();
+    const nextResult = next();
+    const isThenable =
+      nextResult !== null &&
+      (typeof nextResult === 'object' || typeof nextResult === 'function') &&
+      typeof (nextResult as PromiseLike<unknown>).then === 'function';
+    if (isThenable) {
+      void Promise.resolve(nextResult).catch((err) => {
+        logger.error('[effectiveCapability] next() returned rejected promise', {
+          err,
+          path: getRequestPath(req),
+          ...logContext,
+        });
+        try {
+          next(err as Error);
+        } catch {
+          // Do not throw from access middleware on downstream next-handler failures.
+        }
+      });
+    }
   } catch (err) {
     logger.error('[effectiveCapability] next() threw synchronously', {
       err,
@@ -161,24 +195,36 @@ export async function resolveProjectIdFromRequest(req: AuthRequest): Promise<str
   const params = safeRead(() => req.params, undefined as unknown);
   const body = safeRead(() => req.body, undefined as unknown);
   const query = safeRead(() => req.query, undefined as unknown);
-  return firstString(
-    safeRead(() => (params as any)?.projectId, undefined as unknown),
-    safeRead(() => (params as any)?.id, undefined as unknown),
-    safeRead(() => (body as any)?.projectId, undefined as unknown),
-    safeRead(() => (body as any)?.project_id, undefined as unknown),
-    safeRead(() => (query as any)?.projectId, undefined as unknown),
+  const paramProjectId = getSingleScalarString(safeRead(() => (params as any)?.projectId, undefined as unknown));
+  const paramId = getSingleScalarString(safeRead(() => (params as any)?.id, undefined as unknown));
+  const bodyProjectId = getSingleScalarString(safeRead(() => (body as any)?.projectId, undefined as unknown));
+  const bodyProjectIdLegacy = getSingleScalarString(
+    safeRead(() => (body as any)?.project_id, undefined as unknown)
+  );
+  const queryProjectId = getSingleScalarString(safeRead(() => (query as any)?.projectId, undefined as unknown));
+  const queryProjectIdLegacy = getSingleScalarString(
     safeRead(() => (query as any)?.project_id, undefined as unknown)
+  );
+  return firstString(
+    paramProjectId,
+    paramId,
+    bodyProjectId,
+    bodyProjectIdLegacy,
+    queryProjectId,
+    queryProjectIdLegacy
   );
 }
 
 export async function resolveTaskProjectId(req: AuthRequest): Promise<string | null> {
   const params = safeRead(() => req.params, undefined as unknown);
   const body = safeRead(() => req.body, undefined as unknown);
-  const taskId = firstString(
+  const taskId = normalizeLookupId(
+    firstString(
     safeRead(() => (params as any)?.taskId, undefined as unknown),
     safeRead(() => (params as any)?.id, undefined as unknown),
     safeRead(() => (body as any)?.taskId, undefined as unknown),
     safeRead(() => (body as any)?.task_id, undefined as unknown)
+    )
   );
   if (!taskId) return await resolveProjectIdFromRequest(req);
   const row = await queryHelpers
@@ -192,11 +238,13 @@ export async function resolveTaskProjectId(req: AuthRequest): Promise<string | n
 export async function resolveInitiativeProjectId(req: AuthRequest): Promise<string | null> {
   const params = safeRead(() => req.params, undefined as unknown);
   const body = safeRead(() => req.body, undefined as unknown);
-  const initiativeId = firstString(
+  const initiativeId = normalizeLookupId(
+    firstString(
     safeRead(() => (params as any)?.initiativeId, undefined as unknown),
     safeRead(() => (params as any)?.id, undefined as unknown),
     safeRead(() => (body as any)?.initiativeId, undefined as unknown),
     safeRead(() => (body as any)?.initiative_id, undefined as unknown)
+    )
   );
   if (!initiativeId) return await resolveProjectIdFromRequest(req);
   const row = await queryHelpers
@@ -211,9 +259,11 @@ export async function resolveInterviewProjectId(req: AuthRequest): Promise<strin
   const params = safeRead(() => req.params, undefined as unknown);
   const body = safeRead(() => req.body, undefined as unknown);
   const query = safeRead(() => req.query, undefined as unknown);
-  const assignmentId = firstString(
+  const assignmentId = normalizeLookupId(
+    firstString(
     safeRead(() => (params as any)?.assignmentId, undefined as unknown),
     safeRead(() => (params as any)?.id, undefined as unknown)
+    )
   );
   if (assignmentId) {
     const row = await queryHelpers
@@ -230,10 +280,12 @@ export async function resolveInterviewProjectId(req: AuthRequest): Promise<strin
     if (projectId) return projectId;
   }
 
-  const sessionId = firstString(
+  const sessionId = normalizeLookupId(
+    firstString(
     safeRead(() => (params as any)?.sessionId, undefined as unknown),
     safeRead(() => (body as any)?.sessionId, undefined as unknown),
     safeRead(() => (query as any)?.sessionId, undefined as unknown)
+    )
   );
   if (sessionId) {
     const row = await queryHelpers
@@ -244,10 +296,12 @@ export async function resolveInterviewProjectId(req: AuthRequest): Promise<strin
     return firstString(row?.project_id, await resolveProjectIdFromRequest(req));
   }
 
-  const insightId = firstString(
+  const insightId = normalizeLookupId(
+    firstString(
     safeRead(() => (params as any)?.insightId, undefined as unknown),
     safeRead(() => (params as any)?.id, undefined as unknown),
     safeRead(() => (body as any)?.insightId, undefined as unknown)
+    )
   );
   if (insightId) {
     const row = await queryHelpers

@@ -51,6 +51,18 @@ describe('v8Auth.middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('requireV8OrgContext does not call next when inbound socket is already destroyed', () => {
+    const req: any = {
+      organizationId: 'org-1',
+      socket: { destroyed: true },
+    };
+    const res: any = makeRes();
+    const next = vi.fn();
+    requireV8OrgContext(req, res as any, next as any);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('requireV8OrgContext does not throw when next is not a function', () => {
     const req: any = { organizationId: 'org-1' };
     const res = makeRes();
@@ -308,6 +320,23 @@ describe('v8Auth.middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('attachV8Context does not call next or attach context when inbound connection is already closed', () => {
+    const req: any = {
+      organizationId: 'org-1',
+      userId: 'user-1',
+      userRole: 'ADMIN',
+      destroyed: true,
+    };
+    const res = makeRes();
+    const next = vi.fn();
+
+    attachV8Context(req, res as any, next as any);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(req.v8Context).toBeUndefined();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('attachV8Context sets empty userRole when role contains only control chars', () => {
     const req: any = {
       organizationId: 'org-1',
@@ -392,6 +421,18 @@ describe('v8Auth.middleware', () => {
 
   it('getV8Context throws when context not attached', () => {
     const req: any = {};
+    expect(() => getV8Context(req)).toThrow('V8 context not attached');
+  });
+
+  it('getV8Context ignores inherited prototype context and throws as not attached', () => {
+    const req: any = Object.create({
+      v8Context: {
+        organizationId: 'org-inherited',
+        userId: 'user-inherited',
+        userRole: 'ADMIN',
+        isSuperAdmin: false,
+      },
+    });
     expect(() => getV8Context(req)).toThrow('V8 context not attached');
   });
 

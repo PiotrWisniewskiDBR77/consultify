@@ -375,6 +375,59 @@ describe('deprecationHeader.middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('falls back to setHeader merge when append exists but throws', () => {
+    const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-link-append-throws' };
+    const res: any = {
+      setHeader: vi.fn(),
+      getHeader: vi.fn(() => '</api/current>; rel="alternate"'),
+      append: vi.fn(() => {
+        throw new Error('append failed');
+      }),
+    };
+    const next = vi.fn();
+
+    deprecationHeader('/api/v8/new')(req, res, next as any);
+
+    expect(res.append).toHaveBeenCalledWith('Link', '</api/v8/new>; rel="successor-version"');
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Link',
+      '</api/current>; rel="alternate", </api/v8/new>; rel="successor-version"'
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to successor-only Link when merged Link would exceed max length', () => {
+    const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-link-merge-cap' };
+    const res: any = {
+      setHeader: vi.fn(),
+      getHeader: vi.fn(() => `</api/current>; rel="alternate"; title="${'x'.repeat(5000)}"`),
+    };
+    const next = vi.fn();
+
+    deprecationHeader('/api/v8/new')(req, res, next as any);
+
+    const linkSetCalls = res.setHeader.mock.calls.filter((call: unknown[]) => call[0] === 'Link');
+    const finalLinkValue = String(linkSetCalls.at(-1)?.[1] ?? '');
+    expect(finalLinkValue.length).toBeLessThanOrEqual(4096);
+    expect(finalLinkValue).toBe('</api/v8/new>; rel="successor-version"');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats Buffer Link header value as existing Link and appends successor relation', () => {
+    const req: any = { method: 'GET', baseUrl: '/api/old', path: '/route-link-buffer' };
+    const res: any = {
+      setHeader: vi.fn(),
+      getHeader: vi.fn(() => Buffer.from('</api/current>; rel="alternate"', 'utf8')),
+      append: vi.fn(),
+    };
+    const next = vi.fn();
+
+    deprecationHeader('/api/v8/new')(req, res, next as any);
+
+    expect(res.append).toHaveBeenCalledWith('Link', '</api/v8/new>; rel="successor-version"');
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it('does not log first-hit message when warned.add throws', () => {
     const infoSpy = vi.spyOn(logger, 'info').mockImplementation(() => undefined);
     const originalAdd = Set.prototype.add;
@@ -394,6 +447,27 @@ describe('deprecationHeader.middleware', () => {
     expect(infoSpy).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
     addSpy.mockRestore();
+    infoSpy.mockRestore();
+  });
+
+  it('does not include query or hash fragments from originalUrl in deprecation log key', () => {
+    const infoSpy = vi.spyOn(logger, 'info').mockImplementation(() => undefined);
+    const req: any = {
+      method: 'GET',
+      baseUrl: '/api/old',
+      originalUrl: '/route-sensitive?token=SECRET&foo=1#frag',
+    };
+    const res = makeRes();
+    const next = vi.fn();
+
+    deprecationHeader('/api/v8/new')(req, res as any, next as any);
+
+    const msg = String(infoSpy.mock.calls[0]?.[0] ?? '');
+    expect(msg).toContain('/api/old/route-sensitive');
+    expect(msg).not.toContain('SECRET');
+    expect(msg).not.toContain('token=');
+    expect(msg).not.toContain('#frag');
+    expect(next).toHaveBeenCalledTimes(1);
     infoSpy.mockRestore();
   });
 });

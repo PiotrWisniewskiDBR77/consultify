@@ -85,10 +85,17 @@ const normalizeAllowList = (allowed: string | string[]): string[] => {
 const isPlainObjectRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const getAnonPermissions = (machine: UserStateMachine): Record<string, unknown> =>
-  safeRead(
+  (() => {
+    const permissions = safeRead(
     () => machine.getPermissions(machine.USER_STATES.ANON),
     {}
-  );
+    );
+    return isPlainObjectRecord(permissions) ? permissions : {};
+  })();
+const coerceStatePermissions = (
+  value: unknown,
+  machine: UserStateMachine
+): Record<string, unknown> => (isPlainObjectRecord(value) ? value : getAnonPermissions(machine));
 
 // ==========================================
 // MIDDLEWARE
@@ -111,9 +118,12 @@ export async function attachUserState(
     if (!userId) {
       req.userState = UserStateMachine.USER_STATES.ANON;
       req.currentPhase = UserStateMachine.PHASES.A;
-      req.statePermissions = safeRead(
+      req.statePermissions = coerceStatePermissions(
+        safeRead(
         () => UserStateMachine.getPermissions(req.userState as string),
         getAnonPermissions(UserStateMachine)
+        ),
+        UserStateMachine
       );
       next();
       return;
@@ -123,9 +133,12 @@ export async function attachUserState(
     if (!db) {
       req.userState = UserStateMachine.USER_STATES.ANON;
       req.currentPhase = UserStateMachine.PHASES.A;
-      req.statePermissions = safeRead(
+      req.statePermissions = coerceStatePermissions(
+        safeRead(
         () => UserStateMachine.getPermissions(req.userState as string),
         getAnonPermissions(UserStateMachine)
+        ),
+        UserStateMachine
       );
       next();
       return;
@@ -155,9 +168,12 @@ export async function attachUserState(
     }
 
     // Attach permissions for convenience
-    req.statePermissions = safeRead(
-      () => UserStateMachine.getPermissions(req.userState as string),
-      getAnonPermissions(UserStateMachine)
+    req.statePermissions = coerceStatePermissions(
+      safeRead(
+        () => UserStateMachine.getPermissions(req.userState as string),
+        getAnonPermissions(UserStateMachine)
+      ),
+      UserStateMachine
     );
 
     next();
@@ -167,7 +183,7 @@ export async function attachUserState(
     // Fail closed - treat as ANON
     req.userState = UserStateMachine.USER_STATES.ANON;
     req.currentPhase = UserStateMachine.PHASES.A;
-    req.statePermissions = getAnonPermissions(UserStateMachine);
+    req.statePermissions = coerceStatePermissions(getAnonPermissions(UserStateMachine), UserStateMachine);
     next();
   }
 }
@@ -179,6 +195,8 @@ export async function attachUserState(
  */
 export function requireState(allowedStates: string | string[]) {
   const states = normalizeAllowList(allowedStates);
+  const knownStates = new Set(Object.values(deps.UserStateMachine.USER_STATES));
+  const invalidStates = states.filter((state) => !knownStates.has(state));
   if (states.length === 0) {
     return (_req: UserStateRequest, res: Response, _next: NextFunction): void => {
       res.status(500).json({
@@ -187,9 +205,18 @@ export function requireState(allowedStates: string | string[]) {
       });
     };
   }
+  if (invalidStates.length > 0) {
+    return (_req: UserStateRequest, res: Response, _next: NextFunction): void => {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: 'requireState contains unknown user states.',
+        invalidStates,
+      });
+    };
+  }
 
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-    const currentState = normalizeOptionalString(req.userState);
+    const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined as unknown));
 
     if (!currentState) {
       res.status(401).json({
@@ -221,6 +248,8 @@ export function requireState(allowedStates: string | string[]) {
  */
 export function requirePhase(allowedPhases: string | string[]) {
   const phases = normalizeAllowList(allowedPhases);
+  const knownPhases = new Set(Object.values(deps.UserStateMachine.PHASES));
+  const invalidPhases = phases.filter((phase) => !knownPhases.has(phase));
   if (phases.length === 0) {
     return (_req: UserStateRequest, res: Response, _next: NextFunction): void => {
       res.status(500).json({
@@ -229,9 +258,18 @@ export function requirePhase(allowedPhases: string | string[]) {
       });
     };
   }
+  if (invalidPhases.length > 0) {
+    return (_req: UserStateRequest, res: Response, _next: NextFunction): void => {
+      res.status(500).json({
+        error: 'MISCONFIGURED_USER_STATE_GUARD',
+        message: 'requirePhase contains unknown phases.',
+        invalidPhases,
+      });
+    };
+  }
 
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
-    const currentPhase = normalizeOptionalString(req.currentPhase);
+    const currentPhase = normalizeOptionalString(safeRead(() => req.currentPhase, undefined as unknown));
 
     if (!currentPhase) {
       res.status(401).json({
@@ -273,7 +311,7 @@ export function requirePermission(permission: string) {
 
   return (req: UserStateRequest, res: Response, next: NextFunction): void => {
     const { UserStateMachine } = deps;
-    const currentState = normalizeOptionalString(req.userState);
+    const currentState = normalizeOptionalString(safeRead(() => req.userState, undefined as unknown));
 
     if (!currentState) {
       res.status(401).json({
@@ -329,6 +367,7 @@ export async function transitionState(
   if (!normalizedFromState || !normalizedToState) {
     return { success: false, error: 'Invalid state' };
   }
+  const transitionContext = isPlainObjectRecord(context) ? context : {};
   const knownStates = new Set(Object.values(UserStateMachine.USER_STATES));
   if (!knownStates.has(normalizedFromState) || !knownStates.has(normalizedToState)) {
     return { success: false, error: 'Unknown user state' };
@@ -337,7 +376,11 @@ export async function transitionState(
   // Validate transition
   let validation: { valid: boolean; reason?: string };
   try {
-    validation = UserStateMachine.validateTransition(normalizedFromState, normalizedToState, context);
+    validation = UserStateMachine.validateTransition(
+      normalizedFromState,
+      normalizedToState,
+      transitionContext
+    );
   } catch (error: unknown) {
     logger.error('transitionState validateTransition error:', error);
     return { success: false, error: 'State transition validation failed' };
@@ -391,7 +434,7 @@ export async function transitionState(
           toState: normalizedToState,
           fromPhase: safeRead(() => UserStateMachine.getPhase(normalizedFromState), newPhase),
           toPhase: newPhase,
-          context: { ...context, timestamp: new Date().toISOString() },
+          context: { ...transitionContext, timestamp: new Date().toISOString() },
         },
       });
     } catch (auditError) {

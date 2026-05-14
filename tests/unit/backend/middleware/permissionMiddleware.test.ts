@@ -262,6 +262,20 @@ describe('Permission Middleware - Real Production Tests', () => {
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('sanitizes invisible and control chars in permission key before permission check', async () => {
+      mockPermissionService.hasPermission.mockResolvedValue(true);
+      const middleware = requirePermission('  ADMIN_\u200BACCESS\u0000  ');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+        'user-123',
+        'org-456',
+        'ADMIN_ACCESS',
+        'USER'
+      );
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
   describe('requireAnyPermission', () => {
@@ -682,6 +696,31 @@ describe('Permission Middleware - Real Production Tests', () => {
           middleware: 'requirePermission',
           code: 'RESPONSE_ALREADY_COMMITTED',
         })
+      );
+    });
+
+    it('requirePermission skips before blank-key validation when response is already committed', async () => {
+      Object.defineProperty(mockRes, 'headersSent', {
+        configurable: true,
+        get: () => true,
+      });
+
+      const middleware = requirePermission('   ');
+      await middleware(mockReq, mockRes, mockNext);
+
+      expect(mockPermissionService.hasPermission).not.toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        '[PermissionMiddleware] Skipped permission check: response already committed',
+        expect.objectContaining({
+          middleware: 'requirePermission',
+          code: 'RESPONSE_ALREADY_COMMITTED',
+        })
+      );
+      expect(mockLogger.info).not.toHaveBeenCalledWith(
+        expect.stringContaining('blank permission key')
       );
     });
 

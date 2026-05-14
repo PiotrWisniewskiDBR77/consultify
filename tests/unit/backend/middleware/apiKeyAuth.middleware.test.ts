@@ -53,6 +53,25 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('requireApiKeyPermission returns 500 when configured with empty permission', async () => {
+    vi.resetModules();
+    const mwMod = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const { requireApiKeyPermission } = mwMod;
+    const mw = requireApiKeyPermission('   ');
+    const res: any = { setHeader: vi.fn(), status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    mw({ apiKey: { permissions: ['read_projects'] } } as any, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'API_KEY_PERMISSION_CONFIG',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('requireApiKeyPermission returns stable 401 JSON when apiKey is missing', async () => {
     vi.resetModules();
     const mwMod = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
@@ -77,6 +96,26 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
       'WWW-Authenticate',
       'Bearer realm="consultify-api", error="invalid_token"'
     );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireApiKeyPermission returns early when response is already committed', async () => {
+    vi.resetModules();
+    const mwMod = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const { requireApiKeyPermission, API_KEY_PERMISSIONS } = mwMod;
+    const mw = requireApiKeyPermission(API_KEY_PERMISSIONS.READ_PROJECTS);
+    const res: any = {
+      headersSent: true,
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    mw({} as any, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -218,6 +257,39 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
       })
     );
     expect(validateKey).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('apiKeyAuth rejects API key containing transport control characters before validation', async () => {
+    vi.resetModules();
+    const validateKey = vi.fn();
+    vi.doMock('../../../../server/src/services/apiKeyService.js', () => ({
+      API_KEY_PERMISSIONS: {
+        FULL_ACCESS: 'full_access',
+      },
+      ApiKeyService: {
+        validateKey,
+      },
+    }));
+    const { apiKeyAuth } = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const req: any = {
+      headers: { authorization: `Bearer ck_valid${String.fromCharCode(0)}suffix` },
+      query: {},
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '' },
+    };
+    const res: any = {
+      setHeader: vi.fn(),
+      status: vi.fn(() => res),
+      json: vi.fn(() => res),
+    };
+    const next = vi.fn();
+
+    await apiKeyAuth(req, res, next);
+
+    expect(validateKey).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'API_KEY_INVALID' }));
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -396,6 +468,44 @@ describe('apiKeyAuth.middleware hardening (no DB)', () => {
 
     expect(validateKey).toHaveBeenCalledTimes(1);
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('hybridAuth awaits async JWT middleware and forwards synchronous completion', async () => {
+    vi.resetModules();
+    const mwMod = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const { hybridAuth } = mwMod;
+    const jwtMiddleware = vi.fn(async (_req: any, _res: any, next: any) => {
+      next();
+    });
+    const mw = hybridAuth(jwtMiddleware);
+    const req: any = { headers: {}, query: {}, ip: '127.0.0.1', socket: { remoteAddress: '' } };
+    const res: any = { setHeader: vi.fn(), status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(jwtMiddleware).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('hybridAuth forwards async JWT middleware rejection to next', async () => {
+    vi.resetModules();
+    const mwMod = await import('../../../../server/src/middleware/apiKeyAuth.middleware.ts');
+    const { hybridAuth } = mwMod;
+    const jwtMiddleware = vi.fn(async () => {
+      throw new Error('jwt boom');
+    });
+    const mw = hybridAuth(jwtMiddleware);
+    const req: any = { headers: {}, query: {}, ip: '127.0.0.1', socket: { remoteAddress: '' } };
+    const res: any = { setHeader: vi.fn(), status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(jwtMiddleware).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+    expect((next.mock.calls[0]?.[0] as Error).message).toBe('jwt boom');
   });
 
   it('apiKeyAuth rejects too-short API key before validation', async () => {
@@ -1308,5 +1418,41 @@ describeIfDb('apiKeyAuth.middleware (L1)', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(req.apiKey?.id).toBe(key.id);
     expect(req.organizationId).toBe('org-array-auth');
+  });
+
+  it('rate-limited response includes no-store cache headers', async () => {
+    const { plainTextKey } = await ApiKeyService.createKey({
+      organizationId: 'org-rate-no-store',
+      name: 'Key RL no-store',
+      permissions: [API_KEY_PERMISSIONS.READ_PROJECTS],
+      ipWhitelist: ['*'],
+      rateLimit: 1,
+      createdBy: 'u1',
+    });
+
+    const makeReq = (): any => ({
+      headers: { authorization: `Bearer ${plainTextKey}`, 'x-forwarded-for': '8.8.8.8' },
+      query: {},
+      ip: '',
+      socket: { remoteAddress: '' },
+    });
+    const mkRes = () => {
+      const res: any = {};
+      res.setHeader = vi.fn(() => res);
+      res.status = vi.fn(() => res);
+      res.json = vi.fn(() => res);
+      return res;
+    };
+
+    await apiKeyAuth(makeReq(), mkRes(), vi.fn()); // allow #1
+    const res2 = mkRes();
+    const next2 = vi.fn();
+    await apiKeyAuth(makeReq(), res2, next2); // reject #2
+
+    expect(res2.status).toHaveBeenCalledWith(429);
+    expect(res2.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+    expect(res2.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+    expect(res2.setHeader).toHaveBeenCalledWith('Retry-After', expect.any(String));
+    expect(next2).not.toHaveBeenCalled();
   });
 });

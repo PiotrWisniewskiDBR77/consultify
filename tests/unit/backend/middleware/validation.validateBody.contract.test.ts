@@ -177,6 +177,37 @@ describe('validation.middleware (L1 contract)', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('does not attempt 400 write when response is already writableEnded', () => {
+      const schema = z.object({ name: z.string().min(2) });
+      const mw = validateBody(schema);
+      const req: any = { body: { name: 'a' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      res.headersSent = false;
+      res.writableEnded = true;
+      const next = vi.fn();
+
+      mw(req, res, next);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    });
+
+  it('does not attempt 400 write when response is already finished', () => {
+    const schema = z.object({ name: z.string().min(2) });
+    const mw = validateBody(schema);
+    const req: any = { body: { name: 'a' }, method: 'POST', path: '/x' };
+    const res = makeRes();
+    res.headersSent = false;
+    res.writableEnded = false;
+    res.finished = true;
+    const next = vi.fn();
+
+    mw(req, res, next);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
     it('uses default error message when issues are missing (fallback branch)', () => {
       const schema: any = {
         safeParse: () => ({ success: false, error: undefined }),
@@ -333,6 +364,63 @@ describe('validation.middleware (L1 contract)', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
+    it('caps validation issue processing before details mapping', () => {
+      const issues = Array.from({ length: 10000 }, (_, index) => ({
+        path: [`field_${index}`],
+        message: `invalid_${index}`,
+        code: 'custom',
+      }));
+      const schema: any = {
+        safeParse: () => ({
+          success: false,
+          error: { issues },
+        }),
+      };
+      const mw = validateBody(schema);
+      const req: any = { body: { any: 'x' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      const payload = (res.json as any).mock.calls[0][0];
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(payload.details).toHaveLength(50);
+      expect(payload.details[49].field).toContain('field_49');
+      expect(payload.details.some((entry: any) => String(entry.field).includes('field_9999'))).toBe(false);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('returns stable 400 when schema failure object has throwing issues accessor', () => {
+      const schema: any = {
+        safeParse: () => {
+          const error = {};
+          Object.defineProperty(error, 'issues', {
+            enumerable: true,
+            get: () => {
+              throw new Error('issues getter failed');
+            },
+          });
+          return { success: false, error };
+        },
+      };
+      const mw = validateBody(schema);
+      const req: any = { body: { any: 'x' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn();
+
+      mw(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation Error',
+          details: [{ field: '', message: 'Validation Error', code: 'custom' }],
+        })
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when body accessor throws and schema expects object', () => {
       const schema = z.object({ name: z.string() });
       const mw = validateBody(schema);
@@ -360,6 +448,23 @@ describe('validation.middleware (L1 contract)', () => {
 
       mw(req, res, undefined as unknown as any);
 
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
+    expect(req.body).toEqual({ name: 'valid' });
+    });
+
+    it('returns 500 when next throws synchronously on valid body payload', () => {
+      const schema = z.object({ name: z.string().min(2) });
+      const mw = validateBody(schema);
+      const req: any = { body: { name: 'valid' }, method: 'POST', path: '/x' };
+      const res = makeRes();
+      const next = vi.fn(() => {
+        throw new Error('next failed');
+      });
+
+      mw(req, res, next);
+
+      expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error during validation' });
     });

@@ -1132,6 +1132,15 @@ describeIfDb('orgContext.middleware (L1)', () => {
     await expect(resolveUserOrgAccess('u', '')).resolves.toEqual({ allowed: false });
   });
 
+  it('resolveUserOrgAccess returns allowed=false for malformed user/org identifiers', async () => {
+    await expect(resolveUserOrgAccess('u'.repeat(129), 'orgM')).resolves.toEqual({ allowed: false });
+    await expect(resolveUserOrgAccess('u1', 'o'.repeat(129))).resolves.toEqual({ allowed: false });
+  });
+
+  it('getUserOrganizations returns empty list for malformed user identifier', async () => {
+    await expect(getUserOrganizations('u'.repeat(129))).resolves.toEqual([]);
+  });
+
   it('resolveUserOrgAccess returns membership access when ACTIVE member exists', async () => {
     await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
       'orgM',
@@ -1178,6 +1187,43 @@ describeIfDb('orgContext.middleware (L1)', () => {
         linkId: 'lC',
       })
     );
+  });
+
+  it('ignores inherited orgId in req.params prototype and requires explicit own param', async () => {
+    await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+      'orgProto',
+      'Org Proto',
+      'pro',
+      'active',
+    ]);
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['mProto', 'orgProto', 'u1', 'ADMIN', 'ACTIVE']
+    );
+
+    const mw = orgContextMiddleware({ required: true, strictWrite: true });
+    const params = Object.create({ orgId: 'orgProto' });
+    const req: any = {
+      method: 'GET',
+      params,
+      headers: {},
+      user: { id: 'u1', organizationId: '' },
+    };
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Organization context required',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(req.org).toBeNull();
+    expect(req.orgContext).toBeNull();
   });
 });
 

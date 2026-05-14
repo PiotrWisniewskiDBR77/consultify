@@ -386,6 +386,39 @@ describe('AuthMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('returns 401 when decoded id exceeds max user-id length', async () => {
+      mockReq.headers!['authorization'] = 'Bearer oversized-user-id';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'u'.repeat(257), role: 'ADMIN' });
+      });
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockReq.user).toBeUndefined();
+    });
+
+    it('ignores oversized organizationId claim and keeps auth flow stable', async () => {
+      mockReq.headers!['authorization'] = 'Bearer oversized-org-claim';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, {
+          id: 'user-org-oversized',
+          role: 'ADMIN',
+          organizationId: 'o'.repeat(129),
+        });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).not.toHaveBeenCalledWith(401);
+      expect(mockReq.organizationId).toBeUndefined();
+      expect(mockReq.user?.organizationId).toBe('');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
     it('should treat non-Bearer authorization header as token', async () => {
       mockReq.headers!['authorization'] = 'raw-token';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
@@ -627,6 +660,50 @@ describe('AuthMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('should ignore oversized body token and treat request as missing token', async () => {
+      mockReq.body = { token: 'x'.repeat(9000) } as any;
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should ignore body token with control characters and treat request as missing token', async () => {
+      mockReq.body = { token: 'body-\u0000-token' } as any;
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should ignore oversized query token and treat request as missing token', async () => {
+      mockReq.query = { token: 'x'.repeat(9000) } as any;
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should ignore query token with control characters and treat request as missing token', async () => {
+      mockReq.query = { token: 'query-\u0000-token' } as any;
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should not accept non-string query.token values', async () => {
       mockReq.query = { token: ['x'] } as any;
 
@@ -796,6 +873,34 @@ describe('AuthMiddleware', () => {
         );
       }
     );
+
+    it('req.can denies oversized capability before PermissionService.can invocation', async () => {
+      mockReq.headers!['authorization'] = 'Bearer perm-oversized';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'u-oversized', role: 'admin' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      vi.clearAllMocks();
+      expect(mockReq.can?.(`e${'x'.repeat(200)}`)).toBe(false);
+      expect(mockPermissionService.can).not.toHaveBeenCalled();
+    });
+
+    it('req.can denies control-char capability before PermissionService.can invocation', async () => {
+      mockReq.headers!['authorization'] = 'Bearer perm-control-char';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'u-control-char', role: 'admin' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      vi.clearAllMocks();
+      expect(mockReq.can?.('edit\u0000project')).toBe(false);
+      expect(mockPermissionService.can).not.toHaveBeenCalled();
+    });
 
     it('should not overwrite existing req.user in test bypass mode', async () => {
       process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
@@ -2017,6 +2122,18 @@ describe('AuthMiddleware', () => {
       mockReq.headers!['authorization'] = 'Bearer opt-missing-id';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         callback(null, { role: 'ADMIN' });
+      });
+
+      await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user).toBeUndefined();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('continues without user when decoded payload id exceeds max user-id length', async () => {
+      mockReq.headers!['authorization'] = 'Bearer opt-oversized-id';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'u'.repeat(257), role: 'ADMIN' });
       });
 
       await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);

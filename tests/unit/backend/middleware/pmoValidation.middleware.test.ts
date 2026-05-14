@@ -71,6 +71,17 @@ describe('pmoValidation.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('validateInitiative returns 400 when body is null', () => {
+    const req: any = { body: null };
+    const res = makeRes();
+    const next = vi.fn();
+
+    expect(() => validateInitiative(req as any, res, next as unknown as NextFunction)).not.toThrow();
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('validateInitiative returns 400 when owner id exceeds max allowed length', () => {
     const req: any = { body: { ownerId: 'o'.repeat(129) } };
     const res = makeRes();
@@ -106,6 +117,18 @@ describe('pmoValidation.middleware', () => {
     const next = vi.fn();
 
     await validateTask(req as any, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
+  it('validateTask returns 400 when body is null', async () => {
+    const req: any = { body: null };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await expect(validateTask(req as any, res, next as unknown as NextFunction)).resolves.toBeUndefined();
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(next).not.toHaveBeenCalled();
@@ -275,6 +298,17 @@ describe('pmoValidation.middleware', () => {
     expect(getMock).not.toHaveBeenCalled();
   });
 
+  it('validateInitiativeStatus treats null body as empty payload and skips DB lookup', async () => {
+    const req: any = { body: null, params: { id: 'init-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
   it('validateTaskStatus returns 400 when params accessor throws', async () => {
     const req: any = { body: { status: 'DONE' } };
     Object.defineProperty(req, 'params', {
@@ -304,6 +338,17 @@ describe('pmoValidation.middleware', () => {
     expect(getMock).not.toHaveBeenCalled();
   });
 
+  it('validateTaskStatus treats null body as empty payload and skips DB lookup', async () => {
+    const req: any = { body: null, params: { id: 'task-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateTaskStatus(req, res, next as unknown as NextFunction);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(getMock).not.toHaveBeenCalled();
+  });
+
   it('validateInitiativeStatus returns 400 when status exceeds max allowed length', async () => {
     const req: any = { body: { status: 'S'.repeat(129) }, params: { id: 'init-1' } };
     const res = makeRes();
@@ -319,6 +364,19 @@ describe('pmoValidation.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('validateInitiativeStatus returns 400 when status is non-string type', async () => {
+    const req: any = { body: { status: 123 }, params: { id: 'init-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'INVALID_STATUS_TYPE' }));
+    expect(getMock).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('validateTaskStatus returns 400 when status exceeds max allowed length', async () => {
     const req: any = { body: { status: 'S'.repeat(129) }, params: { id: 'task-1' } };
     const res = makeRes();
@@ -330,6 +388,19 @@ describe('pmoValidation.middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ rule: 'STATUS_VALUE_TOO_LONG' })
     );
+    expect(getMock).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateTaskStatus returns 400 when status is non-string type', async () => {
+    const req: any = { body: { status: true }, params: { id: 'task-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateTaskStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'INVALID_STATUS_TYPE' }));
     expect(getMock).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
@@ -400,6 +471,19 @@ describe('pmoValidation.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('validateInitiativeStatus returns 500 when db row has invalid current status', async () => {
+    getMock.mockResolvedValueOnce({ status: null, project_id: 'proj-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(statusMachineMock.validateInitiativeTransition).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('validateInitiativeStatus returns fallback error when transition reason is missing', async () => {
     statusMachineMock.validateInitiativeTransition.mockReturnValueOnce({ valid: false });
     getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
@@ -408,6 +492,45 @@ describe('pmoValidation.middleware', () => {
     const next = vi.fn();
 
     await validateInitiativeStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rule: 'INVALID_STATUS_TRANSITION',
+        error: 'Invalid status transition',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateInitiativeStatus treats non-boolean valid flag as invalid transition', async () => {
+    statusMachineMock.validateInitiativeTransition.mockReturnValueOnce({ valid: 1 as any });
+    getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rule: 'INVALID_STATUS_TRANSITION',
+        currentStatus: 'NEW',
+        requestedStatus: 'IN_PROGRESS',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateInitiativeStatus treats undefined status machine response as invalid transition', async () => {
+    statusMachineMock.validateInitiativeTransition.mockReturnValueOnce(undefined as any);
+    getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await expect(validateInitiativeStatus(req, res, next as unknown as NextFunction)).resolves.toBeUndefined();
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
@@ -434,6 +557,19 @@ describe('pmoValidation.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('validateTaskStatus returns 500 when db row has invalid current status', async () => {
+    getMock.mockResolvedValueOnce({ status: 123 as any, initiative_id: 'init-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'task-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateTaskStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(statusMachineMock.validateTaskTransition).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('validateTaskStatus returns fallback error when transition reason is non-string', async () => {
     statusMachineMock.validateTaskTransition.mockReturnValueOnce({ valid: false, reason: 123 as any });
     getMock.mockResolvedValueOnce({ status: 'TODO', initiative_id: 'init-1' });
@@ -442,6 +578,45 @@ describe('pmoValidation.middleware', () => {
     const next = vi.fn();
 
     await validateTaskStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rule: 'INVALID_STATUS_TRANSITION',
+        error: 'Invalid status transition',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateTaskStatus treats non-boolean valid flag as invalid transition', async () => {
+    statusMachineMock.validateTaskTransition.mockReturnValueOnce({ valid: 'true' as any });
+    getMock.mockResolvedValueOnce({ status: 'TODO', initiative_id: 'init-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'task-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await validateTaskStatus(req, res, next as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rule: 'INVALID_STATUS_TRANSITION',
+        currentStatus: 'TODO',
+        requestedStatus: 'IN_PROGRESS',
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validateTaskStatus treats undefined status machine response as invalid transition', async () => {
+    statusMachineMock.validateTaskTransition.mockReturnValueOnce(undefined as any);
+    getMock.mockResolvedValueOnce({ status: 'TODO', initiative_id: 'init-1' });
+    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'task-1' } };
+    const res = makeRes();
+    const next = vi.fn();
+
+    await expect(validateTaskStatus(req, res, next as unknown as NextFunction)).resolves.toBeUndefined();
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
@@ -472,5 +647,43 @@ describe('pmoValidation.middleware', () => {
       })
     );
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('logStatusChange skips audit insert when organization id exceeds max allowed length', async () => {
+    const req: any = {
+      body: { status: 'DONE' },
+      previousStatus: 'IN_PROGRESS',
+      organizationId: 'o'.repeat(129),
+      userId: 'user-1',
+      params: { id: 'task-1' },
+    };
+    const res: any = { statusCode: 200, json: vi.fn((payload: unknown) => payload) };
+    const next = vi.fn();
+
+    const middleware = logStatusChange('task');
+    middleware(req, res as Response, next as unknown as NextFunction);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    await expect((res.json as any)({ ok: true })).resolves.toEqual({ ok: true });
+    expect(runMock).not.toHaveBeenCalled();
+  });
+
+  it('logStatusChange skips audit insert when user id exceeds max allowed length', async () => {
+    const req: any = {
+      body: { status: 'DONE' },
+      previousStatus: 'IN_PROGRESS',
+      organizationId: 'org-1',
+      userId: 'u'.repeat(129),
+      params: { id: 'task-1' },
+    };
+    const res: any = { statusCode: 200, json: vi.fn((payload: unknown) => payload) };
+    const next = vi.fn();
+
+    const middleware = logStatusChange('task');
+    middleware(req, res as Response, next as unknown as NextFunction);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    await expect((res.json as any)({ ok: true })).resolves.toEqual({ ok: true });
+    expect(runMock).not.toHaveBeenCalled();
   });
 });

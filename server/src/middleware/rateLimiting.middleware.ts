@@ -52,6 +52,21 @@ function capKeySegment(value: string): string {
   return value.slice(0, MAX_RATE_LIMIT_IP_KEY_LEN);
 }
 
+function normalizeIpKeyMaterial(value: string): string {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) return '';
+  if (/^\d{1,3}(?:\.\d{1,3}){3}:\d+$/.test(normalized)) {
+    return normalized.replace(/:\d+$/, '');
+  }
+  if (normalized.startsWith('[')) {
+    const bracketCloseIndex = normalized.indexOf(']');
+    if (bracketCloseIndex > 1) {
+      return normalized.slice(1, bracketCloseIndex);
+    }
+  }
+  return normalized;
+}
+
 function increment(key: string, windowMs: number): { count: number; resetAt: number } {
   const now = Date.now();
   const entry = store.get(key);
@@ -210,11 +225,11 @@ function extractKey(req: Request): string {
   const tokenUid = tryExtractUserIdFromToken(req);
   if (tokenUid) return `u:${capKeySegment(tokenUid)}`;
   const ipFromReqRaw = normalizeOptionalString(safeRead(() => req.ip, undefined as unknown));
-  const ipFromReq = ipFromReqRaw ? capKeySegment(ipFromReqRaw) : null;
+  const ipFromReq = ipFromReqRaw ? capKeySegment(normalizeIpKeyMaterial(ipFromReqRaw)) : null;
   const ipFromSocketRaw = normalizeOptionalString(
     safeRead(() => req.socket?.remoteAddress, undefined as unknown)
   );
-  const ipFromSocket = ipFromSocketRaw ? capKeySegment(ipFromSocketRaw) : null;
+  const ipFromSocket = ipFromSocketRaw ? capKeySegment(normalizeIpKeyMaterial(ipFromSocketRaw)) : null;
   const forwardedHeader = safeRead(() => req.headers['x-forwarded-for'], undefined as unknown);
   const trustProxy = Boolean(
     safeRead(
@@ -227,13 +242,13 @@ function extractKey(req: Request): string {
     if (!trustProxy) return null;
     if (typeof forwardedHeader === 'string') {
       const candidate = normalizeOptionalString(forwardedHeader.split(',')[0]);
-      return candidate ? capKeySegment(candidate) : null;
+      return candidate ? capKeySegment(normalizeIpKeyMaterial(candidate)) : null;
     }
     if (Array.isArray(forwardedHeader)) {
       for (const forwardedEntry of forwardedHeader) {
         if (typeof forwardedEntry !== 'string') continue;
         const candidate = normalizeOptionalString(forwardedEntry.split(',')[0]);
-        if (candidate) return capKeySegment(candidate);
+        if (candidate) return capKeySegment(normalizeIpKeyMaterial(candidate));
       }
     }
     return null;
@@ -249,7 +264,16 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
   const { prefix, message = 'Too many requests, please try again later.' } = opts;
   const { windowMs, max } = resolveLimiterParams(opts.windowMs, opts.max);
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true') {
+    if (process.env.NODE_ENV === 'test') {
+      safeInvokeNext(next);
+      return;
+    }
+    const disableRateLimitRequested = process.env.DISABLE_RATE_LIMIT === 'true';
+    const allowProdDisable = process.env.RATE_LIMIT_ALLOW_PROD_DISABLE === 'true';
+    if (
+      disableRateLimitRequested &&
+      (process.env.NODE_ENV !== 'production' || allowProdDisable)
+    ) {
       safeInvokeNext(next);
       return;
     }

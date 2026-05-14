@@ -187,6 +187,24 @@ describe('CSRF middleware (L1)', () => {
       expect(opts.secure).toBe(true);
     });
 
+    it('sets secure cookie when RFC7239 Forwarded proto is https', () => {
+      const { req, res, next } = createMocks({
+        headers: { forwarded: 'for=1.2.3.4;proto=https;host=example.com' } as any,
+      });
+      csrfTokenMiddleware(req, res, next);
+      const opts = res.cookie.mock.calls[0][2];
+      expect(opts.secure).toBe(true);
+    });
+
+    it('sets secure cookie when first Forwarded element has proto=https', () => {
+      const { req, res, next } = createMocks({
+        headers: { forwarded: 'for=1.2.3.4;proto=https, for=5.6.7.8;proto=http' } as any,
+      });
+      csrfTokenMiddleware(req, res, next);
+      const opts = res.cookie.mock.calls[0][2];
+      expect(opts.secure).toBe(true);
+    });
+
     it('sets secure cookie in production env', () => {
       const origNodeEnv = process.env.NODE_ENV;
       try {
@@ -195,6 +213,22 @@ describe('CSRF middleware (L1)', () => {
         csrfTokenMiddleware(req, res, next);
         const opts = res.cookie.mock.calls[0][2];
         expect(opts.secure).toBe(true);
+      } finally {
+        process.env.NODE_ENV = origNodeEnv;
+      }
+    });
+
+    it('does not set secure cookie when Forwarded proto is explicitly http', () => {
+      const origNodeEnv = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = 'test';
+        const { req, res, next } = createMocks({
+          headers: { forwarded: 'for=1.2.3.4;proto=http;host=example.com' } as any,
+        });
+        csrfTokenMiddleware(req, res, next);
+        const opts = res.cookie.mock.calls[0][2];
+        expect(opts.secure).toBe(false);
+        expect(next).toHaveBeenCalled();
       } finally {
         process.env.NODE_ENV = origNodeEnv;
       }
@@ -402,6 +436,40 @@ describe('CSRF middleware (L1)', () => {
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'CSRF_INVALID' }));
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('rejects when raw cookie header contains conflicting csrf_token assignments', () => {
+      const tokA = 'a'.repeat(64);
+      const tokB = 'b'.repeat(64);
+      const { req, res, next } = createMocks({
+        method: 'POST',
+        path: '/api/test',
+        cookies: { csrf_token: tokA },
+        headers: {
+          'x-csrf-token': tokA,
+          cookie: `csrf_token=${tokA}; csrf_token=${tokB}`,
+        } as any,
+      });
+      csrfValidationMiddleware(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'CSRF_INVALID' }));
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('accepts duplicate csrf_token cookie assignments when values are identical', () => {
+      const tok = 'a'.repeat(64);
+      const { req, res, next } = createMocks({
+        method: 'POST',
+        path: '/api/test',
+        cookies: { csrf_token: tok },
+        headers: {
+          'x-csrf-token': tok,
+          cookie: `csrf_token=${tok}; csrf_token=${tok}`,
+        } as any,
+      });
+      csrfValidationMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it('accepts when lowercase and uppercase CSRF headers match', () => {
@@ -635,6 +703,15 @@ describe('CSRF middleware (L1)', () => {
       const { req, res } = createMocks();
       getCsrfTokenHandler(req, res);
       expect(res.cookie.mock.calls[0][2].maxAge).toBe(24 * 60 * 60 * 1000);
+    });
+
+    it('sets secure cookie in token handler when RFC7239 Forwarded proto is https', () => {
+      const { req, res } = createMocks({
+        headers: { forwarded: 'for=1.2.3.4;proto=https;host=example.com' } as any,
+      });
+      getCsrfTokenHandler(req, res);
+      const opts = res.cookie.mock.calls[0][2];
+      expect(opts.secure).toBe(true);
     });
 
     it('returns deterministic test token when CSRF is disabled in test env', () => {

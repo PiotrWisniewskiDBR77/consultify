@@ -62,6 +62,33 @@ function readCsrfHeader(req: Request): string | undefined {
   return normalizeHeaderValue(upper);
 }
 
+function readForwardedProtoFromRfc7239(req: Request): string | undefined {
+  const raw = safeRead(() => req.headers['forwarded'], undefined as unknown);
+  const value =
+    typeof raw === 'string'
+      ? raw
+      : Array.isArray(raw)
+        ? raw.find((entry) => typeof entry === 'string')
+        : undefined;
+  if (!value || typeof value !== 'string') return undefined;
+  const firstElement = value.split(',')[0]?.trim();
+  if (!firstElement) return undefined;
+  const params = firstElement.split(';');
+  for (const param of params) {
+    const [rawKey, ...rawValueParts] = param.split('=');
+    if (!rawKey || rawValueParts.length === 0) continue;
+    if (rawKey.trim().toLowerCase() !== 'proto') continue;
+    const rawValue = rawValueParts.join('=').trim();
+    const unquoted =
+      rawValue.length >= 2 && rawValue.startsWith('"') && rawValue.endsWith('"')
+        ? rawValue.slice(1, -1)
+        : rawValue;
+    const normalized = unquoted.trim().toLowerCase();
+    return normalized || undefined;
+  }
+  return undefined;
+}
+
 function hasConflictingCsrfHeaderValues(req: Request): boolean {
   const raw = safeRead(() => req.headers?.[CSRF_HEADER_NAME], undefined as unknown);
   if (!Array.isArray(raw) || raw.length <= 1) return false;
@@ -97,6 +124,22 @@ function hasConflictingCsrfHeaderKeySources(req: Request): boolean {
   if (!normalizedLower || !normalizedUpper) return false;
   return normalizedLower !== normalizedUpper;
 }
+function hasConflictingCsrfCookieAssignments(req: Request): boolean {
+  const rawCookieHeader = safeRead(() => req.headers?.cookie, undefined as unknown);
+  if (typeof rawCookieHeader !== 'string' || !rawCookieHeader.trim()) return false;
+  const observed = new Set<string>();
+  for (const segment of rawCookieHeader.split(';')) {
+    const equalsIndex = segment.indexOf('=');
+    if (equalsIndex <= 0) continue;
+    const rawName = segment.slice(0, equalsIndex).trim();
+    if (rawName !== CSRF_COOKIE_NAME) continue;
+    const rawValue = segment.slice(equalsIndex + 1).trim();
+    if (!rawValue) continue;
+    observed.add(rawValue);
+    if (observed.size > 1) return true;
+  }
+  return false;
+}
 
 function isTestEnv() {
   return process.env.NODE_ENV === 'test' || !!process.env.VITEST;
@@ -130,6 +173,7 @@ function cookieOptions(req: Request) {
   const isSecure =
     safeRead(() => req.secure, false) ||
     readForwardedProto() === 'https' ||
+    readForwardedProtoFromRfc7239(req) === 'https' ||
     process.env.NODE_ENV === 'production';
 
   return {
@@ -224,6 +268,10 @@ export const csrfValidationMiddleware = (req: Request, res: Response, next: Next
   const cookieTok = readCsrfCookieRaw(req);
   const headerTok = readCsrfHeader(req);
   if (hasConflictingCsrfHeaderValues(req) || hasConflictingCsrfHeaderKeySources(req)) {
+    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
+    return;
+  }
+  if (hasConflictingCsrfCookieAssignments(req)) {
     sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
     return;
   }

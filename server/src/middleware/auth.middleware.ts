@@ -20,6 +20,7 @@ const MAX_AUTH_JWT_CHARS = 8192;
 const MAX_AUTH_HEADER_CHARS = MAX_AUTH_JWT_CHARS + 64;
 const MAX_AUTH_JWT_SEGMENT_CHARS = 6144;
 const MAX_AUTH_JTI_CHARS = 256;
+const MAX_AUTH_USER_ID_CHARS = 256;
 const MAX_AUTH_CAPABILITY_CHARS = 128;
 const MAX_JWT_SECRET_CHARS = 4096;
 const AUTH_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
@@ -162,7 +163,7 @@ const sanitizeJwtPayload = (payload: unknown): Partial<JWTPayload> => {
   const exp = readFiniteNumberClaim(source, 'exp');
 
   return {
-    ...(id ? { id } : {}),
+    ...(id && id.length <= MAX_AUTH_USER_ID_CHARS ? { id } : {}),
     ...(email ? { email } : {}),
     ...(name ? { name } : {}),
     ...(role ? { role } : {}),
@@ -421,12 +422,18 @@ const extractToken = (req: AuthRequest): string | null => {
     } catch {
       bodyToken = null;
     }
+    if (bodyToken && isRejectedAuthTokenCandidate(bodyToken)) {
+      bodyToken = null;
+    }
     if (bodyToken) return bodyToken;
 
     let queryToken: string | null = null;
     try {
       queryToken = normalizeTokenCandidate(req.query?.token);
     } catch {
+      queryToken = null;
+    }
+    if (queryToken && isRejectedAuthTokenCandidate(queryToken)) {
       queryToken = null;
     }
     if (queryToken) return queryToken;
@@ -535,8 +542,8 @@ const attachUser = async (
     return;
   }
   const tokenOrganizationId =
-    readOptionalStringClaim(decodedClaims, 'organizationId') ||
-    readOptionalStringClaim(decodedClaims, 'organization_id');
+    normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organizationId')) ||
+    normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organization_id'));
   let resolvedOrganizationId =
     isDemoHeader && requestedDemoSessionOrgId
       ? requestedDemoSessionOrgId
@@ -636,12 +643,22 @@ const attachUser = async (
   const permissionRole =
     req.userRole === 'SUPERADMIN' ? 'SUPERADMIN' : normalizePermissionRole(permissionRoleSource);
   req.can = (capability: string): boolean => {
+    if (typeof capability !== 'string') return false;
+    const normalizedCapability = capability.trim();
+    if (!normalizedCapability) return false;
+    if (normalizedCapability.length > MAX_AUTH_CAPABILITY_CHARS) return false;
+    if (
+      AUTH_TOKEN_CONTROL_CHARS.test(normalizedCapability) ||
+      AUTH_TOKEN_DISALLOWED_UNICODE.test(normalizedCapability)
+    ) {
+      return false;
+    }
     return PermissionService.can(
       {
         ...user,
         role: permissionRole as UserRole,
       },
-      capability,
+      normalizedCapability,
       {
         organizationId: req.organizationId,
       }
@@ -919,9 +936,13 @@ export const verifyToken = asyncHandler(
             : undefined;
         const decodedUserId = normalizeContextIdentifier(readOptionalStringClaim(decodedClaims, 'id'));
         if (decodedClaims && readBooleanTrueClaim(decodedClaims, 'e2e') && decodedUserId) {
+          if (decodedUserId.length > MAX_AUTH_USER_ID_CHARS) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+          }
           const normalizedE2EOrgId =
-            readOptionalStringClaim(decodedClaims, 'organizationId') ||
-            readOptionalStringClaim(decodedClaims, 'organization_id') ||
+            normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organizationId')) ||
+            normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organization_id')) ||
             'e2e-org-id';
           const normalizedE2ERole =
             readOptionalStringClaim(decodedClaims, 'role') ||
@@ -1029,6 +1050,10 @@ export const verifyToken = asyncHandler(
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
+      if (decodedId.length > MAX_AUTH_USER_ID_CHARS) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
       const normalizedDecoded: JWTPayload = { ...sanitizedDecoded, id: decodedId };
 
       await checkTokenRevocation(normalizedDecoded, req, res, next);
@@ -1123,6 +1148,9 @@ export const optionalAuth = asyncHandler(
 
     if (!decodedUserId) {
       // Optional auth stays non-blocking on malformed token payloads.
+      return next();
+    }
+    if (decodedUserId.length > MAX_AUTH_USER_ID_CHARS) {
       return next();
     }
 

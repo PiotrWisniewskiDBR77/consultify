@@ -108,8 +108,12 @@ const sendQuotaJson = (
       () =>
         Boolean(
           res.headersSent ||
+            (res as Response & { finished?: boolean }).finished === true ||
             (res as Response & { writableEnded?: boolean; destroyed?: boolean }).writableEnded === true ||
-            (res as Response & { writableEnded?: boolean; destroyed?: boolean }).destroyed === true
+            (res as Response & { writableEnded?: boolean; destroyed?: boolean; closed?: boolean })
+              .destroyed === true ||
+            (res as Response & { writableEnded?: boolean; destroyed?: boolean; closed?: boolean })
+              .closed === true
         ),
       false
     )
@@ -144,6 +148,8 @@ const callNextIfFunction = (next: NextFunction): void => {
 
 const finiteNumberOrZero = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
+const finiteNonNegativeNumberOrZero = (value: unknown): number =>
+  Math.max(0, finiteNumberOrZero(value));
 
 const isValidQuotaInfo = (value: unknown): value is QuotaInfo =>
   !!value &&
@@ -235,7 +241,16 @@ async function getAccessPolicyService() {
   if (accessPolicyService) return accessPolicyService;
   try {
     const mod = await import('../services/accessPolicyService.js');
-    accessPolicyService = mod.default || mod;
+    const candidate = (mod.default ?? mod) as unknown;
+    if (
+      !candidate ||
+      typeof candidate !== 'object' ||
+      typeof (candidate as { checkAccess?: unknown }).checkAccess !== 'function'
+    ) {
+      logger.error('[QuotaMiddleware] AccessPolicyService export missing checkAccess');
+      throw new Error('AccessPolicyService export missing checkAccess');
+    }
+    accessPolicyService = candidate;
     return accessPolicyService;
   } catch (error) {
     logger.error('[QuotaMiddleware] Failed to load AccessPolicyService:', error);
@@ -343,8 +358,8 @@ export async function enforceTokenQuota(
     }
     const quota: QuotaInfo = {
       allowed: quotaCandidate.allowed,
-      used: finiteNumberOrZero(quotaCandidate.used),
-      limit: finiteNumberOrZero(quotaCandidate.limit),
+      used: finiteNonNegativeNumberOrZero(quotaCandidate.used),
+      limit: finiteNonNegativeNumberOrZero(quotaCandidate.limit),
       percentage: finiteNumberOrZero(quotaCandidate.percentage),
     };
     req.quotaInfo = quota;
@@ -487,8 +502,8 @@ export async function enforceStorageQuota(
     }
     const quota: QuotaInfo = {
       allowed: quotaCandidate.allowed,
-      used: finiteNumberOrZero(quotaCandidate.used),
-      limit: finiteNumberOrZero(quotaCandidate.limit),
+      used: finiteNonNegativeNumberOrZero(quotaCandidate.used),
+      limit: finiteNonNegativeNumberOrZero(quotaCandidate.limit),
       percentage: finiteNumberOrZero(quotaCandidate.percentage),
     };
     req.storageQuotaInfo = quota;

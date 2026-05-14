@@ -185,6 +185,19 @@ describe('requireConfirmation', () => {
     );
   });
 
+  it('rejects oversized confirmation string before reason checks', async () => {
+    const { run: mockRun } = await import('../../../../server/src/utils/DbPromise.js');
+    const req = mockReq({ confirmation: 'x'.repeat(65), reason: 'Valid reason that should be ignored' });
+    const res = mockRes();
+
+    await middleware(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(428);
+    expect(res.body.code).toBe('CONFIRMATION_STRING_TOO_LONG');
+    expect(mockRun).not.toHaveBeenCalled();
+  });
+
   it('blocks the action if audit DB write fails (fail-closed)', async () => {
     const { run: mockRun } = await import('../../../../server/src/utils/DbPromise.js');
     (mockRun as any).mockRejectedValueOnce(new Error('DB down'));
@@ -327,6 +340,22 @@ describe('requireConfirmation', () => {
     expect(res.statusCode).toBe(0);
     expect(res.body).toBeNull();
     expect(mockRun).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when downstream next throws synchronously', async () => {
+    const { run: mockRun } = await import('../../../../server/src/utils/DbPromise.js');
+    const throwingNext = vi.fn(() => {
+      throw new Error('downstream failure');
+    });
+    const req = mockReq({ confirmation: true, reason: 'Trigger next throw path' });
+    const res = mockRes();
+
+    await middleware(req, res, throwingNext);
+
+    expect(throwingNext).toHaveBeenCalledTimes(1);
+    expect(mockRun).toHaveBeenCalledTimes(1);
+    expect(res.statusCode).toBe(500);
+    expect(res.body.code).toBe('CONFIRMATION_GATE_UNEXPECTED');
   });
 
   it('uses first user-agent value when header arrives as string array', async () => {

@@ -315,6 +315,31 @@ describe('alertWatchdog.middleware', () => {
     perfSpy.mockRestore();
   });
 
+  it('preserves threshold stats with mixed status values across the same window', async () => {
+    vi.stubEnv('ALERT_WATCHDOG_WINDOW_MS', '60000');
+    vi.resetModules();
+    const dateNowSpy = vi.spyOn(Date, 'now').mockImplementation(() => 2_000_000);
+    const { default: alertWatchdog, getWatchdogStats } = await import(
+      '../../../../server/src/middleware/alertWatchdog.middleware.ts'
+    );
+
+    const statuses: unknown[] = [200, 500, Number.NaN, 700, 503];
+    for (const statusCode of statuses) {
+      const req: any = {};
+      const res: any = { end: vi.fn(), statusCode };
+      const next = vi.fn();
+      alertWatchdog(req, res, next);
+      res.end();
+    }
+    await flushImmediate();
+
+    const stats = getWatchdogStats();
+    expect(stats.windowRequests).toBe(5);
+    expect(stats.windowFiveXx).toBe(2);
+    expect(stats.totalFiveXx).toBe(2);
+    dateNowSpy.mockRestore();
+  });
+
   it('returns safe empty stats when stats computation throws', async () => {
     vi.resetModules();
     const mod = await import('../../../../server/src/middleware/alertWatchdog.middleware.ts');

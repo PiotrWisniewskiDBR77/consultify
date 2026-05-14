@@ -46,6 +46,23 @@ describe('trialEntryGuard.middleware', () => {
     await trialEntryGuard(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(403);
+    expect(req.isTrialEntry).toBeUndefined();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('blocks PATCH /api/initiatives for trial entry users', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'PATCH',
+      path: '/api/initiatives/initiative-1',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -79,7 +96,25 @@ describe('trialEntryGuard.middleware', () => {
     await trialEntryGuard(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(403);
+    expect(req.isTrialEntry).toBeUndefined();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('marks request as trial entry when user is trial and route is allowed', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'GET',
+      path: '/api/initiatives',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(req.isTrialEntry).toBe(true);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
   });
 
   it('blocks route when path has duplicate slashes', async () => {
@@ -429,6 +464,25 @@ describe('trialEntryGuard.middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('blocks route when req.url carries blocked path and mounted/original paths are benign', async () => {
+    mockDbGet.mockResolvedValue({ user_status: 'TRIAL_ENTRY' });
+    const req: any = {
+      user: { id: 'u-1' },
+      method: 'POST',
+      baseUrl: '/health',
+      path: '/ok',
+      originalUrl: '/status/alive',
+      url: '/api/initiatives?source=url',
+    };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await trialEntryGuard(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('requireOrgContext denies when organizationId accessor throws', async () => {
     const req: any = { user: {} };
     Object.defineProperty(req.user, 'organizationId', {
@@ -444,6 +498,28 @@ describe('trialEntryGuard.middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgContext denies when organizationId exceeds max length', async () => {
+    const req: any = { user: { organizationId: 'o'.repeat(513) } };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await requireOrgContext(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('requireOrgContext allows organizationId at max supported length', async () => {
+    const req: any = { user: { organizationId: 'o'.repeat(512) } };
+    const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const next = vi.fn();
+
+    await requireOrgContext(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
   });
 
   it('requireOrgContext handles throwing isTrialEntry accessor and falls through to org check', async () => {

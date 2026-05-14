@@ -185,6 +185,11 @@ const applyNoStoreHeaders = (res: Response): void => {
 };
 const hasOwnVersionEntry = (value: string): boolean =>
   Object.prototype.hasOwnProperty.call(API_VERSIONS, value);
+const getOwnQueryParam = (query: unknown, key: string): unknown => {
+  if (!query || typeof query !== 'object' || Array.isArray(query)) return undefined;
+  if (!Object.prototype.hasOwnProperty.call(query, key)) return undefined;
+  return (query as Record<string, unknown>)[key];
+};
 const cloneApiVersionInfo = (info: ApiVersionInfo): ApiVersionInfo => ({
   major: safeRead(() => info.major, 0),
   minor: safeRead(() => info.minor, 0),
@@ -219,6 +224,25 @@ const formatErrorForLog = (error: unknown): string => {
     return String(error);
   })();
   return rawDetail.replace(/[\r\n\0]/g, ' ').slice(0, MAX_API_VERSION_ERROR_LOG_DETAIL_CHARS);
+};
+const invokeNextSafely = (
+  next: NextFunction,
+  logKey: string,
+  extra?: Record<string, unknown>
+): void => {
+  try {
+    next();
+  } catch (error) {
+    logger.error(logKey, {
+      detail: formatErrorForLog(error),
+      ...(extra || {}),
+    });
+  }
+};
+const normalizeVersionPart = (value: unknown): number => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.trunc(parsed);
 };
 const isPlainJsonObject = (value: unknown): value is Record<string, unknown> => {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -258,7 +282,7 @@ export function apiVersionMiddleware(
     if (!version) {
       version =
         coerceVersionInput(
-          safeRead(() => (req.query as Record<string, unknown> | undefined)?.version, undefined)
+          safeRead(() => getOwnQueryParam(req.query, 'version'), undefined)
         ) || '';
     }
 
@@ -327,13 +351,25 @@ export function apiVersionMiddleware(
       });
     }
 
-    next();
+    try {
+      next();
+    } catch (error) {
+      logger.error('[APIVersion] next() threw after successful version resolution', {
+        detail: formatErrorForLog(error),
+      });
+    }
   } catch (error) {
     logger.error('[APIVersion] Version extraction error', {
       detail: formatErrorForLog(error),
     });
     const nextSucceeded = safeRead(() => {
-      next();
+      try {
+        next();
+      } catch (error) {
+        logger.error('[APIVersion] next() threw after requireVersion success', {
+          detail: formatErrorForLog(error),
+        });
+      }
       return true;
     }, false);
     if (!nextSucceeded) {
@@ -355,10 +391,7 @@ export function requireVersion(minVersion: string) {
           logger.warn('[APIVersion] requireVersion blocked write; headers already sent', {
             reason: 'missing_api_version',
           });
-          safeRead(() => {
-            next();
-            return true;
-          }, false);
+          invokeNextSafely(next, '[APIVersion] requireVersion next() threw (missing version branch)');
           return;
         }
         applyNoStoreHeaders(res);
@@ -379,7 +412,7 @@ export function requireVersion(minVersion: string) {
         ? API_VERSIONS[normalizedMinVersion]
         : undefined;
       if (!minInfo) {
-        next();
+        invokeNextSafely(next, '[APIVersion] requireVersion next() threw (unknown minVersion no-op)');
         return;
       }
 
@@ -390,10 +423,10 @@ export function requireVersion(minVersion: string) {
             requiredVersion: minInfo.full,
             currentVersion: req.apiVersion.full,
           });
-          safeRead(() => {
-            next();
-            return true;
-          }, false);
+          invokeNextSafely(next, '[APIVersion] requireVersion next() threw (headers already sent, too old)', {
+            requiredVersion: minInfo.full,
+            currentVersion: req.apiVersion.full,
+          });
           return;
         }
         applyNoStoreHeaders(res);
@@ -415,20 +448,12 @@ export function requireVersion(minVersion: string) {
         return;
       }
 
-      next();
+      invokeNextSafely(next, '[APIVersion] requireVersion next() threw (success)');
     } catch (error) {
       logger.error('[APIVersion] requireVersion error', {
         detail: formatErrorForLog(error),
       });
-      const nextSucceeded = safeRead(() => {
-        next();
-        return true;
-      }, false);
-      if (!nextSucceeded) {
-        logger.warn('[APIVersion] Failed to invoke next after requireVersion error', {
-          detail: formatErrorForLog(error),
-        });
-      }
+      invokeNextSafely(next, '[APIVersion] requireVersion next() threw (catch fallback)');
     }
   };
 }
@@ -524,9 +549,15 @@ function normalizeVersion(version: string): string {
  * Returns: -1 if a < b, 0 if a == b, 1 if a > b
  */
 function compareVersions(a: ApiVersionInfo, b: ApiVersionInfo): number {
-  if (a.major !== b.major) return a.major - b.major;
-  if (a.minor !== b.minor) return a.minor - b.minor;
-  return a.patch - b.patch;
+  const aMajor = normalizeVersionPart(safeRead(() => a.major, 0));
+  const bMajor = normalizeVersionPart(safeRead(() => b.major, 0));
+  if (aMajor !== bMajor) return aMajor - bMajor;
+  const aMinor = normalizeVersionPart(safeRead(() => a.minor, 0));
+  const bMinor = normalizeVersionPart(safeRead(() => b.minor, 0));
+  if (aMinor !== bMinor) return aMinor - bMinor;
+  const aPatch = normalizeVersionPart(safeRead(() => a.patch, 0));
+  const bPatch = normalizeVersionPart(safeRead(() => b.patch, 0));
+  return aPatch - bPatch;
 }
 
 /**

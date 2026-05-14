@@ -41,6 +41,7 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
 };
 const stripControlChars = (value: string): string =>
   value.replace(/[\u0000-\u001F\u007F]/g, '');
+const stripQueryAndHash = (value: string): string => value.split('?')[0]?.split('#')[0] || '';
 const sanitizeLinkTargetPath = (value: string): string =>
   stripControlChars(value).replace(/ /g, '%20').replace(/[<>"\\]/g, '');
 
@@ -79,24 +80,31 @@ const safeSetOrAppendLinkHeader = (res: Response, linkValue: string): void => {
     headersSentCommitted || writableEndedCommitted || writableFinishedCommitted;
   if (alreadyCommitted) return;
 
-  const existingLinkHeader = safeRead(
+  const rawExistingLinkHeader = safeRead(
     () => (res as Response & { getHeader?: (name: string) => unknown }).getHeader?.('Link'),
     undefined
   );
+  const existingLinkHeader = Buffer.isBuffer(rawExistingLinkHeader)
+    ? rawExistingLinkHeader.toString('utf8')
+    : rawExistingLinkHeader;
   if (typeof existingLinkHeader === 'string' && existingLinkHeader.trim().length > 0) {
     const append = safeRead(
       () => (res as Response & { append?: unknown }).append,
       undefined
     );
-    if (typeof append === 'function') {
-      safeRead(() => {
-        (append as (name: string, value: string) => unknown).call(res, 'Link', linkValue);
-        return true;
-      }, false);
+    const appended =
+      typeof append === 'function'
+        ? safeRead(() => {
+            (append as (name: string, value: string) => unknown).call(res, 'Link', linkValue);
+            return true;
+          }, false)
+        : false;
+    if (appended) {
       return;
     }
     safeRead(() => {
-      res.setHeader('Link', `${existingLinkHeader}, ${linkValue}`);
+      const merged = `${existingLinkHeader}, ${linkValue}`;
+      res.setHeader('Link', merged.length > LINK_HEADER_MAX_CHARS ? linkValue : merged);
       return true;
     }, false);
     return;
@@ -107,7 +115,8 @@ const safeSetOrAppendLinkHeader = (res: Response, linkValue: string): void => {
     existingLinkHeader.length > 0
   ) {
     safeRead(() => {
-      res.setHeader('Link', [...existingLinkHeader, linkValue].join(', '));
+      const merged = [...existingLinkHeader, linkValue].join(', ');
+      res.setHeader('Link', merged.length > LINK_HEADER_MAX_CHARS ? linkValue : merged);
       return true;
     }, false);
     return;
@@ -165,9 +174,11 @@ export function deprecationHeader(v8Replacement: string, opts?: Partial<Deprecat
         normalizeOptionalString(safeRead(() => req.baseUrl, undefined)) || ''
       );
       const path = stripControlChars(
-        normalizeOptionalString(safeRead(() => req.path, undefined)) ||
-          normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
-          ''
+        stripQueryAndHash(
+          normalizeOptionalString(safeRead(() => req.path, undefined)) ||
+            normalizeOptionalString(safeRead(() => req.originalUrl, undefined)) ||
+            ''
+        )
       );
       const key = `${method} ${baseUrl}${path}`.slice(0, WARNED_KEY_MAX_CHARS);
       if (!warned.has(key)) {

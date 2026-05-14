@@ -14,6 +14,9 @@ import auditEventsService from '../services/AuditEventsService.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
+const MAX_AUDIT_EMITS_PER_REQUEST = 50;
+const AUDIT_SCALAR_CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
+
 declare module 'express-serve-static-core' {
   interface Request {
     emitAuditEvent?: (
@@ -46,6 +49,8 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
     const normalized = value.trim();
     return normalized || undefined;
   };
+  const stripAuditScalarControls = (value: string): string =>
+    value.replace(AUDIT_SCALAR_CONTROL_CHARS, '');
 
   const MAX_AUDIT_USER_AGENT = 2048;
   const MAX_AUDIT_IP = 128;
@@ -111,10 +116,11 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
 
   const requireAuditField = (value: unknown, field: string, maxLength: number): string => {
     const normalized = normalizeOptionalString(value);
-    if (!normalized) {
+    const sanitized = normalized ? stripAuditScalarControls(normalized) : undefined;
+    if (!sanitized) {
       throw new TypeError(`emitAuditEvent requires non-empty ${field}`);
     }
-    return normalized.length > maxLength ? normalized.slice(0, maxLength) : normalized;
+    return sanitized.length > maxLength ? sanitized.slice(0, maxLength) : sanitized;
   };
 
   const normalizeActorType = (value: unknown): ActorType => {
@@ -123,8 +129,13 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
     return VALID_ACTOR_TYPES.has(normalized as ActorType) ? (normalized as ActorType) : 'USER';
   };
 
+  let emitCount = 0;
+  let emitChain: Promise<unknown> = Promise.resolve();
   req.emitAuditEvent = async (input) => {
     try {
+      if (emitCount >= MAX_AUDIT_EMITS_PER_REQUEST) {
+        throw new TypeError('emitAuditEvent request emission limit exceeded');
+      }
       if (!input || typeof input !== 'object' || Array.isArray(input)) {
         throw new TypeError('emitAuditEvent requires a non-null object payload');
       }
@@ -141,7 +152,12 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
         MAX_AUDIT_RESOURCE_TYPE
       );
       const normalizedResourceId = clampOptionalString(
-        normalizeOptionalString(snapshotInput.resourceId),
+        (() => {
+          const normalized = normalizeOptionalString(snapshotInput.resourceId);
+          if (!normalized) return undefined;
+          const sanitized = stripAuditScalarControls(normalized);
+          return sanitized || undefined;
+        })(),
         MAX_AUDIT_RESOURCE_ID
       );
       const normalizedMetadata = cloneAuditStateObject(snapshotInput.metadata);
@@ -150,49 +166,55 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
       assertJsonSerializableAuditPayload('metadata', normalizedMetadata);
       assertJsonSerializableAuditPayload('before', normalizedBefore);
       assertJsonSerializableAuditPayload('after', normalizedAfter);
-
-      const eventId = await auditEventsService.log({
-        action: normalizedAction,
-        resourceType: normalizedResourceType,
-        resourceId: normalizedResourceId,
-        metadata: normalizedMetadata,
-        before: normalizedBefore,
-        after: normalizedAfter,
-        actorType: normalizeActorType(snapshotInput.actorType),
-        actorId: clampOptionalString(
-          normalizeOptionalString(safeRead(() => req.user?.id, undefined)) ||
-            normalizeOptionalString(safeRead(() => req.userId, undefined)),
-          MAX_AUDIT_ACTOR_ID
-        ),
-        organizationId: clampOptionalString(
-          normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
-          normalizeOptionalString(
-            safeRead(() => (req.user as { organization_id?: string } | undefined)?.organization_id, undefined)
-          ) ||
-          normalizeOptionalString(safeRead(() => req.organizationId, undefined)),
-          MAX_AUDIT_ORGANIZATION_ID
-        ),
-        ip:
-          clampOptionalString(
-            normalizeOptionalString(safeRead(() => req.ip, undefined)) ||
-              normalizeOptionalString(safeRead(() => req.socket?.remoteAddress, undefined)),
-            MAX_AUDIT_IP
+      emitCount += 1;
+      const eventId = await (emitChain = emitChain.then(async () => {
+        const persistedId = await auditEventsService.log({
+          action: normalizedAction,
+          resourceType: normalizedResourceType,
+          resourceId: normalizedResourceId,
+          metadata: normalizedMetadata,
+          before: normalizedBefore,
+          after: normalizedAfter,
+          actorType: normalizeActorType(snapshotInput.actorType),
+          actorId: clampOptionalString(
+            normalizeOptionalString(safeRead(() => req.user?.id, undefined)) ||
+              normalizeOptionalString(safeRead(() => req.userId, undefined)),
+            MAX_AUDIT_ACTOR_ID
           ),
-        userAgent: clampOptionalString(
-          normalizeOptionalString(
-            safeRead(() => {
-              const getHeader = req.get;
-              if (typeof getHeader !== 'function') return undefined;
-              return getHeader.call(req, 'user-agent');
-            }, undefined)
+          organizationId: clampOptionalString(
+            normalizeOptionalString(safeRead(() => req.user?.organizationId, undefined)) ||
+            normalizeOptionalString(
+              safeRead(
+                () => (req.user as { organization_id?: string } | undefined)?.organization_id,
+                undefined
+              )
+            ) ||
+            normalizeOptionalString(safeRead(() => req.organizationId, undefined)),
+            MAX_AUDIT_ORGANIZATION_ID
           ),
-          MAX_AUDIT_USER_AGENT
-        ),
-      });
-      if (typeof eventId !== 'string' || !eventId.trim()) {
-        throw new TypeError('emitAuditEvent persistence returned an invalid event id');
-      }
-      return eventId.trim();
+          ip:
+            clampOptionalString(
+              normalizeOptionalString(safeRead(() => req.ip, undefined)) ||
+                normalizeOptionalString(safeRead(() => req.socket?.remoteAddress, undefined)),
+              MAX_AUDIT_IP
+            ),
+          userAgent: clampOptionalString(
+            normalizeOptionalString(
+              safeRead(() => {
+                const getHeader = req.get;
+                if (typeof getHeader !== 'function') return undefined;
+                return getHeader.call(req, 'user-agent');
+              }, undefined)
+            ),
+            MAX_AUDIT_USER_AGENT
+          ),
+        });
+        if (typeof persistedId !== 'string' || !persistedId.trim()) {
+          throw new TypeError('emitAuditEvent persistence returned an invalid event id');
+        }
+        return persistedId.trim();
+      }));
+      return eventId;
     } catch (err) {
       if (isEmitAuditValidationError(err)) {
         logger.warn('[requireAudit] emitAuditEvent validation rejected', err);
