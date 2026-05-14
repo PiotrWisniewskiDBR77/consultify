@@ -9,6 +9,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { tokenService } from '@/services/tokenService';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
 import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
@@ -33,6 +34,48 @@ const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicR
 const InviteRouteWrapper = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
+  const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
+
+  const clearClientSessionForInviteHandoff = () => {
+    tokenService.clearTokens();
+    localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('consultify-storage');
+    localStorage.removeItem('consultify_demo_session');
+    localStorage.removeItem('consultify_current_org_id');
+    localStorage.removeItem('demo_events');
+    try {
+      sessionStorage.removeItem('isDemo');
+      sessionStorage.removeItem('demo_session_id');
+      sessionStorage.removeItem('demo_events');
+    } catch {
+      // best effort: continue handoff even if storage access fails
+    }
+    setCurrentUser(null);
+    setCurrentOrganization(null);
+  };
+
+  const normalizedToken = token?.trim() || '';
+  if (!normalizedToken) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="max-w-md w-full bg-white dark:bg-navy-900 rounded-xl shadow p-6 text-center">
+          <h1 className="text-xl font-semibold mb-2">Invalid invitation link</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+            This invitation URL is incomplete. Please request a new invitation link.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/login', { replace: true })}
+            className="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Go to login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <React.Suspense
@@ -43,8 +86,11 @@ const InviteRouteWrapper = () => {
       }
     >
       <AcceptInvitationView
-        token={token || ''}
-        onAccepted={() => navigate('/login')}
+        token={normalizedToken}
+        onAccepted={() => {
+          clearClientSessionForInviteHandoff();
+          navigate('/login', { replace: true });
+        }}
         onError={(error) => console.error('Invitation error:', error)}
       />
     </React.Suspense>

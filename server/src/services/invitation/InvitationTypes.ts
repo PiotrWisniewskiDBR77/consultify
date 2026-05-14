@@ -1,5 +1,6 @@
 export const INVITATION_EXPIRY_DAYS = 7;
 export const TOKEN_LENGTH_BYTES = 32; // 64 hex characters
+export const INVITATION_TOKEN_HEX_LENGTH = TOKEN_LENGTH_BYTES * 2;
 export const MAX_RESEND_COUNT = 3;
 export const RESEND_COOLDOWN_MINUTES = 5;
 

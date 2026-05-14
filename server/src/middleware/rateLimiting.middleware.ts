@@ -361,6 +361,14 @@ export const apiAuthRateLimiter = createLimiter({
   message: 'Too many requests, please try again later.',
 });
 
+/** Public invitation token endpoints: stricter anti-enumeration limits */
+export const invitePublicRateLimiter = createLimiter({
+  windowMs: 15 * 60_000,
+  max: isProd ? 15 : 300,
+  prefix: 'invite-public',
+  message: 'Too many invitation attempts. Please try again later.',
+});
+
 /** Default API: 300 req / 15 min (prod) */
 export const defaultRateLimiter = createLimiter({
   windowMs: 15 * 60_000,

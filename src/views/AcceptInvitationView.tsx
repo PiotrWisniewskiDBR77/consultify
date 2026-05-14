@@ -1,5 +1,8 @@
 import { AlertCircle, Building2, CheckCircle, Loader2, Shield, Users, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { API_URL } from '@/services/api';
 
 import { useAppStore } from '../store/useAppStore';
 import { InvitationType, InvitationValidation } from '../types';
@@ -10,14 +13,14 @@ interface AcceptInvitationViewProps {
   onError?: (error: string) => void;
 }
 
-const API_URL = '/api';
-
 const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   token,
   onAccepted,
   onError,
 }) => {
-  const { currentUser } = useAppStore();
+  const navigate = useNavigate();
+  const currentUser = useAppStore((s) => s.currentUser);
+  const logout = useAppStore((s) => s.logout);
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState(true);
   const [invitation, setInvitation] = useState<InvitationValidation | null>(null);
@@ -39,6 +42,15 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   // Validate token on mount
   useEffect(() => {
     const validateToken = async () => {
+      if (!token.trim()) {
+        const message = 'Invalid invitation link';
+        setError(message);
+        onError?.(message);
+        setValidating(false);
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch(`${API_URL}/invitations/validate/${token}`);
         const data = await res.json();
@@ -48,6 +60,12 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
         }
 
         setInvitation(data);
+        const loggedEmail = currentUser?.email?.trim().toLowerCase();
+        const invitedEmail = data?.email?.trim().toLowerCase();
+        const shouldBlockMismatch = Boolean(
+          currentUser?.isAuthenticated && loggedEmail && invitedEmail && loggedEmail !== invitedEmail
+        );
+        setEmailMismatch(shouldBlockMismatch);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to validate invitation';
         setError(message);
@@ -59,7 +77,12 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
     };
 
     validateToken();
-  }, [token, onError]);
+  }, [token, onError, currentUser?.email, currentUser?.isAuthenticated]);
+
+  const handleSignOutAndContinue = () => {
+    logout();
+    navigate('/login');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +136,12 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
       }
 
       setSuccess(true);
-      onAccepted?.(data.user);
+      onAccepted?.(
+        data?.user || {
+          id: data?.userId || '',
+          email: invitation?.email || '',
+        }
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to accept invitation';
       setError(message);
@@ -216,6 +244,23 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {emailMismatch && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+              <p className="font-medium mb-1">Signed in with a different account</p>
+              <p className="mb-3">
+                This invitation is for <span className="font-semibold">{invitation?.email}</span>.
+                Sign out and continue with the invited address.
+              </p>
+              <button
+                type="button"
+                onClick={handleSignOutAndContinue}
+                className="inline-flex items-center px-3 py-1.5 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+              >
+                Sign out and continue
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -385,6 +430,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             <button
               type="submit"
               disabled={
+                emailMismatch ||
                 submitting ||
                 !firstName ||
                 !lastName ||

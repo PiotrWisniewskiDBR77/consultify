@@ -56,6 +56,7 @@ export const Sidebar: React.FC = () => {
   // because it can trigger "getSnapshot should be cached" warnings/loops.
   const currentView = useAppStore((s) => s.currentView);
   const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const returnToFullChat = useAppStore((s) => s.returnToFullChat);
   const logout = useAppStore((s) => s.logout);
   const isSidebarOpen = useAppStore((s) => s.isSidebarOpen);
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
@@ -191,8 +192,12 @@ export const Sidebar: React.FC = () => {
 
   const navigateToFullChat = React.useCallback(() => {
     setDisplayMode('full');
+    if (typeof returnToFullChat === 'function') {
+      returnToFullChat();
+      return;
+    }
     setCurrentView(AppView.AI_CHAT);
-  }, [setCurrentView, setDisplayMode]);
+  }, [returnToFullChat, setCurrentView, setDisplayMode]);
 
   const navigateToView = React.useCallback(
     (viewId: AppView) => {

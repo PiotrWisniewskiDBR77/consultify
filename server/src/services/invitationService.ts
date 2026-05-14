@@ -25,6 +25,7 @@ import {
   RESEND_COOLDOWN_MINUTES,
 } from './invitation/InvitationTypes.js';
 import { mapToCanonicalProjectRole } from './projectRoleCanon.js';
+import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 
 // Dynamic imports
 let AccessPolicyService: any = null;
@@ -410,6 +411,9 @@ export class InvitationServiceClass {
   }
 
   async getByToken(token: string): Promise<InvitationRecord | null> {
+    if (!this.deps.tokenService.isCanonicalInvitationRawToken(token)) {
+      return null;
+    }
     const tokenHash = this.deps.tokenService.hashToken(token);
     return this.deps.dataService.getInvitationByTokenHash(tokenHash);
   }
@@ -639,7 +643,8 @@ export class InvitationServiceClass {
   async resendInvitation(
     invitationId: string,
     performedByUserId: string,
-    requestInfo: RequestInfo = {}
+    requestInfo: RequestInfo = {},
+    organizationId?: string
   ): Promise<{
     id: string;
     email: string;
@@ -649,6 +654,9 @@ export class InvitationServiceClass {
   }> {
     const invitation = await this.deps.dataService.getInvitationById(invitationId);
     if (!invitation) throw new Error('Invitation not found');
+    if (organizationId && invitation.organization_id !== organizationId) {
+      throw new Error('Invitation not found');
+    }
 
     if (
       invitation.status !== INVITATION_STATUS.PENDING &&
@@ -708,7 +716,8 @@ export class InvitationServiceClass {
     invitationId: string,
     performedByUserId: string,
     reason: string = '',
-    requestInfo: RequestInfo = {}
+    requestInfo: RequestInfo = {},
+    organizationId?: string
   ): Promise<{
     id: string;
     email: string;
@@ -716,6 +725,9 @@ export class InvitationServiceClass {
   }> {
     const invitation = await this.deps.dataService.getInvitationById(invitationId);
     if (!invitation) throw new Error('Invitation not found');
+    if (organizationId && invitation.organization_id !== organizationId) {
+      throw new Error('Invitation not found');
+    }
 
     await this.deps.dataService.markAsRevoked(invitationId);
 
@@ -761,6 +773,9 @@ export class InvitationServiceClass {
   }
 
   async validateInvitationToken(token: string): Promise<any> {
+    if (!this.deps.tokenService.isCanonicalInvitationRawToken(token)) {
+      throw new Error('Invalid invitation token');
+    }
     const tokenHash = this.deps.tokenService.hashToken(token);
     const invitation = await this.deps.dataService.getInvitationByTokenHash(tokenHash);
 
@@ -785,10 +800,31 @@ export class InvitationServiceClass {
       invitationType: invitation.invitation_type,
       projectId: invitation.project_id,
       projectName: invitation.project_name,
+      roleToAssign: invitation.role_to_assign || invitation.role,
+      expiresAt: invitation.expires_at,
     };
   }
 
-  async getInvitationAudit(invitationId: string): Promise<any> {
+  async getInvitationAudit(
+    invitationId: string,
+    organizationId?: string,
+    requestingUserId?: string
+  ): Promise<any> {
+    if (organizationId && requestingUserId) {
+      const invitation = await this.deps.dataService.getInvitationById(invitationId);
+      if (!invitation || invitation.organization_id !== organizationId) {
+        throw new Error('Invitation not found');
+      }
+
+      const access = await resolveEffectiveAccess({
+        userId: requestingUserId,
+        organizationId,
+      });
+      if (!hasEffectiveCapability(access, 'users.invite')) {
+        throw new Error('Missing required invitation capability');
+      }
+    }
+
     const events = await this.deps.dataService.getInvitationEvents(invitationId);
     return events.map((e) => ({
       id: e.id,
@@ -812,10 +848,15 @@ export default instance;
 // Named exports for backward compatibility
 export const acceptInvitation = (params: any) => instance.acceptInvitation(params);
 export const createInvitation = (params: any) => instance.createInvitation(params);
-export const resendInvitation = (id: string, userId: string) =>
-  instance.resendInvitation(id, userId);
+export const resendInvitation = (
+  id: string,
+  userId: string,
+  requestInfo: RequestInfo = {},
+  organizationId?: string
+) => instance.resendInvitation(id, userId, requestInfo, organizationId);
 export const cancelInvitation = (id: string, userId: string) =>
   instance.cancelInvitation(id, userId);
 export const getInvitations = (orgId: string) => instance.getInvitations(orgId);
 export const validateInvitationToken = (token: string) => instance.validateInvitationToken(token);
-export const getInvitationAudit = (id: string) => instance.getInvitationAudit(id);
+export const getInvitationAudit = (id: string, organizationId?: string, requestingUserId?: string) =>
+  instance.getInvitationAudit(id, organizationId, requestingUserId);

@@ -1,11 +1,15 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
+import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 import { useTeresaVoice, type UseTeresaVoiceReturn } from '../hooks/useTeresaVoice';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
 import { buildTeresaVoiceSystemInstruction } from '../utils/teresaVoiceInstruction';
+import { getTeresaStartFailureMessage } from '../components/AIChat/teresaRuntimeCopy';
 
 interface TeresaVoiceContextValue extends UseTeresaVoiceReturn {
   /** Toggle voice on/off — creates conversation if needed */
@@ -21,6 +25,7 @@ export function useTeresaVoiceContext(): TeresaVoiceContextValue {
 }
 
 export function TeresaVoiceProvider({ children }: { children: React.ReactNode }) {
+  const { i18n } = useTranslation();
   const currentUser = useAppStore((s) => s.currentUser);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
@@ -30,14 +35,24 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
   const {
     activeConversationId,
     addMessage,
+    chatLanguageByConversationId,
     createConversation,
     setActiveConversation,
     setConversationChatLanguage,
   } = useConversationStore();
 
-  const [chatLanguage] = useState<string>(() => {
-    return readPreferredChatLanguage('pl') || 'pl';
+  const [fallbackChatLanguage] = useState<SupportedLanguage>(() => {
+    return (readPreferredChatLanguage('pl') || 'pl') as SupportedLanguage;
   });
+  const chatLanguage: SupportedLanguage = useMemo(() => {
+    const explicitPref = readPreferredChatLanguage(null);
+    const activeLang = activeConversationId ? chatLanguageByConversationId[activeConversationId] : null;
+    const uiLang = i18n.language?.split('-')[0] || 'en';
+    const candidate = explicitPref || activeLang || uiLang || fallbackChatLanguage;
+    const base = String(candidate).split('-')[0];
+    return (normalizeLanguageCode(base) ||
+      (isValidLanguage(base) ? (base as SupportedLanguage) : fallbackChatLanguage)) as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, fallbackChatLanguage, i18n.language]);
 
   const systemInstruction = useMemo(
     () =>
@@ -107,6 +122,7 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
         setConversationChatLanguage(newConv.id, chatLanguage as any);
       } catch (err) {
         console.error('[TeresaVoice] Failed to create conversation:', err);
+        toast.error(getTeresaStartFailureMessage(i18n.language));
         return;
       }
     }
@@ -120,6 +136,12 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     setActiveConversation,
     setConversationChatLanguage,
   ]);
+
+  useEffect(() => {
+    if (activeConversationId) return;
+    if (voice.voiceStatus !== 'live' && voice.voiceStatus !== 'connecting') return;
+    void voice.stopVoiceConversation();
+  }, [activeConversationId, voice]);
 
   const value = useMemo<TeresaVoiceContextValue>(
     () => ({ ...voice, handleVoiceToggle }),

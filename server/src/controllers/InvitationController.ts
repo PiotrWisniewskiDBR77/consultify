@@ -21,6 +21,22 @@ import type {
 // ==========================================
 
 export class InvitationController {
+  private static mapAcceptInvitationErrorStatus(message: string): number {
+    const normalized = String(message || '').toLowerCase();
+    const clientErrorHints = [
+      'invalid invitation token',
+      'invitation is ',
+      'invitation has expired',
+      'invitation has already been accepted',
+      'email address does not match invitation',
+      'already a member',
+      'multi-organization support is not yet available',
+      'token does not match',
+      'accepted',
+    ];
+    return clientErrorHints.some((hint) => normalized.includes(hint)) ? 400 : 500;
+  }
+
   /**
    * Get all invitations for organization
    */
@@ -127,18 +143,21 @@ export class InvitationController {
   static resendInvitation = asyncHandler(
     async (req: AuthenticatedRequest<ResendInvitationRequest>, res: Response): Promise<void> => {
       const invitationId = (req.body && req.body.invitationId) || req.params.id;
+      const organizationId = req.user?.organizationId;
+      const userId = req.user?.id;
 
       if (!invitationId) {
         res.status(400).json({ error: 'Invitation ID is required' });
         return;
       }
+      if (!organizationId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
       const InvitationService = (await import('../services/invitationService.js')).default;
       try {
-        const invitation = await InvitationService.resendInvitation(
-          invitationId,
-          req.user?.id || ''
-        );
+        const invitation = await InvitationService.resendInvitation(invitationId, userId, {}, organizationId);
 
         res.json({
           success: true,
@@ -179,8 +198,9 @@ export class InvitationController {
         });
         res.json(result);
       } catch (error: any) {
-        const status =
-          error.message.includes('match') || error.message.includes('accepted') ? 400 : 500;
+        const status = InvitationController.mapAcceptInvitationErrorStatus(
+          error?.message || 'Unexpected error'
+        );
         res.status(status).json({ error: error.message });
       }
     }
@@ -209,9 +229,15 @@ export class InvitationController {
   static getInvitationAudit = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
+      const organizationId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!organizationId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
       const InvitationService = (await import('../services/invitationService.js')).default;
-      const audit = await InvitationService.getInvitationAudit(id);
+      const audit = await InvitationService.getInvitationAudit(id, organizationId, userId);
 
       res.json(audit);
     }
@@ -223,10 +249,16 @@ export class InvitationController {
   static cancelInvitation = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
+      const organizationId = req.user?.organizationId;
+      const userId = req.user?.id;
+      if (!organizationId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
       const InvitationService = (await import('../services/invitationService.js')).default;
       try {
-        const invitation = await InvitationService.revokeInvitation(id, req.user?.id || '');
+        const invitation = await InvitationService.revokeInvitation(id, userId, '', {}, organizationId);
         res.json({
           success: true,
           message: 'Invitation cancelled',

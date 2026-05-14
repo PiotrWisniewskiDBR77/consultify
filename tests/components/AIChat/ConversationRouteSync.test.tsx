@@ -7,10 +7,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const navigateMock = vi.fn();
 const setActiveConversationMock = vi.fn();
+const clearActiveChatMock = vi.fn();
 
 const routeState: { conversationId?: string } = {};
-const conversationState: { activeConversationId: string | null } = {
+const conversationState: { activeConversationId: string | null; _activeConversationState: string } = {
   activeConversationId: null,
+  _activeConversationState: 'loaded',
 };
 
 vi.mock('react-router-dom', () => ({
@@ -19,10 +21,17 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('../../../src/store/useConversationStore', () => ({
-  useConversationStore: (selector: (state: { activeConversationId: string | null; setActiveConversation: typeof setActiveConversationMock }) => unknown) =>
+  useConversationStore: (selector: (state: {
+    activeConversationId: string | null;
+    _activeConversationState: string;
+    setActiveConversation: typeof setActiveConversationMock;
+    clearActiveChat: typeof clearActiveChatMock;
+  }) => unknown) =>
     selector({
       activeConversationId: conversationState.activeConversationId,
+      _activeConversationState: conversationState._activeConversationState,
       setActiveConversation: setActiveConversationMock,
+      clearActiveChat: clearActiveChatMock,
     }),
 }));
 
@@ -30,8 +39,10 @@ describe('ConversationRouteSync', () => {
   beforeEach(() => {
     navigateMock.mockReset();
     setActiveConversationMock.mockReset();
+    clearActiveChatMock.mockReset();
     routeState.conversationId = undefined;
     conversationState.activeConversationId = null;
+    conversationState._activeConversationState = 'loaded';
   });
 
   it('does not redirect away from /chat on initial mount when a conversation is already restored in store', async () => {
@@ -62,5 +73,21 @@ describe('ConversationRouteSync', () => {
     render(<ConversationRouteSync />);
 
     expect(setActiveConversationMock).toHaveBeenCalledWith('conv-deeplink');
+  });
+
+  it('clears dead deep-link conversation and routes back to /chat', async () => {
+    routeState.conversationId = 'conv-missing';
+    conversationState.activeConversationId = 'conv-missing';
+    conversationState._activeConversationState = 'loaded';
+
+    const { ConversationRouteSync } = await import('../../../src/components/AIChat/ConversationRouteSync');
+    const view = render(<ConversationRouteSync />);
+
+    conversationState._activeConversationState = 'not_found';
+    conversationState.activeConversationId = null;
+    view.rerender(<ConversationRouteSync />);
+
+    expect(clearActiveChatMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith('/chat', { replace: true });
   });
 });

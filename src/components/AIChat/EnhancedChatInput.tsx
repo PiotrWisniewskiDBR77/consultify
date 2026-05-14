@@ -226,7 +226,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   }, []);
 
   useEffect(() => {
-    if (teresaVoiceStatus !== 'error') return;
+    if (teresaVoiceStatus !== 'error') {
+      lastTeresaVoiceToastRef.current = null;
+      return;
+    }
     const msg = (teresaVoiceError || '').trim() || t('aiChat.voiceError', 'Voice error');
     if (lastTeresaVoiceToastRef.current === msg) return;
     lastTeresaVoiceToastRef.current = msg;

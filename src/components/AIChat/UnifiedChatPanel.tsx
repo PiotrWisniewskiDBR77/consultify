@@ -2040,6 +2040,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           conversationId = conv.id;
         } catch (err) {
           console.error('[UnifiedChatPanel] Failed to create conversation:', err);
+          toast.error(getTeresaStartFailureMessage(i18n.language));
+          return;
         }
       }
 
@@ -2991,8 +2993,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setActiveConversation(conv.id);
     } catch (err) {
       console.error('[UnifiedChatPanel] Failed to create new chat:', err);
+      toast.error(getTeresaStartFailureMessage(i18n.language));
     }
-  }, [clearActiveChat, createConversation, setActiveConversation]);
+  }, [clearActiveChat, createConversation, i18n.language, setActiveConversation]);
 
   const handleSelectConversation = useCallback(
     (id: string) => {

@@ -19,12 +19,15 @@ export const ConversationRouteSync: React.FC = () => {
   const navigate = useNavigate();
   const activeConversationId = useConversationStore((s) => s.activeConversationId);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
+  const clearActiveChat = useConversationStore((s) => s.clearActiveChat);
+  const activeConversationState = useConversationStore((s) => s._activeConversationState);
 
   // Guard to prevent Store→URL sync from firing right after URL→Store sync
   const syncingFromUrl = useRef(false);
   // When the user intentionally lands on `/chat`, let the welcome screen
   // render first instead of bouncing to the last restored conversation.
   const skipInitialBaseRouteRedirect = useRef(!conversationId);
+  const notFoundHandledRef = useRef(false);
 
   // URL → Store sync
   useEffect(() => {
@@ -40,6 +43,22 @@ export const ConversationRouteSync: React.FC = () => {
     }, 100);
     return () => clearTimeout(timer);
   }, [conversationId, activeConversationId, setActiveConversation]);
+
+  useEffect(() => {
+    if (!conversationId) {
+      notFoundHandledRef.current = false;
+      return;
+    }
+    if (activeConversationState !== 'not_found') {
+      notFoundHandledRef.current = false;
+      return;
+    }
+    if (notFoundHandledRef.current) return;
+
+    notFoundHandledRef.current = true;
+    clearActiveChat();
+    navigate('/chat', { replace: true });
+  }, [activeConversationState, clearActiveChat, conversationId]);
 
   // Store → URL sync (only when user changes conversation via UI, not from URL sync)
   useEffect(() => {

@@ -564,6 +564,17 @@ describe('UnifiedChatPanel (L2)', () => {
     await waitFor(() => expect(setActiveConversationMock).toHaveBeenCalledWith('conv-1'));
   });
 
+  it('shows Teresa fallback toast when creating a new chat fails', async () => {
+    const user = userEvent.setup();
+    createConversationMock.mockRejectedValueOnce(new Error('create failed'));
+    await renderWithRouterAndFlush(<UnifiedChatPanel />);
+
+    await user.click(screen.getByTestId('chat-new-button'));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    expect(setActiveConversationMock).not.toHaveBeenCalled();
+  });
+
   it('sends a message (creates conversation if needed) and starts stream', async () => {
     const user = userEvent.setup();
     createConversationMock.mockResolvedValue({ id: 'conv-1' });
@@ -578,6 +589,19 @@ describe('UnifiedChatPanel (L2)', () => {
       )
     );
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+  });
+
+  it('stops send flow and shows Teresa fallback toast when conversation creation fails', async () => {
+    const user = userEvent.setup();
+    createConversationMock.mockRejectedValueOnce(new Error('create failed'));
+    await renderWithRouterAndFlush(<UnifiedChatPanel onMessageSent={vi.fn()} />);
+
+    await user.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(createConversationMock).toHaveBeenCalled());
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    expect(addMessageToConversationMock).not.toHaveBeenCalled();
+    expect(startStreamMock).not.toHaveBeenCalled();
   });
 
   it('routes explicit output tool to active Outputs sheet surface', async () => {
