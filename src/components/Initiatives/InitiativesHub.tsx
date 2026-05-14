@@ -56,8 +56,16 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
-import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
-import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  FilterChip,
+  HubWorkAreaLoadError,
+  HubWorkAreaLoading,
+  ModuleHub,
+  ModuleTab,
+  OpenDocument,
+  useModuleOpenDocuments,
+  ViewMode,
+} from '../shared/ModuleHub';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
@@ -178,6 +186,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadErrorCode, setLoadErrorCode] = useState<string | null>(null);
   const fetchRetryRef = useRef(0);
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
@@ -308,6 +317,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       try {
         setLoadError(null);
+        setLoadErrorCode(null);
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
         // Scope-based filtering: 'active' sends only core statuses, 'all' sends everything.
@@ -381,6 +391,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             'Failed to load initiatives from the active data source.'
           )
         );
+        const code =
+          typeof error?.data?.code === 'string' && error.data.code.trim()
+            ? error.data.code.trim()
+            : null;
+        setLoadErrorCode(code);
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -1072,37 +1087,23 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     if (loadError) {
       return (
-        <div className="flex items-center justify-center h-full px-6">
-          <div className="max-w-xl w-full p-5 rounded-2xl border border-red-500/20 bg-red-900/10">
-            <div className="text-sm font-semibold text-red-300">
-              {t('initiatives.hub.failedToLoad')}
-            </div>
-            <div className="text-sm text-red-200/80 mt-1">{loadError}</div>
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => fetchData(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors"
-              >
-                {t('initiatives.hub.retry')}
-              </button>
-              <button
-                onClick={() => setLoadError(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-              >
-                {t('initiatives.hub.dismiss')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <HubWorkAreaLoadError
+          title={t('initiatives.hub.failedToLoad')}
+          message={loadError}
+          errorCode={loadErrorCode}
+          retryLabel={t('initiatives.hub.retry')}
+          dismissLabel={t('initiatives.hub.dismiss')}
+          onRetry={() => fetchData(true)}
+          onDismiss={() => {
+            setLoadError(null);
+            setLoadErrorCode(null);
+          }}
+        />
       );
     }
 
     if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary-500" />
-        </div>
-      );
+      return <HubWorkAreaLoading />;
     }
 
     if (initiatives.length === 0) {
@@ -1286,7 +1287,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </div>
                 {searchedInitiatives.length === 0 && (
                   <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-                    No initiatives found
+                    {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
                   </div>
                 )}
               </div>

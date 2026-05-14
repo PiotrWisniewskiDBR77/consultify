@@ -97,6 +97,7 @@ import {
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
   type NModeAction,
   NModeCanvas,
@@ -7841,24 +7842,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-      </div>
-    );
+    return <HubWorkAreaLoading />;
   }
 
   if (error || !initiative) {
+    const message = error || t('initiatives.document.notFound', 'Initiative not found');
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-center">
-        <AlertTriangle className="w-12 h-12 text-red-400 mb-4" />
-        <p className="text-slate-500">{error || 'Initiative not found'}</p>
-        {onBack && (
-          <button onClick={onBack} className="mt-4 text-purple-500 hover:underline">
-            {isPolish ? 'Wróć' : 'Go back'}
-          </button>
-        )}
-      </div>
+      <HubWorkAreaLoadError
+        title={t('initiatives.document.failedToLoad', 'Failed to load initiative card.')}
+        message={message}
+        retryLabel={t('initiatives.document.retry', 'Retry')}
+        dismissLabel={t('initiatives.document.goBack', 'Go back')}
+        onRetry={() => {
+          void fetchAll();
+        }}
+        onDismiss={() => {
+          if (onBack) onBack();
+        }}
+      />
     );
   }
 

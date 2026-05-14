@@ -2214,7 +2214,14 @@
     "hub": {
       "failedToLoad": "Failed to load initiatives.",
       "retry": "Retry",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "noInitiativesFound": "No initiatives found"
+    },
+    "document": {
+      "failedToLoad": "Failed to load initiative card.",
+      "notFound": "Initiative not found",
+      "retry": "Retry",
+      "goBack": "Go back"
     },
     "empty": {
       "title": "No initiatives yet",
@@ -2371,6 +2378,11 @@
     "calendar": "Calendar",
     "decisions": "Decisions",
     "heatmap": "Workload Heatmap",
+    "hub": {
+      "failedToLoad": "Failed to load execution initiatives.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
     "demo": {
       "label": "Demo",
       "toggleHint": "Toggle demo data for Execution Center (local only)",
@@ -6405,6 +6417,11 @@
   },
   "results": {
     "moduleName": "Results",
+    "hub": {
+      "failedToLoadKpis": "Failed to load KPI catalog.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
     "kpi": {
       "ai": {
         "summarizePrompt": "Summarize this KPI: meaning, current status, and suggested next actions.",

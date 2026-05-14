@@ -1627,7 +1627,14 @@
     "hub": {
       "failedToLoad": "Nie udało się załadować inicjatyw.",
       "retry": "Spróbuj ponownie",
-      "dismiss": "Zamknij"
+      "dismiss": "Zamknij",
+      "noInitiativesFound": "Nie znaleziono inicjatyw"
+    },
+    "document": {
+      "failedToLoad": "Nie udało się załadować karty inicjatywy.",
+      "notFound": "Nie znaleziono inicjatywy",
+      "retry": "Spróbuj ponownie",
+      "goBack": "Wróć"
     },
     "empty": {
       "title": "Brak inicjatyw",
@@ -1784,6 +1791,11 @@
     "calendar": "Kalendarz",
     "decisions": "Decyzje",
     "heatmap": "Mapa obciążenia",
+    "hub": {
+      "failedToLoad": "Nie udało się załadować inicjatyw realizacyjnych.",
+      "retry": "Spróbuj ponownie",
+      "dismiss": "Zamknij"
+    },
     "demo": {
       "label": "Demo",
       "toggleHint": "Przełącz dane demo dla Centrum Realizacji (tylko lokalnie)",
@@ -6984,6 +6996,11 @@
   },
   "results": {
     "moduleName": "Rezultaty",
+    "hub": {
+      "failedToLoadKpis": "Nie udało się załadować katalogu KPI.",
+      "retry": "Spróbuj ponownie",
+      "dismiss": "Zamknij"
+    },
     "kpi": {
       "ai": {
         "summarizePrompt": "Podsumuj ten KPI: sens, bieżący status i sugerowane następne kroki.",

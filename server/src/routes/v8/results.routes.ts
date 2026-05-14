@@ -181,7 +181,15 @@ router.get(
         });
       }
     }
-    const snapshot = await getResultsDashboard(organizationId, { initiativeId });
+    let snapshot;
+    try {
+      snapshot = await getResultsDashboard(organizationId, { initiativeId });
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load results dashboard',
+        code: 'RESULTS_DASHBOARD_READ_FAILED',
+      });
+    }
     return res.json({
       data: { snapshot },
       meta: resultsMeta(),
@@ -215,9 +223,23 @@ router.get(
         });
       }
     }
-    const catalog = await getResultsKpiCatalog(organizationId, { kpiId, initiativeId });
+    let catalog;
+    try {
+      catalog = await getResultsKpiCatalog(organizationId, { kpiId, initiativeId });
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load KPI catalog',
+        code: 'RESULTS_CATALOG_READ_FAILED',
+      });
+    }
+    const normalizedCatalog = {
+      ...catalog,
+      initiatives: Array.isArray((catalog as any)?.initiatives) ? (catalog as any).initiatives : [],
+      kpis: Array.isArray((catalog as any)?.kpis) ? (catalog as any).kpis : [],
+      mappings: Array.isArray((catalog as any)?.mappings) ? (catalog as any).mappings : [],
+    };
     return res.json({
-      data: catalog,
+      data: normalizedCatalog,
       meta: resultsMeta(),
     });
   })
@@ -1065,7 +1087,10 @@ router.get(
           code: 'RESULTS_KPI_NOT_FOUND',
         });
       }
-      throw error;
+      return res.status(500).json({
+        error: 'Failed to load KPI drawer detail',
+        code: 'RESULTS_KPI_DRAWER_READ_FAILED',
+      });
     }
     return res.json({
       data: detail,
@@ -1223,10 +1248,15 @@ router.get(
         });
       }
     }
-    const portfolio = await getROIPortfolioSummary(
-      organizationId,
-      initiativeId ? { initiativeId } : undefined
-    );
+    let portfolio;
+    try {
+      portfolio = await getROIPortfolioSummary(organizationId, initiativeId ? { initiativeId } : undefined);
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to load ROI portfolio summary',
+        code: 'RESULTS_ROI_PORTFOLIO_READ_FAILED',
+      });
+    }
     return res.json({
       data: portfolio,
       meta: resultsMeta(),
