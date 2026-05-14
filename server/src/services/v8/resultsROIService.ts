@@ -1268,7 +1268,13 @@ export async function getROIDashboard(
  * ROI portfolio rollup for the active Results ROI surfaces.
  * This is a bounded V8 bridge over the existing org-scoped ROI assumptions and realized tables.
  */
-export async function getROIPortfolioSummary(organizationId: string): Promise<ROIPortfolioSummary> {
+export async function getROIPortfolioSummary(
+  organizationId: string,
+  options?: { initiativeId?: string }
+): Promise<ROIPortfolioSummary> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
+  const initiativeClause = initiativeId ? ' AND ra.initiative_id = ?' : '';
+  const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
   const assumptions = await dbAll<LegacyRoiAssumptionRow>(
     `SELECT
        ra.initiative_id,
@@ -1282,11 +1288,12 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
        ra.confidence
      FROM roi_assumptions ra
      JOIN initiatives i ON i.id = ra.initiative_id
-     WHERE ra.organization_id = ?`,
-    [organizationId],
+     WHERE ra.organization_id = ?${initiativeClause}`,
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
+  const realizedClause = initiativeId ? ' AND initiative_id = ?' : '';
   const realized = await dbAll<LegacyRoiRealizedAggRow>(
     `SELECT
        initiative_id,
@@ -1294,9 +1301,9 @@ export async function getROIPortfolioSummary(organizationId: string): Promise<RO
        SUM(realized_cost_delta) AS total_cost,
        SUM(realized_savings) AS total_savings
      FROM roi_realized_values
-     WHERE organization_id = ?
+     WHERE organization_id = ?${realizedClause}
      GROUP BY initiative_id`,
-    [organizationId],
+    [organizationId, ...initiativeParams],
     { fallback: true }
   );
 
@@ -1466,13 +1473,26 @@ export async function getROIInitiativeDetail(
  */
 export async function getResultsKpiCatalog(
   organizationId: string,
-  options: { kpiId?: string } = {}
+  options: { kpiId?: string; initiativeId?: string } = {}
 ): Promise<ResultsKpiCatalog> {
   const params: Array<string> = [organizationId, organizationId, organizationId, organizationId];
   let kpiFilterSql = '';
   if (options.kpiId) {
     kpiFilterSql = ' AND k.id = ?';
     params.push(options.kpiId);
+  }
+  if (options.initiativeId) {
+    kpiFilterSql += ` AND (
+      k.initiative_id = ?
+      OR EXISTS (
+        SELECT 1
+        FROM initiative_kpi_mappings map_scope
+        WHERE map_scope.organization_id = ?
+          AND map_scope.initiative_id = ?
+          AND map_scope.kpi_id = k.id
+      )
+    )`;
+    params.push(options.initiativeId, organizationId, options.initiativeId);
   }
 
   const kpiRows = await dbAll<LegacyResultsKpiRow>(
@@ -1560,6 +1580,10 @@ export async function getResultsKpiCatalog(
   if (options.kpiId) {
     mappingFilterSql = ' AND m.kpi_id = ?';
     mappingParams.push(options.kpiId);
+  }
+  if (options.initiativeId) {
+    mappingFilterSql += ' AND m.initiative_id = ?';
+    mappingParams.push(options.initiativeId);
   }
 
   const mappingRows = await dbAll<LegacyResultsKpiMappingRow>(
@@ -1752,8 +1776,34 @@ function deriveLegacyKpiPeriodKey(
  */
 export async function getResultsKpiDrawerDetail(
   kpiId: string,
-  organizationId: string
+  organizationId: string,
+  options?: { initiativeId?: string }
 ): Promise<ResultsKpiDrawerDetail> {
+  const initiativeId = options?.initiativeId?.trim() || undefined;
+  if (initiativeId) {
+    const scopedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ?
+         AND COALESCE(k.organization_id, i.organization_id) = ?
+         AND (
+           k.initiative_id = ?
+           OR EXISTS (
+             SELECT 1
+             FROM initiative_kpi_mappings m
+             WHERE m.organization_id = ?
+               AND m.initiative_id = ?
+               AND m.kpi_id = k.id
+           )
+         )`,
+      [kpiId, organizationId, initiativeId, organizationId, initiativeId],
+      { fallback: true }
+    );
+    if (!scopedKpi?.id) {
+      throw new Error('RESULTS_KPI_NOT_FOUND');
+    }
+  }
   const measurementRows = await dbAll<LegacyKpiTimeSeriesRow>(
     `SELECT
        ts.*,

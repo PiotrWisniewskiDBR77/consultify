@@ -690,6 +690,37 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
   }, [deepLinkHandled, searchParams, setSearchParams]);
 
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    const currentTab = String(next.get('tab') || '').trim().toLowerCase();
+    const desiredTab = String(activeTab || '').trim().toLowerCase();
+    if (desiredTab && currentTab !== desiredTab) {
+      next.set('tab', desiredTab);
+      changed = true;
+    }
+    const currentView = String(next.get('view') || '').trim().toLowerCase();
+    const desiredView = String(viewMode || '').trim().toLowerCase();
+    if (desiredView && currentView !== desiredView) {
+      next.set('view', desiredView);
+      changed = true;
+    }
+    const currentInitiativeScope = String(next.get('initiativeId') || '').trim();
+    const desiredInitiativeScope =
+      activeDocumentId && !activeDocumentId.startsWith('report:') ? activeDocumentId : '';
+    if (desiredInitiativeScope) {
+      if (currentInitiativeScope !== desiredInitiativeScope) {
+        next.set('initiativeId', desiredInitiativeScope);
+        changed = true;
+      }
+    } else if (currentInitiativeScope) {
+      next.delete('initiativeId');
+      changed = true;
+    }
+    if (!changed) return;
+    setSearchParams(next, { replace: true });
+  }, [activeDocumentId, activeTab, searchParams, setSearchParams, viewMode]);
+
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
     const todayStart = new Date(now);
@@ -1507,14 +1538,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const copyExecutionLink = useCallback(
     async (id: string) => {
       try {
-        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?open=${encodeURIComponent(id)}&mode=doc`;
+        const query = new URLSearchParams();
+        query.set('open', encodeURIComponent(id));
+        query.set('mode', 'doc');
+        query.set('initiativeId', encodeURIComponent(id));
+        query.set('tab', String(activeTab || 'list'));
+        query.set('view', String(viewMode || 'table'));
+        const url = `${window.location.origin}${ROUTES.IMPLEMENTATION}?${query.toString()}`;
         await navigator.clipboard.writeText(url);
         toast.success(t('common.copied', 'Copied'));
       } catch {
         toast.error(t('common.copyFailed', 'Copy failed'));
       }
     },
-    [t]
+    [activeTab, t, viewMode]
   );
 
   // Tab configuration
@@ -3095,6 +3132,35 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const badgeBase =
       'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
 
+    if (activeDocumentId && !activeDocumentId.startsWith('report:')) {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/initiatives?open=${encodeURIComponent(activeDocumentId)}&mode=doc`)
+            }
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+          >
+            <Target size={14} />
+            <span>{t('execution.command.openInInitiatives', 'Open in Initiatives')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(activeDocumentId)}`
+              )
+            }
+            className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+          >
+            <FileText size={14} />
+            <span>{t('initiatives.preview.resultsAndReports', 'Results & KPI reports')}</span>
+          </button>
+        </div>
+      );
+    }
+
     if (activeTab === 'reports') {
       const reportPresets = [
         { id: 'all' as const, label: t('common.all', 'ALL'), count: 11 },
@@ -3259,6 +3325,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       </div>
     );
   }, [
+    activeDocumentId,
     activeTab,
     actionCenter,
     actionQueueItems.length,
@@ -3271,6 +3338,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     riskSignals.length,
     t,
     tasks.length,
+    navigate,
   ]);
 
   // ---------------------------------------------------------------------------

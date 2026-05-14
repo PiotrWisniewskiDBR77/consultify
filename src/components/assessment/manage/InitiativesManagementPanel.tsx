@@ -910,7 +910,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   };
 
   const handleOpenInitiative = (initiativeId: string) => {
-    navigate(`/initiatives?id=${initiativeId}`);
+    navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
   };
 
   // Close status filter popover on outside click / ESC

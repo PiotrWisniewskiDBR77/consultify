@@ -2,7 +2,7 @@ import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucid
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import {
@@ -11,6 +11,7 @@ import {
   type V8ResultsDashboardSnapshot,
 } from '@/services/api/v8/results';
 import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
+import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -133,8 +134,10 @@ const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'co
 
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const currentUser = useAppStore((state) => state.currentUser);
   const [searchParams, setSearchParams] = useSearchParams();
+  const scopedInitiativeId = String(searchParams.get('initiativeId') || '').trim() || undefined;
 
   const [activeTab, setActiveTabRaw] = useState<ModuleTab>(
     (VALID_TABS.includes(searchParams.get('tab') as ModuleTab)
@@ -309,12 +312,12 @@ export const ResultsHub: React.FC = () => {
 
   const loadV8Snapshot = useCallback(async () => {
     try {
-      const response = await V8ResultsApi.getDashboard();
+      const response = await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId });
       setV8Snapshot(response.snapshot);
     } catch {
       setV8Snapshot(null);
     }
-  }, []);
+  }, [scopedInitiativeId]);
 
   useEffect(() => {
     fetchKPIs();
@@ -721,6 +724,17 @@ export const ResultsHub: React.FC = () => {
     }
   }, [searchParams, setSearchParams, setActiveTab, setReportWorkspaceMode]);
 
+  const openScopedExecutionLane = useCallback(() => {
+    if (!scopedInitiativeId) return;
+    const query = new URLSearchParams();
+    query.set('initiativeId', scopedInitiativeId);
+    query.set('open', scopedInitiativeId);
+    query.set('mode', 'doc');
+    query.set('tab', 'list');
+    query.set('view', 'table');
+    navigate(`${ROUTES.IMPLEMENTATION}?${query.toString()}`);
+  }, [navigate, scopedInitiativeId]);
+
   const openInitiativeDocument = useCallback(
     (initiative: ResultsTrackedInitiative) => {
       const existing = openDocuments.find(
@@ -941,6 +955,15 @@ export const ResultsHub: React.FC = () => {
 
       return (
         <div className="flex items-center gap-2">
+          {scopedInitiativeId ? (
+            <button
+              type="button"
+              onClick={openScopedExecutionLane}
+              className="h-9 rounded-full border border-primary-500/30 bg-primary-500/15 px-3 text-sm text-primary-300 hover:bg-primary-500/20 transition-colors"
+            >
+              {t('results.actions.openInExecution', 'Open in Execution')}
+            </button>
+          ) : null}
           <ResultsControlSelect
             ariaLabel={t('results.filters.stage', 'Initiative stage filter')}
             value={initiativeStageFilter}
@@ -1065,12 +1088,14 @@ export const ResultsHub: React.FC = () => {
     activeSignalFilter,
     activeTab,
     applySignalFilter,
+    openScopedExecutionLane,
     initiativeHealthFilter,
     initiativeKpiLinkFilter,
     initiativeStageFilter,
     kpiWorkspaceMode,
     lifecycleFilter,
     observationPhaseFilter,
+    scopedInitiativeId,
     t,
     trackedInitiatives,
   ]);
@@ -1102,6 +1127,15 @@ export const ResultsHub: React.FC = () => {
       return (
         <div className="flex w-full items-center justify-between gap-3">
           <div className="flex items-center gap-2 overflow-x-auto">
+            {scopedInitiativeId ? (
+              <button
+                type="button"
+                onClick={openScopedExecutionLane}
+                className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+              >
+                {t('results.actions.openInExecution', 'Open in Execution')}
+              </button>
+            ) : null}
             {actionButton(
               t('results.kpi.workspace.catalog', 'KPI List'),
               () => setKpiWorkspaceMode('catalog'),
@@ -1144,6 +1178,15 @@ export const ResultsHub: React.FC = () => {
     if (activeTab === 'roi') {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
+          {scopedInitiativeId ? (
+            <button
+              type="button"
+              onClick={openScopedExecutionLane}
+              className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+            >
+              {t('results.actions.openInExecution', 'Open in Execution')}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={openRoiPicker}
@@ -1170,6 +1213,15 @@ export const ResultsHub: React.FC = () => {
     if (activeTab === 'roi_analysis') {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
+          {scopedInitiativeId ? (
+            <button
+              type="button"
+              onClick={openScopedExecutionLane}
+              className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+            >
+              {t('results.actions.openInExecution', 'Open in Execution')}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => setActiveTab('roi')}
@@ -1187,6 +1239,15 @@ export const ResultsHub: React.FC = () => {
     if (activeTab === 'results_reports') {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
+          {scopedInitiativeId ? (
+            <button
+              type="button"
+              onClick={openScopedExecutionLane}
+              className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+            >
+              {t('results.actions.openInExecution', 'Open in Execution')}
+            </button>
+          ) : null}
           {actionButton(
             t('results.reporting.workspace.trackedKpis', 'Tracked KPI'),
             () => {
@@ -1239,8 +1300,10 @@ export const ResultsHub: React.FC = () => {
     activeTab,
     governedRuntimeStrip,
     kpiWorkspaceMode,
+    openScopedExecutionLane,
     openFirstFilteredKpiRecord,
     observationPhaseFilter,
+    scopedInitiativeId,
     openRoiPicker,
     reportWorkspaceMode,
     setQueueFilter,

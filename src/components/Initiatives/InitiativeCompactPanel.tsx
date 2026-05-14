@@ -51,6 +51,7 @@ import {
   getInitiativeStatusPreflightTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
+import { ROUTES } from '@/routes/routeConfig';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
@@ -880,6 +881,20 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
           </div>
         </div>
       )}
+
+      {init.id ? (
+        <button
+          onClick={() =>
+            navigate(
+              `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(String(init.id))}`
+            )
+          }
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <span>{t('initiatives.preview.resultsAndReports', 'Results & KPI reports')}</span>
+        </button>
+      ) : null}
 
       {/* Kill Criteria / Scope */}
       {init.killCriteria?.length > 0 && (

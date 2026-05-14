@@ -236,7 +236,9 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
         </button>
         <button
           onClick={() =>
-            navigate(`${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${initiativeId}`)
+            navigate(
+              `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(initiativeId)}`
+            )
           }
           className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
         >

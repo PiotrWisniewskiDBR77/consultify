@@ -48,9 +48,44 @@ describe('V8ResultsApi', () => {
 
     const data = await V8ResultsApi.getDashboard();
 
-    expect(v8Get).toHaveBeenCalledWith('/results/dashboard');
+    expect(v8Get).toHaveBeenCalledWith('/results/dashboard', undefined);
     expect(data.snapshot.kpiScorecard.totalKpis).toBe(5);
     expect(data.snapshot.roiDashboard.totalRealized).toBe(1200);
+  });
+
+  it('requests initiative-scoped governed dashboard from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      snapshot: {
+        organizationId: 'org-1',
+        kpiScorecard: {
+          organizationId: 'org-1',
+          totalKpis: 2,
+          byStatus: { onTarget: 2 },
+          byCategory: {},
+          averageTargetAchievementRate: 0.9,
+        },
+        activeDeviationsCount: 0,
+        roiDashboard: {
+          organizationId: 'org-1',
+          totalEntries: 1,
+          totalRealized: 1000,
+          projectedFromKpiTargets: 1500,
+          overallRealizationRate: 0.66,
+          byInitiative: [],
+        },
+        reconciliationHealth: {
+          organizationId: 'org-1',
+          total: 0,
+          byStatus: {},
+          unresolvedCount: 0,
+          averageResolutionHours: null,
+        },
+        recentReviewPacks: [],
+      },
+    });
+
+    await V8ResultsApi.getDashboard({ initiativeId: 'init-1' });
+    expect(v8Get).toHaveBeenCalledWith('/results/dashboard', { initiativeId: 'init-1' });
   });
 
   it('requests the governed ROI portfolio summary from the V8 namespace', async () => {
@@ -83,9 +118,27 @@ describe('V8ResultsApi', () => {
 
     const data = await V8ResultsApi.getRoiPortfolioSummary();
 
-    expect(v8Get).toHaveBeenCalledWith('/results/roi/portfolio-summary');
+    expect(v8Get).toHaveBeenCalledWith('/results/roi/portfolio-summary', undefined);
     expect(data.summary.totalProjected).toBe(300);
     expect(data.items[0].initiativeId).toBe('init-1');
+  });
+
+  it('requests initiative-scoped ROI portfolio summary from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      organizationId: 'org-1',
+      items: [],
+      summary: {
+        totalProjected: 0,
+        totalRealized: 0,
+        totalCapex: 0,
+        totalVariance: 0,
+        initiativeCount: 0,
+        coveragePercent: 0,
+      },
+    });
+
+    await V8ResultsApi.getRoiPortfolioSummary({ initiativeId: 'init-1' });
+    expect(v8Get).toHaveBeenCalledWith('/results/roi/portfolio-summary', { initiativeId: 'init-1' });
   });
 
   it('requests the governed KPI catalog from the V8 namespace', async () => {
@@ -100,6 +153,18 @@ describe('V8ResultsApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/results/kpis/catalog', { kpiId: 'kpi-1' });
     expect(data.kpis[0].id).toBe('kpi-1');
     expect(data.mappings[0].initiativeId).toBe('init-1');
+  });
+
+  it('requests initiative-scoped governed KPI catalog from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [],
+      mappings: [],
+      initiatives: [],
+    });
+
+    await V8ResultsApi.getKpiCatalog({ initiativeId: 'init-1' });
+    expect(v8Get).toHaveBeenCalledWith('/results/kpis/catalog', { initiativeId: 'init-1' });
   });
 
   it('requests the governed KPI drawer detail from the V8 namespace', async () => {

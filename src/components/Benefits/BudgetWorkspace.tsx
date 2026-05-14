@@ -885,7 +885,11 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                             >
                               <td className="px-4 py-2">
                                 <button
-                                  onClick={() => navigate(`/initiatives?id=${ini.id}`)}
+                                  onClick={() =>
+                                    navigate(
+                                      `/initiatives?open=${encodeURIComponent(ini.id)}&mode=doc`
+                                    )
+                                  }
                                   className="text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
                                 >
                                   {ini.title} <ExternalLink size={12} />

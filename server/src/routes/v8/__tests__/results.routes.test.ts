@@ -349,7 +349,35 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.organizationId).toBe(ORG);
-    expect(mockGetROIPortfolioSummary).toHaveBeenCalledWith(ORG);
+    expect(mockGetROIPortfolioSummary).toHaveBeenCalledWith(ORG, undefined);
+  });
+
+  it('GET /api/v8/results/roi/portfolio-summary forwards initiativeId scope when provided', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/roi/portfolio-summary')
+      .query({ initiativeId: 'init-1' });
+
+    expect(res.status).toBe(200);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      ['init-1', ORG],
+      { fallback: true }
+    );
+    expect(mockGetROIPortfolioSummary).toHaveBeenCalledWith(ORG, { initiativeId: 'init-1' });
+  });
+
+  it('GET /api/v8/results/roi/portfolio-summary returns 404 for invalid initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/roi/portfolio-summary')
+      .query({ initiativeId: 'missing-init' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockGetROIPortfolioSummary).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/results/kpis/catalog returns envelope and delegates to getResultsKpiCatalog', async () => {
@@ -359,17 +387,67 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.organizationId).toBe(ORG);
-    expect(mockGetResultsKpiCatalog).toHaveBeenCalledWith(ORG, { kpiId: 'kpi-1' });
+    expect(mockGetResultsKpiCatalog).toHaveBeenCalledWith(ORG, {
+      kpiId: 'kpi-1',
+      initiativeId: undefined,
+    });
+  });
+
+  it('GET /api/v8/results/kpis/catalog forwards initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/kpis/catalog')
+      .query({ initiativeId: 'init-1' });
+
+    expect(res.status).toBe(200);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      ['init-1', ORG],
+      { fallback: true }
+    );
+    expect(mockGetResultsKpiCatalog).toHaveBeenCalledWith(ORG, {
+      kpiId: undefined,
+      initiativeId: 'init-1',
+    });
+  });
+
+  it('GET /api/v8/results/kpis/catalog returns 404 for invalid initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/kpis/catalog')
+      .query({ initiativeId: 'missing-init' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockGetResultsKpiCatalog).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/results/roi/initiative/:initiativeId/detail returns envelope and delegates to getROIInitiativeDetail', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
     const app = createApp();
     const res = await request(app).get('/api/v8/results/roi/initiative/init-1/detail');
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.initiativeId).toBe('init-1');
+    expect(mockDbGet).toHaveBeenCalledWith(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      ['init-1', ORG],
+      { fallback: true }
+    );
     expect(mockGetROIInitiativeDetail).toHaveBeenCalledWith('init-1', ORG);
+  });
+
+  it('GET /api/v8/results/roi/initiative/:initiativeId/detail returns 404 for invalid initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).get('/api/v8/results/roi/initiative/missing-init/detail');
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockGetROIInitiativeDetail).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/results/kpis/:kpiId/drawer-detail returns envelope and delegates to getResultsKpiDrawerDetail', async () => {
@@ -379,17 +457,64 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.kpiId).toBe('kpi-1');
-    expect(mockGetResultsKpiDrawerDetail).toHaveBeenCalledWith('kpi-1', ORG);
+    expect(mockGetResultsKpiDrawerDetail).toHaveBeenCalledWith('kpi-1', ORG, {
+      initiativeId: undefined,
+    });
+  });
+
+  it('GET /api/v8/results/kpis/:kpiId/drawer-detail forwards initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/kpis/kpi-1/drawer-detail')
+      .query({ initiativeId: 'init-1' });
+
+    expect(res.status).toBe(200);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      ['init-1', ORG],
+      { fallback: true }
+    );
+    expect(mockGetResultsKpiDrawerDetail).toHaveBeenCalledWith('kpi-1', ORG, {
+      initiativeId: 'init-1',
+    });
+  });
+
+  it('GET /api/v8/results/kpis/:kpiId/drawer-detail returns 404 for invalid initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/kpis/kpi-1/drawer-detail')
+      .query({ initiativeId: 'missing-init' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockGetResultsKpiDrawerDetail).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/v8/results/kpis/:kpiId/drawer-detail returns 404 when KPI is outside initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
+    mockGetResultsKpiDrawerDetail.mockRejectedValueOnce(new Error('RESULTS_KPI_NOT_FOUND'));
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/v8/results/kpis/kpi-1/drawer-detail')
+      .query({ initiativeId: 'init-1' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
   });
 
   it('POST /api/v8/results/kpis creates a KPI in the governed V8 namespace', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/kpis').send({
-      name: 'Revenue Growth',
-      targetValue: 100,
-      measurementFrequency: 'MONTHLY',
-      direction: 'HIGHER_IS_BETTER',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/kpis')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        name: 'Revenue Growth',
+        targetValue: 100,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -405,18 +530,21 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
 
     const app = createApp();
-    const res = await request(app).put('/api/v8/results/kpis/kpi-1').send({
-      name: 'KPI Alpha Updated',
-      description: 'Updated description',
-      unit: '%',
-      baselineValue: 10,
-      targetValue: 20,
-      measurementFrequency: 'MONTHLY',
-      direction: 'HIGHER_IS_BETTER',
-      thresholdMode: 'PERCENT_FROM_TARGET',
-      amberThresholdPct: 5,
-      redThresholdPct: 10,
-    });
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-1')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        name: 'KPI Alpha Updated',
+        description: 'Updated description',
+        unit: '%',
+        baselineValue: 10,
+        targetValue: 20,
+        measurementFrequency: 'MONTHLY',
+        direction: 'HIGHER_IS_BETTER',
+        thresholdMode: 'PERCENT_FROM_TARGET',
+        amberThresholdPct: 5,
+        redThresholdPct: 10,
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -445,7 +573,9 @@ describe('V8 results read-only routes', () => {
     mockDbAll.mockResolvedValueOnce([{ id: 'case-1' }]);
 
     const app = createApp();
-    const res = await request(app).delete('/api/v8/results/kpis/kpi-1');
+    const res = await request(app)
+      .delete('/api/v8/results/kpis/kpi-1')
+      .set('x-kpi-role', 'kpi_owner');
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -463,6 +593,7 @@ describe('V8 results read-only routes', () => {
   });
 
   it('POST /api/v8/results/kpi-mappings creates a governed KPI mapping', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' }).mockResolvedValueOnce({ id: 'kpi-1' });
     const app = createApp();
     const res = await request(app).post('/api/v8/results/kpi-mappings').send({
       initiativeId: 'init-1',
@@ -489,6 +620,32 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('POST /api/v8/results/kpi-mappings returns 404 when initiative is outside org scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/kpi-mappings').send({
+      initiativeId: 'init-missing',
+      kpiId: 'kpi-1',
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/results/kpi-mappings returns 404 when KPI is outside org scope', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' }).mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/kpi-mappings').send({
+      initiativeId: 'init-1',
+      kpiId: 'kpi-missing',
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_KPI_NOT_FOUND');
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
   it('DELETE /api/v8/results/kpi-mappings/:mappingId removes a governed KPI mapping', async () => {
     const app = createApp();
     const res = await request(app).delete('/api/v8/results/kpi-mappings/map-1');
@@ -508,6 +665,7 @@ describe('V8 results read-only routes', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/results/deviation-cases/case-1/acknowledge')
+      .set('x-kpi-role', 'kpi_owner')
       .send({});
 
     expect(res.status).toBe(200);
@@ -527,9 +685,12 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).put('/api/v8/results/deviation-cases/case-1/rca').send({
-      rcaText: 'Root cause analysis details',
-    });
+    const res = await request(app)
+      .put('/api/v8/results/deviation-cases/case-1/rca')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        rcaText: 'Root cause analysis details',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -550,10 +711,13 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/actions').send({
-      title: 'Create mitigation plan',
-      dueDate: '2026-03-31',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/actions')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        title: 'Create mitigation plan',
+        dueDate: '2026-03-31',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -575,6 +739,7 @@ describe('V8 results read-only routes', () => {
     const app = createApp();
     const res = await request(app)
       .put('/api/v8/results/deviation-cases/case-1/actions/action-1')
+      .set('x-kpi-role', 'kpi_owner')
       .send({
         status: 'DONE',
       });
@@ -597,7 +762,10 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/resolve').send({});
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/resolve')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({});
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -616,10 +784,13 @@ describe('V8 results read-only routes', () => {
     mockDbGet.mockResolvedValueOnce({ id: 'case-1' });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/deviation-cases/case-1/close').send({
-      evidenceText: 'Verified mitigation in review pack',
-      resolutionNotes: 'Closed after governance review',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/close')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        evidenceText: 'Verified mitigation in review pack',
+        resolutionNotes: 'Closed after governance review',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -643,10 +814,27 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('POST /api/v8/results/deviation-cases/:caseId/close returns 404 when linked initiative is outside org scope', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'case-1' }).mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/results/deviation-cases/case-1/close')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        evidenceText: 'Verified mitigation in review pack',
+        linkedInitiativeId: 'missing-init',
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
   it('POST /api/v8/results/kpi-reports creates a governed KPI report builder draft', async () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/results/kpi-reports')
+      .set('x-kpi-role', 'kpi_owner')
       .send({
         periodStart: '2026-02-01',
         periodEnd: '2026-02-28',
@@ -684,11 +872,14 @@ describe('V8 results read-only routes', () => {
 
   it('POST /api/v8/results/kpis/:kpiId/time-series records governed KPI measurement', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/v8/results/kpis/kpi-1/time-series').send({
-      value: 24,
-      periodStart: '2026-03-01',
-      notes: 'March value',
-    });
+    const res = await request(app)
+      .post('/api/v8/results/kpis/kpi-1/time-series')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({
+        value: 24,
+        periodStart: '2026-03-01',
+        notes: 'March value',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
@@ -721,6 +912,7 @@ describe('V8 results read-only routes', () => {
   });
 
   it('PUT /api/v8/results/roi/initiative/:initiativeId/assumptions saves governed ROI assumptions', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
     const app = createApp();
     const res = await request(app).put('/api/v8/results/roi/initiative/init-1/assumptions').send({
       expectedRevenueDelta: 200,
@@ -755,7 +947,20 @@ describe('V8 results read-only routes', () => {
     );
   });
 
+  it('PUT /api/v8/results/roi/initiative/:initiativeId/assumptions returns 404 for invalid initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).put('/api/v8/results/roi/initiative/missing/assumptions').send({
+      expectedRevenueDelta: 200,
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
   it('POST /api/v8/results/roi/initiative/:initiativeId/realized creates governed ROI realized entry', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'init-1' });
     const app = createApp();
     const res = await request(app).post('/api/v8/results/roi/initiative/init-1/realized').send({
       periodMonth: '2026-03-01',
@@ -780,6 +985,19 @@ describe('V8 results read-only routes', () => {
         UID,
       ])
     );
+  });
+
+  it('POST /api/v8/results/roi/initiative/:initiativeId/realized returns 404 for invalid initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/results/roi/initiative/missing/realized').send({
+      periodMonth: '2026-03-01',
+      realizedSavings: 120,
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockDbRun).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/results/reconciliations returns 400 when kpiId missing', async () => {
