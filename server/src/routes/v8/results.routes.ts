@@ -165,7 +165,24 @@ router.get(
   '/dashboard',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const snapshot = await getResultsDashboard(organizationId);
+    const initiativeId =
+      typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
+        ? req.query.initiativeId.trim()
+        : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
+    const snapshot = await getResultsDashboard(organizationId, { initiativeId });
     return res.json({
       data: { snapshot },
       meta: resultsMeta(),

@@ -5,7 +5,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PresentationsTabContent } from '../../../src/components/ReportsAndPresentations/PresentationsTabContent';
+import { ReportsTabContent } from '../../../src/components/ReportsAndPresentations/ReportsTabContent';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -50,76 +50,53 @@ vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
 }));
 
 const actions = {
-  exportDeckPptx: vi.fn(),
-  archiveDeck: vi.fn().mockResolvedValue(true),
+  exportReportPdf: vi.fn(),
+  archiveReport: vi.fn().mockResolvedValue(true),
   startArtifactReview: vi.fn().mockResolvedValue(true),
 };
 
-const presentations = [
+const reports = [
   {
-    id: 'deck-1',
-    artifactId: 'art-1',
-    title: 'Deck One',
-    sourceType: 'tool',
+    id: 'report-1',
+    artifactId: 'art-r1',
+    title: 'Report One',
+    reportType: 'R1',
     owner: 'User 1',
     status: 'draft',
-    presentationMode: 'briefing',
     createdAt: '2026-05-01T00:00:00Z',
     updatedAt: '2026-05-01T00:00:00Z',
-    slideCount: 10,
     governance: {},
   },
   {
-    id: 'deck-2',
-    artifactId: 'art-2',
-    title: 'Deck Two',
-    sourceType: 'assessment',
+    id: 'report-2',
+    artifactId: 'art-r2',
+    title: 'Report Two',
+    reportType: 'R2',
     owner: 'User 2',
     status: 'ready',
-    presentationMode: 'show',
     createdAt: '2026-05-02T00:00:00Z',
     updatedAt: '2026-05-02T00:00:00Z',
-    slideCount: 15,
     governance: {},
   },
 ] as any;
 
-describe('PresentationsTabContent deep-link selection', () => {
-  it('selects matching deck id from initialArtifactId deep link', () => {
+describe('ReportsTabContent deep-link selection', () => {
+  it('selects matching report id from initialArtifactId deep link', () => {
     render(
-      <PresentationsTabContent
+      <ReportsTabContent
         viewMode="table"
         searchQuery=""
         activeFilters={[]}
         onFilterChange={() => {}}
-        presentations={presentations}
+        reports={reports}
         loading={false}
         error={null}
         onRefresh={() => {}}
         actions={actions as any}
-        initialArtifactId="art-2"
+        initialArtifactId="art-r2"
       />
     );
 
-    expect(screen.getByTestId('selected-id').textContent).toBe('deck-2');
-  });
-
-  it('also selects by deck id for legacy deck query compatibility', () => {
-    render(
-      <PresentationsTabContent
-        viewMode="table"
-        searchQuery=""
-        activeFilters={[]}
-        onFilterChange={() => {}}
-        presentations={presentations}
-        loading={false}
-        error={null}
-        onRefresh={() => {}}
-        actions={actions as any}
-        initialArtifactId="deck-2"
-      />
-    );
-
-    expect(screen.getByTestId('selected-id').textContent).toBe('deck-2');
+    expect(screen.getByTestId('selected-id').textContent).toBe('report-2');
   });
 });

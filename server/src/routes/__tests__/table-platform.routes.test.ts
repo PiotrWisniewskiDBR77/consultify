@@ -15,6 +15,12 @@ const mockLockView = vi.fn();
 const mockUnlockView = vi.fn();
 const mockGetUserRole = vi.fn();
 const mockCanAccessBase = vi.fn();
+const mockGetArtifactByOrigin = vi.fn();
+const mockRecordCompletedExport = vi.fn();
+const mockRecordFailedExport = vi.fn();
+const mockGetTableName = vi.fn();
+const mockBuildXlsxBuffer = vi.fn();
+const mockStreamCsvExport = vi.fn();
 
 vi.mock('../../services/tablePlatform/MetadataService.js', () => ({
   default: {
@@ -118,6 +124,24 @@ vi.mock('../../database/Database.js', () => ({
   getDatabase: () => ({ query: vi.fn().mockResolvedValue({ rows: [] }) }),
 }));
 
+vi.mock('../../services/v8/artifactRegistryService.js', () => ({
+  getArtifactByOrigin: (...args: unknown[]) => mockGetArtifactByOrigin(...args),
+  registerGovernedTableSheetArtifact: vi.fn(),
+}));
+
+vi.mock('../../services/v8/reportsPresModelService.js', () => ({
+  recordCompletedExport: (...args: unknown[]) => mockRecordCompletedExport(...args),
+  recordFailedExport: (...args: unknown[]) => mockRecordFailedExport(...args),
+}));
+
+vi.mock('../../services/tablePlatform/ExportService.js', () => ({
+  default: {
+    getTableName: (...args: unknown[]) => mockGetTableName(...args),
+    buildXlsxBuffer: (...args: unknown[]) => mockBuildXlsxBuffer(...args),
+    streamCsvExport: (...args: unknown[]) => mockStreamCsvExport(...args),
+  },
+}));
+
 function createMockReq(overrides: Record<string, unknown> = {}): any {
   return {
     params: {},
@@ -155,6 +179,12 @@ async function runMiddlewareChain(handlers: any[], req: any, res: any): Promise<
 describe('Table Platform Routes — handler logic', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetTableName.mockResolvedValue('Test Table');
+    mockBuildXlsxBuffer.mockResolvedValue(Buffer.from('xlsx'));
+    mockGetArtifactByOrigin.mockResolvedValue(null);
+    mockRecordCompletedExport.mockResolvedValue(undefined);
+    mockRecordFailedExport.mockResolvedValue(undefined);
+    mockStreamCsvExport.mockResolvedValue(undefined);
   });
 
   // 1. POST /bases → 201 with base
@@ -265,6 +295,107 @@ describe('Table Platform Routes — handler logic', () => {
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(record);
+  });
+
+  it('GET /tables/:tableId/export/xlsx records failed export trace on error', async () => {
+    mockBuildXlsxBuffer.mockRejectedValue(new Error('xlsx boom'));
+    mockGetArtifactByOrigin.mockResolvedValue({ artifactId: 'artifact-sheet-1' });
+
+    const router = await importRouter();
+    const layer = router.stack.find(
+      (l: any) => l.route?.path === '/tables/:tableId/export/xlsx' && l.route?.methods?.get
+    );
+    expect(layer).toBeDefined();
+
+    const req = createMockReq({
+      params: { tableId: 'table-1' },
+      userId: 'user-1',
+      organizationId: 'org-1',
+    });
+    const res = createMockRes();
+    await runMiddlewareChain(layer!.route!.stack, req, res);
+
+    expect(mockGetArtifactByOrigin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org-1',
+        originRuntime: 'sheet',
+        originRecordId: 'table-1',
+        userId: 'user-1',
+      })
+    );
+    expect(mockRecordFailedExport).toHaveBeenCalledWith(
+      'artifact-sheet-1',
+      'org-1',
+      'xlsx',
+      'user-1'
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'XLSX export failed',
+      })
+    );
+  });
+
+  it('GET /tables/:tableId/export/csv records completed export trace on success', async () => {
+    mockGetArtifactByOrigin.mockResolvedValue({ artifactId: 'artifact-sheet-2' });
+
+    const router = await importRouter();
+    const layer = router.stack.find(
+      (l: any) => l.route?.path === '/tables/:tableId/export/csv' && l.route?.methods?.get
+    );
+    expect(layer).toBeDefined();
+
+    const req = createMockReq({
+      params: { tableId: 'table-2' },
+      userId: 'user-1',
+      organizationId: 'org-1',
+    });
+    const res = createMockRes();
+    res.setHeader = vi.fn();
+    res.write = vi.fn();
+    await runMiddlewareChain(layer!.route!.stack, req, res);
+
+    expect(mockRecordCompletedExport).toHaveBeenCalledWith(
+      'artifact-sheet-2',
+      'org-1',
+      'csv',
+      'user-1'
+    );
+    expect(mockRecordFailedExport).not.toHaveBeenCalled();
+  });
+
+  it('GET /tables/:tableId/export/csv records failed export trace on error', async () => {
+    mockStreamCsvExport.mockRejectedValueOnce(new Error('csv boom'));
+    mockGetArtifactByOrigin.mockResolvedValue({ artifactId: 'artifact-sheet-3' });
+
+    const router = await importRouter();
+    const layer = router.stack.find(
+      (l: any) => l.route?.path === '/tables/:tableId/export/csv' && l.route?.methods?.get
+    );
+    expect(layer).toBeDefined();
+
+    const req = createMockReq({
+      params: { tableId: 'table-3' },
+      userId: 'user-1',
+      organizationId: 'org-1',
+    });
+    const res = createMockRes();
+    res.write = vi.fn();
+    await runMiddlewareChain(layer!.route!.stack, req, res);
+
+    expect(mockRecordFailedExport).toHaveBeenCalledWith(
+      'artifact-sheet-3',
+      'org-1',
+      'csv',
+      'user-1'
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'CSV export failed',
+      })
+    );
   });
 
   // 6. GET /tables/:id/records → 200 with records array

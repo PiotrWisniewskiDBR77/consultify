@@ -28,6 +28,8 @@ This is the operational tracker for finishing the remaining product work in fixe
 - `BLOCKED` - waiting on decision/dependency
 - `DONE` - fully delivered and validated
 
+Audit rule: `DONE` in this tracker is an execution status. It is not a release/gate closure unless the corresponding evidence row confirms committed changes, executed tests, and gate/manual evidence where required by `_GATE_TEST_BLUEPRINT_2026-05-12.md`.
+
 ---
 
 ## 3) Global Counter (Trajectory)
@@ -35,13 +37,13 @@ This is the operational tracker for finishing the remaining product work in fixe
 | Metric | Value |
 | --- | --- |
 | Planned total tasks | `300` |
-| Done tasks | `66` |
+| Done tasks | `102` |
 | In progress tasks | `0` |
 | Blocked tasks | `0` |
-| Remaining tasks | `234` |
-| Global progress | `22%` |
-| Active pack | `PACK-03` |
-| Active series in pack | `S2/5` |
+| Remaining tasks | `198` |
+| Global progress | `34%` |
+| Active pack | `PACK-04` |
+| Active series in pack | `S3/5` |
 
 Update this block after each completed series (`+6` tasks).
 
@@ -64,8 +66,8 @@ Rule: when `PACK-05` or `PACK-10` is closed, mark stage closure in this table.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `PACK-01` | `P0` | Core user journeys + unblockers | `30` | `30` | `0` | `0` | `0` | `5/5` | `DONE` |
 | `PACK-02` | `P0` | Auth/ACL/gating + critical UX states | `30` | `30` | `0` | `0` | `0` | `5/5` | `DONE` |
-| `PACK-03` | `P0` | Output/document/table/presentation core flow | `30` | `6` | `0` | `0` | `24` | `1/5` | `IN_PROGRESS` |
-| `PACK-04` | `P1` | Initiative/execution/results integration | `30` | `0` | `0` | `0` | `30` | `0/5` | `TODO` |
+| `PACK-03` | `P0` | Output/document/table/presentation core flow | `30` | `30` | `0` | `0` | `0` | `5/5` | `DONE` |
+| `PACK-04` | `P1` | Initiative/execution/results integration | `30` | `12` | `0` | `0` | `18` | `2/5` | `IN_PROGRESS` |
 | `PACK-05` | `P1` | UI/UX consistency + error/empty/loading quality | `30` | `0` | `0` | `0` | `30` | `0/5` | `TODO` |
 | `PACK-06` | `P1` | Admin/settings/memory governance | `30` | `0` | `0` | `0` | `30` | `0/5` | `TODO` |
 | `PACK-07` | `P1` | Collaboration and advanced workflows | `30` | `0` | `0` | `0` | `30` | `0/5` | `TODO` |
@@ -84,11 +86,11 @@ Use this for the active pack. When one series is done, increment:
 
 | Series | Tasks in series | Status | Notes |
 | --- | --- | --- | --- |
-| `S1` | `6` | `DONE` | Presentation output reliability hardened: failed export traces now persist as `failed` in runtime operating model (instead of incorrectly `completed`), and HTML/PNG export endpoints now enforce the same canonical `EXPORT_LIMIT_EXCEEDED` guard as PPTX/PDF. Added runtime service regression for failed export persistence plus canonical RAP hook tests for report/deck export path resolution (authority path + fallback). Added deep-link selection regression for presentations tab to ensure `initialArtifactId` opens the correct deck row in Outputs table layout. |
-| `S2` | `6` | `DONE` | Backend org-guard parity expanded to consultant-project-access/tools/workbook routers (`requireOrgAccess` fail-closed stack); dedicated route tests for each router; API client now maps backend `FEATURE_ACCESS_DENIED` into unified `access:blocked` flow; AccessBlockedModal handles feature denial CTA to My Work; RouterSync protected unauth redirects now preserve `state.from`; routeConfig path→view mapping extended for guarded module families (`roi`, `project-intelligence`, `ai-actions`, consultant, onboarding/setup, affiliate, partner onboarding ordering) with regression tests. |
-| `S3` | `6` | `DONE` | Backend fail-closed org guard parity expanded to `assessment-workflow-v2` and `pmo/initiatives` routers (`requireOrgAccess` before demo middleware); removed implicit fallback org in assessment auth context (`org-default` -> empty fail-closed value); added dedicated org-guard regression tests for both routers; RouterSync protected path parity expanded for `/organization`, `/superadmin`, and authenticated partner shell routes while preserving public `/partner/pricing`; artifact unauth redirects now preserve `state.from` in addition to artifact query; RouterSync regression tests extended for new protected route matrix and artifact redirect contract. |
-| `S4` | `6` | `DONE` | PMO auth/tenant guard parity expanded to `pmo/decisions`, `pmo/projects`, and `pmo/tasks` routers via `requireOrgAccess` fail-closed middleware (placed after `verifyToken` and before module handlers/demo context where applicable); added dedicated org-guard regression tests for all three PMO routers to assert stable `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` behavior for authenticated users missing organization context. |
-| `S5` | `6` | `DONE` | Backend org-guard parity expanded to `document-studio` and `presentations` routers (`requireOrgAccess` fail-closed stack, with shared presentations route still public before auth guard); dedicated org-guard regression tests added for both routers with canonical `403 RBAC_ORGANIZATION_ACCESS_REQUIRED` assertion; auth session consistency improved by clearing RouterSync attribution session keys (`attribution_ref`, `attribution_invite`) during logout; regression test added for logout attribution cleanup. |
+| `S1` | `6` | `DONE` | Initiative/execution/results handoff baseline delivered: execution hub now honors deep links (`?open=<initiativeId>&mode=doc`) and canonicalizes URL params after hydration; results hub now supports the same deep-link open pattern for initiative docs; results lane can receive initiative-scoped deep links (`?initiativeId=`) and pre-apply initiative filter in reports tracked view; KPI reports “Discuss” action now enriches chat payload with initiative IDs + KPI IDs + explicit P11 handoff metadata; initiative preview now exposes direct “Results & KPI reports” jump for initiative context continuity; report-builder initiative creation write path hardened for dynamic columns and schema variance. |
+| `S2` | `6` | `DONE` | V8 initiative-scoped integration parity delivered across execution/results read seams and frontend lane routing: `/api/v8/execution/runs` now supports validated `initiativeId` scope (active + non-active paths) and returns canonical `404 INITIATIVE_NOT_FOUND` on foreign scope; `executionSpineService` run queries now apply SQL JSON metadata filter (`metadata.initiativeId`) for scoped fetches; `/api/v8/results/dashboard` now accepts validated `initiativeId` and forwards scoped options to results dashboard service; `resultsROIService` dashboard composition now supports initiative-scoped KPI/deviation/ROI aggregates; initiative preview “Results & KPI reports” CTA now uses canonical benefits route with `rmode=reports`; results lane open from initiative context now defaults to reports workspace. Added/extended regressions for V8 execution initiative filtering, V8 results dashboard initiative scope forwarding + 404 path, and benefits deep-link reports lane scope behavior. |
+| `S3` | `6` | `TODO` |  |
+| `S4` | `6` | `TODO` |  |
+| `S5` | `6` | `TODO` |  |
 
 Pack closes when `S1..S5 = DONE`.
 
@@ -98,28 +100,49 @@ Pack closes when `S1..S5 = DONE`.
 
 | Gate | Packs | Total tasks | Done tasks | Progress | Status |
 | --- | --- | --- | --- | --- | --- |
-| `P0` | `PACK-01`..`PACK-03` | `90` | `66` | `73%` | `IN_PROGRESS` |
-| `P1` | `PACK-04`..`PACK-07` | `120` | `0` | `0%` | `TODO` |
+| `P0` | `PACK-01`..`PACK-03` | `90` | `90` | `100%` | `DONE` |
+| `P1` | `PACK-04`..`PACK-07` | `120` | `12` | `10%` | `IN_PROGRESS` |
 | `P2` | `PACK-08`..`PACK-10` | `90` | `0` | `0%` | `TODO` |
 
 ---
 
-## 8) Update Protocol (quick)
+## 8) Evidence Ledger
+
+| Scope | Execution status | Evidence status | Notes |
+| --- | --- | --- | --- |
+| `PACK-01` | `DONE` | `COMMITTED_TESTS_PRESENT` | Commit evidence exists for invitation/chat/shell reliability and accessibility hardening with targeted regression tests. |
+| `PACK-02` | `DONE` | `COMMITTED_TESTS_PRESENT` | Commit evidence exists for auth/ACL/org-guard parity, route protection, blocked access UX, and regression tests. |
+| `PACK-03` | `DONE` | `LOCAL_EVIDENCE_PENDING_CLOSEOUT` | Tracker records completion, but audit must confirm all local export/deep-link changes are committed and test outputs are captured before gate closure. |
+| `PACK-04 / S1` | `DONE` | `LOCAL_EVIDENCE_PENDING_CLOSEOUT` | Tracker records completion, but audit must confirm local initiative/execution/results changes are committed and validation evidence is captured before gate closure. |
+| `PACK-04 / S2` | `DONE` | `LOCAL_EVIDENCE_PENDING_CLOSEOUT` | Tracker records completion, but audit must confirm local scoped V8 execution/results changes are committed and validation evidence is captured before gate closure. |
+
+---
+
+## 9) Update Protocol (quick)
 
 After each completed delivery cycle (`6 tasks`):
 
 1. Update section `3` (Global Counter).
 2. Update row of active pack in section `5`.
 3. Update active series status in section `6`.
-4. If pack just reached `30/30`, mark pack `DONE`, switch active pack.
-5. If `PACK-05` or `PACK-10` closed, update stage status in section `4`.
+4. Update section `7` (P0/P1/P2 Completion Counters).
+5. Update section `8` (Evidence Ledger) with commit/test/gate evidence status.
+6. If pack just reached `30/30`, mark pack `DONE`, switch active pack.
+7. If `PACK-05` or `PACK-10` closed, update stage status in section `4`.
 
 ---
 
-## 9) Change Log
+## 10) Change Log
 
 | Date | Change | Author |
 | --- | --- | --- |
+| `2026-05-14` | `PACK-04 / S2 completed (+6 tasks): V8 execution/results initiative-scoped read parity (validated query scope + service filtering), canonical benefits reports deep-link routing from initiative preview, and targeted regressions for scoped execution runs + results dashboard + reports lane scope` | `assistant` |
+| `2026-05-14` | `Audit correction: P1 counter aligned with PACK-04/S1, evidence ledger added to separate execution status from gate/evidence closure` | `assistant` |
+| `2026-05-14` | `PACK-04 / S1 completed (+6 tasks): execution/results deep-link open mode parity, initiative-scoped results routing, KPI report chat P11 handoff enrichment, initiative preview -> results jump, and report-builder create-initiative dynamic-column hardening` | `assistant` |
+| `2026-05-14` | `PACK-03 / S5 completed (+6 tasks): cloud-publish + document-studio export trace parity, quality-gated cloud exports, and template/deck URL canonicalization UX; PACK-03 closed (30/30)` | `assistant` |
+| `2026-05-14` | `PACK-03 / S4 completed (+6 tasks): docx/csv export-runtime parity (completed+failed traces), deck query deep-link fallback, and sheets deep-link empty-state reliability with targeted regressions` | `assistant` |
+| `2026-05-14` | `PACK-03 / S3 completed (+6 tasks): outputs tab-query artifact preservation, templates deep-link parity, aggregate deep-link regression coverage, and png export-format runtime parity` | `assistant` |
+| `2026-05-14` | `PACK-03 / S2 completed (+6 tasks): failed export trace parity for report-builder and table xlsx flows, plus reports/sheets artifact deep-link reliability with targeted regressions` | `assistant` |
 | `2026-05-14` | `PACK-03 / S1 completed (+6 tasks): output export trace correctness, export limit parity (html/png), RAP export authority/fallback regression coverage, and presentations deep-link selection stability` | `assistant` |
 | `2026-05-14` | `PACK-02 / S5 completed (+6 tasks): document-studio and presentations org-guard parity with RBAC regression tests, plus logout attribution session cleanup + test; PACK-02 closed (30/30)` | `assistant` |
 | `2026-05-14` | `PACK-02 / S4 completed (+6 tasks): PMO router org-guard parity for decisions/projects/tasks with dedicated RBAC org-guard regression tests` | `assistant` |
