@@ -84,6 +84,23 @@ describe('LearningLoopService (DB adapter)', () => {
     );
   });
 
+  it('fails closed when stewardship item is missing for tenant scope', async () => {
+    const service = new LearningLoopService();
+    getMock.mockResolvedValueOnce(null);
+
+    await expect(
+      service.resolveStewardship('missing-item', {
+        scope: makeScope(),
+        now: '2026-04-21T10:00:00.000Z',
+        note: 'x',
+      })
+    ).rejects.toMatchObject({
+      code: 'LEARNING_LOOP_QUEUE_ITEM_NOT_FOUND',
+      status: 404,
+    });
+    expect(runMock).not.toHaveBeenCalled();
+  });
+
   it('computes dashboard metrics from aggregates', async () => {
     const service = new LearningLoopService();
     getMock

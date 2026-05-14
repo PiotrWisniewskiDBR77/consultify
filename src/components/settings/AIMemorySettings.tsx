@@ -41,6 +41,11 @@ const defaultPreferences: AIMemoryPreferences = {
   includeContext: true,
 };
 
+const extractErrorCode = (error: unknown): string | null => {
+  const maybe = error as { data?: { code?: string } };
+  return typeof maybe?.data?.code === 'string' ? maybe.data.code : null;
+};
+
 export const AIMemorySettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<AIMemoryPreferences>(defaultPreferences);
@@ -50,6 +55,8 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
   const [saving, setSaving] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
+  const [loadErrorCode, setLoadErrorCode] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -57,6 +64,8 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
     const load = async () => {
       try {
         setLoading(true);
+        setIsUnavailable(false);
+        setLoadErrorCode(null);
         const response = await Api.getAIMemory();
         if (response?.preferences) {
           const merged = { ...defaultPreferences, ...response.preferences };
@@ -65,6 +74,8 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
         }
       } catch (err) {
         console.error('Failed to load AI memory settings:', err);
+        setIsUnavailable(true);
+        setLoadErrorCode(extractErrorCode(err));
       } finally {
         setLoading(false);
       }
@@ -76,10 +87,25 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
     setSaving(true);
     try {
       await Api.saveAIMemory(preferences);
-      setOriginalPreferences(preferences);
+      const readBack = await Api.getAIMemory();
+      const mergedReadBack = { ...defaultPreferences, ...(readBack?.preferences || {}) };
+      const readBackMatches = JSON.stringify(mergedReadBack) === JSON.stringify(preferences);
+      if (!readBackMatches) {
+        toast.error(
+          t(
+            'settings.ai.memoryConfirmError',
+            'AI memory settings were not confirmed by the server'
+          )
+        );
+        return;
+      }
+      setPreferences(mergedReadBack);
+      setOriginalPreferences(mergedReadBack);
       toast.success(t('settings.ai.memorySaved', 'AI memory settings saved'));
-    } catch {
-      toast.error(t('settings.ai.memoryError', 'Failed to save memory settings'));
+    } catch (error) {
+      const code = extractErrorCode(error);
+      const fallback = t('settings.ai.memoryError', 'Failed to save memory settings');
+      toast.error(code ? `${fallback} (${code})` : fallback);
     } finally {
       setSaving(false);
     }
@@ -91,8 +117,10 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
       await Api.clearAIMemoryData();
       toast.success(t('settings.ai.memoryCleared', 'AI memory cleared'));
       setShowClearConfirm(false);
-    } catch {
-      toast.error(t('settings.ai.memoryClearError', 'Failed to clear memory'));
+    } catch (error) {
+      const code = extractErrorCode(error);
+      const fallback = t('settings.ai.memoryClearError', 'Failed to clear memory');
+      toast.error(code ? `${fallback} (${code})` : fallback);
     } finally {
       setClearing(false);
     }
@@ -113,11 +141,17 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
         )}
         cardId="settings-ai-memory"
         isDirty={isDirty}
-        onSave={handleSave}
+        onSave={isUnavailable ? undefined : handleSave}
         saving={saving}
         loading={loading}
       >
-        <div className="space-y-6">
+        {isUnavailable ? (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div>{t('settings.ai.memoryUnavailable', 'AI memory settings unavailable')}</div>
+            {loadErrorCode ? <div className="mt-1 text-xs">({loadErrorCode})</div> : null}
+          </div>
+        ) : (
+          <div className="space-y-6">
           {/* Master toggle */}
           <SettingsToggle
             checked={preferences.enabled}
@@ -249,7 +283,8 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
               )}
             </div>
           </div>
-        </div>
+          </div>
+        )}
       </SettingsSection>
     </div>
   );

@@ -40,5 +40,6 @@ describe('syncEntryResolver', () => {
       'notifications-overview',
     );
     expect(normalizeSettingsSectionFromPath('/settings/ai-behavior')).toBe('ai-behavior');
+    expect(normalizeSettingsSectionFromPath('/settings/ai-history')).toBe('ai-chat-history');
   });
 });

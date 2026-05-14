@@ -121,5 +121,7 @@ describe('routeConfig helpers', () => {
     expect(getRouteFromAppView(AppView.SETTINGS_SECURITY)).toBe('/settings/security-dashboard');
     expect(getRouteFromAppView(AppView.SETTINGS_API_KEYS)).toBe('/settings/api-keys');
     expect(getRouteFromAppView(AppView.SETTINGS_PRIVACY)).toBe('/settings/privacy');
+    expect(getRouteFromAppView(AppView.SETTINGS_AI_MEMORY)).toBe('/settings/ai-memory');
+    expect(getRouteFromAppView(AppView.SETTINGS_AI_CHAT_HISTORY)).toBe('/settings/ai-chat-history');
   });
 });

@@ -44,6 +44,7 @@ import { DesktopSoundsSettings } from '../components/settings/DesktopSoundsSetti
 import { DeveloperSettings } from '../components/settings/DeveloperSettings';
 import { EmailDigestSettings } from '../components/settings/EmailDigestSettings';
 import { EmailSignaturesSettings } from '../components/settings/EmailSignaturesSettings';
+import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
 import { LanguageSettings } from '../components/settings/LanguageSettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
@@ -134,6 +135,10 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   },
   'ai-autocomplete': { title: 'Auto-Complete', subtitle: 'Configure AI-powered suggestions' },
   'ai-memory': { title: 'Memory & Context', subtitle: 'Control AI memory and context retention' },
+  'ai-chat-history': {
+    title: 'Chat History',
+    subtitle: 'Manage conversation history retention, export, and cleanup',
+  },
   'ai-privacy': {
     title: 'AI Data & Privacy',
     subtitle: 'Control data access, retention, and compliance settings',
@@ -336,6 +341,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         return <AIAutoCompleteSettings />;
       case 'ai-memory':
         return <AIMemorySettings />;
+      case 'ai-chat-history':
+        return <ChatHistorySettings />;
       case 'ai-privacy':
         return <AIPrivacySettings />;
       case 'ai-prompt-library':

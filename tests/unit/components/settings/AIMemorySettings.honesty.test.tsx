@@ -99,4 +99,64 @@ describe('AIMemorySettings honest UI', () => {
       expect(toast.success).toHaveBeenCalledWith('AI memory settings saved');
     });
   });
+
+  it('surfaces coded save failures for memory settings', async () => {
+    const codedError = Object.assign(new Error('Save failed'), {
+      data: { code: 'AI_MEMORY_PREFERENCES_SAVE_FAILED' },
+    });
+    vi.mocked(Api.saveAIMemory).mockRejectedValueOnce(codedError);
+
+    render(<AIMemorySettings />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Enable Memory')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Failed to save memory settings (AI_MEMORY_PREFERENCES_SAVE_FAILED)'
+      );
+    });
+  });
+
+  it('surfaces coded clear-memory failures', async () => {
+    const codedError = Object.assign(new Error('Clear failed'), {
+      data: { code: 'AI_MEMORY_PREFERENCES_INVALID_STORE' },
+    });
+    vi.mocked(Api.clearAIMemoryData).mockRejectedValueOnce(codedError);
+
+    render(<AIMemorySettings />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Enable Memory')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Clear All Memory/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Yes, Clear Everything/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Failed to clear memory (AI_MEMORY_PREFERENCES_INVALID_STORE)'
+      );
+    });
+  });
+
+  it('shows load-failure machine code in unavailable banner', async () => {
+    const codedLoadError = Object.assign(new Error('Load failed'), {
+      data: { code: 'AI_MEMORY_PREFERENCES_INVALID_STORE' },
+    });
+    vi.mocked(Api.getAIMemory).mockRejectedValueOnce(codedLoadError);
+
+    render(<AIMemorySettings />);
+
+    await waitFor(() => {
+      expect(screen.getByText('AI memory settings unavailable')).toBeInTheDocument();
+    });
+    expect(screen.getByText('(AI_MEMORY_PREFERENCES_INVALID_STORE)')).toBeInTheDocument();
+    expect(screen.queryByText('Enable Memory')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Save Changes/i })).not.toBeInTheDocument();
+  });
 });
