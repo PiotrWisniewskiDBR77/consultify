@@ -4,7 +4,7 @@
 
 `GLOBAL_NO_GO_IN_PROGRESS`
 
-The global module program is not yet closed. Work Canvas save/read-back is now `DONE_PASS`, while My Work/Radar still has an open `BLOCKED_P1` and several module gates remain `READY_FOR_MANUAL`, `RETEST_REQUIRED`, `AWAITING_RETEST`, or `DOC_DRIFT_OPEN`.
+The global module program is not yet closed. Work Canvas save/read-back is `DONE_PASS`, My Work/Radar owner runtime is `PASS_WITH_P2_ROLE_SHELL_RISK`, and Tabele/Excel/Table Studio artifact/export runtime is `DONE_PASS_WITH_MANUAL_UI_FOLLOWUP`. Several later module gates remain `READY_FOR_MANUAL`, `RETEST_REQUIRED`, `AWAITING_RETEST`, or `DOC_DRIFT_OPEN`.
 
 This board is the Sprint 0 reconciliation artifact for the global closeout program. It does not supersede module source-of-truth files; it reconciles their current delivery/testing state so the remaining sprints have one operating status.
 
@@ -24,7 +24,7 @@ This board is the Sprint 0 reconciliation artifact for the global closeout progr
 | Work Canvas / AI Canvas | 1 | `DONE_PASS` | `manual_Tests/reports/2026-05-15_1947_antygravity-current-rollout-manual.md`; `docs/testing/reports/WORK_CANVAS_A2_PERSISTENCE_RETEST_2026-05-15.md`; local A2 Playwright smoke `2/2 PASS`; remote staging smoke `2/2 PASS`; `WORK_CANVAS_P1_PERSISTENCE_CLOSEOUT_2026-05-15.md` | Fresh A2 manual failure reproduced and fixed. Root cause: autosave/manual save conflict. Staging deployment is live on `261d4d9e`; manual A2 retest passed. |
 | My Work / Radar | 2 | `PASS_WITH_P2_ROLE_SHELL_RISK` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260506-001`; `testy_antygravity/REPORT_INDEX.md` My Work runtime gate; `docs/testing/reports/MY_WORK_RADAR_RUNTIME_RETEST_2026-05-15.md` | Prior owner `/my-work/start` infinite spinner P1 is no longer reproducible. Member demo/pilot shell parity remains a P2 risk. |
 | Tasks / Calendar / Notebook | 2 | `PASS_WITH_P2_ROLE_SHELL_RISK` | `docs/testing/reports/MY_WORK_RADAR_RUNTIME_RETEST_2026-05-15.md`; module docs under `docs/modules/02_moja-praca` and UI/UX raw notes | Owner routes `/my-work/notebook`, `/my-work/tasks`, `/my-work/calendar`, and `/my-work/inbox` render on staging. Member shell parity remains open P2. |
-| Tabele / Excel / Table Studio | 3 | `READY_FOR_MANUAL_WITH_DEMO_P1_DRIFT` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260508-001`; `testy_antygravity/reports/2026-05-09_2140_tabele-artifact-mapping-retest.md` | Staging queue says `READY_FOR_MANUAL`; demo evidence contains artifact mapping `BLOCKED_P1`. Sprint 3 must reconcile environment drift before PASS. |
+| Tabele / Excel / Table Studio | 3 | `DONE_PASS_WITH_MANUAL_UI_FOLLOWUP` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260508-001`; `testy_antygravity/reports/2026-05-09_2140_tabele-artifact-mapping-retest.md`; `docs/testing/reports/TABELE_EXCEL_TABLE_STUDIO_RUNTIME_RETEST_2026-05-15.md`; staging runtime `f1b0312ac`; targeted table-platform suites `93/93 PASS`; production build PASS | Demo drift reconciled on staging. Historical table artifact loads; records read; CSV includes real record values; XLSX export returns binary workbook; AI editor/QA/source-pack/conversion/form-intake endpoints are enabled and do not return disabled-state responses. Full visual AnyGravity UI pass remains a manual business follow-up, not an open P1 developer blocker. |
 | Presentations Builder | 4 | `PASS_WITH_STATUS_DRIFT` | `testy_antygravity/reports/2026-05-09_0615_presentations-manual-loop-r3-full-flow.md`; `testy_antygravity/CONTROL_BOARD.md`; `TQ-20260509-001` | Later R3 full-flow says PASS, while `CONTROL_BOARD.md` still says awaiting retest. Sprint 4 must update canonical boards. |
 | Presentations Premium System V2 | 4 | `READY_FOR_MANUAL_WITH_RISK` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260507-001`; preflight report `2026-05-07_1928_presentations-preflight-gate-a.md` | Docs parity and Playwright local timeout remain risk until MT-PRES-001..031 manual gate. |
 | Documents / Reports / Outputs | 5 | `ON_STAGING_NOT_TESTED` | `docs/modules/09_outputs`, `docs/modules/10_dokumenty`; Document Studio product SSOT references | No final combined business gate found in active queue. |
@@ -40,7 +40,7 @@ This board is the Sprint 0 reconciliation artifact for the global closeout progr
 
 `PASS_WITH_OPEN_WORK`
 
-One operating status board now exists. Sprint 1 has closed Work Canvas as `DONE_PASS`; Sprint 2 has closed the owner My Work/Radar P1 as `PASS_WITH_P2_ROLE_SHELL_RISK`; global completion remains blocked by open module gates.
+One operating status board now exists. Sprint 1 has closed Work Canvas as `DONE_PASS`; Sprint 2 has closed the owner My Work/Radar P1 as `PASS_WITH_P2_ROLE_SHELL_RISK`; Sprint 3 has closed Tabele/Excel/Table Studio runtime and export blockers as `DONE_PASS_WITH_MANUAL_UI_FOLLOWUP`; global completion remains blocked by later open module gates.
 
 ## Hard Stops Carried Forward
 
