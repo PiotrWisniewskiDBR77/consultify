@@ -64,6 +64,7 @@ export function WorkflowDashboard({
     distributionsCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const isLocked = Boolean(locked);
 
   const loadStats = useCallback(async () => {
     try {
@@ -243,8 +244,8 @@ export function WorkflowDashboard({
     {
       id: 'sync',
       icon: RefreshCw,
-      iconColor: 'text-blue-500',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+      iconColor: 'text-cyan-500',
+      bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
       titleEn: 'Table Sync',
       titlePl: 'Synchronizacja',
       descEn: 'Keep tables in sync automatically',
@@ -265,8 +266,8 @@ export function WorkflowDashboard({
     {
       id: 'sharing',
       icon: Users,
-      iconColor: 'text-primary-500',
-      bgColor: 'bg-primary-50 dark:bg-primary-900/20',
+      iconColor: 'text-violet-500',
+      bgColor: 'bg-violet-50 dark:bg-violet-900/20',
       titleEn: 'Sharing',
       titlePl: 'Udostępnianie',
       descEn: 'Share views, manage collaborators and API access',
@@ -304,8 +305,15 @@ export function WorkflowDashboard({
           return (
             <button
               key={card.id}
-              onClick={() => setActivePanel(card.id)}
-              className="group text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md transition-all"
+              onClick={() => {
+                if (!isLocked) setActivePanel(card.id);
+              }}
+              disabled={isLocked}
+              className={`group text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 transition-all ${
+                isLocked
+                  ? 'cursor-not-allowed opacity-60'
+                  : 'hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-md'
+              }`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className={`p-2 rounded-lg ${card.bgColor}`}>

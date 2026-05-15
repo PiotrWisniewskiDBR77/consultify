@@ -9,11 +9,13 @@ import { Lock, Users, WifiOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
 import {
   V8MultiplayerApi,
   type V8MultiplayerLockRecord,
   type V8MultiplayerSurfacePresence,
 } from '@/services/api/v8/multiplayer';
+import { ideaTablePresenceErrorMessage } from '@/utils/mywork/ideaTablePresenceErrorMessage';
 
 export interface PresenceUser {
   id: string;
@@ -47,15 +49,15 @@ interface WorkspaceLockIndicatorProps {
 }
 
 const PRESENCE_COLORS = [
-  '#6366f1',
-  '#3b82f6',
+  '#8b5cf6',
+  '#06b6d4',
   '#f59e0b',
-  '#f43f5e',
+  '#ef4444',
   '#10b981',
   '#ec4899',
   '#6366f1',
-  '#3b82f6',
-  '#f59e0b',
+  '#14b8a6',
+  '#f97316',
   '#84cc16',
 ];
 
@@ -155,6 +157,7 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [activeUsers, setActiveUsers] = useState<PresenceUser[]>([]);
+  const [presenceStatus, setPresenceStatus] = useState<'healthy' | 'degraded'>('healthy');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchWorkspacePresence = useCallback(async () => {
@@ -172,8 +175,10 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
 
       const response = await V8MultiplayerApi.getRoomPresence(roomId);
       setActiveUsers(mapWorkspacePresenceUsers(response.presence || [], currentUserId));
+      setPresenceStatus('healthy');
     } catch {
       setActiveUsers([]);
+      setPresenceStatus('degraded');
     }
   }, [currentUserId, enabled, workspaceId]);
 
@@ -186,41 +191,52 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
     };
   }, [enabled, fetchWorkspacePresence, workspaceId]);
 
-  if (!enabled || activeUsers.length === 0) return null;
+  if (!enabled || (activeUsers.length === 0 && presenceStatus !== 'degraded')) return null;
 
   return (
     <div
       className="flex items-center gap-1 px-2"
       aria-label={isPl ? 'Obecni we workspace' : 'Workspace presence'}
     >
-      <Users size={11} className="text-sky-500" />
-      <div className="flex items-center -space-x-1.5">
-        {activeUsers.slice(0, 5).map((user) => (
-          <div
-            key={user.id}
-            className="relative"
-            title={`${user.id}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
-          >
-            <div
-              className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-black text-white"
-              style={{ backgroundColor: user.color }}
-            >
-              {getInitials(user.name)}
-            </div>
-            {user.isTyping && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white dark:border-navy-900 animate-pulse" />
+      {presenceStatus === 'degraded' ? (
+        <>
+          <WifiOff size={11} className="text-amber-500" />
+          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+            {isPl ? 'Obecność workspace niedostępna' : 'Workspace presence unavailable'}
+          </span>
+        </>
+      ) : (
+        <>
+          <Users size={11} className="text-sky-500" />
+          <div className="flex items-center -space-x-1.5">
+            {activeUsers.slice(0, 5).map((user) => (
+              <div
+                key={user.id}
+                className="relative"
+                title={`${user.id}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
+              >
+                <div
+                  className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-black text-white"
+                  style={{ backgroundColor: user.color }}
+                >
+                  {getInitials(user.name)}
+                </div>
+                {user.isTyping && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white dark:border-navy-900 animate-pulse" />
+                )}
+              </div>
+            ))}
+            {activeUsers.length > 5 && (
+              <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-navy-700 border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-bold text-slate-500">
+                +{activeUsers.length - 5}
+              </div>
             )}
           </div>
-        ))}
-        {activeUsers.length > 5 && (
-          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-navy-700 border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-bold text-slate-500">
-            +{activeUsers.length - 5}
-          </div>
-        )}
-      </div>
-      <span className="text-[9px] text-sky-600 dark:text-sky-300 ml-1">
-        {activeUsers.length} {isPl ? 'online' : 'online'}
-      </span>
+          <span className="text-[9px] text-sky-600 dark:text-sky-300 ml-1">
+            {activeUsers.length} {isPl ? 'online' : 'online'}
+          </span>
+        </>
+      )}
     </div>
   );
 };
@@ -233,6 +249,7 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [activeLocks, setActiveLocks] = useState<V8MultiplayerLockRecord[]>([]);
+  const [lockStatus, setLockStatus] = useState<'healthy' | 'degraded'>('healthy');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchWorkspaceLocks = useCallback(async () => {
@@ -250,8 +267,10 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
 
       const response = await V8MultiplayerApi.getRoomLocks(roomId);
       setActiveLocks(mapWorkspaceLocks(response.locks || [], currentUserId));
+      setLockStatus('healthy');
     } catch {
       setActiveLocks([]);
+      setLockStatus('degraded');
     }
   }, [currentUserId, enabled, workspaceId]);
 
@@ -264,33 +283,44 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
     };
   }, [enabled, fetchWorkspaceLocks, workspaceId]);
 
-  if (!enabled || activeLocks.length === 0) return null;
+  if (!enabled || (activeLocks.length === 0 && lockStatus !== 'degraded')) return null;
 
   return (
     <div
       className="flex items-center gap-1 px-2"
       aria-label={isPl ? 'Blokady we workspace' : 'Workspace locks'}
     >
-      <Lock size={11} className="text-amber-500" />
-      <span className="text-[9px] text-amber-700 dark:text-amber-300">
-        {activeLocks.length} {isPl ? 'blocked' : 'locked'}
-      </span>
-      <div className="hidden md:flex items-center gap-1">
-        {activeLocks.slice(0, 2).map((lock) => (
-          <span
-            key={lock.lockId}
-            className="inline-flex items-center rounded-full border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
-            title={`${lock.holderId} • ${formatLockTypeLabel(lock.lockType, isPl)} • ${lock.lockScope}`}
-          >
-            {formatLockTypeLabel(lock.lockType, isPl)}: {summarizeLockScope(lock.lockScope)}
-          </span>
-        ))}
-        {activeLocks.length > 2 && (
+      {lockStatus === 'degraded' ? (
+        <>
+          <WifiOff size={11} className="text-amber-500" />
           <span className="text-[9px] text-amber-700 dark:text-amber-300">
-            +{activeLocks.length - 2}
+            {isPl ? 'Blokady workspace niedostępne' : 'Workspace locks unavailable'}
           </span>
-        )}
-      </div>
+        </>
+      ) : (
+        <>
+          <Lock size={11} className="text-amber-500" />
+          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+            {activeLocks.length} {isPl ? 'blocked' : 'locked'}
+          </span>
+          <div className="hidden md:flex items-center gap-1">
+            {activeLocks.slice(0, 2).map((lock) => (
+              <span
+                key={lock.lockId}
+                className="inline-flex items-center rounded-full border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
+                title={`${lock.holderId} • ${formatLockTypeLabel(lock.lockType, isPl)} • ${lock.lockScope}`}
+              >
+                {formatLockTypeLabel(lock.lockType, isPl)}: {summarizeLockScope(lock.lockScope)}
+              </span>
+            ))}
+            {activeLocks.length > 2 && (
+              <span className="text-[9px] text-amber-700 dark:text-amber-300">
+                +{activeLocks.length - 2}
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -307,6 +337,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const [remoteUsers, setRemoteUsers] = useState<PresenceUser[]>([]);
   const [presenceStatus, setPresenceStatus] = useState<'healthy' | 'degraded'>('healthy');
+  const [presenceDegradedMessage, setPresenceDegradedMessage] = useState<string>('');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const myColor = useMemo(
     () =>
@@ -321,7 +352,6 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
     async (activeCell?: { nodeId: string; colKey: string }) => {
       if (!enabled) return;
       try {
-        const { Api } = await import('@/services/api');
         await Api.broadcastIdeaPresence(ideaId, {
           userId: currentUserId,
           userName: currentUserName,
@@ -329,17 +359,22 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
           activeCell,
           timestamp: Date.now(),
         });
-      } catch {
-        // silent — presence is best-effort
+      } catch (error) {
+        setPresenceStatus('degraded');
+        setRemoteUsers([]);
+        onPresenceUpdate?.([]);
+        const fallback = isPl
+          ? 'Nie mozna opublikowac kursora wspolpracy. Sprobuj ponownie za chwile.'
+          : 'Could not publish your cursor to collaborators. Retry in a moment.';
+        setPresenceDegradedMessage(ideaTablePresenceErrorMessage(error, fallback));
       }
     },
-    [currentUserId, currentUserName, enabled, ideaId, myColor]
+    [currentUserId, currentUserName, enabled, ideaId, isPl, myColor, onPresenceUpdate]
   );
 
   const fetchPresence = useCallback(async () => {
     if (!enabled) return;
     try {
-      const { Api } = await import('@/services/api');
       const result = await Api.getIdeaPresence(ideaId);
       if (Array.isArray(result?.users)) {
         const now = Date.now();
@@ -349,17 +384,23 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
         setRemoteUsers(active);
         onPresenceUpdate?.(active);
         setPresenceStatus('healthy');
+        setPresenceDegradedMessage('');
       } else {
         setRemoteUsers([]);
         onPresenceUpdate?.([]);
         setPresenceStatus('healthy');
+        setPresenceDegradedMessage('');
       }
-    } catch {
+    } catch (error) {
       setRemoteUsers([]);
       onPresenceUpdate?.([]);
       setPresenceStatus('degraded');
+      const fallback = isPl
+        ? 'Obecnosc tabeli pomyslow jest niedostepna. Odswiez My Work i sprobuj ponownie.'
+        : 'Idea table presence is unavailable. Refresh My Work and retry.';
+      setPresenceDegradedMessage(ideaTablePresenceErrorMessage(error, fallback));
     }
-  }, [currentUserId, enabled, ideaId, onPresenceUpdate]);
+  }, [currentUserId, enabled, ideaId, isPl, onPresenceUpdate]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -386,7 +427,10 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
         <>
           <WifiOff size={11} className="text-amber-500" />
           <span className="text-[9px] text-amber-700 dark:text-amber-300">
-            {isPl ? 'Obecność niedostępna' : 'Presence degraded'}
+            {presenceDegradedMessage ||
+              (isPl
+                ? 'Obecnosc tabeli pomyslow jest niedostepna. Odswiez My Work i sprobuj ponownie.'
+                : 'Idea table presence is unavailable. Refresh My Work and retry.')}
           </span>
         </>
       )}
@@ -448,14 +492,20 @@ export const CellCursor: React.FC<{
   );
   if (!editing) return null;
 
+  const accessibleLabel = `${editing.name} is editing this cell`;
+
   return (
     <div
       className="absolute inset-0 pointer-events-none z-20 rounded"
       style={{ boxShadow: `inset 0 0 0 2px ${editing.color}` }}
+      role="status"
+      aria-label={accessibleLabel}
+      data-testid={`cell-cursor-${nodeId}-${colKey}`}
     >
       <div
         className="absolute -top-4 left-0 px-1 py-0.5 rounded text-[7px] font-bold text-white whitespace-nowrap"
         style={{ backgroundColor: editing.color }}
+        data-testid={`cell-cursor-chip-${nodeId}-${colKey}`}
       >
         {editing.name}
       </div>
