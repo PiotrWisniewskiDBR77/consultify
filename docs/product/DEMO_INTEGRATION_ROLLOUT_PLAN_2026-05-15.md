@@ -267,6 +267,32 @@ Validation evidence:
 - Runtime: `/ping = pong`, homepage `HTTP 200`, `/api/health` reported `gitSha = e089592f7a71aedbe3620deb5c0e9369035506a9`.
 - DB-backed `orgContext.middleware.test.ts` was not used as a local blocker because local Postgres failed before test execution with `role "iris" does not exist`; equivalent new safety coverage was added with mocked DB dependencies.
 
+### Wave 5.2 - API Version Input Guard
+
+Status: `READY_FOR_DEPLOY`.
+
+Source candidate:
+
+- `d7e547713` - `fix(middleware): harden runtime guards across auth/version/quota`
+
+Delivered slice:
+
+- `requireVersion` now trims and clamps `minVersion` input before lookup.
+- Unknown oversized minimum-version strings remain a no-op instead of expanding unbounded string work.
+- No auth middleware, quota middleware, tenant resolution, or schema behavior changed.
+
+Hard stops preserved:
+
+- No bulk middleware cherry-pick.
+- No auth fallback change.
+- No quota policy change.
+- No tenant/ACL model change.
+
+Validation evidence:
+
+- Focused API version middleware gate: `19/19` passing.
+- Production build: passing with larger Node heap.
+
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
 Status: `PLANNED`.
