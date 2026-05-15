@@ -64,7 +64,7 @@ describe('BottomNavigation', () => {
     const initiativesButton = screen.getByTestId('bottom-nav-initiatives');
     const assessmentButton = screen.getByTestId('bottom-nav-assessment');
 
-    expect(initiativesButton.className).toContain('text-purple-700');
+    expect(initiativesButton).toHaveAttribute('aria-current', 'page');
 
     fireEvent.click(initiativesButton);
     fireEvent.click(assessmentButton);

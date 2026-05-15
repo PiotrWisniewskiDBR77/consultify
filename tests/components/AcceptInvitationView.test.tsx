@@ -25,7 +25,11 @@ const state = {
 };
 
 vi.mock('../../src/store/useAppStore', () => ({
-  useAppStore: (selector: any) => selector(state),
+  useAppStore: Object.assign((selector: any) => selector(state), {
+    getState: () => state,
+    setState: (next: Partial<typeof state>) => Object.assign(state, next),
+    subscribe: vi.fn(),
+  }),
 }));
 
 describe('AcceptInvitationView', () => {

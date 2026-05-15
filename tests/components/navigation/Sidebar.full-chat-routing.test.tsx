@@ -31,6 +31,13 @@ const settingsMenuItem = {
   color: 'slate',
 };
 
+const emptyMenuItem = {
+  id: 'EMPTY',
+  label: 'Empty',
+  icon: null,
+  color: 'slate',
+};
+
 const conversationState: any = {
   setDisplayMode: vi.fn(),
   setWorkspaceContext: vi.fn(),
@@ -90,10 +97,11 @@ vi.mock('../../../src/components/navigation/Sidebar/menuConfig', () => ({
       color: 'indigo',
     },
   ],
-  getAdminMenuItem: () => null,
-  getOrganizationMenuItem: () => null,
+  getAdminMenuItem: () => emptyMenuItem,
+  getInternalToolsMenuItem: () => emptyMenuItem,
+  getOrganizationMenuItem: () => emptyMenuItem,
   getSettingsMenuItem: () => settingsMenuItem,
-  getSuperAdminMenuItem: () => null,
+  getSuperAdminMenuItem: () => emptyMenuItem,
   getViewName: () => 'AI Chat',
 }));
 

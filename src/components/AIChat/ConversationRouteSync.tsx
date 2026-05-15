@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { useConversationStore } from '../../store/useConversationStore';
+import {
+  isConversationMarkedMissing,
+  useConversationStore,
+} from '../../store/useConversationStore';
 
 /**
  * ConversationRouteSync
@@ -16,25 +19,55 @@ import { useConversationStore } from '../../store/useConversationStore';
  */
 export const ConversationRouteSync: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const activeConversationId = useConversationStore((s) => s.activeConversationId);
+  const activeMessagesCount = useConversationStore((s) => s.activeMessages.length);
+  const isLoading = useConversationStore((s) => s.isLoading);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
+  const fetchConversation = useConversationStore((s) => s.fetchConversation);
   const clearActiveChat = useConversationStore((s) => s.clearActiveChat);
   const activeConversationState = useConversationStore((s) => s._activeConversationState);
 
   // Guard to prevent Store→URL sync from firing right after URL→Store sync
   const syncingFromUrl = useRef(false);
-  // When the user intentionally lands on `/chat`, let the welcome screen
-  // render first instead of bouncing to the last restored conversation.
-  const skipInitialBaseRouteRedirect = useRef(!conversationId);
+  const ensuredConversationId = useRef<string | null>(null);
   const notFoundHandledRef = useRef(false);
+  const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
+  const isChatRoute = normalizedPath === '/chat' || normalizedPath.startsWith('/chat/');
 
   // URL → Store sync
   useEffect(() => {
-    if (!conversationId || conversationId === activeConversationId) {
+    if (!isChatRoute) return;
+
+    if (!conversationId) {
+      // Base /chat is also the starting point for a new send. When
+      // createConversation() sets activeConversationId, the Store -> URL effect
+      // below must navigate to /chat/:id.
       return;
     }
 
+    if (isConversationMarkedMissing(conversationId)) {
+      ensuredConversationId.current = null;
+      syncingFromUrl.current = false;
+      clearActiveChat();
+      navigate('/chat', { replace: true });
+      return;
+    }
+
+    if (conversationId === activeConversationId) {
+      if (
+        !isLoading &&
+        activeMessagesCount === 0 &&
+        ensuredConversationId.current !== conversationId
+      ) {
+        ensuredConversationId.current = conversationId;
+        void fetchConversation(conversationId);
+      }
+      return;
+    }
+
+    ensuredConversationId.current = conversationId;
     syncingFromUrl.current = true;
     setActiveConversation(conversationId);
     // Reset flag after a tick so Store→URL effect doesn't fire for this change
@@ -42,7 +75,17 @@ export const ConversationRouteSync: React.FC = () => {
       syncingFromUrl.current = false;
     }, 100);
     return () => clearTimeout(timer);
-  }, [conversationId, activeConversationId, setActiveConversation]);
+  }, [
+    conversationId,
+    isChatRoute,
+    activeConversationId,
+    activeMessagesCount,
+    isLoading,
+    clearActiveChat,
+    fetchConversation,
+    navigate,
+    setActiveConversation,
+  ]);
 
   useEffect(() => {
     if (!conversationId) {
@@ -62,19 +105,8 @@ export const ConversationRouteSync: React.FC = () => {
 
   // Store → URL sync (only when user changes conversation via UI, not from URL sync)
   useEffect(() => {
+    if (!isChatRoute) return;
     if (syncingFromUrl.current) return;
-
-    if (!conversationId) {
-      if (skipInitialBaseRouteRedirect.current) {
-        skipInitialBaseRouteRedirect.current = false;
-        return;
-      }
-
-      if (activeConversationId) {
-        navigate(`/chat/${activeConversationId}`, { replace: true });
-      }
-      return;
-    }
 
     if (activeConversationId && activeConversationId !== conversationId) {
       navigate(`/chat/${activeConversationId}`, { replace: true });
@@ -82,7 +114,7 @@ export const ConversationRouteSync: React.FC = () => {
       // User cleared active conversation (new chat) — go back to /chat
       navigate('/chat', { replace: true });
     }
-  }, [activeConversationId, conversationId, navigate]);
+  }, [activeConversationId, conversationId, isChatRoute, navigate]);
 
   return null;
 };

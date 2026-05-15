@@ -390,6 +390,12 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     setConversationChatLanguage,
   ]);
 
+  useEffect(() => {
+    if (activeConversationId) return;
+    if (voice.voiceStatus !== 'live' && voice.voiceStatus !== 'connecting') return;
+    void voice.stopVoiceConversation();
+  }, [activeConversationId, voice]);
+
   const value = useMemo<TeresaVoiceContextValue>(
     () => ({ ...voice, handleVoiceToggle }),
     [voice, handleVoiceToggle]

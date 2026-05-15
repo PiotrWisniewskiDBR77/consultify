@@ -74,6 +74,8 @@ interface EnhancedChatInputProps {
 
   /** Teresa real-time voice status: 'idle' | 'connecting' | 'live' | 'error' */
   teresaVoiceStatus?: string;
+  /** Human-readable runtime error when Teresa live voice fails */
+  teresaVoiceError?: string | null;
   /** Whether Teresa live voice can start from the current server/browser posture */
   teresaVoiceAvailable?: boolean;
   /** Human-readable reason when Teresa live voice cannot start */
@@ -108,6 +110,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   stopVoiceListening,
   onToolSelect,
   teresaVoiceStatus,
+  teresaVoiceError,
   teresaVoiceAvailable = true,
   teresaVoiceUnavailableReason,
   onTeresaVoiceToggle,
@@ -160,6 +163,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vadIntervalRef = useRef<number | null>(null);
   const isDictatingRef = useRef(false);
+  const lastTeresaVoiceToastRef = useRef<string | null>(null);
 
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isInputDisabled = isDisabled || isStreaming;
@@ -213,6 +217,17 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       stopAllRecording();
     };
   }, []);
+
+  useEffect(() => {
+    if (teresaVoiceStatus !== 'error') {
+      lastTeresaVoiceToastRef.current = null;
+      return;
+    }
+    const message = (teresaVoiceError || '').trim() || t('aiChat.voiceError', 'Voice error');
+    if (lastTeresaVoiceToastRef.current === message) return;
+    lastTeresaVoiceToastRef.current = message;
+    toast.error(message);
+  }, [t, teresaVoiceError, teresaVoiceStatus]);
 
   // ========================================================================
   // Auto-resize textarea
