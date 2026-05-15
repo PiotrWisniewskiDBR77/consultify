@@ -153,6 +153,13 @@ const RATE_LIMIT_HOUR = 100;
 
 const JWT_ISSUER = 'consultify.tabele.form-intake';
 const JWT_AUDIENCE = 'consultify.public.form-intake';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function assertUuid(value: string, code: string, label: string): void {
+  if (!UUID_RE.test(value)) {
+    throw new FormIntakeError(code, `${label} not found`, 404);
+  }
+}
 
 // ── Default rate limiter (in-process token bucket) ───────────────────────────
 
@@ -393,6 +400,7 @@ const formIntakeService = {
     if (!organizationId) {
       throw new FormIntakeError('ORG_ID_REQUIRED', 'organizationId is required');
     }
+    assertUuid(formId, 'FORM_NOT_FOUND', 'Form');
     const form = await loadFormById(formId);
     if (!form) throw new FormIntakeError('FORM_NOT_FOUND', 'Form not found', 404);
     const tenantOrg = await tableTenantOrgId(form.embed_target_table_id ?? form.table_id);

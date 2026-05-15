@@ -175,6 +175,14 @@ describe('FormIntakeService.getFormForAdmin', () => {
     });
   });
 
+  it('returns 404 for malformed form ids before querying the database', async () => {
+    await expect(formIntakeService.getFormForAdmin('not-a-form-id', ORG)).rejects.toMatchObject({
+      code: 'FORM_NOT_FOUND',
+      status: 404,
+    });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
   it('refuses cross-tenant forms', async () => {
     state.tableTenantOrg = ORG_OTHER;
     await expect(formIntakeService.getFormForAdmin(FORM_ID, ORG)).rejects.toMatchObject({
