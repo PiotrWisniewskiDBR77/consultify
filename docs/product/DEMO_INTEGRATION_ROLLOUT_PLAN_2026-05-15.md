@@ -7,13 +7,13 @@ Demo integration must continue as a controlled wave rollout, not as a bulk merge
 The current `demo.consultify.ai` baseline is:
 
 - Branch: `origin/staging`
-- Commit: `9d66fd509` (`fix(chat-shell): complete safe demo integration wave one`)
+- Commit: `2e1f3d188` (`fix(collaboration): surface degraded canvas and table states`)
 - Railway environment: `staging`
 - Railway service: `consultify`
-- Latest verified deployment: `1229bc69-5278-4083-8d7d-c397d7ff7417`
+- Latest verified deployment: `1137410c-e347-425c-9d7f-b04a66e0e0d2`
 - Runtime gate: `SUCCESS`, `/ping = pong`, homepage `HTTP 200`
 
-Wave 1 is the stable demo baseline. Every later wave must preserve this baseline and must be independently testable, deployable, and reversible.
+Wave 3 is the stable demo baseline. Every later wave must preserve this baseline and must be independently testable, deployable, and reversible.
 
 ## Operating Rules
 
@@ -66,7 +66,7 @@ Validation evidence:
 
 ## Wave 2 - Results / Execution / Reports Runtime
 
-Status: `NEXT`.
+Status: `DONE` and deployed.
 
 Goal:
 
@@ -111,9 +111,18 @@ Wave 2 acceptance criteria:
 - No new deployment error logs.
 - No new HTTP 5xx pattern.
 
+Validation evidence:
+
+- Frontend scoped tests: `24/24` passing.
+- Backend/integration scoped tests: `74/74` passing.
+- Export trace service/integration tests: `39/39` passing.
+- Production build: passing with larger Node heap.
+- Railway deployment: `dddfa771-4251-4c04-8333-8c070adc615d`, `SUCCESS`.
+- Runtime: `/ping = pong`, homepage `HTTP 200`, no final runtime error logs, no final HTTP 5xx logs.
+
 ## Wave 3 - Table Studio / Work Canvas / My Work Collaboration
 
-Status: `PLANNED`.
+Status: `DONE` for the first safe degraded collaboration UX slice.
 
 Goal:
 
@@ -135,6 +144,27 @@ Gate:
 
 - Must not deploy unless table and canvas focused tests pass.
 - Must inspect runtime logs for 4xx/5xx after first manual click-through.
+
+Delivered slice:
+
+- Work Canvas deterministic action error mapping.
+- Idea Table collaboration degraded presence messages.
+- Workspace lock degraded readback.
+- Workflow dashboard locked-state guard.
+- Cell cursor accessibility status label.
+
+Deferred from Wave 3:
+
+- Large Table Studio Block D conversion/form-intake rollout.
+- Additional migrations and public form routes.
+- Broad My Work/Inbox redesign changes.
+
+Validation evidence:
+
+- Focused UI/unit tests: `16/16` passing.
+- Production build: passing with larger Node heap.
+- Railway deployment: `1137410c-e347-425c-9d7f-b04a66e0e0d2`, `SUCCESS`.
+- Runtime: `/ping = pong`, homepage `HTTP 200`, no final runtime error logs, no final HTTP 5xx logs.
 
 ## Wave 4 - Settings / AI Governance / Admin Controls
 
@@ -218,12 +248,12 @@ Final verdict options:
 
 ## Immediate Next Step
 
-Start Wave 2.
+Start Wave 4.
 
 First command sequence:
 
-1. Inspect diffs and conflict risk for candidate Wave 2 commits.
-2. Apply the smallest viable Results/Execution/Reports slice.
+1. Inspect diffs and conflict risk for Settings / AI Governance / Admin Controls.
+2. Apply the smallest viable governance/settings slice.
 3. Run scoped tests.
 4. Build.
 5. Deploy only after green gates.
