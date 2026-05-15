@@ -351,6 +351,32 @@ Validation evidence:
 - Railway deployment: `892362cd-d8e2-4ded-bf84-beb2b05c4332`, `SUCCESS`.
 - Runtime: `/ping = pong`, `/api/health` reported `gitSha = d9af1cc64fec9d0d291848bb510f9889af0f64ba`.
 
+### Wave 5.5 - Security Header Disclosure Guard
+
+Status: `READY_FOR_DEPLOY`.
+
+Source candidate:
+
+- `8e8a60ad9` - `fix(middleware): extend runtime hardening across access and quota guards`
+
+Delivered slice:
+
+- `securityHeaders` now removes `X-Powered-By` before setting security headers.
+- Header removal is fail-soft if the response object throws.
+- No rate-limit, validation, auth, tenant, quota, or schema behavior changed.
+
+Hard stops preserved:
+
+- No bulk middleware cherry-pick.
+- No auth/tenant behavior change.
+- No rate-limit or quota behavior change.
+- No database or migration change.
+
+Validation evidence:
+
+- Focused security headers gate: `9/9` passing.
+- Production build: passing with larger Node heap.
+
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
 Status: `PLANNED`.
