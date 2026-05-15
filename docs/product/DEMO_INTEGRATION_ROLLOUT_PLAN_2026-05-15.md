@@ -325,7 +325,7 @@ Validation evidence:
 
 ### Wave 5.4 - Deprecation Header Response Guard
 
-Status: `READY_FOR_DEPLOY`.
+Status: `DONE` and deployed.
 
 Source candidate:
 
@@ -348,6 +348,8 @@ Validation evidence:
 
 - Focused deprecation header gate: `3/3` passing.
 - Production build: passing with larger Node heap.
+- Railway deployment: `892362cd-d8e2-4ded-bf84-beb2b05c4332`, `SUCCESS`.
+- Runtime: `/ping = pong`, `/api/health` reported `gitSha = d9af1cc64fec9d0d291848bb510f9889af0f64ba`.
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
