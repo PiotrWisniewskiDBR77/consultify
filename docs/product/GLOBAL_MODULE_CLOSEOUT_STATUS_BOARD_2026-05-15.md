@@ -4,7 +4,7 @@
 
 `GLOBAL_NO_GO_IN_PROGRESS`
 
-The global module program is not yet closed. The latest authoritative status is that staging has a fresh manual `BLOCKED_P1` for Work Canvas save/read-back, while several module gates remain `READY_FOR_MANUAL`, `RETEST_REQUIRED`, or `AWAITING_RETEST`.
+The global module program is not yet closed. Work Canvas save/read-back is now `DONE_PASS`, while My Work/Radar still has an open `BLOCKED_P1` and several module gates remain `READY_FOR_MANUAL`, `RETEST_REQUIRED`, `AWAITING_RETEST`, or `DOC_DRIFT_OPEN`.
 
 This board is the Sprint 0 reconciliation artifact for the global closeout program. It does not supersede module source-of-truth files; it reconciles their current delivery/testing state so the remaining sprints have one operating status.
 
@@ -21,7 +21,7 @@ This board is the Sprint 0 reconciliation artifact for the global closeout progr
 
 | Area | Sprint | Authoritative Status | Evidence | Drift / Decision |
 |---|---:|---|---|---|
-| Work Canvas / AI Canvas | 1 | `DEPLOYED_RETEST_READY` | `manual_Tests/reports/2026-05-15_1947_antygravity-current-rollout-manual.md`; local A2 Playwright smoke `2/2 PASS`; remote staging smoke `2/2 PASS`; `WORK_CANVAS_P1_PERSISTENCE_CLOSEOUT_2026-05-15.md` | Fresh A2 manual failure reproduced and fixed. Root cause: autosave/manual save conflict. Staging deployment is live on `d0dde8fe`; manual AnyGravity A2 retest remains before `DONE_PASS`. |
+| Work Canvas / AI Canvas | 1 | `DONE_PASS` | `manual_Tests/reports/2026-05-15_1947_antygravity-current-rollout-manual.md`; `docs/testing/reports/WORK_CANVAS_A2_PERSISTENCE_RETEST_2026-05-15.md`; local A2 Playwright smoke `2/2 PASS`; remote staging smoke `2/2 PASS`; `WORK_CANVAS_P1_PERSISTENCE_CLOSEOUT_2026-05-15.md` | Fresh A2 manual failure reproduced and fixed. Root cause: autosave/manual save conflict. Staging deployment is live on `261d4d9e`; manual A2 retest passed. |
 | My Work / Radar | 2 | `BLOCKED_P1` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260506-001`; `testy_antygravity/REPORT_INDEX.md` My Work runtime gate | Prior `MY_WORK_GATE_BLOCKED_P1` remains active until `/my-work/start` retest passes. |
 | Tasks / Calendar / Notebook | 2 | `ON_STAGING_NOT_TESTED` | Covered by Sprint 2 plan; module docs under `docs/modules/02_moja-praca` and UI/UX raw notes | No final integrated business gate found in current queue. |
 | Tabele / Excel / Table Studio | 3 | `READY_FOR_MANUAL_WITH_DEMO_P1_DRIFT` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260508-001`; `testy_antygravity/reports/2026-05-09_2140_tabele-artifact-mapping-retest.md` | Staging queue says `READY_FOR_MANUAL`; demo evidence contains artifact mapping `BLOCKED_P1`. Sprint 3 must reconcile environment drift before PASS. |
@@ -40,7 +40,7 @@ This board is the Sprint 0 reconciliation artifact for the global closeout progr
 
 `PASS_WITH_OPEN_WORK`
 
-One operating status board now exists. The program may proceed to Sprint 1, but global completion remains blocked by Work Canvas P1 and open module gates.
+One operating status board now exists. Sprint 1 has closed Work Canvas as `DONE_PASS`; global completion remains blocked by My Work/Radar P1 and open module gates.
 
 ## Hard Stops Carried Forward
 

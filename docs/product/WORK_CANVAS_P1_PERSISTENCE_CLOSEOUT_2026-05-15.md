@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`DEPLOYED_RETEST_READY`
+`DONE_PASS`
 
-The Work Canvas A2 persistence P1 is fixed, deployed to staging, and validated with remote Playwright smoke. Manual AnyGravity A2 retest is still required before this can become `DONE_PASS`.
+The Work Canvas A2 persistence P1 is fixed, deployed to staging, and validated with remote Playwright smoke plus manual retest evidence.
 
 ## Root Cause
 
@@ -47,13 +47,14 @@ The first request succeeded and advanced `updatedAt`. The second request carried
 - Remote Playwright staging smoke:
   - `E2E_API_URL=https://demo.consultify.ai E2E_BASE_URL=https://demo.consultify.ai ... npm run test:e2e -- tests/e2e/smoke/work-canvas-core-flow.spec.ts --project=chromium --workers=1`
   - Result: `2/2 PASS`
+- Manual A2 retest:
+  - `docs/testing/reports/WORK_CANVAS_A2_PERSISTENCE_RETEST_2026-05-15.md`
+  - Result: `PASS`
 
 ## Known Validation Limits
 
 - Full repo `tsc --noEmit` still fails on pre-existing unrelated issues in Kimi, Notebook/TipTap, Reports Premium editor extensions, and `ModuleHub`. No failure was reported in the edited Work Canvas files.
-- Manual AnyGravity A2 retest has not been executed yet after deployment.
 
 ## Next Gate
 
-1. Run manual AnyGravity A2 retest.
-2. Update this verdict to `DONE_PASS` only after manual staging read-back passes.
+Sprint 1 is closed. Continue to Sprint 2: My Work / Radar / Tasks / Calendar / Notebook.
