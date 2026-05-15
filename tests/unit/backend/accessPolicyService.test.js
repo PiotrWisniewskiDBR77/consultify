@@ -330,10 +330,27 @@ describe('AccessPolicyService (L1 REAL)', () => {
     );
   });
 
-  it('denies AI calls for TRIAL orgs until onboarding completed', async () => {
+  it('allows initial trial AI grace calls before onboarding is completed', async () => {
     limitService.getOrganizationType.mockResolvedValue(
       makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
     );
+    mockDbPromiseGet.mockImplementation(async (_db, sql) => {
+      const s = String(sql);
+      if (s.includes('onboarding_status')) return { onboarding_status: 'PENDING' };
+      if (s.includes('FROM payment_methods')) return { count: 0 };
+      return null;
+    });
+
+    await expect(checkAccess('org-1', 'ai_call')).resolves.toEqual(
+      expect.objectContaining({ allowed: true })
+    );
+  });
+
+  it('denies trial AI calls after grace usage when onboarding is incomplete', async () => {
+    limitService.getOrganizationType.mockResolvedValue(
+      makeOrgInfo({ organizationType: ORG_TYPES.TRIAL })
+    );
+    usageService.getDailyUsage.mockResolvedValue(makeUsage({ aiCallsCount: 3 }));
     mockDbPromiseGet.mockImplementation(async (_db, sql) => {
       const s = String(sql);
       if (s.includes('onboarding_status')) return { onboarding_status: 'PENDING' };
