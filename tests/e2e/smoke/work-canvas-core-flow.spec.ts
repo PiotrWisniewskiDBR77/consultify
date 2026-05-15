@@ -17,9 +17,16 @@ test.describe('V10 Work Canvas core flow smoke', () => {
     const signals = collectPageSignals(page);
     const token = await loginAsOwner(page);
     const draft = await createWorkCanvasDraft(page.request, token);
+    const editedTitle = `QA A2 persistence ${Date.now()}`;
+    const editedContent = `QA TEST DRAFT A2 PERSISTENCE CHECK ${Date.now()}`;
 
     await openWorkCanvasDraft(page, draft);
+    const titleInput = page.getByLabel('Canvas document title');
+    await page.getByRole('button', { name: 'Markdown view' }).click();
+    const markdownEditor = page.getByTestId('canvas-md-view');
     await expect(page.getByRole('button', { name: 'Save Canvas document' })).toBeVisible();
+    await titleInput.fill(editedTitle);
+    await markdownEditor.fill(`# ${editedTitle}\n\n${editedContent}`);
     await testInfo.attach('work-canvas-core-loaded', {
       body: await page.screenshot({ fullPage: true }),
       contentType: 'image/png',
@@ -28,7 +35,9 @@ test.describe('V10 Work Canvas core flow smoke', () => {
     await page.getByRole('button', { name: 'Save Canvas document' }).click();
     await page.waitForTimeout(1500);
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
-    await ensureWorkCanvasVisible(page, draft.title);
+    await ensureWorkCanvasVisible(page, editedTitle);
+    await page.getByRole('button', { name: 'Markdown view' }).click();
+    await expect(page.getByTestId('canvas-md-view')).toContainText(editedContent);
     await expectNoRawInternals(page);
     await testInfo.attach('work-canvas-core-save-readback', {
       body: await page.screenshot({ fullPage: true }),

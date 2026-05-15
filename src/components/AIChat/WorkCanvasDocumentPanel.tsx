@@ -38,11 +38,11 @@ import type {
   CanvasWorkflowRun,
 } from '@/types/canvasWorkspace';
 import { getCanvasActionAvailability } from '@/utils/canvas/canvasActionAvailability';
-import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
 import {
   mapDraftResponseToCanvasDocumentState,
   starterIdToCanvasKind,
 } from '@/utils/canvas/canvasDraftAdapter';
+import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
@@ -282,6 +282,7 @@ function starterTemplateById(starterId?: CanvasStarterId | null): StarterTemplat
 }
 
 const VIEW_MODE_STORAGE_KEY = 'workCanvas.viewMode';
+const LAST_DRAFT_ID_STORAGE_KEY = 'workCanvas.lastDraftId';
 
 const workspaceActionIds: CanvasActionId[] = ['send-to-idea', 'save-as-note', 'create-initiative'];
 
@@ -635,8 +636,11 @@ export function WorkCanvasDocumentPanel({
   const lastSavedContentRef = React.useRef(documentState.contentMd);
   const lastSavedTitleRef = React.useRef(documentState.title);
   const latestContentRef = React.useRef(documentState.contentMd);
+  const latestTitleRef = React.useRef(documentState.title);
   const autosaveTimerRef = React.useRef<number | null>(null);
   const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
+  const titleInputRef = React.useRef<HTMLInputElement | null>(null);
+  const markdownEditorRef = React.useRef<HTMLTextAreaElement | null>(null);
   const initialStarterPersistedRef = React.useRef(false);
 
   const activeTemplate =
@@ -650,12 +654,53 @@ export function WorkCanvasDocumentPanel({
     let cancelled = false;
 
     const hydrateConversationDraft = async () => {
-      if (!conversationId) {
+      const preferredDraftId = String(
+        initialDraftId ||
+          (typeof window !== 'undefined'
+            ? window.localStorage.getItem(LAST_DRAFT_ID_STORAGE_KEY)
+            : '') ||
+          ''
+      ).trim();
+
+      if (!conversationId && !preferredDraftId) {
         setIsHydrating(false);
         return;
       }
+
       try {
         const token = window.localStorage.getItem('token') || '';
+        if (preferredDraftId) {
+          try {
+            const responseById = await fetch(
+              `/api/work-canvas/drafts/${encodeURIComponent(preferredDraftId)}`,
+              {
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+              }
+            );
+            const jsonById = await responseById.json().catch(() => ({}));
+            const draftById = jsonById?.data?.draft || jsonById?.data;
+            if (responseById.ok && !cancelled && draftById) {
+              setDocumentState((current) =>
+                mapDraftResponseToCanvasDocumentState(draftById, current)
+              );
+              lastSavedContentRef.current =
+                typeof draftById.contentMd === 'string'
+                  ? draftById.contentMd
+                  : lastSavedContentRef.current;
+              lastSavedTitleRef.current =
+                typeof draftById.title === 'string' ? draftById.title : lastSavedTitleRef.current;
+              return;
+            }
+            if (responseById.status === 404) {
+              window.localStorage.removeItem(LAST_DRAFT_ID_STORAGE_KEY);
+            }
+          } catch {
+            // ignore and fallback to conversation list when possible
+          }
+        }
+
+        if (!conversationId) return;
+
         const response = await fetch(
           `/api/work-canvas/drafts?conversationId=${encodeURIComponent(conversationId)}`,
           {
@@ -665,7 +710,6 @@ export function WorkCanvasDocumentPanel({
         const json = await response.json().catch(() => ({}));
         if (!response.ok || cancelled) return;
         const drafts = Array.isArray(json?.data) ? json.data : [];
-        const preferredDraftId = String(initialDraftId || '').trim();
         const match =
           preferredDraftId.length > 0
             ? drafts.find(
@@ -686,7 +730,9 @@ export function WorkCanvasDocumentPanel({
             const jsonById = await responseById.json().catch(() => ({}));
             const draftById = jsonById?.data;
             if (!responseById.ok || cancelled || !draftById) return;
-            setDocumentState((current) => mapDraftResponseToCanvasDocumentState(draftById, current));
+            setDocumentState((current) =>
+              mapDraftResponseToCanvasDocumentState(draftById, current)
+            );
             lastSavedContentRef.current =
               typeof draftById.contentMd === 'string'
                 ? draftById.contentMd
@@ -709,6 +755,12 @@ export function WorkCanvasDocumentPanel({
               : lastSavedContentRef.current;
           lastSavedTitleRef.current =
             typeof latestDraft.title === 'string' ? latestDraft.title : lastSavedTitleRef.current;
+          const hydratedDraftId = String(
+            (latestDraft as any)?.draftId || (latestDraft as any)?.id || ''
+          ).trim();
+          if (hydratedDraftId) {
+            window.localStorage.setItem(LAST_DRAFT_ID_STORAGE_KEY, hydratedDraftId);
+          }
         }
       } catch {
         // keep local draft defaults when hydration is unavailable
@@ -722,6 +774,13 @@ export function WorkCanvasDocumentPanel({
       cancelled = true;
     };
   }, [conversationId, initialDraftId]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const draftId = String(documentState.draftId || '').trim();
+    if (!draftId) return;
+    window.localStorage.setItem(LAST_DRAFT_ID_STORAGE_KEY, draftId);
+  }, [documentState.draftId]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -795,51 +854,78 @@ export function WorkCanvasDocumentPanel({
 
   React.useEffect(() => {
     latestContentRef.current = documentState.contentMd;
-  }, [documentState.contentMd]);
+    latestTitleRef.current = documentState.title;
+  }, [documentState.contentMd, documentState.title]);
 
   React.useEffect(() => {
     onCanvasSelectionChange?.(canvasSelection);
   }, [canvasSelection, onCanvasSelectionChange]);
 
   const persistDraft = React.useCallback(
-    async (draft: CanvasDocumentState = documentState) => {
+    async (draft?: CanvasDocumentState) => {
+      const draftToPersist = draft || {
+        ...documentState,
+        title: titleInputRef.current?.value ?? latestTitleRef.current,
+        contentMd: markdownEditorRef.current?.value ?? latestContentRef.current,
+      };
       const effectiveConversationId = conversationId || `canvas-${Date.now()}`;
 
       setDocumentState((current) => ({ ...current, saveState: 'saving' }));
       try {
         const token = window.localStorage.getItem('token') || '';
-        const response = await fetch(
-          draft.draftId
-            ? `/api/work-canvas/drafts/${encodeURIComponent(draft.draftId)}`
-            : '/api/work-canvas/drafts',
-          {
-            method: draft.draftId ? 'PUT' : 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify({
-              conversationId: effectiveConversationId,
-              baseUpdatedAt: draft.updatedAt || null,
-              kind: draft.kind,
-              title: draft.title,
-              content: draft.contentMd,
-              canonicalFormat: draft.canonicalFormat,
-              contentMd: draft.contentMd,
-              blocks: draft.blocks || [],
-              saveState: 'saved',
-              lifecycleState: draft.lifecycleState,
-              researchSessionId: draft.researchSessionId || null,
-              provenance: {
-                source: 'chat-work-canvas-panel',
-                starterId: draft.activeStarterId,
-                researchSessionId: draft.researchSessionId || null,
-                workflowRuns: draft.workflowRuns || [],
+        const saveDraft = async (baseUpdatedAt: string | null | undefined) =>
+          fetch(
+            draftToPersist.draftId
+              ? `/api/work-canvas/drafts/${encodeURIComponent(draftToPersist.draftId)}`
+              : '/api/work-canvas/drafts',
+            {
+              method: draftToPersist.draftId ? 'PUT' : 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
               },
-            }),
-          }
-        );
-        const json = await response.json().catch(() => ({}));
+              body: JSON.stringify({
+                conversationId: effectiveConversationId,
+                baseUpdatedAt: baseUpdatedAt || null,
+                kind: draftToPersist.kind,
+                title: draftToPersist.title,
+                content: draftToPersist.contentMd,
+                canonicalFormat: draftToPersist.canonicalFormat,
+                contentMd: draftToPersist.contentMd,
+                blocks: draftToPersist.blocks || [],
+                saveState: 'saved',
+                lifecycleState: draftToPersist.lifecycleState,
+                researchSessionId: draftToPersist.researchSessionId || null,
+                provenance: {
+                  source: 'chat-work-canvas-panel',
+                  starterId: draftToPersist.activeStarterId,
+                  researchSessionId: draftToPersist.researchSessionId || null,
+                  workflowRuns: draftToPersist.workflowRuns || [],
+                },
+              }),
+            }
+          );
+
+        let response = await saveDraft(draftToPersist.updatedAt || null);
+        let json = await response.json().catch(() => ({}));
+        if (
+          response.status === 409 &&
+          draftToPersist.draftId &&
+          String(json?.code || '') === 'CANVAS_DRAFT_CONFLICT'
+        ) {
+          const currentResponse = await fetch(
+            `/api/work-canvas/drafts/${encodeURIComponent(draftToPersist.draftId)}`,
+            {
+              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            }
+          );
+          const currentJson = await currentResponse.json().catch(() => ({}));
+          const currentDraft = currentJson?.data?.draft || currentJson?.data;
+          response = await saveDraft(
+            typeof currentDraft?.updatedAt === 'string' ? currentDraft.updatedAt : null
+          );
+          json = await response.json().catch(() => ({}));
+        }
         if (!response.ok) {
           const saveError: any = new Error(json?.error || 'Failed to save Canvas draft');
           saveError.data = json;
@@ -847,27 +933,33 @@ export function WorkCanvasDocumentPanel({
         }
         const savedDraft = json?.data;
         const nextState = mapDraftResponseToCanvasDocumentState(savedDraft, {
-          ...draft,
-          draftId: draft.draftId,
+          ...draftToPersist,
+          draftId: draftToPersist.draftId,
           saveState: 'saved',
           projectionError: null,
         });
+        const savedDraftId = String(
+          savedDraft?.draftId || savedDraft?.id || nextState.draftId || ''
+        ).trim();
+        if (savedDraftId) {
+          window.localStorage.setItem(LAST_DRAFT_ID_STORAGE_KEY, savedDraftId);
+        }
         setDocumentState((current) => {
-          if (current.contentMd !== draft.contentMd) {
+          if (current.contentMd !== draftToPersist.contentMd) {
             return {
               ...current,
-              draftId: savedDraft?.id || current.draftId || draft.draftId,
+              draftId: savedDraftId || current.draftId || draftToPersist.draftId,
               saveState: 'unsaved',
             };
           }
           return mapDraftResponseToCanvasDocumentState(savedDraft, {
             ...current,
-            draftId: current.draftId || draft.draftId,
+            draftId: savedDraftId || current.draftId || draftToPersist.draftId,
             saveState: 'saved',
             projectionError: null,
           });
         });
-        if (latestContentRef.current === draft.contentMd) {
+        if (latestContentRef.current === draftToPersist.contentMd) {
           lastSavedContentRef.current = nextState.contentMd;
           lastSavedTitleRef.current = nextState.title;
         }
@@ -1098,6 +1190,7 @@ export function WorkCanvasDocumentPanel({
   };
 
   const updateMarkdown = (contentMd: string) => {
+    latestContentRef.current = contentMd;
     setDocumentState((current) => ({
       ...current,
       contentMd,
@@ -1281,6 +1374,7 @@ export function WorkCanvasDocumentPanel({
   };
 
   const updateTitle = (title: string) => {
+    latestTitleRef.current = title;
     setDocumentState((current) => ({
       ...current,
       title,
@@ -1907,6 +2001,7 @@ export function WorkCanvasDocumentPanel({
             Document title
           </label>
           <input
+            ref={titleInputRef}
             id="canvas-document-title"
             value={documentState.title}
             onChange={(event) => updateTitle(event.target.value)}
@@ -2712,6 +2807,7 @@ export function WorkCanvasDocumentPanel({
               <div className="flex flex-1 flex-col">
                 {selectionBlockActions}
                 <textarea
+                  ref={markdownEditorRef}
                   value={documentState.contentMd}
                   onChange={(event) => updateMarkdown(event.target.value)}
                   onSelect={captureMarkdownSelection}
