@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`BLOCKED_ON_AUTHENTICATED_SMOKE`; staging is healthy, but final authenticated save/read-back smoke is not complete.
+`GO_WITH_P2_UI_SMOKE_FOLLOWUP`; staging is healthy and authenticated API tenant/save/read-back smoke passed, with a remaining UI automation stabilization follow-up.
 
-The staging runtime is healthy and the critical auth/access-policy automated gate is green after aligning tests to the current canonical role and trial AI access contracts. Safe final-smoke gates passed where credentials were not required, but the final merge verdict cannot move to `GO` until controlled staging owner/member credentials are available and the authenticated tenant/ACL save/read-back smoke passes.
+The staging runtime is healthy and the critical auth/access-policy automated gate is green after aligning tests to the current canonical role and trial AI access contracts. Authenticated owner/member/superadmin API smoke passed on staging, including save/read-back, artifact promotion read-back, member capability denial, and private draft isolation. UI automation still needs stabilization because Work Canvas deeplink rendering is sensitive to demo-session state; this is tracked as P2 follow-up rather than a tenant/security blocker.
 
 ## Assessed Baseline
 
@@ -15,7 +15,7 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Runtime checks: `/api/health` healthy, `/ping = pong`, homepage `HTTP 200`
 - Remediation SHA: `77f727197b57c2dd4d91c8f287752b44f1cbb720`
 - Remediation deployment: `d9264f24-4e2d-4b84-8e54-9f5587c035c0`, `SUCCESS`
-- Current runtime SHA during final-smoke attempt: `d7be37e4ca275cdb1e03966a80ddb7c432391cca`
+- Current runtime SHA during final-smoke attempt: `5890455bf822b752a5a091dfd5d4df381682a557`
 
 ## Scope Size
 
@@ -38,14 +38,19 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Static Organization Context Engine smoke passed with `41/41` checks.
 - Cross-application Organization Context Engine audit passed with `6/6` checks and no forbidden frontend ingestion imports.
 - Read-only tenant split audit passed for real staging tenants `vts,dbr77`; required orgs present, forbidden org `org-dbr77-system` absent.
+- Authenticated browser auth smoke passed with `3/3` checks.
+- Authenticated API smoke passed for owner, member, and superadmin test accounts.
+- API smoke covered owner create/read/update/read-back, artifact promotion read-back, member proposal approval denial with `403 CANVAS_PROPOSAL_CAPABILITY_REQUIRED`, member isolation from owner private draft with `404`, and superadmin create/read-back.
+- Work Canvas UI deeplink loaded when seeded with the full demo session state used by the smoke helpers.
 
 ## Blocking Gates
 
 - Previous blocker: `npm run test:unit:critical` failed with `3` files failed, `11` tests failed, `522/533` tests passed.
 - Remediation result: `npm run test:unit:critical` now passes with `534/534` tests passing.
 - Targeted blocker files pass with `203/203` tests passing.
-- Authenticated browser smoke is blocked locally because Playwright Chromium is not installed.
-- Authenticated tenant/ACL save/read-back smoke is blocked because `E2E_OWNER_EMAIL`, `E2E_OWNER_PASSWORD`, `E2E_MEMBER_EMAIL`, and `E2E_MEMBER_PASSWORD` are not configured locally.
+- Resolved: Playwright Chromium was installed locally and the basic authenticated browser smoke passed.
+- Resolved: controlled staging owner/member/superadmin test accounts were provided for the final smoke.
+- P2 follow-up: Work Canvas UI save/read-back automation is not fully deterministic without the expected demo-session localStorage state, even though the authenticated API save/read-back gate passed.
 
 Resolved categories:
 
@@ -59,11 +64,10 @@ Resolved categories:
 
 ## Required Fix Before Merge
 
-1. Provide controlled staging owner/member test credentials through local env or CI secrets.
-2. Install the Playwright browser runtime or run the smoke in CI where browsers are already provisioned.
-3. Run authenticated tenant/ACL and save/read-back smoke with test accounts.
-4. Re-issue final merge verdict after the authenticated smoke gate.
+1. Keep branch frozen for merge.
+2. Stabilize the Work Canvas Playwright smoke helper so deeplink tests always seed the required demo-session state before asserting UI save/read-back.
+3. Re-run UI smoke after merge as a P2 release-candidate follow-up.
 
 ## Recommendation
 
-Keep the branch frozen. Do not add more product or middleware slices before final authenticated staging smoke and merge verdict.
+Proceed as `GO_WITH_P2_UI_SMOKE_FOLLOWUP` if the team accepts API-level tenant/save/read-back evidence as the merge gate. Do not add more product or middleware slices before merge; handle UI smoke stabilization as a focused follow-up.
