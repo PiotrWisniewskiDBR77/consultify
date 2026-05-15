@@ -250,6 +250,7 @@ _archived_backups/
 # Test artifacts (local only)
 test-drafts/
 test-screenshots/
+var/
 
 # Knowledge bank: keep markdown packs in repo, ignore raw source binaries
 knowledge/**/*.pdf
