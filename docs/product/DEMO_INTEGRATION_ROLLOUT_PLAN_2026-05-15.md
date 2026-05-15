@@ -269,7 +269,7 @@ Validation evidence:
 
 ### Wave 5.2 - API Version Input Guard
 
-Status: `READY_FOR_DEPLOY`.
+Status: `DONE` and deployed.
 
 Source candidate:
 
@@ -292,6 +292,8 @@ Validation evidence:
 
 - Focused API version middleware gate: `19/19` passing.
 - Production build: passing with larger Node heap.
+- Railway deployment: `0c6aba50-ee61-4390-a9b3-4ede7a100b13`, `SUCCESS`.
+- Runtime: `/ping = pong`, homepage `HTTP 200`, `/api/health` reported `gitSha = fde05d354afb041b849082bae22e96d451438182`.
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
