@@ -22,8 +22,8 @@ This board is the Sprint 0 reconciliation artifact for the global closeout progr
 | Area | Sprint | Authoritative Status | Evidence | Drift / Decision |
 |---|---:|---|---|---|
 | Work Canvas / AI Canvas | 1 | `DONE_PASS` | `manual_Tests/reports/2026-05-15_1947_antygravity-current-rollout-manual.md`; `docs/testing/reports/WORK_CANVAS_A2_PERSISTENCE_RETEST_2026-05-15.md`; local A2 Playwright smoke `2/2 PASS`; remote staging smoke `2/2 PASS`; `WORK_CANVAS_P1_PERSISTENCE_CLOSEOUT_2026-05-15.md` | Fresh A2 manual failure reproduced and fixed. Root cause: autosave/manual save conflict. Staging deployment is live on `261d4d9e`; manual A2 retest passed. |
-| My Work / Radar | 2 | `BLOCKED_P1` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260506-001`; `testy_antygravity/REPORT_INDEX.md` My Work runtime gate | Prior `MY_WORK_GATE_BLOCKED_P1` remains active until `/my-work/start` retest passes. |
-| Tasks / Calendar / Notebook | 2 | `ON_STAGING_NOT_TESTED` | Covered by Sprint 2 plan; module docs under `docs/modules/02_moja-praca` and UI/UX raw notes | No final integrated business gate found in current queue. |
+| My Work / Radar | 2 | `PASS_WITH_P2_ROLE_SHELL_RISK` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260506-001`; `testy_antygravity/REPORT_INDEX.md` My Work runtime gate; `docs/testing/reports/MY_WORK_RADAR_RUNTIME_RETEST_2026-05-15.md` | Prior owner `/my-work/start` infinite spinner P1 is no longer reproducible. Member demo/pilot shell parity remains a P2 risk. |
+| Tasks / Calendar / Notebook | 2 | `PASS_WITH_P2_ROLE_SHELL_RISK` | `docs/testing/reports/MY_WORK_RADAR_RUNTIME_RETEST_2026-05-15.md`; module docs under `docs/modules/02_moja-praca` and UI/UX raw notes | Owner routes `/my-work/notebook`, `/my-work/tasks`, `/my-work/calendar`, and `/my-work/inbox` render on staging. Member shell parity remains open P2. |
 | Tabele / Excel / Table Studio | 3 | `READY_FOR_MANUAL_WITH_DEMO_P1_DRIFT` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260508-001`; `testy_antygravity/reports/2026-05-09_2140_tabele-artifact-mapping-retest.md` | Staging queue says `READY_FOR_MANUAL`; demo evidence contains artifact mapping `BLOCKED_P1`. Sprint 3 must reconcile environment drift before PASS. |
 | Presentations Builder | 4 | `PASS_WITH_STATUS_DRIFT` | `testy_antygravity/reports/2026-05-09_0615_presentations-manual-loop-r3-full-flow.md`; `testy_antygravity/CONTROL_BOARD.md`; `TQ-20260509-001` | Later R3 full-flow says PASS, while `CONTROL_BOARD.md` still says awaiting retest. Sprint 4 must update canonical boards. |
 | Presentations Premium System V2 | 4 | `READY_FOR_MANUAL_WITH_RISK` | `testy_antygravity/TEST_QUEUE.md` item `TQ-20260507-001`; preflight report `2026-05-07_1928_presentations-preflight-gate-a.md` | Docs parity and Playwright local timeout remain risk until MT-PRES-001..031 manual gate. |
@@ -40,7 +40,7 @@ This board is the Sprint 0 reconciliation artifact for the global closeout progr
 
 `PASS_WITH_OPEN_WORK`
 
-One operating status board now exists. Sprint 1 has closed Work Canvas as `DONE_PASS`; global completion remains blocked by My Work/Radar P1 and open module gates.
+One operating status board now exists. Sprint 1 has closed Work Canvas as `DONE_PASS`; Sprint 2 has closed the owner My Work/Radar P1 as `PASS_WITH_P2_ROLE_SHELL_RISK`; global completion remains blocked by open module gates.
 
 ## Hard Stops Carried Forward
 
