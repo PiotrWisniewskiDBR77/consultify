@@ -182,9 +182,22 @@ function parseArgs(argv: string[]): ParsedArgs {
 // filesystem helpers (read-only, never throw)
 // ---------------------------------------------------------------------------
 
+function resolveReadablePath(filePath: string): string {
+  const cwdPath = path.resolve(process.cwd(), filePath);
+  if (fs.existsSync(cwdPath)) return cwdPath;
+
+  // Owner registry entries may reference DRD-root files while this script runs
+  // from DRD/consultify. Keep the registry canonical and resolve that prefix.
+  if (filePath.startsWith('DRD/')) {
+    return path.resolve(process.cwd(), '..', filePath.slice('DRD/'.length));
+  }
+
+  return cwdPath;
+}
+
 function readSafe(filePath: string): string | null {
   try {
-    const abs = path.resolve(process.cwd(), filePath);
+    const abs = resolveReadablePath(filePath);
     return fs.readFileSync(abs, 'utf8');
   } catch {
     return null;
@@ -193,7 +206,7 @@ function readSafe(filePath: string): string | null {
 
 function fileMtimeIso(filePath: string): string | null {
   try {
-    const abs = path.resolve(process.cwd(), filePath);
+    const abs = resolveReadablePath(filePath);
     const stat = fs.statSync(abs);
     return stat.mtime.toISOString().slice(0, 10);
   } catch {
