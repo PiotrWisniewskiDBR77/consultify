@@ -381,7 +381,7 @@ Validation evidence:
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
 
-Status: `READY_FOR_DEPLOY` after blocker remediation.
+Status: `DEPLOYED_AFTER_REMEDIATION`; authenticated manual smoke still pending before final `GO`.
 
 Goal:
 
@@ -405,7 +405,7 @@ Final verdict options:
 Wave 6 result:
 
 - Previous verdict: `NO_GO / BLOCKED_P1`.
-- Remediation verdict: `READY_FOR_DEPLOY`.
+- Remediation verdict: `DEPLOYED_AFTER_REMEDIATION`.
 - Branch freeze: current `origin/staging` was frozen for RC assessment at `012ed86d45a7082b93271fc1ddc945e65b88c00d`.
 - Runtime baseline: `/api/health` reported `gitSha = 012ed86d45a7082b93271fc1ddc945e65b88c00d`, `/ping = pong`, homepage `HTTP 200`.
 - Railway deployment: `8c5242b5-ed3e-4f67-943c-3521786e9ee2`, `SUCCESS`.
@@ -413,6 +413,8 @@ Wave 6 result:
 - Middleware regression gate: `73/73` passing across metrics, org-context safety, permission, API version, request access, deprecation header, and security headers tests.
 - Critical auth/access-policy gate after remediation: `534/534` passing.
 - Targeted blocker files after remediation: `203/203` passing.
+- Remediation deployment: `d9264f24-4e2d-4b84-8e54-9f5587c035c0`, `SUCCESS`.
+- Runtime after remediation: `/api/health` reported `gitSha = 77f727197b57c2dd4d91c8f287752b44f1cbb720`, `/ping = pong`, homepage `HTTP 200`.
 - Live unauthenticated API probes returned controlled `401` responses with `{"error":"No token provided"}`.
 - Live response headers did not expose `X-Powered-By`; CSP, HSTS, frame, content-type, and referrer controls were present.
 
@@ -429,12 +431,11 @@ Residual risks:
 
 ## Immediate Next Step
 
-Deploy and verify the Wave 6 blocker remediation:
+Run the final authenticated staging smoke before merge:
 
-1. Push the test-contract remediation to `origin/staging`.
-2. Verify Railway deploy reaches `SUCCESS`.
-3. Confirm `/api/health`, `/ping`, and homepage after deployment.
-4. Run authenticated tenant/ACL and save/read-back smoke before changing final merge verdict to `GO`.
+1. Use test accounts to validate tenant/ACL isolation.
+2. Validate save/read-back/refresh on the agreed critical flows.
+3. If no P0/P1 appears, change final merge verdict to `GO` or `GO_WITH_P2`.
 
 Previous Wave 5 continuation command sequence:
 

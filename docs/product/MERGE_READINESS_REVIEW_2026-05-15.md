@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`READY_FOR_DEPLOY` after blocker remediation.
+`DEPLOYED_AFTER_REMEDIATION`; final authenticated staging smoke still pending.
 
-The staging runtime is healthy and the critical auth/access-policy automated gate is now green after aligning tests to the current canonical role and trial AI access contracts. Final merge still requires deployment verification and authenticated tenant/ACL smoke before changing the verdict to `GO`.
+The staging runtime is healthy and the critical auth/access-policy automated gate is now green after aligning tests to the current canonical role and trial AI access contracts. Final merge still requires authenticated tenant/ACL smoke before changing the verdict to `GO`.
 
 ## Assessed Baseline
 
@@ -13,6 +13,8 @@ The staging runtime is healthy and the critical auth/access-policy automated gat
 - Runtime SHA: `012ed86d45a7082b93271fc1ddc945e65b88c00d`
 - Railway deployment: `8c5242b5-ed3e-4f67-943c-3521786e9ee2`, `SUCCESS`
 - Runtime checks: `/api/health` healthy, `/ping = pong`, homepage `HTTP 200`
+- Remediation SHA: `77f727197b57c2dd4d91c8f287752b44f1cbb720`
+- Remediation deployment: `d9264f24-4e2d-4b84-8e54-9f5587c035c0`, `SUCCESS`
 
 ## Scope Size
 
@@ -51,10 +53,8 @@ Resolved categories:
 
 ## Required Fix Before Merge
 
-1. Deploy the remediation commit to `origin/staging` and verify Railway `SUCCESS`.
-2. Confirm `/api/health`, `/ping`, and homepage after deployment.
-3. Run authenticated tenant/ACL and save/read-back smoke with test accounts.
-4. Re-issue final merge verdict after the authenticated smoke gate.
+1. Run authenticated tenant/ACL and save/read-back smoke with test accounts.
+2. Re-issue final merge verdict after the authenticated smoke gate.
 
 ## Recommendation
 
