@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`FIX_READY_DEPLOY_PENDING`
+`DEPLOYED_RETEST_READY`
 
-The Work Canvas A2 persistence P1 is fixed locally and validated against the staging API. Staging still needs the commit deployed, followed by the manual A2 retest before this can become `DONE_PASS`.
+The Work Canvas A2 persistence P1 is fixed, deployed to staging, and validated with remote Playwright smoke. Manual AnyGravity A2 retest is still required before this can become `DONE_PASS`.
 
 ## Root Cause
 
@@ -39,16 +39,21 @@ The first request succeeded and advanced `updatedAt`. The second request carried
 - Production build:
   - `NODE_OPTIONS=--max-old-space-size=8192 npm run build`
   - Result: `PASS`.
+- Staging deployment:
+  - Commit: `d0dde8fe6beafb8b7d16a2814c326d1bcb777816`
+  - Railway deployment: `eea16c6c-748a-4007-8139-98fc33f0ff60`
+  - Result: `SUCCESS`
+  - `/api/health.gitSha`: `d0dde8fe6beafb8b7d16a2814c326d1bcb777816`
+- Remote Playwright staging smoke:
+  - `E2E_API_URL=https://demo.consultify.ai E2E_BASE_URL=https://demo.consultify.ai ... npm run test:e2e -- tests/e2e/smoke/work-canvas-core-flow.spec.ts --project=chromium --workers=1`
+  - Result: `2/2 PASS`
 
 ## Known Validation Limits
 
 - Full repo `tsc --noEmit` still fails on pre-existing unrelated issues in Kimi, Notebook/TipTap, Reports Premium editor extensions, and `ModuleHub`. No failure was reported in the edited Work Canvas files.
-- Remote `demo.consultify.ai` UI still fails until this local fix is committed, pushed, and deployed.
+- Manual AnyGravity A2 retest has not been executed yet after deployment.
 
 ## Next Gate
 
-1. Commit and push the fix to the staging branch.
-2. Verify Railway deployment reaches `SUCCESS`.
-3. Run remote Work Canvas smoke against `https://demo.consultify.ai`.
-4. Run manual AnyGravity A2 retest.
-5. Update this verdict to `DONE_PASS` only after staging read-back passes.
+1. Run manual AnyGravity A2 retest.
+2. Update this verdict to `DONE_PASS` only after manual staging read-back passes.
