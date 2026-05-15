@@ -239,7 +239,7 @@ Gate:
 
 ### Wave 5.1 - Middleware Edge Guards
 
-Status: `READY_FOR_DEPLOY`.
+Status: `DONE` and deployed.
 
 Source candidate:
 
@@ -263,6 +263,8 @@ Validation evidence:
 
 - Focused non-DB middleware gate: `36/36` passing.
 - Production build: passing with larger Node heap.
+- Railway deployment: `73591801-158f-4fc3-af66-0f7bac343bc0`, `SUCCESS`.
+- Runtime: `/ping = pong`, homepage `HTTP 200`, `/api/health` reported `gitSha = e089592f7a71aedbe3620deb5c0e9369035506a9`.
 - DB-backed `orgContext.middleware.test.ts` was not used as a local blocker because local Postgres failed before test execution with `role "iris" does not exist`; equivalent new safety coverage was added with mocked DB dependencies.
 
 ## Wave 6 - Enterprise Closeout / Manual Test Gate
@@ -290,12 +292,12 @@ Final verdict options:
 
 ## Immediate Next Step
 
-Deploy Wave 5.1 after commit/push, then verify `/ping`, homepage, `/api/health`, and proceed only if runtime stays green.
+Continue Wave 5 with the next independently testable middleware-family slice only after auditing candidate diffs and preserving the current runtime baseline.
 
 First command sequence:
 
-1. Commit and push Wave 5.1 middleware edge guards to `origin/staging`.
-2. Wait for Railway staging deployment.
-3. Verify runtime health on `demo.consultify.ai`.
-4. Continue Wave 5 only with the next independently testable middleware-family slice.
+1. Inspect the next middleware candidate map.
+2. Select one narrow slice with no auth model rewrite, no tenant resolution rewrite, and no schema change.
+3. Run focused tests and production build.
+4. Deploy only after green gates and verify `/ping`, homepage, and `/api/health`.
 
