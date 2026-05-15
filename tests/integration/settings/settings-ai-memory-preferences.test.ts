@@ -110,7 +110,7 @@ describe('Settings AI memory preferences', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.body).toEqual({ preferences });
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT OR REPLACE INTO user_preferences'),
+      expect.stringContaining('INSERT INTO user_preferences'),
       ['u-1', 'settings:ai-memory', JSON.stringify(preferences)],
       expect.any(Object)
     );

@@ -4031,7 +4031,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!userId)
+      return res.status(401).json({ error: 'User not authenticated', code: 'AUTH_REQUIRED' });
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
@@ -4043,7 +4044,10 @@ router.get(
       try {
         return res.json({ preferences: JSON.parse(row.preferences_data) });
       } catch {
-        // fallthrough
+        return res.status(500).json({
+          error: 'Stored AI memory preferences are invalid',
+          code: 'AI_MEMORY_PREFERENCES_INVALID_STORE',
+        });
       }
     }
     return res.json({ preferences: defaultAIMemory });
@@ -4068,10 +4072,11 @@ router.put(
       });
     }
 
-    await ensureUserPreferencesTable();
-    const payload = JSON.stringify(preferences);
-    const result = await upsertUserPreferenceValue(userId, preferencesKey('ai-memory'), payload);
-    if (!result.success) {
+    try {
+      await ensureUserPreferencesTable();
+      const payload = JSON.stringify(preferences);
+      await upsertUserPreferenceValue(userId, preferencesKey('ai-memory'), payload);
+    } catch {
       return res.status(500).json({
         error: 'Failed to save AI memory preferences',
         code: 'AI_MEMORY_PREFERENCES_SAVE_FAILED',
